@@ -105,8 +105,8 @@ sub get_all_vars {
 my ($mysqlvermajor,$mysqlverminor);
 sub validate_mysql_version {
     ($mysqlvermajor,$mysqlverminor) = $myvar{'version'} =~ /(\d)\.(\d)/;
-    if ($mysqlvermajor < 4) {
-        print $bad." This script will not work with MySQL < 4.0\n";
+    if ($mysqlvermajor < 4 || ($mysqlvermajor == 4 && $mysqlverminor < 1)) {
+        print $bad." This script will not work with MySQL < 4.1\n";
         exit 0;
     } elsif ($1 == 4 && $2 == 0) {
         print $bad." Your MySQL version ".$myvar{'version'}." is EOL software!  Upgrade soon!\n";
@@ -499,8 +499,7 @@ sub performance_options {
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-print "------------------------------------------------------------------------------\n".
-    $info." MySQL High-Performance Tuner - Major Hayden <major.hayden\@rackspace.com>\n";
+print $info." MySQL High-Performance Tuner - Major Hayden <major.hayden\@rackspace.com>\n";
 mysql_install_ok;               # Check to see if MySQL is installed
 os_setup;                       # Set up some OS variables
 setup_mysql_login;              # Gotta login first
@@ -517,7 +516,6 @@ check_join;                     # Check join buffers
 check_temporary_tables;         # Check temporary table creation
 check_other_buffers;
 performance_options;
-print "------------------------------------------------------------------------------\n";
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
