@@ -19,7 +19,7 @@ sub os_setup {
         $duflags = '-b';
     } elsif ($os =~ /Darwin/) {
         $physical_memory = `sysctl -n hw.memsize`;
-        $swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*$//'`;
+        $swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'`;
     } elsif ($os =~ /BSD/) {
         $physical_memory = `sysctl -n hw.realmem`;
         $swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
