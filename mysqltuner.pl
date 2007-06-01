@@ -2,6 +2,44 @@
 use strict;
 use warnings;
 use diagnostics;
+use Getopt::Long;
+
+# Set defaults
+my %opt = (
+        "nobad" => 0,
+        "nogood" => 0,
+        "noinfo" => 0,
+        "notitle" => 0,
+    );
+
+# Gather the options from the command line
+GetOptions(\%opt,
+        'nobad',
+        'nogood',
+        'noinfo',
+        'notitle',
+        'help',
+    );
+
+if (defined $opt{'help'} && $opt{'help'} == 1) { usage(); }
+
+sub usage {
+    print "\n".
+        "    MySQL High Performance Tuning Script\n".
+        "    Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
+        "    Maintained by Major Hayden (major.hayden\@rackspace.com)\n\n".
+        "    Important Usage Guidelines:\n".
+        "       To run the script with the default options, run the script without arguments\n".
+        "       Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n".
+        "       Some routines may require root level privileges (script will provide warnings)\n\n".
+        "    Output Options:\n".
+        "       --nogood        Remove OK responses\n".
+        "       --nobad         Remove negative/suggestion responses\n".
+        "       --noinfo        Remove informational responses\n".
+        "       --notitle       Remove section title headers\n".
+        "\n";
+    exit;
+}
 
 # CONFIGURATION ITEMS
 my $revision = "1";
@@ -10,18 +48,27 @@ my $bad = "[\e[00;31m!!\e[00m]";
 my $info = "[\e[00;34m--\e[00m]";
 
 sub goodprint {
+    if ($opt{nogood} == 1) { return 0; }
     my $text = shift;
     print $good." ".$text;
 }
 
 sub infoprint {
+    if ($opt{noinfo} == 1) { return 0; }
     my $text = shift;
     print $info." ".$text;
 }
 
 sub badprint {
+    if ($opt{nobad} == 1) { return 0; }
     my $text = shift;
     print $bad." ".$text;
+}
+
+sub titleprint {
+    if ($opt{notitle} == 1) { return 0; }
+    my $text = shift;
+    print $text;
 }
 
 my ($physical_memory,$swap_memory,$duflags);
@@ -200,7 +247,7 @@ sub mysql_initial_stats {
 }
 
 sub check_memory {
-    print "------ MEMORY USAGE ------\n";
+    titleprint "------ MEMORY USAGE ------\n";
     # The purpose of this section is to make sure you're not going to end up in swap or crashing the box
     # by having buffers that are set too large
     #
@@ -234,9 +281,17 @@ sub check_memory {
     my $key_buffer_size = $myvar{'key_buffer_size'};
     #   query_cache_size - holds query results (default 0) [still allocated when query_cache_type = 0]
     my $query_cache_size = (defined $myvar{'query_cache_size'}) ? $myvar{'query_cache_size'} : 0 ;
+    #   max_heap_table_size / tmp_table_size - hold temporary table data from queries
+    #   ** The effective temporary table size is the smaller number between these two
+    my $eff_tmp_table_size;
+    if ($myvar{'tmp_table_size'} > $myvar{'max_heap_table_size'}) {
+        $eff_tmp_table_size = $myvar{'max_heap_table_size'};
+    } else {
+        $eff_tmp_table_size = $myvar{'tmp_table_size'};
+    }
     #
     # GLOBAL BUFFER CALCULATIONS:
-    my $global_buffers = $innodb_buffer_pool_size + $innodb_additional_mem_pool_size + $innodb_log_buffer_size + $key_buffer_size + $query_cache_size;
+    my $global_buffers = $innodb_buffer_pool_size + $innodb_additional_mem_pool_size + $innodb_log_buffer_size + $key_buffer_size + $query_cache_size + $eff_tmp_table_size;
     #
     # FINAL BUFFER/MEMORY CALCULATIONS:
     my $max_memory = $global_buffers + $max_thread_buffers;
@@ -254,10 +309,11 @@ sub check_memory {
         goodprint "MySQL is configured to use $pct_physical_memory% (".hr_bytes($total_memory).
             ") of physical memory (".hr_bytes($physical_memory).")\n";
     }
+    infoprint "This memory total above is when MySQL is at absolute full load\n";
 }
 
 sub check_slow_queries {
-    print "------ SLOW QUERIES ------\n";
+    titleprint "------ SLOW QUERIES ------\n";
     # If the server hasn't received any queries, then we can't calculate a slow query percentage
     if ($mystat{'Questions'} > 0) {
         my $slowquerypct = int(($mystat{'Slow_queries'}/$mystat{'Questions'}) * 100);
@@ -286,7 +342,7 @@ sub check_slow_queries {
 }
 
 sub check_connections {
-    print "------ CONNECTION LIMITS ------\n";
+    titleprint "------ CONNECTION LIMITS ------\n";
     # We're looking at two things here:
     #   How many connections have been used so far and how close is the connection limit?
     #   How many connections can overflow into the back_log?
@@ -315,7 +371,7 @@ sub check_connections {
 }
 
 sub check_key_buffer {
-    print "------ KEY BUFFER ------\n";
+    titleprint "------ KEY BUFFER ------\n";
     my $myisamindexes;
     if ($mysqlvermajor < 5) {
         $myisamindexes = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du $duflags '{}' 2>&1 | awk '{ s += \$1 } END { print s }'`;
@@ -375,7 +431,7 @@ sub check_key_buffer {
 }
 
 sub check_query_cache {
-    print "------ QUERY CACHE ------\n";
+    titleprint "------ QUERY CACHE ------\n";
     # If query cache support isn't compiled into MySQL, we fail here
     if (!defined $myvar{'have_query_cache'}) {
         badprint "Your MySQL server does not support query caching - upgrade MySQL\n";
@@ -427,7 +483,7 @@ sub check_query_cache {
 }
 
 sub check_sort {
-    print "------ SORTING ------\n";
+    titleprint "------ SORTING ------\n";
     # SORTING VARIABLES/STATUS:
     #   read_rnd_buffer_size - sorts are read from this buffer after the sort is complete, helps ORDER BY
     #   sort_buffer_size - per-thread buffer used for sorting, helps ORDER/GROUP BY
@@ -453,7 +509,7 @@ sub check_sort {
 }
 
 sub check_join {
-    print "------ JOINS ------\n";
+    titleprint "------ JOINS ------\n";
     # JOIN VARIABLES/STATUS:
     #   join_buffer_size - buffer used to join tables when indexes can't be utilized
     #   Select_full_join - number of joins not using indexes
@@ -472,7 +528,7 @@ sub check_join {
 }
 
 sub check_temporary_tables {
-    print "------ TEMPORARY TABLES ------\n";
+    titleprint "------ TEMPORARY TABLES ------\n";
     # TEMPORARY TABLE VARIABLES/STATUS:
     #   Created_tmp_disk_tables - number of temporary tables created on disk
     #   Created_tmp_tables - number of temporary tables created in memory
@@ -495,14 +551,14 @@ sub check_temporary_tables {
 }
 
 sub check_other_buffers {
-    print "------ OTHER BUFFERS ------\n";
+    titleprint "------ OTHER BUFFERS ------\n";
     #  bulk_insert_buffer_size = buffer for large inserts (default: 8M)
     infoprint "Your bulk_insert_buffer_size is ".hr_bytes_rnd($myvar{'bulk_insert_buffer_size'}).
         " - increase this for large bulk inserts\n";
 }
 
 sub performance_options {
-    print "------ PERFORMANCE OPTIONS ------\n";
+    titleprint "------ PERFORMANCE OPTIONS ------\n";
     # concurrent_insert = enables simultaneous insert/select on MyISAM tables w/o holes
     # It's ON/OFF in MySQL 4.1 and 0/1 in MySQL 5.x
     if ($myvar{'concurrent_insert'} eq "ON" || $myvar{'concurrent_insert'} > 0) {
@@ -515,7 +571,8 @@ sub performance_options {
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-infoprint "MySQL High-Performance Tuner - Major Hayden <major.hayden\@rackspace.com>\n";
+print   "     MySQL High-Performance Tuner - Major Hayden <major.hayden\@rackspace.com>\n".
+        "     Bug reports, feature requests, downloads at mysqltuner.com\n";
 mysql_install_ok;               # Check to see if MySQL is installed
 os_setup;                       # Set up some OS variables
 setup_mysql_login;              # Gotta login first
