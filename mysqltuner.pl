@@ -9,6 +9,21 @@ my $good = "[\e[00;32mOK\e[00m]";
 my $bad = "[\e[00;31m!!\e[00m]";
 my $info = "[\e[00;34m--\e[00m]";
 
+sub goodprint {
+    my $text = shift;
+    print $good." ".$text;
+}
+
+sub infoprint {
+    my $text = shift;
+    print $info." ".$text;
+}
+
+sub badprint {
+    my $text = shift;
+    print $bad." ".$text;
+}
+
 my ($physical_memory,$swap_memory,$duflags);
 sub os_setup {
     my $os = `uname`;
@@ -31,7 +46,7 @@ sub mysql_install_ok {
     my $command = `which mysqladmin`;
     chomp($command);
     if (! -e $command) {
-        print $bad." Unable to find mysqladmin in your \$PATH.  Is MySQL installed?\n";
+        badprint "Unable to find mysqladmin in your \$PATH.  Is MySQL installed?\n";
         exit;
     }
 }
@@ -43,10 +58,10 @@ sub setup_mysql_login {
         $mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
         my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
         if ($loginstatus =~ /mysqld is alive/) {
-            print $good." Successfully logged into MySQL using Plesk's credentials.\n";
+            goodprint "Successfully logged into MySQL using Plesk's credentials.\n";
             return 1;
         } else {
-            print $bad." Attempted to use login credentials from Plesk, but they failed.\n";
+            badprint "Attempted to use login credentials from Plesk, but they failed.\n";
             exit 0;
         }
     } else {
@@ -61,7 +76,8 @@ sub setup_mysql_login {
             if ( -e "$userpath/.my.cnf" ) {
                 # Login was successful, but we won't say anything to save space
             } else {
-                print $bad." Successfully authenticated with no password - SECURITY RISK!\n";
+                #badprint "Successfully authenticated with no password - SECURITY RISK!\n";
+                badprint "Successfully authenticated with no password - SECURITY RISK!\n";
             }
             return 1;
         } else {
@@ -106,14 +122,14 @@ my ($mysqlvermajor,$mysqlverminor);
 sub validate_mysql_version {
     ($mysqlvermajor,$mysqlverminor) = $myvar{'version'} =~ /(\d)\.(\d)/;
     if ($mysqlvermajor < 4 || ($mysqlvermajor == 4 && $mysqlverminor < 1)) {
-        print $bad." This script will not work with MySQL < 4.1\n";
+        badprint "This script will not work with MySQL < 4.1\n";
         exit 0;
     } elsif ($1 == 4 && $2 == 0) {
-        print $bad." Your MySQL version ".$myvar{'version'}." is EOL software!  Upgrade soon!\n";
+        badprint "Your MySQL version ".$myvar{'version'}." is EOL software!  Upgrade soon!\n";
     } elsif ($1 == 5 && $2 == 1) {
-        print $bad." Currently running supported MySQL version ".$myvar{'version'}." (BETA - USE CAUTION)\n";
+        badprint "Currently running supported MySQL version ".$myvar{'version'}." (BETA - USE CAUTION)\n";
     } else {
-        print $good." Currently running supported MySQL version ".$myvar{'version'}."\n";
+        goodprint "Currently running supported MySQL version ".$myvar{'version'}."\n";
     }
 }
 
@@ -178,7 +194,7 @@ sub hr_num {
 sub mysql_initial_stats {
     # Show uptime, queries per second, connections, traffic stats
     my $qps = sprintf("%.3f",$mystat{'Questions'}/$mystat{'Uptime'});
-    print $info." Up for: ".pretty_uptime($mystat{'Uptime'})." (".hr_num($mystat{'Questions'}).
+    infoprint "Up for: ".pretty_uptime($mystat{'Uptime'})." (".hr_num($mystat{'Questions'}).
         " q [".hr_num($qps)." qps], ".hr_num($mystat{'Connections'})." conn,".
         " TX: ".hr_num($mystat{'Bytes_sent'}).", RX: ".hr_num($mystat{'Bytes_received'}).")\n";
 }
@@ -227,15 +243,15 @@ sub check_memory {
     my $total_memory = $global_buffers + $total_thread_buffers;
     my $pct_physical_memory = int(($total_memory * 100) / $physical_memory);
     
-    print $info." Per-thread buffers are ".hr_bytes_rnd($thread_buffers).", total ".hr_bytes_rnd($total_thread_buffers).
+    infoprint "Per-thread buffers are ".hr_bytes_rnd($thread_buffers).", total ".hr_bytes_rnd($total_thread_buffers).
         " ($myvar{'max_connections'} connections)\n";
-    print $info." Max allocated is ".hr_bytes_rnd($max_memory)." (".hr_bytes_rnd($thread_buffers).
+    infoprint "Max allocated is ".hr_bytes_rnd($max_memory)." (".hr_bytes_rnd($thread_buffers).
         " per-thread * $mystat{'Max_used_connections'} connections + ".hr_bytes_rnd($global_buffers)." global)\n";
     if ($pct_physical_memory > 85) {
-        print $bad." DANGER - MySQL is configured to use $pct_physical_memory% (".hr_bytes($total_memory).
+        badprint "DANGER - MySQL is configured to use $pct_physical_memory% (".hr_bytes($total_memory).
             ") of physical memory (".hr_bytes($physical_memory).")\n";
     } else {
-        print $good." MySQL is configured to use $pct_physical_memory% (".hr_bytes($total_memory).
+        goodprint "MySQL is configured to use $pct_physical_memory% (".hr_bytes($total_memory).
             ") of physical memory (".hr_bytes($physical_memory).")\n";
     }
 }
@@ -246,25 +262,25 @@ sub check_slow_queries {
     if ($mystat{'Questions'} > 0) {
         my $slowquerypct = int(($mystat{'Slow_queries'}/$mystat{'Questions'}) * 100);
         if ($slowquerypct > 5) {
-            print $bad." $slowquerypct% of all queries take more than ".$myvar{'long_query_time'}." sec - optimization is recommended\n";
+            badprint "$slowquerypct% of all queries take more than ".$myvar{'long_query_time'}." sec - optimization is recommended\n";
         } elsif ($slowquerypct <= 5 && $slowquerypct >= 1) {
-            print $good." $slowquerypct% of all queries take more than ".$myvar{'long_query_time'}." sec\n";
+            goodprint "$slowquerypct% of all queries take more than ".$myvar{'long_query_time'}." sec\n";
         } else {
-            print $good." Less than 1% of all queries take more than ".$myvar{'long_query_time'}." sec\n";
+            goodprint "Less than 1% of all queries take more than ".$myvar{'long_query_time'}." sec\n";
         }
     }
     # Best case scenario would be slow query log enabled with a long_query_time of 10 or less
     if ($myvar{'log_slow_queries'} =~ /ON/) {
         if ($myvar{'long_query_time'} <= 10) {
-            print $good." Slow query log is enabled, and long_query_time is reasonable ($myvar{'long_query_time'} sec)\n";
+            goodprint "Slow query log is enabled, and long_query_time is reasonable ($myvar{'long_query_time'} sec)\n";
         } else {
             print $bad. " Slow query log is enabled, but long_query_time is too long ($myvar{'long_query_time'} sec)\n";
         }
     } else {
         if ($myvar{'long_query_time'} <= 10) {
-            print $bad." Slow query log is disabled, but long_query_time is reasonable ($myvar{'long_query_time'} sec)\n";
+            badprint "Slow query log is disabled, but long_query_time is reasonable ($myvar{'long_query_time'} sec)\n";
         } else {
-            print $bad." Slow query log is disabled, and long_query_time is too long ($myvar{'long_query_time'} sec)\n";
+            badprint "Slow query log is disabled, and long_query_time is too long ($myvar{'long_query_time'} sec)\n";
         }
     }
 }
@@ -279,22 +295,22 @@ sub check_connections {
     # However, if the maximum connections used is less than 10%, that's just wasted memory.
     my $connpct = int(($mystat{'Max_used_connections'}/$myvar{'max_connections'}) * 100);
     if ($connpct > 85) {
-        print $bad." $connpct% of connections have been used ".
+        badprint "$connpct% of connections have been used ".
             "(".$mystat{'Max_used_connections'}."/".$myvar{'max_connections'}.")".
             " - Increase the max_connections variable\n";
     } elsif ($connpct < 10) {
-        print $bad." $connpct% of connections have been used ".
+        badprint "$connpct% of connections have been used ".
             "(".$mystat{'Max_used_connections'}."/".$myvar{'max_connections'}.")".
             " - Reduce max_connections\n";
     } else {
-        print $good." $connpct% of connections have been used ".
+        goodprint "$connpct% of connections have been used ".
             "(".$mystat{'Max_used_connections'}."/".$myvar{'max_connections'}.")\n";
     }
     # If the back_log is less than 50, there's a chance that connections will be forcefully rejected
     if ($myvar{'back_log'} < 50) {
-        print $bad." Your listen queue back_log is too low - you should raise this to 50-256\n";
+        badprint "Your listen queue back_log is too low - you should raise this to 50-256\n";
     } else {
-        print $good." Your listen queue back_log is set to a reasonable level (".$myvar{'back_log'}.")\n";
+        goodprint "Your listen queue back_log is set to a reasonable level (".$myvar{'back_log'}.")\n";
     }
 }
 
@@ -304,7 +320,7 @@ sub check_key_buffer {
     if ($mysqlvermajor < 5) {
         $myisamindexes = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du $duflags '{}' 2>&1 | awk '{ s += \$1 } END { print s }'`;
         if ($myisamindexes =~ /^0\n$/) {
-            print $bad." Unable to complete calculations - run this script with root privileges\n";
+            badprint "Unable to complete calculations - run this script with root privileges\n";
             return 0;
         }
     } else {
@@ -317,7 +333,7 @@ sub check_key_buffer {
     #   Key_read_requests - number of requests to read a key block from the cache (this should be high)
     #   Key_reads - number of requests for a key that had to be read from a disk (this should be low)
     if ($mystat{'Key_reads'} == 0) {
-        print $bad." Your queries are not using any indexes - no recommendations can be made\n";
+        badprint "Your queries are not using any indexes - no recommendations can be made\n";
         return 0;
     }
     # BUFFER CALCULATIONS:
@@ -342,19 +358,19 @@ sub check_key_buffer {
     } elsif ($key_from_mem_pct < 80) {
         $raise_key_buffer += 2;     # This is really, really bad - raise the buffer!
     }
-    print $info." The key buffer is $key_buffer_use_pct% used, and $key_from_mem_pct% of key requests come from memory\n";
+    infoprint "The key buffer is $key_buffer_use_pct% used, and $key_from_mem_pct% of key requests come from memory\n";
     if ($myisamindexes < $myvar{'key_buffer_size'} && $raise_key_buffer >= 1) {
-        print $bad." Your key_buffer_size (".hr_bytes_rnd($myvar{'key_buffer_size'}).") is higher than your total MyISAM indexes (".hr_bytes_rnd($myisamindexes).")\n";
+        badprint "Your key_buffer_size (".hr_bytes_rnd($myvar{'key_buffer_size'}).") is higher than your total MyISAM indexes (".hr_bytes_rnd($myisamindexes).")\n";
     } else {
-        print $info." Total MyISAM index size is ".hr_bytes_rnd($myisamindexes).
+        infoprint "Total MyISAM index size is ".hr_bytes_rnd($myisamindexes).
             " (current key_buffer_size ".hr_bytes_rnd($myvar{'key_buffer_size'}).")\n";
     }
     if ($raise_key_buffer >= 1) {
-        print $bad." Raise the key_buffer_size for better indexing performance in MyISAM tables\n";
+        badprint "Raise the key_buffer_size for better indexing performance in MyISAM tables\n";
     } elsif ($raise_key_buffer == 0) {
-        print $good." Your key_buffer_size is set to a reasonable level\n";
+        goodprint "Your key_buffer_size is set to a reasonable level\n";
     } else {
-        print $bad." Lower the key_buffer_size to use the resources elsewhere\n";
+        badprint "Lower the key_buffer_size to use the resources elsewhere\n";
     }
 }
 
@@ -362,17 +378,17 @@ sub check_query_cache {
     print "------ QUERY CACHE ------\n";
     # If query cache support isn't compiled into MySQL, we fail here
     if (!defined $myvar{'have_query_cache'}) {
-        print $bad." Your MySQL server does not support query caching - upgrade MySQL\n";
+        badprint "Your MySQL server does not support query caching - upgrade MySQL\n";
         return 0;
     }
     # If the query cache is disabled, we fail here
     if ($myvar{'query_cache_size'} == 0) {
-        print $bad." The query cache is disabled - set the query_cache_size > 0 to enable it\n";
+        badprint "The query cache is disabled - set the query_cache_size > 0 to enable it\n";
         return 0;
     }
     # If there haven't been any selects, then we can't do much
     if ($mystat{'Com_select'} == 0) {
-        print $info." No SELECT statements have been run - no recommendations can be made\n";
+        infoprint "No SELECT statements have been run - no recommendations can be made\n";
         return 0;
     }
     # QUERY CACHE VARIABLES/STATUS:
@@ -389,24 +405,24 @@ sub check_query_cache {
     #   qcache_pct_free - % of query cache free
     my $qcache_pct_free = sprintf("%.1f",($mystat{'Qcache_free_memory'} / $myvar{'query_cache_size'}) * 100);
     my $problem = 0;
-    print $info." $query_cache_efficiency% of SELECTS used query cache (Stats: $qcache_pct_free% free, "
+    infoprint "$query_cache_efficiency% of SELECTS used query cache (Stats: $qcache_pct_free% free, "
         .hr_bytes_rnd($myvar{'query_cache_size'})." total, $mystat{'Qcache_lowmem_prunes'} prunes)\n";
     # When the prunes get to be pretty high, either too many queries are making it into the query cache
     # that don't belong there, or the queries are too big and the query_cache_limit needs to be reduced.
     if ($mystat{'Qcache_lowmem_prunes'} > 50) {
-        print $bad." Cache cleared $mystat{'Qcache_lowmem_prunes'} times due to low memory - increase query_cache_size\n";
+        badprint "Cache cleared $mystat{'Qcache_lowmem_prunes'} times due to low memory - increase query_cache_size\n";
         $problem = 1;
     }
     # If the query_cache_efficiency is less than 20%, then too many selects are not being pulled from
     # the query_cache.  This could mean that the results exceed query_cache_limit, or the queries are
     # using the SQL_NO_CACHE modifier (which throw these recommendations way off).
     if ($query_cache_efficiency <= 20) {
-        print $bad." Very few queries used query cache - increase query_cache_limit or adjust queries\n";
+        badprint "Very few queries used query cache - increase query_cache_limit or adjust queries\n";
         $problem = 1;
     }
     # If the query_cache efficiency is over 20% and the prunes are under 50, then everything should be good.
     if ($problem == 0) {
-        print $good." Your query cache is configured properly\n";
+        goodprint "Your query cache is configured properly\n";
     }
 }
 
@@ -424,15 +440,15 @@ sub check_sort {
     #   If a sort is too big for the sort_buffer_size, temporary tables are made, sorted, and then Sort_merge_passes gets incremented
     my $total_sorts = $mystat{'Sort_scan'} + $mystat{'Sort_range'};
     if ($total_sorts == 0) {
-        print $info." No sorts have been performed - no recommendations can be made\n";
+        infoprint "No sorts have been performed - no recommendations can be made\n";
         return 0;
     }
     my $temp_sort_table_pct = int(($mystat{'Sort_merge_passes'} / $total_sorts) * 100);
-    print $info." $total_sorts sorts have occurred with $temp_sort_table_pct% requiring temporary tables\n";
+    infoprint "$total_sorts sorts have occurred with $temp_sort_table_pct% requiring temporary tables\n";
     if ($temp_sort_table_pct > 10) {
-        print $bad." Increase sorting performance by raising sort_buffer_size and read_rnd_buffer_size\n";
+        badprint "Increase sorting performance by raising sort_buffer_size and read_rnd_buffer_size\n";
     } else {
-        print $good." Your sorting buffers are reasonable\n";
+        goodprint "Your sorting buffers are reasonable\n";
     }
 }
 
@@ -447,11 +463,11 @@ sub check_join {
     #   Technically, the performance hit of Select_range_check is as bad as Select_full_join, so they should be summed
     my $joins_without_indexes = $mystat{'Select_range_check'} + $mystat{'Select_range_check'};
     if ($joins_without_indexes > 0) {
-        print $info." $joins_without_indexes joins did not use indexes, join buffer is ".hr_bytes_rnd($myvar{'join_buffer_size'})."\n";
-        print $bad." Adjust your joins to utilize indexes (if impossible, increase join_buffer_size)\n";
-        print $bad." NOTE: This script will always suggest raising the join_buffer_size\n";
+        infoprint "$joins_without_indexes joins did not use indexes, join buffer is ".hr_bytes_rnd($myvar{'join_buffer_size'})."\n";
+        badprint "Adjust your joins to utilize indexes (if impossible, increase join_buffer_size)\n";
+        badprint "NOTE: This script will always suggest raising the join_buffer_size\n";
     } else {
-        print $good." Your joins are using indexes appropriately, join buffer is not necessary\n";
+        goodprint "Your joins are using indexes appropriately, join buffer is not necessary\n";
     }
 }
 
@@ -466,22 +482,22 @@ sub check_temporary_tables {
     #   If the ratio of Created_tmp_disk_tables to Created_tmp_tables increases, this is bad
     #   To reduce temporary tables on disk, the tmp_table_size needs to be increased (and possibly max_heap_table_size)
     if ($mystat{'Created_tmp_tables'} == 0) {
-        print $info." No temporary tables have been created since the server started\n";
+        infoprint "No temporary tables have been created since the server started\n";
         return 0;
     }
     my $tmp_disk_pct = int(($mystat{'Created_tmp_disk_tables'} / $mystat{'Created_tmp_tables'}) * 100);
     if ($tmp_disk_pct > 25) {
-        print $bad." $tmp_disk_pct% of temp tables were created on disk\n";
-        print $bad." Increase tmp_table_size (which is limited by max_heap_table_size)\n";
+        badprint "$tmp_disk_pct% of temp tables were created on disk\n";
+        badprint "Increase tmp_table_size (which is limited by max_heap_table_size)\n";
     } else {
-        print $good." $tmp_disk_pct% of temp tables were created on disk - this is reasonable\n";
+        goodprint "$tmp_disk_pct% of temp tables were created on disk - this is reasonable\n";
     }
 }
 
 sub check_other_buffers {
     print "------ OTHER BUFFERS ------\n";
     #  bulk_insert_buffer_size = buffer for large inserts (default: 8M)
-    print $info." Your bulk_insert_buffer_size is ".hr_bytes_rnd($myvar{'bulk_insert_buffer_size'}).
+    infoprint "Your bulk_insert_buffer_size is ".hr_bytes_rnd($myvar{'bulk_insert_buffer_size'}).
         " - increase this for large bulk inserts\n";
 }
 
@@ -490,16 +506,16 @@ sub performance_options {
     # concurrent_insert = enables simultaneous insert/select on MyISAM tables w/o holes
     # It's ON/OFF in MySQL 4.1 and 0/1 in MySQL 5.x
     if ($myvar{'concurrent_insert'} eq "ON" || $myvar{'concurrent_insert'} > 0) {
-        print $good." Concurrent inserts/selects in MyISAM tables are enabled\n";
+        goodprint "Concurrent inserts/selects in MyISAM tables are enabled\n";
     } else {
-        print $bad." Concurrent inserts/selects in MyISAM tables are disabled - enable concurrent_insert\n";
+        badprint "Concurrent inserts/selects in MyISAM tables are disabled - enable concurrent_insert\n";
     }
 }
 
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-print $info." MySQL High-Performance Tuner - Major Hayden <major.hayden\@rackspace.com>\n";
+infoprint "MySQL High-Performance Tuner - Major Hayden <major.hayden\@rackspace.com>\n";
 mysql_install_ok;               # Check to see if MySQL is installed
 os_setup;                       # Set up some OS variables
 setup_mysql_login;              # Gotta login first
