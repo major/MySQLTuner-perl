@@ -4,15 +4,6 @@ use warnings;
 use diagnostics;
 
 # CONFIGURATION ITEMS
-# Quick color reference
-#Black       0;30     Dark Gray     1;30
-#Blue        0;34     Light Blue    1;34
-#Green       0;32     Light Green   1;32
-#Cyan        0;36     Light Cyan    1;36
-#Red         0;31     Light Red     1;31
-#Purple      0;35     Light Purple  1;35
-#Brown       0;33     Yellow        1;33
-#Light Gray  0;37     White         1;37
 my $revision = "1";
 my $good = "[\e[00;32mOK\e[00m]";
 my $bad = "[\e[00;31m!!\e[00m]";
@@ -34,6 +25,15 @@ sub os_setup {
         $swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
     }
     chomp($physical_memory);
+}
+
+sub mysql_install_ok {
+    my $command = `which mysqladmin`;
+    chomp($command);
+    if (! -e $command) {
+        print $bad." Unable to find mysqladmin in your \$PATH.  Is MySQL installed?\n";
+        exit;
+    }
 }
 
 my $mysqllogin;
@@ -501,6 +501,7 @@ sub performance_options {
 # ---------------------------------------------------------------------------
 print "------------------------------------------------------------------------------\n".
     $info." MySQL High-Performance Tuner - Major Hayden <major.hayden\@rackspace.com>\n";
+mysql_install_ok;               # Check to see if MySQL is installed
 os_setup;                       # Set up some OS variables
 setup_mysql_login;              # Gotta login first
 get_all_vars;                   # Toss variables/status into hashes
