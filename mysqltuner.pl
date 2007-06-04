@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use diagnostics;
 use Getopt::Long;
+use Text::Wrap;
+$Text::Wrap::columns = 72;
 
 # Set defaults
 my %opt = (
@@ -10,6 +12,7 @@ my %opt = (
         "nogood" => 0,
         "noinfo" => 0,
         "notitle" => 0,
+        "noexplain" => 0,
     );
 
 # Gather the options from the command line
@@ -18,6 +21,7 @@ GetOptions(\%opt,
         'nogood',
         'noinfo',
         'notitle',
+        'noexplain',
         'help',
     );
 
@@ -37,6 +41,7 @@ sub usage {
         "       --nobad         Remove negative/suggestion responses\n".
         "       --noinfo        Remove informational responses\n".
         "       --notitle       Remove section title headers\n".
+        "       --noexplain     Remove verbose explanations\n".
         "\n";
     exit;
 }
@@ -69,6 +74,13 @@ sub titleprint {
     if ($opt{notitle} == 1) { return 0; }
     my $text = shift;
     print $text;
+}
+
+my $exptext;
+sub explainprint {
+    if ($opt{noexplain} == 1) { return 0; }
+    my $text = shift;
+    print "\n".wrap("","",$text)."\n\n";
 }
 
 my ($physical_memory,$swap_memory,$duflags);
@@ -305,11 +317,19 @@ sub check_memory {
     if ($pct_physical_memory > 85) {
         badprint "DANGER - MySQL is configured to use $pct_physical_memory% (".hr_bytes($total_memory).
             ") of physical memory (".hr_bytes($physical_memory).")\n";
+        $exptext = "Your current memory settings are dangerous as they exceed the maximum amount of memory on your ".
+            "server if it was running at full capacity.  By reducing your current memory usage, you will decrease the ".
+            "chances of out of memory errors and general instability.";
     } else {
         goodprint "MySQL is configured to use $pct_physical_memory% (".hr_bytes($total_memory).
             ") of physical memory (".hr_bytes($physical_memory).")\n";
+        $exptext = "Your current memory settings are reasonable as they do not exceed the maximum amount of memory on ".
+            "your server.  If you find that this script suggests increasing buffers in later tests, you have additional memory ".
+            "available for the expansion of those buffers.";
     }
-    infoprint "This memory total above is when MySQL is at absolute full load\n";
+    explainprint "The above calculations show MySQL's memory usage at full capacity.  ".
+        "This means that all connections are at their maximum with all buffers being fully used.  ".$exptext;
+    
 }
 
 sub check_slow_queries {
