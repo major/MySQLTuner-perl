@@ -45,7 +45,7 @@ sub usage {
         "       --nobad         Remove negative/suggestion responses\n".
         "       --noinfo        Remove informational responses\n".
         "       --notitle       Remove section title headers\n".
-        "       --withexplain     Add verbose explanations\n".
+        "       --withexplain   Add verbose explanations\n".
         "       --explainonly   Provide only long text explanations, no bullets/titles\n".
         "       --nocolor       Don't print output in color\n".
         "\n";
@@ -69,6 +69,7 @@ if ($opt{explainonly} == 1) {
     $opt{noinfo} = 1;
     $opt{nobad} = 1;
     $opt{notitle} = 1;
+    $opt{withexplain} = 1;
 }
 
 sub goodprint {
