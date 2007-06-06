@@ -13,6 +13,7 @@ my %opt = (
         "noinfo" => 0,
         "notitle" => 0,
         "noexplain" => 0,
+        "explainonly" => 0,
     );
 
 # Gather the options from the command line
@@ -22,6 +23,7 @@ GetOptions(\%opt,
         'noinfo',
         'notitle',
         'noexplain',
+        'explainonly',
         'help',
     );
 
@@ -42,6 +44,7 @@ sub usage {
         "       --noinfo        Remove informational responses\n".
         "       --notitle       Remove section title headers\n".
         "       --noexplain     Remove verbose explanations\n".
+        "       --explainonly   Provide only long text explanations, no bullets/titles\n".
         "\n";
     exit;
 }
@@ -51,6 +54,13 @@ my $revision = "1";
 my $good = "[\e[00;32mOK\e[00m]";
 my $bad = "[\e[00;31m!!\e[00m]";
 my $info = "[\e[00;34m--\e[00m]";
+
+if ($opt{explainonly} == 1) {
+    $opt{nogood} = 1;
+    $opt{noinfo} = 1;
+    $opt{nobad} = 1;
+    $opt{notitle} = 1;
+}
 
 sub goodprint {
     if ($opt{nogood} == 1) { return 0; }
@@ -80,7 +90,11 @@ my $exptext;
 sub explainprint {
     if ($opt{noexplain} == 1) { return 0; }
     my $text = shift;
-    print "\n".wrap("","",$text)."\n\n";
+    if ($opt{explainonly} == 0) {
+        print "\n".wrap("","",$text)."\n\n";
+    } else {
+        print "\n".wrap("","",$text)."\n";
+    }
 }
 
 my ($physical_memory,$swap_memory,$duflags);
@@ -327,7 +341,7 @@ sub check_memory {
             "your server.  If you find that this script suggests increasing buffers in later tests, you have additional memory ".
             "available for the expansion of those buffers.";
     }
-    explainprint "The above calculations show MySQL's memory usage at full capacity.  ".
+    explainprint "This script's calculations show MySQL's memory usage at full capacity.  ".
         "This means that all connections are at their maximum with all buffers being fully used.  ".$exptext;
     
 }
@@ -349,16 +363,25 @@ sub check_slow_queries {
     if ($myvar{'log_slow_queries'} =~ /ON/) {
         if ($myvar{'long_query_time'} <= 10) {
             goodprint "Slow query log is enabled, and long_query_time is reasonable ($myvar{'long_query_time'} sec)\n";
+            $exptext = "Your slow query settings are already at an optimal level.";
         } else {
             print $bad. " Slow query log is enabled, but long_query_time is too long ($myvar{'long_query_time'} sec)\n";
+            $exptext = "Although your slow query log is enabled, a query must exceed $myvar{'long_query_time'} seconds ".
+                "to appear in the log which is much too long.  Reduce the long_query_time to 10 or less to make your ".
+                "slow query log more effective.";
         }
     } else {
         if ($myvar{'long_query_time'} <= 10) {
             badprint "Slow query log is disabled, but long_query_time is reasonable ($myvar{'long_query_time'} sec)\n";
+            $exptext = "While your long_query_time is set to a value less than 10, your slow query log is currently ".
+                "disabled. This will prevent you from auditing your slow queries.";
         } else {
             badprint "Slow query log is disabled, and long_query_time is too long ($myvar{'long_query_time'} sec)\n";
+            $exptext = "To audit your server's slow queries, you should enable the slow query log and reduce your ".
+                "long_query_time to 10 seconds or less.";
         }
     }
+    explainprint "The slow query log will allow you to see which queries are taking too long to execute.  ".$exptext;
 }
 
 sub check_connections {
