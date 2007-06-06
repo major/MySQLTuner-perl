@@ -12,8 +12,9 @@ my %opt = (
         "nogood" => 0,
         "noinfo" => 0,
         "notitle" => 0,
-        "noexplain" => 0,
+        "withexplain" => 0,
         "explainonly" => 0,
+        "nocolor" => 0,
     );
 
 # Gather the options from the command line
@@ -22,8 +23,9 @@ GetOptions(\%opt,
         'nogood',
         'noinfo',
         'notitle',
-        'noexplain',
+        'withexplain',
         'explainonly',
+        'nocolor',
         'help',
     );
 
@@ -43,17 +45,24 @@ sub usage {
         "       --nobad         Remove negative/suggestion responses\n".
         "       --noinfo        Remove informational responses\n".
         "       --notitle       Remove section title headers\n".
-        "       --noexplain     Remove verbose explanations\n".
+        "       --withexplain     Add verbose explanations\n".
         "       --explainonly   Provide only long text explanations, no bullets/titles\n".
+        "       --nocolor       Don't print output in color\n".
         "\n";
     exit;
 }
 
 # CONFIGURATION ITEMS
-my $revision = "1";
-my $good = "[\e[00;32mOK\e[00m]";
-my $bad = "[\e[00;31m!!\e[00m]";
-my $info = "[\e[00;34m--\e[00m]";
+my ($good,$bad,$info);
+if ($opt{nocolor} == 0) {
+    $good = "[\e[00;32mOK\e[00m]";
+    $bad = "[\e[00;31m!!\e[00m]";
+    $info = "[\e[00;34m--\e[00m]";
+} else {
+    $good = "[OK]";
+    $bad = "[!!]";
+    $info = "[--]";
+}
 
 if ($opt{explainonly} == 1) {
     $opt{nogood} = 1;
@@ -88,7 +97,7 @@ sub titleprint {
 
 my $exptext;
 sub explainprint {
-    if ($opt{noexplain} == 1) { return 0; }
+    if ($opt{withexplain} == 0) { return 0; }
     my $text = shift;
     if ($opt{explainonly} == 0) {
         print "\n".wrap("","",$text)."\n\n";
@@ -615,7 +624,8 @@ sub performance_options {
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 print   "     MySQL High-Performance Tuner - Major Hayden <major.hayden\@rackspace.com>\n".
-        "     Bug reports, feature requests, downloads at mysqltuner.com\n";
+        "     Bug reports, feature requests, downloads at mysqltuner.com\n".
+        "     Run with '--help' for additional options and output filtering\n";
 mysql_install_ok;               # Check to see if MySQL is installed
 os_setup;                       # Set up some OS variables
 setup_mysql_login;              # Gotta login first
