@@ -280,6 +280,9 @@ sub mysql_initial_stats {
     infoprint "Up for: ".pretty_uptime($mystat{'Uptime'})." (".hr_num($mystat{'Questions'}).
         " q [".hr_num($qps)." qps], ".hr_num($mystat{'Connections'})." conn,".
         " TX: ".hr_num($mystat{'Bytes_sent'}).", RX: ".hr_num($mystat{'Bytes_received'}).")\n";
+    if ($mystat{'Uptime'} < 86400) {
+        badprint "MySQL has been recently restarted - results cannot be trusted\n";
+    }
 }
 
 sub check_memory {
@@ -334,7 +337,7 @@ sub check_memory {
     
     infoprint "Per-thread buffers are ".hr_bytes_rnd($thread_buffers).", total ".hr_bytes_rnd($total_thread_buffers).
         " ($myvar{'max_connections'} connections)\n";
-    infoprint "Max allocated is ".hr_bytes_rnd($max_memory)." (".hr_bytes_rnd($thread_buffers).
+    infoprint "Max ever allocated is ".hr_bytes_rnd($max_memory)." (".hr_bytes_rnd($thread_buffers).
         " per-thread * $mystat{'Max_used_connections'} connections + ".hr_bytes_rnd($global_buffers)." global)\n";
     if ($pct_physical_memory > 85) {
         badprint "DANGER - MySQL is configured to use $pct_physical_memory% (".hr_bytes($total_memory).
@@ -466,7 +469,9 @@ sub check_key_buffer {
     } else {
         $raise_key_buffer = -1;     # Key buffer is too big - lower it
     }
-    if ($key_from_mem_pct < 95 && $key_from_mem_pct >= 80) {
+    if ($key_from_mem_pct >= 95) {
+        $raise_key_buffer = 0;      # Key buffer is being utilized well, no need to change a thing
+    } elsif ($key_from_mem_pct < 95 && $key_from_mem_pct >= 80) {
         $raise_key_buffer += 1;     # Key buffer is probably set to the default, should be raised
     } elsif ($key_from_mem_pct < 80) {
         $raise_key_buffer += 2;     # This is really, really bad - raise the buffer!
@@ -484,6 +489,9 @@ sub check_key_buffer {
         goodprint "Your key_buffer_size is set to a reasonable level\n";
     } else {
         badprint "Lower the key_buffer_size to use the resources elsewhere\n";
+    }
+    if ($myvar{'max_seeks_for_key'} > 100) {
+        badprint "Reduce max_seeks_for_key to force MySQL to prefer indexes over table scans\n";
     }
 }
 
