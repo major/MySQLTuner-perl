@@ -136,12 +136,12 @@ sub mysql_install_ok {
 
 my $mysqllogin;
 sub setup_mysql_login {
-    if ( -f "/etc/psa/.psa.shadow" ) {
+    if ( -r "/etc/psa/.psa.shadow" ) {
         # It's a Plesk box, use the available credentials
         $mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
         my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
         if ($loginstatus =~ /mysqld is alive/) {
-            goodprint "Successfully logged into MySQL using Plesk's credentials.\n";
+            # Login was successful, but we won't say anything to save space
             return 1;
         } else {
             badprint "Attempted to use login credentials from Plesk, but they failed.\n";
@@ -159,7 +159,6 @@ sub setup_mysql_login {
             if ( -e "$userpath/.my.cnf" ) {
                 # Login was successful, but we won't say anything to save space
             } else {
-                #badprint "Successfully authenticated with no password - SECURITY RISK!\n";
                 badprint "Successfully authenticated with no password - SECURITY RISK!\n";
             }
             return 1;
@@ -175,7 +174,8 @@ sub setup_mysql_login {
             $mysqllogin = "-u $name -p'$password'";
             my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
             if ($loginstatus =~ /mysqld is alive/) {
-                print "\n".$good." Successfully logged into MySQL using provided credentials.\n";
+                # Login was successful, but we won't say anything to save space
+                print "\n";
                 return 1;
             } else {
                 print "\n".$bad." Attempted to use login credentials, but they were invalid.\n";
@@ -288,8 +288,6 @@ sub check_memory {
     # by having buffers that are set too large
     #
     # PER-THREAD BUFFERS:
-    #   binlog_cache_size - only if log_bin is 'ON' (default 32K)
-    my $binlog_cache_size = ($myvar{'log_bin'} =~ /ON/) ? $myvar{'binlog_cache_size'} : 0 ;
     #   join_buffer_size - helps joins that don't use indexes (default 128M)
     my $join_buffer_size = $myvar{'join_buffer_size'};
     #   read_buffer_size - for sequential scans (default 128K)
@@ -302,7 +300,7 @@ sub check_memory {
     my $thread_stack = $myvar{'thread_stack'};
     #
     # PER-THREAD BUFFER CALCULATIONS:
-    my $thread_buffers = $read_buffer_size + $read_rnd_buffer_size + $sort_buffer_size + $thread_stack + $join_buffer_size + $binlog_cache_size;
+    my $thread_buffers = $read_buffer_size + $read_rnd_buffer_size + $sort_buffer_size + $thread_stack + $join_buffer_size;
     my $total_thread_buffers = $thread_buffers * $myvar{'max_connections'};
     my $max_thread_buffers = $thread_buffers * $mystat{'Max_used_connections'};
     #
@@ -348,7 +346,7 @@ sub check_memory {
         goodprint "MySQL is configured to use $pct_physical_memory% (".hr_bytes($total_memory).
             ") of physical memory (".hr_bytes($physical_memory).")\n";
         $exptext = "Your current memory settings are reasonable as they do not exceed the maximum amount of memory on ".
-            "your server.  If you find that this script suggests increasing buffers in later tests, you have additional memory ".
+            "your server.  If you find that this script suggests increasing buffers in later tests, you may not have additional memory ".
             "available for the expansion of those buffers.";
     }
     explainprint "This script's calculations show MySQL's memory usage at full capacity.  ".
@@ -407,13 +405,17 @@ sub check_connections {
         badprint "$connpct% of connections have been used ".
             "(".$mystat{'Max_used_connections'}."/".$myvar{'max_connections'}.")".
             " - Increase the max_connections variable\n";
+            $exptext = "Your historical connection usage is too high relative to your set maximum.  The max_connections variable should be increased.";
     } elsif ($connpct < 10) {
         badprint "$connpct% of connections have been used ".
             "(".$mystat{'Max_used_connections'}."/".$myvar{'max_connections'}.")".
             " - Reduce max_connections\n";
+            $exptext = "Your historical connection usage is voo low relative to your set maximum.  MySQL is wasting resources by allowing".
+                " so many concurrent connections.";
     } else {
         goodprint "$connpct% of connections have been used ".
             "(".$mystat{'Max_used_connections'}."/".$myvar{'max_connections'}.")\n";
+            $exptext = "These settings are appropriate for your historical usage.";
     }
     # If the back_log is less than 50, there's a chance that connections will be forcefully rejected
     if ($myvar{'back_log'} < 50) {
@@ -421,6 +423,8 @@ sub check_connections {
     } else {
         goodprint "Your listen queue back_log is set to a reasonable level (".$myvar{'back_log'}.")\n";
     }
+    explainprint "You can currently handle ".($myvar{'max_connections'}+$myvar{'back_log'})." total connections, which includes ".
+        $myvar{'max_connections'}." active connections with ".$myvar{'back_log'}." more in queue. ".$exptext;
 }
 
 sub check_key_buffer {
