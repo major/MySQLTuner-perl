@@ -284,8 +284,10 @@ sub calculations {
     # Query cache
     if ($mysqlvermajor > 3) {
         $mycalc{'query_cache_efficiency'} = sprintf("%.1f",($mystat{'Qcache_hits'} / ($mystat{'Com_select'} + $mystat{'Qcache_hits'})) * 100);
-        $mycalc{'pct_query_cache_used'} = sprintf("%.1f",100 - ($mystat{'Qcache_free_memory'} / $myvar{'query_cache_size'}) * 100);
-        if ($mystat{'Qcache_lowmem_prunes'} == 0) {
+        if ($myvar{'query_cache_size'}) {
+		$mycalc{'pct_query_cache_used'} = sprintf("%.1f",100 - ($mystat{'Qcache_free_memory'} / $myvar{'query_cache_size'}) * 100);
+        }
+	if ($mystat{'Qcache_lowmem_prunes'} == 0) {
             $mycalc{'query_cache_prunes_per_day'} = 0;
         } else {
             $mycalc{'query_cache_prunes_per_day'} = int($mystat{'Qcache_lowmem_prunes'} / ($mystat{'Uptime'}/86400));
