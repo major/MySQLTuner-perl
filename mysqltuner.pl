@@ -505,12 +505,10 @@ sub mysql_stats {
     # Performance options
     if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
         push(@generalrec,"Upgrade to MySQL 4.1+ to use concurrent MyISAM inserts");
-    } elsif ($myvar{'concurrent_insert'} eq "OFF" || $myvar{'concurrent_insert'} < 1) {
-        if ($mysqlvermajor == 4) {
-            push(@generalrec,"Enable concurrent_insert by setting it to 'ON'");
-        } else {
-            push(@generalrec,"Enable concurrent_insert by setting it to 1");
-        }
+    } elsif ($myvar{'concurrent_insert'} eq "OFF") {
+        push(@generalrec,"Enable concurrent_insert by setting it to 'ON'");
+    } elsif ($myvar{'concurrent_insert'} eq 0) {
+        push(@generalrec,"Enable concurrent_insert by setting it to 1");
     }
 }
 
