@@ -1,4 +1,26 @@
 #!/usr/bin/perl -w
+# mysqltuner.pl - High Performance MySQL Tuning Script
+# Copyright (C) 2006-2007 Major Hayden - major@mhtx.net
+#
+# Inspired by Matthew Montgomery's tuning-primer.sh script:
+# http://forge.mysql.com/projects/view.php?id=44
+#
+# Other Contributors:
+#	Paul Kehrer
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 use strict;
 use warnings;
 use diagnostics;
@@ -303,6 +325,7 @@ sub calculations {
     
     # Joins
     $mycalc{'joins_without_indexes'} = $mystat{'Select_range_check'} + $mystat{'Select_full_join'};
+	$mycalc{'joins_without_indexes_per_day'} = int($mycalc{'joins_without_indexes'} / ($mystat{'Uptime'}/86400));
     
     # Temporary tables
     if ($mystat{'Created_tmp_tables'} > 0) {
@@ -336,8 +359,22 @@ sub calculations {
     
     # Thread cache
     $mycalc{'thread_cache_hit_rate'} = int(100 - (($mystat{'Threads_created'} / $mystat{'Connections'}) * 100));
-    
-    #foreach my $key (sort keys %mycalc) { print "$key\t\t-> \t".$mycalc{$key}."\n"; }
+
+	# Other
+	if ($mystat{'Connections'} > 0) {
+		$mycalc{'pct_aborted_connections'} = int(($mystat{'Aborted_connects'}/$mystat{'Connections'}) * 100);
+	}
+	if ($mystat{'Questions'} > 0) {
+		$mycalc{'total_reads'} = $mystat{'Com_select'};
+		$mycalc{'total_writes'} = $mystat{'Com_delete'} + $mystat{'Com_insert'} + $mystat{'Com_update'} + $mystat{'Com_replace'};
+		if ($mycalc{'total_reads'} == 0) {
+			$mycalc{'pct_reads'} = 0;
+			$mycalc{'pct_writes'} = 100;
+		} else {
+			$mycalc{'pct_reads'} = int(($mycalc{'total_reads'}/($mycalc{'total_reads'}+$mycalc{'total_writes'})) * 100);
+			$mycalc{'pct_writes'} = 100-$mycalc{'pct_reads'};
+		}
+	}
 }
 
 my (@decvars, @incvars, @generalrec);
@@ -351,7 +388,8 @@ sub mysql_stats {
     infoprint "Up for: ".pretty_uptime($mystat{'Uptime'})." (".hr_num($mystat{'Questions'}).
         " q [".hr_num($qps)." qps], ".hr_num($mystat{'Connections'})." conn,".
         " TX: ".hr_num($mystat{'Bytes_sent'}).", RX: ".hr_num($mystat{'Bytes_received'}).")\n";
-    
+    infoprint "Reads / Writes: ".$mycalc{'pct_reads'}."% / ".$mycalc{'pct_writes'}."%\n";
+
     # Memory usage
     if ($mycalc{'pct_physical_memory'} > 85) {
         badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
@@ -366,7 +404,8 @@ sub mysql_stats {
     } else {
         goodprint "Slow queries: $mycalc{'pct_slow_queries'}%\n";
     }
-    if ($myvar{'long_query_time'} > 5) { push(@decvars,"long_query_time (<= 5)"); }
+    if ($myvar{'long_query_time'} > 10) { push(@decvars,"long_query_time (<= 10)"); }
+	if ($myvar{'log_slow_queries'} eq "OFF") { push(@generalrec,"Enable the slow query log to troubleshoot bad queries"); }
     
     # Connections
     if ($mycalc{'pct_connections_used'} > 85) {
@@ -401,7 +440,7 @@ sub mysql_stats {
             # No queries have run that would use keys
         }
     }
-    if ($mysqlvermajor > 3 && $myvar{'max_seeks_for_key'} > 100) { push(@decvars,"max_seeks_for_key (<= 100)"); }
+    if ($mysqlvermajor > 3 && $myvar{'max_seeks_for_key'} > 1000) { push(@decvars,"max_seeks_for_key (<= 1000)"); }
     
     # Query cache
     if ($mysqlvermajor < 4) { 
@@ -441,7 +480,7 @@ sub mysql_stats {
     }
     
     # Joins
-    if ($mycalc{'joins_without_indexes'} > 0) {
+    if ($mycalc{'joins_without_indexes_per_day'} > 250) {
         badprint "Joins performed without indexes: $mycalc{'joins_without_indexes'}\n";
         push(@incvars,"join_buffer_size (> ".hr_bytes($myvar{'join_buffer_size'}).", or always use indexes with joins)");
         push(@generalrec,"Adjust your join queries to always utilize indexes");
@@ -457,6 +496,7 @@ sub mysql_stats {
             push(@incvars,"tmp_table_size (> ".hr_bytes_rnd($myvar{'tmp_table_size'}).")");
             push(@incvars,"max_heap_table_size (> ".hr_bytes_rnd($myvar{'max_heap_table_size'}).")");
             push(@generalrec,"Be sure that tmp_table_size/max_heap_table_size are equal");
+            push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
         } else {
             goodprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
         }
@@ -511,6 +551,10 @@ sub mysql_stats {
     } elsif ($myvar{'concurrent_insert'} eq 0) {
         push(@generalrec,"Enable concurrent_insert by setting it to 1");
     }
+	if ($mycalc{'pct_aborted_connections'} > 0) {
+		badprint "Connections aborted: ".$mycalc{'pct_aborted_connections'}."\n";
+		push(@generalrec,"Your applications are not closing MySQL connections properly");
+	}
 }
 
 sub make_recommendations {
