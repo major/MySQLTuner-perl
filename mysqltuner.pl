@@ -405,7 +405,9 @@ sub mysql_stats {
         goodprint "Slow queries: $mycalc{'pct_slow_queries'}%\n";
     }
     if ($myvar{'long_query_time'} > 10) { push(@decvars,"long_query_time (<= 10)"); }
-	if ($myvar{'log_slow_queries'} eq "OFF") { push(@generalrec,"Enable the slow query log to troubleshoot bad queries"); }
+    if (defined($myvar{'log_slow_queries'})) {
+	    if ($myvar{'log_slow_queries'} eq "OFF") { push(@generalrec,"Enable the slow query log to troubleshoot bad queries"); }
+    }
     
     # Connections
     if ($mycalc{'pct_connections_used'} > 85) {
