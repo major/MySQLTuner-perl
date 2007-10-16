@@ -68,7 +68,7 @@ my ($good,$bad,$info);
 if ($opt{nocolor} == 0) {
     $good = "[\e[00;32mOK\e[00m]";
     $bad = "[\e[00;31m!!\e[00m]";
-    $info = "[\e[00;34m--\e[00m]";
+    $info = "[\e[00;34m**\e[00m]";
 } else {
     $good = "[OK]";
     $bad = "[!!]";
@@ -391,6 +391,8 @@ sub mysql_stats {
     infoprint "Reads / Writes: ".$mycalc{'pct_reads'}."% / ".$mycalc{'pct_writes'}."%\n";
 
     # Memory usage
+    infoprint "Total buffers per thread: ".hr_bytes($mycalc{'per_thread_buffers'})."\n";
+    infoprint "Total global buffers: ".hr_bytes($mycalc{'server_buffers'})."\n";
     if ($mycalc{'pct_physical_memory'} > 85) {
         badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
         push(@generalrec,"Reduce your overall MySQL memory footprint for system stability");
@@ -425,7 +427,7 @@ sub mysql_stats {
     } elsif ($mycalc{'total_myisam_indexes'} == "0") {
         badprint "None of your MyISAM tables are indexed - add indexes immediately\n";
     } else {
-        if ($myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}) {
+        if ($myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'} && $mycalc{'pct_keys_from_mem'} < 95) {
             badprint "Key buffer size / total MyISAM indexes: ".hr_bytes($myvar{'key_buffer_size'})."/".hr_bytes($mycalc{'total_myisam_indexes'})."\n";
             push(@incvars,"key_buffer_size (> ".hr_bytes($mycalc{'total_myisam_indexes'}).")");
         } else {
@@ -442,7 +444,6 @@ sub mysql_stats {
             # No queries have run that would use keys
         }
     }
-    if ($mysqlvermajor > 3 && $myvar{'max_seeks_for_key'} > 1000) { push(@decvars,"max_seeks_for_key (<= 1000)"); }
     
     # Query cache
     if ($mysqlvermajor < 4) { 
@@ -493,11 +494,15 @@ sub mysql_stats {
     
     # Temporary tables
     if ($mystat{'Created_tmp_tables'} > 0) {
-        if ($mycalc{'pct_temp_disk'} > 25) {
+        if ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} < 256) {
             badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
             push(@incvars,"tmp_table_size (> ".hr_bytes_rnd($myvar{'tmp_table_size'}).")");
             push(@incvars,"max_heap_table_size (> ".hr_bytes_rnd($myvar{'max_heap_table_size'}).")");
             push(@generalrec,"Be sure that tmp_table_size/max_heap_table_size are equal");
+            push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
+        } elsif ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} >= 256) {
+            badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
+            push(@generalrec,"Temporary table size is already large - reduce result set size");
             push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
         } else {
             goodprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
@@ -553,8 +558,8 @@ sub mysql_stats {
     } elsif ($myvar{'concurrent_insert'} eq 0) {
         push(@generalrec,"Enable concurrent_insert by setting it to 1");
     }
-	if ($mycalc{'pct_aborted_connections'} > 0) {
-		badprint "Connections aborted: ".$mycalc{'pct_aborted_connections'}."\n";
+	if ($mycalc{'pct_aborted_connections'} > 5) {
+		badprint "Connections aborted: ".$mycalc{'pct_aborted_connections'}."%\n";
 		push(@generalrec,"Your applications are not closing MySQL connections properly");
 	}
 }
