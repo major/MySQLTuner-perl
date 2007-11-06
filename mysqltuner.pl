@@ -7,6 +7,7 @@
 #
 # Other Contributors:
 #	Paul Kehrer
+#   Dave Burgess
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -104,6 +105,9 @@ sub os_setup {
     } elsif ($os =~ /Darwin/) {
         $physical_memory = `sysctl -n hw.memsize`;
         $swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'`;
+    } elsif ($os =~ /NetBSD/) {
+        $physical_memory = `sysctl -n hw.physmem`;
+        $swap_memory = `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
     } elsif ($os =~ /BSD/) {
         $physical_memory = `sysctl -n hw.realmem`;
         $swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
@@ -146,19 +150,19 @@ sub mysql_setup {
             }
             return 1;
         } else {
-            print "Please enter your MySQL login: ";
+            print STDERR "Please enter your MySQL login: ";
             my $name = <>;
-            print "Please enter your MySQL password: ";
-            system("stty -echo"); #don't show the password
+            print STDERR "Please enter your MySQL password: ";
+            system("stty -echo");
             my $password = <>;
-            system("stty echo"); #plz give echo back
+            system("stty echo");
             chomp($password);
             chomp($name);
             $mysqllogin = "-u $name -p'$password'";
             my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
             if ($loginstatus =~ /mysqld is alive/) {
                 # Login was successful, but we won't say anything to save space
-                print "\n";
+                print STDERR "\n";
                 return 1;
             } else {
                 print "\n".$bad." Attempted to use login credentials, but they were invalid.\n";
