@@ -181,6 +181,7 @@ sub mysql_setup {
 
 my (%mystat,%myvar,$dummyselect);
 sub get_all_vars {
+    # We need to initiate at least one query so that our data is useable
     $dummyselect = `mysql $mysqllogin -Bse "SELECT VERSION();"`;
     my @mysqlvarlist = `mysql $mysqllogin -Bse "SHOW /*!50000 GLOBAL */ VARIABLES;"`;
     foreach my $line (@mysqlvarlist) {
@@ -203,6 +204,21 @@ sub validate_mysql_version {
         badprint "Currently running supported MySQL version ".$myvar{'version'}." (BETA - USE CAUTION)\n";
     } else {
         goodprint "Currently running supported MySQL version ".$myvar{'version'}."\n";
+    }
+}
+
+my ($arch);
+sub check_architecture {
+    if (`uname -m` =~ /64/) {
+        $arch = 64;
+        goodprint "Operating on 64-bit architecture\n";
+    } else {
+        $arch = 32;
+        if ($physical_memory > 2*1024*1024*1024) {
+            badprint "Switch to 64-bit OS - MySQL cannot currenty use all of your RAM\n";
+        } else {
+            goodprint "Operating on 32-bit architecture with less than 2GB RAM\n";
+        }
     }
 }
 
@@ -381,9 +397,15 @@ sub calculations {
 			$mycalc{'pct_writes'} = 100-$mycalc{'pct_reads'};
 		}
 	}
+
+    # InnoDB
+    if ($myvar{'have_innodb'} eq "YES") {
+        $mycalc{'innodb_log_size_pct'} = ($myvar{'innodb_log_file_size'} * 100 / $myvar{'innodb_buffer_pool_size'});
+    }
+
 }
 
-my (@decvars, @incvars, @generalrec);
+my (@adjvars, @generalrec);
 sub mysql_stats {
     print "-------- General Statistics --------------------------------------------------\n";
 
@@ -399,7 +421,10 @@ sub mysql_stats {
     # Memory usage
     infoprint "Total buffers per thread: ".hr_bytes($mycalc{'per_thread_buffers'})."\n";
     infoprint "Total global buffers: ".hr_bytes($mycalc{'server_buffers'})."\n";
-    if ($mycalc{'pct_physical_memory'} > 85) {
+    if ($mycalc{'total_possible_used_memory'} > 2*1024*1024*1024 && $arch eq 32) {
+        badprint "Allocating > 2GB RAM on 32-bit systems can cause system instability\n";
+        badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+    } elsif ($mycalc{'pct_physical_memory'} > 85) {
         badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
         push(@generalrec,"Reduce your overall MySQL memory footprint for system stability");
     } else {
@@ -412,7 +437,7 @@ sub mysql_stats {
     } else {
         goodprint "Slow queries: $mycalc{'pct_slow_queries'}%\n";
     }
-    if ($myvar{'long_query_time'} > 10) { push(@decvars,"long_query_time (<= 10)"); }
+    if ($myvar{'long_query_time'} > 10) { push(@adjvars,"long_query_time (<= 10)"); }
     if (defined($myvar{'log_slow_queries'})) {
 	    if ($myvar{'log_slow_queries'} eq "OFF") { push(@generalrec,"Enable the slow query log to troubleshoot bad queries"); }
     }
@@ -420,8 +445,8 @@ sub mysql_stats {
     # Connections
     if ($mycalc{'pct_connections_used'} > 85) {
         badprint "Highest connection usage: $mycalc{'pct_connections_used'}%\n";
-        push(@incvars,"max_connections (> ".$myvar{'max_connections'}.")");
-        push(@decvars,"wait_timeout (< ".$myvar{'wait_timeout'}.")","interactive_timeout (< ".$myvar{'interactive_timeout'}.")");
+        push(@adjvars,"max_connections (> ".$myvar{'max_connections'}.")");
+        push(@adjvars,"wait_timeout (< ".$myvar{'wait_timeout'}.")","interactive_timeout (< ".$myvar{'interactive_timeout'}.")");
         push(@generalrec,"Reduce or eliminate persistent connections to reduce connection usage")
     } else {
         goodprint "Highest usage of available connections: $mycalc{'pct_connections_used'}%\n";
@@ -435,7 +460,7 @@ sub mysql_stats {
     } else {
         if ($myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'} && $mycalc{'pct_keys_from_mem'} < 95) {
             badprint "Key buffer size / total MyISAM indexes: ".hr_bytes($myvar{'key_buffer_size'})."/".hr_bytes($mycalc{'total_myisam_indexes'})."\n";
-            push(@incvars,"key_buffer_size (> ".hr_bytes($mycalc{'total_myisam_indexes'}).")");
+            push(@adjvars,"key_buffer_size (> ".hr_bytes($mycalc{'total_myisam_indexes'}).")");
         } else {
             goodprint "Key buffer size / total MyISAM indexes: ".hr_bytes($myvar{'key_buffer_size'})."/".hr_bytes($mycalc{'total_myisam_indexes'})."\n";
         }
@@ -458,19 +483,19 @@ sub mysql_stats {
         push(@generalrec,"Upgrade MySQL to version 4+ to utilize query caching");
     } elsif ($myvar{'query_cache_size'} < 1) {
         badprint "Query cache is disabled\n";
-        push(@incvars,"query_cache_size (>= 8M)");
+        push(@adjvars,"query_cache_size (>= 8M)");
     } elsif ($mystat{'Com_select'} == 0) {
         badprint "Query cache cannot be analyzed - no SELECT statements executed\n";
     } else {
         if ($mycalc{'query_cache_efficiency'} < 20) {
             badprint "Query cache efficiency: $mycalc{'query_cache_efficiency'}%\n";
-            push(@incvars,"query_cache_limit (> 1M, or use smaller result sets)");
+            push(@adjvars,"query_cache_limit (> 1M, or use smaller result sets)");
         } else {
             goodprint "Query cache efficiency: $mycalc{'query_cache_efficiency'}%\n";
         }
         if ($mycalc{'query_cache_prunes_per_day'} > 98) {
             badprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
-            push(@incvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).")")
+            push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).")")
         } else {
             goodprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
         }
@@ -482,8 +507,8 @@ sub mysql_stats {
         # No sorts have run yet
     } elsif ($mycalc{'pct_temp_sort_table'} > 10) {
         badprint "Sorts requiring temporary tables: $mycalc{'pct_temp_sort_table'}%\n";
-        push(@incvars,"sort_buffer_size (> ".hr_bytes_rnd($myvar{'sort_buffer_size'}).")");
-        push(@incvars,"read_rnd_buffer_size (> ".hr_bytes_rnd($myvar{'read_rnd_buffer_size'}).")");
+        push(@adjvars,"sort_buffer_size (> ".hr_bytes_rnd($myvar{'sort_buffer_size'}).")");
+        push(@adjvars,"read_rnd_buffer_size (> ".hr_bytes_rnd($myvar{'read_rnd_buffer_size'}).")");
     } else {
         goodprint "Sorts requiring temporary tables: $mycalc{'pct_temp_sort_table'}%\n";
     }
@@ -491,7 +516,7 @@ sub mysql_stats {
     # Joins
     if ($mycalc{'joins_without_indexes_per_day'} > 250) {
         badprint "Joins performed without indexes: $mycalc{'joins_without_indexes'}\n";
-        push(@incvars,"join_buffer_size (> ".hr_bytes($myvar{'join_buffer_size'}).", or always use indexes with joins)");
+        push(@adjvars,"join_buffer_size (> ".hr_bytes($myvar{'join_buffer_size'}).", or always use indexes with joins)");
         push(@generalrec,"Adjust your join queries to always utilize indexes");
     } else {
         # For the sake of space, we will be quiet here
@@ -500,10 +525,10 @@ sub mysql_stats {
     
     # Temporary tables
     if ($mystat{'Created_tmp_tables'} > 0) {
-        if ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} < 256) {
+        if ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} < 256*1024*1024) {
             badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
-            push(@incvars,"tmp_table_size (> ".hr_bytes_rnd($myvar{'tmp_table_size'}).")");
-            push(@incvars,"max_heap_table_size (> ".hr_bytes_rnd($myvar{'max_heap_table_size'}).")");
+            push(@adjvars,"tmp_table_size (> ".hr_bytes_rnd($myvar{'tmp_table_size'}).")");
+            push(@adjvars,"max_heap_table_size (> ".hr_bytes_rnd($myvar{'max_heap_table_size'}).")");
             push(@generalrec,"Be sure that tmp_table_size/max_heap_table_size are equal");
             push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
         } elsif ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} >= 256) {
@@ -519,17 +544,24 @@ sub mysql_stats {
     }
 
     # Thread cache
-    if ($mycalc{'thread_cache_hit_rate'} <= 50) {
-        badprint "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}%\n";
+    if ($myvar{'thread_cache_size'} eq 0) {
+        badprint "Thread cache is disabled\n";
+        push(@generalrec,"Set thread_cache_size to 4 as a starting value");
+        push(@adjvars,"thread_cache_size (start at 4)");
     } else {
-        goodprint "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}%\n";
-    }
+        if ($mycalc{'thread_cache_hit_rate'} <= 50) {
+            badprint "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}%\n";
+            push(@adjvars,"thread_cache_size (> $myvar{'thread_cache_size'})");
+        } else {
+            goodprint "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}%\n";
+        }
+    }
 
     # Table cache
     if ($mystat{'Open_tables'} > 0) {
         if ($mycalc{'table_cache_hit_rate'} < 20) {
             badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}%\n";
-            push(@incvars,"table_cache (> ".$myvar{'table_cache'}.")");
+            push(@adjvars,"table_cache (> ".$myvar{'table_cache'}.")");
             push(@generalrec,"Increase table_cache gradually to avoid file descriptor limits");
         } else {
             goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}%\n";
@@ -540,7 +572,7 @@ sub mysql_stats {
     if ($myvar{'open_files_limit'} > 0) {
         if ($mycalc{'pct_files_open'} > 85) {
             badprint "Open file limit used: $mycalc{'pct_files_open'}%\n";
-            push(@incvars,"open_files_limit (> ".$myvar{'open_files_limit'}.")");
+            push(@adjvars,"open_files_limit (> ".$myvar{'open_files_limit'}.")");
         } else {
             goodprint "Open file limit used: $mycalc{'pct_files_open'}%\n";
         }
@@ -568,6 +600,18 @@ sub mysql_stats {
 		badprint "Connections aborted: ".$mycalc{'pct_aborted_connections'}."%\n";
 		push(@generalrec,"Your applications are not closing MySQL connections properly");
 	}
+
+    # InnoDB
+    if ($myvar{'have_innodb'} eq "YES") {
+        if ($mycalc{'innodb_log_size_pct'} > 20 && $mycalc{'innodb_log_size_pct'} < 30) {
+            goodprint "InnoDB log size is ".hr_bytes($myvar{'innodb_log_file_size'})." ($mycalc{'innodb_log_size_pct'}% of InnoDB buffer pool)\n";
+        } else {
+            badprint "InnoDB log size is ".hr_bytes($myvar{'innodb_log_file_size'})." ($mycalc{'innodb_log_size_pct'}% of InnoDB buffer pool)\n";
+    		push(@generalrec,"Set innodb_log_file_size to 25% of InnoDB buffer pool");
+    		push(@adjvars,"innodb_log_file_size (".hr_bytes($myvar{'innodb_buffer_pool_size'}*.25).", which is 25% of InnoDB buffer pool)");
+        }
+    }
+
 }
 
 sub make_recommendations {
@@ -576,17 +620,13 @@ sub make_recommendations {
         print "General recommendations:\n";
         foreach (@generalrec) { print "     ".$_."\n"; }
     }
-    if (@incvars > 0) {
-        print "Variables to increase:\n";
+    if (@adjvars > 0) {
+        print "Variables to adjust:\n";
         if ($mycalc{'pct_physical_memory'} > 85) {
             print "     *** MySQL's maximum memory usage exceeds your installed memory ***\n".
                   "     *** Add more RAM before increasing any MySQL buffer variables  ***\n";
         }
-        foreach (@incvars) { print "     ".$_."\n"; }
-    }
-    if (@decvars > 0) {
-        print "Variables to decrease:\n";
-        foreach (@decvars) { print "     ".$_."\n"; }
+        foreach (@adjvars) { print "     ".$_."\n"; }
     }
 }
 
@@ -600,6 +640,7 @@ os_setup;                           # Set up some OS variables
 mysql_setup;                        # Gotta login first
 get_all_vars;                       # Toss variables/status into hashes
 validate_mysql_version;             # Check current MySQL version
+check_architecture;                 # Suggest 64-bit upgrade
 calculations;                       # Calculate everything we need
 mysql_stats;                        # Print the server stats
 make_recommendations;               # Make recommendations based on stats
