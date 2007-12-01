@@ -1,13 +1,10 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - High Performance MySQL Tuning Script
+# mysqltuner.pl - Revision 20071201
+# High Performance MySQL Tuning Script
 # Copyright (C) 2006-2007 Major Hayden - major@mhtx.net
 #
-# Inspired by Matthew Montgomery's tuning-primer.sh script:
-# http://forge.mysql.com/projects/view.php?id=44
-#
-# Other Contributors:
-#	Paul Kehrer
-#   Dave Burgess
+# For the latest updates, please visit http://mysqltuner.com
+# Subversion repository available at http://tools.assembla.com/svn/mysqltuner/
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +18,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+#
+# This project would not be possible without help from:
+#   Matthew Montgomery
+#   Paul Kehrer
+#   Dave Burgess
+#   Jonathan Hinds
+#
+# Inspired by Matthew Montgomery's tuning-primer.sh script:
+# http://forge.mysql.com/projects/view.php?id=44
+#
 use strict;
 use warnings;
 use diagnostics;
@@ -50,7 +56,7 @@ sub usage {
     print "\n".
         "    MySQL High Performance Tuning Script\n".
         "    Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
-        "    Maintained by Major Hayden (major.hayden\@rackspace.com)\n\n".
+        "    Maintained by Major Hayden (major\@mhtx.net)\n\n".
         "    Important Usage Guidelines:\n".
         "       To run the script with the default options, run the script without arguments\n".
         "       Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n".
@@ -300,12 +306,8 @@ sub calculations {
     if ($mystat{'Key_read_requests'} > 0) {
         $mycalc{'pct_keys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_reads'} / $mystat{'Key_read_requests'}) * 100)));
     }
-    if ($mysqlvermajor < 5) {
-        $mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du $duflags '{}' 2>&1 | awk '{ s += \$1 } END { print s }'`;
-        if ($mycalc{'total_myisam_indexes'} =~ /^0\n$/) { $mycalc{'total_myisam_indexes'} = "fail"; }
-    } else {
-        $mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "/*!50000 SELECT SUM(INDEX_LENGTH) from information_schema.TABLES where ENGINE='MyISAM' */"`;
-    }
+    $mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du $duflags '{}' 2>&1 | awk '{ s += \$1 } END { print s }'`;
+    if ($mycalc{'total_myisam_indexes'} =~ /^0\n$/) { $mycalc{'total_myisam_indexes'} = "fail"; }
     chomp($mycalc{'total_myisam_indexes'});
     
     # Query cache
@@ -591,8 +593,8 @@ sub make_recommendations {
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-print   "     MySQL High-Performance Tuner - Major Hayden <major.hayden\@rackspace.com>\n".
-        "     Bug reports, feature requests, and downloads at mysqltuner.com\n".
+print   "     MySQL High-Performance Tuning Script - Major Hayden <major\@mhtx.net>\n".
+        "     Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
         "     Run with '--help' for additional options and output filtering\n";
 os_setup;                           # Set up some OS variables
 mysql_setup;                        # Gotta login first
