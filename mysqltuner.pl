@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 20080113
+# mysqltuner.pl - Version 20080114
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -24,7 +24,7 @@
 #   Paul Kehrer
 #   Dave Burgess
 #   Jonathan Hinds
-#	Mike Jackson
+#   Mike Jackson
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
