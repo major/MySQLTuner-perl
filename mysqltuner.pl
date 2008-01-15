@@ -24,6 +24,7 @@
 #   Paul Kehrer
 #   Dave Burgess
 #   Jonathan Hinds
+#	Mike Jackson
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -249,13 +250,18 @@ sub check_storage_engines {
 	my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
 	foreach my $db (@dblist) {
 		chomp($db);
-		push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM $db" | awk '{print \$2,\$7}'`);
+		push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7}'`);
 		foreach my $line (@tblist) {
 			$line =~ /([a-zA-Z_]*)\s*(.*)/;
-			if (defined $enginestats{$1}) {
-				$enginestats{$1} = $enginestats{$1} + $2;
+			my $engine = $1;
+			my $size = $2;
+			if ($size =~ /^\d+$/) {
+				$size = 0;			
+			}
+			if (defined $enginestats{$engine}) {
+				$enginestats{$engine} = $enginestats{$engine} + $size;
 			} else {
-				$enginestats{$1} = $2;
+				$enginestats{$engine} = $size;
 			}
 		}
 	}
