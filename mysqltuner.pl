@@ -255,7 +255,7 @@ sub check_storage_engines {
 			$line =~ /([a-zA-Z_]*)\s*(.*)/;
 			my $engine = $1;
 			my $size = $2;
-			if ($size =~ /^\d+$/) {
+			if ($size !~ /^\d+$/) {
 				$size = 0;			
 			}
 			if (defined $enginestats{$engine}) {
