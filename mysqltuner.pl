@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 20080114
+# mysqltuner.pl - Version 20080115
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
