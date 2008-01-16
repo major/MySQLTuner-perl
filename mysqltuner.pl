@@ -453,7 +453,6 @@ sub calculations {
 	}
 }
 
-#my (@adjvars, @generalrec);
 sub mysql_stats {
 	print "-------- Performance Metrics -------------------------------------------------\n";
 	# Show uptime, queries per second, connections, traffic stats
