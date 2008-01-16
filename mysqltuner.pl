@@ -34,6 +34,9 @@ use warnings;
 use diagnostics;
 use Getopt::Long;
 
+# Set up a few variables for use in the script
+my (@adjvars, @generalrec);
+
 # Set defaults
 my %opt = (
 		"nobad" => 0,
@@ -54,6 +57,7 @@ GetOptions(\%opt,
 if (defined $opt{'help'} && $opt{'help'} == 1) { usage(); }
 
 sub usage {
+	# Shown with --help option passed
 	print "\n".
 		"	MySQL High Performance Tuning Script\n".
 		"	Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
@@ -71,46 +75,81 @@ sub usage {
 	exit;
 }
 
-# CONFIGURATION ITEMS
-my ($good,$bad,$info);
-if ($opt{nocolor} == 0) {
-	$good = "[\e[00;32mOK\e[00m]";
-	$bad = "[\e[00;31m!!\e[00m]";
-	$info = "[\e[00;34m**\e[00m]";
-} else {
-	$good = "[OK]";
-	$bad = "[!!]";
-	$info = "[--]";
+# Setting up the colors for the print styles
+my $good = ($opt{nocolor} == 0)? "[\e[00;32mOK\e[00m]" : "[OK]" ;
+my $bad = ($opt{nocolor} == 0)? "[\e[00;31mOK\e[00m]" : "[!!]" ;
+my $info = ($opt{nocolor} == 0)? "[\e[00;34mOK\e[00m]" : "[--]" ;
+
+# Functions that handle the print styles
+sub goodprint { print $good." ".$_[0] unless ($opt{nogood} == 1); }
+sub infoprint { print $info." ".$_[0] unless ($opt{noinfo} == 1); }
+sub badprint { print $bad." ".$_[0] unless ($opt{nobad} == 1); }
+sub redwrap { return "\e[00;31m".$_[0]."\e[00m"; }
+sub greenwrap { return "\e[00;32m".$_[0]."\e[00m"; }
+
+# Calculates the parameter passed in bytes, and then rounds it to one decimal place
+sub hr_bytes {
+	my $num = shift;
+	if ($num >= (1024**3)) { #GB
+		return sprintf("%.1f",($num/(1024**3)))."G";
+	} elsif ($num >= (1024**2)) { #MB
+		return sprintf("%.1f",($num/(1024**2)))."M";
+	} elsif ($num >= 1024) { #KB
+		return sprintf("%.1f",($num/1024))."K";
+	} else {
+		return $num."B";
+	}
 }
 
-sub goodprint {
-	if ($opt{nogood} == 1) { return 0; }
-	my $text = shift;
-	print $good." ".$text;
+# Calculates the parameter passed in bytes, and then rounds it to the nearest integer
+sub hr_bytes_rnd {
+	my $num = shift;
+	if ($num >= (1024**3)) { #GB
+		return int(($num/(1024**3)))."G";
+	} elsif ($num >= (1024**2)) { #MB
+		return int(($num/(1024**2)))."M";
+	} elsif ($num >= 1024) { #KB
+		return int(($num/1024))."K";
+	} else {
+		return $num."B";
+	}
 }
 
-sub infoprint {
-	if ($opt{noinfo} == 1) { return 0; }
-	my $text = shift;
-	print $info." ".$text;
+# Calculates the parameter passed to the nearest power of 1000, then rounds it to the nearest integer
+sub hr_num {
+	my $num = shift;
+	if ($num >= (1000**3)) { # Billions
+		return int(($num/(1000**3)))."B";
+	} elsif ($num >= (1000**2)) { # Millions
+		return int(($num/(1000**2)))."M";
+	} elsif ($num >= 1000) { # Thousands
+		return int(($num/1000))."K";
+	} else {
+		return $num;
+	}
 }
 
-sub badprint {
-	if ($opt{nobad} == 1) { return 0; }
-	my $text = shift;
-	print $bad." ".$text;
+# Calculates uptime to display in a more attractive form
+sub pretty_uptime {
+	my $uptime = shift;
+	my $seconds = $uptime % 60;
+	my $minutes = int(($uptime % 3600) / 60);
+	my $hours = int(($uptime % 86400) / (3600));
+	my $days = int($uptime / (86400));
+	my $uptimestring;
+	if ($days > 0) {
+		$uptimestring = "${days}d ${hours}h ${minutes}m ${seconds}s";
+	} elsif ($hours > 0) {
+		$uptimestring = "${hours}h ${minutes}m ${seconds}s";
+	} elsif ($minutes > 0) {
+		$uptimestring = "${minutes}m ${seconds}s";
+	} else {
+		$uptimestring = "${seconds}s";
+	}
+	return $uptimestring;
 }
 
-sub redwrap {
-	my $text = shift;
-	return "\e[00;31m".$text."\e[00m";
-}
-
-sub greenwrap {
-	my $text = shift;
-	return "\e[00;32m".$text."\e[00m";
-}
-
+# Retrieves the memory installed on this machine
 my ($physical_memory,$swap_memory,$duflags);
 sub os_setup {
 	my $os = `uname`;
@@ -132,6 +171,7 @@ sub os_setup {
 	chomp($physical_memory);
 }
 
+# Checks to see if a MySQL login is possible
 my $mysqllogin;
 sub mysql_setup {
 	my $command = `which mysqladmin`;
@@ -144,10 +184,7 @@ sub mysql_setup {
 		# It's a Plesk box, use the available credentials
 		$mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
 		my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
-		if ($loginstatus =~ /mysqld is alive/) {
-			# Login was successful, but we won't say anything to save space
-			return 1;
-		} else {
+		unless ($loginstatus =~ /mysqld is alive/) {
 			badprint "Attempted to use login credentials from Plesk, but they failed.\n";
 			exit 0;
 		}
@@ -160,16 +197,14 @@ sub mysql_setup {
 			# Did this go well because of a .my.cnf file or is there no password set?
 			my $userpath = `ls -d ~`;
 			chomp($userpath);
-			if ( -e "$userpath/.my.cnf" ) {
-				# Login was successful, but we won't say anything to save space
-			} else {
+			unless ( -e "$userpath/.my.cnf" ) {
 				badprint "Successfully authenticated with no password - SECURITY RISK!\n";
 			}
 			return 1;
 		} else {
-			print STDERR "Please enter your MySQL login: ";
+			print STDERR "Please enter your MySQL administrative login: ";
 			my $name = <>;
-			print STDERR "Please enter your MySQL password: ";
+			print STDERR "Please enter your MySQL administrative password: ";
 			system("stty -echo");
 			my $password = <>;
 			system("stty echo");
@@ -178,7 +213,6 @@ sub mysql_setup {
 			$mysqllogin = "-u $name -p'$password'";
 			my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
 			if ($loginstatus =~ /mysqld is alive/) {
-				# Login was successful, but we won't say anything to save space
 				print STDERR "\n";
 				return 1;
 			} else {
@@ -190,6 +224,7 @@ sub mysql_setup {
 	}
 }
 
+# Populates all of the variable and status hashes
 my (%mystat,%myvar,$dummyselect);
 sub get_all_vars {
 	# We need to initiate at least one query so that our data is useable
@@ -206,6 +241,7 @@ sub get_all_vars {
 	}
 }
 
+# Checks for supported or EOL'ed MySQL versions
 my ($mysqlvermajor,$mysqlverminor);
 sub validate_mysql_version {
 	print "-------- General Statistics --------------------------------------------------\n";
@@ -219,6 +255,7 @@ sub validate_mysql_version {
 	}
 }
 
+# Checks for 32-bit boxes with more than 2GB of RAM
 my ($arch);
 sub check_architecture {
 	if (`uname -m` =~ /64/) {
@@ -226,7 +263,7 @@ sub check_architecture {
 		goodprint "Operating on 64-bit architecture\n";
 	} else {
 		$arch = 32;
-		if ($physical_memory > 2*1024*1024*1024) {
+		if ($physical_memory > 2147483648) {
 			badprint "Switch to 64-bit OS - MySQL cannot currenty use all of your RAM\n";
 		} else {
 			goodprint "Operating on 32-bit architecture with less than 2GB RAM\n";
@@ -234,7 +271,8 @@ sub check_architecture {
 	}
 }
 
-my %enginestats;
+# Start up a ton of storage engine counts/statistics
+my (%enginestats,%enginecount);
 sub check_storage_engines {
 	print "-------- Storage Engine Statistics -------------------------------------------\n";
 	infoprint "Status: ";
@@ -247,90 +285,47 @@ sub check_storage_engines {
 	$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;	
 	print "$engines\n";
 	my @tblist;
+	# Now we build a database list, and loop through it to get storage engine stats for tables
 	my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
 	foreach my $db (@dblist) {
 		chomp($db);
-		push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7}'`);
-		foreach my $line (@tblist) {
-			$line =~ /([a-zA-Z_]*)\s*(.*)/;
-			my $engine = $1;
-			my $size = $2;
-			if ($size !~ /^\d+$/) {
-				$size = 0;			
-			}
-			if (defined $enginestats{$engine}) {
-				$enginestats{$engine} = $enginestats{$engine} + $size;
-			} else {
-				$enginestats{$engine} = $size;
-			}
+		if ($mysqlvermajor == 3) {
+			# MySQL 3.23 keeps Data_Length in the 6th column
+			push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$6}'`);
+		} else {
+			# MySQL 4.0+ keeps Data_Length in the 7th column
+			push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7}'`);
+		}
+	}
+	# Parse through the table list to generate storage engine counts/statistics
+	foreach my $line (@tblist) {
+		$line =~ /([a-zA-Z_]*)\s*(.*)/;
+		my $engine = $1;
+		my $size = $2;
+		if ($size !~ /^\d+$/) { $size = 0; }
+		if (defined $enginestats{$engine}) {
+			$enginestats{$engine} += $size;
+			$enginecount{$engine} += 1;
+		} else {
+			$enginestats{$engine} = $size;
+			$enginecount{$engine} = 1;
 		}
 	}
 	while (my ($engine,$size) = each(%enginestats)) {
-		infoprint "Data in $engine tables: ".hr_bytes_rnd($size)."\n";
+		infoprint "Data in $engine tables: ".hr_bytes_rnd($size)." (Tables: ".$enginecount{$engine}.")"."\n";
 	}
+	# If the storage engine isn't being used, recommend it to be disabled
 	if (!defined $enginestats{'InnoDB'} && defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES") {
 		badprint "InnoDB is enabled but isn't being used\n";
+		push(@generalrec,"Add skip-innodb to MySQL configuration to disable InnoDB");
 	}
 	if (!defined $enginestats{'BDB'} && defined $myvar{'have_bdb'} && $myvar{'have_bdb'} eq "YES") {
 		badprint "BDB is enabled but isn't being used\n";
+		push(@generalrec,"Add skip-bdb to MySQL configuration to disable BDB");
 	}
-}
-
-sub pretty_uptime {
-	my $uptime = shift;
-	my $seconds = $uptime % 60;
-	my $minutes = int(($uptime % 3600) / 60);
-	my $hours = int(($uptime % 86400) / (3600));
-	my $days = int($uptime / (86400));
-	my $uptimestring;
-	if ($days > 0) {
-		$uptimestring = "${days}d ${hours}h ${minutes}m ${seconds}s";
-	} elsif ($hours > 0) {
-		$uptimestring = "${hours}h ${minutes}m ${seconds}s";
-	} elsif ($minutes > 0) {
-		$uptimestring = "${minutes}m ${seconds}s";
-	} else {
-		$uptimestring = "${seconds}s";
-	}
-	return $uptimestring;
-}
-
-sub hr_bytes_rnd {
-	my $num = shift;
-	if ($num >= (1024**3)) { #GB
-		return int(($num/(1024**3)))."G";
-	} elsif ($num >= (1024**2)) { #MB
-		return int(($num/(1024**2)))."M";
-	} elsif ($num >= 1024) { #KB
-		return int(($num/1024))."K";
-	} else {
-		return $num."B";
-	}
-}
-
-sub hr_bytes {
-	my $num = shift;
-	if ($num >= (1024**3)) { #GB
-		return sprintf("%.1f",($num/(1024**3)))."G";
-	} elsif ($num >= (1024**2)) { #MB
-		return sprintf("%.1f",($num/(1024**2)))."M";
-	} elsif ($num >= 1024) { #KB
-		return sprintf("%.1f",($num/1024))."K";
-	} else {
-		return $num."B";
-	}
-}
-
-sub hr_num {
-	my $num = shift;
-	if ($num >= (1000**3)) { #GB
-		return int(($num/(1000**3)))."G";
-	} elsif ($num >= (1000**2)) { #MB
-		return int(($num/(1000**2)))."M";
-	} elsif ($num >= 1000) { #KB
-		return int(($num/1000))."K";
-	} else {
-		return $num;
+	if (!defined $enginestats{'ISAM'} && defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES") {
+		badprint "ISAM is enabled but isn't being used\n";
+		push(@generalrec,"Add skip-isam to MySQL configuration to disable ISAM");
 	}
 }
 
@@ -458,7 +453,7 @@ sub calculations {
 	}
 }
 
-my (@adjvars, @generalrec);
+#my (@adjvars, @generalrec);
 sub mysql_stats {
 	print "-------- Performance Metrics -------------------------------------------------\n";
 	# Show uptime, queries per second, connections, traffic stats
@@ -663,6 +658,7 @@ sub mysql_stats {
 	}
 }
 
+# Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
 	print "-------- Recommendations -----------------------------------------------------\n";
 	if (@generalrec > 0) {
