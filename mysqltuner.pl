@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 0.8.0
+# mysqltuner.pl - Version 0.8.5
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -25,6 +25,7 @@
 #   Dave Burgess
 #   Jonathan Hinds
 #   Mike Jackson
+#   Nils Breunese
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -35,6 +36,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
+my $tunerversion = "0.8.5";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -59,7 +61,7 @@ if (defined $opt{'help'} && $opt{'help'} == 1) { usage(); }
 sub usage {
 	# Shown with --help option passed
 	print "\n".
-		"	MySQL High Performance Tuning Script\n".
+		"	MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n".
 		"	Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
 		"	Maintained by Major Hayden (major\@mhtx.net)\n\n".
 		"	Important Usage Guidelines:\n".
@@ -77,8 +79,8 @@ sub usage {
 
 # Setting up the colors for the print styles
 my $good = ($opt{nocolor} == 0)? "[\e[00;32mOK\e[00m]" : "[OK]" ;
-my $bad = ($opt{nocolor} == 0)? "[\e[00;31mOK\e[00m]" : "[!!]" ;
-my $info = ($opt{nocolor} == 0)? "[\e[00;34mOK\e[00m]" : "[--]" ;
+my $bad = ($opt{nocolor} == 0)? "[\e[00;31m!!\e[00m]" : "[!!]" ;
+my $info = ($opt{nocolor} == 0)? "[\e[00;34m--\e[00m]" : "[--]" ;
 
 # Functions that handle the print styles
 sub goodprint { print $good." ".$_[0] unless ($opt{nogood} == 1); }
@@ -289,11 +291,11 @@ sub check_storage_engines {
 	my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
 	foreach my $db (@dblist) {
 		chomp($db);
-		if ($mysqlvermajor == 3) {
-			# MySQL 3.23 keeps Data_Length in the 6th column
+		if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
+			# MySQL 3.23/4.0 keeps Data_Length in the 6th column
 			push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$6}'`);
 		} else {
-			# MySQL 4.0+ keeps Data_Length in the 7th column
+			# MySQL 4.1+ keeps Data_Length in the 7th column
 			push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7}'`);
 		}
 	}
@@ -365,7 +367,7 @@ sub calculations {
 	$mycalc{'pct_connections_used'} = ($mycalc{'pct_connections_used'} > 100) ? 100 : $mycalc{'pct_connections_used'} ;
 	
 	# Key buffers
-	if ($mysqlvermajor > 3) {
+	if ($mysqlvermajor > 3 && !($mysqlvermajor == 4 && $mysqlverminor == 0)) {
 		$mycalc{'pct_key_buffer_used'} = sprintf("%.1f",(1 - (($mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}) / $myvar{'key_buffer_size'})) * 100);
 	}
 	if ($mystat{'Key_read_requests'} > 0) {
@@ -672,12 +674,15 @@ sub make_recommendations {
 		}
 		foreach (@adjvars) { print "    ".$_."\n"; }
 	}
+	if (@generalrec == 0 && @adjvars ==0) {
+		print "No additional performance recommendations are available.\n"
+	}
 }
 
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-print	" >>  MySQL High-Performance Tuning Script - Major Hayden <major\@mhtx.net>\n".
+print	" >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
 		" >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
 		" >>  Run with '--help' for additional options and output filtering\n";
 os_setup;						# Set up some OS variables
