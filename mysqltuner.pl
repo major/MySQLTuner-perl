@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 0.8.5
+# mysqltuner.pl - Version 0.8.6
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -26,6 +26,7 @@
 #   Jonathan Hinds
 #   Mike Jackson
 #   Nils Breunese
+#   Shawn Ashlee
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -36,7 +37,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "0.8.5";
+my $tunerversion = "0.8.6";
 my (@adjvars, @generalrec);
 
 # Set defaults
