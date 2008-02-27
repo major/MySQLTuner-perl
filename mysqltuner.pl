@@ -86,8 +86,8 @@ my $info = ($opt{nocolor} == 0)? "[\e[00;34m--\e[00m]" : "[--]" ;
 sub goodprint { print $good." ".$_[0] unless ($opt{nogood} == 1); }
 sub infoprint { print $info." ".$_[0] unless ($opt{noinfo} == 1); }
 sub badprint { print $bad." ".$_[0] unless ($opt{nobad} == 1); }
-sub redwrap { return "\e[00;31m".$_[0]."\e[00m"; }
-sub greenwrap { return "\e[00;32m".$_[0]."\e[00m"; }
+sub redwrap { return ($opt{nocolor} == 0)? "\e[00;31m".$_[0]."\e[00m" : $_[0] ; }
+sub greenwrap { return ($opt{nocolor} == 0)? "\e[00;32m".$_[0]."\e[00m" : $_[0] ; }
 
 # Calculates the parameter passed in bytes, and then rounds it to one decimal place
 sub hr_bytes {
@@ -246,7 +246,7 @@ sub get_all_vars {
 # Checks for supported or EOL'ed MySQL versions
 my ($mysqlvermajor,$mysqlverminor);
 sub validate_mysql_version {
-	print "-------- General Statistics --------------------------------------------------\n";
+	print "\n-------- General Statistics --------------------------------------------------\n";
 	($mysqlvermajor,$mysqlverminor) = $myvar{'version'} =~ /(\d)\.(\d)/;
 	if ($mysqlvermajor < 5) {
 		badprint "Your MySQL version ".$myvar{'version'}." is EOL software!  Upgrade soon!\n";
@@ -276,7 +276,7 @@ sub check_architecture {
 # Start up a ton of storage engine counts/statistics
 my (%enginestats,%enginecount);
 sub check_storage_engines {
-	print "-------- Storage Engine Statistics -------------------------------------------\n";
+	print "\n-------- Storage Engine Statistics -------------------------------------------\n";
 	infoprint "Status: ";
 	my $engines;
 	$engines .= (defined $myvar{'have_archive'} && $myvar{'have_archive'} eq "YES")? greenwrap "+Archive " : redwrap "-Archive " ;
@@ -291,6 +291,7 @@ sub check_storage_engines {
 	my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
 	foreach my $db (@dblist) {
 		chomp($db);
+		if ($db eq "information_schema") { next; }
 		if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
 			# MySQL 3.23/4.0 keeps Data_Length in the 6th column
 			push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$6}'`);
@@ -456,7 +457,7 @@ sub calculations {
 }
 
 sub mysql_stats {
-	print "-------- Performance Metrics -------------------------------------------------\n";
+	print "\n-------- Performance Metrics -------------------------------------------------\n";
 	# Show uptime, queries per second, connections, traffic stats
 	my $qps;
 	if ($mystat{'Uptime'} > 0) { $qps = sprintf("%.3f",$mystat{'Questions'}/$mystat{'Uptime'}); }
@@ -661,7 +662,7 @@ sub mysql_stats {
 
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
-	print "-------- Recommendations -----------------------------------------------------\n";
+	print "\n-------- Recommendations -----------------------------------------------------\n";
 	if (@generalrec > 0) {
 		print "General recommendations:\n";
 		foreach (@generalrec) { print "    ".$_."\n"; }
@@ -677,12 +678,13 @@ sub make_recommendations {
 	if (@generalrec == 0 && @adjvars ==0) {
 		print "No additional performance recommendations are available.\n"
 	}
+	print "\n";
 }
 
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-print	" >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
+print	"\n >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
 		" >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
 		" >>  Run with '--help' for additional options and output filtering\n";
 os_setup;						# Set up some OS variables
