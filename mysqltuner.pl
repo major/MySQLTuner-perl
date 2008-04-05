@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 0.8.6
+# mysqltuner.pl - Version 0.8.9
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -37,7 +37,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "0.8.6";
+my $tunerversion = "0.8.9";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -46,6 +46,7 @@ my %opt = (
 		"nogood" => 0,
 		"noinfo" => 0,
 		"nocolor" => 0,
+		"skipsize" => 0,
 	);
 	
 # Gather the options from the command line
@@ -54,6 +55,7 @@ GetOptions(\%opt,
 		'nogood',
 		'noinfo',
 		'nocolor',
+		'skipsize',
 		'help',
 	);
 
@@ -62,18 +64,21 @@ if (defined $opt{'help'} && $opt{'help'} == 1) { usage(); }
 sub usage {
 	# Shown with --help option passed
 	print "\n".
-		"	MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n".
-		"	Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
-		"	Maintained by Major Hayden (major\@mhtx.net)\n\n".
-		"	Important Usage Guidelines:\n".
-		"	   To run the script with the default options, run the script without arguments\n".
-		"	   Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n".
-		"	   Some routines may require root level privileges (script will provide warnings)\n\n".
-		"	Output Options:\n".
-		"	   --nogood         Remove OK responses\n".
-		"	   --nobad          Remove negative/suggestion responses\n".
-		"	   --noinfo         Remove informational responses\n".
-		"	   --nocolor        Don't print output in color\n".
+		"   MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n".
+		"   Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
+		"   Maintained by Major Hayden (major\@mhtx.net)\n\n".
+		"   Important Usage Guidelines:\n".
+		"      To run the script with the default options, run the script without arguments\n".
+		"      Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n".
+		"      Some routines may require root level privileges (script will provide warnings)\n\n".
+		"   Performance and Reporting Options\n".
+		"      --skipsize       Don't enumerate tables and their types/sizes\n".
+		"                       (Recommended for servers with many tables)\n\n".
+		"   Output Options:\n".
+		"      --nogood         Remove OK responses\n".
+		"      --nobad          Remove negative/suggestion responses\n".
+		"      --noinfo         Remove informational responses\n".
+		"      --nocolor        Don't print output in color\n".
 		"\n";
 	exit;
 }
@@ -277,6 +282,11 @@ sub check_architecture {
 # Start up a ton of storage engine counts/statistics
 my (%enginestats,%enginecount);
 sub check_storage_engines {
+	if ($opt{skipsize} eq 1) {
+		print "\n-------- Storage Engine Statistics -------------------------------------------\n";
+		infoprint "Skipped due to --skipsize option\n";
+		return;
+	}
 	print "\n-------- Storage Engine Statistics -------------------------------------------\n";
 	infoprint "Status: ";
 	my $engines;
@@ -287,32 +297,44 @@ sub check_storage_engines {
 	$engines .= (defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES")? greenwrap "+ISAM " : redwrap "-ISAM " ;
 	$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;	
 	print "$engines\n";
-	my @tblist;
-	# Now we build a database list, and loop through it to get storage engine stats for tables
-	my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
-	foreach my $db (@dblist) {
-		chomp($db);
-		if ($db eq "information_schema") { next; }
-		if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
-			# MySQL 3.23/4.0 keeps Data_Length in the 6th column
-			push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$6}'`);
-		} else {
-			# MySQL 4.1+ keeps Data_Length in the 7th column
-			push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7}'`);
-		}
-	}
-	# Parse through the table list to generate storage engine counts/statistics
-	foreach my $line (@tblist) {
-		$line =~ /([a-zA-Z_]*)\s*(.*)/;
-		my $engine = $1;
-		my $size = $2;
-		if ($size !~ /^\d+$/) { $size = 0; }
-		if (defined $enginestats{$engine}) {
-			$enginestats{$engine} += $size;
-			$enginecount{$engine} += 1;
-		} else {
+	if ($mysqlvermajor eq 5) {
+		# MySQL 5 servers can have table sizes calculated quickly from information schema
+		my @templist = `mysql $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
+		foreach my $line (@templist) {
+			my ($engine,$size,$count);
+			($engine,$size,$count) = $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)/;
 			$enginestats{$engine} = $size;
-			$enginecount{$engine} = 1;
+			$enginecount{$engine} = $count;
+		}
+	} else {
+		# MySQL < 5 servers take a lot of work to get table sizes
+		my @tblist;
+		# Now we build a database list, and loop through it to get storage engine stats for tables
+		my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
+		foreach my $db (@dblist) {
+			chomp($db);
+			if ($db eq "information_schema") { next; }
+			if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
+				# MySQL 3.23/4.0 keeps Data_Length in the 6th column
+				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$6}'`);
+			} else {
+				# MySQL 4.1+ keeps Data_Length in the 7th column
+				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7}'`);
+			}
+		}
+		# Parse through the table list to generate storage engine counts/statistics
+		foreach my $line (@tblist) {
+			$line =~ /([a-zA-Z_]*)\s+(.*)/;
+			my $engine = $1;
+			my $size = $2;
+			if ($size !~ /^\d+$/) { $size = 0; }
+			if (defined $enginestats{$engine}) {
+				$enginestats{$engine} += $size;
+				$enginecount{$engine} += 1;
+			} else {
+				$enginestats{$engine} = $size;
+				$enginecount{$engine} = 1;
+			}
 		}
 	}
 	while (my ($engine,$size) = each(%enginestats)) {
@@ -538,7 +560,7 @@ sub mysql_stats {
 	} else {
 		if ($mycalc{'query_cache_efficiency'} < 20) {
 			badprint "Query cache efficiency: $mycalc{'query_cache_efficiency'}%\n";
-			push(@adjvars,"query_cache_limit (> 1M, or use smaller result sets)");
+			push(@adjvars,"query_cache_limit (> ".hr_bytes_rnd($myvar{'query_cache_limit'}).", or use smaller result sets)");
 		} else {
 			goodprint "Query cache efficiency: $mycalc{'query_cache_efficiency'}%\n";
 		}
@@ -578,7 +600,7 @@ sub mysql_stats {
 			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
 			push(@adjvars,"tmp_table_size (> ".hr_bytes_rnd($myvar{'tmp_table_size'}).")");
 			push(@adjvars,"max_heap_table_size (> ".hr_bytes_rnd($myvar{'max_heap_table_size'}).")");
-			push(@generalrec,"Be sure that tmp_table_size/max_heap_table_size are equal");
+			push(@generalrec,"When making adjustments, make tmp_table_size/max_heap_table_size equal");
 			push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
 		} elsif ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} >= 256) {
 			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
