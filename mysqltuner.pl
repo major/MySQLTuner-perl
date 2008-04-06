@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 0.8.9
+# mysqltuner.pl - Version 0.9.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -37,7 +37,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "0.8.9";
+my $tunerversion = "0.9.0";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -47,6 +47,7 @@ my %opt = (
 		"noinfo" => 0,
 		"nocolor" => 0,
 		"skipsize" => 0,
+		"skipversion" => 0,
 	);
 	
 # Gather the options from the command line
@@ -56,6 +57,7 @@ GetOptions(\%opt,
 		'noinfo',
 		'nocolor',
 		'skipsize',
+		'skipversion',
 		'help',
 	);
 
@@ -73,7 +75,8 @@ sub usage {
 		"      Some routines may require root level privileges (script will provide warnings)\n\n".
 		"   Performance and Reporting Options\n".
 		"      --skipsize       Don't enumerate tables and their types/sizes\n".
-		"                       (Recommended for servers with many tables)\n\n".
+		"                       (Recommended for servers with many tables)\n".
+		"      --skipversion    Don't check for updates to MySQLTuner\n\n".
 		"   Output Options:\n".
 		"      --nogood         Remove OK responses\n".
 		"      --nobad          Remove negative/suggestion responses\n".
@@ -249,10 +252,33 @@ sub get_all_vars {
 	}
 }
 
+# Checks for updates to MySQLTuner
+sub validate_tuner_version {
+	print "\n-------- General Statistics --------------------------------------------------\n";
+	if ($opt{skipversion} eq 1) {
+		infoprint "Skipped version check for MySQLTuner script\n";
+		return;
+	}
+	my $update;
+	if (-e "/usr/bin/curl") {
+		$update = `/usr/bin/curl --connect-timeout 5 http://mysqltuner.com/versioncheck.php?v=$tunerversion 2>/dev/null`;
+		chomp($update);
+	} elsif (-e "/usr/bin/wget") {
+		$update = `/usr/bin/wget -T 5 -O - http://mysqltuner.com/versioncheck.php?v=$tunerversion 2>/dev/null`;
+		chomp($update);
+	}
+	if ($update eq 1) {
+		badprint "There is a new version of MySQLTuner available\n";
+	} elsif ($update eq 0) {
+		goodprint "You have the latest version of MySQLTuner\n";
+	} else {
+		infoprint "Unable to check for the latest MySQLTuner version\n";
+	}
+}
+
 # Checks for supported or EOL'ed MySQL versions
 my ($mysqlvermajor,$mysqlverminor);
 sub validate_mysql_version {
-	print "\n-------- General Statistics --------------------------------------------------\n";
 	($mysqlvermajor,$mysqlverminor) = $myvar{'version'} =~ /(\d)\.(\d)/;
 	if ($mysqlvermajor < 5) {
 		badprint "Your MySQL version ".$myvar{'version'}." is EOL software!  Upgrade soon!\n";
@@ -299,7 +325,7 @@ sub check_storage_engines {
 	print "$engines\n";
 	if ($mysqlvermajor eq 5) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
-		my @templist = `mysql $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
+		my @templist = `mysql $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') GROUP BY ENGINE HAVING SUM(DATA_LENGTH) > 0 ORDER BY ENGINE ASC;"`;
 		foreach my $line (@templist) {
 			my ($engine,$size,$count);
 			($engine,$size,$count) = $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)/;
@@ -713,6 +739,7 @@ print	"\n >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
 os_setup;						# Set up some OS variables
 mysql_setup;					# Gotta login first
 get_all_vars;					# Toss variables/status into hashes
+validate_tuner_version;			# Check current MySQLTuner version
 validate_mysql_version;			# Check current MySQL version
 check_architecture;				# Suggest 64-bit upgrade
 check_storage_engines;			# Show enabled storage engines
