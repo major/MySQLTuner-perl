@@ -658,7 +658,11 @@ sub mysql_stats {
 	if ($mystat{'Open_tables'} > 0) {
 		if ($mycalc{'table_cache_hit_rate'} < 20) {
 			badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}%\n";
-			push(@adjvars,"table_cache (> ".$myvar{'table_cache'}.")");
+			if ($mysqlvermajor eq 6) {
+				push(@adjvars,"table_cache (> ".$myvar{'table_open_cache'}.")");
+			} else {
+				push(@adjvars,"table_cache (> ".$myvar{'table_cache'}.")");
+			}
 			push(@generalrec,"Increase table_cache gradually to avoid file descriptor limits");
 		} else {
 			goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}%\n";
