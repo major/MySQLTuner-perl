@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 0.9.0
+# mysqltuner.pl - Version 0.9.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -27,6 +27,9 @@
 #   Mike Jackson
 #   Nils Breunese
 #   Shawn Ashlee
+#   Luuk Vosslamber
+#   Ville Skytta
+#   Trent Hornibrook
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -37,7 +40,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "0.9.0";
+my $tunerversion = "0.9.1";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -221,10 +224,21 @@ sub mysql_setup {
 			system("stty echo");
 			chomp($password);
 			chomp($name);
-			$mysqllogin = "-u $name -p'$password'";
+			$mysqllogin = "-u $name";
+			if (length($password)) {
+				$mysqllogin .= " -p'$password'";
+			}
 			my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
 			if ($loginstatus =~ /mysqld is alive/) {
 				print STDERR "\n";
+				if (! length($password)) {
+					# Did this go well because of a .my.cnf file or is there no password set?
+					my $userpath = `ls -d ~`;
+					chomp($userpath);
+					unless ( -e "$userpath/.my.cnf" ) {
+						badprint "Successfully authenticated with no password - SECURITY RISK!\n";
+					}
+				}
 				return 1;
 			} else {
 				print "\n".$bad." Attempted to use login credentials, but they were invalid.\n";
@@ -260,11 +274,12 @@ sub validate_tuner_version {
 		return;
 	}
 	my $update;
+	my $url = "http://mysqltuner.com/versioncheck.php?v=$tunerversion";
 	if (-e "/usr/bin/curl") {
-		$update = `/usr/bin/curl --connect-timeout 5 http://mysqltuner.com/versioncheck.php?v=$tunerversion 2>/dev/null`;
+		$update = `/usr/bin/curl --connect-timeout 5 '$url' 2>/dev/null`;
 		chomp($update);
 	} elsif (-e "/usr/bin/wget") {
-		$update = `/usr/bin/wget -T 5 -O - http://mysqltuner.com/versioncheck.php?v=$tunerversion 2>/dev/null`;
+		$update = `/usr/bin/wget -e timestamping=off -T 5 -O - '$url' 2>/dev/null`;
 		chomp($update);
 	}
 	if ($update eq 1) {
@@ -306,7 +321,7 @@ sub check_architecture {
 }
 
 # Start up a ton of storage engine counts/statistics
-my (%enginestats,%enginecount);
+my (%enginestats,%enginecount,$fragtables);
 sub check_storage_engines {
 	if ($opt{skipsize} eq 1) {
 		print "\n-------- Storage Engine Statistics -------------------------------------------\n";
@@ -323,7 +338,7 @@ sub check_storage_engines {
 	$engines .= (defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES")? greenwrap "+ISAM " : redwrap "-ISAM " ;
 	$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;	
 	print "$engines\n";
-	if ($mysqlvermajor eq 5) {
+	if ($mysqlvermajor >= 5) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
 		my @templist = `mysql $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') GROUP BY ENGINE HAVING SUM(DATA_LENGTH) > 0 ORDER BY ENGINE ASC;"`;
 		foreach my $line (@templist) {
@@ -332,6 +347,8 @@ sub check_storage_engines {
 			$enginestats{$engine} = $size;
 			$enginecount{$engine} = $count;
 		}
+		$fragtables = `mysql $mysqllogin -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0"`;
+		chomp($fragtables);
 	} else {
 		# MySQL < 5 servers take a lot of work to get table sizes
 		my @tblist;
@@ -342,17 +359,20 @@ sub check_storage_engines {
 			if ($db eq "information_schema") { next; }
 			if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
 				# MySQL 3.23/4.0 keeps Data_Length in the 6th column
-				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$6}'`);
+				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$6,\$9}'`);
 			} else {
 				# MySQL 4.1+ keeps Data_Length in the 7th column
-				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7}'`);
+				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7,\$10}'`);
 			}
 		}
 		# Parse through the table list to generate storage engine counts/statistics
+		$fragtables = 0;
 		foreach my $line (@tblist) {
-			$line =~ /([a-zA-Z_]*)\s+(.*)/;
+			chomp($line);
+			$line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)/;
 			my $engine = $1;
 			my $size = $2;
+			my $datafree = $3;
 			if ($size !~ /^\d+$/) { $size = 0; }
 			if (defined $enginestats{$engine}) {
 				$enginestats{$engine} += $size;
@@ -360,6 +380,9 @@ sub check_storage_engines {
 			} else {
 				$enginestats{$engine} = $size;
 				$enginecount{$engine} = 1;
+			}
+			if ($datafree > 0) {
+				$fragtables++;
 			}
 		}
 	}
@@ -378,6 +401,13 @@ sub check_storage_engines {
 	if (!defined $enginestats{'ISAM'} && defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES") {
 		badprint "ISAM is enabled but isn't being used\n";
 		push(@generalrec,"Add skip-isam to MySQL configuration to disable ISAM");
+	}
+	# Fragmented tables
+	if ($fragtables > 0) {
+		badprint "Total fragmented tables: $fragtables\n";
+		push(@generalrec,"Run OPTIMIZE TABLE to defragment tables for better performance");
+	} else {
+		goodprint "Total fragmented tables: $fragtables\n";
 	}
 }
 
@@ -453,7 +483,7 @@ sub calculations {
 	# Temporary tables
 	if ($mystat{'Created_tmp_tables'} > 0) {
 		if ($mystat{'Created_tmp_disk_tables'} > 0) {
-			$mycalc{'pct_temp_disk'} = int(($mystat{'Created_tmp_disk_tables'} / $mystat{'Created_tmp_tables'}) * 100);
+			$mycalc{'pct_temp_disk'} = int(($mystat{'Created_tmp_disk_tables'} / ($mystat{'Created_tmp_tables'} + $mystat{'Created_tmp_disk_tables'})) * 100);
 		} else {
 			$mycalc{'pct_temp_disk'} = 0;
 		}
@@ -467,7 +497,7 @@ sub calculations {
 	}
 	
 	# Open files
-	if ($mystat{'Open_files'} > 0 && $myvar{'open_files_limit'} > 0) {
+	if ($myvar{'open_files_limit'} > 0) {
 		$mycalc{'pct_files_open'} = int($mystat{'Open_files'}*100/$myvar{'open_files_limit'});
 	}
 	
@@ -670,7 +700,7 @@ sub mysql_stats {
 	}
 
 	# Open files
-	if ($myvar{'open_files_limit'} > 0) {
+	if (defined $mycalc{'pct_files_open'}) {
 		if ($mycalc{'pct_files_open'} > 85) {
 			badprint "Open file limit used: $mycalc{'pct_files_open'}%\n";
 			push(@adjvars,"open_files_limit (> ".$myvar{'open_files_limit'}.")");
