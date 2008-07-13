@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 0.9.1
+# mysqltuner.pl - Version 0.9.5
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -30,6 +30,7 @@
 #   Luuk Vosslamber
 #   Ville Skytta
 #   Trent Hornibrook
+#   Jason Gill
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -40,7 +41,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "0.9.1";
+my $tunerversion = "0.9.5";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -49,6 +50,12 @@ my %opt = (
 		"nogood" => 0,
 		"noinfo" => 0,
 		"nocolor" => 0,
+		"forcemem" => 0,
+		"forceswap" => 0,
+		"host" => 0,
+		"port" => 0,
+		"user" => 0,
+		"pass" => 0,
 		"skipsize" => 0,
 		"skipversion" => 0,
 	);
@@ -59,6 +66,12 @@ GetOptions(\%opt,
 		'nogood',
 		'noinfo',
 		'nocolor',
+		'forcemem=i',
+		'forceswap=i',
+		'host=s',
+		'port=i',
+		'user=s',
+		'pass=s',
 		'skipsize',
 		'skipversion',
 		'help',
@@ -71,15 +84,20 @@ sub usage {
 	print "\n".
 		"   MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n".
 		"   Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
-		"   Maintained by Major Hayden (major\@mhtx.net)\n\n".
+		"   Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL\n".
+		"\n".
 		"   Important Usage Guidelines:\n".
 		"      To run the script with the default options, run the script without arguments\n".
 		"      Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n".
-		"      Some routines may require root level privileges (script will provide warnings)\n\n".
+		"      Some routines may require root level privileges (script will provide warnings)\n".
+		"\n".
 		"   Performance and Reporting Options\n".
-		"      --skipsize       Don't enumerate tables and their types/sizes\n".
-		"                       (Recommended for servers with many tables)\n".
-		"      --skipversion    Don't check for updates to MySQLTuner\n\n".
+		"      --skipsize         Don't enumerate tables and their types/sizes\n".
+		"                           (Recommended for servers with many tables)\n".
+		"      --skipversion      Don't check for updates to MySQLTuner\n".
+		"      --forcemem i       Amount of RAM installed in megabytes\n".
+		"      --forceswap i      Amount of swap memory configured in megabytes\n".
+		"\n".
 		"   Output Options:\n".
 		"      --nogood         Remove OK responses\n".
 		"      --nobad          Remove negative/suggestion responses\n".
@@ -166,35 +184,77 @@ sub pretty_uptime {
 # Retrieves the memory installed on this machine
 my ($physical_memory,$swap_memory,$duflags);
 sub os_setup {
+	sub memerror {
+		badprint "Unable to determine total memory/swap; use '--forcemem' and '--forceswap'\n";
+		exit;
+	}
 	my $os = `uname`;
-	$duflags = '';
-	if ($os =~ /Linux/) {
-		$physical_memory = `free -b | grep Mem | awk '{print \$2}'`;
-		$swap_memory = `free -b | grep Swap | awk '{print \$2}'`;
-		$duflags = '-b';
-	} elsif ($os =~ /Darwin/) {
-		$physical_memory = `sysctl -n hw.memsize`;
-		$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'`;
-	} elsif ($os =~ /NetBSD/) {
-		$physical_memory = `sysctl -n hw.physmem`;
-		$swap_memory = `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
-	} elsif ($os =~ /BSD/) {
-		$physical_memory = `sysctl -n hw.realmem`;
-		$swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
+	$duflags = ($os =~ /Linux/) ? '-b' : '';
+	if ($opt{'forcemem'} > 0) {
+		$physical_memory = $opt{'forcemem'} * 1048576;
+		infoprint "Assuming $opt{'forcemem'} MB of physical memory\n";
+		if ($opt{'forceswap'} > 0) {
+			$swap_memory = $opt{'forceswap'} * 1048576;
+			infoprint "Assuming $opt{'forceswap'} MB of swap space\n";
+		} else {
+			$swap_memory = 0;
+			badprint "Assuming 0 MB of swap space (use --forceswap to specify)\n";
+		}
+	} else {
+		if ($os =~ /Linux/) {
+			$physical_memory = `free -b | grep Mem | awk '{print \$2}'` or memerror;
+			$swap_memory = `free -b | grep Swap | awk '{print \$2}'` or memerror;
+		} elsif ($os =~ /Darwin/) {
+			$physical_memory = `sysctl -n hw.memsize` or memerror;
+			$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'` or memerror;
+		} elsif ($os =~ /NetBSD/) {
+			$physical_memory = `sysctl -n hw.physmem` or memerror;
+			$swap_memory = `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'` or memerror;
+		} elsif ($os =~ /BSD/) {
+			$physical_memory = `sysctl -n hw.realmem`;
+			$swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
+		}
 	}
 	chomp($physical_memory);
 }
 
 # Checks to see if a MySQL login is possible
-my $mysqllogin;
+my ($mysqllogin,$doremote,$remotestring);
 sub mysql_setup {
+	$doremote = 0;
+	$remotestring = '';
 	my $command = `which mysqladmin`;
 	chomp($command);
 	if (! -e $command) {
 		badprint "Unable to find mysqladmin in your \$PATH.  Is MySQL installed?\n";
 		exit;
 	}
-	if ( -r "/etc/psa/.psa.shadow" ) {
+	# Are we being asked to connect to a remote server?
+	if ($opt{host} ne 0) {
+		chomp($opt{host});
+		$opt{port} = ($opt{port} eq 0)? 3306 : $opt{port} ;
+		# If we're doing a remote connection, but forcemem wasn't specified, we need to exit
+		if ($opt{'forcemem'} eq 0) {
+			badprint "The --forcemem option is required for remote connections\n";
+			exit;
+		}
+		infoprint "Performing tests on $opt{host}:$opt{port}\n";
+		$remotestring = " -h $opt{host} -P $opt{port}";
+		$doremote = 1;
+	}
+	# Did we already get a username and password passed on the command line?
+	if ($opt{user} ne 0 and $opt{pass} ne 0) {
+		$mysqllogin = "-u $opt{user} -p'$opt{pass}'".$remotestring;
+		my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
+		if ($loginstatus =~ /mysqld is alive/) {
+			goodprint "Logged in using credentials passed on the command line\n";
+			return 1;
+		} else {
+			badprint "Attempted to use login credentials, but they were invalid\n";
+			exit 0;
+		}
+	}
+	if ( -r "/etc/psa/.psa.shadow" and $doremote == 0 ) {
 		# It's a Plesk box, use the available credentials
 		$mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
 		my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
@@ -204,7 +264,7 @@ sub mysql_setup {
 		}
 	} else {
 		# It's not Plesk, we should try a login
-		my $loginstatus = `mysqladmin ping 2>&1`;
+		my $loginstatus = `mysqladmin $remotestring ping 2>&1`;
 		if ($loginstatus =~ /mysqld is alive/) {
 			# Login went just fine
 			$mysqllogin = "";
@@ -225,9 +285,10 @@ sub mysql_setup {
 			chomp($password);
 			chomp($name);
 			$mysqllogin = "-u $name";
-			if (length($password)) {
+			if (length($password) > 0) {
 				$mysqllogin .= " -p'$password'";
 			}
+			$mysqllogin .= $remotestring;
 			my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
 			if ($loginstatus =~ /mysqld is alive/) {
 				print STDERR "\n";
@@ -307,6 +368,7 @@ sub validate_mysql_version {
 # Checks for 32-bit boxes with more than 2GB of RAM
 my ($arch);
 sub check_architecture {
+	if ($doremote eq 1) { return; }
 	if (`uname -m` =~ /64/) {
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
@@ -453,9 +515,16 @@ sub calculations {
 	if ($mystat{'Key_read_requests'} > 0) {
 		$mycalc{'pct_keys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_reads'} / $mystat{'Key_read_requests'}) * 100)));
 	}
-	$mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du -L $duflags '{}' 2>&1 | awk '{ s += \$1 } END { print s }'`;
-	if ($mycalc{'total_myisam_indexes'} =~ /^0\n$/) { $mycalc{'total_myisam_indexes'} = "fail"; }
-	chomp($mycalc{'total_myisam_indexes'});
+	if ($doremote eq 0) {
+		$mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du -L $duflags '{}' 2>&1 | awk '{ s += \$1 } END { print s }'`;
+	} elsif ($doremote eq 1 and $mysqlvermajor >= 5) {
+		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT SUM(INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema');"`;
+	}
+	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} =~ /^0\n$/) { 
+		$mycalc{'total_myisam_indexes'} = "fail"; 
+	} elsif (defined $mycalc{'total_myisam_indexes'}) {
+		chomp($mycalc{'total_myisam_indexes'});
+	}
 	
 	# Query cache
 	if ($mysqlvermajor > 3) {
@@ -580,7 +649,9 @@ sub mysql_stats {
 	}
 	
 	# Key buffer
-	if ($mycalc{'total_myisam_indexes'} =~ /^fail$/) { 
+	if (!defined($mycalc{'total_myisam_indexes'}) and $doremote eq 1) {
+		push(@generalrec,"Unable to calculate MyISAM indexes on remote MySQL server < 5.0.0");
+	} elsif ($mycalc{'total_myisam_indexes'} =~ /^fail$/) { 
 		badprint "Cannot calculate MyISAM index size - re-run script as root user\n";
 	} elsif ($mycalc{'total_myisam_indexes'} == "0") {
 		badprint "None of your MyISAM tables are indexed - add indexes immediately\n";
@@ -770,8 +841,8 @@ sub make_recommendations {
 print	"\n >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
 		" >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
 		" >>  Run with '--help' for additional options and output filtering\n";
-os_setup;						# Set up some OS variables
 mysql_setup;					# Gotta login first
+os_setup;						# Set up some OS variables
 get_all_vars;					# Toss variables/status into hashes
 validate_tuner_version;			# Check current MySQLTuner version
 validate_mysql_version;			# Check current MySQL version
