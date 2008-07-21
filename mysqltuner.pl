@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 0.9.5
+# mysqltuner.pl - Version 0.9.8
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -41,7 +41,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "0.9.5";
+my $tunerversion = "0.9.8";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -57,7 +57,7 @@ my %opt = (
 		"user" => 0,
 		"pass" => 0,
 		"skipsize" => 0,
-		"skipversion" => 0,
+		"checkversion" => 0,
 	);
 	
 # Gather the options from the command line
@@ -73,7 +73,7 @@ GetOptions(\%opt,
 		'user=s',
 		'pass=s',
 		'skipsize',
-		'skipversion',
+		'checkversion',
 		'help',
 	);
 
@@ -90,19 +90,26 @@ sub usage {
 		"      To run the script with the default options, run the script without arguments\n".
 		"      Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n".
 		"      Some routines may require root level privileges (script will provide warnings)\n".
+		"      You must provide the remote server's total memory when connecting to other servers\n".
+		"\n".
+		"   Connection and Authentication\n".
+		"      --host <hostname>    Connect to a remote host to perform tests (default: localhost)\n".
+		"      --port <port>        Port to use for connection (default: 3306)\n".
+		"      --user <username>    Username to use for authentication\n".
+		"      --pass <password>    Password to use for authentication\n".
 		"\n".
 		"   Performance and Reporting Options\n".
-		"      --skipsize         Don't enumerate tables and their types/sizes\n".
-		"                           (Recommended for servers with many tables)\n".
-		"      --skipversion      Don't check for updates to MySQLTuner\n".
-		"      --forcemem i       Amount of RAM installed in megabytes\n".
-		"      --forceswap i      Amount of swap memory configured in megabytes\n".
+		"      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n".
+		"                             (Recommended for servers with many tables)\n".
+		"      --checkversion       Check for updates to MySQLTuner (default: don't check)\n".
+		"      --forcemem <size>    Amount of RAM installed in megabytes\n".
+		"      --forceswap <size>   Amount of swap memory configured in megabytes\n".
 		"\n".
 		"   Output Options:\n".
-		"      --nogood         Remove OK responses\n".
-		"      --nobad          Remove negative/suggestion responses\n".
-		"      --noinfo         Remove informational responses\n".
-		"      --nocolor        Don't print output in color\n".
+		"      --nogood             Remove OK responses\n".
+		"      --nobad              Remove negative/suggestion responses\n".
+		"      --noinfo             Remove informational responses\n".
+		"      --nocolor            Don't print output in color\n".
 		"\n";
 	exit;
 }
@@ -330,7 +337,7 @@ sub get_all_vars {
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
 	print "\n-------- General Statistics --------------------------------------------------\n";
-	if ($opt{skipversion} eq 1) {
+	if ($opt{checkversion} eq 0) {
 		infoprint "Skipped version check for MySQLTuner script\n";
 		return;
 	}
