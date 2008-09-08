@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 0.9.8
+# mysqltuner.pl - Version 0.9.9
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -20,17 +20,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # This project would not be possible without help from:
-#   Matthew Montgomery
-#   Paul Kehrer
-#   Dave Burgess
-#   Jonathan Hinds
-#   Mike Jackson
-#   Nils Breunese
-#   Shawn Ashlee
-#   Luuk Vosslamber
-#   Ville Skytta
-#   Trent Hornibrook
-#   Jason Gill
+#   Matthew Montgomery     Paul Kehrer
+#   Dave Burgess           Jonathan Hinds
+#   Mike Jackson           Nils Breunese
+#   Shawn Ashlee           Luuk Vosslamber
+#   Ville Skytta           Trent Hornibrook
+#   Jason Gill             Mark Imbriaco
+#   Greg Eden              Aubin Galinotti
+#   Giovanni Bechis        Bill Bradford
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -41,7 +38,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "0.9.8";
+my $tunerversion = "0.9.9";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -53,6 +50,7 @@ my %opt = (
 		"forcemem" => 0,
 		"forceswap" => 0,
 		"host" => 0,
+		"socket" => 0,
 		"port" => 0,
 		"user" => 0,
 		"pass" => 0,
@@ -69,6 +67,7 @@ GetOptions(\%opt,
 		'forcemem=i',
 		'forceswap=i',
 		'host=s',
+		'socket=s',
 		'port=i',
 		'user=s',
 		'pass=s',
@@ -94,6 +93,7 @@ sub usage {
 		"\n".
 		"   Connection and Authentication\n".
 		"      --host <hostname>    Connect to a remote host to perform tests (default: localhost)\n".
+		"      --socket <socket>    Use a different socket for a local connection\n".
 		"      --port <port>        Port to use for connection (default: 3306)\n".
 		"      --user <username>    Username to use for authentication\n".
 		"      --pass <password>    Password to use for authentication\n".
@@ -214,7 +214,7 @@ sub os_setup {
 		} elsif ($os =~ /Darwin/) {
 			$physical_memory = `sysctl -n hw.memsize` or memerror;
 			$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'` or memerror;
-		} elsif ($os =~ /NetBSD/) {
+		} elsif ($os =~ /NetBSD|OpenBSD/) {
 			$physical_memory = `sysctl -n hw.physmem` or memerror;
 			$swap_memory = `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'` or memerror;
 		} elsif ($os =~ /BSD/) {
@@ -235,6 +235,10 @@ sub mysql_setup {
 	if (! -e $command) {
 		badprint "Unable to find mysqladmin in your \$PATH.  Is MySQL installed?\n";
 		exit;
+	}
+	# Are we being asked to connect via a socket?
+	if ($opt{socket} ne 0) {
+		$remotestring = " -S $opt{socket}";
 	}
 	# Are we being asked to connect to a remote server?
 	if ($opt{host} ne 0) {
@@ -276,9 +280,11 @@ sub mysql_setup {
 			# Login went just fine
 			$mysqllogin = "";
 			# Did this go well because of a .my.cnf file or is there no password set?
-			my $userpath = `ls -d ~`;
-			chomp($userpath);
-			unless ( -e "$userpath/.my.cnf" ) {
+			my $userpath = `ls -d ~ 2>/dev/null`;
+			if (length($userpath) > 0) {
+				chomp($userpath);
+			}
+			unless ( -e "${userpath}/.my.cnf" ) {
 				badprint "Successfully authenticated with no password - SECURITY RISK!\n";
 			}
 			return 1;
@@ -409,7 +415,7 @@ sub check_storage_engines {
 	print "$engines\n";
 	if ($mysqlvermajor >= 5) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
-		my @templist = `mysql $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') GROUP BY ENGINE HAVING SUM(DATA_LENGTH) > 0 ORDER BY ENGINE ASC;"`;
+		my @templist = `mysql $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
 		foreach my $line (@templist) {
 			my ($engine,$size,$count);
 			($engine,$size,$count) = $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)/;
@@ -463,7 +469,7 @@ sub check_storage_engines {
 		badprint "InnoDB is enabled but isn't being used\n";
 		push(@generalrec,"Add skip-innodb to MySQL configuration to disable InnoDB");
 	}
-	if (!defined $enginestats{'BDB'} && defined $myvar{'have_bdb'} && $myvar{'have_bdb'} eq "YES") {
+	if (!defined $enginestats{'BerkeleyDB'} && defined $myvar{'have_bdb'} && $myvar{'have_bdb'} eq "YES") {
 		badprint "BDB is enabled but isn't being used\n";
 		push(@generalrec,"Add skip-bdb to MySQL configuration to disable BDB");
 	}
@@ -522,10 +528,10 @@ sub calculations {
 	if ($mystat{'Key_read_requests'} > 0) {
 		$mycalc{'pct_keys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_reads'} / $mystat{'Key_read_requests'}) * 100)));
 	}
-	if ($doremote eq 0) {
-		$mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du -L $duflags '{}' 2>&1 | awk '{ s += \$1 } END { print s }'`;
-	} elsif ($doremote eq 1 and $mysqlvermajor >= 5) {
-		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT SUM(INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema');"`;
+	if ($doremote eq 0 and $mysqlvermajor < 5) {
+		$mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du -L $duflags '{}' 2>&1 | awk '{ s += \$1 } END { printf (\"%d\",s) }'`;
+	} elsif ($mysqlvermajor >= 5) {
+		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema');"`;
 	}
 	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} =~ /^0\n$/) { 
 		$mycalc{'total_myisam_indexes'} = "fail"; 
@@ -623,7 +629,7 @@ sub mysql_stats {
 	infoprint "Reads / Writes: ".$mycalc{'pct_reads'}."% / ".$mycalc{'pct_writes'}."%\n";
 
 	# Memory usage
-	infoprint "Total buffers: ".hr_bytes($mycalc{'per_thread_buffers'})." per thread and ".hr_bytes($mycalc{'server_buffers'})." global\n";
+	infoprint "Total buffers: ".hr_bytes($mycalc{'server_buffers'})." global + ".hr_bytes($mycalc{'per_thread_buffers'})." per thread ($myvar{'max_connections'} max threads)\n";
 	if ($mycalc{'total_possible_used_memory'} > 2*1024*1024*1024 && $arch eq 32) {
 		badprint "Allocating > 2GB RAM on 32-bit systems can cause system instability\n";
 		badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
@@ -671,9 +677,9 @@ sub mysql_stats {
 		}
 		if ($mystat{'Key_read_requests'} > 0) {
 			if ($mycalc{'pct_keys_from_mem'} < 95) {
-				badprint "Key buffer hit rate: $mycalc{'pct_keys_from_mem'}%\n";
+				badprint "Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% (".hr_num($mystat{'Key_read_requests'})." cached / ".hr_num($mystat{'Key_reads'})." reads)\n";
 			} else {
-				goodprint "Key buffer hit rate: $mycalc{'pct_keys_from_mem'}%\n";
+				goodprint "Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% (".hr_num($mystat{'Key_read_requests'})." cached / ".hr_num($mystat{'Key_reads'})." reads)\n";
 			}
 		} else {
 			# For the sake of space, we will be quiet here
@@ -693,10 +699,10 @@ sub mysql_stats {
 		badprint "Query cache cannot be analyzed - no SELECT statements executed\n";
 	} else {
 		if ($mycalc{'query_cache_efficiency'} < 20) {
-			badprint "Query cache efficiency: $mycalc{'query_cache_efficiency'}%\n";
+			badprint "Query cache efficiency: $mycalc{'query_cache_efficiency'}% (".hr_num($mystat{'Qcache_hits'})." cached / ".hr_num($mystat{'Qcache_hits'}+$mystat{'Com_select'})." selects)\n";
 			push(@adjvars,"query_cache_limit (> ".hr_bytes_rnd($myvar{'query_cache_limit'}).", or use smaller result sets)");
 		} else {
-			goodprint "Query cache efficiency: $mycalc{'query_cache_efficiency'}%\n";
+			goodprint "Query cache efficiency: $mycalc{'query_cache_efficiency'}% (".hr_num($mystat{'Qcache_hits'})." cached / ".hr_num($mystat{'Qcache_hits'}+$mystat{'Com_select'})." selects)\n";
 		}
 		if ($mycalc{'query_cache_prunes_per_day'} > 98) {
 			badprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
@@ -711,11 +717,11 @@ sub mysql_stats {
 		# For the sake of space, we will be quiet here
 		# No sorts have run yet
 	} elsif ($mycalc{'pct_temp_sort_table'} > 10) {
-		badprint "Sorts requiring temporary tables: $mycalc{'pct_temp_sort_table'}%\n";
+		badprint "Sorts requiring temporary tables: $mycalc{'pct_temp_sort_table'}% (".hr_num($mystat{'Sort_merge_passes'})." temp sorts / ".hr_num($mycalc{'total_sorts'})." sorts)\n";
 		push(@adjvars,"sort_buffer_size (> ".hr_bytes_rnd($myvar{'sort_buffer_size'}).")");
 		push(@adjvars,"read_rnd_buffer_size (> ".hr_bytes_rnd($myvar{'read_rnd_buffer_size'}).")");
 	} else {
-		goodprint "Sorts requiring temporary tables: $mycalc{'pct_temp_sort_table'}%\n";
+		goodprint "Sorts requiring temporary tables: $mycalc{'pct_temp_sort_table'}% (".hr_num($mystat{'Sort_merge_passes'})." temp sorts / ".hr_num($mycalc{'total_sorts'})." sorts)\n";
 	}
 	
 	# Joins
@@ -731,17 +737,17 @@ sub mysql_stats {
 	# Temporary tables
 	if ($mystat{'Created_tmp_tables'} > 0) {
 		if ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} < 256*1024*1024) {
-			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
+			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_disk_tables'} + $mystat{'Created_tmp_tables'})." total)\n";
 			push(@adjvars,"tmp_table_size (> ".hr_bytes_rnd($myvar{'tmp_table_size'}).")");
 			push(@adjvars,"max_heap_table_size (> ".hr_bytes_rnd($myvar{'max_heap_table_size'}).")");
 			push(@generalrec,"When making adjustments, make tmp_table_size/max_heap_table_size equal");
 			push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
 		} elsif ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} >= 256) {
-			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
+			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_disk_tables'} + $mystat{'Created_tmp_tables'})." total)\n";
 			push(@generalrec,"Temporary table size is already large - reduce result set size");
 			push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
 		} else {
-			goodprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}%\n";
+			goodprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_disk_tables'} + $mystat{'Created_tmp_tables'})." total)\n";
 		}
 	} else {
 		# For the sake of space, we will be quiet here
@@ -755,17 +761,17 @@ sub mysql_stats {
 		push(@adjvars,"thread_cache_size (start at 4)");
 	} else {
 		if ($mycalc{'thread_cache_hit_rate'} <= 50) {
-			badprint "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}%\n";
+			badprint "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}% (".hr_num($mystat{'Threads_created'})." created / ".hr_num($mystat{'Connections'})." connections)\n";
 			push(@adjvars,"thread_cache_size (> $myvar{'thread_cache_size'})");
 		} else {
-			goodprint "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}%\n";
+			goodprint "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}% (".hr_num($mystat{'Threads_created'})." created / ".hr_num($mystat{'Connections'})." connections)\n";
 		}
 	}
 
 	# Table cache
 	if ($mystat{'Open_tables'} > 0) {
 		if ($mycalc{'table_cache_hit_rate'} < 20) {
-			badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}%\n";
+			badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
 			if ($mysqlvermajor eq 6) {
 				push(@adjvars,"table_cache (> ".$myvar{'table_open_cache'}.")");
 			} else {
@@ -773,17 +779,17 @@ sub mysql_stats {
 			}
 			push(@generalrec,"Increase table_cache gradually to avoid file descriptor limits");
 		} else {
-			goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}%\n";
+			goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
 		}
 	}
 
 	# Open files
 	if (defined $mycalc{'pct_files_open'}) {
 		if ($mycalc{'pct_files_open'} > 85) {
-			badprint "Open file limit used: $mycalc{'pct_files_open'}%\n";
+			badprint "Open file limit used: $mycalc{'pct_files_open'}% (".hr_num($mystat{'Open_files'})."/".hr_num($myvar{'open_files_limit'}).")\n";
 			push(@adjvars,"open_files_limit (> ".$myvar{'open_files_limit'}.")");
 		} else {
-			goodprint "Open file limit used: $mycalc{'pct_files_open'}%\n";
+			goodprint "Open file limit used: $mycalc{'pct_files_open'}% (".hr_num($mystat{'Open_files'})."/".hr_num($myvar{'open_files_limit'}).")\n";
 		}
 	}
 
@@ -793,7 +799,7 @@ sub mysql_stats {
 			badprint "Table locks acquired immediately: $mycalc{'pct_table_locks_immediate'}%\n";
 			push(@generalrec,"Optimize queries and/or use InnoDB to reduce lock wait");
 		} else {
-			goodprint "Table locks acquired immediately: $mycalc{'pct_table_locks_immediate'}%\n";
+			goodprint "Table locks acquired immediately: $mycalc{'pct_table_locks_immediate'}% (".hr_num($mystat{'Table_locks_immediate'})." immediate / ".hr_num($mystat{'Table_locks_waited'}+$mystat{'Table_locks_immediate'})." locks)\n";
 		}
 	}
 
