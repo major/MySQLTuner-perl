@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 0.9.9
+# mysqltuner.pl - Version 1.0.0-rc1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -38,7 +38,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "0.9.9";
+my $tunerversion = "1.0.0-rc1";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -216,10 +216,17 @@ sub os_setup {
 			$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'` or memerror;
 		} elsif ($os =~ /NetBSD|OpenBSD/) {
 			$physical_memory = `sysctl -n hw.physmem` or memerror;
+			if ($physical_memory < 0) {
+				$physical_memory = `sysctl -n hw.physmem64` or memerror;
+			}
 			$swap_memory = `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'` or memerror;
 		} elsif ($os =~ /BSD/) {
 			$physical_memory = `sysctl -n hw.realmem`;
 			$swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
+		} elsif ($os =~ /SunOS/) {
+			$physical_memory = `/usr/sbin/prtconf | grep Memory | awk '{print \$3}'` or memerror;
+			chomp($physical_memory);
+			$physical_memory = $physical_memory*1024*1024;
 		}
 	}
 	chomp($physical_memory);
@@ -278,7 +285,7 @@ sub mysql_setup {
 		my $loginstatus = `mysqladmin $remotestring ping 2>&1`;
 		if ($loginstatus =~ /mysqld is alive/) {
 			# Login went just fine
-			$mysqllogin = "";
+			$mysqllogin = " $remotestring ";
 			# Did this go well because of a .my.cnf file or is there no password set?
 			my $userpath = `ls -d ~ 2>/dev/null`;
 			if (length($userpath) > 0) {
@@ -382,7 +389,10 @@ sub validate_mysql_version {
 my ($arch);
 sub check_architecture {
 	if ($doremote eq 1) { return; }
-	if (`uname -m` =~ /64/) {
+	if (`uname` =~ /SunOS/ && `isainfo -b` =~ /64/) {
+		$arch = 64;
+		goodprint "Operating on 64-bit architecture\n";
+	} elsif (`uname` !~ /SunOS/ && `uname -m` =~ /64/) {
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
 	} else {
@@ -476,7 +486,7 @@ sub check_storage_engines {
 	}
 	if (!defined $enginestats{'ISAM'} && defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES") {
 		badprint "ISAM is enabled but isn't being used\n";
-		push(@generalrec,"Add skip-isam to MySQL configuration to disable ISAM");
+		push(@generalrec,"Add skip-isam to MySQL configuration to disable ISAM (MySQL > 4.1.0)");
 	}
 	# Fragmented tables
 	if ($fragtables > 0) {
@@ -773,7 +783,7 @@ sub mysql_stats {
 	if ($mystat{'Open_tables'} > 0) {
 		if ($mycalc{'table_cache_hit_rate'} < 20) {
 			badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
-			if ($mysqlvermajor eq 6) {
+			if ($mysqlvermajor eq 6 || ($mysqlvermajor eq 5 && $mysqlverminor ge 1)) {
 				push(@adjvars,"table_cache (> ".$myvar{'table_open_cache'}.")");
 			} else {
 				push(@adjvars,"table_cache (> ".$myvar{'table_cache'}.")");
@@ -837,9 +847,9 @@ sub make_recommendations {
 	}
 	if (@adjvars > 0) {
 		print "Variables to adjust:\n";
-		if ($mycalc{'pct_physical_memory'} > 85) {
-			print "  *** MySQL's maximum memory usage exceeds your installed memory ***\n".
-				"  *** Add more RAM before increasing any MySQL buffer variables  ***\n";
+		if ($mycalc{'pct_physical_memory'} > 90) {
+			print "  *** MySQL's maximum memory usage is dangerously high ***\n".
+				  "  *** Add RAM before increasing MySQL buffer variables ***\n";
 		}
 		foreach (@adjvars) { print "    ".$_."\n"; }
 	}
