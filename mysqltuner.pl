@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.0.0-rc1
+# mysqltuner.pl - Version 1.0.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2008 Major Hayden - major@mhtx.net
 #
@@ -28,6 +28,9 @@
 #   Jason Gill             Mark Imbriaco
 #   Greg Eden              Aubin Galinotti
 #   Giovanni Bechis        Bill Bradford
+#   Ryan Novosielski       Michael Scheidell
+#   Blair Christensen      Hans du Plooy
+#   Victor Trac            Everett Barnes
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -38,7 +41,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.0.0-rc1";
+my $tunerversion = "1.0.0";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -398,7 +401,7 @@ sub check_architecture {
 	} else {
 		$arch = 32;
 		if ($physical_memory > 2147483648) {
-			badprint "Switch to 64-bit OS - MySQL cannot currenty use all of your RAM\n";
+			badprint "Switch to 64-bit OS - MySQL cannot currently use all of your RAM\n";
 		} else {
 			goodprint "Operating on 32-bit architecture with less than 2GB RAM\n";
 		}
