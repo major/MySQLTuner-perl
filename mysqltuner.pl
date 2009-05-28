@@ -31,7 +31,7 @@
 #   Ryan Novosielski       Michael Scheidell
 #   Blair Christensen      Hans du Plooy
 #   Victor Trac            Everett Barnes
-#   Tom Krouper
+#   Tom Krouper            Gary Barrueto
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -437,7 +437,7 @@ sub check_storage_engines {
 			$enginestats{$engine} = $size;
 			$enginecount{$engine} = $count;
 		}
-		$fragtables = `mysql $mysqllogin -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0"`;
+		$fragtables = `mysql $mysqllogin -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`;
 		chomp($fragtables);
 	} else {
 		# MySQL < 5 servers take a lot of work to get table sizes
