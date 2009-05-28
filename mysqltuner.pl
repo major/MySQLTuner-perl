@@ -31,6 +31,7 @@
 #   Ryan Novosielski       Michael Scheidell
 #   Blair Christensen      Hans du Plooy
 #   Victor Trac            Everett Barnes
+#   Tom Krouper
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -545,7 +546,7 @@ sub calculations {
 	if ($doremote eq 0 and $mysqlvermajor < 5) {
 		$mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du -L $duflags '{}' 2>&1 | awk '{ s += \$1 } END { printf (\"%d\",s) }'`;
 	} elsif ($mysqlvermajor >= 5) {
-		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema');"`;
+		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';"`;
 	}
 	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} =~ /^0\n$/) { 
 		$mycalc{'total_myisam_indexes'} = "fail"; 
