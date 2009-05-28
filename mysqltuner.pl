@@ -32,6 +32,7 @@
 #   Blair Christensen      Hans du Plooy
 #   Victor Trac            Everett Barnes
 #   Tom Krouper            Gary Barrueto
+#   Simon Greenaway
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -542,6 +543,8 @@ sub calculations {
 	}
 	if ($mystat{'Key_read_requests'} > 0) {
 		$mycalc{'pct_keys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_reads'} / $mystat{'Key_read_requests'}) * 100)));
+	} else {
+	    $mycalc{'pct_keys_from_mem'} = 0;
 	}
 	if ($doremote eq 0 and $mysqlvermajor < 5) {
 		$mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du -L $duflags '{}' 2>&1 | awk '{ s += \$1 } END { printf (\"%d\",s) }'`;
