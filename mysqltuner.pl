@@ -32,7 +32,7 @@
 #   Blair Christensen      Hans du Plooy
 #   Victor Trac            Everett Barnes
 #   Tom Krouper            Gary Barrueto
-#   Simon Greenaway
+#   Simon Greenaway        Adam Stein
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -120,16 +120,16 @@ sub usage {
 }
 
 # Setting up the colors for the print styles
-my $good = ($opt{nocolor} == 0)? "[\e[00;32mOK\e[00m]" : "[OK]" ;
-my $bad = ($opt{nocolor} == 0)? "[\e[00;31m!!\e[00m]" : "[!!]" ;
-my $info = ($opt{nocolor} == 0)? "[\e[00;34m--\e[00m]" : "[--]" ;
+my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
+my $bad = ($opt{nocolor} == 0)? "[\e[0;31m!!\e[0m]" : "[!!]" ;
+my $info = ($opt{nocolor} == 0)? "[\e[0;34m--\e[0m]" : "[--]" ;
 
 # Functions that handle the print styles
 sub goodprint { print $good." ".$_[0] unless ($opt{nogood} == 1); }
 sub infoprint { print $info." ".$_[0] unless ($opt{noinfo} == 1); }
 sub badprint { print $bad." ".$_[0] unless ($opt{nobad} == 1); }
-sub redwrap { return ($opt{nocolor} == 0)? "\e[00;31m".$_[0]."\e[00m" : $_[0] ; }
-sub greenwrap { return ($opt{nocolor} == 0)? "\e[00;32m".$_[0]."\e[00m" : $_[0] ; }
+sub redwrap { return ($opt{nocolor} == 0)? "\e[0;31m".$_[0]."\e[0m" : $_[0] ; }
+sub greenwrap { return ($opt{nocolor} == 0)? "\e[0;32m".$_[0]."\e[0m" : $_[0] ; }
 
 # Calculates the parameter passed in bytes, and then rounds it to one decimal place
 sub hr_bytes {
@@ -229,7 +229,7 @@ sub os_setup {
 			$physical_memory = `sysctl -n hw.realmem`;
 			$swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
 		} elsif ($os =~ /SunOS/) {
-			$physical_memory = `/usr/sbin/prtconf | grep Memory | awk '{print \$3}'` or memerror;
+			$physical_memory = `/usr/sbin/prtconf | grep Memory | cut -f 3 -d ' '` or memerror;
 			chomp($physical_memory);
 			$physical_memory = $physical_memory*1024*1024;
 		}
@@ -292,7 +292,7 @@ sub mysql_setup {
 			# Login went just fine
 			$mysqllogin = " $remotestring ";
 			# Did this go well because of a .my.cnf file or is there no password set?
-			my $userpath = `ls -d ~ 2>/dev/null`;
+			my $userpath = `printenv HOME`;
 			if (length($userpath) > 0) {
 				chomp($userpath);
 			}
@@ -680,7 +680,7 @@ sub mysql_stats {
 	}
 	
 	# Key buffer
-	if (!defined($mycalc{'total_myisam_indexes'}) and $doremote eq 1) {
+	if (!defined($mycalc{'total_myisam_indexes'}) and $doremote == 1) {
 		push(@generalrec,"Unable to calculate MyISAM indexes on remote MySQL server < 5.0.0");
 	} elsif ($mycalc{'total_myisam_indexes'} =~ /^fail$/) { 
 		badprint "Cannot calculate MyISAM index size - re-run script as root user\n";
