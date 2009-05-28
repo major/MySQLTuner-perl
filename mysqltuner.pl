@@ -697,14 +697,12 @@ sub mysql_stats {
 				goodprint "Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% (".hr_num($mystat{'Key_read_requests'})." cached / ".hr_num($mystat{'Key_reads'})." reads)\n";
 			}
 		} else {
-			# For the sake of space, we will be quiet here
 			# No queries have run that would use keys
 		}
 	}
 	
 	# Query cache
 	if ($mysqlvermajor < 4) { 
-		# For the sake of space, we will be quiet here
 		# MySQL versions < 4.01 don't support query caching
 		push(@generalrec,"Upgrade MySQL to version 4+ to utilize query caching");
 	} elsif ($myvar{'query_cache_size'} < 1) {
@@ -721,7 +719,12 @@ sub mysql_stats {
 		}
 		if ($mycalc{'query_cache_prunes_per_day'} > 98) {
 			badprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
-			push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).")")
+			if ($myvar{'query_cache_size'} > 128*1024*1024) {
+			    push(@generalrec,"Increasing the query_cache size over 128M may reduce performance");
+		        push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).") [see warning above]");
+			} else {
+		        push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).")");
+			}
 		} else {
 			goodprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
 		}
