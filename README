@@ -1,0 +1,15 @@
+----- MySQLTuner-perl -----
+
+MySQLTuner is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
+
+*WARNING*
+It is extremely important for you to fully understand each change you make to a MySQL database server.  If you don't understand portions of the script's output, or if you don't understand the recommendations, you should consult a knowledgeable DBA or even a system administrator that you trust.  Always test your changes on staging environments, and always keep in mind that improvements in one area can negatively affect MySQL in other areas.
+
+----- Download/Installation -----
+
+You can download the entire repository by using 'git clone' followed by the cloning URL above.  The simplest and shortest method is:
+
+	wget mysqltuner.pl
+	perl mysqltuner.pl
+	
+Of course, you can add the execute bit (chmod +x mysqltuner.pl) so you can execute it without calling perl directly.
