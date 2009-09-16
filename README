@@ -13,3 +13,4 @@ You can download the entire repository by using 'git clone' followed by the clon
 	perl mysqltuner.pl
 	
 Of course, you can add the execute bit (chmod +x mysqltuner.pl) so you can execute it without calling perl directly.
+
