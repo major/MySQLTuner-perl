@@ -4,7 +4,7 @@
 # Copyright (C) 2006-2009 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.com/
-# Subversion repository available at http://tools.assembla.com/svn/mysqltuner/
+# Git repository available at http://github.com/rackerhacker/MySQLTuner-perl
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
