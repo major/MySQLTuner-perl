@@ -352,6 +352,31 @@ sub get_all_vars {
 	}
 }
 
+sub security_recommendations {
+	print "\n-------- Security Recommendations  -------------------------------------------\n";
+	my @mysqlstatlist = `mysql $mysqllogin -Bse "SELECT user FROM mysql.user WHERE password = '' OR password IS NULL;"`;
+	if (@mysqlstatlist) {
+		foreach my $line (@mysqlstatlist) {
+			chomp($line);
+			badprint "User '".$line."' has no password set.\n";
+		}
+	} else {
+		goodprint "All database users have passwords assigned\n";
+	}
+}
+
+sub get_replication_status {
+	my $io_running = `mysql -Bse "show slave status\\G"|grep -i slave_io_running|awk '{ print \$2}'`;
+	my $sql_running = `mysql -Bse "show slave status\\G"|grep -i slave_sql_running|awk '{ print \$2}'`;
+	if ($io_running eq 'Yes' && $sql_running eq 'Yes') {
+		if ($myvar{'read_only'} eq 'OFF') {
+			badprint "This replication slave running with read_only option disabled.";
+		} else {
+			goodprint "This replication slave is running with the read_only option enabled.";
+		}
+	}
+}
+
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
 	print "\n-------- General Statistics --------------------------------------------------\n";
@@ -882,6 +907,7 @@ validate_tuner_version;			# Check current MySQLTuner version
 validate_mysql_version;			# Check current MySQL version
 check_architecture;				# Suggest 64-bit upgrade
 check_storage_engines;			# Show enabled storage engines
+security_recommendations;		# Display some security recommendations
 calculations;					# Calculate everything we need
 mysql_stats;					# Print the server stats
 make_recommendations;			# Make recommendations based on stats
