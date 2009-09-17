@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.1.0
+# mysqltuner.pl - Version 1.1.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2009 Major Hayden - major@mhtx.net
 #
@@ -40,7 +40,7 @@ use diagnostics;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.1.0";
+my $tunerversion = "1.1.1";
 my (@adjvars, @generalrec);
 
 # Set defaults
