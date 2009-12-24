@@ -358,9 +358,9 @@ sub get_all_vars {
 
 sub security_recommendations {
 	print "\n-------- Security Recommendations  -------------------------------------------\n";
-	my @mysqlstatlist = `mysql $mysqllogin -Bse "SELECT user FROM mysql.user WHERE password = '' OR password IS NULL;"`;
+	my @mysqlstatlist = `mysql $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL;"`;
 	if (@mysqlstatlist) {
-		foreach my $line (@mysqlstatlist) {
+		foreach my $line (sort @mysqlstatlist) {
 			chomp($line);
 			badprint "User '".$line."' has no password set.\n";
 		}
