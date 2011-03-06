@@ -455,7 +455,7 @@ sub check_storage_engines {
 	my $engines;
 	$engines .= (defined $myvar{'have_archive'} && $myvar{'have_archive'} eq "YES")? greenwrap "+Archive " : redwrap "-Archive " ;
 	$engines .= (defined $myvar{'have_bdb'} && $myvar{'have_bdb'} eq "YES")? greenwrap "+BDB " : redwrap "-BDB " ;
-	$engines .= (defined $myvar{'have_federated'} && $myvar{'have_federated'} eq "YES")? greenwrap "+Federated " : redwrap "-Federated " ;
+	$engines .= (defined $myvar{'have_federated_engine'} && $myvar{'have_federated_engine'} eq "YES")? greenwrap "+Federated " : redwrap "-Federated " ;
 	$engines .= (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES")? greenwrap "+InnoDB " : redwrap "-InnoDB " ;
 	$engines .= (defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES")? greenwrap "+ISAM " : redwrap "-ISAM " ;
 	$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;	
