@@ -354,6 +354,22 @@ sub get_all_vars {
 		$line =~ /([a-zA-Z_]*)\s*(.*)/;
 		$mystat{$1} = $2;
 	}
+	# have_* for engines is deprecated and will be removed in MySQL 5.6;
+	# check SHOW ENGINES and set corresponding old style variables.
+	# Also works around MySQL bug #59393 wrt. skip-innodb
+	my @mysqlenginelist = `mysql $mysqllogin -Bse "SHOW ENGINES;" 2>/dev/null`;
+	foreach my $line (@mysqlenginelist) {
+		if ($line =~ /^([a-zA-Z_]+)\s+(\S+)/) {
+			my $engine = lc($1);
+			if ($engine eq "federated" || $engine eq "blackhole") {
+				$engine .= "_engine";
+			} elsif ($engine eq "berkeleydb") {
+				$engine = "bdb";
+			}
+			my $val = ($2 eq "DEFAULT") ? "YES" : $2;
+			$myvar{"have_$engine"} = $val;
+		}
+	}
 }
 
 sub security_recommendations {
