@@ -354,6 +354,10 @@ sub get_all_vars {
 		$line =~ /([a-zA-Z_]*)\s*(.*)/;
 		$mystat{$1} = $2;
 	}
+	# Workaround for MySQL bug #59393 wrt. ignore-builtin-innodb
+	if (($myvar{'ignore_builtin_innodb'} || "") eq "ON") {
+		$myvar{'have_innodb'} = "NO";
+	}
 	# have_* for engines is deprecated and will be removed in MySQL 5.6;
 	# check SHOW ENGINES and set corresponding old style variables.
 	# Also works around MySQL bug #59393 wrt. skip-innodb
