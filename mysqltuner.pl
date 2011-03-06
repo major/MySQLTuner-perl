@@ -354,6 +354,26 @@ sub get_all_vars {
 		$line =~ /([a-zA-Z_]*)\s*(.*)/;
 		$mystat{$1} = $2;
 	}
+	# Workaround for MySQL bug #59393 wrt. ignore-builtin-innodb
+	if (($myvar{'ignore_builtin_innodb'} || "") eq "ON") {
+		$myvar{'have_innodb'} = "NO";
+	}
+	# have_* for engines is deprecated and will be removed in MySQL 5.6;
+	# check SHOW ENGINES and set corresponding old style variables.
+	# Also works around MySQL bug #59393 wrt. skip-innodb
+	my @mysqlenginelist = `mysql $mysqllogin -Bse "SHOW ENGINES;" 2>/dev/null`;
+	foreach my $line (@mysqlenginelist) {
+		if ($line =~ /^([a-zA-Z_]+)\s+(\S+)/) {
+			my $engine = lc($1);
+			if ($engine eq "federated" || $engine eq "blackhole") {
+				$engine .= "_engine";
+			} elsif ($engine eq "berkeleydb") {
+				$engine = "bdb";
+			}
+			my $val = ($2 eq "DEFAULT") ? "YES" : $2;
+			$myvar{"have_$engine"} = $val;
+		}
+	}
 }
 
 sub security_recommendations {
@@ -455,7 +475,7 @@ sub check_storage_engines {
 	my $engines;
 	$engines .= (defined $myvar{'have_archive'} && $myvar{'have_archive'} eq "YES")? greenwrap "+Archive " : redwrap "-Archive " ;
 	$engines .= (defined $myvar{'have_bdb'} && $myvar{'have_bdb'} eq "YES")? greenwrap "+BDB " : redwrap "-BDB " ;
-	$engines .= (defined $myvar{'have_federated'} && $myvar{'have_federated'} eq "YES")? greenwrap "+Federated " : redwrap "-Federated " ;
+	$engines .= (defined $myvar{'have_federated_engine'} && $myvar{'have_federated_engine'} eq "YES")? greenwrap "+Federated " : redwrap "-Federated " ;
 	$engines .= (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES")? greenwrap "+InnoDB " : redwrap "-InnoDB " ;
 	$engines .= (defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES")? greenwrap "+ISAM " : redwrap "-ISAM " ;
 	$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;	
