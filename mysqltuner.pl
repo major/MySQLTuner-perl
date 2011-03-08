@@ -941,3 +941,9 @@ make_recommendations;			# Make recommendations based on stats
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
+
+# Local variables:
+# indent-tabs-mode: t
+# cperl-indent-level: 8
+# perl-indent-level: 8
+# End:
