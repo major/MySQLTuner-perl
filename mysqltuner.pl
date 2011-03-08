@@ -59,7 +59,7 @@ my %opt = (
 		"skipsize" 		=> 0,
 		"checkversion" 	=> 0,
 	);
-	
+
 # Gather the options from the command line
 GetOptions(\%opt,
 		'nobad',
@@ -478,7 +478,7 @@ sub check_storage_engines {
 	$engines .= (defined $myvar{'have_federated_engine'} && $myvar{'have_federated_engine'} eq "YES")? greenwrap "+Federated " : redwrap "-Federated " ;
 	$engines .= (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES")? greenwrap "+InnoDB " : redwrap "-InnoDB " ;
 	$engines .= (defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES")? greenwrap "+ISAM " : redwrap "-ISAM " ;
-	$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;	
+	$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;
 	print "$engines\n";
 	if ($mysqlvermajor >= 5) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
@@ -584,11 +584,11 @@ sub calculations {
 
 	# Slow queries
 	$mycalc{'pct_slow_queries'} = int(($mystat{'Slow_queries'}/$mystat{'Questions'}) * 100);
-	
+
 	# Connections
 	$mycalc{'pct_connections_used'} = int(($mystat{'Max_used_connections'}/$myvar{'max_connections'}) * 100);
 	$mycalc{'pct_connections_used'} = ($mycalc{'pct_connections_used'} > 100) ? 100 : $mycalc{'pct_connections_used'} ;
-	
+
 	# Key buffers
 	if ($mysqlvermajor > 3 && !($mysqlvermajor == 4 && $mysqlverminor == 0)) {
 		$mycalc{'pct_key_buffer_used'} = sprintf("%.1f",(1 - (($mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}) / $myvar{'key_buffer_size'})) * 100);
@@ -603,12 +603,12 @@ sub calculations {
 	} elsif ($mysqlvermajor >= 5) {
 		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';"`;
 	}
-	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} =~ /^0\n$/) { 
-		$mycalc{'total_myisam_indexes'} = "fail"; 
+	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} =~ /^0\n$/) {
+		$mycalc{'total_myisam_indexes'} = "fail";
 	} elsif (defined $mycalc{'total_myisam_indexes'}) {
 		chomp($mycalc{'total_myisam_indexes'});
 	}
-	
+
 	# Query cache
 	if ($mysqlvermajor > 3) {
 		$mycalc{'query_cache_efficiency'} = sprintf("%.1f",($mystat{'Qcache_hits'} / ($mystat{'Com_select'} + $mystat{'Qcache_hits'})) * 100);
@@ -621,17 +621,17 @@ sub calculations {
 			$mycalc{'query_cache_prunes_per_day'} = int($mystat{'Qcache_lowmem_prunes'} / ($mystat{'Uptime'}/86400));
 		}
 	}
-	
+
 	# Sorting
 	$mycalc{'total_sorts'} = $mystat{'Sort_scan'} + $mystat{'Sort_range'};
 	if ($mycalc{'total_sorts'} > 0) {
 		$mycalc{'pct_temp_sort_table'} = int(($mystat{'Sort_merge_passes'} / $mycalc{'total_sorts'}) * 100);
 	}
-	
+
 	# Joins
 	$mycalc{'joins_without_indexes'} = $mystat{'Select_range_check'} + $mystat{'Select_full_join'};
 	$mycalc{'joins_without_indexes_per_day'} = int($mycalc{'joins_without_indexes'} / ($mystat{'Uptime'}/86400));
-	
+
 	# Temporary tables
 	if ($mystat{'Created_tmp_tables'} > 0) {
 		if ($mystat{'Created_tmp_disk_tables'} > 0) {
@@ -640,19 +640,19 @@ sub calculations {
 			$mycalc{'pct_temp_disk'} = 0;
 		}
 	}
-	
+
 	# Table cache
 	if ($mystat{'Opened_tables'} > 0) {
 		$mycalc{'table_cache_hit_rate'} = int($mystat{'Open_tables'}*100/$mystat{'Opened_tables'});
 	} else {
 		$mycalc{'table_cache_hit_rate'} = 100;
 	}
-	
+
 	# Open files
 	if ($myvar{'open_files_limit'} > 0) {
 		$mycalc{'pct_files_open'} = int($mystat{'Open_files'}*100/$myvar{'open_files_limit'});
 	}
-	
+
 	# Table locks
 	if ($mystat{'Table_locks_immediate'} > 0) {
 		if ($mystat{'Table_locks_waited'} == 0) {
@@ -661,7 +661,7 @@ sub calculations {
 			$mycalc{'pct_table_locks_immediate'} = int($mystat{'Table_locks_immediate'}*100/($mystat{'Table_locks_waited'} + $mystat{'Table_locks_immediate'}));
 		}
 	}
-	
+
 	# Thread cache
 	$mycalc{'thread_cache_hit_rate'} = int(100 - (($mystat{'Threads_created'} / $mystat{'Connections'}) * 100));
 
@@ -709,7 +709,7 @@ sub mysql_stats {
 	} else {
 		goodprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
 	}
-	
+
 	# Slow queries
 	if ($mycalc{'pct_slow_queries'} > 5) {
 		badprint "Slow queries: $mycalc{'pct_slow_queries'}% (".hr_num($mystat{'Slow_queries'})."/".hr_num($mystat{'Questions'}).")\n";
@@ -720,7 +720,7 @@ sub mysql_stats {
 	if (defined($myvar{'log_slow_queries'})) {
 		if ($myvar{'log_slow_queries'} eq "OFF") { push(@generalrec,"Enable the slow query log to troubleshoot bad queries"); }
 	}
-	
+
 	# Connections
 	if ($mycalc{'pct_connections_used'} > 85) {
 		badprint "Highest connection usage: $mycalc{'pct_connections_used'}%  ($mystat{'Max_used_connections'}/$myvar{'max_connections'})\n";
@@ -730,11 +730,11 @@ sub mysql_stats {
 	} else {
 		goodprint "Highest usage of available connections: $mycalc{'pct_connections_used'}% ($mystat{'Max_used_connections'}/$myvar{'max_connections'})\n";
 	}
-	
+
 	# Key buffer
 	if (!defined($mycalc{'total_myisam_indexes'}) and $doremote == 1) {
 		push(@generalrec,"Unable to calculate MyISAM indexes on remote MySQL server < 5.0.0");
-	} elsif ($mycalc{'total_myisam_indexes'} =~ /^fail$/) { 
+	} elsif ($mycalc{'total_myisam_indexes'} =~ /^fail$/) {
 		badprint "Cannot calculate MyISAM index size - re-run script as root user\n";
 	} elsif ($mycalc{'total_myisam_indexes'} == "0") {
 		badprint "None of your MyISAM tables are indexed - add indexes immediately\n";
@@ -755,9 +755,9 @@ sub mysql_stats {
 			# No queries have run that would use keys
 		}
 	}
-	
+
 	# Query cache
-	if ($mysqlvermajor < 4) { 
+	if ($mysqlvermajor < 4) {
 		# MySQL versions < 4.01 don't support query caching
 		push(@generalrec,"Upgrade MySQL to version 4+ to utilize query caching");
 	} elsif ($myvar{'query_cache_size'} < 1) {
@@ -784,7 +784,7 @@ sub mysql_stats {
 			goodprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
 		}
 	}
-	
+
 	# Sorting
 	if ($mycalc{'total_sorts'} == 0) {
 		# For the sake of space, we will be quiet here
@@ -796,7 +796,7 @@ sub mysql_stats {
 	} else {
 		goodprint "Sorts requiring temporary tables: $mycalc{'pct_temp_sort_table'}% (".hr_num($mystat{'Sort_merge_passes'})." temp sorts / ".hr_num($mycalc{'total_sorts'})." sorts)\n";
 	}
-	
+
 	# Joins
 	if ($mycalc{'joins_without_indexes_per_day'} > 250) {
 		badprint "Joins performed without indexes: $mycalc{'joins_without_indexes'}\n";
@@ -806,7 +806,7 @@ sub mysql_stats {
 		# For the sake of space, we will be quiet here
 		# No joins have run without indexes
 	}
-	
+
 	# Temporary tables
 	if ($mystat{'Created_tmp_tables'} > 0) {
 		if ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} < 256*1024*1024) {
@@ -888,7 +888,7 @@ sub mysql_stats {
 		badprint "Connections aborted: ".$mycalc{'pct_aborted_connections'}."%\n";
 		push(@generalrec,"Your applications are not closing MySQL connections properly");
 	}
-	
+
 	# InnoDB
 	if (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES" && defined $enginestats{'InnoDB'}) {
 		if ($myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'}) {
