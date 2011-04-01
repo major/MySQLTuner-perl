@@ -116,6 +116,33 @@ sub usage {
 	exit;
 }
 
+# on win console, no colors can be used
+if ($^O eq 'MSWin32')
+{
+    $opt{nocolor} = 1;
+}
+
+# some tool names
+my $awk;
+my $mysqladmin;
+my $quotes;
+my $null;
+if ($^O eq 'MSWin32')
+{
+	$awk = 'gawk --traditional';
+	$mysqladmin = 'mysqladmin.exe';
+	# gawk on win wants them double. Also the -p option for mysql
+	$quotes = '"';
+	$null = 'NUL';
+}
+else
+{
+	$awk = 'awk';
+	$mysqladmin = 'mysqladmin';
+	$quotes = "'";
+	$null = '/dev/null';
+}
+
 # Setting up the colors for the print styles
 my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
 my $bad = ($opt{nocolor} == 0)? "[\e[0;31m!!\e[0m]" : "[!!]" ;
@@ -211,31 +238,40 @@ sub os_setup {
 		}
 	} else {
 		if ($os =~ /Linux/) {
-			$physical_memory = `free -b | grep Mem | awk '{print \$2}'` or memerror;
-			$swap_memory = `free -b | grep Swap | awk '{print \$2}'` or memerror;
+			$physical_memory = `free -b | grep Mem | $awk $quotes\{print \$2}$quotes` or memerror;
+			$swap_memory = `free -b | grep Swap | $awk $quotes\{print \$2}$quotes` or memerror;
 		} elsif ($os =~ /Darwin/) {
 			$physical_memory = `sysctl -n hw.memsize` or memerror;
-			$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'` or memerror;
+			$swap_memory = `sysctl -n vm.swapusage | $awk $quotes\{print \$3}$quotes | sed 's/\..*\$//'` or memerror;
 		} elsif ($os =~ /NetBSD|OpenBSD/) {
 			$physical_memory = `sysctl -n hw.physmem` or memerror;
 			if ($physical_memory < 0) {
 				$physical_memory = `sysctl -n hw.physmem64` or memerror;
 			}
-			$swap_memory = `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'` or memerror;
+			$swap_memory = `swapctl -l | grep '^/' | $awk $quotes\{ s+= \$2 } END { print s }$quotes` or memerror;
 		} elsif ($os =~ /BSD/) {
 			$physical_memory = `sysctl -n hw.realmem`;
-			$swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
+			$swap_memory = `swapinfo | grep '^/' | $awk $quotes\{ s+= \$2 } END { print s }$quotes`;
 		} elsif ($os =~ /SunOS/) {
 			$physical_memory = `/usr/sbin/prtconf | grep Memory | cut -f 3 -d ' '` or memerror;
 			chomp($physical_memory);
 			$physical_memory = $physical_memory*1024*1024;
 		} elsif ($os =~ /AIX/) {
-			$physical_memory = `lsattr -El sys0 | grep realmem | awk '{print \$2}'` or memerror;
+			$physical_memory = `lsattr -El sys0 | grep realmem | $awk $quotes\{print \$2}$quotes` or memerror;
 			chomp($physical_memory);
 			$physical_memory = $physical_memory*1024;
-			$swap_memory = `lsps -as | awk -F"(MB| +)" '/MB /{print \$2}'` or memerror;
+			$swap_memory = `lsps -as | $awk -F"(MB| +)" '/MB /{print \$2}'` or memerror;
 			chomp($swap_memory);
 			$swap_memory = $swap_memory*1024*1024;
+		} elsif ($os =~ /WindowsNT/) {
+			if ($opt{'forcemem'} == 0)
+			{
+				badprint "Unable to determine total memory/swap; use '--forcemem'\n";
+				exit;
+			}
+			# to be finished. is swap info available via cli???
+			#$physical_memory = `mem`;
+			#$swap_memory = `swapinfo | grep '^/' | $awk $quotes\{ s+= \$2 } END { print s }$quotes`;
 		}
 	}
 	chomp($physical_memory);
@@ -246,11 +282,16 @@ my ($mysqllogin,$doremote,$remotestring);
 sub mysql_setup {
 	$doremote = 0;
 	$remotestring = '';
-	my $command = `which mysqladmin`;
+	my $command = `which $mysqladmin`;
 	chomp($command);
 	if (! -e $command) {
 		badprint "Unable to find mysqladmin in your \$PATH.  Is MySQL installed?\n";
 		exit;
+	}
+	if ($^O eq 'MSWin32')
+	{
+	    # in case it is in c:\program files\mysql, we need double quotes
+		$command = '"' . $command . '"';
 	}
 	# Are we being asked to connect via a socket?
 	if ($opt{socket} ne 0) {
@@ -271,8 +312,8 @@ sub mysql_setup {
 	}
 	# Did we already get a username and password passed on the command line?
 	if ($opt{user} ne 0 and $opt{pass} ne 0) {
-		$mysqllogin = "-u $opt{user} -p'$opt{pass}'".$remotestring;
-		my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
+		$mysqllogin = "-u $opt{user} -p$quotes$opt{pass}$quotes".$remotestring;
+		my $loginstatus = `$command ping $mysqllogin 2>&1`;
 		if ($loginstatus =~ /mysqld is alive/) {
 			goodprint "Logged in using credentials passed on the command line\n";
 			return 1;
@@ -284,14 +325,14 @@ sub mysql_setup {
 	if ( -r "/etc/psa/.psa.shadow" and $doremote == 0 ) {
 		# It's a Plesk box, use the available credentials
 		$mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
-		my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
+		my $loginstatus = `$command ping $mysqllogin 2>&1`;
 		unless ($loginstatus =~ /mysqld is alive/) {
 			badprint "Attempted to use login credentials from Plesk, but they failed.\n";
 			exit 0;
 		}
 	} else {
 		# It's not Plesk, we should try a login
-		my $loginstatus = `mysqladmin $remotestring ping 2>&1`;
+		my $loginstatus = `$command $remotestring ping 2>&1`;
 		if ($loginstatus =~ /mysqld is alive/) {
 			# Login went just fine
 			$mysqllogin = " $remotestring ";
@@ -308,17 +349,23 @@ sub mysql_setup {
 			print STDERR "Please enter your MySQL administrative login: ";
 			my $name = <>;
 			print STDERR "Please enter your MySQL administrative password: ";
-			system("stty -echo");
+			if ($^O ne 'MSWin32')
+			{
+				system("stty -echo");
+			}
 			my $password = <>;
-			system("stty echo");
+			if ($^O ne 'MSWin32')
+			{
+				system("stty echo");
+			}
 			chomp($password);
 			chomp($name);
 			$mysqllogin = "-u $name";
 			if (length($password) > 0) {
-				$mysqllogin .= " -p'$password'";
+				$mysqllogin .= " -p$quotes$password$quotes";
 			}
 			$mysqllogin .= $remotestring;
-			my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
+			my $loginstatus = `$command ping $mysqllogin 2>&1`;
 			if ($loginstatus =~ /mysqld is alive/) {
 				print STDERR "\n";
 				if (! length($password)) {
@@ -361,7 +408,7 @@ sub get_all_vars {
 	# have_* for engines is deprecated and will be removed in MySQL 5.6;
 	# check SHOW ENGINES and set corresponding old style variables.
 	# Also works around MySQL bug #59393 wrt. skip-innodb
-	my @mysqlenginelist = `mysql $mysqllogin -Bse "SHOW ENGINES;" 2>/dev/null`;
+	my @mysqlenginelist = `mysql $mysqllogin -Bse "SHOW ENGINES;" 2>$null`;
 	foreach my $line (@mysqlenginelist) {
 		if ($line =~ /^([a-zA-Z_]+)\s+(\S+)/) {
 			my $engine = lc($1);
@@ -390,8 +437,8 @@ sub security_recommendations {
 }
 
 sub get_replication_status {
-	my $io_running = `mysql -Bse "show slave status\\G"|grep -i slave_io_running|awk '{ print \$2}'`;
-	my $sql_running = `mysql -Bse "show slave status\\G"|grep -i slave_sql_running|awk '{ print \$2}'`;
+	my $io_running = `mysql -Bse "show slave status\\G"|grep -i slave_io_running|$awk $quotes\{ print \$2}$quotes`;
+	my $sql_running = `mysql -Bse "show slave status\\G"|grep -i slave_sql_running|$awk $quotes\{ print \$2}$quotes`;
 	if ($io_running eq 'Yes' && $sql_running eq 'Yes') {
 		if ($myvar{'read_only'} eq 'OFF') {
 			badprint "This replication slave running with read_only option disabled.";
@@ -411,10 +458,10 @@ sub validate_tuner_version {
 	my $update;
 	my $url = "http://mysqltuner.com/versioncheck.php?v=$tunerversion";
 	if (-e "/usr/bin/curl") {
-		$update = `/usr/bin/curl --connect-timeout 5 '$url' 2>/dev/null`;
+		$update = `/usr/bin/curl --connect-timeout 5 '$url' 2>$null`;
 		chomp($update);
 	} elsif (-e "/usr/bin/wget") {
-		$update = `/usr/bin/wget -e timestamping=off -T 5 -O - '$url' 2>/dev/null`;
+		$update = `/usr/bin/wget -e timestamping=off -T 5 -O - '$url' 2>$null`;
 		chomp($update);
 	}
 	if ($update eq 1) {
@@ -502,10 +549,10 @@ sub check_storage_engines {
 			if ($db eq "information_schema") { next; }
 			if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
 				# MySQL 3.23/4.0 keeps Data_Length in the 6th column
-				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$6,\$9}'`);
+				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | $awk $quotes\{print \$2,\$6,\$9}$quotes`);
 			} else {
 				# MySQL 4.1+ keeps Data_Length in the 7th column
-				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7,\$10}'`);
+				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | $awk $quotes\{print \$2,\$7,\$10}$quotes`);
 			}
 		}
 		# Parse through the table list to generate storage engine counts/statistics
@@ -599,7 +646,7 @@ sub calculations {
 	    $mycalc{'pct_keys_from_mem'} = 0;
 	}
 	if ($doremote eq 0 and $mysqlvermajor < 5) {
-		$mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du -L $duflags '{}' 2>&1 | awk '{ s += \$1 } END { printf (\"%d\",s) }'`;
+		$mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du -L $duflags '{}' 2>&1 | $awk $quotes\{ s += \$1 } END { printf (\"%d\",s) }$quotes`;
 	} elsif ($mysqlvermajor >= 5) {
 		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';"`;
 	}
@@ -736,7 +783,7 @@ sub mysql_stats {
 		push(@generalrec,"Unable to calculate MyISAM indexes on remote MySQL server < 5.0.0");
 	} elsif ($mycalc{'total_myisam_indexes'} =~ /^fail$/) {
 		badprint "Cannot calculate MyISAM index size - re-run script as root user\n";
-	} elsif ($mycalc{'total_myisam_indexes'} == "0") {
+	} elsif ($mycalc{'total_myisam_indexes'} eq "0") {
 		badprint "None of your MyISAM tables are indexed - add indexes immediately\n";
 	} else {
 		if ($myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'} && $mycalc{'pct_keys_from_mem'} < 95) {
