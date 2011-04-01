@@ -394,7 +394,7 @@ sub get_replication_status {
 	my $sql_running = `mysql -Bse "show slave status\\G"|grep -i slave_sql_running|awk '{ print \$2}'`;
 	if ($io_running eq 'Yes' && $sql_running eq 'Yes') {
 		if ($myvar{'read_only'} eq 'OFF') {
-			badprint "This replication slave running with read_only option disabled.";
+			badprint "This replication slave is running with the read_only option disabled.";
 		} else {
 			goodprint "This replication slave is running with the read_only option enabled.";
 		}
