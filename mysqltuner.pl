@@ -308,9 +308,9 @@ sub mysql_setup {
 			print STDERR "Please enter your MySQL administrative login: ";
 			my $name = <>;
 			print STDERR "Please enter your MySQL administrative password: ";
-			system("stty -echo");
+			system("stty -echo >/dev/null 2>&1");
 			my $password = <>;
-			system("stty echo");
+			system("stty echo >/dev/null 2>&1");
 			chomp($password);
 			chomp($name);
 			$mysqllogin = "-u $name";
