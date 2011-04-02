@@ -37,6 +37,7 @@
 use strict;
 use warnings;
 use diagnostics;
+use File::Spec;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
@@ -115,6 +116,8 @@ sub usage {
 		"\n";
 	exit;
 }
+
+my $devnull = File::Spec->devnull();
 
 # Setting up the colors for the print styles
 my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
@@ -308,9 +311,9 @@ sub mysql_setup {
 			print STDERR "Please enter your MySQL administrative login: ";
 			my $name = <>;
 			print STDERR "Please enter your MySQL administrative password: ";
-			system("stty -echo >/dev/null 2>&1");
+			system("stty -echo >$devnull 2>&1");
 			my $password = <>;
-			system("stty echo >/dev/null 2>&1");
+			system("stty echo >$devnull 2>&1");
 			chomp($password);
 			chomp($name);
 			$mysqllogin = "-u $name";
@@ -361,7 +364,7 @@ sub get_all_vars {
 	# have_* for engines is deprecated and will be removed in MySQL 5.6;
 	# check SHOW ENGINES and set corresponding old style variables.
 	# Also works around MySQL bug #59393 wrt. skip-innodb
-	my @mysqlenginelist = `mysql $mysqllogin -Bse "SHOW ENGINES;" 2>/dev/null`;
+	my @mysqlenginelist = `mysql $mysqllogin -Bse "SHOW ENGINES;" 2>$devnull`;
 	foreach my $line (@mysqlenginelist) {
 		if ($line =~ /^([a-zA-Z_]+)\s+(\S+)/) {
 			my $engine = lc($1);
@@ -412,10 +415,10 @@ sub validate_tuner_version {
 	my $update;
 	my $url = "http://mysqltuner.com/versioncheck.php?v=$tunerversion";
 	if (-e "/usr/bin/curl") {
-		$update = `/usr/bin/curl --connect-timeout 5 '$url' 2>/dev/null`;
+		$update = `/usr/bin/curl --connect-timeout 5 '$url' 2>$devnull`;
 		chomp($update);
 	} elsif (-e "/usr/bin/wget") {
-		$update = `/usr/bin/wget -e timestamping=off -T 5 -O - '$url' 2>/dev/null`;
+		$update = `/usr/bin/wget -e timestamping=off -T 5 -O - '$url' 2>$devnull`;
 		chomp($update);
 	}
 	if ($update eq 1) {
