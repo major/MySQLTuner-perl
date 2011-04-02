@@ -390,8 +390,9 @@ sub security_recommendations {
 }
 
 sub get_replication_status {
-	my $io_running = `mysql -Bse "show slave status\\G"|grep -i slave_io_running|awk '{ print \$2}'`;
-	my $sql_running = `mysql -Bse "show slave status\\G"|grep -i slave_sql_running|awk '{ print \$2}'`;
+	my $slave_status = `mysql $mysqllogin -Bse "show slave status\\G"`;
+	my ($io_running) = ($slave_status =~ /slave_io_running\S*\s+(\S+)/i);
+	my ($sql_running) = ($slave_status =~ /slave_sql_running\S*\s+(\S+)/i);
 	if ($io_running eq 'Yes' && $sql_running eq 'Yes') {
 		if ($myvar{'read_only'} eq 'OFF') {
 			badprint "This replication slave is running with the read_only option disabled.";
@@ -500,23 +501,17 @@ sub check_storage_engines {
 		foreach my $db (@dblist) {
 			chomp($db);
 			if ($db eq "information_schema") { next; }
+			my @ixs = (1, 6, 9);
 			if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
-				# MySQL 3.23/4.0 keeps Data_Length in the 6th column
-				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$6,\$9}'`);
-			} else {
-				# MySQL 4.1+ keeps Data_Length in the 7th column
-				push (@tblist,`mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`" | awk '{print \$2,\$7,\$10}'`);
+				# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
+				@ixs = (1, 5, 8);
 			}
+			push(@tblist, map { [ (split)[@ixs] ] } `mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`"`);
 		}
 		# Parse through the table list to generate storage engine counts/statistics
 		$fragtables = 0;
-		foreach my $line (@tblist) {
-			chomp($line);
-			$line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)/;
-			my $engine = $1;
-			my $size = $2;
-			my $datafree = $3;
-			if ($size !~ /^\d+$/) { $size = 0; }
+		foreach my $tbl (@tblist) {
+			my ($engine, $size, $datafree) = @$tbl;
 			if (defined $enginestats{$engine}) {
 				$enginestats{$engine} += $size;
 				$enginecount{$engine} += 1;
@@ -599,11 +594,13 @@ sub calculations {
 	    $mycalc{'pct_keys_from_mem'} = 0;
 	}
 	if ($doremote eq 0 and $mysqlvermajor < 5) {
-		$mycalc{'total_myisam_indexes'} = `find $myvar{'datadir'} -name '*.MYI' 2>&1 | xargs du -L $duflags '{}' 2>&1 | awk '{ s += \$1 } END { printf (\"%d\",s) }'`;
+		my $size = 0;
+		$size += (split)[0] for `find $myvar{'datadir'} -name "*.MYI" 2>&1 | xargs du -L $duflags 2>&1`;
+		$mycalc{'total_myisam_indexes'} = $size;
 	} elsif ($mysqlvermajor >= 5) {
 		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';"`;
 	}
-	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} =~ /^0\n$/) {
+	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} == 0) {
 		$mycalc{'total_myisam_indexes'} = "fail";
 	} elsif (defined $mycalc{'total_myisam_indexes'}) {
 		chomp($mycalc{'total_myisam_indexes'});
