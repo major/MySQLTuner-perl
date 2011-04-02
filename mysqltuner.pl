@@ -431,13 +431,19 @@ sub validate_tuner_version {
 my ($mysqlvermajor,$mysqlverminor);
 sub validate_mysql_version {
 	($mysqlvermajor,$mysqlverminor) = $myvar{'version'} =~ /(\d)\.(\d)/;
-	if ($mysqlvermajor < 5) {
+	if (!mysql_version_ge(5)) {
 		badprint "Your MySQL version ".$myvar{'version'}." is EOL software!  Upgrade soon!\n";
-	} elsif ($mysqlvermajor == 5) {
-		goodprint "Currently running supported MySQL version ".$myvar{'version'}."\n";
-	} else {
+	} elsif (mysql_version_ge(6)) {
 		badprint "Currently running unsupported MySQL version ".$myvar{'version'}."\n";
+	} else {
+		goodprint "Currently running supported MySQL version ".$myvar{'version'}."\n";
 	}
+}
+
+# Checks if MySQL version is greater than equal to (major, minor)
+sub mysql_version_ge {
+	my ($maj, $min) = @_;
+	return $mysqlvermajor > $maj || ($mysqlvermajor == $maj && $mysqlverminor >= ($min || 0));
 }
 
 # Checks for 32-bit boxes with more than 2GB of RAM
@@ -481,7 +487,7 @@ sub check_storage_engines {
 	$engines .= (defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES")? greenwrap "+ISAM " : redwrap "-ISAM " ;
 	$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;
 	print "$engines\n";
-	if ($mysqlvermajor >= 5) {
+	if (mysql_version_ge(5)) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
 		my @templist = `mysql $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
 		foreach my $line (@templist) {
@@ -502,7 +508,7 @@ sub check_storage_engines {
 			chomp($db);
 			if ($db eq "information_schema") { next; }
 			my @ixs = (1, 6, 9);
-			if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
+			if (!mysql_version_ge(4, 1)) {
 				# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
 				@ixs = (1, 5, 8);
 			}
@@ -556,7 +562,7 @@ sub calculations {
 		exit 0;
 	}
 	# Per-thread memory
-	if ($mysqlvermajor > 3) {
+	if (mysql_version_ge(4)) {
 		$mycalc{'per_thread_buffers'} = $myvar{'read_buffer_size'} + $myvar{'read_rnd_buffer_size'} + $myvar{'sort_buffer_size'} + $myvar{'thread_stack'} + $myvar{'join_buffer_size'};
 	} else {
 		$mycalc{'per_thread_buffers'} = $myvar{'record_buffer'} + $myvar{'record_rnd_buffer'} + $myvar{'sort_buffer'} + $myvar{'thread_stack'} + $myvar{'join_buffer_size'};
@@ -585,7 +591,7 @@ sub calculations {
 	$mycalc{'pct_connections_used'} = ($mycalc{'pct_connections_used'} > 100) ? 100 : $mycalc{'pct_connections_used'} ;
 
 	# Key buffers
-	if ($mysqlvermajor > 3 && !($mysqlvermajor == 4 && $mysqlverminor == 0)) {
+	if (mysql_version_ge(4, 1)) {
 		$mycalc{'pct_key_buffer_used'} = sprintf("%.1f",(1 - (($mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}) / $myvar{'key_buffer_size'})) * 100);
 	}
 	if ($mystat{'Key_read_requests'} > 0) {
@@ -593,11 +599,11 @@ sub calculations {
 	} else {
 	    $mycalc{'pct_keys_from_mem'} = 0;
 	}
-	if ($doremote eq 0 and $mysqlvermajor < 5) {
+	if ($doremote eq 0 and !mysql_version_ge(5)) {
 		my $size = 0;
 		$size += (split)[0] for `find $myvar{'datadir'} -name "*.MYI" 2>&1 | xargs du -L $duflags 2>&1`;
 		$mycalc{'total_myisam_indexes'} = $size;
-	} elsif ($mysqlvermajor >= 5) {
+	} elsif (mysql_version_ge(5)) {
 		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';"`;
 	}
 	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} == 0) {
@@ -607,7 +613,7 @@ sub calculations {
 	}
 
 	# Query cache
-	if ($mysqlvermajor > 3) {
+	if (mysql_version_ge(4)) {
 		$mycalc{'query_cache_efficiency'} = sprintf("%.1f",($mystat{'Qcache_hits'} / ($mystat{'Com_select'} + $mystat{'Qcache_hits'})) * 100);
 		if ($myvar{'query_cache_size'}) {
 			$mycalc{'pct_query_cache_used'} = sprintf("%.1f",100 - ($mystat{'Qcache_free_memory'} / $myvar{'query_cache_size'}) * 100);
@@ -754,7 +760,7 @@ sub mysql_stats {
 	}
 
 	# Query cache
-	if ($mysqlvermajor < 4) {
+	if (!mysql_version_ge(4)) {
 		# MySQL versions < 4.01 don't support query caching
 		push(@generalrec,"Upgrade MySQL to version 4+ to utilize query caching");
 	} elsif ($myvar{'query_cache_size'} < 1) {
@@ -842,7 +848,7 @@ sub mysql_stats {
 	if ($mystat{'Open_tables'} > 0) {
 		if ($mycalc{'table_cache_hit_rate'} < 20) {
 			badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
-			if ($mysqlvermajor eq 6 || ($mysqlvermajor eq 5 && $mysqlverminor ge 1)) {
+			if (mysql_version_ge(5, 1)) {
 				push(@adjvars,"table_cache (> ".$myvar{'table_open_cache'}.")");
 			} else {
 				push(@adjvars,"table_cache (> ".$myvar{'table_cache'}.")");
@@ -874,7 +880,7 @@ sub mysql_stats {
 	}
 
 	# Performance options
-	if ($mysqlvermajor == 3 || ($mysqlvermajor == 4 && $mysqlverminor == 0)) {
+	if (!mysql_version_ge(4, 1)) {
 		push(@generalrec,"Upgrade to MySQL 4.1+ to use concurrent MyISAM inserts");
 	} elsif ($myvar{'concurrent_insert'} eq "OFF") {
 		push(@generalrec,"Enable concurrent_insert by setting it to 'ON'");
