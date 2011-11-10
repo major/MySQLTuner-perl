@@ -292,8 +292,16 @@ sub mysql_setup {
 			badprint "Attempted to use login credentials from Plesk, but they failed.\n";
 			exit 0;
 		}
+	} elsif ( -r "/etc/mysql/debian.cnf" and $doremote == 0 ) {
+		# It's a Debian box, use the system maintenance account
+		$mysqllogin = "--defaults-file=/etc/mysql/debian.cnf";
+		my $loginstatus = `mysqladmin $mysqllogin ping 2>&1`;
+		unless ($loginstatus =~ /mysqld is alive/) {
+			badprint "Attempted to use Debian system maintenance login credentials, but they failed. Do you have permission to use them?\n";
+			exit 0;
+		}
 	} else {
-		# It's not Plesk, we should try a login
+		# It's not Plesk and not Debian, we should try a login
 		my $loginstatus = `mysqladmin $remotestring ping 2>&1`;
 		if ($loginstatus =~ /mysqld is alive/) {
 			# Login went just fine
