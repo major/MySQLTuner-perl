@@ -463,7 +463,14 @@ sub mysql_version_ge {
 # Checks for 32-bit boxes with more than 2GB of RAM
 my ($arch);
 sub check_architecture {
-	if ($doremote eq 1) { return; }
+	if ($doremote eq 1) { 
+		# Setting value for $arch variable to avoid warning about uninitialized
+		# variable (more details at https://github.com/rackerhacker/MySQLTuner-perl/issues/7)
+		# $id Dimiter "Arruor" Nikov exp
+		$arch = 0;
+		return; 
+	}
+
 	if (`uname` =~ /SunOS/ && `isainfo -b` =~ /64/) {
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
