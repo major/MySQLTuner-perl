@@ -292,6 +292,23 @@ sub mysql_setup {
 			badprint "Attempted to use login credentials from Plesk, but they failed.\n";
 			exit 0;
 		}
+	} elsif ( -r "/usr/local/directadmin/conf/mysql.conf" and $doremote == 0 ){
+		# It's a DirectAdmin box, use the available credentials
+		my $mysqluser=`cat /usr/local/directadmin/conf/mysql.conf | egrep '^user=.*'`;
+		my $mysqlpass=`cat /usr/local/directadmin/conf/mysql.conf | egrep '^passwd=.*'`;
+
+		$mysqluser =~ s/user=//;
+		$mysqluser =~ s/[\r\n]//;
+		$mysqlpass =~ s/passwd=//;
+		$mysqlpass =~ s/[\r\n]//;
+		
+		$mysqllogin = "-u $mysqluser -p$mysqlpass";
+		
+		my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
+		unless ($loginstatus =~ /mysqld is alive/) {
+			badprint "Attempted to use login credentials from DirectAdmin, but they failed.\n";
+			exit 0;
+		}
 	} elsif ( -r "/etc/mysql/debian.cnf" and $doremote == 0 ){
 		# We have a debian maintenance account, use it
 		$mysqllogin = "--defaults-file=/etc/mysql/debian.cnf";
