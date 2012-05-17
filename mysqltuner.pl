@@ -909,9 +909,9 @@ sub mysql_stats {
 	# InnoDB
 	if (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES" && defined $enginestats{'InnoDB'}) {
 		if ($myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'}) {
-			goodprint "InnoDB data size / buffer pool: ".hr_bytes($enginestats{'InnoDB'})."/".hr_bytes($myvar{'innodb_buffer_pool_size'})."\n";
+			goodprint "InnoDB buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
 		} else {
-			badprint "InnoDB data size / buffer pool: ".hr_bytes($enginestats{'InnoDB'})."/".hr_bytes($myvar{'innodb_buffer_pool_size'})."\n";
+			badprint "InnoDB  buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
 			push(@adjvars,"innodb_buffer_pool_size (>= ".hr_bytes_rnd($enginestats{'InnoDB'}).")");
 		}
 	}
