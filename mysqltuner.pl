@@ -463,25 +463,31 @@ sub mysql_version_ge {
 # Checks for 32-bit boxes with more than 2GB of RAM
 my ($arch);
 sub check_architecture {
-	if ($doremote eq 1) { return; }
-	if (`uname` =~ /SunOS/ && `isainfo -b` =~ /64/) {
+	# We assume that 32-bit version is used by default
+	$arch = 32;
+
+	# If version_compile_machine ends with 64
+	# then we have 64-bit MySQL on non-Windows OS
+	if ($myvar{'version_compile_machine'} =~ /64$/) {
 		$arch = 64;
-		goodprint "Operating on 64-bit architecture\n";
-	} elsif (`uname` !~ /SunOS/ && `uname -m` =~ /64/) {
+		goodprint "Operating on 64-bit version of MySQL\n";
+	} elsif ($myvar{'version_compile_os'} =~ /64$/) {
+		# We have 64-bit version of MySQL on 64-bit Windows OS
 		$arch = 64;
-		goodprint "Operating on 64-bit architecture\n";
-	} elsif (`uname` =~ /AIX/ && `bootinfo -K` =~ /64/) {
-		$arch = 64;
-		goodprint "Operating on 64-bit architecture\n";
-	} else {
-		$arch = 32;
-		if ($physical_memory > 2147483648) {
-			badprint "Switch to 64-bit OS - MySQL cannot currently use all of your RAM\n";
-		} else {
-			goodprint "Operating on 32-bit architecture with less than 2GB RAM\n";
-		}
+		goodprint "Operating on 64-bit version of MySQL\n";    
 	}
-}
+
+	# Check for available memory and suggest switching to
+        # 64-bit version of mysql
+	if ($arch == 32) {
+	        if ($physical_memory > 2147483648) {
+        	        badprint "Switch to 64-bit version of MySQL\n";
+                	badprint "MySQL cannot currently use all of your RAM\n";
+	        } else {
+        	        goodprint "Operating on 32-bit version of MySQL with less than 2GB RAM\n";
+        	}
+	} # end-if-32-bit-arch-check
+} #end-sub-check_architecture
 
 # Start up a ton of storage engine counts/statistics
 my (%enginestats,%enginecount,$fragtables);
