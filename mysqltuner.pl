@@ -473,6 +473,9 @@ sub check_architecture {
 	} elsif (`uname` =~ /AIX/ && `bootinfo -K` =~ /64/) {
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
+	} elsif (`uname` =~ /FreeBSD/ && `sysctl -b hw.machine_arch` =~ /64/) {
+		$arch = 64;
+		goodprint "Operating on 64-bit architecture\n";
 	} else {
 		$arch = 32;
 		if ($physical_memory > 2147483648) {
