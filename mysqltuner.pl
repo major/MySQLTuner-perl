@@ -219,14 +219,14 @@ sub os_setup {
 		} elsif ($os =~ /Darwin/) {
 			$physical_memory = `sysctl -n hw.memsize` or memerror;
 			$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'` or memerror;
-		} elsif ($os =~ /NetBSD|OpenBSD/) {
+		} elsif ($os =~ /NetBSD|OpenBSD|FreeBSD/) {
 			$physical_memory = `sysctl -n hw.physmem` or memerror;
 			if ($physical_memory < 0) {
 				$physical_memory = `sysctl -n hw.physmem64` or memerror;
 			}
 			$swap_memory = `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'` or memerror;
 		} elsif ($os =~ /BSD/) {
-			$physical_memory = `sysctl -n hw.realmem`;
+			$physical_memory = `sysctl -n hw.realmem` or memerror;
 			$swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
 		} elsif ($os =~ /SunOS/) {
 			$physical_memory = `/usr/sbin/prtconf | grep Memory | cut -f 3 -d ' '` or memerror;
@@ -471,6 +471,12 @@ sub check_architecture {
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
 	} elsif (`uname` =~ /AIX/ && `bootinfo -K` =~ /64/) {
+		$arch = 64;
+		goodprint "Operating on 64-bit architecture\n";
+	} elsif (`uname` =~ /NetBSD|OpenBSD/ && `sysctl -b hw.machine` =~ /64/) {
+		$arch = 64;
+		goodprint "Operating on 64-bit architecture\n";
+	} elsif (`uname` =~ /FreeBSD/ && `sysctl -b hw.machine_arch` =~ /64/) {
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
 	} else {
