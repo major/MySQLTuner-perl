@@ -254,8 +254,8 @@ sub mysql_setup {
 	chomp($command);
     if ( $opt{mysqladmin} ) {
 	    $command = $opt{mysqladmin};
-    }
-    elsif (! -e $command) {
+    } 
+    elsif (! -e $command ) {
 		badprint "Unable to find mysqladmin in your \$PATH.  Is MySQL installed?\n";
 		exit;
 	}
