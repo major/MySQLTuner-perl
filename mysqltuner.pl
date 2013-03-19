@@ -252,7 +252,7 @@ sub mysql_setup {
 	$remotestring = '';
 	my $command = `which mysqladmin`;
 	chomp($command);
-    if ($opt{mysqladmin} ) {
+    if ( $opt{mysqladmin} ) {
 	    $command = $opt{mysqladmin};
     }
     elsif (! -e $command) {
