@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.2.0
+# mysqltuner.pl - Version 1.2.0_LKC
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2011 Major Hayden - major@mhtx.net
 #
@@ -41,7 +41,7 @@ use File::Spec;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.2.0";
+my $tunerversion = "1.2.0_LKC";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -219,19 +219,24 @@ sub os_setup {
 		} elsif ($os =~ /Darwin/) {
 			$physical_memory = `sysctl -n hw.memsize` or memerror;
 			$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'` or memerror;
-		} elsif ($os =~ /NetBSD|OpenBSD/) {
+			$swap_memory = $swap_memory*1024*1024;
+		} elsif ($os =~ /NetBSD|OpenBSD|FreeBSD/) {
 			$physical_memory = `sysctl -n hw.physmem` or memerror;
 			if ($physical_memory < 0) {
 				$physical_memory = `sysctl -n hw.physmem64` or memerror;
 			}
 			$swap_memory = `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'` or memerror;
+			$swap_memory = $swap_memory*1024;
 		} elsif ($os =~ /BSD/) {
-			$physical_memory = `sysctl -n hw.realmem`;
+			$physical_memory = `sysctl -n hw.realmem` or memerror;
 			$swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
+			$swap_memory = $swap_memory*1024;
 		} elsif ($os =~ /SunOS/) {
 			$physical_memory = `/usr/sbin/prtconf | grep Memory | cut -f 3 -d ' '` or memerror;
 			chomp($physical_memory);
 			$physical_memory = $physical_memory*1024*1024;
+			$swap_memory = `swap -l | grep '^/' | awk '{ s+= \$4 } END { print s }'`;
+			$swap_memory = $swap_memory*512;
 		} elsif ($os =~ /AIX/) {
 			$physical_memory = `lsattr -El sys0 | grep realmem | awk '{print \$2}'` or memerror;
 			chomp($physical_memory);
@@ -719,12 +724,12 @@ sub mysql_stats {
 	infoprint "Total buffers: ".hr_bytes($mycalc{'server_buffers'})." global + ".hr_bytes($mycalc{'per_thread_buffers'})." per thread ($myvar{'max_connections'} max threads)\n";
 	if ($mycalc{'total_possible_used_memory'} > 2*1024*1024*1024 && $arch eq 32) {
 		badprint "Allocating > 2GB RAM on 32-bit systems can cause system instability\n";
-		badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+		badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM - ".hr_bytes($physical_memory).")\n";
 	} elsif ($mycalc{'pct_physical_memory'} > 85) {
-		badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+		badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM - ".hr_bytes($physical_memory).")\n";
 		push(@generalrec,"Reduce your overall MySQL memory footprint for system stability");
 	} else {
-		goodprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+		goodprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM - ".hr_bytes($physical_memory).")\n";
 	}
 
 	# Slow queries
@@ -863,11 +868,12 @@ sub mysql_stats {
 		if ($mycalc{'table_cache_hit_rate'} < 20) {
 			badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
 			if (mysql_version_ge(5, 1)) {
-				push(@adjvars,"table_cache (> ".$myvar{'table_open_cache'}.")");
+				push(@adjvars,"table_open_cache (> ".$myvar{'table_open_cache'}.")");
+				push(@generalrec,"Increase table_open_cache gradually to avoid file descriptor limits");
 			} else {
 				push(@adjvars,"table_cache (> ".$myvar{'table_cache'}.")");
+				push(@generalrec,"Increase table_cache gradually to avoid file descriptor limits");
 			}
-			push(@generalrec,"Increase table_cache gradually to avoid file descriptor limits");
 		} else {
 			goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
 		}
@@ -950,6 +956,9 @@ get_all_vars;					# Toss variables/status into hashes
 validate_tuner_version;			# Check current MySQLTuner version
 validate_mysql_version;			# Check current MySQL version
 check_architecture;				# Suggest 64-bit upgrade
+
+infoprint "Physical Memory - ".hr_bytes($physical_memory)."  Swap Memory - ".hr_bytes($swap_memory)."\n";
+
 check_storage_engines;			# Show enabled storage engines
 security_recommendations;		# Display some security recommendations
 calculations;					# Calculate everything we need
