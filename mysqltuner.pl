@@ -479,14 +479,14 @@ sub check_architecture {
 	} elsif (`uname` =~ /FreeBSD/ && `sysctl -b hw.machine_arch` =~ /64/) {
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
-	# Darwin box.local 9.8.0 Darwin Kernel Version 9.8.0: Wed Jul 15 16:57:01 PDT 2009; root:xnu1228.15.4~1/RELEASE_PPC Power Macintosh
 	} elsif (uname =~ /Darwin/ && uname -m =~ /Power Macintosh/) {
+		# Darwin box.local 9.8.0 Darwin Kernel Version 9.8.0: Wed Jul 15 16:57:01 PDT 2009; root:xnu1228.15.4~1/RELEASE_PPC Power Macintosh
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
-	# Darwin gibas.local 12.3.0 Darwin Kernel Version 12.3.0: Sun Jan  6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
 	} elsif (uname =~ /Darwin/ && uname -m =~ /x86_64/) {
+		# Darwin gibas.local 12.3.0 Darwin Kernel Version 12.3.0: Sun Jan  6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
 		$arch = 64;
-		goodprint "Operating on 64-bit architecture\n";
+		goodprint "Operating on 64-bit architecture\n"; 
 	} else {
 		$arch = 32;
 		if ($physical_memory > 2147483648) {
