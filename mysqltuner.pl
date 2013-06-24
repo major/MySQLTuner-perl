@@ -100,9 +100,6 @@ sub usage {
 		"      --port <port>        Port to use for connection (default: 3306)\n".
 		"      --user <username>    Username to use for authentication\n".
 		"      --pass <password>    Password to use for authentication\n".
-		"   Database type\n".
-		"      --mysql              Run with mysql database (default)\n".
-		"      --maria              Run with mariadb database\n".
 		"\n".
 		"   Performance and Reporting Options\n".
 		"      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n".
