@@ -605,8 +605,10 @@ sub calculations {
 	$mycalc{'pct_connections_used'} = ($mycalc{'pct_connections_used'} > 100) ? 100 : $mycalc{'pct_connections_used'} ;
 
 	# Key buffers
-	if (mysql_version_ge(4, 1)) {
+	if (mysql_version_ge(4, 1) && $myvar{'key_buffer_size'} > 0) {
 		$mycalc{'pct_key_buffer_used'} = sprintf("%.1f",(1 - (($mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}) / $myvar{'key_buffer_size'})) * 100);
+	} else {
+		$mycalc{'pct_key_buffer_used'} = 0;
 	}
 	if ($mystat{'Key_read_requests'} > 0) {
 		$mycalc{'pct_keys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_reads'} / $mystat{'Key_read_requests'}) * 100)));
