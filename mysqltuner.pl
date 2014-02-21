@@ -100,6 +100,9 @@ sub usage {
 		"      --port <port>        Port to use for connection (default: 3306)\n".
 		"      --user <username>    Username to use for authentication\n".
 		"      --pass <password>    Password to use for authentication\n".
+		"   Database type\n".
+		"      --mysql              Run with mysql database (default)\n".
+		"      --maria              Run with mariadb database\n".
 		"\n".
 		"   Performance and Reporting Options\n".
 		"      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n".
@@ -219,14 +222,14 @@ sub os_setup {
 		} elsif ($os =~ /Darwin/) {
 			$physical_memory = `sysctl -n hw.memsize` or memerror;
 			$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'` or memerror;
-		} elsif ($os =~ /NetBSD|OpenBSD/) {
+		} elsif ($os =~ /NetBSD|OpenBSD|FreeBSD/) {
 			$physical_memory = `sysctl -n hw.physmem` or memerror;
 			if ($physical_memory < 0) {
 				$physical_memory = `sysctl -n hw.physmem64` or memerror;
 			}
 			$swap_memory = `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'` or memerror;
 		} elsif ($os =~ /BSD/) {
-			$physical_memory = `sysctl -n hw.realmem`;
+			$physical_memory = `sysctl -n hw.realmem` or memerror;
 			$swap_memory = `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
 		} elsif ($os =~ /SunOS/) {
 			$physical_memory = `/usr/sbin/prtconf | grep Memory | cut -f 3 -d ' '` or memerror;
@@ -446,6 +449,20 @@ sub check_architecture {
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
 	} elsif (`uname` =~ /AIX/ && `bootinfo -K` =~ /64/) {
+		$arch = 64;
+		goodprint "Operating on 64-bit architecture\n";
+	} elsif (`uname` =~ /NetBSD|OpenBSD/ && `sysctl -b hw.machine` =~ /64/) {
+		$arch = 64;
+		goodprint "Operating on 64-bit architecture\n";
+	} elsif (`uname` =~ /FreeBSD/ && `sysctl -b hw.machine_arch` =~ /64/) {
+		$arch = 64;
+		goodprint "Operating on 64-bit architecture\n";
+	} elsif (`uname` =~ /Darwin/ && `uname -m` =~ /Power Macintosh/) {
+		# Darwin box.local 9.8.0 Darwin Kernel Version 9.8.0: Wed Jul 15 16:57:01 PDT 2009; root:xnu1228.15.4~1/RELEASE_PPC Power Macintosh
+		$arch = 64;
+		goodprint "Operating on 64-bit architecture\n";
+	} elsif (`uname` =~ /Darwin/ && `uname -m` =~ /x86_64/) {
+		# Darwin gibas.local 12.3.0 Darwin Kernel Version 12.3.0: Sun Jan  6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
 		$arch = 64;
 		goodprint "Operating on 64-bit architecture\n";
 	} else {
