@@ -76,6 +76,7 @@ GetOptions(\%opt,
 		'pass=s',
 		'skipsize',
 		'checkversion',
+		'mysqladmin=s',
 		'help',
 	);
 
@@ -254,10 +255,15 @@ sub mysql_setup {
 	$remotestring = '';
 	my $command = `which mysqladmin`;
 	chomp($command);
-	if (! -e $command) {
+    if ( $opt{mysqladmin} ) {
+	    $command = $opt{mysqladmin};
+    } 
+    elsif (! -e $command ) {
 		badprint "Unable to find mysqladmin in your \$PATH.  Is MySQL installed?\n";
 		exit;
 	}
+
+
 	# Are we being asked to connect via a socket?
 	if ($opt{socket} ne 0) {
 		$remotestring = " -S $opt{socket}";
@@ -278,7 +284,7 @@ sub mysql_setup {
 	# Did we already get a username and password passed on the command line?
 	if ($opt{user} ne 0 and $opt{pass} ne 0) {
 		$mysqllogin = "-u $opt{user} -p'$opt{pass}'".$remotestring;
-		my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
+		my $loginstatus = `$command ping $mysqllogin 2>&1`;
 		if ($loginstatus =~ /mysqld is alive/) {
 			goodprint "Logged in using credentials passed on the command line\n";
 			return 1;
@@ -290,7 +296,7 @@ sub mysql_setup {
 	if ( -r "/etc/psa/.psa.shadow" and $doremote == 0 ) {
 		# It's a Plesk box, use the available credentials
 		$mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
-		my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
+		my $loginstatus = `$command ping $mysqllogin 2>&1`;
 		unless ($loginstatus =~ /mysqld is alive/) {
 			badprint "Attempted to use login credentials from Plesk, but they failed.\n";
 			exit 0;
@@ -298,7 +304,7 @@ sub mysql_setup {
 	} elsif ( -r "/etc/mysql/debian.cnf" and $doremote == 0 ){
 		# We have a debian maintenance account, use it
 		$mysqllogin = "--defaults-file=/etc/mysql/debian.cnf";
-		my $loginstatus = `mysqladmin $mysqllogin ping 2>&1`;
+		my $loginstatus = `$command $mysqllogin ping 2>&1`;
 		if ($loginstatus =~ /mysqld is alive/) {
 			goodprint "Logged in using credentials from debian maintenance account.\n";
 			return 1;
@@ -308,7 +314,7 @@ sub mysql_setup {
 		}
 	} else {
 		# It's not Plesk or debian, we should try a login
-		my $loginstatus = `mysqladmin $remotestring ping 2>&1`;
+		my $loginstatus = `$command $remotestring ping 2>&1`;
 		if ($loginstatus =~ /mysqld is alive/) {
 			# Login went just fine
 			$mysqllogin = " $remotestring ";
@@ -335,7 +341,7 @@ sub mysql_setup {
 				$mysqllogin .= " -p'$password'";
 			}
 			$mysqllogin .= $remotestring;
-			my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
+			my $loginstatus = `$command ping $mysqllogin 2>&1`;
 			if ($loginstatus =~ /mysqld is alive/) {
 				print STDERR "\n";
 				if (! length($password)) {
