@@ -416,31 +416,6 @@ sub get_replication_status {
 	}
 }
 
-# Checks for updates to MySQLTuner
-sub validate_tuner_version {
-	print "\n-------- General Statistics --------------------------------------------------\n";
-	if ($opt{checkversion} eq 0) {
-		infoprint "Skipped version check for MySQLTuner script\n";
-		return;
-	}
-	my $update;
-	my $url = "http://mysqltuner.com/versioncheck.php?v=$tunerversion";
-	if (-e "/usr/bin/curl") {
-		$update = `/usr/bin/curl --connect-timeout 5 '$url' 2>$devnull`;
-		chomp($update);
-	} elsif (-e "/usr/bin/wget") {
-		$update = `/usr/bin/wget -e timestamping=off -T 5 -O - '$url' 2>$devnull`;
-		chomp($update);
-	}
-	if ($update eq 1) {
-		badprint "There is a new version of MySQLTuner available\n";
-	} elsif ($update eq 0) {
-		goodprint "You have the latest version of MySQLTuner\n";
-	} else {
-		infoprint "Unable to check for the latest MySQLTuner version\n";
-	}
-}
-
 # Checks for supported or EOL'ed MySQL versions
 my ($mysqlvermajor,$mysqlverminor);
 sub validate_mysql_version {
@@ -956,7 +931,6 @@ print	"\n >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
 mysql_setup;					# Gotta login first
 os_setup;						# Set up some OS variables
 get_all_vars;					# Toss variables/status into hashes
-validate_tuner_version;			# Check current MySQLTuner version
 validate_mysql_version;			# Check current MySQL version
 check_architecture;				# Suggest 64-bit upgrade
 check_storage_engines;			# Show enabled storage engines
