@@ -870,6 +870,7 @@ sub mysql_stats {
 				push(@adjvars,"table_cache (> ".$myvar{'table_cache'}.")");
 			}
 			push(@generalrec,"Increase table_cache gradually to avoid file descriptor limits");
+			push(@generalrec,"Read this before increasing table_cache over 64: http://bit.ly/1mi7c4C");
 		} else {
 			goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
 		}
