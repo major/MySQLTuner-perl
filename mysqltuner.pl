@@ -444,7 +444,7 @@ sub validate_tuner_version {
 # Checks for supported or EOL'ed MySQL versions
 my ($mysqlvermajor,$mysqlverminor);
 sub validate_mysql_version {
-	($mysqlvermajor,$mysqlverminor) = $myvar{'version'} =~ /(\d)\.(\d)/;
+	($mysqlvermajor,$mysqlverminor) = $myvar{'version'} =~ /(\d+)\.(\d+)/;
 	if (!mysql_version_ge(5)) {
 		badprint "Your MySQL version ".$myvar{'version'}." is EOL software!  Upgrade soon!\n";
 	} elsif (mysql_version_ge(6)) {
