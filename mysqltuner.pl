@@ -296,8 +296,8 @@ sub mysql_setup {
 			exit 0;
 		}
 	}
-	my $svcprop = `which svcprop`;
-	if ( substr($svcprop, 0, 1) =~ "/" ) {
+	my $svcprop = `which svcprop 2>/dev/null`;
+	if (substr($svcprop, 0, 1) =~ "/") {
 		# We are on solaris
 		(my $mysql_login = `svcprop -p quickbackup/username svc:/network/mysql-quickbackup:default`) =~ s/\s+$//;
 		(my $mysql_pass = `svcprop -p quickbackup/password svc:/network/mysql-quickbackup:default`) =~ s/\s+$//;
