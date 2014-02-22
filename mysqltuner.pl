@@ -296,7 +296,24 @@ sub mysql_setup {
 			exit 0;
 		}
 	}
-	if ( -r "/etc/psa/.psa.shadow" and $doremote == 0 ) {
+	my $svcprop = `which svcprop`;
+	if ( substr($svcprop, 0, 1) =~ "/" ) {
+		# We are on solaris
+		(my $mysql_login = `svcprop -p quickbackup/username svc:/network/mysql-quickbackup:default`) =~ s/\s+$//;
+		(my $mysql_pass = `svcprop -p quickbackup/password svc:/network/mysql-quickbackup:default`) =~ s/\s+$//;
+		if ( substr($mysql_login, 0, 7) ne "svcprop" ) {
+			# mysql-quickbackup is installed
+			$mysqllogin = "-u $mysql_login -p$mysql_pass";
+			my $loginstatus = `mysqladmin $mysqllogin ping 2>&1`;
+			if ($loginstatus =~ /mysqld is alive/) {
+				goodprint "Logged in using credentials from mysql-quickbackup.\n";
+				return 1;
+			} else {
+				badprint "Attempted to use login credentials from mysql-quickbackup, but they failed.\n";
+				exit 0;
+			}
+		}
+	} elsif ( -r "/etc/psa/.psa.shadow" and $doremote == 0 ) {
 		# It's a Plesk box, use the available credentials
 		$mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
 		my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
