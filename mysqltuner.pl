@@ -1,10 +1,10 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.2.0
+# mysqltuner.pl - Version 1.3.0
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2011 Major Hayden - major@mhtx.net
+# Copyright (C) 2006-2014 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.com/
-# Git repository available at http://github.com/rackerhacker/MySQLTuner-perl
+# Git repository available at http://github.com/major/MySQLTuner-perl
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ use File::Spec;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.2.0";
+my $tunerversion = "1.3.0";
 my (@adjvars, @generalrec);
 
 # Set defaults
