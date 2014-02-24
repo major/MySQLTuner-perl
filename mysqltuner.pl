@@ -533,7 +533,7 @@ sub check_storage_engines {
 	print "\n-------- Storage Engine Statistics -------------------------------------------\n";
 	infoprint "Status: ";
 	my $engines;
-	if (mysql_version_ge(5)) {
+	if (mysql_version_ge(5, 1, 5)) {
 		my @engineresults = `mysql $mysqllogin -Bse "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC"`;
 		foreach my $line (@engineresults) {
 			my ($engine,$engineenabled);
