@@ -961,12 +961,12 @@ sub mysql_stats {
 			badprint "InnoDB  buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
 			push(@adjvars,"innodb_buffer_pool_size (>= ".hr_bytes_rnd($enginestats{'InnoDB'}).")");
 		}
-	}
-	if (defined $mystat{'Innodb_log_waits'} && $mystat{'Innodb_log_waits'} > 0) {
-		badprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
-		push(@adjvars,"innodb_log_buffer_size (>= ".hr_bytes_rnd($myvar{'innodb_log_buffer_size'}).")");
-	} else {
-		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
+	    if (defined $mystat{'Innodb_log_waits'} && $mystat{'Innodb_log_waits'} > 0) {
+		    badprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
+    		push(@adjvars,"innodb_log_buffer_size (>= ".hr_bytes_rnd($myvar{'innodb_log_buffer_size'}).")");
+    	} else {
+    		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
+    	}
 	}
 }
 
