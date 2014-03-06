@@ -826,7 +826,10 @@ sub mysql_stats {
 	} elsif ($myvar{'query_cache_size'} < 1) {
 		badprint "Query cache is disabled\n";
 		push(@adjvars,"query_cache_size (>= 8M)");
-	} elsif ($mystat{'Com_select'} == 0) {
+	} elsif ($myvar{'query_cache_type'} eq "OFF") {
+                badprint "Query cache is disabled\n";
+                push(@adjvars,"query_cache_type (=1)");
+        } elsif ($mystat{'Com_select'} == 0) {
 		badprint "Query cache cannot be analyzed - no SELECT statements executed\n";
 	} else {
 		if ($mycalc{'query_cache_efficiency'} < 20) {
