@@ -912,12 +912,13 @@ sub mysql_stats {
 		if ($mycalc{'table_cache_hit_rate'} < 20) {
 			badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
 			if (mysql_version_ge(5, 1)) {
-				push(@adjvars,"table_cache (> ".$myvar{'table_open_cache'}.")");
+				my @table_cache_var = "table_open_cache";
 			} else {
-				push(@adjvars,"table_cache (> ".$myvar{'table_cache'}.")");
+				my @table_cache_var = "table_cache";
 			}
-			push(@generalrec,"Increase table_cache gradually to avoid file descriptor limits");
-			push(@generalrec,"Read this before increasing table_cache over 64: http://bit.ly/1mi7c4C");
+			push(@adjvars,$table_cache_var." (> ".$myvar{'table_open_cache'}.")");
+			push(@generalrec,"Increase ".$table_cache_var." gradually to avoid file descriptor limits");
+			push(@generalrec,"Read this before increasing ".$table_cache_var." over 64: http://bit.ly/1mi7c4C");
 		} else {
 			goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
 		}
