@@ -908,13 +908,14 @@ sub mysql_stats {
 	}
 
 	# Table cache
+	my $table_cache_var = "";
 	if ($mystat{'Open_tables'} > 0) {
 		if ($mycalc{'table_cache_hit_rate'} < 20) {
 			badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
 			if (mysql_version_ge(5, 1)) {
-				my @table_cache_var = "table_open_cache";
+				$table_cache_var = "table_open_cache";
 			} else {
-				my @table_cache_var = "table_cache";
+				$table_cache_var = "table_cache";
 			}
 			push(@adjvars,$table_cache_var." (> ".$myvar{'table_open_cache'}.")");
 			push(@generalrec,"Increase ".$table_cache_var." gradually to avoid file descriptor limits");
