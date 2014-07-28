@@ -31,7 +31,7 @@ Download/Installation
 
 You can download the entire repository by using 'git clone' followed by the cloning URL above.  The simplest and shortest method is:
 
-	wget mysqltuner.pl
+	wget http://mysqltuner.pl/ -O mysqltuner.pl
 	perl mysqltuner.pl
 	
 Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
