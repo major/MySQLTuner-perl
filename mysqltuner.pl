@@ -51,14 +51,14 @@ my %opt = (
 		"noinfo" 		=> 0,
 		"nocolor" 		=> 0,
 		"forcemem" 		=> 0,
-		"forceswap" 	=> 0,
+		"forceswap" 		=> 0,
 		"host" 			=> 0,
 		"socket" 		=> 0,
 		"port" 			=> 0,
 		"user" 			=> 0,
 		"pass"			=> 0,
 		"skipsize" 		=> 0,
-		"checkversion" 	=> 0,
+		"checkversion" 		=> 0,
 	);
 
 # Gather the options from the command line
@@ -1002,15 +1002,15 @@ sub make_recommendations {
 print	"\n >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
 		" >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
 		" >>  Run with '--help' for additional options and output filtering\n";
-mysql_setup;					# Gotta login first
-os_setup;						# Set up some OS variables
-get_all_vars;					# Toss variables/status into hashes
+mysql_setup;				# Gotta login first
+os_setup;				# Set up some OS variables
+get_all_vars;				# Toss variables/status into hashes
 validate_mysql_version;			# Check current MySQL version
-check_architecture;				# Suggest 64-bit upgrade
+check_architecture;			# Suggest 64-bit upgrade
 check_storage_engines;			# Show enabled storage engines
 security_recommendations;		# Display some security recommendations
-calculations;					# Calculate everything we need
-mysql_stats;					# Print the server stats
+calculations;				# Calculate everything we need
+mysql_stats;				# Print the server stats
 make_recommendations;			# Make recommendations based on stats
 # ---------------------------------------------------------------------------
 # END 'MAIN'
