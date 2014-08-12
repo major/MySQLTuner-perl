@@ -217,6 +217,9 @@ sub os_setup {
 	} else {
 		if ($os =~ /Linux/) {
 			$physical_memory = `free -b | grep Mem | awk '{print \$2}'` or memerror;
+			if ($physical_memory == 0) {
+				$physical_memory = `echo \$(( \`cat /proc/meminfo | grep 'MemTotal' | awk '{print \$2}'\` * 1024 ))` or memerror;
+			}
 			$swap_memory = `free -b | grep Swap | awk '{print \$2}'` or memerror;
 		} elsif ($os =~ /Darwin/) {
 			$physical_memory = `sysctl -n hw.memsize` or memerror;
