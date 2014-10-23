@@ -59,6 +59,7 @@ my %opt = (
 		"pass"			=> 0,
 		"skipsize" 		=> 0,
 		"checkversion" 		=> 0,
+		"buffers" 		=> 0,
 	);
 
 # Gather the options from the command line
@@ -78,6 +79,7 @@ GetOptions(\%opt,
 		'checkversion',
 		'mysqladmin=s',
 		'help',
+		'buffers',
 	);
 
 if (defined $opt{'help'} && $opt{'help'} == 1) { usage(); }
@@ -115,6 +117,7 @@ sub usage {
 		"      --nobad              Remove negative/suggestion responses\n".
 		"      --noinfo             Remove informational responses\n".
 		"      --nocolor            Don't print output in color\n".
+		"      --buffers            Print global and per-thread buffer values\n".
 		"\n";
 	exit;
 }
@@ -763,6 +766,33 @@ sub mysql_stats {
 
 	# Memory usage
 	infoprint "Total buffers: ".hr_bytes($mycalc{'server_buffers'})." global + ".hr_bytes($mycalc{'per_thread_buffers'})." per thread ($myvar{'max_connections'} max threads)\n";
+	
+	if ($opt{buffers} ne 0) {
+		infoprint "Global Buffers\n";
+		infoprint " +-- Key Buffer: " . hr_bytes($myvar{'key_buffer_size'}) . "\n";
+		infoprint " +-- Max Tmp Table: ".hr_bytes($mycalc{'max_tmp_table_size'})."\n";
+		
+		if (defined $myvar{'innodb_buffer_pool_size'}) {
+			infoprint " +-- InnoDB Buffer Pool: " . hr_bytes($myvar{'innodb_buffer_pool_size'}) . "\n";
+		}
+		if (defined $myvar{'innodb_additional_mem_pool_size'}) {
+			infoprint " +-- InnoDB Additional Mem Pool: " . hr_bytes($myvar{'innodb_additional_mem_pool_size'}) . "\n";
+		}
+		if (defined $myvar{'innodb_log_buffer_size'}) {
+			infoprint " +-- InnoDB Log Buffer: " . hr_bytes($myvar{'innodb_log_buffer_size'}) . "\n";
+		}
+		if (defined $myvar{'query_cache_size'}) {
+			infoprint " +-- Query Cache: " . hr_bytes($myvar{'query_cache_size'}) . "\n";
+		}
+		
+		infoprint "Per Thread Buffers\n";
+		infoprint " +-- Read Buffer: " . hr_bytes($myvar{'read_buffer_size'}) . "\n";
+		infoprint " +-- Read RND Buffer: " . hr_bytes($myvar{'read_rnd_buffer_size'}) . "\n";
+		infoprint " +-- Sort Buffer: " . hr_bytes($myvar{'sort_buffer_size'}) . "\n";
+		infoprint " +-- Thread stack: " . hr_bytes($myvar{'thread_stack'}) . "\n";
+		infoprint " +-- Join Buffer: " . hr_bytes($myvar{'join_buffer_size'}) . "\n";
+	}	
+
 	if ($arch && $arch == 32 && $mycalc{'total_possible_used_memory'} > 2*1024*1024*1024) {
 		badprint "Allocating > 2GB RAM on 32-bit systems can cause system instability\n";
 		badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
