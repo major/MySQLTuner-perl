@@ -532,7 +532,7 @@ sub check_storage_engines {
 	print "\n-------- Storage Engine Statistics -------------------------------------------\n";
 	infoprint "Status: ";
 	my $engines;
-	if (mysql_version_ge(5)) {
+	if (mysql_version_ge(5, 1)) {
 		my @engineresults = `mysql $mysqllogin -Bse "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC"`;
 		foreach my $line (@engineresults) {
 			my ($engine,$engineenabled);
@@ -947,7 +947,7 @@ sub mysql_stats {
 			} else {
 				$table_cache_var = "table_cache";
 			}
-			push(@adjvars,$table_cache_var." (> ".$myvar{'table_open_cache'}.")");
+			push(@adjvars,$table_cache_var." (> ".$myvar{$table_cache_var}.")");
 			push(@generalrec,"Increase ".$table_cache_var." gradually to avoid file descriptor limits");
 			push(@generalrec,"Read this before increasing ".$table_cache_var." over 64: http://bit.ly/1mi7c4C");
 		} else {
