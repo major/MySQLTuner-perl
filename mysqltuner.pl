@@ -29,7 +29,7 @@
 #   Blair Christensen      Hans du Plooy        Victor Trac
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
-#   Baptiste M.
+#   Baptiste M.		   Cole Turner
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
