@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 # mysqltuner.pl - Version 1.3.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2014 Major Hayden - major@mhtx.net
