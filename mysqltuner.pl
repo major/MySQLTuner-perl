@@ -29,7 +29,7 @@
 #   Blair Christensen      Hans du Plooy        Victor Trac
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
-#   Baptiste M.
+#   Baptiste M.		   Cole Turner
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -614,6 +614,47 @@ sub check_storage_engines {
 	} else {
 		goodprint "Total fragmented tables: $fragtables\n";
 	}
+
+	
+	# Auto increments
+	my %tblist;
+	# Find the maximum integer
+	my $maxint = `mysql $mysqllogin -Bse "SELECT ~0"`;
+	
+	# Now we build a database list, and loop through it to get storage engine stats for tables
+	my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
+	foreach my $db (@dblist) {
+		chomp($db);
+		
+		if(!$tblist{$db})
+		{
+			$tblist{$db} = ();
+		}
+		
+		if ($db eq "information_schema") { next; }
+		my @ia = (0, 10);
+		if (!mysql_version_ge(4, 1)) {
+			# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
+			@ia = (0, 9);
+		}
+		push(@{$tblist{$db}}, map { [ (split)[@ia] ] } `mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`"`);
+	}
+	
+	my @dbnames = keys %tblist;
+	
+	foreach my $db (@dbnames) {
+		foreach my $tbl (@{$tblist{$db}}) {
+			my ($name, $autoincrement) = @$tbl;
+			
+			if ($autoincrement =~ /^\d+?$/) {
+				my $percent = ($autoincrement / $maxint) * 100;
+				if($percent >= 75) {
+					badprint "Table '$db.$name' has an autoincrement value near max capacity ($percent%)\n";
+				}
+			}
+		}
+	}
+
 }
 
 my %mycalc;
