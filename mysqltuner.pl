@@ -29,7 +29,7 @@
 #   Blair Christensen      Hans du Plooy        Victor Trac
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
-#   Baptiste M.		   Cole Turner
+#   Baptiste M.            Cole Turner
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -41,7 +41,7 @@ use File::Spec;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.3.0";
+my $tunerversion = "1.4.0";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -51,14 +51,14 @@ my %opt = (
 		"noinfo" 		=> 0,
 		"nocolor" 		=> 0,
 		"forcemem" 		=> 0,
-		"forceswap" 		=> 0,
+		"forceswap" 	=> 0,
 		"host" 			=> 0,
 		"socket" 		=> 0,
 		"port" 			=> 0,
 		"user" 			=> 0,
 		"pass"			=> 0,
 		"skipsize" 		=> 0,
-		"checkversion" 		=> 0,
+		"checkversion" 	=> 0,
 		"buffers" 		=> 0,
 	);
 
