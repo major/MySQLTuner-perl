@@ -29,7 +29,7 @@
 #   Blair Christensen      Hans du Plooy        Victor Trac
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
-#   Baptiste M.
+#   Baptiste M.            Cole Turner
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -41,7 +41,7 @@ use File::Spec;
 use Getopt::Long;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.3.0";
+my $tunerversion = "1.4.0";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -51,14 +51,14 @@ my %opt = (
 		"noinfo" 		=> 0,
 		"nocolor" 		=> 0,
 		"forcemem" 		=> 0,
-		"forceswap" 		=> 0,
+		"forceswap" 	=> 0,
 		"host" 			=> 0,
 		"socket" 		=> 0,
 		"port" 			=> 0,
 		"user" 			=> 0,
 		"pass"			=> 0,
 		"skipsize" 		=> 0,
-		"checkversion" 		=> 0,
+		"checkversion" 	=> 0,
 		"buffers" 		=> 0,
 	);
 
@@ -532,7 +532,7 @@ sub check_storage_engines {
 	print "\n-------- Storage Engine Statistics -------------------------------------------\n";
 	infoprint "Status: ";
 	my $engines;
-	if (mysql_version_ge(5)) {
+	if (mysql_version_ge(5, 1)) {
 		my @engineresults = `mysql $mysqllogin -Bse "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC"`;
 		foreach my $line (@engineresults) {
 			my ($engine,$engineenabled);
@@ -614,6 +614,47 @@ sub check_storage_engines {
 	} else {
 		goodprint "Total fragmented tables: $fragtables\n";
 	}
+
+	
+	# Auto increments
+	my %tblist;
+	# Find the maximum integer
+	my $maxint = `mysql $mysqllogin -Bse "SELECT ~0"`;
+	
+	# Now we build a database list, and loop through it to get storage engine stats for tables
+	my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
+	foreach my $db (@dblist) {
+		chomp($db);
+		
+		if(!$tblist{$db})
+		{
+			$tblist{$db} = ();
+		}
+		
+		if ($db eq "information_schema") { next; }
+		my @ia = (0, 10);
+		if (!mysql_version_ge(4, 1)) {
+			# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
+			@ia = (0, 9);
+		}
+		push(@{$tblist{$db}}, map { [ (split)[@ia] ] } `mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`"`);
+	}
+	
+	my @dbnames = keys %tblist;
+	
+	foreach my $db (@dbnames) {
+		foreach my $tbl (@{$tblist{$db}}) {
+			my ($name, $autoincrement) = @$tbl;
+			
+			if ($autoincrement =~ /^\d+?$/) {
+				my $percent = ($autoincrement / $maxint) * 100;
+				if($percent >= 75) {
+					badprint "Table '$db.$name' has an autoincrement value near max capacity ($percent%)\n";
+				}
+			}
+		}
+	}
+
 }
 
 my %mycalc;
@@ -701,7 +742,7 @@ sub calculations {
 	# Temporary tables
 	if ($mystat{'Created_tmp_tables'} > 0) {
 		if ($mystat{'Created_tmp_disk_tables'} > 0) {
-			$mycalc{'pct_temp_disk'} = int(($mystat{'Created_tmp_disk_tables'} / ($mystat{'Created_tmp_tables'} + $mystat{'Created_tmp_disk_tables'})) * 100);
+			$mycalc{'pct_temp_disk'} = int(($mystat{'Created_tmp_disk_tables'} / $mystat{'Created_tmp_tables'}) * 100);
 		} else {
 			$mycalc{'pct_temp_disk'} = 0;
 		}
@@ -906,17 +947,17 @@ sub mysql_stats {
 	# Temporary tables
 	if ($mystat{'Created_tmp_tables'} > 0) {
 		if ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} < 256*1024*1024) {
-			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_disk_tables'} + $mystat{'Created_tmp_tables'})." total)\n";
+			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_tables'})." total)\n";
 			push(@adjvars,"tmp_table_size (> ".hr_bytes_rnd($myvar{'tmp_table_size'}).")");
 			push(@adjvars,"max_heap_table_size (> ".hr_bytes_rnd($myvar{'max_heap_table_size'}).")");
 			push(@generalrec,"When making adjustments, make tmp_table_size/max_heap_table_size equal");
 			push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
 		} elsif ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} >= 256) {
-			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_disk_tables'} + $mystat{'Created_tmp_tables'})." total)\n";
+			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_tables'})." total)\n";
 			push(@generalrec,"Temporary table size is already large - reduce result set size");
 			push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
 		} else {
-			goodprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_disk_tables'} + $mystat{'Created_tmp_tables'})." total)\n";
+			goodprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_tables'})." total)\n";
 		}
 	} else {
 		# For the sake of space, we will be quiet here
@@ -947,7 +988,7 @@ sub mysql_stats {
 			} else {
 				$table_cache_var = "table_cache";
 			}
-			push(@adjvars,$table_cache_var." (> ".$myvar{'table_open_cache'}.")");
+			push(@adjvars,$table_cache_var." (> ".$myvar{$table_cache_var}.")");
 			push(@generalrec,"Increase ".$table_cache_var." gradually to avoid file descriptor limits");
 			push(@generalrec,"Read this before increasing ".$table_cache_var." over 64: http://bit.ly/1mi7c4C");
 		} else {
