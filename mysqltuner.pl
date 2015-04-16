@@ -78,6 +78,7 @@ GetOptions(\%opt,
 		'skipsize',
 		'checkversion',
 		'mysqladmin=s',
+		'mysqlcmd=s',
 		'help',
 		'buffers',
 	);
@@ -104,6 +105,7 @@ sub usage {
 		"      --user <username>    Username to use for authentication\n".
 		"      --pass <password>    Password to use for authentication\n".
 		"      --mysqladmin <path>  Path to a custom mysqladmin executable\n".
+		"      --mysqlcmd <path>    Path to a custom mysql executable\n".
 		"\n".
 		"   Performance and Reporting Options\n".
 		"      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n".
@@ -250,7 +252,7 @@ sub os_setup {
 }
 
 # Checks to see if a MySQL login is possible
-my ($mysqllogin,$doremote,$remotestring);
+my ($mysqllogin,$doremote,$remotestring,$mysqlcmd);
 sub mysql_setup {
 	$doremote = 0;
 	$remotestring = '';
@@ -269,6 +271,19 @@ sub mysql_setup {
 		exit;
 	}
 
+    if ($opt{mysqlcmd}) {
+	    $mysqlcmd = $opt{mysqlcmd};
+    } else {
+		$mysqlcmd = `which mysql`;
+    }
+    chomp($mysqlcmd);
+    if (! -e $mysqlcmd && $opt{mysqlcmd}) {
+		badprint "Unable to find the mysql command you specified: ".$mysqlcmd."\n";
+		exit;
+	} elsif (! -e $mysqlcmd) {
+        badprint "Couldn't find mysql in your \$PATH. Is MySQL installed?\n";
+		exit;
+	}
 
 	# Are we being asked to connect via a socket?
 	if ($opt{socket} ne 0) {
@@ -406,13 +421,13 @@ sub mysql_setup {
 my (%mystat,%myvar,$dummyselect);
 sub get_all_vars {
 	# We need to initiate at least one query so that our data is useable
-	$dummyselect = `mysql $mysqllogin -Bse "SELECT VERSION();"`;
-	my @mysqlvarlist = `mysql $mysqllogin -Bse "SHOW /*!50000 GLOBAL */ VARIABLES;"`;
+	$dummyselect = `$mysqlcmd $mysqllogin -Bse "SELECT VERSION();"`;
+	my @mysqlvarlist = `$mysqlcmd $mysqllogin -Bse "SHOW /*!50000 GLOBAL */ VARIABLES;"`;
 	foreach my $line (@mysqlvarlist) {
 		$line =~ /([a-zA-Z_]*)\s*(.*)/;
 		$myvar{$1} = $2;
 	}
-	my @mysqlstatlist = `mysql $mysqllogin -Bse "SHOW /*!50000 GLOBAL */ STATUS;"`;
+	my @mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SHOW /*!50000 GLOBAL */ STATUS;"`;
 	foreach my $line (@mysqlstatlist) {
 		$line =~ /([a-zA-Z_]*)\s*(.*)/;
 		$mystat{$1} = $2;
@@ -424,7 +439,7 @@ sub get_all_vars {
 	# have_* for engines is deprecated and will be removed in MySQL 5.6;
 	# check SHOW ENGINES and set corresponding old style variables.
 	# Also works around MySQL bug #59393 wrt. skip-innodb
-	my @mysqlenginelist = `mysql $mysqllogin -Bse "SHOW ENGINES;" 2>$devnull`;
+	my @mysqlenginelist = `$mysqlcmd $mysqllogin -Bse "SHOW ENGINES;" 2>$devnull`;
 	foreach my $line (@mysqlenginelist) {
 		if ($line =~ /^([a-zA-Z_]+)\s+(\S+)/) {
 			my $engine = lc($1);
@@ -441,7 +456,7 @@ sub get_all_vars {
 
 sub security_recommendations {
 	print "\n-------- Security Recommendations  -------------------------------------------\n";
-	my @mysqlstatlist = `mysql $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL;"`;
+	my @mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL;"`;
 	if (@mysqlstatlist) {
 		foreach my $line (sort @mysqlstatlist) {
 			chomp($line);
@@ -453,7 +468,7 @@ sub security_recommendations {
 }
 
 sub get_replication_status {
-	my $slave_status = `mysql $mysqllogin -Bse "show slave status\\G"`;
+	my $slave_status = `$mysqlcmd $mysqllogin -Bse "show slave status\\G"`;
 	my ($io_running) = ($slave_status =~ /slave_io_running\S*\s+(\S+)/i);
 	my ($sql_running) = ($slave_status =~ /slave_sql_running\S*\s+(\S+)/i);
 	if ($io_running eq 'Yes' && $sql_running eq 'Yes') {
@@ -533,7 +548,7 @@ sub check_storage_engines {
 	infoprint "Status: ";
 	my $engines;
 	if (mysql_version_ge(5, 1)) {
-		my @engineresults = `mysql $mysqllogin -Bse "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC"`;
+		my @engineresults = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC"`;
 		foreach my $line (@engineresults) {
 			my ($engine,$engineenabled);
 			($engine,$engineenabled) = $line =~ /([a-zA-Z_]*)\s+([a-zA-Z]+)/;
@@ -550,7 +565,7 @@ sub check_storage_engines {
 	print "$engines\n";
 	if (mysql_version_ge(5)) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
-		my @templist = `mysql $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
+		my @templist = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
 		foreach my $line (@templist) {
 			my ($engine,$size,$count);
 			($engine,$size,$count) = $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)/;
@@ -558,13 +573,13 @@ sub check_storage_engines {
 			$enginestats{$engine} = $size;
 			$enginecount{$engine} = $count;
 		}
-		$fragtables = `mysql $mysqllogin -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`;
+		$fragtables = `$mysqlcmd $mysqllogin -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`;
 		chomp($fragtables);
 	} else {
 		# MySQL < 5 servers take a lot of work to get table sizes
 		my @tblist;
 		# Now we build a database list, and loop through it to get storage engine stats for tables
-		my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
+		my @dblist = `$mysqlcmd $mysqllogin -Bse "SHOW DATABASES"`;
 		foreach my $db (@dblist) {
 			chomp($db);
 			if ($db eq "information_schema") { next; }
@@ -573,7 +588,7 @@ sub check_storage_engines {
 				# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
 				@ixs = (1, 5, 8);
 			}
-			push(@tblist, map { [ (split)[@ixs] ] } `mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`"`);
+			push(@tblist, map { [ (split)[@ixs] ] } `$mysqlcmd $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`"`);
 		}
 		# Parse through the table list to generate storage engine counts/statistics
 		$fragtables = 0;
@@ -619,10 +634,10 @@ sub check_storage_engines {
 	# Auto increments
 	my %tblist;
 	# Find the maximum integer
-	my $maxint = `mysql $mysqllogin -Bse "SELECT ~0"`;
+	my $maxint = `$mysqlcmd $mysqllogin -Bse "SELECT ~0"`;
 	
 	# Now we build a database list, and loop through it to get storage engine stats for tables
-	my @dblist = `mysql $mysqllogin -Bse "SHOW DATABASES"`;
+	my @dblist = `$mysqlcmd $mysqllogin -Bse "SHOW DATABASES"`;
 	foreach my $db (@dblist) {
 		chomp($db);
 		
@@ -637,7 +652,7 @@ sub check_storage_engines {
 			# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
 			@ia = (0, 9);
 		}
-		push(@{$tblist{$db}}, map { [ (split)[@ia] ] } `mysql $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`"`);
+		push(@{$tblist{$db}}, map { [ (split)[@ia] ] } `$mysqlcmd $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`"`);
 	}
 	
 	my @dbnames = keys %tblist;
@@ -708,7 +723,7 @@ sub calculations {
 		$size += (split)[0] for `find $myvar{'datadir'} -name "*.MYI" 2>&1 | xargs du -L $duflags 2>&1`;
 		$mycalc{'total_myisam_indexes'} = $size;
 	} elsif (mysql_version_ge(5)) {
-		$mycalc{'total_myisam_indexes'} = `mysql $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';"`;
+		$mycalc{'total_myisam_indexes'} = `$mysqlcmd $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';"`;
 	}
 	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} == 0) {
 		$mycalc{'total_myisam_indexes'} = "fail";
