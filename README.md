@@ -7,6 +7,8 @@ Compatibility:
 
 * MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (full support)
 * MySQL 5.4 (not fully tested, partially supported)
+* MySQL 5.5 (partial support)
+* MySQL 5.6 (partial support)
 * MySQL 6.0 (partial support)
 * MariaDB 10.x (partial support)
 * Perl 5.6 or later (with [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod) package)
@@ -29,7 +31,7 @@ MySQL in other areas.
 Download/Installation
 --
 
-You can download the entire repository by using 'git clone' followed by the cloning URL above.  The simplest and shortest method is:
+You can download the entire repository by using 'git clone' followed by the cloning URL above. The simplest and shortest method is:
 
 	wget http://mysqltuner.pl/ -O mysqltuner.pl
 	perl mysqltuner.pl
