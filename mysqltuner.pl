@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.4.1
+# mysqltuner.pl - Version 1.4.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2014 Major Hayden - major@mhtx.net
 #
@@ -42,7 +42,7 @@ use Getopt::Long;
 use File::Basename;
 use Cwd 'abs_path';
 # Set up a few variables for use in the script
-my $tunerversion = "1.4.1";
+my $tunerversion = "1.4.2";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -61,6 +61,7 @@ my %opt = (
 		"skipsize" 		=> 0,
 		"checkversion" 	=> 0,
 		"buffers" 		=> 0,
+		"passwordfile"	=> 0,
 	);
 
 # Gather the options from the command line
@@ -82,6 +83,7 @@ GetOptions(\%opt,
 		'mysqlcmd=s',
 		'help',
 		'buffers',
+		'passwordfile=s',
 	);
 
 if (defined $opt{'help'} && $opt{'help'} == 1) { usage(); }
@@ -114,6 +116,7 @@ sub usage {
 		"      --checkversion       Check for updates to MySQLTuner (default: don't check)\n".
 		"      --forcemem <size>    Amount of RAM installed in megabytes\n".
 		"      --forceswap <size>   Amount of swap memory configured in megabytes\n".
+		"      --passwordfile <path>Path to a password file list(one password by line)\n".
 		"\n".
 		"   Output Options:\n".
 		"      --nogood             Remove OK responses\n".
@@ -126,7 +129,7 @@ sub usage {
 }
 
 my $devnull = File::Spec->devnull();
-my $basic_password_files=abs_path(dirname(__FILE__))."/basic_passwords.txt";
+my $basic_password_files=($opt{passwordfile} eq "0")? abs_path(dirname(__FILE__))."/basic_passwords.txt" : abs_path($opt{passwordfile}) ;
 
 # Setting up the colors for the print styles
 my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
@@ -544,12 +547,16 @@ sub get_replication_status {
 	my $slave_status = `$mysqlcmd $mysqllogin -Bse "show slave status\\G"`;
 	my ($io_running) = ($slave_status =~ /slave_io_running\S*\s+(\S+)/i);
 	my ($sql_running) = ($slave_status =~ /slave_sql_running\S*\s+(\S+)/i);
+	my ($seconds_behind_master) = ($slave_status =~ /seconds_behind_master\S*\s+(\S+)/i);
 	if ($io_running eq 'Yes' && $sql_running eq 'Yes') {
 		if ($myvar{'read_only'} eq 'OFF') {
 			badprint "This replication slave is running with the read_only option disabled.";
 		} else {
 			goodprint "This replication slave is running with the read_only option enabled.";
 		}
+		if ($seconds_behind_master>0) {
+				badprint "This replication slave is lagging and slave has $seconds_behind_master second(s) behind master host.";
+			}
 	}
 }
 
@@ -1162,15 +1169,15 @@ print	"\n >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
 		" >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
 		" >>  Run with '--help' for additional options and output filtering\n";
 mysql_setup;				# Gotta login first
-os_setup;				# Set up some OS variables
+os_setup;					# Set up some OS variables
 get_all_vars;				# Toss variables/status into hashes
-validate_mysql_version;			# Check current MySQL version
+validate_mysql_version;		# Check current MySQL version
 check_architecture;			# Suggest 64-bit upgrade
-check_storage_engines;			# Show enabled storage engines
-security_recommendations;		# Display some security recommendations
+check_storage_engines;		# Show enabled storage engines
+security_recommendations;	# Display some security recommendations
 calculations;				# Calculate everything we need
 mysql_stats;				# Print the server stats
-make_recommendations;			# Make recommendations based on stats
+make_recommendations;		# Make recommendations based on stats
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
