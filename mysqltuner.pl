@@ -547,12 +547,16 @@ sub get_replication_status {
 	my $slave_status = `$mysqlcmd $mysqllogin -Bse "show slave status\\G"`;
 	my ($io_running) = ($slave_status =~ /slave_io_running\S*\s+(\S+)/i);
 	my ($sql_running) = ($slave_status =~ /slave_sql_running\S*\s+(\S+)/i);
+	my ($seconds_behind_master) = ($slave_status =~ /seconds_behind_master\S*\s+(\S+)/i);
 	if ($io_running eq 'Yes' && $sql_running eq 'Yes') {
 		if ($myvar{'read_only'} eq 'OFF') {
 			badprint "This replication slave is running with the read_only option disabled.";
 		} else {
 			goodprint "This replication slave is running with the read_only option enabled.";
 		}
+		if ($seconds_behind_master>0) {
+				badprint "This replication slave is lagging and slave has $seconds_behind_master second(s) behind master host.";
+			}
 	}
 }
 
@@ -1165,15 +1169,15 @@ print	"\n >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
 		" >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
 		" >>  Run with '--help' for additional options and output filtering\n";
 mysql_setup;				# Gotta login first
-os_setup;				# Set up some OS variables
+os_setup;					# Set up some OS variables
 get_all_vars;				# Toss variables/status into hashes
-validate_mysql_version;			# Check current MySQL version
+validate_mysql_version;		# Check current MySQL version
 check_architecture;			# Suggest 64-bit upgrade
-check_storage_engines;			# Show enabled storage engines
-security_recommendations;		# Display some security recommendations
+check_storage_engines;		# Show enabled storage engines
+security_recommendations;	# Display some security recommendations
 calculations;				# Calculate everything we need
 mysql_stats;				# Print the server stats
-make_recommendations;			# Make recommendations based on stats
+make_recommendations;		# Make recommendations based on stats
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
