@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.4.0
+# mysqltuner.pl - Version 1.4.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2014 Major Hayden - major@mhtx.net
 #
@@ -39,9 +39,10 @@ use warnings;
 use diagnostics;
 use File::Spec;
 use Getopt::Long;
-
+use File::Basename;
+use Cwd 'abs_path';
 # Set up a few variables for use in the script
-my $tunerversion = "1.4.0";
+my $tunerversion = "1.4.1";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -125,6 +126,7 @@ sub usage {
 }
 
 my $devnull = File::Spec->devnull();
+my $basic_password_files=abs_path(dirname(__FILE__))."/basic_passwords.txt";
 
 # Setting up the colors for the print styles
 my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
@@ -454,16 +456,87 @@ sub get_all_vars {
 	}
 }
 
+sub get_basic_passwords {
+	my $file=shift;
+	open (FH, "< $file") or die "Can't open $file for read: $!";
+	my @lines = <FH>;
+	close FH or die "Cannot close $file: $!";
+	return @lines 
+}
+
 sub security_recommendations {
 	print "\n-------- Security Recommendations  -------------------------------------------\n";
-	my @mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL;"`;
+	# Looking for Anonymous users
+	my @mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL ;"`;
+	if (@mysqlstatlist) {
+		foreach my $line (sort @mysqlstatlist) {
+			chomp($line);
+			badprint "User '".$line."' is an anonymous account.\n";
+		}
+		push(@generalrec, "Remove Anonymous User account - there is ".scalar(@mysqlstatlist). " Anonymous account.");
+	} else {
+		goodprint "There is no anonymous account in all database users\n";
+	} 
+
+	# Looking for Empty Password
+	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL;"`;
 	if (@mysqlstatlist) {
 		foreach my $line (sort @mysqlstatlist) {
 			chomp($line);
 			badprint "User '".$line."' has no password set.\n";
 		}
+		push(@generalrec, "Set up a Password for user with the following SQL statement ( SET PASSWORD FOR 'user'\@'SpecificDNSorIp' = PASSWORD('secure_password'); )");
 	} else {
 		goodprint "All database users have passwords assigned\n";
+	} 
+
+	# Looking for User with user/ uppercase /capitalise user as password
+	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = PASSWORD(user) OR password = PASSWORD(UPPER(user)) OR password = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)));"`;
+	if (@mysqlstatlist) {
+		foreach my $line (sort @mysqlstatlist) {
+			chomp($line);
+			badprint "User '".$line."' has user name as password.\n";
+		}
+		push(@generalrec, "Set up a Secure Password for user\@host ( SET PASSWORD FOR  'user'\@'SpecificDNSorIp' = PASSWORD('secure_password'); )");
+	}
+
+	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE HOST='%';"`;
+	if (@mysqlstatlist) {
+		foreach my $line (sort @mysqlstatlist) {
+			chomp($line);
+			badprint "User '".$line."' hasn't specific host restriction.\n";
+		}
+		push(@generalrec, "Restrict Host for user\@% to user\@SpecificDNSorIp");
+	}
+
+	unless (-f $basic_password_files) {
+		badprint "There is not basic password file list !";
+		return;
+	}
+	
+	my @passwords=get_basic_passwords $basic_password_files;
+	infoprint "There is ". scalar(@passwords). " basic passwords in the list.\n";
+	my $nbins=0;
+	my $passreq;
+	if (@passwords) {
+		foreach my $pass (@passwords) {
+			$pass=~s/\s//g;
+			chomp($pass);
+			# Looking for User with user/ uppercase /capitalise weak password
+			$passreq="SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = PASSWORD('".$pass."') OR password = PASSWORD(UPPER('".$pass."')) OR password = PASSWORD(UPPER(LEFT('".$pass."', 1)) + SUBSTRING('".$pass."', 2, LENGTH('".$pass."')));\n";
+			@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "$passreq"`;
+			#infoprint "There is ".scalar (@mysqlstatlist). " items.\n";
+			if (@mysqlstatlist) {
+				foreach my $line (@mysqlstatlist) {
+					chomp($line);
+					badprint "User '".$line."' is using weak pasword: $pass in a lower, upper or capitalize derivated version.\n";
+					$nbins++;
+				}
+			}
+		}
+	}
+	if ($nbins>0) {
+		push(@generalrec, $nbins. " user(s) used basic or weaked password.");
 	}
 }
 
