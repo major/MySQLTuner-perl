@@ -126,9 +126,8 @@ sub usage {
 }
 
 my $devnull = File::Spec->devnull();
-
 my $basic_password_files=abs_path(dirname(__FILE__))."/basic_passwords.txt";
-print "$basic_password_files";
+
 # Setting up the colors for the print styles
 my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
 my $bad = ($opt{nocolor} == 0)? "[\e[0;31m!!\e[0m]" : "[!!]" ;
@@ -526,7 +525,7 @@ sub security_recommendations {
 			# Looking for User with user/ uppercase /capitalise weak password
 			$passreq="SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = PASSWORD('".$pass."') OR password = PASSWORD(UPPER('".$pass."')) OR password = PASSWORD(UPPER(LEFT('".$pass."', 1)) + SUBSTRING('".$pass."', 2, LENGTH('".$pass."')));\n";
 			@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "$passreq"`;
-			infoprint "There is ".scalar (@mysqlstatlist). " items.\n";
+			#infoprint "There is ".scalar (@mysqlstatlist). " items.\n";
 			if (@mysqlstatlist) {
 				foreach my $line (@mysqlstatlist) {
 					chomp($line);
