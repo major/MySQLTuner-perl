@@ -1140,20 +1140,17 @@ sub mysql_stats {
     	}
     	if (defined($myvar{'innodb_buffer_pool_instances'})) {
 			if ($myvar{'innodb_buffer_pool_instances'} > 64) {
-				badprint "InnoDB buffer pool instances must be lower than 64.\n";
-				push(@adjvars,"innodb_buffer_pool_instances must be lower than 64.");
+				badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+				push(@adjvars,"innodb_buffer_pool_instances (<= 64)");
 			} else {
-				goodprint "InnoDB buffer pool instances is lower than 64.\n";
-			}
-			infoprint "Buffer Pool Inst: $myvar{'innodb_buffer_pool_instances'}\n";
-			if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024 
-					and (
-						($myvar{'innodb_buffer_pool_size'}/$myvar{'innodb_buffer_pool_instances'}) < 1024*1024*924
-					or  ($myvar{'innodb_buffer_pool_size'}/$myvar{'innodb_buffer_pool_instances'}) > 1024*1024*1124 ) ) {
-				badprint "InnoDB buffer pool is greater than 1Go and each InnoDB buffer pool instance must manage 900Mo to 1.1Go buffer pool size";
-				push(@adjvars,"innodb_buffer_pool_instances must be calculated with innodb_buffer_pool_size / 1Go ");
-			} else {
-				goodprint "InnoDB buffer pool instances is configurated for managing around 1Go Buffer pool size.";
+				if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024
+					and $myvar{'innodb_buffer_pool_instances'} != int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024))
+				) {
+					badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+					push(@adjvars,"innodb_buffer_pool_instances(=".int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024)).")");
+				} else {
+					goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+				}
 			}
 		}
 	}
