@@ -1145,7 +1145,6 @@ sub mysql_stats {
 			} else {
 				goodprint "InnoDB buffer pool instances is lower than 64.\n";
 			}
-			infoprint "Buffer Pool Size: ".hr_bytes_rnd($myvar{'innodb_buffer_pool_size'})."\n";
 			infoprint "Buffer Pool Inst: $myvar{'innodb_buffer_pool_instances'}\n";
 			if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024 
 					and (
