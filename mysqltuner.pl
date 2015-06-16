@@ -1139,7 +1139,6 @@ sub mysql_stats {
     		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'}."\n";
     	}
     	if (defined($myvar{'innodb_buffer_pool_instances'})) {
-    		infoprint "MySQL version: " .$myvar{'version'}." is greater than MySQL 5.6.6(innodb_buffer_pool_instances is present)\n";
 			if ($myvar{'innodb_buffer_pool_instances'} > 64) {
 				badprint "InnoDB buffer pool instances must be lower than 64.\n";
 				push(@adjvars,"innodb_buffer_pool_instances must be lower than 64.");
