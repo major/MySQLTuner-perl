@@ -59,6 +59,22 @@ The script will try its best to log in via any means possible.  It will check fo
 	
 Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.  If a [T-1000 shows up in a LAPD uniform](https://en.wikipedia.org/wiki/T-1000) and demands your database credentials, you won't have much of an option.
 
+Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?
+
+You could use mysql_config_editor utilities.
+$ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
+Enter passord: ********
+$
+
+At this time, ~/.mylogin.cnf has been written with appropriated rigth access.
+
+To get information about stored credentials, use the following command:
+$mysql_config_editor print
+[client]
+user = someusername
+password = *****
+host = localhost
+
 Question: It's not working on my OS! What gives?!
 
 These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:
