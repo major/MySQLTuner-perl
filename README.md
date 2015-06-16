@@ -62,18 +62,20 @@ Once you create it, make sure it's owned by your user and the mode on the file i
 Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?
 
 You could use mysql_config_editor utilities.
-$ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
-Enter passord: ********
-$
+
+	$ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
+	Enter passord: ********
+	$
 
 At this time, ~/.mylogin.cnf has been written with appropriated rigth access.
 
 To get information about stored credentials, use the following command:
-$mysql_config_editor print
-[client]
-user = someusername
-password = *****
-host = localhost
+
+	$mysql_config_editor print
+	[client]
+	user = someusername
+	password = *****
+	host = localhost
 
 Question: It's not working on my OS! What gives?!
 
