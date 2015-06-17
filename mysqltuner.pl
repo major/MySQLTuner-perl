@@ -510,7 +510,7 @@ sub security_recommendations {
 	} 
 
 	# Looking for User with user/ uppercase /capitalise user as password
-	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = PASSWORD(user) OR password = PASSWORD(UPPER(user)) OR password = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)));"`;
+	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST(password as Binary) = PASSWORD(user) OR CAST(password as Binary) = PASSWORD(UPPER(user)) OR CAST(password as Binary) = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)));"`;
 	if (@mysqlstatlist) {
 		foreach my $line (sort @mysqlstatlist) {
 			chomp($line);
