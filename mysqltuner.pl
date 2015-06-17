@@ -1171,7 +1171,12 @@ sub mysql_stats {
 				badprint "InnoDB buffer pool is greater than 1Go and each InnoDB buffer pool instance must manage 900Mo to 1.1Go buffer pool size.\n";
 				push(@adjvars,"innodb_buffer_pool_instances must be calculated with innodb_buffer_pool_size / 1Go ");
 			} else {
-				goodprint "InnoDB buffer pool instances is configurated for managing around 1Go Buffer pool size.\n";
+				if ($myvar{'innodb_buffer_pool_instances'} != 1) {
+					badprint "InnoDB buffer pool is lower than 1Go and 1 InnoDB buffer pool instance is recommanded.\n";
+					push(@adjvars,"innodb_buffer_pool_instances must be calculated with innodb_buffer_pool_size / 1Go ");
+					} else {
+					goodprint "InnoDB buffer pool instances is configurated for managing around 1Go Buffer pool size.\n";
+				}
 			}
 		}
 	}
@@ -1196,7 +1201,9 @@ sub make_recommendations {
 		prettyprint "No additional performance recommendations are available.\n"
 	}
 }
-
+sub close_reportfile {
+	close($fh) if defined($fh);
+}
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
@@ -1213,8 +1220,8 @@ security_recommendations;	# Display some security recommendations
 calculations;				# Calculate everything we need
 mysql_stats;				# Print the server stats
 make_recommendations;		# Make recommendations based on stats
+close_reportfile;			# Close reportfile if needed
 
-close($fh) if defined($fh);
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
