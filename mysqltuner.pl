@@ -242,8 +242,8 @@ sub os_setup {
 		}
 	} else {
 		if ($os =~ /Linux/) {
-			$physical_memory = `free -b | grep Mem | awk '{print \$2}'` or memerror;
-			$swap_memory = `free -b | grep Swap | awk '{print \$2}'` or memerror;
+			$physical_memory = `LANG=en free -b | grep Mem | awk '{print \$2}'` or memerror;
+			$swap_memory = `LANG=en free -b | grep Swap | awk '{print \$2}'` or memerror;
 		} elsif ($os =~ /Darwin/) {
 			$physical_memory = `sysctl -n hw.memsize` or memerror;
 			$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'` or memerror;
@@ -1142,43 +1142,43 @@ sub mysql_stats {
 
 	# InnoDB
 	if (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES" && defined $enginestats{'InnoDB'}) {
+		# InnoDB Buffer Pull Size
 		if ($myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'}) {
 			goodprint "InnoDB buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
 		} else {
 			badprint "InnoDB  buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
 			push(@adjvars,"innodb_buffer_pool_size (>= ".hr_bytes_rnd($enginestats{'InnoDB'}).")");
 		}
+		# InnoDB Buffer Pull Instances (MySQL 5.6.6+)
+		if (defined($myvar{'innodb_buffer_pool_instances'})) {
+			# Bad Value if > 64
+			if ($myvar{'innodb_buffer_pool_instances'} > 64) {
+				badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+				push(@adjvars,"innodb_buffer_pool_instances (<= 64)");
+			} else {
+				# InnoDB Buffer Pull Size > 1Go
+				if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024
+					and $myvar{'innodb_buffer_pool_instances'} != int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024))
+				) {
+					badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+					push(@adjvars,"innodb_buffer_pool_instances(=".int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024)).")");
+				} else {
+					if ($myvar{'innodb_buffer_pool_instances'} != 1) {
+						badprint "InnoDB buffer pool <= 1Go and innodb_buffer_pool_instances(=1).\n";
+						push(@adjvars,"innodb_buffer_pool_instances (=1)");
+					} else {
+						goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+					}
+				}
+			}
+		}
+		# InnoDB Log Waits
 	    if (defined $mystat{'Innodb_log_waits'} && $mystat{'Innodb_log_waits'} > 0) {
 		    badprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
     		push(@adjvars,"innodb_log_buffer_size (>= ".hr_bytes_rnd($myvar{'innodb_log_buffer_size'}).")");
     	} else {
     		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'}."\n";
     	}
-    	if (defined($myvar{'innodb_buffer_pool_instances'})) {
-    		infoprint "MySQL version: " .$myvar{'version'}." is greater than MySQL 5.6.6(innodb_buffer_pool_instances is present)\n";
-			if ($myvar{'innodb_buffer_pool_instances'} > 64) {
-				badprint "InnoDB buffer pool instances must be lower than 64.\n";
-				push(@adjvars,"innodb_buffer_pool_instances must be lower than 64.");
-			} else {
-				goodprint "InnoDB buffer pool instances is lower than 64.\n";
-			}
-			infoprint "Buffer Pool Size: ".hr_bytes_rnd($myvar{'innodb_buffer_pool_size'})."\n";
-			infoprint "Buffer Pool Inst: $myvar{'innodb_buffer_pool_instances'}\n";
-			if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024 
-					and (
-						($myvar{'innodb_buffer_pool_size'}/$myvar{'innodb_buffer_pool_instances'}) < 1024*1024*924
-					or  ($myvar{'innodb_buffer_pool_size'}/$myvar{'innodb_buffer_pool_instances'}) > 1024*1024*1124 ) ) {
-				badprint "InnoDB buffer pool is greater than 1Go and each InnoDB buffer pool instance must manage 900Mo to 1.1Go buffer pool size.\n";
-				push(@adjvars,"innodb_buffer_pool_instances must be calculated with innodb_buffer_pool_size / 1Go ");
-			} else {
-				if ($myvar{'innodb_buffer_pool_instances'} != 1) {
-					badprint "InnoDB buffer pool is lower than 1Go and 1 InnoDB buffer pool instance is recommanded.\n";
-					push(@adjvars,"innodb_buffer_pool_instances must be calculated with innodb_buffer_pool_size / 1Go ");
-					} else {
-					goodprint "InnoDB buffer pool instances is configurated for managing around 1Go Buffer pool size.\n";
-				}
-			}
-		}
 	}
 }
 
