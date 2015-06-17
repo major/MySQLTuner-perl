@@ -141,6 +141,7 @@ $reportfile=abs_path($opt{reportfile}) unless $opt{reportfile} eq "0";
 
 my $fh=undef;
 open($fh, '>', $reportfile) or die("Fail opening $reportfile") if defined($reportfile);
+$opt{nocolor} = 0 if if defined($reportfile);
 
 # Setting up the colors for the print styles
 my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
