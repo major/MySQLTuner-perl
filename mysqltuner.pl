@@ -1172,7 +1172,7 @@ sub mysql_innodb {
 			push(@adjvars,"innodb_buffer_pool_instances (<= 64)");
 		} 
 		
-		# InnoDB Buffer Pull Size > 1Go
+		# InnoDB Buffer Pull Size > 1G
 		if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024
 			and $myvar{'innodb_buffer_pool_instances'} != int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024))
 		) {
@@ -1180,7 +1180,7 @@ sub mysql_innodb {
 			push(@adjvars,"innodb_buffer_pool_instances(=".int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024)).")");
 		} else {
 			if ($myvar{'innodb_buffer_pool_instances'} != 1) {
-				badprint "InnoDB buffer pool <= 1Go and innodb_buffer_pool_instances(=1).\n";
+				badprint "InnoDB buffer pool <= 1G and innodb_buffer_pool_instances(=1).\n";
 				push(@adjvars,"innodb_buffer_pool_instances (=1)");
 			} else {
 				goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
