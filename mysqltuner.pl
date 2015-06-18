@@ -936,7 +936,7 @@ sub mysql_stats {
 		if (defined $myvar{'query_cache_size'}) {
 			infoprint " +-- Query Cache: " . hr_bytes($myvar{'query_cache_size'}) . "\n";
 		}
-		
+
 		infoprint "Per Thread Buffers\n";
 		infoprint " +-- Read Buffer: " . hr_bytes($myvar{'read_buffer_size'}) . "\n";
 		infoprint " +-- Read RND Buffer: " . hr_bytes($myvar{'read_rnd_buffer_size'}) . "\n";
@@ -1009,9 +1009,9 @@ sub mysql_stats {
 		badprint "Query cache is disabled\n";
 		push(@adjvars,"query_cache_size (>= 8M)");
 	} elsif ($myvar{'query_cache_type'} eq "OFF") {
-                badprint "Query cache is disabled\n";
-                push(@adjvars,"query_cache_type (=1)");
-        } elsif ($mystat{'Com_select'} == 0) {
+				badprint "Query cache is disabled\n";
+				push(@adjvars,"query_cache_type (=1)");
+	} elsif ($mystat{'Com_select'} == 0) {
 		badprint "Query cache cannot be analyzed - no SELECT statements executed\n";
 	} else {
 		if ($mycalc{'query_cache_efficiency'} < 20) {
@@ -1023,10 +1023,10 @@ sub mysql_stats {
 		if ($mycalc{'query_cache_prunes_per_day'} > 98) {
 			badprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
 			if ($myvar{'query_cache_size'} > 128*1024*1024) {
-			    push(@generalrec,"Increasing the query_cache size over 128M may reduce performance");
-		        push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).") [see warning above]");
+				push(@generalrec,"Increasing the query_cache size over 128M may reduce performance");
+				push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).") [see warning above]");
 			} else {
-		        push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).")");
+				push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).")");
 			}
 		} else {
 			goodprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
@@ -1140,48 +1140,63 @@ sub mysql_stats {
 		push(@generalrec,"Your applications are not closing MySQL connections properly");
 	}
 
+}
+# Recommandations for Innodb
+sub mysql_innodb {
+	prettyprint "\n-------- InnoDB Metrics -----------------------------------------------------\n";
 	# InnoDB
-	if (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES" && defined $enginestats{'InnoDB'}) {
-		# InnoDB Buffer Pull Size
-		if ($myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'}) {
-			goodprint "InnoDB buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
-		} else {
-			badprint "InnoDB  buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
-			push(@adjvars,"innodb_buffer_pool_size (>= ".hr_bytes_rnd($enginestats{'InnoDB'}).")");
+	unless (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES" && defined $enginestats{'InnoDB'}) {
+		infoprint "InnoDB is disabled.";
+		if (mysql_version_ge(5,5)) {
+			badprint "InnoDB Storage engine is disabled. InnoDB is the default storage engine\n";
 		}
-		# InnoDB Buffer Pull Instances (MySQL 5.6.6+)
-		if (defined($myvar{'innodb_buffer_pool_instances'})) {
-			# Bad Value if > 64
-			if ($myvar{'innodb_buffer_pool_instances'} > 64) {
-				badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
-				push(@adjvars,"innodb_buffer_pool_instances (<= 64)");
+		return;
+	}
+
+	infoprint "InnoDB is enabled.\n";
+	infoprint "InnoDB BufferPool Size :".hr_bytes($myvar{'innodb_buffer_pool_size'})."\n";
+	infoprint "InnoDB BufferPool Inst :".$myvar{'innodb_buffer_pool_instances'}."\n" if defined($myvar{'innodb_buffer_pool_instances'});
+	# InnoDB Buffer Pull Size
+	if ($myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'}) {
+		goodprint "InnoDB buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
+	} else {
+		badprint "InnoDB  buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
+		push(@adjvars,"innodb_buffer_pool_size (>= ".hr_bytes_rnd($enginestats{'InnoDB'}).")");
+	}
+
+	# InnoDB Buffer Pull Instances (MySQL 5.6.6+)
+	if (defined($myvar{'innodb_buffer_pool_instances'})) {
+		# Bad Value if > 64
+		if ($myvar{'innodb_buffer_pool_instances'} > 64) {
+			badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+			push(@adjvars,"innodb_buffer_pool_instances (<= 64)");
+		} 
+		
+		# InnoDB Buffer Pull Size > 1Go
+		if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024
+			and $myvar{'innodb_buffer_pool_instances'} != int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024))
+		) {
+			badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+			push(@adjvars,"innodb_buffer_pool_instances(=".int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024)).")");
+		} else {
+			if ($myvar{'innodb_buffer_pool_instances'} != 1) {
+				badprint "InnoDB buffer pool <= 1Go and innodb_buffer_pool_instances(=1).\n";
+				push(@adjvars,"innodb_buffer_pool_instances (=1)");
 			} else {
-				# InnoDB Buffer Pull Size > 1Go
-				if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024
-					and $myvar{'innodb_buffer_pool_instances'} != int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024))
-				) {
-					badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
-					push(@adjvars,"innodb_buffer_pool_instances(=".int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024)).")");
-				} else {
-					if ($myvar{'innodb_buffer_pool_instances'} != 1) {
-						badprint "InnoDB buffer pool <= 1Go and innodb_buffer_pool_instances(=1).\n";
-						push(@adjvars,"innodb_buffer_pool_instances (=1)");
-					} else {
-						goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
-					}
-				}
+				goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
 			}
 		}
-		# InnoDB Log Waits
-	    if (defined $mystat{'Innodb_log_waits'} && $mystat{'Innodb_log_waits'} > 0) {
-		    badprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
-    		push(@adjvars,"innodb_log_buffer_size (>= ".hr_bytes_rnd($myvar{'innodb_log_buffer_size'}).")");
-    	} else {
-    		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'}."\n";
-    	}
+		
+	}
+
+	# InnoDB Log Waits
+	if (defined $mystat{'Innodb_log_waits'} && $mystat{'Innodb_log_waits'} > 0) {
+		badprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
+		push(@adjvars,"innodb_log_buffer_size (>= ".hr_bytes_rnd($myvar{'innodb_log_buffer_size'}).")");
+	} else {
+		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'}."\n";
 	}
 }
-
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
 	prettyprint "\n-------- Recommendations -----------------------------------------------------\n";
@@ -1219,6 +1234,7 @@ check_storage_engines;		# Show enabled storage engines
 security_recommendations;	# Display some security recommendations
 calculations;				# Calculate everything we need
 mysql_stats;				# Print the server stats
+mysql_innodb;				# Print InnoDB stats
 make_recommendations;		# Make recommendations based on stats
 close_reportfile;			# Close reportfile if needed
 
