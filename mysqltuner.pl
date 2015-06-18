@@ -41,6 +41,8 @@ use File::Spec;
 use Getopt::Long;
 use File::Basename;
 use Cwd 'abs_path';
+#use Data::Dumper qw/Dumper/;
+
 # Set up a few variables for use in the script
 my $tunerversion = "1.4.4";
 my (@adjvars, @generalrec);
@@ -661,7 +663,8 @@ sub check_storage_engines {
 	infoprint "Status: $engines\n";
 	if (mysql_version_ge(5)) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
-		my @templist = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
+		my @templist = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
+		
 		foreach my $line (@templist) {
 			my ($engine,$size,$count);
 			($engine,$size,$count) = $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)/;
@@ -669,7 +672,7 @@ sub check_storage_engines {
 			$enginestats{$engine} = $size;
 			$enginecount{$engine} = $count;
 		}
-		$fragtables = `$mysqlcmd $mysqllogin -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`;
+		$fragtables = `$mysqlcmd $mysqllogin -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','performance_schema', 'mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`;
 		chomp($fragtables);
 	} else {
 		# MySQL < 5 servers take a lot of work to get table sizes
@@ -679,6 +682,8 @@ sub check_storage_engines {
 		foreach my $db (@dblist) {
 			chomp($db);
 			if ($db eq "information_schema") { next; }
+			if ($db eq "performance_schema") { next; }
+			if ($db eq "mysql") { next; }
 			my @ixs = (1, 6, 9);
 			if (!mysql_version_ge(4, 1)) {
 				# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
@@ -715,7 +720,7 @@ sub check_storage_engines {
 		push(@generalrec,"Add skip-bdb to MySQL configuration to disable BDB");
 	}
 	if (!defined $enginestats{'ISAM'} && defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES") {
-		badprint "ISAM is enabled but isn't being used\n";
+		badprint "MYISAM is enabled but isn't being used\n";
 		push(@generalrec,"Add skip-isam to MySQL configuration to disable ISAM (MySQL > 4.1.0)");
 	}
 	# Fragmented tables
