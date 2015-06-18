@@ -140,6 +140,9 @@ sub usage {
 my $devnull = File::Spec->devnull();
 my $basic_password_files=($opt{passwordfile} eq "0")? abs_path(dirname(__FILE__))."/basic_passwords.txt" : abs_path($opt{passwordfile}) ;
 
+# for RPM distributions
+$basic_password_files="/usr/share/mysqltuner/basic_passwords.txt" unless -f "$basic_password_files";
+
 # 
 my $reportfile=undef;
 $reportfile=abs_path($opt{reportfile}) unless $opt{reportfile} eq "0";

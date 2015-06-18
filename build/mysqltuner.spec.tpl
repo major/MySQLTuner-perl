@@ -27,9 +27,11 @@ Montgomery's MySQL tuning primer script.
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_sbindir}
+install -d $RPM_BUILD_ROOT%{_datarootdir}
 install -p %{name}.pl $RPM_BUILD_ROOT%{_sbindir}/%{name}
 install -d $RPM_BUILD_ROOT%{_datarootdir}/%{name}
-install -p LICENSE $RPM_BUILD_ROOT%{_sbindir}/%{name}
+install -p LICENSE $RPM_BUILD_ROOT%{_datarootdir}/%{name}
+install -p basic_passwords.txt $RPM_BUILD_ROOT%{_datarootdir}/%{name}
 
 
 %clean
@@ -37,7 +39,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc LICENSE
+%doc %{_datarootdir}/%{name}
 %attr(755,root,root) %{_sbindir}/%{name}
 
 %changelog
