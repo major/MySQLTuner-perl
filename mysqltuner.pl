@@ -399,7 +399,7 @@ sub mysql_setup {
 			if (length($userpath) > 0) {
 				chomp($userpath);
 			}
-			unless ( -e "${userpath}/.my.cnf" ) {
+			unless ( -e "${userpath}/.my.cnf" or -e "${userpath}/.mylogin.cnf" ) {
 				badprint "Successfully authenticated with no password - SECURITY RISK!\n";
 			}
 			return 1;
