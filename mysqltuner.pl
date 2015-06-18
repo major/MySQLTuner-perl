@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.4.4
+# mysqltuner.pl - Version 1.4.5
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2014 Major Hayden - major@mhtx.net
 #
@@ -29,7 +29,7 @@
 #   Blair Christensen      Hans du Plooy        Victor Trac
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
-#   Baptiste M.            Cole Turner
+#   Baptiste M.            Cole Turner          Major Hayden
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -42,9 +42,8 @@ use Getopt::Long;
 use File::Basename;
 use Cwd 'abs_path';
 #use Data::Dumper qw/Dumper/;
-
 # Set up a few variables for use in the script
-my $tunerversion = "1.4.4";
+my $tunerversion = "1.4.5";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -52,6 +51,7 @@ my %opt = (
 		"nobad" 		=> 0,
 		"nogood" 		=> 0,
 		"noinfo" 		=> 0,
+		"debug" 		=> 0,
 		"nocolor" 		=> 0,
 		"forcemem" 		=> 0,
 		"forceswap" 	=> 0,
@@ -67,11 +67,13 @@ my %opt = (
 		"reportfile"	=> 0,
 	);
 
+
 # Gather the options from the command line
 GetOptions(\%opt,
 		'nobad',
 		'nogood',
 		'noinfo',
+		'debug',
 		'nocolor',
 		'forcemem=i',
 		'forceswap=i',
@@ -128,6 +130,7 @@ sub usage {
 		"      --nogood             Remove OK responses\n".
 		"      --nobad              Remove negative/suggestion responses\n".
 		"      --noinfo             Remove informational responses\n".
+		"      --debug             Print debug information\n".
 		"      --nocolor            Don't print output in color\n".
 		"      --buffers            Print global and per-thread buffer values\n".
 		"\n";
@@ -149,17 +152,19 @@ $opt{nocolor} = 1 if defined($reportfile);
 my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
 my $bad  = ($opt{nocolor} == 0)? "[\e[0;31m!!\e[0m]" : "[!!]" ;
 my $info = ($opt{nocolor} == 0)? "[\e[0;34m--\e[0m]" : "[--]" ;
+my $deb  = ($opt{nocolor} == 0)? "[\e[0;31mDEBUG\e[0m]" : "[DEBUG]" ;
 
 # Functions that handle the print styles
 sub prettyprint {
 	print $_[0];
 	print $fh $_[0] if defined($fh);
 }
-sub goodprint { prettyprint $good." ".$_[0] unless ($opt{nogood} == 1); }
-sub infoprint { prettyprint $info." ".$_[0] unless ($opt{noinfo} == 1); }
-sub badprint  { prettyprint $bad. " ".$_[0] unless ($opt{nobad}  == 1); }
-sub redwrap   { return ($opt{nocolor} == 0) ? "\e[0;31m".$_[0]."\e[0m" : $_[0] ; }
-sub greenwrap { return ($opt{nocolor} == 0) ? "\e[0;32m".$_[0]."\e[0m" : $_[0] ; }
+sub goodprint  { prettyprint $good." ".$_[0] unless ($opt{nogood} == 1); }
+sub infoprint  { prettyprint $info." ".$_[0] unless ($opt{noinfo} == 1); }
+sub badprint   { prettyprint $bad. " ".$_[0] unless ($opt{nobad}  == 1); }
+sub debugprint { prettyprint $deb. " ".$_[0] unless ($opt{debug}  == 0); }
+sub redwrap    { return ($opt{nocolor} == 0) ? "\e[0;31m".$_[0]."\e[0m" : $_[0] ; }
+sub greenwrap  { return ($opt{nocolor} == 0) ? "\e[0;32m".$_[0]."\e[0m" : $_[0] ; }
 
 # Calculates the parameter passed in bytes, and then rounds it to one decimal place
 sub hr_bytes {
@@ -201,6 +206,14 @@ sub hr_num {
 	} else {
 		return $num;
 	}
+}
+
+# Calculate Percentage
+sub percentage{
+	my $value=shift;
+	my $total=shift;
+	return 0,00 if $total == 0;
+	return sprintf("%.2f", ($value*100/$total) );
 }
 
 # Calculates uptime to display in a more attractive form
@@ -561,8 +574,15 @@ sub security_recommendations {
 	}
 }
 
-sub get_replication_status {
+sub get_replication_status { 
+	prettyprint "\n-------- Replication Metrics -------------------------------------------------\n";
+
 	my $slave_status = `$mysqlcmd $mysqllogin -Bse "show slave status\\G"`;
+	if( $slave_status eq '' ) {
+		infoprint "No replication setup for this server.\n";
+		return;
+	}
+	debugprint "$slave_status \n";
 	my ($io_running) = ($slave_status =~ /slave_io_running\S*\s+(\S+)/i);
 	my ($sql_running) = ($slave_status =~ /slave_sql_running\S*\s+(\S+)/i);
 	my ($seconds_behind_master) = ($slave_status =~ /seconds_behind_master\S*\s+(\S+)/i);
@@ -634,6 +654,24 @@ sub check_architecture {
 	}
 }
 
+# Request Array
+sub select_array {
+	my $req=shift;
+	debugprint "PERFORM: $req \n";
+	my @result=`$mysqlcmd $mysqllogin -Bse "$req"`;
+	chomp (@result);
+	return @result;
+}
+
+# Request one
+sub select_one {
+	my $req=shift;
+	debugprint "PERFORM: $req \n";
+	my $result=`$mysqlcmd $mysqllogin -Bse "$req"`;
+	chomp ($result);
+	return $result;
+}
+
 # Start up a ton of storage engine counts/statistics
 my (%enginestats,%enginecount,$fragtables);
 sub check_storage_engines {
@@ -663,8 +701,8 @@ sub check_storage_engines {
 	infoprint "Status: $engines\n";
 	if (mysql_version_ge(5)) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
-		my @templist = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
-		
+		my @templist = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
+
 		foreach my $line (@templist) {
 			my ($engine,$size,$count);
 			($engine,$size,$count) = $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)/;
@@ -1202,6 +1240,34 @@ sub mysql_innodb {
 		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'}."\n";
 	}
 }
+
+# Recommandations for Innodb
+sub mysql_databases {
+	prettyprint "\n-------- Database Metrics ------------------------------------------------\n";
+	unless (mysql_version_ge(5,5)) {
+		infoprint "Skip Database metrics from information schema \n";
+		return;
+	}
+
+	my @dblist=select_array("SHOW DATABASES;");
+	infoprint "There is ".scalar(@dblist). " Database(s).\n";
+	my @totaldbinfo=split /\s/, select_one("SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH) FROM information_schema.TABLES");
+	infoprint " +-- ROWS : ".($totaldbinfo[0] eq 'NULL'?0:$totaldbinfo[0])."\n";
+	infoprint " +-- DATA : ".hr_bytes($totaldbinfo[1])."(".percentage($totaldbinfo[1], $totaldbinfo[3])."%)\n";
+	infoprint " +-- INDEX: ".hr_bytes($totaldbinfo[2])."(".percentage($totaldbinfo[2], $totaldbinfo[3])."%)\n";
+	infoprint " +-- SIZE : ".hr_bytes($totaldbinfo[3])."\n";
+	badprint "Index size is larger than data size \n" if $totaldbinfo[1]<$totaldbinfo[2];
+	foreach (@dblist) { 
+		my @dbinfo=split /\s/, select_one("SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA");
+		infoprint "Database: ".$dbinfo[0]."\n";
+		infoprint " +-- ROWS : ".($dbinfo[1] eq 'NULL'?0:$dbinfo[1])."\n";
+		infoprint " +-- DATA : ".hr_bytes($dbinfo[2])."(".percentage($dbinfo[2], $dbinfo[4])."%)\n";
+		infoprint " +-- INDEX: ".hr_bytes($dbinfo[3])."(".percentage($dbinfo[3], $dbinfo[4])."%)\n";
+		infoprint " +-- TOTAL: ".hr_bytes($dbinfo[4])."\n";
+		badprint "Index size is larger than data size for $dbinfo[0] \n" if $dbinfo[2]<$dbinfo[3];
+	}
+}
+
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
 	prettyprint "\n-------- Recommendations -----------------------------------------------------\n";
@@ -1236,10 +1302,12 @@ get_all_vars;				# Toss variables/status into hashes
 validate_mysql_version;		# Check current MySQL version
 check_architecture;			# Suggest 64-bit upgrade
 check_storage_engines;		# Show enabled storage engines
+mysql_databases;			# Show informations about databases
 security_recommendations;	# Display some security recommendations
 calculations;				# Calculate everything we need
 mysql_stats;				# Print the server stats
 mysql_innodb;				# Print InnoDB stats
+get_replication_status;		# Print replication info
 make_recommendations;		# Make recommendations based on stats
 close_reportfile;			# Close reportfile if needed
 
