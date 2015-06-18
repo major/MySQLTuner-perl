@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.4.3
+# mysqltuner.pl - Version 1.4.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2014 Major Hayden - major@mhtx.net
 #
@@ -42,7 +42,7 @@ use Getopt::Long;
 use File::Basename;
 use Cwd 'abs_path';
 # Set up a few variables for use in the script
-my $tunerversion = "1.4.3";
+my $tunerversion = "1.4.4";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -62,6 +62,7 @@ my %opt = (
 		"checkversion" 	=> 0,
 		"buffers" 		=> 0,
 		"passwordfile"	=> 0,
+		"reportfile"	=> 0,
 	);
 
 # Gather the options from the command line
@@ -84,6 +85,8 @@ GetOptions(\%opt,
 		'help',
 		'buffers',
 		'passwordfile=s',
+		'reportfile=s',
+		'silent',
 	);
 
 if (defined $opt{'help'} && $opt{'help'} == 1) { usage(); }
@@ -117,6 +120,7 @@ sub usage {
 		"      --forcemem <size>    Amount of RAM installed in megabytes\n".
 		"      --forceswap <size>   Amount of swap memory configured in megabytes\n".
 		"      --passwordfile <path>Path to a password file list(one password by line)\n".
+		"      --reportfile <path>  Path to a report txt file\n".
 		"\n".
 		"   Output Options:\n".
 		"      --nogood             Remove OK responses\n".
@@ -131,17 +135,29 @@ sub usage {
 my $devnull = File::Spec->devnull();
 my $basic_password_files=($opt{passwordfile} eq "0")? abs_path(dirname(__FILE__))."/basic_passwords.txt" : abs_path($opt{passwordfile}) ;
 
+# 
+my $reportfile=undef;
+$reportfile=abs_path($opt{reportfile}) unless $opt{reportfile} eq "0";
+
+my $fh=undef;
+open($fh, '>', $reportfile) or die("Fail opening $reportfile") if defined($reportfile);
+$opt{nocolor} = 1 if defined($reportfile);
+
 # Setting up the colors for the print styles
 my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
-my $bad = ($opt{nocolor} == 0)? "[\e[0;31m!!\e[0m]" : "[!!]" ;
+my $bad  = ($opt{nocolor} == 0)? "[\e[0;31m!!\e[0m]" : "[!!]" ;
 my $info = ($opt{nocolor} == 0)? "[\e[0;34m--\e[0m]" : "[--]" ;
 
 # Functions that handle the print styles
-sub goodprint { print $good." ".$_[0] unless ($opt{nogood} == 1); }
-sub infoprint { print $info." ".$_[0] unless ($opt{noinfo} == 1); }
-sub badprint { print $bad." ".$_[0] unless ($opt{nobad} == 1); }
-sub redwrap { return ($opt{nocolor} == 0)? "\e[0;31m".$_[0]."\e[0m" : $_[0] ; }
-sub greenwrap { return ($opt{nocolor} == 0)? "\e[0;32m".$_[0]."\e[0m" : $_[0] ; }
+sub prettyprint {
+	print $_[0];
+	print $fh $_[0] if defined($fh);
+}
+sub goodprint { prettyprint $good." ".$_[0] unless ($opt{nogood} == 1); }
+sub infoprint { prettyprint $info." ".$_[0] unless ($opt{noinfo} == 1); }
+sub badprint  { prettyprint $bad. " ".$_[0] unless ($opt{nobad}  == 1); }
+sub redwrap   { return ($opt{nocolor} == 0) ? "\e[0;31m".$_[0]."\e[0m" : $_[0] ; }
+sub greenwrap { return ($opt{nocolor} == 0) ? "\e[0;32m".$_[0]."\e[0m" : $_[0] ; }
 
 # Calculates the parameter passed in bytes, and then rounds it to one decimal place
 sub hr_bytes {
@@ -383,7 +399,7 @@ sub mysql_setup {
 			if (length($userpath) > 0) {
 				chomp($userpath);
 			}
-			unless ( -e "${userpath}/.my.cnf" ) {
+			unless ( -e "${userpath}/.my.cnf" or -e "${userpath}/.mylogin.cnf" ) {
 				badprint "Successfully authenticated with no password - SECURITY RISK!\n";
 			}
 			return 1;
@@ -468,7 +484,7 @@ sub get_basic_passwords {
 }
 
 sub security_recommendations {
-	print "\n-------- Security Recommendations  -------------------------------------------\n";
+	prettyprint "\n-------- Security Recommendations  -------------------------------------------\n";
 	# Looking for Anonymous users
 	my @mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL ;"`;
 	if (@mysqlstatlist) {
@@ -494,13 +510,13 @@ sub security_recommendations {
 	} 
 
 	# Looking for User with user/ uppercase /capitalise user as password
-	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = PASSWORD(user) OR password = PASSWORD(UPPER(user)) OR password = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)));"`;
+	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST(password as Binary) = PASSWORD(user) OR CAST(password as Binary) = PASSWORD(UPPER(user)) OR CAST(password as Binary) = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)));"`;
 	if (@mysqlstatlist) {
 		foreach my $line (sort @mysqlstatlist) {
 			chomp($line);
 			badprint "User '".$line."' has user name as password.\n";
 		}
-		push(@generalrec, "Set up a Secure Password for user\@host ( SET PASSWORD FOR  'user'\@'SpecificDNSorIp' = PASSWORD('secure_password'); )");
+		push(@generalrec, "Set up a Secure Password for user\@host ( SET PASSWORD FOR 'user'\@'SpecificDNSorIp' = PASSWORD('secure_password'); )");
 	}
 
 	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE HOST='%';"`;
@@ -620,12 +636,12 @@ sub check_architecture {
 my (%enginestats,%enginecount,$fragtables);
 sub check_storage_engines {
 	if ($opt{skipsize} eq 1) {
-		print "\n-------- Storage Engine Statistics -------------------------------------------\n";
+		prettyprint "\n-------- Storage Engine Statistics -------------------------------------------\n";
 		infoprint "Skipped due to --skipsize option\n";
 		return;
 	}
-	print "\n-------- Storage Engine Statistics -------------------------------------------\n";
-	infoprint "Status: ";
+	prettyprint "\n-------- Storage Engine Statistics -------------------------------------------\n";
+	
 	my $engines;
 	if (mysql_version_ge(5, 1)) {
 		my @engineresults = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC"`;
@@ -642,7 +658,7 @@ sub check_storage_engines {
 		$engines .= (defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES")? greenwrap "+ISAM " : redwrap "-ISAM " ;
 		$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;
 	}
-	print "$engines\n";
+	infoprint "Status: $engines\n";
 	if (mysql_version_ge(5)) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
 		my @templist = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
@@ -890,7 +906,7 @@ sub calculations {
 }
 
 sub mysql_stats {
-	print "\n-------- Performance Metrics -------------------------------------------------\n";
+	prettyprint "\n-------- Performance Metrics -------------------------------------------------\n";
 	# Show uptime, queries per second, connections, traffic stats
 	my $qps;
 	if ($mystat{'Uptime'} > 0) { $qps = sprintf("%.3f",$mystat{'Questions'}/$mystat{'Uptime'}); }
@@ -920,7 +936,7 @@ sub mysql_stats {
 		if (defined $myvar{'query_cache_size'}) {
 			infoprint " +-- Query Cache: " . hr_bytes($myvar{'query_cache_size'}) . "\n";
 		}
-		
+
 		infoprint "Per Thread Buffers\n";
 		infoprint " +-- Read Buffer: " . hr_bytes($myvar{'read_buffer_size'}) . "\n";
 		infoprint " +-- Read RND Buffer: " . hr_bytes($myvar{'read_rnd_buffer_size'}) . "\n";
@@ -993,9 +1009,9 @@ sub mysql_stats {
 		badprint "Query cache is disabled\n";
 		push(@adjvars,"query_cache_size (>= 8M)");
 	} elsif ($myvar{'query_cache_type'} eq "OFF") {
-                badprint "Query cache is disabled\n";
-                push(@adjvars,"query_cache_type (=1)");
-        } elsif ($mystat{'Com_select'} == 0) {
+				badprint "Query cache is disabled\n";
+				push(@adjvars,"query_cache_type (=1)");
+	} elsif ($mystat{'Com_select'} == 0) {
 		badprint "Query cache cannot be analyzed - no SELECT statements executed\n";
 	} else {
 		if ($mycalc{'query_cache_efficiency'} < 20) {
@@ -1007,10 +1023,10 @@ sub mysql_stats {
 		if ($mycalc{'query_cache_prunes_per_day'} > 98) {
 			badprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
 			if ($myvar{'query_cache_size'} > 128*1024*1024) {
-			    push(@generalrec,"Increasing the query_cache size over 128M may reduce performance");
-		        push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).") [see warning above]");
+				push(@generalrec,"Increasing the query_cache size over 128M may reduce performance");
+				push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).") [see warning above]");
 			} else {
-		        push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).")");
+				push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).")");
 			}
 		} else {
 			goodprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
@@ -1124,63 +1140,89 @@ sub mysql_stats {
 		push(@generalrec,"Your applications are not closing MySQL connections properly");
 	}
 
+}
+# Recommandations for Innodb
+sub mysql_innodb {
+	prettyprint "\n-------- InnoDB Metrics -----------------------------------------------------\n";
 	# InnoDB
-	if (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES" && defined $enginestats{'InnoDB'}) {
-		if ($myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'}) {
-			goodprint "InnoDB buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
-		} else {
-			badprint "InnoDB  buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
-			push(@adjvars,"innodb_buffer_pool_size (>= ".hr_bytes_rnd($enginestats{'InnoDB'}).")");
+	unless (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES" && defined $enginestats{'InnoDB'}) {
+		infoprint "InnoDB is disabled.";
+		if (mysql_version_ge(5,5)) {
+			badprint "InnoDB Storage engine is disabled. InnoDB is the default storage engine\n";
 		}
-		if (defined($myvar{'innodb_buffer_pool_instances'})) {
-			if ($myvar{'innodb_buffer_pool_instances'} > 64) {
-				badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
-				push(@adjvars,"innodb_buffer_pool_instances (<= 64)");
+		return;
+	}
+
+	infoprint "InnoDB is enabled.\n";
+	infoprint "InnoDB BufferPool Size :".hr_bytes($myvar{'innodb_buffer_pool_size'})."\n";
+	infoprint "InnoDB BufferPool Inst :".$myvar{'innodb_buffer_pool_instances'}."\n" if defined($myvar{'innodb_buffer_pool_instances'});
+	# InnoDB Buffer Pull Size
+	if ($myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'}) {
+		goodprint "InnoDB buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
+	} else {
+		badprint "InnoDB  buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
+		push(@adjvars,"innodb_buffer_pool_size (>= ".hr_bytes_rnd($enginestats{'InnoDB'}).")");
+	}
+
+	# InnoDB Buffer Pull Instances (MySQL 5.6.6+)
+	if (defined($myvar{'innodb_buffer_pool_instances'})) {
+		# Bad Value if > 64
+		if ($myvar{'innodb_buffer_pool_instances'} > 64) {
+			badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+			push(@adjvars,"innodb_buffer_pool_instances (<= 64)");
+		} 
+		
+		# InnoDB Buffer Pull Size > 1Go
+		if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024
+			and $myvar{'innodb_buffer_pool_instances'} != int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024))
+		) {
+			badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
+			push(@adjvars,"innodb_buffer_pool_instances(=".int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024)).")");
+		} else {
+			if ($myvar{'innodb_buffer_pool_instances'} != 1) {
+				badprint "InnoDB buffer pool <= 1Go and innodb_buffer_pool_instances(=1).\n";
+				push(@adjvars,"innodb_buffer_pool_instances (=1)");
 			} else {
-				if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024
-					and $myvar{'innodb_buffer_pool_instances'} != int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024))
-				) {
-					badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
-					push(@adjvars,"innodb_buffer_pool_instances(=".int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024)).")");
-				} else {
-					goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
-				}
+				goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
 			}
 		}
-	    if (defined $mystat{'Innodb_log_waits'} && $mystat{'Innodb_log_waits'} > 0) {
-		    badprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
-    		push(@adjvars,"innodb_log_buffer_size (>= ".hr_bytes_rnd($myvar{'innodb_log_buffer_size'}).")");
-    	} else {
-    		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'}."\n";
-    	}
+		
+	}
+
+	# InnoDB Log Waits
+	if (defined $mystat{'Innodb_log_waits'} && $mystat{'Innodb_log_waits'} > 0) {
+		badprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
+		push(@adjvars,"innodb_log_buffer_size (>= ".hr_bytes_rnd($myvar{'innodb_log_buffer_size'}).")");
+	} else {
+		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'}."\n";
 	}
 }
-
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
-	print "\n-------- Recommendations -----------------------------------------------------\n";
+	prettyprint "\n-------- Recommendations -----------------------------------------------------\n";
 	if (@generalrec > 0) {
-		print "General recommendations:\n";
-		foreach (@generalrec) { print "    ".$_."\n"; }
+		prettyprint "General recommendations:\n";
+		foreach (@generalrec) { prettyprint "    ".$_."\n"; }
 	}
 	if (@adjvars > 0) {
-		print "Variables to adjust:\n";
+		prettyprint "Variables to adjust:\n";
 		if ($mycalc{'pct_physical_memory'} > 90) {
-			print "  *** MySQL's maximum memory usage is dangerously high ***\n".
+			prettyprint "  *** MySQL's maximum memory usage is dangerously high ***\n".
 				  "  *** Add RAM before increasing MySQL buffer variables ***\n";
 		}
-		foreach (@adjvars) { print "    ".$_."\n"; }
+		foreach (@adjvars) { prettyprint "    ".$_."\n"; }
 	}
 	if (@generalrec == 0 && @adjvars ==0) {
-		print "No additional performance recommendations are available.\n"
+		prettyprint "No additional performance recommendations are available.\n"
 	}
-	print "\n";
 }
-
+sub close_reportfile {
+	close($fh) if defined($fh);
+}
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-print	"\n >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
+prettyprint	" >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
 		" >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
 		" >>  Run with '--help' for additional options and output filtering\n";
 mysql_setup;				# Gotta login first
@@ -1192,7 +1234,10 @@ check_storage_engines;		# Show enabled storage engines
 security_recommendations;	# Display some security recommendations
 calculations;				# Calculate everything we need
 mysql_stats;				# Print the server stats
+mysql_innodb;				# Print InnoDB stats
 make_recommendations;		# Make recommendations based on stats
+close_reportfile;			# Close reportfile if needed
+
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
