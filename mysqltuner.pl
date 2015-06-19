@@ -65,6 +65,7 @@ my %opt = (
 		"buffers" 		=> 0,
 		"passwordfile"	=> 0,
 		"reportfile"	=> 0,
+		"dbstat"		=> 0,
 	);
 
 
@@ -91,6 +92,7 @@ GetOptions(\%opt,
 		'passwordfile=s',
 		'reportfile=s',
 		'silent',
+		'dbstat',
 	);
 
 if (defined $opt{'help'} && $opt{'help'} == 1) { usage(); }
@@ -1246,6 +1248,9 @@ sub mysql_innodb {
 
 # Recommandations for Innodb
 sub mysql_databases {
+	if ($opt{dbstat} == 0) {
+		return;
+	}
 	prettyprint "\n-------- Database Metrics ------------------------------------------------\n";
 	unless (mysql_version_ge(5,5)) {
 		infoprint "Skip Database metrics from information schema \n";
