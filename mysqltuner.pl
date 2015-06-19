@@ -1232,7 +1232,7 @@ sub mysql_innodb {
 		# InnoDB Buffer Pull Size < 1Go
 		} else {
 			if ($myvar{'innodb_buffer_pool_instances'} != 1) {
-				badprint "InnoDB buffer pool <= 1Go and innodb_buffer_pool_instances(=1).\n";
+				badprint "InnoDB buffer pool <= 1G and innodb_buffer_pool_instances(!=1).\n";
 				push(@adjvars,"innodb_buffer_pool_instances (=1)");
 			} else {
 				goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
