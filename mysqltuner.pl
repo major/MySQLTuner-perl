@@ -854,6 +854,12 @@ sub calculations {
 	$mycalc{'pct_connections_used'} = int(($mystat{'Max_used_connections'}/$myvar{'max_connections'}) * 100);
 	$mycalc{'pct_connections_used'} = ($mycalc{'pct_connections_used'} > 100) ? 100 : $mycalc{'pct_connections_used'} ;
 
+	# Aborted Connections
+	$mycalc{'pct_connections_aborted'} = percentage($mystat{'Aborted_connects'}, $mystat{'Connections'});
+	debugprint "Aborted_connects: ".$mystat{'Aborted_connects'}."\n";
+	debugprint "Connections: ".$mystat{'Connections'}."\n";
+	debugprint "pct_connections_aborted: ".$mycalc{'pct_connections_aborted'}."\n";
+	
 	# Key buffers
 	if (mysql_version_ge(4, 1) && $myvar{'key_buffer_size'} > 0) {
 		$mycalc{'pct_key_buffer_used'} = sprintf("%.1f",(1 - (($mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}) / $myvar{'key_buffer_size'})) * 100);
@@ -954,6 +960,11 @@ sub calculations {
 	if ($myvar{'have_innodb'} eq "YES") {
 		$mycalc{'innodb_log_size_pct'} = ($myvar{'innodb_log_file_size'} * 100 / $myvar{'innodb_buffer_pool_size'});
 	}
+
+	# Binlog Cache
+	if ($myvar{'log_bin'} ne 'OFF') {
+		$mycalc{'pct_binlog_cache'} = percentage( $mystat{'Binlog_cache_use'} - $mystat{'Binlog_cache_disk_use'}, $mystat{'Binlog_cache_use'} );
+	}
 }
 
 sub mysql_stats {
@@ -966,20 +977,24 @@ sub mysql_stats {
 		" q [".hr_num($qps)." qps], ".hr_num($mystat{'Connections'})." conn,".
 		" TX: ".hr_num($mystat{'Bytes_sent'}).", RX: ".hr_num($mystat{'Bytes_received'}).")\n";
 	infoprint "Reads / Writes: ".$mycalc{'pct_reads'}."% / ".$mycalc{'pct_writes'}."%\n";
+	# Binlog Cache
+	if ($myvar{'log_bin'} eq 'OFF') {
+		infoprint "Binary logging is disabled\n";
+	} else {
+		infoprint "Binary logging is enabled (GTID MODE: ".(defined ($myvar{'gtid_mode'})?$myvar{'gtid_mode'}:"OFF").")\n";
+	}
 
 	# Memory usage
 	infoprint "Total buffers: ".hr_bytes($mycalc{'server_buffers'})." global + ".hr_bytes($mycalc{'per_thread_buffers'})." per thread ($myvar{'max_connections'} max threads)\n";
-	
+
 	if ($opt{buffers} ne 0) {
 		infoprint "Global Buffers\n";
 		infoprint " +-- Key Buffer: " . hr_bytes($myvar{'key_buffer_size'}) . "\n";
 		infoprint " +-- Max Tmp Table: ".hr_bytes($mycalc{'max_tmp_table_size'})."\n";
-		
+
 		if (defined $myvar{'query_cache_type'}) {
 			infoprint "Query Cache Buffers\n";
 			infoprint " +-- Query Cache: ".$myvar{'query_cache_type'}." - " .($myvar{'query_cache_type'} eq 0| $myvar{'query_cache_type'} eq 'OFF'?"DISABLED":($myvar{'query_cache_type'} eq 1?"ALL REQUESTS":"ON DEMAND")) . "\n";
-		}
-		if (defined $myvar{'query_cache_size'}) {
 			infoprint " +-- Query Cache Size: " . hr_bytes($myvar{'query_cache_size'}) . "\n";
 		}
 
@@ -989,7 +1004,11 @@ sub mysql_stats {
 		infoprint " +-- Sort Buffer: " . hr_bytes($myvar{'sort_buffer_size'}) . "\n";
 		infoprint " +-- Thread stack: " . hr_bytes($myvar{'thread_stack'}) . "\n";
 		infoprint " +-- Join Buffer: " . hr_bytes($myvar{'join_buffer_size'}) . "\n";
-	}	
+		if ( $myvar{'log_bin'} ne 'OFF') {
+			infoprint "Binlog Cache Buffers\n";
+			infoprint " +-- Binlog Cache: ". hr_bytes($myvar{'binlog_cache_size'})."\n";
+		}
+	}
 
 	if ($arch && $arch == 32 && $mycalc{'total_possible_used_memory'} > 2*1024*1024*1024) {
 		badprint "Allocating > 2GB RAM on 32-bit systems can cause system instability\n";
@@ -1020,6 +1039,14 @@ sub mysql_stats {
 		push(@generalrec,"Reduce or eliminate persistent connections to reduce connection usage")
 	} else {
 		goodprint "Highest usage of available connections: $mycalc{'pct_connections_used'}% ($mystat{'Max_used_connections'}/$myvar{'max_connections'})\n";
+	}
+
+	# Aborted Connections
+	if ($mycalc{'pct_connections_aborted'} > 3) {
+		badprint "Aborded connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})\n";
+		push(@generalrec,"Reduce or eliminate unclosed connexions and network issues")
+	} else {
+		goodprint "Aborded connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})\n";
 	}
 
 	# Key buffer
@@ -1109,7 +1136,7 @@ sub mysql_stats {
 			push(@adjvars,"max_heap_table_size (> ".hr_bytes_rnd($myvar{'max_heap_table_size'}).")");
 			push(@generalrec,"When making adjustments, make tmp_table_size/max_heap_table_size equal");
 			push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
-		} elsif ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} >= 256) {
+		} elsif ($mycalc{'pct_temp_disk'} > 25 && $mycalc{'max_tmp_table_size'} >= 256*1024*1024) {
 			badprint "Temporary tables created on disk: $mycalc{'pct_temp_disk'}% (".hr_num($mystat{'Created_tmp_disk_tables'})." on disk / ".hr_num($mystat{'Created_tmp_tables'})." total)\n";
 			push(@generalrec,"Temporary table size is already large - reduce result set size");
 			push(@generalrec,"Reduce your SELECT DISTINCT queries without LIMIT clauses");
@@ -1170,6 +1197,19 @@ sub mysql_stats {
 			push(@generalrec,"Optimize queries and/or use InnoDB to reduce lock wait");
 		} else {
 			goodprint "Table locks acquired immediately: $mycalc{'pct_table_locks_immediate'}% (".hr_num($mystat{'Table_locks_immediate'})." immediate / ".hr_num($mystat{'Table_locks_waited'}+$mystat{'Table_locks_immediate'})." locks)\n";
+		}
+	}
+
+	# Binlog cache
+	if (defined $mycalc{'pct_binlog_cache'}) {
+		infoprint "Binlog cache memory access: ".$mycalc{'pct_binlog_cache'} ."% ( ".($mystat{'Binlog_cache_use'}-$mystat{'Binlog_cache_disk_use'})." Memory / ".$mystat{'Binlog_cache_use'}." Total)\n";
+		if ($mycalc{'pct_binlog_cache'} < 90 && $mystat{'Binlog_cache_use'}>0 ) {
+			badprint "Binlog cache access for memory: ".$mycalc{'pct_binlog_cache'}."% (should be >90%)\n";
+			push(@generalrec,"Increase binlog_cache_size (Actual value: ".$myvar{'binlog_cache_size'}.") ");
+			push(@adjvars,"binlog_cache_size (".hr_bytes($myvar{'binlog_cache_size'})." + 16K ) ");
+		} else {
+			goodprint "Binlog cache access from memory cache: ". $mycalc{'pct_binlog_cache'}."% \n";
+			infoprint "Not enought data to validate binlog cache size\n" if $mystat{'Binlog_cache_use'}<10; 
 		}
 	}
 
