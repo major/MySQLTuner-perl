@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.4.5
+# mysqltuner.pl - Version 1.4.6
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -43,7 +43,7 @@ use File::Basename;
 use Cwd 'abs_path';
 #use Data::Dumper qw/Dumper/;
 # Set up a few variables for use in the script
-my $tunerversion = "1.4.5";
+my $tunerversion = "1.4.6";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -66,6 +66,7 @@ my %opt = (
 		"passwordfile"	=> 0,
 		"reportfile"	=> 0,
 		"dbstat"		=> 0,
+		"idxstat"		=> 0,
 	);
 
 
@@ -93,14 +94,14 @@ GetOptions(\%opt,
 		'reportfile=s',
 		'silent',
 		'dbstat',
+		'idxstat',
 	);
 
 if (defined $opt{'help'} && $opt{'help'} == 1) { usage(); }
 
 sub usage {
 	# Shown with --help option passed
-	print "\n".
-		"   MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n".
+	print "   MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n".
 		"   Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
 		"   Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL\n".
 		"\n".
@@ -121,7 +122,7 @@ sub usage {
 		"\n".
 		"   Performance and Reporting Options\n".
 		"      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n".
-		"                             (Recommended for servers with many tables)\n".
+		"                           (Recommended for servers with many tables)\n".
 		"      --checkversion       Check for updates to MySQLTuner (default: don't check)\n".
 		"      --forcemem <size>    Amount of RAM installed in megabytes\n".
 		"      --forceswap <size>   Amount of swap memory configured in megabytes\n".
@@ -134,9 +135,9 @@ sub usage {
 		"      --noinfo             Remove informational responses\n".
 		"      --debug              Print debug information\n".
 		"      --dbstat             Print database information\n".
+		"      --idxstat            Print index information\n".
 		"      --nocolor            Don't print output in color\n".
-		"      --buffers            Print global and per-thread buffer values\n".
-		"\n";
+		"      --buffers            Print global and per-thread buffer values\n";
 	exit;
 }
 
@@ -218,6 +219,7 @@ sub hr_num {
 sub percentage{
 	my $value=shift;
 	my $total=shift;
+	$total=0 unless defined $total;
 	return 100,00 if $total == 0;
 	return sprintf("%.2f", ($value*100/$total) );
 }
@@ -299,31 +301,31 @@ sub mysql_setup {
 	$doremote = 0;
 	$remotestring = '';
 	my $mysqladmincmd;
-    if ($opt{mysqladmin}) {
-	    $mysqladmincmd = $opt{mysqladmin};
-    } else {
+	if ($opt{mysqladmin}) {
+		$mysqladmincmd = $opt{mysqladmin};
+	} else {
 		$mysqladmincmd = `which mysqladmin`;
-    }
-    chomp($mysqladmincmd);
-    if (! -e $mysqladmincmd && $opt{mysqladmin}) {
+	}
+	chomp($mysqladmincmd);
+	if (! -e $mysqladmincmd && $opt{mysqladmin}) {
 		badprint "Unable to find the mysqladmin command you specified: ".$mysqladmincmd."\n";
 		exit;
 	} elsif (! -e $mysqladmincmd) {
-        badprint "Couldn't find mysqladmin in your \$PATH. Is MySQL installed?\n";
+		badprint "Couldn't find mysqladmin in your \$PATH. Is MySQL installed?\n";
 		exit;
 	}
 
-    if ($opt{mysqlcmd}) {
-	    $mysqlcmd = $opt{mysqlcmd};
-    } else {
+	if ($opt{mysqlcmd}) {
+		$mysqlcmd = $opt{mysqlcmd};
+	} else {
 		$mysqlcmd = `which mysql`;
-    }
-    chomp($mysqlcmd);
-    if (! -e $mysqlcmd && $opt{mysqlcmd}) {
+	}
+	chomp($mysqlcmd);
+	if (! -e $mysqlcmd && $opt{mysqlcmd}) {
 		badprint "Unable to find the mysql command you specified: ".$mysqlcmd."\n";
 		exit;
 	} elsif (! -e $mysqlcmd) {
-        badprint "Couldn't find mysql in your \$PATH. Is MySQL installed?\n";
+		badprint "Couldn't find mysql in your \$PATH. Is MySQL installed?\n";
 		exit;
 	}
 
@@ -551,7 +553,7 @@ sub security_recommendations {
 	}
 
 	unless (-f $basic_password_files) {
-		badprint "There is not basic password file list !";
+		badprint "There is not basic password file list !\n";
 		return;
 	}
 	
@@ -728,9 +730,7 @@ sub check_storage_engines {
 		my @dblist = `$mysqlcmd $mysqllogin -Bse "SHOW DATABASES"`;
 		foreach my $db (@dblist) {
 			chomp($db);
-			if ($db eq "information_schema") { next; }
-			if ($db eq "performance_schema") { next; }
-			if ($db eq "mysql") { next; }
+			if ($db eq "information_schema" or $db eq "performance_schema" or $db eq "mysql") { next; }
 			my @ixs = (1, 6, 9);
 			if (!mysql_version_ge(4, 1)) {
 				# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
@@ -848,6 +848,21 @@ sub calculations {
 	$mycalc{'total_possible_used_memory'} = $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'};
 	$mycalc{'pct_physical_memory'} = int(($mycalc{'total_possible_used_memory'} * 100) / $physical_memory);
 
+	# Maximum memory limit
+	$mycalc{'max_peak_memory'}=0;
+	foreach my $key ( 'key_buffer_size', 'query_cache_size', 'tmp_table_size', 
+		'innodb_buffer_pool_size', 'innodb_additional_mem_pool_size',
+		'innodb_log_buffer_size') {
+		$mycalc{'max_peak_memory'}+=$myvar{$key} if defined $myvar{$key};
+	}
+	foreach my $key ( 'sort_buffer_size', 'read_buffer_size', 'read_rnd_buffer_size', 'join_buffer_size',
+		'thread_stack', 'binlog_cache_size' ) {
+		$mycalc{'max_peak_memory'}+=($myvar{$key}*$myvar{'max_connections'}) if defined $myvar{$key};
+	}
+	debugprint "Max Peak Memory: ".hr_bytes($mycalc{'max_peak_memory'})."\n";
+	$mycalc{'pct_max_physical_memory'} = percentage($mycalc{'max_peak_memory'}, $physical_memory);
+	debugprint "Max Percentage RAM: ".$mycalc{'pct_max_physical_memory'}."%\n";
+
 	# Slow queries
 	$mycalc{'pct_slow_queries'} = int(($mystat{'Slow_queries'}/$mystat{'Questions'}) * 100);
 
@@ -871,13 +886,13 @@ sub calculations {
 	if ($mystat{'Key_read_requests'} > 0) {
 		$mycalc{'pct_keys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_reads'} / $mystat{'Key_read_requests'}) * 100)));
 	} else {
-	    $mycalc{'pct_keys_from_mem'} = 0;
+		$mycalc{'pct_keys_from_mem'} = 0;
 	}
 
 	if ($mystat{'Key_write_requests'} > 0) {
 		$mycalc{'pct_wkeys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_writes'} / $mystat{'Key_write_requests'}) * 100)));
 	} else {
-	    $mycalc{'pct_wkeys_from_mem'} = 0;
+		$mycalc{'pct_wkeys_from_mem'} = 0;
 	}
 
 	if ($doremote eq 0 and !mysql_version_ge(5)) {
@@ -1031,12 +1046,18 @@ sub mysql_stats {
 
 	if ($arch && $arch == 32 && $mycalc{'total_possible_used_memory'} > 2*1024*1024*1024) {
 		badprint "Allocating > 2GB RAM on 32-bit systems can cause system instability\n";
-		badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+		badprint "Maximum reached memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
 	} elsif ($mycalc{'pct_physical_memory'} > 85) {
-		badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+		badprint "Maximum reached memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+	} else {
+		goodprint "Maximum reached memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+	}
+
+	if ($mycalc{'pct_max_physical_memory'} > 85) {
+		badprint "Maximum possible memory usage: ".hr_bytes($mycalc{'max_peak_memory'})." ($mycalc{'pct_max_physical_memory'}% of installed RAM)\n";
 		push(@generalrec,"Reduce your overall MySQL memory footprint for system stability");
 	} else {
-		goodprint "Maximum possible memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+		goodprint "Maximum possible memory usage: ".hr_bytes($mycalc{'max_peak_memory'})." ($mycalc{'pct_max_physical_memory'}% of installed RAM)\n";
 	}
 
 	# Slow queries
@@ -1355,36 +1376,51 @@ sub mysql_innodb {
 	}
 }
 
-# Recommandations for Innodb
+# Recommandations for MySQL Databases
 sub mysql_databases {
 	if ($opt{dbstat} == 0) {
 		return;
 	}
 	prettyprint "\n-------- Database Metrics ------------------------------------------------\n";
 	unless (mysql_version_ge(5,5)) {
-		infoprint "Skip Database metrics from information schema \n";
+		infoprint "Skip Database metrics from information schema missing in this version\n";
 		return;
 	}
 
 	my @dblist=select_array("SHOW DATABASES;");
 	infoprint "There is ".scalar(@dblist). " Database(s).\n";
-	my @totaldbinfo=split /\s/, select_one("SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH) FROM information_schema.TABLES");
+	my @totaldbinfo=split /\s/, select_one("SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema');");
+	infoprint "All Databases:\n";
 	infoprint " +-- ROWS : ".($totaldbinfo[0] eq 'NULL'?0:$totaldbinfo[0])."\n";
 	infoprint " +-- DATA : ".hr_bytes($totaldbinfo[1])."(".percentage($totaldbinfo[1], $totaldbinfo[3])."%)\n";
 	infoprint " +-- INDEX: ".hr_bytes($totaldbinfo[2])."(".percentage($totaldbinfo[2], $totaldbinfo[3])."%)\n";
 	infoprint " +-- SIZE : ".hr_bytes($totaldbinfo[3])."\n";
 	badprint "Index size is larger than data size \n" if $totaldbinfo[1]<$totaldbinfo[2];
 	foreach (@dblist) { 
-		my @dbinfo=split /\s/, select_one("SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA");
+		chomp($_);
+		if ( $_ eq "information_schema" or $_ eq "performance_schema" or $_ eq "mysql" ) { next; }
+
+		my @dbinfo=split /\s/, select_one("SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA");
 		infoprint "Database: ".$dbinfo[0]."\n";
-		infoprint " +-- ROWS : ".($dbinfo[1] eq 'NULL'?0:$dbinfo[1])."\n";
+		infoprint " +-- ROWS : ".(!defined($dbinfo[1]) or $dbinfo[1] eq 'NULL'?0:$dbinfo[1])."\n";
 		infoprint " +-- DATA : ".hr_bytes($dbinfo[2])."(".percentage($dbinfo[2], $dbinfo[4])."%)\n";
 		infoprint " +-- INDEX: ".hr_bytes($dbinfo[3])."(".percentage($dbinfo[3], $dbinfo[4])."%)\n";
 		infoprint " +-- TOTAL: ".hr_bytes($dbinfo[4])."\n";
 		badprint "Index size is larger than data size for $dbinfo[0] \n" if $dbinfo[2]<$dbinfo[3];
+		badprint "There ".$dbinfo[5]. " storage engines. Be careful \n" if $dbinfo[5]>1;
 	}
 }
 
+# Recommandations for MySQL Databases
+sub mysql_indexes {
+	return if ($opt{idxstat} == 0);
+
+	prettyprint "\n-------- Indexes Metrics -------------------------------------------------\n";
+	unless (mysql_version_ge(5,5)) {
+		infoprint "Skip Index metrics from information schema missing in this version\n";
+		return;
+	}
+}
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
 	prettyprint "\n-------- Recommendations -----------------------------------------------------\n";
@@ -1420,6 +1456,7 @@ validate_mysql_version;		# Check current MySQL version
 check_architecture;			# Suggest 64-bit upgrade
 check_storage_engines;		# Show enabled storage engines
 mysql_databases;			# Show informations about databases
+mysql_indexes;				# Show informations about indexes
 security_recommendations;	# Display some security recommendations
 calculations;				# Calculate everything we need
 mysql_stats;				# Print the server stats
@@ -1439,7 +1476,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.4.5 - MySQL High Performance Tuning Script
+ MySQLTuner 1.4.6 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -1475,6 +1512,7 @@ You must provide the remote server's total memory when connecting to other serve
  --noinfo             Remove informational responses
  --debug              Print debug information
  --dbstat             Print database information
+ --idxstat            Print index information
  --nocolor            Don't print output in color
  --buffers            Print global and per-thread buffer values
 
