@@ -85,7 +85,9 @@ Major Hayden - major@mhtx.net
 # SUPPORT
 
 Bug reports, feature requests, and downloads at http://mysqltuner.com/
+
 Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
+
 Maintained by Major Hayden (major\\@mhtx.net) - Licensed under GPL
 
 # SOURCE CODE
@@ -99,6 +101,7 @@ Maintained by Major Hayden (major\\@mhtx.net) - Licensed under GPL
 Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 
 For the latest updates, please visit http://mysqltuner.com/
+
 Git repository available at http://github.com/major/MySQLTuner-perl
 
 This program is free software: you can redistribute it and/or modify
@@ -108,8 +111,9 @@ the Free Software Foundation, either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+    See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
