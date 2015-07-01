@@ -1336,6 +1336,226 @@ close_reportfile;			# Close reportfile if needed
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
+__END__
+
+=pod
+=encoding UTF-8
+
+=head1 NAME
+
+ MySQLTuner 1.4.5 - MySQL High Performance Tuning Script
+
+=head1 IMPORTANT USAGE GUIDELINES
+
+To run the script with the default options, run the script without arguments
+Allow MySQL server to run for at least 24-48 hours before trusting suggestions
+Some routines may require root level privileges (script will provide warnings)
+You must provide the remote server's total memory when connecting to other servers
+
+=head1 CONNECTION AND AUTHENTIFICATION
+
+ --host <hostname>    Connect to a remote host to perform tests (default: localhost)
+ --socket <socket>    Use a different socket for a local connection
+ --port <port>        Port to use for connection (default: 3306)
+ --user <username>    Username to use for authentication
+ --pass <password>    Password to use for authentication
+ --mysqladmin <path>  Path to a custom mysqladmin executable
+ --mysqlcmd <path>    Path to a custom mysql executable
+
+=head1 PERFORMANCE AND REPORTING OPTIONS
+
+ --skipsize           Don't enumerate tables and their types/sizes (default: on)
+                      (Recommended for servers with many tables)
+ --checkversion       Check for updates to MySQLTuner (default: don't check)
+ --forcemem <size>    Amount of RAM installed in megabytes
+ --forceswap <size>   Amount of swap memory configured in megabytes
+ --passwordfile <path>Path to a password file list(one password by line)
+ --reportfile <path>  Path to a report txt file
+
+=head1 OUTPUT OPTIONS
+
+ --nogood             Remove OK responses
+ --nobad              Remove negative/suggestion responses
+ --noinfo             Remove informational responses
+ --debug              Print debug information
+ --dbstat             Print database information
+ --nocolor            Don't print output in color
+ --buffers            Print global and per-thread buffer values
+
+=back
+
+=head2 PERLDOC
+
+You can find documentation for this module with the perldoc command.
+
+  perldoc mysqltuner
+
+=head1 AUTHORS
+
+Major Hayden - major@mhtx.net
+
+=head1 CONTRIBUTORS
+
+=over 4
+
+=item *
+
+Matthew Montgomery
+
+=item *
+
+Paul Kehrer
+
+=item *
+
+Dave Burgess
+
+=item *
+
+Jonathan Hinds
+
+=item *
+
+Mike Jackson
+
+=item *
+
+Nils Breunese
+
+=item *
+
+Shawn Ashlee
+
+=item *
+
+Luuk Vosslamber
+
+=item *
+
+Ville Skytta
+
+=item *
+
+Trent Hornibrook
+
+=item *
+
+Jason Gill
+
+=item *
+
+Mark Imbriaco
+
+=item *
+
+Greg Eden
+
+=item *
+
+Aubin Galinotti
+
+=item *
+
+Giovanni Bechis
+
+=item *
+
+Bill Bradford
+
+=item *
+
+Ryan Novosielski
+
+=item *
+
+Michael Scheidell
+
+=item *
+
+Blair Christensen
+
+=item *
+
+Hans du Plooy
+
+=item *
+
+Victor Trac
+
+=item *
+
+Everett Barnes
+
+=item *
+
+Tom Krouper
+
+=item *
+
+Gary Barrueto
+
+=item *
+
+Simon Greenaway
+
+=item *
+
+Adam Stein
+
+=item *
+
+Isart Montane
+
+=item *
+
+Baptiste M.
+
+=item *
+
+Cole Turner
+
+=item *
+
+Major Hayden
+
+=back
+
+=head1 SUPPORT
+
+Bug reports, feature requests, and downloads at http://mysqltuner.com/
+Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
+Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL
+
+=back
+
+=head1 SOURCE CODE
+
+
+L<https://github.com/major/MySQLTuner-perl>
+
+  git clone https://github.com/major/MySQLTuner-perl.git
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
+
+For the latest updates, please visit http://mysqltuner.com/
+Git repository available at http://github.com/major/MySQLTuner-perl
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+=cut
 
 # Local variables:
 # indent-tabs-mode: t
