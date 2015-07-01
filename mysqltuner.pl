@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # mysqltuner.pl - Version 1.4.5
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2014 Major Hayden - major@mhtx.net
+# Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.com/
 # Git repository available at http://github.com/major/MySQLTuner-perl
@@ -132,7 +132,8 @@ sub usage {
 		"      --nogood             Remove OK responses\n".
 		"      --nobad              Remove negative/suggestion responses\n".
 		"      --noinfo             Remove informational responses\n".
-		"      --debug             Print debug information\n".
+		"      --debug              Print debug information\n".
+		"      --dbstat             Print database information\n".
 		"      --nocolor            Don't print output in color\n".
 		"      --buffers            Print global and per-thread buffer values\n".
 		"\n";
@@ -217,7 +218,7 @@ sub hr_num {
 sub percentage{
 	my $value=shift;
 	my $total=shift;
-	return 0,00 if $total == 0;
+	return 100,00 if $total == 0;
 	return sprintf("%.2f", ($value*100/$total) );
 }
 
@@ -599,7 +600,9 @@ sub get_replication_status {
 		}
 		if ($seconds_behind_master>0) {
 				badprint "This replication slave is lagging and slave has $seconds_behind_master second(s) behind master host.";
-			}
+		} else {
+			goodprint "This replication slave is uptodate with master.";
+		}
 	}
 }
 
@@ -972,17 +975,12 @@ sub mysql_stats {
 		infoprint " +-- Key Buffer: " . hr_bytes($myvar{'key_buffer_size'}) . "\n";
 		infoprint " +-- Max Tmp Table: ".hr_bytes($mycalc{'max_tmp_table_size'})."\n";
 		
-		if (defined $myvar{'innodb_buffer_pool_size'}) {
-			infoprint " +-- InnoDB Buffer Pool: " . hr_bytes($myvar{'innodb_buffer_pool_size'}) . "\n";
-		}
-		if (defined $myvar{'innodb_additional_mem_pool_size'}) {
-			infoprint " +-- InnoDB Additional Mem Pool: " . hr_bytes($myvar{'innodb_additional_mem_pool_size'}) . "\n";
-		}
-		if (defined $myvar{'innodb_log_buffer_size'}) {
-			infoprint " +-- InnoDB Log Buffer: " . hr_bytes($myvar{'innodb_log_buffer_size'}) . "\n";
+		if (defined $myvar{'query_cache_type'}) {
+			infoprint "Query Cache Buffers\n";
+			infoprint " +-- Query Cache: ".$myvar{'query_cache_type'}." - " .($myvar{'query_cache_type'} eq 0| $myvar{'query_cache_type'} eq 'OFF'?"DISABLED":($myvar{'query_cache_type'} eq 1?"ALL REQUESTS":"ON DEMAND")) . "\n";
 		}
 		if (defined $myvar{'query_cache_size'}) {
-			infoprint " +-- Query Cache: " . hr_bytes($myvar{'query_cache_size'}) . "\n";
+			infoprint " +-- Query Cache Size: " . hr_bytes($myvar{'query_cache_size'}) . "\n";
 		}
 
 		infoprint "Per Thread Buffers\n";
@@ -1200,10 +1198,23 @@ sub mysql_innodb {
 		}
 		return;
 	}
-
 	infoprint "InnoDB is enabled.\n";
-	infoprint "InnoDB BufferPool Size :".hr_bytes($myvar{'innodb_buffer_pool_size'})."\n";
-	infoprint "InnoDB BufferPool Inst :".$myvar{'innodb_buffer_pool_instances'}."\n" if defined($myvar{'innodb_buffer_pool_instances'});
+
+	if ($opt{buffers} ne 0) {
+		infoprint "InnoDB Buffers\n";
+		if (defined $myvar{'innodb_buffer_pool_size'}) {
+			infoprint " +-- InnoDB Buffer Pool: " . hr_bytes($myvar{'innodb_buffer_pool_size'}) . "\n";
+		}
+		if (defined $myvar{'innodb_buffer_pool_instances'}) {
+			infoprint " +-- InnoDB Buffer Pool Instances: " . $myvar{'innodb_buffer_pool_instances'} . "\n";
+		}
+		if (defined $myvar{'innodb_additional_mem_pool_size'}) {
+			infoprint " +-- InnoDB Additional Mem Pool: " . hr_bytes($myvar{'innodb_additional_mem_pool_size'}) . "\n";
+		}
+		if (defined $myvar{'innodb_log_buffer_size'}) {
+			infoprint " +-- InnoDB Log Buffer: " . hr_bytes($myvar{'innodb_log_buffer_size'}) . "\n";
+		}
+	}
 	# InnoDB Buffer Pull Size
 	if ($myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'}) {
 		goodprint "InnoDB buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
