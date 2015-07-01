@@ -158,7 +158,7 @@ $opt{nocolor} = 1 if defined($reportfile);
 my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
 my $bad  = ($opt{nocolor} == 0)? "[\e[0;31m!!\e[0m]" : "[!!]" ;
 my $info = ($opt{nocolor} == 0)? "[\e[0;34m--\e[0m]" : "[--]" ;
-my $deb  = ($opt{nocolor} == 0)? "[\e[0;31mDEBUG\e[0m]" : "[DEBUG]" ;
+my $deb  = ($opt{nocolor} == 0)? "[\e[0;31mDG\e[0m]" : "[DG]" ;
 
 # Functions that handle the print styles
 sub prettyprint {
@@ -506,6 +506,7 @@ sub get_basic_passwords {
 
 sub security_recommendations {
 	prettyprint "\n-------- Security Recommendations  -------------------------------------------\n";
+	
 	# Looking for Anonymous users
 	my @mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL ;"`;
 	if (@mysqlstatlist) {
@@ -610,7 +611,7 @@ sub get_replication_status {
 my ($mysqlvermajor,$mysqlverminor);
 sub validate_mysql_version {
 	($mysqlvermajor,$mysqlverminor) = $myvar{'version'} =~ /(\d+)\.(\d+)/;
-	if (!mysql_version_ge(5)) {
+	if (!mysql_version_ge(5,1)) {
 		badprint "Your MySQL version ".$myvar{'version'}." is EOL software!  Upgrade soon!\n";
 	} elsif (mysql_version_ge(6)) {
 		badprint "Currently running unsupported MySQL version ".$myvar{'version'}."\n";
@@ -866,11 +867,19 @@ sub calculations {
 	} else {
 		$mycalc{'pct_key_buffer_used'} = 0;
 	}
+	
 	if ($mystat{'Key_read_requests'} > 0) {
 		$mycalc{'pct_keys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_reads'} / $mystat{'Key_read_requests'}) * 100)));
 	} else {
 	    $mycalc{'pct_keys_from_mem'} = 0;
 	}
+
+	if ($mystat{'Key_write_requests'} > 0) {
+		$mycalc{'pct_wkeys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_writes'} / $mystat{'Key_write_requests'}) * 100)));
+	} else {
+	    $mycalc{'pct_wkeys_from_mem'} = 0;
+	}
+
 	if ($doremote eq 0 and !mysql_version_ge(5)) {
 		my $size = 0;
 		$size += (split)[0] for `find $myvar{'datadir'} -name "*.MYI" 2>&1 | xargs du -L $duflags 2>&1`;
@@ -960,7 +969,17 @@ sub calculations {
 	if ($myvar{'have_innodb'} eq "YES") {
 		$mycalc{'innodb_log_size_pct'} = ($myvar{'innodb_log_file_size'} * 100 / $myvar{'innodb_buffer_pool_size'});
 	}
-
+	($mystat{'Innodb_buffer_pool_read_requests'}, $mystat{'Innodb_buffer_pool_reads'})=(1,1) unless defined $mystat{'Innodb_buffer_pool_reads'};
+	$mycalc{'pct_read_efficiency'}=percentage($mystat{'Innodb_buffer_pool_reads'}/$mystat{'Innodb_buffer_pool_read_requests'}) if defined $mystat{'Innodb_buffer_pool_read_requests'};
+	debugprint "pct_read_efficiency: ".$mycalc{'pct_read_efficiency'}."\n";
+	debugprint "Innodb_buffer_pool_reads: ".$mystat{'Innodb_buffer_pool_reads'}."\n";
+	debugprint "Innodb_buffer_pool_read_requests: ".$mystat{'Innodb_buffer_pool_read_requests'}."\n";
+	($mystat{'Innodb_buffer_pool_write_requests'}, $mystat{'Innodb_buffer_pool_writes'})=(1,1) unless defined $mystat{'Innodb_buffer_pool_writes'};
+	$mycalc{'pct_write_efficiency'}=percentage($mystat{'Innodb_buffer_pool_writes'}/$mystat{'Innodb_buffer_pool_write_requests'}) if defined $mystat{'Innodb_buffer_pool_write_requests'};
+	debugprint "pct_write_efficiency: ".$mycalc{'pct_read_efficiency'}."\n";
+	debugprint "Innodb_buffer_pool_writes: ".$mystat{'Innodb_buffer_pool_writes'}."\n";
+	debugprint "Innodb_buffer_pool_write_requests: ".$mystat{'Innodb_buffer_pool_write_requests'}."\n";
+	
 	# Binlog Cache
 	if ($myvar{'log_bin'} ne 'OFF') {
 		$mycalc{'pct_binlog_cache'} = percentage( $mystat{'Binlog_cache_use'} - $mystat{'Binlog_cache_disk_use'}, $mystat{'Binlog_cache_use'} );
@@ -1049,6 +1068,18 @@ sub mysql_stats {
 		goodprint "Aborded connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})\n";
 	}
 
+	# Key buffer usage
+	if (defined($mycalc{'pct_key_buffer_used'})) {
+		if ($mycalc{'pct_key_buffer_used'} < 90) {
+			badprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% (".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100)." used / ".hr_num($myvar{'key_buffer_size'})." cache)\n";
+			push(@adjvars,"key_buffer_size (\~ ".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100).")");
+		} else {
+			goodprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% (".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100)." used / ".hr_num($myvar{'key_buffer_size'})." cache)\n";
+		}	
+	} else {
+			# No queries have run that would use keys
+			debugprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% (".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100)." used / ".hr_num($myvar{'key_buffer_size'})." cache)\n";
+	}
 	# Key buffer
 	if (!defined($mycalc{'total_myisam_indexes'}) and $doremote == 1) {
 		push(@generalrec,"Unable to calculate MyISAM indexes on remote MySQL server < 5.0.0");
@@ -1065,12 +1096,23 @@ sub mysql_stats {
 		}
 		if ($mystat{'Key_read_requests'} > 0) {
 			if ($mycalc{'pct_keys_from_mem'} < 95) {
-				badprint "Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% (".hr_num($mystat{'Key_read_requests'})." cached / ".hr_num($mystat{'Key_reads'})." reads)\n";
+				badprint "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% (".hr_num($mystat{'Key_read_requests'})." cached / ".hr_num($mystat{'Key_reads'})." reads)\n";
 			} else {
-				goodprint "Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% (".hr_num($mystat{'Key_read_requests'})." cached / ".hr_num($mystat{'Key_reads'})." reads)\n";
+				goodprint "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% (".hr_num($mystat{'Key_read_requests'})." cached / ".hr_num($mystat{'Key_reads'})." reads)\n";
 			}
 		} else {
 			# No queries have run that would use keys
+			debugprint "Key buffer size / total MyISAM indexes: ".hr_bytes($myvar{'key_buffer_size'})."/".hr_bytes($mycalc{'total_myisam_indexes'})."\n";
+		}
+		if ($mystat{'Key_write_requests'} > 0) {
+			if ($mycalc{'pct_wkeys_from_mem'} < 95) {
+				badprint "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% (".hr_num($mystat{'Key_write_requests'})." cached / ".hr_num($mystat{'Key_writes'})." writes)\n";
+			} else {
+				goodprint "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% (".hr_num($mystat{'Key_write_requests'})." cached / ".hr_num($mystat{'Key_writes'})." writes)\n";
+			}
+		} else {
+			# No queries have run that would use keys
+			debugprint "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% (".hr_num($mystat{'Key_write_requests'})." cached / ".hr_num($mystat{'Key_writes'})." writes)\n";
 		}
 	}
 
@@ -1202,20 +1244,19 @@ sub mysql_stats {
 
 	# Binlog cache
 	if (defined $mycalc{'pct_binlog_cache'}) {
-		infoprint "Binlog cache memory access: ".$mycalc{'pct_binlog_cache'} ."% ( ".($mystat{'Binlog_cache_use'}-$mystat{'Binlog_cache_disk_use'})." Memory / ".$mystat{'Binlog_cache_use'}." Total)\n";
 		if ($mycalc{'pct_binlog_cache'} < 90 && $mystat{'Binlog_cache_use'}>0 ) {
-			badprint "Binlog cache access for memory: ".$mycalc{'pct_binlog_cache'}."% (should be >90%)\n";
+			badprint "Binlog cache memory access: ".$mycalc{'pct_binlog_cache'}."% ( ".($mystat{'Binlog_cache_use'}-$mystat{'Binlog_cache_disk_use'})." Memory / ".$mystat{'Binlog_cache_use'}." Total)\n";
 			push(@generalrec,"Increase binlog_cache_size (Actual value: ".$myvar{'binlog_cache_size'}.") ");
-			push(@adjvars,"binlog_cache_size (".hr_bytes($myvar{'binlog_cache_size'})." + 16K ) ");
+			push(@adjvars,"binlog_cache_size (".hr_bytes($myvar{'binlog_cache_size'}+16*1024*1024)." ) ");
 		} else {
-			goodprint "Binlog cache access from memory cache: ". $mycalc{'pct_binlog_cache'}."% \n";
-			infoprint "Not enought data to validate binlog cache size\n" if $mystat{'Binlog_cache_use'}<10; 
+			goodprint "Binlog cache memory access: ". $mycalc{'pct_binlog_cache'}."% ( ".($mystat{'Binlog_cache_use'}-$mystat{'Binlog_cache_disk_use'})." Memory / ".$mystat{'Binlog_cache_use'}." Total)\n";
+			debugprint "Not enought data to validate binlog cache size\n" if $mystat{'Binlog_cache_use'}<10; 
 		}
 	}
 
 	# Performance options
-	if (!mysql_version_ge(4, 1)) {
-		push(@generalrec,"Upgrade to MySQL 4.1+ to use concurrent MyISAM inserts");
+	if (!mysql_version_ge(5, 1)) {
+		push(@generalrec,"Upgrade to MySQL 5.5+ to use asynchrone write");
 	} elsif ($myvar{'concurrent_insert'} eq "OFF") {
 		push(@generalrec,"Enable concurrent_insert by setting it to 'ON'");
 	} elsif ($myvar{'concurrent_insert'} eq 0) {
@@ -1260,7 +1301,7 @@ sub mysql_innodb {
 		goodprint "InnoDB buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
 	} else {
 		badprint "InnoDB  buffer pool / data size: ".hr_bytes($myvar{'innodb_buffer_pool_size'})."/".hr_bytes($enginestats{'InnoDB'})."\n";
-		push(@adjvars,"innodb_buffer_pool_size (>= ".hr_bytes_rnd($enginestats{'InnoDB'}).")");
+		push(@adjvars,"innodb_buffer_pool_size (>= ".hr_bytes_rnd($enginestats{'InnoDB'}).") if possible.");
 	}
 
 	# InnoDB Buffer Pull Instances (MySQL 5.6.6+)
@@ -1291,12 +1332,26 @@ sub mysql_innodb {
 		}
 	}
 
+	# InnoDB Read efficency
+	if (defined $mycalc{'pct_read_efficiency'} && $mycalc{'pct_read_efficiency'} < 90 ) {
+		badprint "InnoDB Read buffer efficiency: ".$mycalc{'pct_read_efficiency'}. "% (".$mystat{'Innodb_buffer_pool_reads'}." hits/ ".$mystat{'Innodb_buffer_pool_read_requests'}." total)\n";
+	} else {
+		goodprint "InnoDB Read buffer efficiency: ".$mycalc{'pct_read_efficiency'}. "% (".$mystat{'Innodb_buffer_pool_reads'}." hits/ ".$mystat{'Innodb_buffer_pool_read_requests'}." total)\n";
+	}
+
+	# InnoDB Write efficency
+	if (defined $mycalc{'pct_write_efficiency'} && $mycalc{'pct_write_efficiency'} < 90 ) {
+		badprint "InnoDB Write buffer efficiency: ".$mycalc{'pct_write_efficiency'}. "% (".$mystat{'Innodb_buffer_pool_writes'}." hits/ ".$mystat{'Innodb_buffer_pool_write_requests'}." total)\n";
+	} else {
+		goodprint "InnoDB Write buffer efficiency: ".$mycalc{'pct_write_efficiency'}. "% (".$mystat{'Innodb_buffer_pool_writes'}." hits/ ".$mystat{'Innodb_buffer_pool_write_requests'}." total)\n";
+	}
+
 	# InnoDB Log Waits
 	if (defined $mystat{'Innodb_log_waits'} && $mystat{'Innodb_log_waits'} > 0) {
-		badprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'};
+		badprint "InnoDB log waits: ".percentage($mystat{'Innodb_log_waits'}, $mystat{'Innodb_log_writes'})."% (".$mystat{'Innodb_log_waits'}. " waits / ".$mystat{'Innodb_log_writes'}." writes)\n";
 		push(@adjvars,"innodb_log_buffer_size (>= ".hr_bytes_rnd($myvar{'innodb_log_buffer_size'}).")");
 	} else {
-		goodprint "InnoDB log waits: ".$mystat{'Innodb_log_waits'}."\n";
+		goodprint "InnoDB log waits: ".percentage($mystat{'Innodb_log_waits'}, $mystat{'Innodb_log_writes'})."% (".$mystat{'Innodb_log_waits'}. " waits / ".$mystat{'Innodb_log_writes'}." writes)\n";
 	}
 }
 
