@@ -1339,6 +1339,7 @@ close_reportfile;			# Close reportfile if needed
 __END__
 
 =pod
+
 =encoding UTF-8
 
 =head1 NAME
@@ -1382,9 +1383,7 @@ You must provide the remote server's total memory when connecting to other serve
  --nocolor            Don't print output in color
  --buffers            Print global and per-thread buffer values
 
-=back
-
-=head2 PERLDOC
+=head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
 
@@ -1526,10 +1525,7 @@ Bug reports, feature requests, and downloads at http://mysqltuner.com/
 Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
 Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL
 
-=back
-
 =head1 SOURCE CODE
-
 
 L<https://github.com/major/MySQLTuner-perl>
 
