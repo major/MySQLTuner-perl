@@ -1466,7 +1466,30 @@ ENDSQL
 		infoprint " +-- CARDINALITY : ".$info[4]." distinct values\n";
 		infoprint " +-- NB ROWS     : ".$info[5]." rows\n";
 		infoprint " +-- SELECTIVITY : ".$info[6]."%\n";
+		if ($info[6] < 25) {
+			badprint "$info[1] has a low selectivity\n";
+		}
 	}
+
+	return unless (defined($myvar{'performance_schema'}) and $myvar{'performance_schema'} eq 'ON' );
+
+$selIdxReq= <<'ENDSQL';
+SELECT CONCAT(CONCAT(object_schema,'.'),object_name) AS 'table', index_name 
+FROM performance_schema.table_io_waits_summary_by_index_usage
+WHERE index_name IS NOT NULL
+AND count_star =0  
+AND index_name <> 'PRIMARY' 
+AND object_schema != 'mysql' 
+ORDER BY count_star, object_schema, object_name;
+ENDSQL
+	@idxinfo=select_array($selIdxReq);
+	infoprint "Unsused indexes:\n";
+	push(@generalrec, "Remove unused indexes.") if (scalar(@idxinfo)>0);
+	foreach (@idxinfo) {
+		debugprint "$_\n";
+		my @info= split /\s/;
+		badprint "Index: $info[1] on $info[0] is not used.\n";
+	}	
 }
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
