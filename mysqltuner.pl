@@ -461,6 +461,25 @@ sub mysql_setup {
 	}
 }
 
+
+# MySQL Request Array
+sub select_array {
+	my $req=shift;
+	debugprint "PERFORM: $req \n";
+	my @result=`$mysqlcmd $mysqllogin -Bse "$req"`;
+	chomp (@result);
+	return @result;
+}
+
+# MySQL Request one
+sub select_one {
+	my $req=shift;
+	debugprint "PERFORM: $req \n";
+	my $result=`$mysqlcmd $mysqllogin -Bse "$req"`;
+	chomp ($result);
+	return $result;
+}
+
 # Populates all of the variable and status hashes
 my (%mystat,%myvar,$dummyselect);
 sub get_all_vars {
@@ -663,24 +682,6 @@ sub check_architecture {
 			goodprint "Operating on 32-bit architecture with less than 2GB RAM\n";
 		}
 	}
-}
-
-# Request Array
-sub select_array {
-	my $req=shift;
-	debugprint "PERFORM: $req \n";
-	my @result=`$mysqlcmd $mysqllogin -Bse "$req"`;
-	chomp (@result);
-	return @result;
-}
-
-# Request one
-sub select_one {
-	my $req=shift;
-	debugprint "PERFORM: $req \n";
-	my $result=`$mysqlcmd $mysqllogin -Bse "$req"`;
-	chomp ($result);
-	return $result;
 }
 
 # Start up a ton of storage engine counts/statistics
@@ -1473,7 +1474,7 @@ ENDSQL
 
 	return unless (defined($myvar{'performance_schema'}) and $myvar{'performance_schema'} eq 'ON' );
 
-$selIdxReq= <<'ENDSQL';
+	$selIdxReq= <<'ENDSQL';
 SELECT CONCAT(CONCAT(object_schema,'.'),object_name) AS 'table', index_name 
 FROM performance_schema.table_io_waits_summary_by_index_usage
 WHERE index_name IS NOT NULL

@@ -6,7 +6,7 @@ License:	GPL v3+
 Group:		Applications
 Source0:	https://github.com/build/MySQLTuner-perl/build/%{name}-%{version}.tgz
 URL:		https://github.com/major/MySQLTuner-perl
-Requires:	mysql-client
+Requires:	mysql
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -28,11 +28,12 @@ Montgomery's MySQL tuning primer script.
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_sbindir}
 install -d $RPM_BUILD_ROOT%{_datarootdir}
+install -d $RPM_BUILD_ROOT/%{_mandir}/man1
 install -p %{name}.pl $RPM_BUILD_ROOT%{_sbindir}/%{name}
 install -d $RPM_BUILD_ROOT%{_datarootdir}/%{name}
 install -p LICENSE $RPM_BUILD_ROOT%{_datarootdir}/%{name}
 install -p basic_passwords.txt $RPM_BUILD_ROOT%{_datarootdir}/%{name}
-
+install -p %{name}.1.gz $RPM_BUILD_ROOT/%{_mandir}/man1
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -41,6 +42,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(644,root,root,755)
 %doc %{_datarootdir}/%{name}
 %attr(755,root,root) %{_sbindir}/%{name}
+%{_mandir}/man1/*
 
 %changelog
 * Thu Jun 18 2015 Jean-Marie RENOUARD <jmrenouard@gmail.com> %VERSION%-1
