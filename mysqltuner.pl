@@ -1420,6 +1420,53 @@ sub mysql_indexes {
 		infoprint "Skip Index metrics from information schema missing in this version\n";
 		return;
 	}
+	my $selIdxReq= <<'ENDSQL';
+SELECT
+  CONCAT(CONCAT(t.TABLE_SCHEMA, '.'),t.TABLE_NAME) AS 'table'
+ , CONCAT(CONCAT(CONCAT(s.INDEX_NAME, '('),s.COLUMN_NAME), ')') AS 'index'
+ , s.SEQ_IN_INDEX AS 'seq'
+ , s2.max_columns AS 'maxcol'
+ , s.CARDINALITY  AS 'card'
+ , t.TABLE_ROWS   AS 'est_rows'
+ , ROUND(((s.CARDINALITY / IFNULL(t.TABLE_ROWS, 0.01)) * 100), 2) AS 'sel'
+FROM INFORMATION_SCHEMA.STATISTICS s
+ INNER JOIN INFORMATION_SCHEMA.TABLES t
+  ON s.TABLE_SCHEMA = t.TABLE_SCHEMA
+  AND s.TABLE_NAME = t.TABLE_NAME
+ INNER JOIN (
+  SELECT 
+     TABLE_SCHEMA
+   , TABLE_NAME
+   , INDEX_NAME
+   , MAX(SEQ_IN_INDEX) AS max_columns
+  FROM INFORMATION_SCHEMA.STATISTICS
+  WHERE TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema')
+  GROUP BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME
+ ) AS s2
+ ON s.TABLE_SCHEMA = s2.TABLE_SCHEMA
+ AND s.TABLE_NAME = s2.TABLE_NAME
+ AND s.INDEX_NAME = s2.INDEX_NAME
+WHERE t.TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema')
+AND t.TABLE_ROWS > 10
+AND s.CARDINALITY IS NOT NULL
+AND (s.CARDINALITY / IFNULL(t.TABLE_ROWS, 0.01)) < 8.00
+ORDER BY sel
+LIMIT 10;
+ENDSQL
+	my @idxinfo=select_array($selIdxReq);
+	infoprint "Worst selectivity indexes:\n";
+	foreach (@idxinfo) {
+		debugprint "$_\n";
+		my @info= split /\s/;
+		infoprint "Index: ".$info[1]."\n";
+		
+		infoprint " +-- COLONNE     : ".$info[0]."\n";
+		infoprint " +-- NB SEQS     : ".$info[2]." sequence(s)\n";
+		infoprint " +-- NB COLS     : ".$info[3]." column(s)\n";
+		infoprint " +-- CARDINALITY : ".$info[4]." distinct values\n";
+		infoprint " +-- NB ROWS     : ".$info[5]." rows\n";
+		infoprint " +-- SELECTIVITY : ".$info[6]."%\n";
+	}
 }
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
