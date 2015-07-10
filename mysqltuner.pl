@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.4.6
+# mysqltuner.pl - Version 1.4.7
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -461,7 +461,6 @@ sub mysql_setup {
 	}
 }
 
-
 # MySQL Request Array
 sub select_array {
 	my $req=shift;
@@ -847,6 +846,7 @@ sub calculations {
 	# Global memory
 	$mycalc{'max_used_memory'} = $mycalc{'server_buffers'} + $mycalc{"max_total_per_thread_buffers"};
 	$mycalc{'total_possible_used_memory'} = $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'};
+
 	$mycalc{'pct_physical_memory'} = int(($mycalc{'total_possible_used_memory'} * 100) / $physical_memory);
 
 	# Maximum memory limit
@@ -1159,7 +1159,7 @@ sub mysql_stats {
 		}
 		if ($mycalc{'query_cache_prunes_per_day'} > 98) {
 			badprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}\n";
-			if ($myvar{'query_cache_size'} > 128*1024*1024) {
+			if ($myvar{'query_cache_size'} >= 128*1024*1024) {
 				push(@generalrec,"Increasing the query_cache size over 128M may reduce performance");
 				push(@adjvars,"query_cache_size (> ".hr_bytes_rnd($myvar{'query_cache_size'}).") [see warning above]");
 			} else {
