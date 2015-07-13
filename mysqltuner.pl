@@ -1027,12 +1027,12 @@ sub calculations {
 		$mycalc{'innodb_log_size_pct'} = ($myvar{'innodb_log_file_size'} * 100 / $myvar{'innodb_buffer_pool_size'});
 	}
 	($mystat{'Innodb_buffer_pool_read_requests'}, $mystat{'Innodb_buffer_pool_reads'})=(1,1) unless defined $mystat{'Innodb_buffer_pool_reads'};
-	$mycalc{'pct_read_efficiency'}=percentage($mystat{'Innodb_buffer_pool_reads'}/$mystat{'Innodb_buffer_pool_read_requests'}) if defined $mystat{'Innodb_buffer_pool_read_requests'};
+	$mycalc{'pct_read_efficiency'}=percentage(($mystat{'Innodb_buffer_pool_read_requests'}-$mystat{'Innodb_buffer_pool_reads'}), $mystat{'Innodb_buffer_pool_read_requests'}) if defined $mystat{'Innodb_buffer_pool_read_requests'};
 	debugprint "pct_read_efficiency: ".$mycalc{'pct_read_efficiency'}."\n";
 	debugprint "Innodb_buffer_pool_reads: ".$mystat{'Innodb_buffer_pool_reads'}."\n";
 	debugprint "Innodb_buffer_pool_read_requests: ".$mystat{'Innodb_buffer_pool_read_requests'}."\n";
-	($mystat{'Innodb_buffer_pool_write_requests'}, $mystat{'Innodb_buffer_pool_writes'})=(1,1) unless defined $mystat{'Innodb_buffer_pool_writes'};
-	$mycalc{'pct_write_efficiency'}=percentage($mystat{'Innodb_buffer_pool_writes'}/$mystat{'Innodb_buffer_pool_write_requests'}) if defined $mystat{'Innodb_buffer_pool_write_requests'};
+	($mystat{'Innodb_buffer_pool_write_requests'}, $mystat{'Innodb_buffer_pool_writes'})=(1,1) unless defined $mystat{'Innodb_buffer_pool_writes'}; 
+	$mycalc{'pct_write_efficiency'}=percentage(($mystat{'Innodb_buffer_pool_write_requests'}-$mystat{'Innodb_buffer_pool_writes'}), $mystat{'Innodb_buffer_pool_write_requests'}) if defined $mystat{'Innodb_buffer_pool_write_requests'};
 	debugprint "pct_write_efficiency: ".$mycalc{'pct_read_efficiency'}."\n";
 	debugprint "Innodb_buffer_pool_writes: ".$mystat{'Innodb_buffer_pool_writes'}."\n";
 	debugprint "Innodb_buffer_pool_write_requests: ".$mystat{'Innodb_buffer_pool_write_requests'}."\n";
@@ -1397,16 +1397,16 @@ sub mysql_innodb {
 
 	# InnoDB Read efficency
 	if (defined $mycalc{'pct_read_efficiency'} && $mycalc{'pct_read_efficiency'} < 90 ) {
-		badprint "InnoDB Read buffer efficiency: ".$mycalc{'pct_read_efficiency'}. "% (".$mystat{'Innodb_buffer_pool_reads'}." hits/ ".$mystat{'Innodb_buffer_pool_read_requests'}." total)\n";
+		badprint "InnoDB Read buffer efficiency: ".$mycalc{'pct_read_efficiency'}. "% (".($mystat{'Innodb_buffer_pool_read_requests'} - $mystat{'Innodb_buffer_pool_reads'})." hits/ ".$mystat{'Innodb_buffer_pool_read_requests'}." total)\n";
 	} else {
-		goodprint "InnoDB Read buffer efficiency: ".$mycalc{'pct_read_efficiency'}. "% (".$mystat{'Innodb_buffer_pool_reads'}." hits/ ".$mystat{'Innodb_buffer_pool_read_requests'}." total)\n";
+		goodprint "InnoDB Read buffer efficiency: ".$mycalc{'pct_read_efficiency'}. "% (".($mystat{'Innodb_buffer_pool_read_requests'} - $mystat{'Innodb_buffer_pool_reads'})." hits/ ".$mystat{'Innodb_buffer_pool_read_requests'}." total)\n";
 	}
 
 	# InnoDB Write efficency
 	if (defined $mycalc{'pct_write_efficiency'} && $mycalc{'pct_write_efficiency'} < 90 ) {
-		badprint "InnoDB Write buffer efficiency: ".$mycalc{'pct_write_efficiency'}. "% (".$mystat{'Innodb_buffer_pool_writes'}." hits/ ".$mystat{'Innodb_buffer_pool_write_requests'}." total)\n";
+		badprint "InnoDB Write buffer efficiency: ".$mycalc{'pct_write_efficiency'}. "% (".($mystat{'Innodb_buffer_pool_write_requests'} - $mystat{'Innodb_buffer_pool_writes'})." hits/ ".$mystat{'Innodb_buffer_pool_write_requests'}." total)\n";
 	} else {
-		goodprint "InnoDB Write buffer efficiency: ".$mycalc{'pct_write_efficiency'}. "% (".$mystat{'Innodb_buffer_pool_writes'}." hits/ ".$mystat{'Innodb_buffer_pool_write_requests'}." total)\n";
+		goodprint "InnoDB Write buffer efficiency: ".$mycalc{'pct_write_efficiency'}. "% (".($mystat{'Innodb_buffer_pool_write_requests'} - $mystat{'Innodb_buffer_pool_writes'})." hits/ ".$mystat{'Innodb_buffer_pool_write_requests'}." total)\n";
 	}
 
 	# InnoDB Log Waits
