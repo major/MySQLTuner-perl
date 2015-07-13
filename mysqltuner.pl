@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.4.7
+# mysqltuner.pl - Version 1.4.8
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -1036,6 +1036,7 @@ sub calculations {
 	debugprint "pct_write_efficiency: ".$mycalc{'pct_read_efficiency'}."\n";
 	debugprint "Innodb_buffer_pool_writes: ".$mystat{'Innodb_buffer_pool_writes'}."\n";
 	debugprint "Innodb_buffer_pool_write_requests: ".$mystat{'Innodb_buffer_pool_write_requests'}."\n";
+	$mycalc{'pct_innodb_buffer_used'}=percentage(($mystat{'Innodb_buffer_pool_pages_total'}-$mystat{'Innodb_buffer_pool_pages_free'}), $mystat{'Innodb_buffer_pool_pages_total'}) if defined $mystat{'Innodb_buffer_pool_pages_total'};
 	
 	# Binlog Cache
 	if ($myvar{'log_bin'} ne 'OFF') {
@@ -1358,6 +1359,12 @@ sub mysql_innodb {
 		if (defined $myvar{'innodb_log_buffer_size'}) {
 			infoprint " +-- InnoDB Log Buffer: " . hr_bytes($myvar{'innodb_log_buffer_size'}) . "\n";
 		}
+		if (defined $mystat{'Innodb_buffer_pool_pages_free'}) {
+			infoprint " +-- InnoDB Log Buffer Free: " . hr_bytes($mystat{'Innodb_buffer_pool_pages_free'}) . "\n";
+		}
+		if (defined $mystat{'Innodb_buffer_pool_pages_total'}) {
+			infoprint " +-- InnoDB Log Buffer Used: " . hr_bytes($mystat{'Innodb_buffer_pool_pages_total'}) . "\n";
+		}
 	}
 	# InnoDB Buffer Pull Size
 	if ($myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'}) {
@@ -1393,6 +1400,13 @@ sub mysql_innodb {
 				goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
 			}
 		}
+	}
+
+	# InnoDB Used Buffer Pool
+	if (defined $mycalc{'pct_innodb_buffer_used'} && $mycalc{'pct_innodb_buffer_used'} < 80 ) {
+		badprint "InnoDB Used buffer: ".$mycalc{'pct_innodb_buffer_used'}. "% (".($mystat{'Innodb_buffer_pool_pages_total'} - $mystat{'Innodb_buffer_pool_pages_free'})." used/ ".$mystat{'Innodb_buffer_pool_pages_total'}." total)\n";
+	} else {
+		goodprint "InnoDB Used buffer: ".$mycalc{'pct_innodb_buffer_used'}. "% (".($mystat{'Innodb_buffer_pool_pages_total'} - $mystat{'Innodb_buffer_pool_pages_free'})." used/ ".$mystat{'Innodb_buffer_pool_pages_total'}." total)\n";
 	}
 
 	# InnoDB Read efficency
