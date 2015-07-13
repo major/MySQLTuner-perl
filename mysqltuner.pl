@@ -736,7 +736,7 @@ sub check_storage_engines {
 	
 	my $engines;
 	if (mysql_version_ge(5, 1)) {
-		my @engineresults = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC"`;
+		my @engineresults = select_array "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC";
 		foreach my $line (@engineresults) {
 			my ($engine,$engineenabled);
 			($engine,$engineenabled) = $line =~ /([a-zA-Z_]*)\s+([a-zA-Z]+)/;
@@ -753,7 +753,7 @@ sub check_storage_engines {
 	infoprint "Status: $engines\n";
 	if (mysql_version_ge(5)) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
-		my @templist = `$mysqlcmd $mysqllogin -Bse "SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;"`;
+		my @templist = select_array "SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
 
 		foreach my $line (@templist) {
 			my ($engine,$size,$count);
@@ -762,13 +762,13 @@ sub check_storage_engines {
 			$enginestats{$engine} = $size;
 			$enginecount{$engine} = $count;
 		}
-		$fragtables = `$mysqlcmd $mysqllogin -Bse "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','performance_schema', 'mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY';"`;
+		$fragtables = select_one "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','performance_schema', 'mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY'";
 		chomp($fragtables);
 	} else {
 		# MySQL < 5 servers take a lot of work to get table sizes
 		my @tblist;
 		# Now we build a database list, and loop through it to get storage engine stats for tables
-		my @dblist = `$mysqlcmd $mysqllogin -Bse "SHOW DATABASES"`;
+		my @dblist = select_array "SHOW DATABASES";
 		foreach my $db (@dblist) {
 			chomp($db);
 			if ($db eq "information_schema" or $db eq "performance_schema" or $db eq "mysql") { next; }
@@ -777,7 +777,7 @@ sub check_storage_engines {
 				# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
 				@ixs = (1, 5, 8);
 			}
-			push(@tblist, map { [ (split)[@ixs] ] } `$mysqlcmd $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`"`);
+			push(@tblist, map { [ (split)[@ixs] ] } select_array "SHOW TABLE STATUS FROM \\\`$db\\\`");
 		}
 		# Parse through the table list to generate storage engine counts/statistics
 		$fragtables = 0;
@@ -823,10 +823,10 @@ sub check_storage_engines {
 	# Auto increments
 	my %tblist;
 	# Find the maximum integer
-	my $maxint = `$mysqlcmd $mysqllogin -Bse "SELECT ~0"`;
+	my $maxint = select_one "SELECT ~0";
 	
 	# Now we build a database list, and loop through it to get storage engine stats for tables
-	my @dblist = `$mysqlcmd $mysqllogin -Bse "SHOW DATABASES"`;
+	my @dblist = select_array "SHOW DATABASES";
 	foreach my $db (@dblist) {
 		chomp($db);
 		
@@ -841,7 +841,7 @@ sub check_storage_engines {
 			# MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
 			@ia = (0, 9);
 		}
-		push(@{$tblist{$db}}, map { [ (split)[@ia] ] } `$mysqlcmd $mysqllogin -Bse "SHOW TABLE STATUS FROM \\\`$db\\\`"`);
+		push(@{$tblist{$db}}, map { [ (split)[@ia] ] } select_array "SHOW TABLE STATUS FROM \\\`$db\\\`");
 	}
 	
 	my @dbnames = keys %tblist;
@@ -942,7 +942,7 @@ sub calculations {
 		$size += (split)[0] for `find $myvar{'datadir'} -name "*.MYI" 2>&1 | xargs du -L $duflags 2>&1`;
 		$mycalc{'total_myisam_indexes'} = $size;
 	} elsif (mysql_version_ge(5)) {
-		$mycalc{'total_myisam_indexes'} = `$mysqlcmd $mysqllogin -Bse "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';"`;
+		$mycalc{'total_myisam_indexes'} = select_one "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';";
 	}
 	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} == 0) {
 		$mycalc{'total_myisam_indexes'} = "fail";
