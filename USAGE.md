@@ -23,6 +23,7 @@ You must provide the remote server's total memory when connecting to other serve
 
     --skipsize           Don't enumerate tables and their types/sizes (default: on)
                          (Recommended for servers with many tables)
+    --skippassword       Don't perform checks on user passwords(default: off)
     --checkversion       Check for updates to MySQLTuner (default: don't check)
     --forcemem <size>    Amount of RAM installed in megabytes
     --forceswap <size>   Amount of swap memory configured in megabytes
