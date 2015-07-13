@@ -41,7 +41,7 @@ use File::Spec;
 use Getopt::Long;
 use File::Basename;
 use Cwd 'abs_path';
-#use Data::Dumper qw/Dumper/;
+use Data::Dumper qw/Dumper/;
 # Set up a few variables for use in the script
 my $tunerversion = "1.4.6";
 my (@adjvars, @generalrec);
@@ -67,6 +67,7 @@ my %opt = (
 		"reportfile"	=> 0,
 		"dbstat"		=> 0,
 		"idxstat"		=> 0,
+		"skippassword"	=> 0,
 	);
 
 
@@ -90,6 +91,7 @@ GetOptions(\%opt,
 		'mysqlcmd=s',
 		'help',
 		'buffers',
+		'skippassword',
 		'passwordfile=s',
 		'reportfile=s',
 		'silent',
@@ -123,6 +125,7 @@ sub usage {
 		"   Performance and Reporting Options\n".
 		"      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n".
 		"                           (Recommended for servers with many tables)\n".
+		"      --skippassword       Don't perform checks on user passwords(default: off)\n".
 		"      --checkversion       Check for updates to MySQLTuner (default: don't check)\n".
 		"      --forcemem <size>    Amount of RAM installed in megabytes\n".
 		"      --forceswap <size>   Amount of swap memory configured in megabytes\n".
@@ -480,16 +483,20 @@ sub select_one {
 }
 
 # Populates all of the variable and status hashes
-my (%mystat,%myvar,$dummyselect);
+my (%mystat,%myvar,$dummyselect,%myrepl, %myslaves);
 sub get_all_vars {
 	# We need to initiate at least one query so that our data is useable
-	$dummyselect = `$mysqlcmd $mysqllogin -Bse "SELECT VERSION();"`;
-	my @mysqlvarlist = `$mysqlcmd $mysqllogin -Bse "SHOW /*!50000 GLOBAL */ VARIABLES;"`;
+	$dummyselect = select_one "SELECT VERSION()";
+	debugprint "VERSION: ".$dummyselect."\n";
+
+	my @mysqlvarlist = select_array "SHOW /*!50000 GLOBAL */ VARIABLES";
 	foreach my $line (@mysqlvarlist) {
 		$line =~ /([a-zA-Z_]*)\s*(.*)/;
 		$myvar{$1} = $2;
+		debugprint "$1 = $2\n";
 	}
-	my @mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SHOW /*!50000 GLOBAL */ STATUS;"`;
+	
+	my @mysqlstatlist = select_array "SHOW /*!50000 GLOBAL */ STATUS";
 	foreach my $line (@mysqlstatlist) {
 		$line =~ /([a-zA-Z_]*)\s*(.*)/;
 		$mystat{$1} = $2;
@@ -501,7 +508,7 @@ sub get_all_vars {
 	# have_* for engines is deprecated and will be removed in MySQL 5.6;
 	# check SHOW ENGINES and set corresponding old style variables.
 	# Also works around MySQL bug #59393 wrt. skip-innodb
-	my @mysqlenginelist = `$mysqlcmd $mysqllogin -Bse "SHOW ENGINES;" 2>$devnull`;
+	my @mysqlenginelist = select_array "SHOW ENGINES";
 	foreach my $line (@mysqlenginelist) {
 		if ($line =~ /^([a-zA-Z_]+)\s+(\S+)/) {
 			my $engine = lc($1);
@@ -513,6 +520,24 @@ sub get_all_vars {
 			my $val = ($2 eq "DEFAULT") ? "YES" : $2;
 			$myvar{"have_$engine"} = $val;
 		}
+	}
+
+	my @mysqlslave = select_array "SHOW SLAVE STATUS\\G";
+	
+	foreach my $line (@mysqlslave) {
+		if ($line =~ /\s*(.*):\s*(.*)/) {
+			debugprint "$1 => $2\n";
+			$myrepl{"$1"} = $2;
+		}
+	}
+	#print Dumper(%myrepl);
+	#exit 0;
+	my @mysqlslaves = select_array "SHOW SLAVE HOSTS";
+	my @lineitems=();
+	foreach my $line (@mysqlslaves) {
+		debugprint "L: $line \n";
+		@lineitems=split /\s*/, $line;
+		$myslaves{$lineitems[0]}=$line;
 	}
 }
 
@@ -526,9 +551,12 @@ sub get_basic_passwords {
 
 sub security_recommendations {
 	prettyprint "\n-------- Security Recommendations  -------------------------------------------\n";
-	
+	if ($opt{skippassword} eq 1) {
+		infoprint "Skipped due to --skippassword option\n";
+		return;
+	}
 	# Looking for Anonymous users
-	my @mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL ;"`;
+	my @mysqlstatlist = select_array "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL";
 	if (@mysqlstatlist) {
 		foreach my $line (sort @mysqlstatlist) {
 			chomp($line);
@@ -540,7 +568,7 @@ sub security_recommendations {
 	} 
 
 	# Looking for Empty Password
-	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL;"`;
+	@mysqlstatlist = select_array "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL";
 	if (@mysqlstatlist) {
 		foreach my $line (sort @mysqlstatlist) {
 			chomp($line);
@@ -552,7 +580,7 @@ sub security_recommendations {
 	} 
 
 	# Looking for User with user/ uppercase /capitalise user as password
-	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST(password as Binary) = PASSWORD(user) OR CAST(password as Binary) = PASSWORD(UPPER(user)) OR CAST(password as Binary) = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)));"`;
+	@mysqlstatlist = select_array "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST(password as Binary) = PASSWORD(user) OR CAST(password as Binary) = PASSWORD(UPPER(user)) OR CAST(password as Binary) = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)))";
 	if (@mysqlstatlist) {
 		foreach my $line (sort @mysqlstatlist) {
 			chomp($line);
@@ -561,7 +589,7 @@ sub security_recommendations {
 		push(@generalrec, "Set up a Secure Password for user\@host ( SET PASSWORD FOR 'user'\@'SpecificDNSorIp' = PASSWORD('secure_password'); )");
 	}
 
-	@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE HOST='%';"`;
+	@mysqlstatlist = select_array "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE HOST='%'";
 	if (@mysqlstatlist) {
 		foreach my $line (sort @mysqlstatlist) {
 			chomp($line);
@@ -584,9 +612,8 @@ sub security_recommendations {
 			$pass=~s/\s//g;
 			chomp($pass);
 			# Looking for User with user/ uppercase /capitalise weak password
-			$passreq="SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = PASSWORD('".$pass."') OR password = PASSWORD(UPPER('".$pass."')) OR password = PASSWORD(UPPER(LEFT('".$pass."', 1)) + SUBSTRING('".$pass."', 2, LENGTH('".$pass."')));\n";
-			@mysqlstatlist = `$mysqlcmd $mysqllogin -Bse "$passreq"`;
-			#infoprint "There is ".scalar (@mysqlstatlist). " items.\n";
+			@mysqlstatlist = select_array "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = PASSWORD('".$pass."') OR password = PASSWORD(UPPER('".$pass."')) OR password = PASSWORD(UPPER(LEFT('".$pass."', 1)) + SUBSTRING('".$pass."', 2, LENGTH('".$pass."')))";
+			debugprint "There is ".scalar (@mysqlstatlist). " items.\n";
 			if (@mysqlstatlist) {
 				foreach my $line (@mysqlstatlist) {
 					chomp($line);
@@ -604,16 +631,30 @@ sub security_recommendations {
 sub get_replication_status { 
 	prettyprint "\n-------- Replication Metrics -------------------------------------------------\n";
 
-	my $slave_status = `$mysqlcmd $mysqllogin -Bse "show slave status\\G"`;
-	if( $slave_status eq '' ) {
-		infoprint "No replication setup for this server.\n";
+	if( scalar(keys %myslaves)==0 ) {
+		infoprint "No replication slave(s) for this server.\n";
+	} else {
+		infoprint "This server is acting as master for ".scalar(keys %myslaves)." server(s).\n";
+	}
+
+	if( scalar(keys %myrepl)==0 and scalar(keys %myslaves)==0 ) {
+		infoprint "This is a standalone server..\n";
 		return;
 	}
-	debugprint "$slave_status \n";
-	my ($io_running) = ($slave_status =~ /slave_io_running\S*\s+(\S+)/i);
-	my ($sql_running) = ($slave_status =~ /slave_sql_running\S*\s+(\S+)/i);
-	my ($seconds_behind_master) = ($slave_status =~ /seconds_behind_master\S*\s+(\S+)/i);
-	if ($io_running eq 'Yes' && $sql_running eq 'Yes') {
+	if( scalar(keys %myrepl)==0 ) {
+		infoprint "No replication setup for this server.\n";
+	} 
+	my ($io_running) = $myrepl{'Slave_IO_Running'};
+	debugprint "IO RUNNING: $io_running \n";
+	my ($sql_running) = $myrepl{'Slave_SQL_Running'};
+	debugprint "SQL RUNNING: $sql_running \n";
+	my ($seconds_behind_master) = $myrepl{'Seconds_Behind_Master'};
+	debugprint "SECONDS : $seconds_behind_master \n";
+	
+	if (defined($io_running) and ($io_running !~ '/yes/i' or $sql_running !~ '/yes/i' )) {
+		badprint "This replication slave is not running but seems to be configurated.";
+	} 
+	if (defined($io_running ) && $io_running =~ '/yes/i' && $sql_running =~ '/yes/i') {
 		if ($myvar{'read_only'} eq 'OFF') {
 			badprint "This replication slave is running with the read_only option disabled.";
 		} else {
@@ -1570,6 +1611,7 @@ You must provide the remote server's total memory when connecting to other serve
 
  --skipsize           Don't enumerate tables and their types/sizes (default: on)
                       (Recommended for servers with many tables)
+ --skippassword       Don't perform checks on user passwords(default: off)
  --checkversion       Check for updates to MySQLTuner (default: don't check)
  --forcemem <size>    Amount of RAM installed in megabytes
  --forceswap <size>   Amount of swap memory configured in megabytes
