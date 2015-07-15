@@ -34,6 +34,7 @@ Download/Installation
 You can download the entire repository by using 'git clone' followed by the cloning URL above. The simplest and shortest method is:
 
 	wget http://mysqltuner.pl/ -O mysqltuner.pl
+	wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
 	perl mysqltuner.pl
 	
 Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
