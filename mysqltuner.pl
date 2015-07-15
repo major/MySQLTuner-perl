@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# mysqltuner.pl - Version 1.4.8
+# mysqltuner.pl - Version 1.4.9
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -30,6 +30,7 @@
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
+#	Joe Ashcraft
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -43,7 +44,7 @@ use File::Basename;
 use Cwd 'abs_path';
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.4.8";
+my $tunerversion = "1.4.9";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -1136,7 +1137,7 @@ sub mysql_stats {
 	if (defined($mycalc{'pct_key_buffer_used'})) {
 		if ($mycalc{'pct_key_buffer_used'} < 90) {
 			badprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% (".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100)." used / ".hr_num($myvar{'key_buffer_size'})." cache)\n";
-			push(@adjvars,"key_buffer_size (\~ ".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100).")");
+			#push(@adjvars,"key_buffer_size (\~ ".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100).")");
 		} else {
 			goodprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% (".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100)." used / ".hr_num($myvar{'key_buffer_size'})." cache)\n";
 		}	
@@ -1602,7 +1603,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.4.8 - MySQL High Performance Tuning Script
+ MySQLTuner 1.4.9 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -1776,6 +1777,10 @@ Cole Turner
 =item *
 
 Major Hayden
+
+=item *
+
+Joe Ashcraft
 
 =back
 
