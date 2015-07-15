@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 # mysqltuner.pl - Version 1.4.9
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
@@ -670,10 +670,12 @@ sub get_replication_status {
 }
 
 # Checks for supported or EOL'ed MySQL versions
-my ($mysqlvermajor,$mysqlverminor);
+my ($mysqlvermajor,$mysqlverminor, $mysqlvermicro);
 sub validate_mysql_version {
-	($mysqlvermajor,$mysqlverminor) = $myvar{'version'} =~ /(\d+)\.(\d+)/;
-	if (!mysql_version_ge(5,1)) {
+	($mysqlvermajor,$mysqlverminor,$mysqlvermicro) = $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+	$mysqlverminor ||= 0;
+	$mysqlvermicro ||= 0;
+	if (!mysql_version_ge(5, 1)) {
 		badprint "Your MySQL version ".$myvar{'version'}." is EOL software!  Upgrade soon!\n";
 	} elsif (mysql_version_ge(6)) {
 		badprint "Currently running unsupported MySQL version ".$myvar{'version'}."\n";
@@ -682,10 +684,12 @@ sub validate_mysql_version {
 	}
 }
 
-# Checks if MySQL version is greater than equal to (major, minor)
+# Checks if MySQL version is greater than equal to (major, minor, micro)
 sub mysql_version_ge {
-	my ($maj, $min) = @_;
-	return $mysqlvermajor > $maj || ($mysqlvermajor == $maj && $mysqlverminor >= ($min || 0));
+	my ($maj, $min, $mic) = @_;
+	$min ||= 0;
+	$mic ||= 0;
+	return $mysqlvermajor > $maj || $mysqlvermajor == $maj && ($mysqlverminor > $min || $mysqlverminor == $min && $mysqlvermicro >= $mic);
 }
 
 # Checks for 32-bit boxes with more than 2GB of RAM
@@ -736,7 +740,7 @@ sub check_storage_engines {
 	prettyprint "\n-------- Storage Engine Statistics -------------------------------------------\n";
 	
 	my $engines;
-	if (mysql_version_ge(5, 1)) {
+	if (mysql_version_ge(5, 1, 5)) {
 		my @engineresults = select_array "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC";
 		foreach my $line (@engineresults) {
 			my ($engine,$engineenabled);
@@ -752,7 +756,7 @@ sub check_storage_engines {
 		$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;
 	}
 	infoprint "Status: $engines\n";
-	if (mysql_version_ge(5)) {
+	if (mysql_version_ge(5, 1, 5)) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
 		my @templist = select_array "SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
 
