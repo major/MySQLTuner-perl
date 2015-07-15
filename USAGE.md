@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.4.6 - MySQL High Performance Tuning Script
+    MySQLTuner 1.4.9 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -83,6 +83,7 @@ Major Hayden - major@mhtx.net
 - Baptiste M.
 - Cole Turner
 - Major Hayden
+- Joe Ashcraft
 
 # SUPPORT
 
