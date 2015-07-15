@@ -1602,7 +1602,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.4.6 - MySQL High Performance Tuning Script
+ MySQLTuner 1.4.8 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
