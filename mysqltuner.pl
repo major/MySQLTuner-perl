@@ -417,6 +417,7 @@ sub mysql_setup {
 		}
 	} else {
 		# It's not Plesk or debian, we should try a login
+		debugprint "$mysqladmincmd $remotestring ping 2>&1";
 		my $loginstatus = `$mysqladmincmd $remotestring ping 2>&1`;
 		if ($loginstatus =~ /mysqld is alive/) {
 			# Login went just fine
