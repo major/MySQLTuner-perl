@@ -1126,10 +1126,10 @@ sub mysql_stats {
 
 	# Aborted Connections
 	if ($mycalc{'pct_connections_aborted'} > 3) {
-		badprint "Aborded connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})\n";
-		push(@generalrec,"Reduce or eliminate unclosed connexions and network issues")
+		badprint "Aborted connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})\n";
+		push(@generalrec,"Reduce or eliminate unclosed connections and network issues")
 	} else {
-		goodprint "Aborded connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})\n";
+		goodprint "Aborted connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})\n";
 	}
 
 	# Key buffer usage
