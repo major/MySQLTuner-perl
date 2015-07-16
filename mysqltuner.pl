@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.4.9
+# mysqltuner.pl - Version 1.5.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -30,7 +30,7 @@
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
-#	Joe Ashcraft
+#	Joe Ashcraft           Jean-Marie Renouard
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -42,9 +42,10 @@ use File::Spec;
 use Getopt::Long;
 use File::Basename;
 use Cwd 'abs_path';
-
+use Data::Dumper qw/Dumper/;
+#use JSON;
 # Set up a few variables for use in the script
-my $tunerversion = "1.4.9";
+my $tunerversion = "1.5.0";
 my (@adjvars, @generalrec);
 
 # Set defaults
@@ -164,6 +165,9 @@ my $good = ($opt{nocolor} == 0)? "[\e[0;32mOK\e[0m]" : "[OK]" ;
 my $bad  = ($opt{nocolor} == 0)? "[\e[0;31m!!\e[0m]" : "[!!]" ;
 my $info = ($opt{nocolor} == 0)? "[\e[0;34m--\e[0m]" : "[--]" ;
 my $deb  = ($opt{nocolor} == 0)? "[\e[0;31mDG\e[0m]" : "[DG]" ;
+
+# Super sturucture containing all informations
+my %result;
 
 # Functions that handle the print styles
 sub prettyprint {
@@ -297,14 +301,21 @@ sub os_setup {
 		}
 	}
 	chomp($physical_memory);
+	chomp($swap_memory);
+	chomp($os);
+	$result{'OS'}{'OS Type'}=$os;
+	$result{'OS'}{'Physical Memory'}{'bytes'}=$physical_memory;
+	$result{'OS'}{'Physical Memory'}{'pretty'}=hr_bytes($physical_memory);
+	$result{'OS'}{'Swap Memory'}{'bytes'}=$swap_memory;
+	$result{'OS'}{'Swap Memory'}{'pretty'}=hr_bytes($swap_memory);
+
 }
 
 # Checks to see if a MySQL login is possible
-my ($mysqllogin,$doremote,$remotestring,$mysqlcmd);
+my ($mysqllogin,$doremote,$remotestring,$mysqlcmd,$mysqladmincmd);
 sub mysql_setup {
 	$doremote = 0;
 	$remotestring = '';
-	my $mysqladmincmd;
 	if ($opt{mysqladmin}) {
 		$mysqladmincmd = $opt{mysqladmin};
 	} else {
@@ -318,7 +329,6 @@ sub mysql_setup {
 		badprint "Couldn't find mysqladmin in your \$PATH. Is MySQL installed?\n";
 		exit;
 	}
-
 	if ($opt{mysqlcmd}) {
 		$mysqlcmd = $opt{mysqlcmd};
 	} else {
@@ -484,24 +494,43 @@ sub select_one {
 	return $result;
 }
 
+sub get_tuning_info {
+	my @infoconn = select_array "\\s";
+	@infoconn = grep {!/Threads:/ and !/Connection id:/ and !/pager:/ and !/Using/ } @infoconn;
+	foreach my $line (@infoconn) {
+		if ($line =~ /\s*(.*):\s*(.*)/) {
+			debugprint "$1 => $2\n";
+			chomp($1);
+			chomp($2);
+			$result{'MySQL Client'}{$1} = $2;
+		}
+	}
+	$result{'MySQL Client'}{'Client Path'}=$mysqlcmd;
+	$result{'MySQL Client'}{'Admin Path'}=$mysqladmincmd;
+	$result{'MySQL Client'}{'Authentication Info'}=$mysqllogin;
+
+}
 # Populates all of the variable and status hashes
 my (%mystat,%myvar,$dummyselect,%myrepl, %myslaves);
 sub get_all_vars {
 	# We need to initiate at least one query so that our data is useable
 	$dummyselect = select_one "SELECT VERSION()";
 	debugprint "VERSION: ".$dummyselect."\n";
-
+	$result{'MySQL Client'}{'Version'}=$dummyselect;
 	my @mysqlvarlist = select_array "SHOW /*!50000 GLOBAL */ VARIABLES";
 	foreach my $line (@mysqlvarlist) {
 		$line =~ /([a-zA-Z_]*)\s*(.*)/;
 		$myvar{$1} = $2;
-		debugprint "$1 = $2\n";
+		$result{'Variables'}{$1}=$2;
+		debugprint "V: $1 = $2\n";
 	}
 	
 	my @mysqlstatlist = select_array "SHOW /*!50000 GLOBAL */ STATUS";
 	foreach my $line (@mysqlstatlist) {
 		$line =~ /([a-zA-Z_]*)\s*(.*)/;
 		$mystat{$1} = $2;
+		$result{'Status'}{$1}=$2;
+		debugprint "S: $1 = $2\n";
 	}
 	# Workaround for MySQL bug #59393 wrt. ignore-builtin-innodb
 	if (($myvar{'ignore_builtin_innodb'} || "") eq "ON") {
@@ -514,6 +543,7 @@ sub get_all_vars {
 	foreach my $line (@mysqlenginelist) {
 		if ($line =~ /^([a-zA-Z_]+)\s+(\S+)/) {
 			my $engine = lc($1);
+
 			if ($engine eq "federated" || $engine eq "blackhole") {
 				$engine .= "_engine";
 			} elsif ($engine eq "berkeleydb") {
@@ -521,6 +551,7 @@ sub get_all_vars {
 			}
 			my $val = ($2 eq "DEFAULT") ? "YES" : $2;
 			$myvar{"have_$engine"} = $val;
+			$result{'Storage Engines'}{$engine}=$2;
 		}
 	}
 
@@ -530,6 +561,7 @@ sub get_all_vars {
 		if ($line =~ /\s*(.*):\s*(.*)/) {
 			debugprint "$1 => $2\n";
 			$myrepl{"$1"} = $2;
+			$result{'Replication'}{'Status'}{$1}=$2;
 		}
 	}
 	#print Dumper(%myrepl);
@@ -538,8 +570,9 @@ sub get_all_vars {
 	my @lineitems=();
 	foreach my $line (@mysqlslaves) {
 		debugprint "L: $line \n";
-		@lineitems=split /\s*/, $line;
+		@lineitems=split /\s+/, $line;
 		$myslaves{$lineitems[0]}=$line;
+		$result{'Replication'}{'Slaves'}{$lineitems[0]}=$lineitems[4];
 	}
 }
 
@@ -1575,15 +1608,26 @@ sub make_recommendations {
 sub close_reportfile {
 	close($fh) if defined($fh);
 }
+
+sub headerprint {
+	prettyprint	" >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
+		" >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
+		" >>  Run with '--help' for additional options and output filtering\n";
+}
+
+sub dump_result {
+	$Data::Dumper::Pair = " : ";
+	print Dumper(\%result);
+	exit 0;
+}
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-prettyprint	" >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n".
-		" >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n".
-		" >>  Run with '--help' for additional options and output filtering\n";
+headerprint					# Header Print
 mysql_setup;				# Gotta login first
 os_setup;					# Set up some OS variables
 get_all_vars;				# Toss variables/status into hashes
+get_tuning_info;			# Get information about the tuning connexion
 validate_mysql_version;		# Check current MySQL version
 check_architecture;			# Suggest 64-bit upgrade
 check_storage_engines;		# Show enabled storage engines
@@ -1608,7 +1652,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.4.9 - MySQL High Performance Tuning Script
+ MySQLTuner 1.5.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -1786,6 +1830,10 @@ Major Hayden
 =item *
 
 Joe Ashcraft
+
+=item *
+
+Jean-Marie Renouard
 
 =back
 
