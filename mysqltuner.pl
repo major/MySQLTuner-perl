@@ -928,7 +928,12 @@ sub calculations {
 	$mycalc{'server_buffers'} += (defined $myvar{'query_cache_size'}) ? $myvar{'query_cache_size'} : 0 ;
 
 	# Global memory
+	# Max used memory is memory used by MySQL based on Max_used_connections
+	# This is the max memory used theorically calculated with the max concurrent connection number reached by mysql
 	$mycalc{'max_used_memory'} = $mycalc{'server_buffers'} + $mycalc{"max_total_per_thread_buffers"};
+
+	# Total possible memory is memory needed by MySQL based on max_connections
+	# This is the max memory MySQL can theorically used if all connections allowed has opened by mysql
 	$mycalc{'total_possible_used_memory'} = $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'};
 
 	$mycalc{'pct_physical_memory'} = int(($mycalc{'total_possible_used_memory'} * 100) / $physical_memory);
