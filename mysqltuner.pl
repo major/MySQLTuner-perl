@@ -496,13 +496,16 @@ sub select_one {
 
 sub get_tuning_info {
 	my @infoconn = select_array "\\s";
+	my ($tkey, $tval);
 	@infoconn = grep {!/Threads:/ and !/Connection id:/ and !/pager:/ and !/Using/ } @infoconn;
 	foreach my $line (@infoconn) {
 		if ($line =~ /\s*(.*):\s*(.*)/) {
 			debugprint "$1 => $2\n";
-			chomp($1);
-			chomp($2);
-			$result{'MySQL Client'}{$1} = $2;
+			$tkey=$1;
+			$tval=$2;
+			chomp($tkey);
+			chomp($tval);
+			$result{'MySQL Client'}{$tkey} = $tval;
 		}
 	}
 	$result{'MySQL Client'}{'Client Path'}=$mysqlcmd;
@@ -761,6 +764,7 @@ sub check_architecture {
 			goodprint "Operating on 32-bit architecture with less than 2GB RAM\n";
 		}
 	}
+	$result{'OS'}{'Architecture'}="$arch bits";
 }
 
 # Start up a ton of storage engine counts/statistics
