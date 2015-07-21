@@ -5,15 +5,15 @@ MySQLTuner is a script written in Perl that allows you to review a MySQL install
 
 Compatibility:
 
-* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (full support)
-* MySQL 5.4 (not fully tested, partially supported)
+* MySQL 5.7 (partial support)
+* MySQL 5.6 (full support)
+* MariaDB 10.0 (partial support)
+* MariaDB 10.1 (partial support)
 * MySQL 5.5 (partial support)
-* MySQL 5.6 (partial support)
-* MySQL 6.0 (partial support)
-* MariaDB 10.x (partial support)
+* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (full support)
 * Perl 5.6 or later (with [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod) package)
 * Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
-* Windows is not supported at this time
+* Windows is not supported at this time (Help wanted !!!!!)
 * Unrestricted read access to the MySQL server (OS root access recommended for MySQL < 5.0)
 
 ***WARNING***
