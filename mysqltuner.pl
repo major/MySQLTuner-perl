@@ -931,27 +931,18 @@ sub calculations {
 	# Max used memory is memory used by MySQL based on Max_used_connections
 	# This is the max memory used theorically calculated with the max concurrent connection number reached by mysql
 	$mycalc{'max_used_memory'} = $mycalc{'server_buffers'} + $mycalc{"max_total_per_thread_buffers"};
-
+	$mycalc{'pct_max_used_memory'} = percentage($mycalc{'max_used_memory'}, $physical_memory);
+	
 	# Total possible memory is memory needed by MySQL based on max_connections
 	# This is the max memory MySQL can theorically used if all connections allowed has opened by mysql
-	$mycalc{'total_possible_used_memory'} = $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'};
-
-	$mycalc{'pct_physical_memory'} = int(($mycalc{'total_possible_used_memory'} * 100) / $physical_memory);
-
-	# Maximum memory limit
-	$mycalc{'max_peak_memory'}=0;
-	foreach my $key ( 'key_buffer_size', 'query_cache_size', 'tmp_table_size', 
-		'innodb_buffer_pool_size', 'innodb_additional_mem_pool_size',
-		'innodb_log_buffer_size') {
-		$mycalc{'max_peak_memory'}+=$myvar{$key} if defined $myvar{$key};
-	}
-	foreach my $key ( 'sort_buffer_size', 'read_buffer_size', 'read_rnd_buffer_size', 'join_buffer_size',
-		'thread_stack', 'binlog_cache_size' ) {
-		$mycalc{'max_peak_memory'}+=($myvar{$key}*$myvar{'max_connections'}) if defined $myvar{$key};
-	}
-	debugprint "Max Peak Memory: ".hr_bytes($mycalc{'max_peak_memory'})."\n";
+	$mycalc{'max_peak_memory'} = $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'};
 	$mycalc{'pct_max_physical_memory'} = percentage($mycalc{'max_peak_memory'}, $physical_memory);
-	debugprint "Max Percentage RAM: ".$mycalc{'pct_max_physical_memory'}."%\n";
+
+	debugprint "Max Used Memory: ".hr_bytes($mycalc{'max_used_memory'})."\n";
+	debugprint "Max Used Percentage RAM: ".$mycalc{'pct_max_used_memory'}."%\n";
+
+	debugprint "Max Peak Memory: ".hr_bytes($mycalc{'max_peak_memory'})."\n";
+	debugprint "Max Peak Percentage RAM: ".$mycalc{'pct_max_physical_memory'}."%\n";
 
 	# Slow queries
 	$mycalc{'pct_slow_queries'} = int(($mystat{'Slow_queries'}/$mystat{'Questions'}) * 100);
@@ -1137,11 +1128,11 @@ sub mysql_stats {
 
 	if ($arch && $arch == 32 && $mycalc{'total_possible_used_memory'} > 2*1024*1024*1024) {
 		badprint "Allocating > 2GB RAM on 32-bit systems can cause system instability\n";
-		badprint "Maximum reached memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
-	} elsif ($mycalc{'pct_physical_memory'} > 85) {
-		badprint "Maximum reached memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+		badprint "Maximum reached memory usage: ".hr_bytes($mycalc{'max_used_memory'})." ($mycalc{'pct_max_used_memory'}% of installed RAM)\n";
+	} elsif ($mycalc{'pct_max_used_memory'} > 85) {
+		badprint "Maximum reached memory usage: ".hr_bytes($mycalc{'max_used_memory'})." ($mycalc{'pct_max_used_memory'}% of installed RAM)\n";
 	} else {
-		goodprint "Maximum reached memory usage: ".hr_bytes($mycalc{'total_possible_used_memory'})." ($mycalc{'pct_physical_memory'}% of installed RAM)\n";
+		goodprint "Maximum reached memory usage: ".hr_bytes($mycalc{'max_used_memory'})." ($mycalc{'pct_max_used_memory'}% of installed RAM)\n";
 	}
 
 	if ($mycalc{'pct_max_physical_memory'} > 85) {
@@ -1604,7 +1595,7 @@ sub make_recommendations {
 	}
 	if (@adjvars > 0) {
 		prettyprint "Variables to adjust:\n";
-		if ($mycalc{'pct_physical_memory'} > 90) {
+		if ($mycalc{'pct_max_physical_memory'} > 90) {
 			prettyprint "  *** MySQL's maximum memory usage is dangerously high ***\n".
 				  "  *** Add RAM before increasing MySQL buffer variables ***\n";
 		}
