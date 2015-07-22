@@ -796,7 +796,7 @@ sub check_storage_engines {
 	}
 	
 	my @dblist = select_array "SHOW DATABASES";
-	$result{'Databases'}=[@dblist];	
+	$result{'Databases'}{'List'}=[@dblist];	
 	infoprint "Status: $engines\n";
 	if (mysql_version_ge(5, 1, 5)) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
@@ -1495,18 +1495,27 @@ sub mysql_databases {
 
 	my @dblist=select_array("SHOW DATABASES;");
 	infoprint "There is ".scalar(@dblist). " Database(s).\n";
-	my @totaldbinfo=split /\s/, select_one("SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema');");
+	my @totaldbinfo=split /\s/, select_one("SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH) FROM information_schema.TABLES;");
 	infoprint "All Databases:\n";
 	infoprint " +-- ROWS : ".($totaldbinfo[0] eq 'NULL'?0:$totaldbinfo[0])."\n";
 	infoprint " +-- DATA : ".hr_bytes($totaldbinfo[1])."(".percentage($totaldbinfo[1], $totaldbinfo[3])."%)\n";
 	infoprint " +-- INDEX: ".hr_bytes($totaldbinfo[2])."(".percentage($totaldbinfo[2], $totaldbinfo[3])."%)\n";
 	infoprint " +-- SIZE : ".hr_bytes($totaldbinfo[3])."\n";
+
 	badprint "Index size is larger than data size \n" if $totaldbinfo[1]<$totaldbinfo[2];
+
+	$result{'Databases'}{'All databases'}{'Rows'}=($totaldbinfo[0] eq 'NULL'?0:$totaldbinfo[0]);
+	$result{'Databases'}{'All databases'}{'Data Size'}=$totaldbinfo[1];
+	$result{'Databases'}{'All databases'}{'Data Pct'}=percentage($totaldbinfo[1], $totaldbinfo[3])."%";
+	$result{'Databases'}{'All databases'}{'Index Size'}=$totaldbinfo[2];
+	$result{'Databases'}{'All databases'}{'Index Pct'}=percentage($totaldbinfo[2], $totaldbinfo[3])."%";
+	$result{'Databases'}{'All databases'}{'Total Size'}=$totaldbinfo[3];
 	foreach (@dblist) { 
 		chomp($_);
-		if ( $_ eq "information_schema" or $_ eq "performance_schema" or $_ eq "mysql" ) { next; }
+		if ( $_ eq "information_schema" or $_ eq "performance_schema" or $_ eq "mysql" or $_ eq "" ) { next; }
 
 		my @dbinfo=split /\s/, select_one("SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA");
+		next unless defined $dbinfo[0];
 		infoprint "Database: ".$dbinfo[0]."\n";
 		infoprint " +-- ROWS : ".(!defined($dbinfo[1]) or $dbinfo[1] eq 'NULL'?0:$dbinfo[1])."\n";
 		infoprint " +-- DATA : ".hr_bytes($dbinfo[2])."(".percentage($dbinfo[2], $dbinfo[4])."%)\n";
@@ -1514,6 +1523,12 @@ sub mysql_databases {
 		infoprint " +-- TOTAL: ".hr_bytes($dbinfo[4])."\n";
 		badprint "Index size is larger than data size for $dbinfo[0] \n" if $dbinfo[2]<$dbinfo[3];
 		badprint "There ".$dbinfo[5]. " storage engines. Be careful \n" if $dbinfo[5]>1;
+		$result{'Databases'}{$dbinfo[0]}{'Rows'}=$dbinfo[1];
+		$result{'Databases'}{$dbinfo[0]}{'Data Size'}=$dbinfo[2];
+		$result{'Databases'}{$dbinfo[0]}{'Data Pct'}=percentage($dbinfo[2], $dbinfo[4])."%";
+		$result{'Databases'}{$dbinfo[0]}{'Index Size'}=$dbinfo[3];
+		$result{'Databases'}{$dbinfo[0]}{'Index Pct'}=percentage($dbinfo[3], $dbinfo[4])."%";
+		$result{'Databases'}{$dbinfo[0]}{'Total Size'}=$dbinfo[4];
 	}
 }
 
@@ -1566,12 +1581,19 @@ ENDSQL
 		my @info= split /\s/;
 		infoprint "Index: ".$info[1]."\n";
 		
-		infoprint " +-- COLONNE     : ".$info[0]."\n";
+		infoprint " +-- COLUNM      : ".$info[0]."\n";
 		infoprint " +-- NB SEQS     : ".$info[2]." sequence(s)\n";
 		infoprint " +-- NB COLS     : ".$info[3]." column(s)\n";
 		infoprint " +-- CARDINALITY : ".$info[4]." distinct values\n";
 		infoprint " +-- NB ROWS     : ".$info[5]." rows\n";
 		infoprint " +-- SELECTIVITY : ".$info[6]."%\n";
+
+		$result{'Indexes'}{$info[1]}{'Colunm'}=$info[0];
+		$result{'Indexes'}{$info[1]}{'Sequence number'}=$info[2];
+		$result{'Indexes'}{$info[1]}{'Number of collunm'}=$info[3];
+		$result{'Indexes'}{$info[1]}{'Cardianality'}=$info[4];
+		$result{'Indexes'}{$info[1]}{'Row number'}=$info[5];
+		$result{'Indexes'}{$info[1]}{'Selectivity'}=$info[6];
 		if ($info[6] < 25) {
 			badprint "$info[1] has a low selectivity\n";
 		}
@@ -1595,6 +1617,7 @@ ENDSQL
 		debugprint "$_\n";
 		my @info= split /\s/;
 		badprint "Index: $info[1] on $info[0] is not used.\n";
+		push @{$result{'Indexes'}{'Unused Indexes'}}, $info[0].".".$info[1];
 	}	
 }
 # Take the two recommendation arrays and display them at the end of the output
