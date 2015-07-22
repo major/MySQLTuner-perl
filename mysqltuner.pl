@@ -783,6 +783,7 @@ sub check_storage_engines {
 		foreach my $line (@engineresults) {
 			my ($engine,$engineenabled);
 			($engine,$engineenabled) = $line =~ /([a-zA-Z_]*)\s+([a-zA-Z]+)/;
+			$result{'Engine'}{$engine}{'Enabled'}=$engineenabled;
 			$engines .= ($engineenabled eq "YES" || $engineenabled eq "DEFAULT") ? greenwrap "+".$engine." " : redwrap "-".$engine." ";
 		}
 	} else {
@@ -793,25 +794,34 @@ sub check_storage_engines {
 		$engines .= (defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES")? greenwrap "+ISAM " : redwrap "-ISAM " ;
 		$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;
 	}
+	
+	my @dblist = select_array "SHOW DATABASES";
+	$result{'Databases'}=[@dblist];	
 	infoprint "Status: $engines\n";
 	if (mysql_version_ge(5, 1, 5)) {
 		# MySQL 5 servers can have table sizes calculated quickly from information schema
-		my @templist = select_array "SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
+		my @templist = select_array "SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE),SUM(DATA_LENGTH),SUM(INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
 
+		my ($engine,$size,$count,$dsize, $isize);
 		foreach my $line (@templist) {
-			my ($engine,$size,$count);
-			($engine,$size,$count) = $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)/;
+			($engine,$size,$count,$dsize, $isize) = $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/;
 			if (!defined($size)) { next; }
 			$enginestats{$engine} = $size;
 			$enginecount{$engine} = $count;
+			$result{'Engine'}{$engine}{'Table Number'}=$count;
+			$result{'Engine'}{$engine}{'Total Size'}=$size;
+			$result{'Engine'}{$engine}{'Data Size'}=$dsize;
+			$result{'Engine'}{$engine}{'Index Size'}=$isize;
 		}
 		$fragtables = select_one "SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','performance_schema', 'mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY'";
 		chomp($fragtables);
+		$result{'Tables'}{'Fragmented tables'}= [ select_array "SELECT CONCAT(CONCAT(TABLE_SCHEMA, '.'), TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','performance_schema', 'mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY'" ]; 
+
 	} else {
 		# MySQL < 5 servers take a lot of work to get table sizes
 		my @tblist;
 		# Now we build a database list, and loop through it to get storage engine stats for tables
-		my @dblist = select_array "SHOW DATABASES";
+
 		foreach my $db (@dblist) {
 			chomp($db);
 			if ($db eq "information_schema" or $db eq "performance_schema" or $db eq "mysql") { next; }
@@ -867,9 +877,8 @@ sub check_storage_engines {
 	my %tblist;
 	# Find the maximum integer
 	my $maxint = select_one "SELECT ~0";
-	
-	# Now we build a database list, and loop through it to get storage engine stats for tables
-	my @dblist = select_array "SHOW DATABASES";
+	$result{'MaxInt'}=$maxint;
+	# Now we use a database list, and loop through it to get storage engine stats for tables
 	foreach my $db (@dblist) {
 		chomp($db);
 		
@@ -894,7 +903,8 @@ sub check_storage_engines {
 			my ($name, $autoincrement) = @$tbl;
 			
 			if ($autoincrement =~ /^\d+?$/) {
-				my $percent = ($autoincrement / $maxint) * 100;
+				my $percent = percentage($autoincrement, $maxint);
+				$result{'PctAutoIncrement'}{"$db.$name"}=$percent;
 				if($percent >= 75) {
 					badprint "Table '$db.$name' has an autoincrement value near max capacity ($percent%)\n";
 				}
@@ -1469,6 +1479,7 @@ sub mysql_innodb {
 	} else {
 		goodprint "InnoDB log waits: ".percentage($mystat{'Innodb_log_waits'}, $mystat{'Innodb_log_writes'})."% (".$mystat{'Innodb_log_waits'}. " waits / ".$mystat{'Innodb_log_writes'}." writes)\n";
 	}
+	$result{'Calculations'}={%mycalc};
 }
 
 # Recommandations for MySQL Databases
@@ -1616,6 +1627,7 @@ sub headerprint {
 }
 
 sub dump_result {
+	return unless $opt{'debug'};
 	$Data::Dumper::Pair = " : ";
 	print Dumper(\%result);
 	exit 0;
@@ -1640,7 +1652,7 @@ mysql_innodb;				# Print InnoDB stats
 get_replication_status;		# Print replication info
 make_recommendations;		# Make recommendations based on stats
 close_reportfile;			# Close reportfile if needed
-
+dump_result;				# Dump result 
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
@@ -1830,6 +1842,10 @@ Major Hayden
 =item *
 
 Joe Ashcraft
+
+=item *
+
+Jean-Marie Renouard
 
 =item *
 
