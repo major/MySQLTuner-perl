@@ -300,8 +300,8 @@ sub os_setup {
 			$swap_memory = $swap_memory*1024*1024;
 		}
 	}
-	debugprint "Physical Memory: $physical_memory\n"
-	debugprint "Swap Memory: $swap_memory\n"
+	debugprint "Physical Memory: $physical_memory\n";
+	debugprint "Swap Memory: $swap_memory\n";
 	chomp($physical_memory);
 	chomp($swap_memory);
 	chomp($os);
@@ -1330,9 +1330,12 @@ sub mysql_stats {
 			} else {
 				$table_cache_var = "table_cache";
 			}
+			
 			push(@adjvars,$table_cache_var." (> ".$myvar{$table_cache_var}.")");
 			push(@generalrec,"Increase ".$table_cache_var." gradually to avoid file descriptor limits");
 			push(@generalrec,"Read this before increasing ".$table_cache_var." over 64: http://bit.ly/1mi7c4C");
+			push(@generalrec,"Beware that open_files_limit (".$myvar{'open_files_limit'}.") variable ");
+			push(@generalrec,"should be greater that $table_cache_var ( ".$myvar{$table_cache_var}.")");
 		} else {
 			goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% (".hr_num($mystat{'Open_tables'})." open / ".hr_num($mystat{'Opened_tables'})." opened)\n";
 		}
