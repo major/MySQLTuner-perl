@@ -300,6 +300,8 @@ sub os_setup {
 			$swap_memory = $swap_memory*1024*1024;
 		}
 	}
+	debugprint "Physical Memory: $physical_memory\n"
+	debugprint "Swap Memory: $swap_memory\n"
 	chomp($physical_memory);
 	chomp($swap_memory);
 	chomp($os);
