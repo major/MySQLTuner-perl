@@ -681,6 +681,7 @@ sub get_replication_status {
 	}
 	if( scalar(keys %myrepl)==0 ) {
 		infoprint "No replication setup for this server.\n";
+		return;
 	} 
 	my ($io_running) = $myrepl{'Slave_IO_Running'};
 	debugprint "IO RUNNING: $io_running \n";
@@ -689,19 +690,19 @@ sub get_replication_status {
 	my ($seconds_behind_master) = $myrepl{'Seconds_Behind_Master'};
 	debugprint "SECONDS : $seconds_behind_master \n";
 	
-	if (defined($io_running) and ($io_running !~ '/yes/i' or $sql_running !~ '/yes/i' )) {
-		badprint "This replication slave is not running but seems to be configurated.";
+	if (defined($io_running) and ($io_running !~ /yes/i or $sql_running !~ /yes/i )) {
+		badprint "This replication slave is not running but seems to be configurated.\n";
 	} 
-	if (defined($io_running ) && $io_running =~ '/yes/i' && $sql_running =~ '/yes/i') {
+	if (defined($io_running ) && $io_running =~ /yes/i && $sql_running =~ /yes/i ) {
 		if ($myvar{'read_only'} eq 'OFF') {
-			badprint "This replication slave is running with the read_only option disabled.";
+			badprint "This replication slave is running with the read_only option disabled.\n";
 		} else {
-			goodprint "This replication slave is running with the read_only option enabled.";
+			goodprint "This replication slave is running with the read_only option enabled.\n";
 		}
 		if ($seconds_behind_master>0) {
-				badprint "This replication slave is lagging and slave has $seconds_behind_master second(s) behind master host.";
+				badprint "This replication slave is lagging and slave has $seconds_behind_master second(s) behind master host.\n";
 		} else {
-			goodprint "This replication slave is uptodate with master.";
+			goodprint "This replication slave is uptodate with master.\n";
 		}
 	}
 }
