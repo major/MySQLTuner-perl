@@ -273,8 +273,11 @@ sub os_setup {
 		}
 	} else {
 		if ($os =~ /Linux/) {
-			$physical_memory = `LANG=en free -b | grep Mem | awk '{print \$2}'` or memerror;
-			$swap_memory = `LANG=en free -b | grep Swap | awk '{print \$2}'` or memerror;
+			$physical_memory = `LANG=en grep -i memtotal: /proc/meminfo | awk '{print \$2}'` or memerror;
+			$physical_memory*=1024;
+
+			$swap_memory = `LANG=en grep -i swaptotal: /proc/meminfo | awk '{print \$2}'` or memerror;
+			$swap_memory*=1024;
 		} elsif ($os =~ /Darwin/) {
 			$physical_memory = `sysctl -n hw.memsize` or memerror;
 			$swap_memory = `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'` or memerror;
