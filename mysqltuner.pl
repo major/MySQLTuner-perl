@@ -1142,7 +1142,7 @@ sub mysql_stats {
 		}
 	}
 
-	if ($arch && $arch == 32 && $mycalc{'total_possible_used_memory'} > 2*1024*1024*1024) {
+	if ($arch && $arch == 32 && $mycalc{'max_used_memory'} > 2*1024*1024*1024) {
 		badprint "Allocating > 2GB RAM on 32-bit systems can cause system instability\n";
 		badprint "Maximum reached memory usage: ".hr_bytes($mycalc{'max_used_memory'})." ($mycalc{'pct_max_used_memory'}% of installed RAM)\n";
 	} elsif ($mycalc{'pct_max_used_memory'} > 85) {
@@ -1447,7 +1447,7 @@ sub mysql_innodb {
 			#  InnoDB Buffer Pull Size > 64Go
 			my $max_innodb_buffer_pool_instances=int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024));
 			$max_innodb_buffer_pool_instances=64 if ($max_innodb_buffer_pool_instances> 64);
-			
+
 			if ($myvar{'innodb_buffer_pool_instances'} != $max_innodb_buffer_pool_instances) {
 				badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
 				push(@adjvars,"innodb_buffer_pool_instances(=".$max_innodb_buffer_pool_instances.")");
