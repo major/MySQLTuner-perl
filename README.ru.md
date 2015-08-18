@@ -5,18 +5,18 @@ MySQLTuner это скрипт, написанный на Perl, который �
 и информация о состоянии в формате отчета с основными подсказками по оптимизации.
 
 Совместимость:
-	* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (полная поддержка)
-	* MySQL 5.4 (оттестировано не полностью, частичная поддержка)
-	* MySQL 5.5 (полная поддержка)
-	* MySQL 5.7 (полная поддержка)
-	* MySQL 5.6 (полная поддержка)
-	* MariaDB 10.0 (полная поддержка)
-	* MariaDB 10.1 (полная поддержка)
-	* MySQL 6.0 (частичная поддержка)
-	* Perl 5.6 или более поздний
-	* Операционная система семейства Unix/Linux (протестировано на Linux, различных вариациях BSD и Solaris)
-	* Windows не поддерживается на данное время
-	* Неограниченный доступ на чтение для MySQL-сервера (Для работы с MySQL < 5.0 требуется root-доступ к серверу)
+* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (полная поддержка)
+* MySQL 5.4 (оттестировано не полностью, частичная поддержка)
+* MySQL 5.5 (полная поддержка)
+* MySQL 5.7 (полная поддержка)
+* MySQL 5.6 (полная поддержка)
+* MariaDB 10.0 (полная поддержка)
+* MariaDB 10.1 (полная поддержка)
+* MySQL 6.0 (частичная поддержка)
+* Perl 5.6 или более поздний
+* Операционная система семейства Unix/Linux (протестировано на Linux, различных вариациях BSD и Solaris)
+* Windows не поддерживается на данное время
+* Неограниченный доступ на чтение для MySQL-сервера (Для работы с MySQL < 5.0 требуется root-доступ к серверу)
 
 Пожалуйста, прочитайте раздел ЧаВо, который расположен чуть ниже.
 
@@ -39,7 +39,7 @@ You can download the entire repository by using 'git clone' followed by the clon
 
 	wget mysqltuner.pl
 	perl mysqltuner.pl
-	
+
 Of course, you can add the execute bit (chmod +x mysqltuner.pl) so you can execute it without calling perl directly.
 
 ----- ЧаВо -----
@@ -66,12 +66,12 @@ Once you create it, make sure it's owned by your user and the mode on the file i
 
 These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:
 
-	* OS and OS version
-	* Architecture (x86, x86_64, IA64, Commodore 64)
-	* Exact MySQL version
-	* Where you obtained your MySQL version (OS package, source, etc)
-	* The full text of the error
-	* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
+* OS and OS version
+* Architecture (x86, x86_64, IA64, Commodore 64)
+* Exact MySQL version
+* Where you obtained your MySQL version (OS package, source, etc)
+* The full text of the error
+* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
 
 Once you get those, join the Google Group and drop your issue to the list:
 
