@@ -1442,10 +1442,15 @@ sub mysql_innodb {
 		
 		# InnoDB Buffer Pull Size > 1Go
 		if ($myvar{'innodb_buffer_pool_size'} > 1024*1024*1024) {
-			# InnoDB Buffer Pull Size / 1Go = InnoDB Buffer Pull Instances
-			if ($myvar{'innodb_buffer_pool_instances'} != int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024))) {
+			# InnoDB Buffer Pull Size / 1Go = InnoDB Buffer Pull Instances limited to 64 max.
+
+			#  InnoDB Buffer Pull Size > 64Go
+			my $max_innodb_buffer_pool_instances=int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024));
+			$max_innodb_buffer_pool_instances=64 if ($max_innodb_buffer_pool_instances> 64);
+			
+			if ($myvar{'innodb_buffer_pool_instances'} != $max_innodb_buffer_pool_instances) {
 				badprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
-				push(@adjvars,"innodb_buffer_pool_instances(=".int($myvar{'innodb_buffer_pool_size'}/(1024*1024*1024)).")");
+				push(@adjvars,"innodb_buffer_pool_instances(=".$max_innodb_buffer_pool_instances.")");
 			} else {
 				goodprint "InnoDB buffer pool instances: ".$myvar{'innodb_buffer_pool_instances'}."\n";
 			}	
