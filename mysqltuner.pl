@@ -30,7 +30,7 @@
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
-#	Joe Ashcraft           Jean-Marie Renouard
+#   Joe Ashcraft           Jean-Marie Renouard
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -1730,7 +1730,7 @@ mysql_innodb;				# Print InnoDB stats
 get_replication_status;		# Print replication info
 make_recommendations;		# Make recommendations based on stats
 close_reportfile;			# Close reportfile if needed
-dump_result;				# Dump result 
+dump_result;				# Dump result if debug is on
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
