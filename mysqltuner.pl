@@ -798,6 +798,7 @@ sub check_storage_engines {
 		$engines .= (defined $myvar{'have_federated_engine'} && $myvar{'have_federated_engine'} eq "YES")? greenwrap "+Federated " : redwrap "-Federated " ;
 		$engines .= (defined $myvar{'have_innodb'} && $myvar{'have_innodb'} eq "YES")? greenwrap "+InnoDB " : redwrap "-InnoDB " ;
 		$engines .= (defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES")? greenwrap "+ISAM " : redwrap "-ISAM " ;
+		$engines .= (defined $myvar{'have_aria'} && $myvar{'have_aria'} eq "YES")? greenwrap "+Aria " : redwrap "-Aria " ;
 		$engines .= (defined $myvar{'have_ndbcluster'} && $myvar{'have_ndbcluster'} eq "YES")? greenwrap "+NDBCluster " : redwrap "-NDBCluster " ;
 	}
 	
@@ -942,6 +943,7 @@ sub calculations {
 	$mycalc{'server_buffers'} += (defined $myvar{'innodb_additional_mem_pool_size'}) ? $myvar{'innodb_additional_mem_pool_size'} : 0 ;
 	$mycalc{'server_buffers'} += (defined $myvar{'innodb_log_buffer_size'}) ? $myvar{'innodb_log_buffer_size'} : 0 ;
 	$mycalc{'server_buffers'} += (defined $myvar{'query_cache_size'}) ? $myvar{'query_cache_size'} : 0 ;
+	$mycalc{'server_buffers'} += (defined $myvar{'aria_pagecache_buffer_size'}) ? $myvar{'aria_pagecache_buffer_size'} : 0 ;
 
 	# Global memory
 	# Max used memory is memory used by MySQL based on Max_used_connections
@@ -985,6 +987,11 @@ sub calculations {
 	} else {
 		$mycalc{'pct_keys_from_mem'} = 0;
 	}
+	if (defined $mystat{'Aria_pagecache_read_requests'} && $mystat{'Aria_pagecache_read_requests'} > 0) {
+		$mycalc{'pct_aria_keys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Aria_pagecache_reads'} / $mystat{'Aria_pagecache_read_requests'}) * 100)));
+	} else {
+		$mycalc{'pct_aria_keys_from_mem'} = 0;
+	}
 
 	if ($mystat{'Key_write_requests'} > 0) {
 		$mycalc{'pct_wkeys_from_mem'} = sprintf("%.1f",(100 - (($mystat{'Key_writes'} / $mystat{'Key_write_requests'}) * 100)));
@@ -996,13 +1003,20 @@ sub calculations {
 		my $size = 0;
 		$size += (split)[0] for `find $myvar{'datadir'} -name "*.MYI" 2>&1 | xargs du -L $duflags 2>&1`;
 		$mycalc{'total_myisam_indexes'} = $size;
+		$mycalc{'total_aria_indexes'} = 0;
 	} elsif (mysql_version_ge(5)) {
 		$mycalc{'total_myisam_indexes'} = select_one "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';";
+		$mycalc{'total_aria_indexe'} = select_one "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'Aria';";
 	}
 	if (defined $mycalc{'total_myisam_indexes'} and $mycalc{'total_myisam_indexes'} == 0) {
 		$mycalc{'total_myisam_indexes'} = "fail";
 	} elsif (defined $mycalc{'total_myisam_indexes'}) {
 		chomp($mycalc{'total_myisam_indexes'});
+	}
+	if (defined $mycalc{'total_aria_indexes'} and $mycalc{'total_aria_indexes'} == 0) {
+		$mycalc{'total_aria_indexes'} = "fail";
+	} elsif (defined $mycalc{'total_aria_indexes'}) {
+		chomp($mycalc{'total_aria_indexes'});
 	}
 
 	# Query cache
@@ -1232,6 +1246,33 @@ sub mysql_stats {
 		} else {
 			# No queries have run that would use keys
 			debugprint "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% (".hr_num($mystat{'Key_write_requests'})." cached / ".hr_num($mystat{'Key_writes'})." writes)\n";
+		}
+	}
+
+	# Aria pagecache
+	if (defined $myvar{'have_aria'} && $myvar{'have_aria'} eq "YES" && defined $enginestats{'Aria'}) {
+		if (!defined($mycalc{'total_aria_indexes'}) and $doremote == 1) {
+			push(@generalrec,"Unable to calculate Aria indexes on remote MySQL server < 5.0.0");
+		} elsif ($mycalc{'total_aria_indexes'} =~ /^fail$/) {
+			badprint "Cannot calculate Aria index size - re-run script as root user\n";
+		} elsif ($mycalc{'total_aria_indexes'} == "0") {
+			badprint "None of your Aria tables are indexed - add indexes immediately\n";
+		} else {
+			if ($myvar{'aria_pagecache_buffer_size'} < $mycalc{'total_aria_indexes'} && $mycalc{'pct_aria_keys_from_mem'} < 95) {
+				badprint "Aria pagecache size / total Aria indexes: ".hr_bytes($myvar{'aria_pagecache_buffer_size'})."/".hr_bytes($mycalc{'total_aria_indexes'})."\n";
+				push(@adjvars,"aria_pagecache_buffer_size (> ".hr_bytes($mycalc{'total_aria_indexes'}).")");
+			} else {
+				goodprint "Aria pagecache size / total Aria indexes: ".hr_bytes($myvar{'aria_pagecache_buffer_size'})."/".hr_bytes($mycalc{'total_aria_indexes'})."\n";
+			}
+			if ($mystat{'Aria_pagecache_read_requests'} > 0) {
+				if ($mycalc{'pct_aria_keys_from_mem'} < 95) {
+					badprint "Aria pagecache hit rate: $mycalc{'pct_aria_keys_from_mem'}% (".hr_num($mystat{'Aria_pagecache_read_requests'})." cached / ".hr_num($mystat{'Aria_pagecache_reads'})." reads)\n";
+				} else {
+					goodprint "Aria pagecache hit rate: $mycalc{'pct_aria_keys_from_mem'}% (".hr_num($mystat{'Aria_pagecache_read_requests'})." cached / ".hr_num($mystat{'Aria_pagecache_reads'})." reads)\n";
+				}
+			} else {
+				# No queries have run that would use keys
+			}
 		}
 	}
 
