@@ -39,8 +39,6 @@
     * Prompt for creds on the console
 
 ## MySQLTuner system checks
-
-* Get total RAM/swap
 * 32-bit w/>2GB RAM check
 
 ## MySQLTuner Server version checks
@@ -83,11 +81,44 @@
 * Misc information about index size
 
 ## MySQLTuner Connections information
+* Percentage of used connections (<85%)
+* Percentage of aborted connections (<3%)
 
-* TODO
+## MySQLTuner server information
 
+* Uptime: If MySQL started within last 24 hours
+* Bytes received and sent
+* Number of connections
+* Percentage between reads and writes
+* Is binary log activated ?
+   * Is GTID mode activated ?
+
+## MySQLTuner global buffer information
+* Key Buffer
+* Max Tmp Table
+* Is Query cache activated ?
+   *Query Cache Buffers
+   * Query Cache DISABLED, ALL REQUEST or ON DEMAND
+   * Query Cache Size
+* Per Thread Buffer
+   * Read Buffer
+   * Read RND Buffer
+	* Sort Buffer
+	* Thread stack
+	* Join Buffer
+	* Binlog Cache Buffers size if activated
+
+## MySQLTuner memory checks
+* Get total RAM/swap
+* Is there enought memory for max connections reached by MySQL ?
+* Is there enought memory for max connections allowed by MySQL ?
+* Max percentage of memory used(<85%)
+* 
+
+## MySQLTuner slow queries checks
+* Percentage of Slow queries  (<5%)
+* 
 ## MySQLTuner InnoDB information
-
 * InnoDB Buffer Pool Size
    * If possible, innodb_buffer_pool_size should be greater data and index size for Innodb Table
    * Innodb_buffer_pool_size should around 75 to 80 % of the available system memory.
@@ -110,4 +141,4 @@
 
 ## MySQLTuner MYISAM information
 
-* TODO
+* 
