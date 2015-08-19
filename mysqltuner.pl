@@ -273,10 +273,10 @@ sub os_setup {
 		}
 	} else {
 		if ($os =~ /Linux/) {
-			$physical_memory = `LANG=en grep -i memtotal: /proc/meminfo | awk '{print \$2}'` or memerror;
+			$physical_memory = `grep -i memtotal: /proc/meminfo | awk '{print \$2}'` or memerror;
 			$physical_memory*=1024;
 
-			$swap_memory = `LANG=en grep -i swaptotal: /proc/meminfo | awk '{print \$2}'` or memerror;
+			$swap_memory = `grep -i swaptotal: /proc/meminfo | awk '{print \$2}'` or memerror;
 			$swap_memory*=1024;
 		} elsif ($os =~ /Darwin/) {
 			$physical_memory = `sysctl -n hw.memsize` or memerror;
