@@ -29,6 +29,11 @@ MySQL in other areas.
 
 **Seriously - please review the FAQ section below.**
 
+Checks performed by MySQLTuner
+--
+All checks done by **MySQLTuner** are docuemented in the following docuementation describing **MySQLTuner** internals.
+[MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) 
+
 Download/Installation
 --
 
