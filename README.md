@@ -87,14 +87,14 @@ Question: It's not working on my OS! What gives?!
 
 These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:
 
-	* OS and OS version
-	* Architecture (x86, x86_64, IA64, Commodore 64)
-	* Exact MySQL version
-	* Where you obtained your MySQL version (OS package, source, etc)
-	* The full text of the error
-	* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
+* OS and OS version
+* Architecture (x86, x86_64, IA64, Commodore 64)
+* Exact MySQL version
+* Where you obtained your MySQL version (OS package, source, etc)
+* The full text of the error
+* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
 
-MySQLTuner-perl needs you
+MySQLTuner needs you
 --
 **MySQLTuner** needs contributors for documentation, code and feedbacks..
 
