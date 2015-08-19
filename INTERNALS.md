@@ -46,6 +46,7 @@
 ## MySQLTuner Server version checks
 * EOL MySQL version check
 * Currently MySQL < 5.1 are EOF considerated.
+* Using 5.5+ version of MySQL for performance issue (asynchronous IO).
 
 ## MySQL Storage engine general information
 
@@ -53,7 +54,7 @@
     * Check for DB engines that are enabled but unused
     * Look for fragmented tables
     * Look for auto-increments near capacity
-
+    	* Look for table with autoincrement with value near max capacity
 
 ## MySQLTuner security checks
 
@@ -66,23 +67,26 @@
 * Password list checks can be avoid (option: --skippassword) 
 
 ## MySQLTuner database information
-
-* Rows number
-* Total size
-* Data size
-* Percentage of data size
-* Index size
-* Percentage of index size
+* PEr database information
+	* Rows number
+	* Total size
+	* Data size
+	* Percentage of data size
+	* Index size
+	* Percentage of index size
 
 ## MySQLTuner index information
 
 * Top 10 worth selectivity index
-* Index Cardinality
-* Index Selectivity
-* Misc information about index definition 
-* Misc information about index size
+* Per index information
+	* Index Cardinality
+	* Index Selectivity
+	* Misc information about index definition 
+	* Misc information about index size
 
 ## MySQLTuner Connections information
+
+* Highest usage of available connections
 * Percentage of used connections (<85%)
 * Percentage of aborted connections (<3%)
 
@@ -95,13 +99,21 @@
 * Is binary log activated ?
    * Is GTID mode activated ?
 
+## MySQLTuner sort, join and temp table information
+* Max memory temporary table size allowed.
+* Percentage of sort using temporary table (<10%)
+* Number of join performed without using indexes (<250)
+* Percentage of temporary table written on disk(<25%)
+* Thread cache (=4)
+* Table cache hit ratio(>2°%)
+* Percentage of open file and open file limit(<85%)
+* Percentage of table locks (<95%)
+* Percentage of binlog cache lock (<90%)
+
 ## MySQLTuner global buffer information
+
 * Key Buffer
 * Max Tmp Table
-* Is Query cache activated ?
-   * Query Cache Buffers
-   * Query Cache DISABLED, ALL REQUEST or ON DEMAND
-   * Query Cache Size
 * Per Thread Buffer
    * Read Buffer
    * Read RND Buffer
@@ -110,7 +122,16 @@
 	* Join Buffer
 	* Binlog Cache Buffers size if activated
 
+## MySQLTuner query cache checks
+
+* Is Query cache activated ?
+   * Query Cache Buffers
+   * Query Cache DISABLED, ALL REQUEST or ON DEMAND
+   * Query Cache Size
+   * Query cache hit ratio (cache efficienty)
+   * 
 ## MySQLTuner memory checks
+
 * Get total RAM/swap
 * Is there enought memory for max connections reached by MySQL ?
 * Is there enought memory for max connections allowed by MySQL ?
@@ -118,9 +139,19 @@
 * 
 
 ## MySQLTuner slow queries checks
+
 * Percentage of Slow queries  (<5%)
-* 
+
+## MySQLTuner replication checks
+
+* Is server replication configuarted as slave ?
+* SQL replacation thread running ?
+* IO replacation thread running ?
+* Replication lag in seconds
+* Is Slave configuratedd in read only ?
+
 ## MySQLTuner InnoDB information
+
 * InnoDB Buffer Pool Size
    * If possible, innodb_buffer_pool_size should be greater data and index size for Innodb Table
    * Innodb_buffer_pool_size should around 75 to 80 % of the available system memory.
@@ -139,8 +170,15 @@
 
 ## MySQLTuner ARIADB information
 
-* TODO
+* Is Aria indexes size is greater than page cache size ?
+* page cache read hit ratio (>95%)
+* page cache write hit ratio (>95%)
+ 
 
 ## MySQLTuner MYISAM information
 
-* 
+* Key buffer usage (>90%)
+* Is MyISAM indexes size is greater than key buffer size ?
+* Key buffer read hit ratio (>95%)
+* Key buffer write hit ratio (>95%)
+
