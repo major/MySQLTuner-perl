@@ -10,7 +10,6 @@
 
 
 4. [Read the doc](https://github.com/major/mysqltuner-perl/). It is short and useful.
-5. 
 5. [Read the internal doc](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md). It is short and useful.
 
 ##If you want to contribute ##
