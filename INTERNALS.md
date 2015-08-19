@@ -99,7 +99,7 @@
 * Key Buffer
 * Max Tmp Table
 * Is Query cache activated ?
-   *Query Cache Buffers
+   * Query Cache Buffers
    * Query Cache DISABLED, ALL REQUEST or ON DEMAND
    * Query Cache Size
 * Per Thread Buffer
