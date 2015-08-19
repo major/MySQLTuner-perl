@@ -1,26 +1,27 @@
 ## MySQLTuner Internals
 
 ## Table of contents
-    * [MySQLTuner Internals](#mysqltuner-internals)
-    * [MySQLTuner steps](#mysqltuner-steps)
-    * [MySQLTuner get login information steps](#mysqltuner-get-login-information-steps)
-    * [MySQLTuner system checks](#mysqltuner-system-checks)
-    * [MySQLTuner Server version checks](#mysqltuner-server-version-checks)
-    * [MySQL Storage engine general information](#mysql-storage-engine-general-information)
-    * [MySQLTuner security checks](#mysqltuner-security-checks)
-    * [MySQLTuner database information](#mysqltuner-database-information)
-    * [MySQLTuner index information](#mysqltuner-index-information)
-    * [MySQLTuner Connections information](#mysqltuner-connections-information)
-    * [MySQLTuner server information](#mysqltuner-server-information)
-    * [MySQLTuner sort, join and temp table information](#mysqltuner-sort-join-and-temp-table-information)
-    * [MySQLTuner global buffer information](#mysqltuner-global-buffer-information)
-    * [MySQLTuner query cache checks](#mysqltuner-query-cache-checks)
-    * [MySQLTuner slow queries checks](#mysqltuner-slow-queries-checks)
-    * [MySQLTuner replication checks](#mysqltuner-replication-checks)
-    * [MySQLTuner InnoDB information](#mysqltuner-innodb-information)
-    * [MySQLTuner ARIADB information](#mysqltuner-ariadb-information)
-    * [MySQLTuner MYISAM information](#mysqltuner-myisam-information)
-    
+
+* [MySQLTuner Internals](#mysqltuner-internals)
+* [MySQLTuner steps](#mysqltuner-steps)
+* [MySQLTuner get login information steps](#mysqltuner-get-login-information-steps)
+* [MySQLTuner system checks](#mysqltuner-system-checks)
+* [MySQLTuner Server version checks](#mysqltuner-server-version-checks)
+* [MySQL Storage engine general information](#mysql-storage-engine-general-information)
+* [MySQLTuner security checks](#mysqltuner-security-checks)
+* [MySQLTuner database information](#mysqltuner-database-information)
+* [MySQLTuner index information](#mysqltuner-index-information)
+* [MySQLTuner Connections information](#mysqltuner-connections-information)
+* [MySQLTuner server information](#mysqltuner-server-information)
+* [MySQLTuner sort, join and temp table information](#mysqltuner-sort-join-and-temp-table-information)
+* [MySQLTuner global buffer information](#mysqltuner-global-buffer-information)
+* [MySQLTuner query cache checks](#mysqltuner-query-cache-checks)
+* [MySQLTuner slow queries checks](#mysqltuner-slow-queries-checks)
+* [MySQLTuner replication checks](#mysqltuner-replication-checks)
+* [MySQLTuner InnoDB information](#mysqltuner-innodb-information)
+* [MySQLTuner ARIADB information](#mysqltuner-ariadb-information)
+* [MySQLTuner MYISAM information](#mysqltuner-myisam-information)
+
 ## MySQLTuner steps
 
 * Header Print
