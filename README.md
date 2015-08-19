@@ -29,9 +29,9 @@ MySQL in other areas.
 
 **Seriously - please review the FAQ section below.**
 
-Checks performed by MySQLTuner
+What MySQLTuner is checking exactely ? 
 --
-All checks done by **MySQLTuner** are docuemented in the following docuementation describing in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) documentation.
+All checks done by **MySQLTuner** are documented in the following docuementation describing in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) documentation.
 
 Download/Installation
 --
