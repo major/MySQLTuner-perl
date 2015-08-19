@@ -1,4 +1,4 @@
-## MySQLTuner checks & logic
+## MySQLTuner Internals
 
 
 ## MySQLTuner steps
