@@ -17,6 +17,7 @@
 * Calculate everything we need
 * Print the server stats
 * Print InnoDB stats
+* Print AriaDB stats
 * Print replication info
 * Make recommendations based on stats
 * Close reportfile if needed
