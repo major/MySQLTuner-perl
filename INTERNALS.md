@@ -67,7 +67,7 @@
 * Password list checks can be avoid (option: --skippassword) 
 
 ## MySQLTuner database information
-* PEr database information
+* Per database information
 	* Rows number
 	* Total size
 	* Data size
@@ -129,14 +129,13 @@
    * Query Cache DISABLED, ALL REQUEST or ON DEMAND
    * Query Cache Size
    * Query cache hit ratio (cache efficienty)
-   * 
+    
 ## MySQLTuner memory checks
 
 * Get total RAM/swap
 * Is there enought memory for max connections reached by MySQL ?
 * Is there enought memory for max connections allowed by MySQL ?
 * Max percentage of memory used(<85%)
-* 
 
 ## MySQLTuner slow queries checks
 
@@ -171,8 +170,8 @@
 ## MySQLTuner ARIADB information
 
 * Is Aria indexes size is greater than page cache size ?
-* page cache read hit ratio (>95%)
-* page cache write hit ratio (>95%)
+* Page cache read hit ratio (>95%)
+* Page cache write hit ratio (>95%)
  
 
 ## MySQLTuner MYISAM information
