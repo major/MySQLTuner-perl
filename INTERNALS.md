@@ -45,6 +45,7 @@
 
 ## MySQLTuner Server version checks
 * EOL MySQL version check
+* Currently MySQL < 5.1 are EOF considerated.
 
 ## MySQL Storage engine general information
 
@@ -87,7 +88,21 @@
 
 ## MySQLTuner InnoDB information
 
-* TODO
+* InnoDB Buffer Pool Size
+   * If possible, innodb_buffer_pool_size should be greater data and index size for Innodb Table
+   * Innodb_buffer_pool_size should around 75 to 80 % of the available system memory.
+* InnoDB Buffer Pool Instances
+   * MySQL needs 1 instanes per 1Go of Buffer Pool
+   * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
+   * innodb_buffer_pool instances must be equals or lower than 64
+*  InnoDB Buffer Pool uUsage
+   * If more than 20% of InnoDB buffer pool is not used, MySQLTuner raise an alert.
+* InnoDB Read effiency
+   * Ratio of read without locks
+* InnoDB Write effiency
+   * Ratio of write without locks
+* InnoDB Log Waits
+   * Checks that no lock is used on Innodb Log.
 
 ## MySQLTuner ARIADB information
 
