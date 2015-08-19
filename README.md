@@ -93,3 +93,12 @@ These kinds of things are bound to happen.  Here are the details I need from you
 	* Where you obtained your MySQL version (OS package, source, etc)
 	* The full text of the error
 	* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
+
+MySQLTuner-perl needs you
+--
+**MySQLTuner** needs contributors for documentation, code and feedbacks..
+
+* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
+* Contribution guide is avalaible following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
+          
