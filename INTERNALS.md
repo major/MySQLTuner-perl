@@ -16,6 +16,7 @@
 * Display some security recommendations
 * Calculate everything we need
 * Print the server stats
+* Print MyISAM stats
 * Print InnoDB stats
 * Print AriaDB stats
 * Print replication info
