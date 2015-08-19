@@ -1025,7 +1025,6 @@ sub check_storage_engines {
         my @tblist;
 
 # Now we build a database list, and loop through it to get storage engine stats for tables
-
         foreach my $db (@dblist) {
             chomp($db);
             if (   $db eq "information_schema"
@@ -2718,11 +2717,18 @@ You must provide the remote server's total memory when connecting to other serve
  --nocolor            Don't print output in color
  --buffers            Print global and per-thread buffer values
 
+
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
 
   perldoc mysqltuner
+
+=head2 INTENALS
+
+L<https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md>
+
+ Internal documentation
 
 =head1 AUTHORS
 
