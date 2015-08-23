@@ -34,4 +34,4 @@ install:
    - cpanm --quiet --notest Data::Dumper
 
 script:
-   - mysqltuner
+   - ./mysqltuner.pl
