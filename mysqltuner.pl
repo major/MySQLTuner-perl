@@ -386,6 +386,9 @@ sub mysql_setup {
         badprint "Couldn't find mysql in your \$PATH. Is MySQL installed?";
         exit 1;
     }
+    $mysqlcmd =~ s/\n$//g;
+    $mysqlcmd .=" --auto-vertical-output=false";
+    debugprint "MySQL Client: $mysqlcmd";
 
     # Are we being asked to connect via a socket?
     if ( $opt{socket} ne 0 ) {
@@ -397,7 +400,7 @@ sub mysql_setup {
         chomp( $opt{host} );
         $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
 
-# If we're doing a remote connection, but forcemem wasn't specified, we need to exit
+        # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
         if ( $opt{'forcemem'} eq 0 ) {
             badprint
               "The --forcemem option is required for remote connections";
@@ -712,7 +715,7 @@ sub security_recommendations {
 
     # Looking for Empty Password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE (password = '' OR password IS NULL) AND (plugin='' OR plugin IS NULL)";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
