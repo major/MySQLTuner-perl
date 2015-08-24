@@ -123,7 +123,7 @@ sub usage {
       . "      --dbstat             Print database information\n"
       . "      --idxstat            Print index information\n"
       . "      --nocolor            Don't print output in color\n"
-      . "      --buffers            Print global and per-thread buffer values";
+      . "      --buffers            Print global and per-thread buffer values\n";
     exit;
 }
 
@@ -857,11 +857,10 @@ sub validate_mysql_version {
           . $myvar{'version'}
           . " is EOL software!  Upgrade soon!";
     }
-    elsif ( mysql_version_ge(6) ) {
+    elsif ( ( mysql_version_ge(6) and mysql_version_le(9) ) or  mysql_version_ge(12) ) {
         badprint "Currently running unsupported MySQL version "
           . $myvar{'version'} . "";
-    }
-    else {
+    } else {
         goodprint "Currently running supported MySQL version "
           . $myvar{'version'} . "";
     }
@@ -876,6 +875,17 @@ sub mysql_version_ge {
       || $mysqlvermajor == $maj
       && ( $mysqlverminor > $min
         || $mysqlverminor == $min && $mysqlvermicro >= $mic );
+}
+
+# Checks if MySQL version is lower than equal to (major, minor, micro)
+sub mysql_version_le {
+    my ( $maj, $min, $mic ) = @_;
+    $min ||= 0;
+    $mic ||= 0;
+    return $mysqlvermajor < $maj
+      || $mysqlvermajor == $maj
+      && ( $mysqlverminor < $min
+        || $mysqlverminor == $min && $mysqlvermicro <= $mic );
 }
 
 # Checks for 32-bit boxes with more than 2GB of RAM
@@ -1920,7 +1930,7 @@ sub mysql_stats {
                   . $myvar{'open_files_limit'}
                   . ") variable " );
             push( @generalrec,
-                    "should be greater that $table_cache_var ( "
+                    "should be greater than $table_cache_var ( "
                   . $myvar{$table_cache_var}
                   . ")" );
         }
