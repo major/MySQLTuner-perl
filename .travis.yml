@@ -1,3 +1,5 @@
+sudo: false
+
 language: perl
 perl:
    - "blead"
@@ -8,7 +10,18 @@ perl:
    - "5.12"
    - "5.10"
    - "5.8"
-   - "5.6"
+
+matrix:
+    include:
+        - addons:
+             mariadb: 5.5
+          perl: 5.20
+        - addons:
+             mariadb: 10.0
+          perl: 5.20
+        - addons:
+             mariadb: 10.1
+          perl: 5.20
 
 before_install:
    - git clone git://github.com/haarg/perl-travis-helper
@@ -20,4 +33,4 @@ install:
    - cpanm --quiet --notest Data::Dumper
 
 script:
-   - mysqltuner
+   - ./mysqltuner.pl
