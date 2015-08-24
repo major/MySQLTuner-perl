@@ -70,6 +70,7 @@ my %opt = (
     "dbstat"       => 0,
     "idxstat"      => 0,
     "skippassword" => 0,
+    "noask"        => 0
 );
 
 # Gather the options from the command line
@@ -80,7 +81,7 @@ GetOptions(
     'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
     'passwordfile=s', 'reportfile=s', 'silent',       'dbstat',
-    'idxstat',
+    'idxstat', 'noask'
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
@@ -106,6 +107,7 @@ sub usage {
       . "      --pass <password>    Password to use for authentication\n"
       . "      --mysqladmin <path>  Path to a custom mysqladmin executable\n"
       . "      --mysqlcmd <path>    Path to a custom mysql executable\n" . "\n"
+      . "      --noask              Dont ask password if needed\n" . "\n"
       . "   Performance and Reporting Options\n"
       . "      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n"
       . "                           (Recommended for servers with many tables)\n"
@@ -124,7 +126,7 @@ sub usage {
       . "      --idxstat            Print index information\n"
       . "      --nocolor            Don't print output in color\n"
       . "      --buffers            Print global and per-thread buffer values\n";
-    exit;
+    exit 0;
 }
 
 my $devnull = File::Spec->devnull();
@@ -520,6 +522,11 @@ sub mysql_setup {
             return 1;
         }
         else {
+            if ( defined($opt{'noask'}) ) {
+                badprint "Attempted to use login credentials, but they were invalid";
+                exit 1;
+            }
+
             print STDERR "Please enter your MySQL administrative login: ";
             my $name = <>;
             print STDERR "Please enter your MySQL administrative password: ";
