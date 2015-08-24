@@ -712,7 +712,7 @@ sub security_recommendations {
 
     # Looking for Empty Password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE (password = '' OR password IS NULL) AND (plugin='' OR plugin IS NULL)";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
