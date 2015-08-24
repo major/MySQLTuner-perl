@@ -266,7 +266,7 @@ sub os_setup {
     sub memerror {
         badprint
 "Unable to determine total memory/swap; use '--forcemem' and '--forceswap'";
-        exit;
+        exit 1;
     }
     my $os = `uname`;
     $duflags = ( $os =~ /Linux/ ) ? '-b' : '';
@@ -363,12 +363,12 @@ sub mysql_setup {
     if ( !-e $mysqladmincmd && $opt{mysqladmin} ) {
         badprint "Unable to find the mysqladmin command you specified: "
           . $mysqladmincmd . "";
-        exit;
+        exit 1;
     }
     elsif ( !-e $mysqladmincmd ) {
         badprint
           "Couldn't find mysqladmin in your \$PATH. Is MySQL installed?";
-        exit;
+        exit 1;
     }
     if ( $opt{mysqlcmd} ) {
         $mysqlcmd = $opt{mysqlcmd};
@@ -380,11 +380,11 @@ sub mysql_setup {
     if ( !-e $mysqlcmd && $opt{mysqlcmd} ) {
         badprint "Unable to find the mysql command you specified: "
           . $mysqlcmd . "";
-        exit;
+        exit 1;
     }
     elsif ( !-e $mysqlcmd ) {
         badprint "Couldn't find mysql in your \$PATH. Is MySQL installed?";
-        exit;
+        exit 1;
     }
 
     # Are we being asked to connect via a socket?
@@ -401,7 +401,7 @@ sub mysql_setup {
         if ( $opt{'forcemem'} eq 0 ) {
             badprint
               "The --forcemem option is required for remote connections";
-            exit;
+            exit 1;
         }
         infoprint "Performing tests on $opt{host}:$opt{port}";
         $remotestring = " -h $opt{host} -P $opt{port}";
@@ -420,7 +420,7 @@ sub mysql_setup {
         else {
             badprint
               "Attempted to use login credentials, but they were invalid";
-            exit 0;
+            exit 1;
         }
     }
     my $svcprop = `which svcprop 2>/dev/null`;
@@ -446,7 +446,7 @@ sub mysql_setup {
             else {
                 badprint
 "Attempted to use login credentials from mysql-quickbackup, but they failed.";
-                exit 0;
+                exit 1;
             }
         }
     }
@@ -458,7 +458,7 @@ sub mysql_setup {
         unless ( $loginstatus =~ /mysqld is alive/ ) {
             badprint
 "Attempted to use login credentials from Plesk, but they failed.";
-            exit 0;
+            exit 1;
         }
     }
     elsif ( -r "/usr/local/directadmin/conf/mysql.conf" and $doremote == 0 ) {
@@ -480,7 +480,7 @@ sub mysql_setup {
         unless ( $loginstatus =~ /mysqld is alive/ ) {
             badprint
 "Attempted to use login credentials from DirectAdmin, but they failed.";
-            exit 0;
+            exit 1;
         }
     }
     elsif ( -r "/etc/mysql/debian.cnf" and $doremote == 0 ) {
@@ -496,7 +496,7 @@ sub mysql_setup {
         else {
             badprint
 "Attempted to use login credentials from debian maintenance account, but they failed.";
-            exit 0;
+            exit 1;
         }
     }
     else {
@@ -558,9 +558,9 @@ sub mysql_setup {
             }
             else {
                 badprint " Attempted to use login credentials, but they were invalid.";
-                exit 0;
+                exit 1;
             }
-            exit 0;
+            exit 1;
         }
     }
 }
@@ -1176,7 +1176,7 @@ sub calculations {
     if ( $mystat{'Questions'} < 1 ) {
         badprint
           "Your server has not answered any queries - cannot continue...";
-        exit 0;
+        exit 2;
     }
 
     # Per-thread memory
