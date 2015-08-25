@@ -387,11 +387,13 @@ sub mysql_setup {
         exit 1;
     }
     $mysqlcmd =~ s/\n$//g;
-   # my $mysqlcliversion=`$mysqlcmd --version`;
-   # if ( $mysqlcliversion =~ /5\.[567]/) {
-   #   $mysqlcmd .=" --auto-vertical-output=false";
-   # }
-   
+    my $mysqlclidefaults=`$mysqlcmd --print-defaults`;
+    debugprint "MySQL Client: $mysqlclidefaults";
+    if ( $mysqlclidefaults=~/auto-vertical-output/ ) {
+      badprint "Avoid auto-vertical-output in configuration file(s) for MySQL like";
+      exit 1;
+    }
+
     debugprint "MySQL Client: $mysqlcmd";
 
     # Are we being asked to connect via a socket?
