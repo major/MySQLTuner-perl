@@ -391,6 +391,7 @@ sub mysql_setup {
    # if ( $mysqlcliversion =~ /5\.[567]/) {
    #   $mysqlcmd .=" --auto-vertical-output=false";
    # }
+   
     debugprint "MySQL Client: $mysqlcmd";
 
     # Are we being asked to connect via a socket?
