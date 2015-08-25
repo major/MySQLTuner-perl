@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.5.1
+# mysqltuner.pl - Version 1.5.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -45,7 +45,7 @@ use Cwd 'abs_path';
 use Data::Dumper qw/Dumper/;
  
 # Set up a few variables for use in the script
-my $tunerversion = "1.5.1";
+my $tunerversion = "1.5.2";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -345,6 +345,58 @@ sub os_setup {
     $result{'OS'}{'Swap Memory'}{'bytes'}      = $swap_memory;
     $result{'OS'}{'Swap Memory'}{'pretty'}     = hr_bytes($swap_memory);
 
+}
+
+# Checks for updates to MySQLTuner
+sub validate_tuner_version {
+  if ($opt{checkversion} eq 0) {
+    infoprint "Skipped version check for MySQLTuner script\n";
+    return;
+  }
+
+  my $update;
+  my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
+  my $httpcli=`which curl`;
+  chomp($httpcli);
+  if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
+    debugprint "$httpcli is available.";
+    
+    debugprint "$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2";
+    $update = `$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2`;
+    chomp($update);
+    debugprint "VERSION: $update";
+    
+    
+    compare_tuner_version($update);
+    return;
+  }
+
+  
+  $httpcli=`which wget`;
+  chomp($httpcli);
+  if ( defined($httpcli) and -e "$httpcli" ) {
+    debugprint "$httpcli is available.";
+    
+    debugprint "$httpcli -e timestamping=off -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
+    $update = `$httpcli -e timestamping=off -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
+    chomp($update);
+    compare_tuner_version($update);
+    return;
+  }
+  debugprint "curl and wget are not avalaible.";
+  infoprint "Unable to check for the latest MySQLTuner version";
+}
+
+sub compare_tuner_version {
+   my $remoteversion=shift;
+   debugprint "Remote data: $remoteversion";
+   #exit 0;
+   if ($remoteversion ne $tunerversion) {
+     badprint "There is a new version of MySQLTuner available ($remoteversion)";
+     return;
+   }
+   goodprint "You have the latest version of MySQLTuner($tunerversion)";
+   return;
 }
 
 # Checks to see if a MySQL login is possible
@@ -2670,8 +2722,9 @@ sub dump_result {
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-headerprint       # Header Print
-  mysql_setup;    # Gotta login first
+headerprint                  # Header Print
+validate_tuner_version;      # Check last version
+mysql_setup;                 # Gotta login first
 os_setup;                    # Set up some OS variables
 get_all_vars;                # Toss variables/status into hashes
 get_tuning_info;             # Get information about the tuning connexion
@@ -2702,7 +2755,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.5.1 - MySQL High Performance Tuning Script
+ MySQLTuner 1.5.2 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
