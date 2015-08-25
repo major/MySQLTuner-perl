@@ -350,7 +350,7 @@ sub os_setup {
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
   if ($opt{checkversion} eq 0) {
-    infoprint "Skipped version check for MySQLTuner script\n";
+    infoprint "Skipped version check for MySQLTuner script";
     return;
   }
 
@@ -2723,8 +2723,8 @@ sub dump_result {
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 headerprint                  # Header Print
-validate_tuner_version;      # Check last version
 mysql_setup;                 # Gotta login first
+validate_tuner_version;      # Check last version
 os_setup;                    # Set up some OS variables
 get_all_vars;                # Toss variables/status into hashes
 get_tuning_info;             # Get information about the tuning connexion
@@ -2747,6 +2747,449 @@ dump_result;                 # Dump result if debug is on
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
+
+# modified for NanoA by kazuho, some modified by tokuhirom
+# based on Mojo::Template. Copyright (C) 2008, Sebastian Riedel.
+
+package Text::MicroTemplate;
+
+require Exporter;
+
+use strict;
+use warnings;
+use constant DEBUG => $ENV{MICRO_TEMPLATE_DEBUG} || 0;
+use 5.00800;
+
+use Scalar::Util;
+
+our $VERSION = '0.24';
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(encoded_string build_mt render_mt);
+our %EXPORT_TAGS = (
+    all => [ @EXPORT_OK ],
+);
+our $_mt_setter = '';
+
+sub new {
+    my $class = shift;
+    my $self = bless {
+        code                => undef,
+        comment_mark        => '#',
+        expression_mark     => '=',
+        line_start          => '?',
+        template            => undef,
+        tree                => [],
+        tag_start           => '<?',
+        tag_end             => '?>',
+        escape_func         => \&_inline_escape_html,
+        prepend             => '',
+        package_name        => undef, # defaults to caller
+        @_ == 1 ? ref($_[0]) ? %{$_[0]} : (template => $_[0]) : @_,
+    }, $class;
+    if (defined $self->{template}) {
+        $self->parse($self->{template});
+    }
+    unless (defined $self->{package_name}) {
+        $self->{package_name} = 'main';
+        my $i = 0;
+        while (my $c = caller(++$i)) {
+            if ($c !~ /^Text::MicroTemplate\b/) {
+                $self->{package_name} = $c;
+                last;
+            }
+        }
+    }
+    $self;
+}
+
+sub escape_func {
+    my $self = shift;
+    if (@_) {
+        $self->{escape_func} = shift;
+    }
+    $self->{escape_func};
+}
+
+sub package_name {
+    my $self = shift;
+    if (@_) {
+        $self->{package_name} = shift;
+    }
+    $self->{package_name};
+}
+
+sub template { shift->{template} }
+
+sub code {
+    my $self = shift;
+    unless (defined $self->{code}) {
+        $self->_build();
+    }
+    $self->{code};
+}
+
+sub _build {
+    my $self = shift;
+    
+    my $escape_func = $self->{escape_func} || '';
+
+    my $embed_escape_func = ref($escape_func) eq 'CODE'
+        ? $escape_func
+        : sub{ $escape_func . "(@_)" };
+
+    # Compile
+    my @lines;
+    my $last_was_code;
+    my $last_text;
+    for my $line (@{$self->{tree}}) {
+
+        # New line
+        push @lines, '';
+        for (my $j = 0; $j < @{$line}; $j += 2) {
+            my $type  = $line->[$j];
+            my $value = $line->[$j + 1];
+
+            if ($type ne 'text' && defined $last_text) {
+                # do not mess the start of current line, since it might be
+                # the start of "=pod", etc.
+                $lines[
+                    $j == 0 && @lines >= 2 ? -2 : -1
+                ] .= "\$_MT .=\"$last_text\";";
+                undef $last_text;
+            }
+            
+            # Need to fix line ending?
+            my $newline = chomp $value;
+
+            # add semicolon to last line of code
+            if ($last_was_code && $type ne 'code') {
+                $lines[-1] .= ';';
+                undef $last_was_code;
+            }
+
+            # Text
+            if ($type eq 'text') {
+
+                # Quote and fix line ending
+                $value = quotemeta($value);
+                $value .= '\n' if $newline;
+
+                $last_text = defined $last_text ? "$last_text$value" : $value;
+            }
+
+            # Code
+            if ($type eq 'code') {
+                $lines[-1] .= $value;
+                $last_was_code = 1;
+            }
+
+            # Expression
+            if ($type eq 'expr') {
+                my $escaped = $embed_escape_func->('$_MT_T');
+                if ($newline && $value =~ /\n/) {
+                    $value .= "\n"; # temporary workaround for t/13-heredoc.t
+                }
+                $lines[-1] .= "\$_MT_T = $value;\$_MT .= ref \$_MT_T eq 'Text::MicroTemplate::EncodedString' ? \$\$_MT_T : $escaped; \$_MT_T = '';";
+            }
+        }
+    }
+
+    # add semicolon to last line of code
+    if ($last_was_code) {
+        $lines[-1] .= "\n;";
+    }
+    # add last text line(s)
+    if (defined $last_text) {
+        $lines[-1] .= "\$_MT .=\"$last_text\";";
+    }
+    
+    # Wrap
+    $lines[0]   = q/sub { my $_MT = ''; local $/ . $self->{package_name} . q/::_MTREF = \$_MT; my $_MT_T = '';/ . (@lines ? $lines[0] : '');
+    $lines[-1] .= q/return $_MT; }/;
+
+    $self->{code} = join "\n", @lines;
+    return $self;
+}
+
+# I am so smart! I am so smart! S-M-R-T! I mean S-M-A-R-T...
+sub parse {
+    my ($self, $tmpl) = @_;
+    $self->{template} = $tmpl;
+
+    # Clean start
+    delete $self->{tree};
+    delete $self->{code};
+
+    # Tags
+    my $line_start    = quotemeta $self->{line_start};
+    my $tag_start     = quotemeta $self->{tag_start};
+    my $tag_end       = quotemeta $self->{tag_end};
+    my $cmnt_mark     = quotemeta $self->{comment_mark};
+    my $expr_mark     = quotemeta $self->{expression_mark};
+
+    # Tokenize
+    my $state = 'text';
+    my @lines = split /(\n)/, $tmpl;
+    my $tokens = [];
+    while (@lines) {
+        my $line = shift @lines;
+        my $newline = undef;
+        if (@lines) {
+            shift @lines;
+            $newline = 1;
+        }
+        
+        if ($state eq 'text') {
+            # Perl line without return value
+            if ($line =~ /^$line_start\s+(.*)$/) {
+                push @{$self->{tree}}, ['code', $1];
+                next;
+            }
+            # Perl line with return value
+            if ($line =~ /^$line_start$expr_mark\s+(.+)$/) {
+                push @{$self->{tree}}, [
+                    'expr', $1,
+                    $newline ? ('text', "\n") : (),
+                ];
+                next;
+            }
+            # Comment line, dummy token needed for line count
+            if ($line =~ /^$line_start$cmnt_mark/) {
+                push @{$self->{tree}}, [];
+                next;
+            }
+        }
+
+        # Escaped line ending?
+        if ($line =~ /(\\+)$/) {
+            my $length = length $1;
+            # Newline escaped
+            if ($length == 1) {
+                $line =~ s/\\$//;
+            }
+            # Backslash escaped
+            if ($length >= 2) {
+                $line =~ s/\\\\$/\\/;
+                $line .= "\n";
+            }
+        } else {
+            $line .= "\n" if $newline;
+        }
+
+        # Mixed line
+        for my $token (split /
+            (
+                $tag_start$expr_mark     # Expression
+            |
+                $tag_start$cmnt_mark     # Comment
+            |
+                $tag_start               # Code
+            |
+                $tag_end                 # End
+            )
+        /x, $line) {
+
+            # handle tags and bail out
+            if ($token eq '') {
+                next;
+            } elsif ($token =~ /^$tag_end$/) {
+                $state = 'text';
+                next;
+            } elsif ($token =~ /^$tag_start$/) {
+                $state = 'code';
+                next;
+            } elsif ($token =~ /^$tag_start$cmnt_mark$/) {
+                $state = 'cmnt';
+                next;
+            } elsif ($token =~ /^$tag_start$expr_mark$/) {
+                $state = 'expr';
+                next;
+            }
+
+            # value
+            if ($state eq 'text') {
+                push @$tokens, $state, $token;
+            } elsif ($state eq 'cmnt') {
+                next; # ignore comments
+            } elsif ($state eq 'cont') {
+                $tokens->[-1] .= $token;
+            } else {
+                # state is code or expr
+                push @$tokens, $state, $token;
+                $state = 'cont';
+            }
+        }
+        if ($state eq 'text') {
+            push @{$self->{tree}}, $tokens;
+            $tokens = [];
+        }
+    }
+    push @{$self->{tree}}, $tokens
+        if @$tokens;
+    
+    return $self;
+}
+
+sub _context {
+    my ($self, $text, $line) = @_;
+    my @lines  = split /\n/, $text;
+    
+    join '', map {
+        0 < $_ && $_ <= @lines ? sprintf("%4d: %s\n", $_, $lines[$_ - 1]) : ''
+    } ($line - 2) .. ($line + 2);
+}
+
+# Debug goodness
+sub _error {
+    my ($self, $error, $line_offset, $from) = @_;
+    
+    # Line
+    if ($error =~ /^(.*)\s+at\s+\(eval\s+\d+\)\s+line\s+(\d+)/) {
+        my $reason = $1;
+        my $line   = $2 - $line_offset;
+        my $delim  = '-' x 76;
+        
+        my $report = "$reason at line $line in template passed from $from.\n";
+        my $template = $self->_context($self->{template}, $line);
+        $report .= "$delim\n$template$delim\n";
+
+        # Advanced debugging
+        if (DEBUG) {
+            my $code = $self->_context($self->code, $line);
+            $report .= "$code$delim\n";
+            $report .= $error;
+        }
+
+        return $report;
+    }
+
+    # No line found
+    return "Template error: $error";
+}
+
+# create raw string (that does not need to be escaped)
+sub encoded_string {
+    Text::MicroTemplate::EncodedString->new($_[0]);
+}
+
+
+sub _inline_escape_html{
+    my($variable) = @_;
+
+    my $source = qq{
+        do{
+            $variable =~ s/([&><"'])/\$Text::MicroTemplate::_escape_table{\$1}/ge;
+            $variable;
+        }
+    }; #" for poor editors
+    $source =~ s/\n//g; # to keep line numbers
+    return $source;
+}
+
+our %_escape_table = ( '&' => '&amp;', '>' => '&gt;', '<' => '&lt;', q{"} => '&quot;', q{'} => '&#39;' );
+sub escape_html {
+    my $str = shift;
+    return ''
+        unless defined $str;
+    return $str->as_string
+        if ref $str eq 'Text::MicroTemplate::EncodedString';
+    $str =~ s/([&><"'])/$_escape_table{$1}/ge; #' for poor editors
+    return $str;
+}
+
+sub build_mt {
+    my $mt = Text::MicroTemplate->new(@_);
+    $mt->build();
+}
+
+sub build {
+    my $_mt = shift;
+    Scalar::Util::weaken($_mt) if $_mt_setter;
+    my $_code = $_mt->code;
+    my $_from = sub {
+        my $i = 0;
+        while (my @c = caller(++$i)) {
+            return "$c[1] at line $c[2]"
+                if $c[0] ne __PACKAGE__;
+        }
+        '';
+    }->();
+    my $line_offset = (() = ($_mt->{prepend} =~ /\n/sg)) + 5;
+    my $expr = << "...";
+package $_mt->{package_name};
+sub {
+    ${_mt_setter}local \$SIG{__WARN__} = sub { print STDERR \$_mt->_error(shift, $line_offset, \$_from) };
+    $_mt->{prepend}
+    Text::MicroTemplate::encoded_string((
+        $_code
+    )->(\@_));
+}
+...
+
+    if(DEBUG >= 2){
+        DEBUG >= 3 ? die $expr : warn $expr;
+    }
+
+    my $die_msg;
+    {
+        local $@;
+        if (my $_builder = eval($expr)) {
+            return $_builder;
+        }
+        $die_msg = $_mt->_error($@, $line_offset, $_from);
+    }
+    die $die_msg;
+}
+
+sub render_mt {
+    my $builder = build_mt(shift);
+    $builder->(@_);
+}
+
+# ? $_mt->filter(sub { s/\s+//smg; s/[\r\n]//g; })->(sub { ... ? });
+sub filter {
+    my ($self, $callback) = @_;
+    my $mtref = do {
+        no strict 'refs';
+        ${"$self->{package_name}::_MTREF"};
+    };
+    my $before = $$mtref;
+    $$mtref = '';
+    return sub {
+        my $inner_func = shift;
+        $inner_func->(@_);
+
+        ## sub { s/foo/bar/g } is a valid filter
+        ## sub { DateTime::Format::Foo->parse_string(shift) } is valid too
+        local $_ = $$mtref;
+        my $retval = $callback->($$mtref);
+        no warnings 'uninitialized';
+        if (($retval =~ /^\d+$/ and $_ ne $$mtref) or (defined $retval and !$retval)) {
+            $$mtref = $before . $_;
+        } else {
+            $$mtref = $before . $retval;
+        }
+    }
+}
+
+package Text::MicroTemplate::EncodedString;
+
+use strict;
+use warnings;
+
+use overload q{""} => sub { shift->as_string }, fallback => 1;
+
+sub new {
+    my ($klass, $str) = @_;
+    bless \$str, $klass;
+}
+
+sub as_string {
+    my $self = shift;
+    $$self;
+}
+
+1;
 __END__
 
 =pod
