@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.5.2
+# mysqltuner.pl - Version 1.6.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -35,6 +35,494 @@
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
 #
+
+# ---------------------------------------------------------------------------
+# BEGIN TEXT TEMPLATE MODULE
+# ---------------------------------------------------------------------------
+# Text::Template.pm
+#
+# Fill in `templates'
+#
+# Copyright 2013 M. J. Dominus.
+# You may copy and distribute this program under the
+# same terms as Perl iteself.  
+# If in doubt, write to mjd-perl-template+@plover.com for a license.
+#
+# Version 1.46
+
+package Text::Template;
+require 5.004;
+use Exporter;
+#use no strict;
+@ISA = qw(Exporter);
+@EXPORT_OK = qw(fill_in_file fill_in_string TTerror);
+use vars '$ERROR';
+use strict;
+
+$Text::Template::VERSION = '1.46';
+my %GLOBAL_PREPEND = ('Text::Template' => '');
+
+sub Version {
+  $Text::Template::VERSION;
+}
+
+sub _param {
+  my $kk;
+  my ($k, %h) = @_;
+  for $kk ($k, "\u$k", "\U$k", "-$k", "-\u$k", "-\U$k") {
+    return $h{$kk} if exists $h{$kk};
+  }
+  return;
+}
+
+sub always_prepend
+{
+  my $pack = shift;
+  my $old = $GLOBAL_PREPEND{$pack};
+  $GLOBAL_PREPEND{$pack} = shift;
+  $old;
+}
+
+{
+  my %LEGAL_TYPE;
+  BEGIN { 
+    %LEGAL_TYPE = map {$_=>1} qw(FILE FILEHANDLE STRING ARRAY);
+  }
+  sub new {
+    my $pack = shift;
+    my %a = @_;
+    my $stype = uc(_param('type', %a) || "FILE");
+    my $source = _param('source', %a);
+    my $untaint = _param('untaint', %a);
+    my $prepend = _param('prepend', %a);
+    my $alt_delim = _param('delimiters', %a);
+    my $broken = _param('broken', %a);
+    unless (defined $source) {
+      require Carp;
+      Carp::croak("Usage: $ {pack}::new(TYPE => ..., SOURCE => ...)");
+    }
+    unless ($LEGAL_TYPE{$stype}) {
+      require Carp;
+      Carp::croak("Illegal value `$stype' for TYPE parameter");
+    }
+    my $self = {TYPE => $stype,
+    PREPEND => $prepend,
+                UNTAINT => $untaint,
+                BROKEN => $broken,
+    (defined $alt_delim ? (DELIM => $alt_delim) : ()),
+         };
+    # Under 5.005_03, if any of $stype, $prepend, $untaint, or $broken
+    # are tainted, all the others become tainted too as a result of
+    # sharing the expression with them.  We install $source separately
+    # to prevent it from acquiring a spurious taint.
+    $self->{SOURCE} = $source;
+
+    bless $self => $pack;
+    return unless $self->_acquire_data;
+    
+    $self;
+  }
+}
+
+# Convert template objects of various types to type STRING,
+# in which the template data is embedded in the object itself.
+sub _acquire_data {
+  my ($self) = @_;
+  my $type = $self->{TYPE};
+  if ($type eq 'STRING') {
+    # nothing necessary    
+  } elsif ($type eq 'FILE') {
+    my $data = _load_text($self->{SOURCE});
+    unless (defined $data) {
+      # _load_text already set $ERROR
+      return undef;
+    }
+    if ($self->{UNTAINT} && _is_clean($self->{SOURCE})) {
+      _unconditionally_untaint($data);
+    }
+    $self->{TYPE} = 'STRING';
+    $self->{FILENAME} = $self->{SOURCE};
+    $self->{SOURCE} = $data;
+  } elsif ($type eq 'ARRAY') {
+    $self->{TYPE} = 'STRING';
+    $self->{SOURCE} = join '', @{$self->{SOURCE}};
+  } elsif ($type eq 'FILEHANDLE') {
+    $self->{TYPE} = 'STRING';
+    local $/;
+    my $fh = $self->{SOURCE};
+    my $data = <$fh>; # Extra assignment avoids bug in Solaris perl5.00[45].
+    if ($self->{UNTAINT}) {
+      _unconditionally_untaint($data);
+    }
+    $self->{SOURCE} = $data;
+  } else {
+    # This should have been caught long ago, so it represents a 
+    # drastic `can't-happen' sort of failure
+    my $pack = ref $self;
+    die "Can only acquire data for $pack objects of subtype STRING, but this is $type; aborting";
+  }
+  $self->{DATA_ACQUIRED} = 1;
+}
+
+sub source {
+  my ($self) = @_;
+  $self->_acquire_data unless $self->{DATA_ACQUIRED};
+  return $self->{SOURCE};
+}
+
+sub set_source_data {
+  my ($self, $newdata) = @_;
+  $self->{SOURCE} = $newdata;
+  $self->{DATA_ACQUIRED} = 1;
+  $self->{TYPE} = 'STRING';
+  1;
+}
+
+sub compile {
+  my $self = shift;
+
+  return 1 if $self->{TYPE} eq 'PREPARSED';
+
+  return undef unless $self->_acquire_data;
+  unless ($self->{TYPE} eq 'STRING') {
+    my $pack = ref $self;
+    # This should have been caught long ago, so it represents a 
+    # drastic `can't-happen' sort of failure
+    die "Can only compile $pack objects of subtype STRING, but this is $self->{TYPE}; aborting";
+  }
+
+  my @tokens;
+  my $delim_pats = shift() || $self->{DELIM};
+
+  
+
+  my ($t_open, $t_close) = ('{', '}');
+  my $DELIM;      # Regex matches a delimiter if $delim_pats
+  if (defined $delim_pats) {
+    ($t_open, $t_close) = @$delim_pats;
+    $DELIM = "(?:(?:\Q$t_open\E)|(?:\Q$t_close\E))";
+    @tokens = split /($DELIM|\n)/, $self->{SOURCE};
+  } else {
+    @tokens = split /(\\\\(?=\\*[{}])|\\[{}]|[{}\n])/, $self->{SOURCE};
+  }
+  my $state = 'TEXT';
+  my $depth = 0;
+  my $lineno = 1;
+  my @content;
+  my $cur_item = '';
+  my $prog_start;
+  while (@tokens) {
+    my $t = shift @tokens;
+    next if $t eq '';
+    if ($t eq $t_open) {  # Brace or other opening delimiter
+      if ($depth == 0) {
+  push @content, [$state, $cur_item, $lineno] if $cur_item ne '';
+  $cur_item = '';
+  $state = 'PROG';
+  $prog_start = $lineno;
+      } else {
+  $cur_item .= $t;
+      }
+      $depth++;
+    } elsif ($t eq $t_close) {  # Brace or other closing delimiter
+      $depth--;
+      if ($depth < 0) {
+  $ERROR = "Unmatched close brace at line $lineno";
+  return undef;
+      } elsif ($depth == 0) {
+  push @content, [$state, $cur_item, $prog_start] if $cur_item ne '';
+  $state = 'TEXT';
+  $cur_item = '';
+      } else {
+  $cur_item .= $t;
+      }
+    } elsif (!$delim_pats && $t eq '\\\\') { # precedes \\\..\\\{ or \\\..\\\}
+      $cur_item .= '\\';
+    } elsif (!$delim_pats && $t =~ /^\\([{}])$/) { # Escaped (literal) brace?
+  $cur_item .= $1;
+    } elsif ($t eq "\n") {  # Newline
+      $lineno++;
+      $cur_item .= $t;
+    } else {      # Anything else
+      $cur_item .= $t;
+    }
+  }
+
+  if ($state eq 'PROG') {
+    $ERROR = "End of data inside program text that began at line $prog_start";
+    return undef;
+  } elsif ($state eq 'TEXT') {
+    push @content, [$state, $cur_item, $lineno] if $cur_item ne '';
+  } else {
+    die "Can't happen error #1";
+  }
+  
+  $self->{TYPE} = 'PREPARSED';
+  $self->{SOURCE} = \@content;
+  1;
+}
+
+sub prepend_text {
+  my ($self) = @_;
+  my $t = $self->{PREPEND};
+  unless (defined $t) {
+    $t = $GLOBAL_PREPEND{ref $self};
+    unless (defined $t) {
+      $t = $GLOBAL_PREPEND{'Text::Template'};
+    }
+  }
+  $self->{PREPEND} = $_[1] if $#_ >= 1;
+  return $t;
+}
+
+sub fill_in {
+  my $fi_self = shift;
+  my %fi_a = @_;
+
+  unless ($fi_self->{TYPE} eq 'PREPARSED') {
+    my $delims = _param('delimiters', %fi_a);
+    my @delim_arg = (defined $delims ? ($delims) : ());
+    $fi_self->compile(@delim_arg)
+      or return undef;
+  }
+
+  my $fi_varhash = _param('hash', %fi_a);
+  my $fi_package = _param('package', %fi_a) ;
+  my $fi_broken  = 
+    _param('broken', %fi_a)  || $fi_self->{BROKEN} || \&_default_broken;
+  my $fi_broken_arg = _param('broken_arg', %fi_a) || [];
+  my $fi_safe = _param('safe', %fi_a);
+  my $fi_ofh = _param('output', %fi_a);
+  my $fi_eval_package;
+  my $fi_scrub_package = 0;
+  my $fi_filename = _param('filename') || $fi_self->{FILENAME} || 'template';
+
+  my $fi_prepend = _param('prepend', %fi_a);
+  unless (defined $fi_prepend) {
+    $fi_prepend = $fi_self->prepend_text;
+  }
+
+  if (defined $fi_safe) {
+    $fi_eval_package = 'main';
+  } elsif (defined $fi_package) {
+    $fi_eval_package = $fi_package;
+  } elsif (defined $fi_varhash) {
+    $fi_eval_package = _gensym();
+    $fi_scrub_package = 1;
+  } else {
+    $fi_eval_package = caller;
+  }
+
+  my $fi_install_package;
+  if (defined $fi_varhash) {
+    if (defined $fi_package) {
+      $fi_install_package = $fi_package;
+    } elsif (defined $fi_safe) {
+      $fi_install_package = $fi_safe->root;
+    } else {
+      $fi_install_package = $fi_eval_package; # The gensymmed one
+    }
+    _install_hash($fi_varhash => $fi_install_package);
+  }
+
+  if (defined $fi_package && defined $fi_safe) {
+    no strict 'refs';
+    # Big fat magic here: Fix it so that the user-specified package
+    # is the default one available in the safe compartment.
+    *{$fi_safe->root . '::'} = \%{$fi_package . '::'};   # LOD
+  }
+
+  my $fi_r = '';
+  my $fi_item;
+  foreach $fi_item (@{$fi_self->{SOURCE}}) {
+    my ($fi_type, $fi_text, $fi_lineno) = @$fi_item;
+    if ($fi_type eq 'TEXT') {
+      $fi_self->append_text_to_output(
+        text   => $fi_text,
+        handle => $fi_ofh,
+        out    => \$fi_r,
+        type   => $fi_type,
+      );
+    } elsif ($fi_type eq 'PROG') {
+      no strict;
+      my $fi_lcomment = "#line $fi_lineno $fi_filename";
+      my $fi_progtext = 
+        "package $fi_eval_package; $fi_prepend;\n$fi_lcomment\n$fi_text;";
+      my $fi_res;
+      my $fi_eval_err = '';
+      if ($fi_safe) {
+        $fi_safe->reval(q{undef $OUT});
+  $fi_res = $fi_safe->reval($fi_progtext);
+  $fi_eval_err = $@;
+  my $OUT = $fi_safe->reval('$OUT');
+  $fi_res = $OUT if defined $OUT;
+      } else {
+  my $OUT;
+  $fi_res = eval $fi_progtext;
+  $fi_eval_err = $@;
+  $fi_res = $OUT if defined $OUT;
+      }
+
+      # If the value of the filled-in text really was undef,
+      # change it to an explicit empty string to avoid undefined
+      # value warnings later.
+      $fi_res = '' unless defined $fi_res;
+
+      if ($fi_eval_err) {
+  $fi_res = $fi_broken->(text => $fi_text,
+             error => $fi_eval_err,
+             lineno => $fi_lineno,
+             arg => $fi_broken_arg,
+             );
+  if (defined $fi_res) {
+          $fi_self->append_text_to_output(
+            text   => $fi_res,
+            handle => $fi_ofh,
+            out    => \$fi_r,
+            type   => $fi_type,
+          );
+  } else {
+    return $fi_res;   # Undefined means abort processing
+  }
+      } else {
+        $fi_self->append_text_to_output(
+          text   => $fi_res,
+          handle => $fi_ofh,
+          out    => \$fi_r,
+          type   => $fi_type,
+        );
+      }
+    } else {
+      die "Can't happen error #2";
+    }
+  }
+
+  _scrubpkg($fi_eval_package) if $fi_scrub_package;
+  defined $fi_ofh ? 1 : $fi_r;
+}
+
+sub append_text_to_output {
+  my ($self, %arg) = @_;
+
+  if (defined $arg{handle}) {
+    print { $arg{handle} } $arg{text};
+  } else {
+    ${ $arg{out} } .= $arg{text};
+  }
+
+  return;
+}
+
+sub fill_this_in {
+  my $pack = shift;
+  my $text = shift;
+  my $templ = $pack->new(TYPE => 'STRING', SOURCE => $text, @_)
+    or return undef;
+  $templ->compile or return undef;
+  my $result = $templ->fill_in(@_);
+  $result;
+}
+
+sub fill_in_string {
+  my $string = shift;
+  my $package = _param('package', @_);
+  push @_, 'package' => scalar(caller) unless defined $package;
+  Text::Template->fill_this_in($string, @_);
+}
+
+sub fill_in_file {
+  my $fn = shift;
+  my $templ = Text::Template->new(TYPE => 'FILE', SOURCE => $fn, @_)
+    or return undef;
+  $templ->compile or return undef;
+  my $text = $templ->fill_in(@_);
+  $text;
+}
+
+sub _default_broken {
+  my %a = @_;
+  my $prog_text = $a{text};
+  my $err = $a{error};
+  my $lineno = $a{lineno};
+  chomp $err;
+#  $err =~ s/\s+at .*//s;
+  "Program fragment delivered error ``$err''";
+}
+
+sub _load_text {
+  my $fn = shift;
+  local *F;
+  unless (open F, $fn) {
+    $ERROR = "Couldn't open file $fn: $!";
+    return undef;
+  }
+  local $/;
+  <F>;
+}
+
+sub _is_clean {
+  my $z;
+  eval { ($z = join('', @_)), eval '#' . substr($z,0,0); 1 }   # LOD
+}
+
+sub _unconditionally_untaint {
+  for (@_) {
+    ($_) = /(.*)/s;
+  }
+}
+
+{
+  my $seqno = 0;
+  sub _gensym {
+    __PACKAGE__ . '::GEN' . $seqno++;
+  }
+  sub _scrubpkg {
+    my $s = shift;
+    $s =~ s/^Text::Template:://;
+    no strict 'refs';
+    my $hash = $Text::Template::{$s."::"};
+    foreach my $key (keys %$hash) {
+      undef $hash->{$key};
+    }
+  }
+}
+  
+# Given a hashful of variables (or a list of such hashes)
+# install the variables into the specified package,
+# overwriting whatever variables were there before.
+sub _install_hash {
+  my $hashlist = shift;
+  my $dest = shift;
+  if (UNIVERSAL::isa($hashlist, 'HASH')) {
+    $hashlist = [$hashlist];
+  }
+  my $hash;
+  foreach $hash (@$hashlist) {
+    my $name;
+    foreach $name (keys %$hash) {
+      my $val = $hash->{$name};
+      no strict 'refs';
+      local *SYM = *{"$ {dest}::$name"};
+      if (! defined $val) {
+  delete ${"$ {dest}::"}{$name};
+      } elsif (ref $val) {
+  *SYM = $val;
+      } else {
+  *SYM = \$val;
+      }
+    }
+  }
+}
+
+sub TTerror { $ERROR }
+
+1;
+# ---------------------------------------------------------------------------
+# END TEXT TEMPLATE MODULE
+# ---------------------------------------------------------------------------
+
+
+package main;
 use strict;
 use warnings;
 use diagnostics;
@@ -42,14 +530,14 @@ use File::Spec;
 use Getopt::Long;
 use File::Basename;
 use Cwd 'abs_path';
-use Data::Dumper qw/Dumper/;
- 
+
 # Set up a few variables for use in the script
-my $tunerversion = "1.5.2";
+my $tunerversion = "1.6.0";
 my ( @adjvars, @generalrec );
 
 # Set defaults
 my %opt = (
+    "silent"       => 0,
     "nobad"        => 0,
     "nogood"       => 0,
     "noinfo"       => 0,
@@ -66,11 +554,13 @@ my %opt = (
     "checkversion" => 0,
     "buffers"      => 0,
     "passwordfile" => 0,
-    "reportfile"   => 0,
+    "outputfile"   => 0,
     "dbstat"       => 0,
     "idxstat"      => 0,
     "skippassword" => 0,
-    "noask"        => 0
+    "noask"        => 0,
+    "template"     => 0,
+    "reportfile"   => 0
 );
 
 # Gather the options from the command line
@@ -80,8 +570,8 @@ GetOptions(
     'host=s',         'socket=s',     'port=i',       'user=s',
     'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
-    'passwordfile=s', 'reportfile=s', 'silent',       'dbstat',
-    'idxstat', 'noask'
+    'passwordfile=s', 'outputfile=s', 'silent',       'dbstat',
+    'idxstat', 'noask', 'template=s', 'reportfile=s'
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
@@ -116,8 +606,8 @@ sub usage {
       . "      --forcemem <size>    Amount of RAM installed in megabytes\n"
       . "      --forceswap <size>   Amount of swap memory configured in megabytes\n"
       . "      --passwordfile <path>Path to a password file list(one password by line)\n"
-      . "      --reportfile <path>  Path to a report txt file\n" . "\n"
       . "   Output Options:\n"
+      . "      --silent             Don't output anything on screen\n"
       . "      --nogood             Remove OK responses\n"
       . "      --nobad              Remove negative/suggestion responses\n"
       . "      --noinfo             Remove informational responses\n"
@@ -125,7 +615,10 @@ sub usage {
       . "      --dbstat             Print database information\n"
       . "      --idxstat            Print index information\n"
       . "      --nocolor            Don't print output in color\n"
-      . "      --buffers            Print global and per-thread buffer values\n";
+      . "      --buffers            Print global and per-thread buffer values\n"
+      . "      --outputfile <path>  Path to a output txt file\n" . "\n"
+      . "      --reportfile <path>  Path to a report txt file\n" . "\n"
+      . "      --tempalte   <path>  Path to a template file\n" . "\n";
     exit 0;
 }
 
@@ -140,14 +633,14 @@ $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
 
 #
-my $reportfile = undef;
-$reportfile = abs_path( $opt{reportfile} ) unless $opt{reportfile} eq "0";
+my $outputfile = undef;
+$outputfile = abs_path( $opt{outputfile} ) unless $opt{outputfile} eq "0";
 
 my $fh = undef;
-open( $fh, '>', $reportfile )
-  or die("Fail opening $reportfile")
-  if defined($reportfile);
-$opt{nocolor} = 1 if defined($reportfile);
+open( $fh, '>', $outputfile )
+  or die("Fail opening $outputfile")
+  if defined($outputfile);
+$opt{nocolor} = 1 if defined($outputfile);
 
 # Setting up the colors for the print styles
 my $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]" : "[OK]";
@@ -160,7 +653,7 @@ my %result;
 
 # Functions that handle the print styles
 sub prettyprint {
-    print $_[0] . "\n";
+    print $_[0] . "\n" unless $opt{'silent'};
     print $fh $_[0] . "\n" if defined($fh);
 }
 sub goodprint  { prettyprint $good. " " . $_[0] unless ( $opt{nogood} == 1 ); }
@@ -2131,7 +2624,7 @@ sub mysql_myisam {
           . " used / "
           . hr_num( $myvar{'key_buffer_size'} )
           . " cache)";
-    }
+    } 
 
     # Key buffer
     if ( !defined( $mycalc{'total_myisam_indexes'} ) and $doremote == 1 ) {
@@ -2701,7 +3194,7 @@ sub make_recommendations {
     }
 }
 
-sub close_reportfile {
+sub close_outputfile {
     close($fh) if defined($fh);
 }
 
@@ -2712,11 +3205,74 @@ sub headerprint {
       . " >>  Run with '--help' for additional options and output filtering";
 }
 
+sub string2file {
+  my $filename=shift;
+  my $content=shift;
+  open my $fh, q(>), $filename
+  or die "Unable to open $filename in write mode. please check permissions for this file or directory";
+  print $fh $content if defined($content);
+  close $fh;
+  debugprint $content if ($opt{'debug'});
+}
+
+sub file2array {
+    my $filename = shift;
+    debugprint "* reading $filename" if ($opt{'debug'});
+    my $fh;
+    open( $fh, q(<), "$filename" )
+      or die "Couldn't open $filename for reading: $!\n";
+    my @lines = <$fh>;
+    close($fh);
+    return @lines;
+}
+
+sub file2string {
+  return join ( '', file2array(@_) );
+}
+
+my $templateModel;
+if ($opt{'template'} ne 0 ) {
+  $templateModel=file2string ($opt{'template'});
+}else {
+  # DEFAULT REPORT TEMPLATE
+  $templateModel=<<'END_TEMPLATE';
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Report</title>
+  <meta charset="UTF-8">
+</head>
+<body>
+
+<h1>Result output</h1>
+<pre>
+{$data}
+</pre>
+
+</body>
+</html>
+END_TEMPLATE
+}
 sub dump_result {
-    return unless $opt{'debug'};
-    $Data::Dumper::Pair = " : ";
-    print Dumper( \%result );
-    exit 0;
+    if ($opt{'debug'}) {
+      use Data::Dumper qw/Dumper/;
+      $Data::Dumper::Pair = " : ";
+      debugprint Dumper( \%result );
+    }
+
+    debugprint "HTML REPORT: $opt{'reportfile'}";
+    if ($opt{'reportfile'} ne 0 ) {
+      use Data::Dumper qw/Dumper/;
+      $Data::Dumper::Pair = " : ";
+      my $vars= {'data' => Dumper( \%result ) };
+
+      my $template = Text::Template->new(TYPE => 'STRING', PREPEND => q{;}, SOURCE => $templateModel)
+      or die "Couldn't construct template: $Text::Template::ERROR";
+      open my $fh, q(>), $opt{'reportfile'}
+      or die "Unable to open $opt{'reportfile'} in write mode. please check permissions for this file or directory";
+      $template->fill_in(HASH =>$vars, OUTPUT=>$fh );
+      close $fh;
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -2741,455 +3297,14 @@ mysql_innodb;                # Print InnoDB stats
 mysql_ariadb;                # Print AriaDB stats
 get_replication_status;      # Print replication info
 make_recommendations;        # Make recommendations based on stats
-close_reportfile;            # Close reportfile if needed
 dump_result;                 # Dump result if debug is on
+close_outputfile;            # Close reportfile if needed
 
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
-
-# modified for NanoA by kazuho, some modified by tokuhirom
-# based on Mojo::Template. Copyright (C) 2008, Sebastian Riedel.
-
-package Text::MicroTemplate;
-
-require Exporter;
-
-use strict;
-use warnings;
-use constant DEBUG => $ENV{MICRO_TEMPLATE_DEBUG} || 0;
-use 5.00800;
-
-use Scalar::Util;
-
-our $VERSION = '0.24';
-our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(encoded_string build_mt render_mt);
-our %EXPORT_TAGS = (
-    all => [ @EXPORT_OK ],
-);
-our $_mt_setter = '';
-
-sub new {
-    my $class = shift;
-    my $self = bless {
-        code                => undef,
-        comment_mark        => '#',
-        expression_mark     => '=',
-        line_start          => '?',
-        template            => undef,
-        tree                => [],
-        tag_start           => '<?',
-        tag_end             => '?>',
-        escape_func         => \&_inline_escape_html,
-        prepend             => '',
-        package_name        => undef, # defaults to caller
-        @_ == 1 ? ref($_[0]) ? %{$_[0]} : (template => $_[0]) : @_,
-    }, $class;
-    if (defined $self->{template}) {
-        $self->parse($self->{template});
-    }
-    unless (defined $self->{package_name}) {
-        $self->{package_name} = 'main';
-        my $i = 0;
-        while (my $c = caller(++$i)) {
-            if ($c !~ /^Text::MicroTemplate\b/) {
-                $self->{package_name} = $c;
-                last;
-            }
-        }
-    }
-    $self;
-}
-
-sub escape_func {
-    my $self = shift;
-    if (@_) {
-        $self->{escape_func} = shift;
-    }
-    $self->{escape_func};
-}
-
-sub package_name {
-    my $self = shift;
-    if (@_) {
-        $self->{package_name} = shift;
-    }
-    $self->{package_name};
-}
-
-sub template { shift->{template} }
-
-sub code {
-    my $self = shift;
-    unless (defined $self->{code}) {
-        $self->_build();
-    }
-    $self->{code};
-}
-
-sub _build {
-    my $self = shift;
-    
-    my $escape_func = $self->{escape_func} || '';
-
-    my $embed_escape_func = ref($escape_func) eq 'CODE'
-        ? $escape_func
-        : sub{ $escape_func . "(@_)" };
-
-    # Compile
-    my @lines;
-    my $last_was_code;
-    my $last_text;
-    for my $line (@{$self->{tree}}) {
-
-        # New line
-        push @lines, '';
-        for (my $j = 0; $j < @{$line}; $j += 2) {
-            my $type  = $line->[$j];
-            my $value = $line->[$j + 1];
-
-            if ($type ne 'text' && defined $last_text) {
-                # do not mess the start of current line, since it might be
-                # the start of "=pod", etc.
-                $lines[
-                    $j == 0 && @lines >= 2 ? -2 : -1
-                ] .= "\$_MT .=\"$last_text\";";
-                undef $last_text;
-            }
-            
-            # Need to fix line ending?
-            my $newline = chomp $value;
-
-            # add semicolon to last line of code
-            if ($last_was_code && $type ne 'code') {
-                $lines[-1] .= ';';
-                undef $last_was_code;
-            }
-
-            # Text
-            if ($type eq 'text') {
-
-                # Quote and fix line ending
-                $value = quotemeta($value);
-                $value .= '\n' if $newline;
-
-                $last_text = defined $last_text ? "$last_text$value" : $value;
-            }
-
-            # Code
-            if ($type eq 'code') {
-                $lines[-1] .= $value;
-                $last_was_code = 1;
-            }
-
-            # Expression
-            if ($type eq 'expr') {
-                my $escaped = $embed_escape_func->('$_MT_T');
-                if ($newline && $value =~ /\n/) {
-                    $value .= "\n"; # temporary workaround for t/13-heredoc.t
-                }
-                $lines[-1] .= "\$_MT_T = $value;\$_MT .= ref \$_MT_T eq 'Text::MicroTemplate::EncodedString' ? \$\$_MT_T : $escaped; \$_MT_T = '';";
-            }
-        }
-    }
-
-    # add semicolon to last line of code
-    if ($last_was_code) {
-        $lines[-1] .= "\n;";
-    }
-    # add last text line(s)
-    if (defined $last_text) {
-        $lines[-1] .= "\$_MT .=\"$last_text\";";
-    }
-    
-    # Wrap
-    $lines[0]   = q/sub { my $_MT = ''; local $/ . $self->{package_name} . q/::_MTREF = \$_MT; my $_MT_T = '';/ . (@lines ? $lines[0] : '');
-    $lines[-1] .= q/return $_MT; }/;
-
-    $self->{code} = join "\n", @lines;
-    return $self;
-}
-
-# I am so smart! I am so smart! S-M-R-T! I mean S-M-A-R-T...
-sub parse {
-    my ($self, $tmpl) = @_;
-    $self->{template} = $tmpl;
-
-    # Clean start
-    delete $self->{tree};
-    delete $self->{code};
-
-    # Tags
-    my $line_start    = quotemeta $self->{line_start};
-    my $tag_start     = quotemeta $self->{tag_start};
-    my $tag_end       = quotemeta $self->{tag_end};
-    my $cmnt_mark     = quotemeta $self->{comment_mark};
-    my $expr_mark     = quotemeta $self->{expression_mark};
-
-    # Tokenize
-    my $state = 'text';
-    my @lines = split /(\n)/, $tmpl;
-    my $tokens = [];
-    while (@lines) {
-        my $line = shift @lines;
-        my $newline = undef;
-        if (@lines) {
-            shift @lines;
-            $newline = 1;
-        }
-        
-        if ($state eq 'text') {
-            # Perl line without return value
-            if ($line =~ /^$line_start\s+(.*)$/) {
-                push @{$self->{tree}}, ['code', $1];
-                next;
-            }
-            # Perl line with return value
-            if ($line =~ /^$line_start$expr_mark\s+(.+)$/) {
-                push @{$self->{tree}}, [
-                    'expr', $1,
-                    $newline ? ('text', "\n") : (),
-                ];
-                next;
-            }
-            # Comment line, dummy token needed for line count
-            if ($line =~ /^$line_start$cmnt_mark/) {
-                push @{$self->{tree}}, [];
-                next;
-            }
-        }
-
-        # Escaped line ending?
-        if ($line =~ /(\\+)$/) {
-            my $length = length $1;
-            # Newline escaped
-            if ($length == 1) {
-                $line =~ s/\\$//;
-            }
-            # Backslash escaped
-            if ($length >= 2) {
-                $line =~ s/\\\\$/\\/;
-                $line .= "\n";
-            }
-        } else {
-            $line .= "\n" if $newline;
-        }
-
-        # Mixed line
-        for my $token (split /
-            (
-                $tag_start$expr_mark     # Expression
-            |
-                $tag_start$cmnt_mark     # Comment
-            |
-                $tag_start               # Code
-            |
-                $tag_end                 # End
-            )
-        /x, $line) {
-
-            # handle tags and bail out
-            if ($token eq '') {
-                next;
-            } elsif ($token =~ /^$tag_end$/) {
-                $state = 'text';
-                next;
-            } elsif ($token =~ /^$tag_start$/) {
-                $state = 'code';
-                next;
-            } elsif ($token =~ /^$tag_start$cmnt_mark$/) {
-                $state = 'cmnt';
-                next;
-            } elsif ($token =~ /^$tag_start$expr_mark$/) {
-                $state = 'expr';
-                next;
-            }
-
-            # value
-            if ($state eq 'text') {
-                push @$tokens, $state, $token;
-            } elsif ($state eq 'cmnt') {
-                next; # ignore comments
-            } elsif ($state eq 'cont') {
-                $tokens->[-1] .= $token;
-            } else {
-                # state is code or expr
-                push @$tokens, $state, $token;
-                $state = 'cont';
-            }
-        }
-        if ($state eq 'text') {
-            push @{$self->{tree}}, $tokens;
-            $tokens = [];
-        }
-    }
-    push @{$self->{tree}}, $tokens
-        if @$tokens;
-    
-    return $self;
-}
-
-sub _context {
-    my ($self, $text, $line) = @_;
-    my @lines  = split /\n/, $text;
-    
-    join '', map {
-        0 < $_ && $_ <= @lines ? sprintf("%4d: %s\n", $_, $lines[$_ - 1]) : ''
-    } ($line - 2) .. ($line + 2);
-}
-
-# Debug goodness
-sub _error {
-    my ($self, $error, $line_offset, $from) = @_;
-    
-    # Line
-    if ($error =~ /^(.*)\s+at\s+\(eval\s+\d+\)\s+line\s+(\d+)/) {
-        my $reason = $1;
-        my $line   = $2 - $line_offset;
-        my $delim  = '-' x 76;
-        
-        my $report = "$reason at line $line in template passed from $from.\n";
-        my $template = $self->_context($self->{template}, $line);
-        $report .= "$delim\n$template$delim\n";
-
-        # Advanced debugging
-        if (DEBUG) {
-            my $code = $self->_context($self->code, $line);
-            $report .= "$code$delim\n";
-            $report .= $error;
-        }
-
-        return $report;
-    }
-
-    # No line found
-    return "Template error: $error";
-}
-
-# create raw string (that does not need to be escaped)
-sub encoded_string {
-    Text::MicroTemplate::EncodedString->new($_[0]);
-}
-
-
-sub _inline_escape_html{
-    my($variable) = @_;
-
-    my $source = qq{
-        do{
-            $variable =~ s/([&><"'])/\$Text::MicroTemplate::_escape_table{\$1}/ge;
-            $variable;
-        }
-    }; #" for poor editors
-    $source =~ s/\n//g; # to keep line numbers
-    return $source;
-}
-
-our %_escape_table = ( '&' => '&amp;', '>' => '&gt;', '<' => '&lt;', q{"} => '&quot;', q{'} => '&#39;' );
-sub escape_html {
-    my $str = shift;
-    return ''
-        unless defined $str;
-    return $str->as_string
-        if ref $str eq 'Text::MicroTemplate::EncodedString';
-    $str =~ s/([&><"'])/$_escape_table{$1}/ge; #' for poor editors
-    return $str;
-}
-
-sub build_mt {
-    my $mt = Text::MicroTemplate->new(@_);
-    $mt->build();
-}
-
-sub build {
-    my $_mt = shift;
-    Scalar::Util::weaken($_mt) if $_mt_setter;
-    my $_code = $_mt->code;
-    my $_from = sub {
-        my $i = 0;
-        while (my @c = caller(++$i)) {
-            return "$c[1] at line $c[2]"
-                if $c[0] ne __PACKAGE__;
-        }
-        '';
-    }->();
-    my $line_offset = (() = ($_mt->{prepend} =~ /\n/sg)) + 5;
-    my $expr = << "...";
-package $_mt->{package_name};
-sub {
-    ${_mt_setter}local \$SIG{__WARN__} = sub { print STDERR \$_mt->_error(shift, $line_offset, \$_from) };
-    $_mt->{prepend}
-    Text::MicroTemplate::encoded_string((
-        $_code
-    )->(\@_));
-}
-...
-
-    if(DEBUG >= 2){
-        DEBUG >= 3 ? die $expr : warn $expr;
-    }
-
-    my $die_msg;
-    {
-        local $@;
-        if (my $_builder = eval($expr)) {
-            return $_builder;
-        }
-        $die_msg = $_mt->_error($@, $line_offset, $_from);
-    }
-    die $die_msg;
-}
-
-sub render_mt {
-    my $builder = build_mt(shift);
-    $builder->(@_);
-}
-
-# ? $_mt->filter(sub { s/\s+//smg; s/[\r\n]//g; })->(sub { ... ? });
-sub filter {
-    my ($self, $callback) = @_;
-    my $mtref = do {
-        no strict 'refs';
-        ${"$self->{package_name}::_MTREF"};
-    };
-    my $before = $$mtref;
-    $$mtref = '';
-    return sub {
-        my $inner_func = shift;
-        $inner_func->(@_);
-
-        ## sub { s/foo/bar/g } is a valid filter
-        ## sub { DateTime::Format::Foo->parse_string(shift) } is valid too
-        local $_ = $$mtref;
-        my $retval = $callback->($$mtref);
-        no warnings 'uninitialized';
-        if (($retval =~ /^\d+$/ and $_ ne $$mtref) or (defined $retval and !$retval)) {
-            $$mtref = $before . $_;
-        } else {
-            $$mtref = $before . $retval;
-        }
-    }
-}
-
-package Text::MicroTemplate::EncodedString;
-
-use strict;
-use warnings;
-
-use overload q{""} => sub { shift->as_string }, fallback => 1;
-
-sub new {
-    my ($klass, $str) = @_;
-    bless \$str, $klass;
-}
-
-sub as_string {
-    my $self = shift;
-    $$self;
-}
-
 1;
+
 __END__
 
 =pod
@@ -3198,7 +3313,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.5.2 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -3226,10 +3341,9 @@ You must provide the remote server's total memory when connecting to other serve
  --forcemem <size>    Amount of RAM installed in megabytes
  --forceswap <size>   Amount of swap memory configured in megabytes
  --passwordfile <path>Path to a password file list(one password by line)
- --reportfile <path>  Path to a report txt file
-
+ 
 =head1 OUTPUT OPTIONS
-
+ --silent             Don't output anything on screen
  --nogood             Remove OK responses
  --nobad              Remove negative/suggestion responses
  --noinfo             Remove informational responses
@@ -3238,7 +3352,9 @@ You must provide the remote server's total memory when connecting to other serve
  --idxstat            Print index information
  --nocolor            Don't print output in color
  --buffers            Print global and per-thread buffer values
-
+ --outputfile <path>  Path to a output txt file
+ --reportfile <path>  Path to a report txt file
+ --template   <path>  Path to a template file
 
 =head1 PERLDOC
 
@@ -3383,10 +3499,6 @@ Major Hayden
 =item *
 
 Joe Ashcraft
-
-=item *
-
-Jean-Marie Renouard
 
 =item *
 
