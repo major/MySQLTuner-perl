@@ -74,6 +74,44 @@ perl mysqltuner.pl
 
 <p>Of course, you can add the execute bit (<code>chmod +x mysqltuner.pl</code>) so you can execute it without calling perl directly.</p>
 
+
+<h2><a id="user-content-specific-usage" class="anchor" href="#specific-usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Specific usage</h2>
+
+<p><strong>Usage:</strong> Minimal usage locally</p>
+
+<pre><code>perl mysqltuner.pl 
+</code></pre>
+
+<p><strong>Usage:</strong> Minimal usage remotely</p>
+
+<pre><code>perl mysqltuner.pl --host targetDNS_IP --user admin_user --password admin_password
+</code></pre>
+
+<p><strong>Usage:</strong> Enable maximum output information around MySQL/MariaDb without debugging </p>
+
+<pre><code>perl mysqltuner.pl --buffers --dbstat --idxstat
+</code></pre>
+
+<p><strong>Usage:</strong> Write your result in a file with information displayed  </p>
+
+<pre><code>perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
+</code></pre>
+
+<p><strong>Usage:</strong> Write your result in a file <strong>without outputting information</strong> </p>
+
+<pre><code>perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
+</code></pre>
+
+<p><strong>Usage:</strong> Using template model to customize your reporting file based on <a href="https://metacpan.org/pod/Text::Template">Text::Template</a> syntax.</p>
+
+<pre><code>perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
+</code></pre>
+
+<p><strong>Usage:</strong> Enable debugging information </p>
+
+<pre><code>perl mysqltuner.pl --debug
+</code></pre>
+
 <h2>
 <a name="faq" class="anchor" href="#faq"><span class="octicon octicon-link"></span></a>FAQ</h2>
 
