@@ -618,7 +618,7 @@ sub usage {
       . "      --buffers            Print global and per-thread buffer values\n"
       . "      --outputfile <path>  Path to a output txt file\n" . "\n"
       . "      --reportfile <path>  Path to a report txt file\n" . "\n"
-      . "      --tempalte   <path>  Path to a template file\n" . "\n";
+      . "      --template   <path>  Path to a template file\n" . "\n";
     exit 0;
 }
 
