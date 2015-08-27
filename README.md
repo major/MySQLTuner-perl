@@ -52,27 +52,27 @@ __Usage:__ Minimal usage locally
 
 	perl mysqltuner.pl 
 
-Usage: Minimal usage remotely
+__Usage:__ Minimal usage remotely
 
 	perl mysqltuner.pl --host targetDNS_IP --user admin_user --password admin_password
 
-Usage: Enable maximum output information around MySQL/MariaDb without debugging 
+__Usage:__ Enable maximum output information around MySQL/MariaDb without debugging 
 
 	perl mysqltuner.pl --buffers --dbstat --idxstat
 
-Usage: Write your result in a file with information displayed  
+__Usage:__ Write your result in a file with information displayed  
 
 	perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 
-Usage: Write your result in a file **without outputting information** 
+__Usage:__ Write your result in a file **without outputting information** 
 
 	perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 
-Usage: Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
+__Usage:__ Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
 
  	perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
 
-Usage: Enable debugging information 
+__Usage:__ Enable debugging information 
 
 	perl mysqltuner.pl --debug
 
