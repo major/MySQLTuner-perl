@@ -48,31 +48,31 @@ Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can exe
 Specific usage
 --
 
-* Minimal usage locally
+Usage: Minimal usage locally
 
 	perl mysqltuner.pl 
 
-* Minimal usage remotely
+Usage: Minimal usage remotely
 
 	perl mysqltuner.pl --host targetDNS_IP --user admin_user --password admin_password
 
-* Enable maximum output information around MySQL/MariaDb without debugging 
+Usage: Enable maximum output information around MySQL/MariaDb without debugging 
 
 	perl mysqltuner.pl --buffers --dbstat --idxstat
 
-* Write your result in a file with information displayed  
+Usage: Write your result in a file with information displayed  
 
 	perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 
-* Write your result in a file **without outputting information** 
+Usage: Write your result in a file **without outputting information** 
 
 	perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 
-* Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
+Usage: Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
 
  	perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
 
-* Enable debugging information 
+Usage: Enable debugging information 
 
 	perl mysqltuner.pl --debug
 
