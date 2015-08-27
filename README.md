@@ -48,7 +48,7 @@ Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can exe
 Specific usage
 --
 
-Usage: Minimal usage locally
+_Usage:_ Minimal usage locally
 
 	perl mysqltuner.pl 
 
