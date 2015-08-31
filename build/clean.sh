@@ -1,3 +1,3 @@
 #!/bin/sh
 
-rm -rf mysqltuner-* mysqltuner.spec
+rm -rf mysqltuner-* mysqltuner.spec *.log
