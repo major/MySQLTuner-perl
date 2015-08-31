@@ -45,7 +45,7 @@
 #
 # Copyright 2013 M. J. Dominus.
 # You may copy and distribute this program under the
-# same terms as Perl iteself.  
+# same terms as Perl itself.  
 # If in doubt, write to mjd-perl-template+@plover.com for a license.
 #
 # Version 1.46
@@ -618,7 +618,7 @@ sub usage {
       . "      --buffers            Print global and per-thread buffer values\n"
       . "      --outputfile <path>  Path to a output txt file\n" . "\n"
       . "      --reportfile <path>  Path to a report txt file\n" . "\n"
-      . "      --tempalte   <path>  Path to a template file\n" . "\n";
+      . "      --template   <path>  Path to a template file\n" . "\n";
     exit 0;
 }
 

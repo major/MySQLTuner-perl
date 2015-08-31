@@ -45,6 +45,37 @@ You can download the entire repository by using 'git clone' followed by the clon
 	
 Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
 
+Specific usage
+--
+
+__Usage:__ Minimal usage locally
+
+	perl mysqltuner.pl 
+
+__Usage:__ Minimal usage remotely
+
+	perl mysqltuner.pl --host targetDNS_IP --user admin_user --password admin_password
+
+__Usage:__ Enable maximum output information around MySQL/MariaDb without debugging 
+
+	perl mysqltuner.pl --buffers --dbstat --idxstat
+
+__Usage:__ Write your result in a file with information displayed  
+
+	perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
+
+__Usage:__ Write your result in a file **without outputting information** 
+
+	perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
+
+__Usage:__ Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
+
+ 	perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
+
+__Usage:__ Enable debugging information 
+
+	perl mysqltuner.pl --debug
+
 FAQ
 --
 
