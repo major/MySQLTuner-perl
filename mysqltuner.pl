@@ -45,7 +45,7 @@
 #
 # Copyright 2013 M. J. Dominus.
 # You may copy and distribute this program under the
-# same terms as Perl iteself.  
+# same terms as Perl itself.  
 # If in doubt, write to mjd-perl-template+@plover.com for a license.
 #
 # Version 1.46
