@@ -1619,7 +1619,10 @@ sub check_storage_engines {
      # Parse through the table list to generate storage engine counts/statistics
         $fragtables = 0;
         foreach my $tbl (@tblist) {
+            debugprint "Data dump ". Dumper (@$tbl);
             my ( $engine, $size, $datafree ) = @$tbl;
+            $size=0 if $size eq 'NULL';
+            $datafree=0 if $datafree eq 'NULL';
             if ( defined $enginestats{$engine} ) {
                 $enginestats{$engine} += $size;
                 $enginecount{$engine} += 1;
