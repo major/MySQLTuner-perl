@@ -1600,7 +1600,8 @@ sub check_storage_engines {
             chomp($db);
             if (   $db eq "information_schema"
                 or $db eq "performance_schema"
-                or $db eq "mysql" )
+                or $db eq "mysql" 
+                or $db eq "lost+found" )
             {
                 next;
             }
