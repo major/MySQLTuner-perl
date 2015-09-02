@@ -1560,7 +1560,8 @@ sub check_storage_engines {
           : redwrap "-NDBCluster ";
     }
 
-    my @dblist = select_array "SHOW DATABASES";
+    my @dblist = grep {$_ ne 'lost+found' } select_array "SHOW DATABASES";
+
     $result{'Databases'}{'List'} = [@dblist];
     infoprint "Status: $engines";
     if ( mysql_version_ge( 5, 1, 5 ) ) {
@@ -1595,7 +1596,7 @@ sub check_storage_engines {
         # MySQL < 5 servers take a lot of work to get table sizes
         my @tblist;
 
-# Now we build a database list, and loop through it to get storage engine stats for tables
+        # Now we build a database list, and loop through it to get storage engine stats for tables
         foreach my $db (@dblist) {
             chomp($db);
             if (   $db eq "information_schema"
@@ -1621,6 +1622,7 @@ sub check_storage_engines {
         foreach my $tbl (@tblist) {
             debugprint "Data dump ". Dumper (@$tbl);
             my ( $engine, $size, $datafree ) = @$tbl;
+            next if $engine eq 'NULL';
             $size=0 if $size eq 'NULL';
             $datafree=0 if $datafree eq 'NULL';
             if ( defined $enginestats{$engine} ) {
