@@ -1076,7 +1076,7 @@ sub mysql_setup {
             return 1;
         }
         else {
-            if ( defined($opt{'noask'}) ) {
+            if ( $opt{'noask'}==1 ) {
                 badprint "Attempted to use login credentials, but they were invalid";
                 exit 1;
             }
