@@ -1256,9 +1256,9 @@ sub security_recommendations {
             badprint "User '" . $line . "' is an anonymous account.";
         }
         push( @generalrec,
-                "Remove Anonymous User account - there is "
+                "Remove Anonymous User accounts - there are "
               . scalar(@mysqlstatlist)
-              . " Anonymous account." );
+              . " Anonymous accounts." );
     }
     else {
         goodprint "There is no anonymous account in all database users";
