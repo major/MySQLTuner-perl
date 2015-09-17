@@ -2407,7 +2407,7 @@ sub mysql_stats {
 "When making adjustments, make tmp_table_size/max_heap_table_size equal"
             );
             push( @generalrec,
-                "Reduce your SELECT DISTINCT queries without LIMIT clauses" );
+                "Reduce your SELECT DISTINCT queries which have no LIMIT clause" );
         }
         elsif ($mycalc{'pct_temp_disk'} > 25
             && $mycalc{'max_tmp_table_size'} >= 256 * 1024 * 1024 )
