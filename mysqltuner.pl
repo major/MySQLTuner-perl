@@ -2844,7 +2844,7 @@ sub mysql_innodb {
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
     }
     else {
-        badprint "InnoDB  buffer pool / data size: "
+        badprint "InnoDB buffer pool / data size: "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . "/"
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
         push( @adjvars,
