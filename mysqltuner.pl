@@ -1305,7 +1305,7 @@ sub security_recommendations {
     }
 
     unless ( -f $basic_password_files ) {
-        badprint "There is not basic password file list !";
+        badprint "There is no basic password file list !";
         return;
     }
 
