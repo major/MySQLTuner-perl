@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.0
+# mysqltuner.pl - Version 1.6.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -532,7 +532,7 @@ use File::Basename;
 use Cwd 'abs_path';
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.0";
+my $tunerversion = "1.6.1";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1909,7 +1909,7 @@ sub calculations {
     elsif ( mysql_version_ge(5) ) {
         $mycalc{'total_myisam_indexes'} = select_one
 "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';";
-        $mycalc{'total_aria_indexe'} = select_one
+        $mycalc{'total_aria_indexes'} = select_one
 "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'Aria';";
     }
     if ( defined $mycalc{'total_myisam_indexes'}
@@ -3319,7 +3319,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.0 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
