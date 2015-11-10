@@ -777,7 +777,7 @@ sub os_setup {
         }
     }
     else {
-        if ( $os =~ /Linux/ ) {
+        if ( $os =~ /Linux|CYGWIN/ ) {
             $physical_memory =
               `grep -i memtotal: /proc/meminfo | awk '{print \$2}'`
               or memerror;
