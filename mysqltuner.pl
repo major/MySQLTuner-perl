@@ -895,6 +895,13 @@ sub compare_tuner_version {
 # Checks to see if a MySQL login is possible
 my ( $mysqllogin, $doremote, $remotestring, $mysqlcmd, $mysqladmincmd );
 
+my $osname = $^O;
+if( $osname eq 'MSWin32' ) {
+  eval { require Win32; } or last;
+  $osname = Win32::GetOSName();
+  #print "\nOS Name: $osname";
+  die "Windows($osname) is not supported.";
+}
 sub mysql_setup {
     $doremote     = 0;
     $remotestring = '';
