@@ -792,7 +792,7 @@ sub security_recommendations {
               . " Anonymous accounts." );
     }
     else {
-        goodprint "There is no anonymous account in all database users";
+        goodprint "There are no anonymous accounts for any database users";
     }
 
     # Looking for Empty Password
@@ -841,7 +841,7 @@ sub security_recommendations {
     }
 
     my @passwords = get_basic_passwords $basic_password_files;
-    infoprint "There is "
+    infoprint "There are "
       . scalar(@passwords)
       . " basic passwords in the list.";
     my $nbins = 0;
