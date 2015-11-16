@@ -31,6 +31,7 @@ before_install:
 
 install:
    - cpanm --quiet --notest Data::Dumper
+   - cpanm --quiet --notest Text::Template
 
 script:
    - ./mysqltuner.pl
