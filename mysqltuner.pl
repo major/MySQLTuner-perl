@@ -36,13 +36,19 @@
 # http://forge.mysql.com/projects/view.php?id=44
 #
 package main;
+
+use 5.005;
 use strict;
 use warnings;
+
 use diagnostics;
 use File::Spec;
 use Getopt::Long;
 use File::Basename;
 use Cwd 'abs_path';
+
+use Data::Dumper;
+$Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
 my $tunerversion = "1.6.1";
@@ -2792,30 +2798,19 @@ END_TEMPLATE
 }
 sub dump_result {
     if ($opt{'debug'}) {
-
-      if (try_load('Data::Dumper')) {
-          badprint "Data::Dumper Module is needed.";
-          exit 1;
-      }
-
-      use Data::Dumper qw/Dumper/;
-      $Data::Dumper::Pair = " : ";
       debugprint Dumper( \%result );
     }
 
     debugprint "HTML REPORT: $opt{'reportfile'}";
+
     if ($opt{'reportfile'} ne 0 ) {
       if (try_load('Text::Template')) {
           badprint "Text::Template Module is needed.";
           exit 1;
       }
-      if (try_load('Data::Dumper')) {
-          badprint "Data::Dumper Module is needed.";
-          exit 1;
-      }
+
       use Text::Template;
-      use Data::Dumper qw/Dumper/;
-      $Data::Dumper::Pair = " : ";
+
       my $vars= {'data' => Dumper( \%result ) };
 
       my $template = Text::Template->new(TYPE => 'STRING', PREPEND => q{;}, SOURCE => $templateModel)
