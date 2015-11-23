@@ -645,19 +645,6 @@ sub mysql_setup {
     }
 }
 
-sub try_load {
-  my $mod = shift;
-
-  eval("use $mod");
-
-  if ($@) {
-    #print "\$@ = $@\n";
-    return(0);
-  } else {
-    return(1);
-  }
-}
-
 # MySQL Request Array
 sub select_array {
     my $req = shift;
@@ -2804,17 +2791,20 @@ sub dump_result {
     debugprint "HTML REPORT: $opt{'reportfile'}";
 
     if ($opt{'reportfile'} ne 0 ) {
-      if (try_load('Text::Template')) {
+      eval "{ use Text::Template }";
+      if ($@) {
           badprint "Text::Template Module is needed.";
           exit 1;
       }
 
-      use Text::Template;
-
       my $vars= {'data' => Dumper( \%result ) };
 
-      my $template = Text::Template->new(TYPE => 'STRING', PREPEND => q{;}, SOURCE => $templateModel)
-      or die "Couldn't construct template: $Text::Template::ERROR";
+      my $template;
+      {
+        no warnings 'once';
+        $template = Text::Template->new(TYPE => 'STRING', PREPEND => q{;}, SOURCE => $templateModel)
+        or die "Couldn't construct template: $Text::Template::ERROR";
+      }
       open my $fh, q(>), $opt{'reportfile'}
       or die "Unable to open $opt{'reportfile'} in write mode. please check permissions for this file or directory";
       $template->fill_in(HASH =>$vars, OUTPUT=>$fh );
