@@ -365,23 +365,23 @@ sub validate_tuner_version {
   chomp($httpcli);
   if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
     debugprint "$httpcli is available.";
-    
+
     debugprint "$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2";
     $update = `$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2`;
     chomp($update);
     debugprint "VERSION: $update";
-    
-    
+
+
     compare_tuner_version($update);
     return;
   }
 
-  
+
   $httpcli=`which wget`;
   chomp($httpcli);
   if ( defined($httpcli) and -e "$httpcli" ) {
     debugprint "$httpcli is available.";
-    
+
     debugprint "$httpcli -e timestamping=off -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
     $update = `$httpcli -e timestamping=off -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
     chomp($update);
@@ -1132,7 +1132,7 @@ sub check_storage_engines {
             chomp($db);
             if (   $db eq "information_schema"
                 or $db eq "performance_schema"
-                or $db eq "mysql" 
+                or $db eq "mysql"
                 or $db eq "lost+found" )
             {
                 next;
@@ -1687,7 +1687,7 @@ sub mysql_stats {
 
         if ( defined $myvar{'query_cache_type'} ) {
             infoprint "Query Cache Buffers";
-            infoprint " +-- Query Cache: " 
+            infoprint " +-- Query Cache: "
               . $myvar{'query_cache_type'} . " - "
               . (
                 $myvar{'query_cache_type'} eq 0 |
@@ -2161,7 +2161,7 @@ sub mysql_myisam {
           . " used / "
           . hr_num( $myvar{'key_buffer_size'} )
           . " cache)";
-    } 
+    }
 
     # Key buffer
     if ( !defined( $mycalc{'total_myisam_indexes'} ) and $doremote == 1 ) {
@@ -2639,7 +2639,7 @@ FROM INFORMATION_SCHEMA.STATISTICS s
   ON s.TABLE_SCHEMA = t.TABLE_SCHEMA
   AND s.TABLE_NAME = t.TABLE_NAME
  INNER JOIN (
-  SELECT 
+  SELECT
      TABLE_SCHEMA
    , TABLE_NAME
    , INDEX_NAME
@@ -2688,12 +2688,12 @@ ENDSQL
         and $myvar{'performance_schema'} eq 'ON' );
 
     $selIdxReq = <<'ENDSQL';
-SELECT CONCAT(CONCAT(object_schema,'.'),object_name) AS 'table', index_name 
+SELECT CONCAT(CONCAT(object_schema,'.'),object_name) AS 'table', index_name
 FROM performance_schema.table_io_waits_summary_by_index_usage
 WHERE index_name IS NOT NULL
-AND count_star =0  
-AND index_name <> 'PRIMARY' 
-AND object_schema != 'mysql' 
+AND count_star =0
+AND index_name <> 'PRIMARY'
+AND object_schema != 'mysql'
 ORDER BY count_star, object_schema, object_name;
 ENDSQL
     @idxinfo = select_array($selIdxReq);
@@ -2792,7 +2792,7 @@ END_TEMPLATE
 }
 sub dump_result {
     if ($opt{'debug'}) {
-      
+
       if (try_load('Data::Dumper')) {
           badprint "Data::Dumper Module is needed.";
           exit 1;
@@ -2893,7 +2893,7 @@ You must provide the remote server's total memory when connecting to other serve
  --forcemem <size>    Amount of RAM installed in megabytes
  --forceswap <size>   Amount of swap memory configured in megabytes
  --passwordfile <path>Path to a password file list(one password by line)
- 
+
 =head1 OUTPUT OPTIONS
  --silent             Don't output anything on screen
  --nogood             Remove OK responses
