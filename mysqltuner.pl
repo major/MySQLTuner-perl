@@ -771,6 +771,12 @@ sub security_recommendations {
         return;
     }
 
+    my $PASS_COLLUMN_NAME='password';
+    if ($myvar{'version'} =~ /5.7/) {
+      $PASS_COLLUMN_NAME='authentication_string';
+    }
+    debugprint "Colunn password = $PASS_COLLUMN_NAME";
+    #exit(0);
     # Looking for Anonymous users
     my @mysqlstatlist = select_array
 "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL";
@@ -790,7 +796,7 @@ sub security_recommendations {
 
     # Looking for Empty Password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = '' OR password IS NULL";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLLUMN_NAME = '' OR $PASS_COLLUMN_NAME IS NULL";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
@@ -806,7 +812,7 @@ sub security_recommendations {
 
     # Looking for User with user/ uppercase /capitalise user as password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST(password as Binary) = PASSWORD(user) OR CAST(password as Binary) = PASSWORD(UPPER(user)) OR CAST(password as Binary) = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)))";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST($PASS_COLLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLLUMN_NAME as Binary) = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)))";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
@@ -847,11 +853,11 @@ sub security_recommendations {
             # Looking for User with user/ uppercase /capitalise weak password
             @mysqlstatlist =
               select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE password = PASSWORD('"
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLLUMN_NAME = PASSWORD('"
               . $pass
-              . "') OR password = PASSWORD(UPPER('"
+              . "') OR $PASS_COLLUMN_NAME = PASSWORD(UPPER('"
               . $pass
-              . "')) OR password = PASSWORD(UPPER(LEFT('"
+              . "')) OR $PASS_COLLUMN_NAME = PASSWORD(UPPER(LEFT('"
               . $pass
               . "', 1)) + SUBSTRING('"
               . $pass
