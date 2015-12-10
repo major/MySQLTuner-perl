@@ -167,7 +167,7 @@ my $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]" : "[!!]";
 my $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]" : "[--]";
 my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]" : "[DG]";
 
-# Super sturucture containing all informations
+# Super structure containing all information
 my %result;
 
 # Functions that handle the print styles
@@ -187,7 +187,7 @@ sub greenwrap {
     return ( $opt{nocolor} == 0 ) ? "\e[0;32m" . $_[0] . "\e[0m" : $_[0];
 }
 
-# Calculates the parameter passed in bytes, and then rounds it to one decimal place
+# Calculates the parameter passed in bytes, then rounds it to one decimal place
 sub hr_bytes {
     my $num = shift;
     if ( $num >= ( 1024**3 ) ) {    #GB
@@ -204,7 +204,7 @@ sub hr_bytes {
     }
 }
 
-# Calculates the parameter passed in bytes, and then rounds it to the nearest integer
+# Calculates the parameter passed in bytes, then rounds it to the nearest integer
 sub hr_bytes_rnd {
     my $num = shift;
     if ( $num >= ( 1024**3 ) ) {       #GB
@@ -394,7 +394,7 @@ sub validate_tuner_version {
     compare_tuner_version($update);
     return;
   }
-  debugprint "curl and wget are not avalaible.";
+  debugprint "curl and wget are not available.";
   infoprint "Unable to check for the latest MySQLTuner version";
 }
 
@@ -417,7 +417,6 @@ my $osname = $^O;
 if( $osname eq 'MSWin32' ) {
   eval { require Win32; } or last;
   $osname = Win32::GetOSName();
-  #print "\nOS Name: $osname";
   print "* Windows OS($osname) is not supported.\n";
   exit 1;
 }
@@ -771,11 +770,11 @@ sub security_recommendations {
         return;
     }
 
-    my $PASS_COLLUMN_NAME='password';
+    my $PASS_COLUMN_NAME='password';
     if ($myvar{'version'} =~ /5.7/) {
-      $PASS_COLLUMN_NAME='authentication_string';
+      $PASS_COLUMN_NAME='authentication_string';
     }
-    debugprint "Colunn password = $PASS_COLLUMN_NAME";
+    debugprint "Password column = $PASS_COLUMN_NAME";
     #exit(0);
     # Looking for Anonymous users
     my @mysqlstatlist = select_array
@@ -788,7 +787,7 @@ sub security_recommendations {
         push( @generalrec,
                 "Remove Anonymous User accounts - there are "
               . scalar(@mysqlstatlist)
-              . " Anonymous accounts." );
+              . " anonymous accounts." );
     }
     else {
         goodprint "There are no anonymous accounts for any database users";
@@ -796,7 +795,7 @@ sub security_recommendations {
 
     # Looking for Empty Password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLLUMN_NAME = '' OR $PASS_COLLUMN_NAME IS NULL";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
@@ -812,7 +811,7 @@ sub security_recommendations {
 
     # Looking for User with user/ uppercase /capitalise user as password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST($PASS_COLLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLLUMN_NAME as Binary) = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)))";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)))";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
@@ -835,7 +834,7 @@ sub security_recommendations {
     }
 
     unless ( -f $basic_password_files ) {
-        badprint "There is no basic password file list !";
+        badprint "There is no basic password file list!";
         return;
     }
 
@@ -853,11 +852,11 @@ sub security_recommendations {
             # Looking for User with user/ uppercase /capitalise weak password
             @mysqlstatlist =
               select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLLUMN_NAME = PASSWORD('"
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = PASSWORD('"
               . $pass
-              . "') OR $PASS_COLLUMN_NAME = PASSWORD(UPPER('"
+              . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
               . $pass
-              . "')) OR $PASS_COLLUMN_NAME = PASSWORD(UPPER(LEFT('"
+              . "')) OR $PASS_COLUMN_NAME = PASSWORD(UPPER(LEFT('"
               . $pass
               . "', 1)) + SUBSTRING('"
               . $pass
@@ -930,7 +929,7 @@ sub get_replication_status {
 "This replication slave is lagging and slave has $seconds_behind_master second(s) behind master host.";
         }
         else {
-            goodprint "This replication slave is uptodate with master.";
+            goodprint "This replication slave is up to date with master.";
         }
     }
 }
@@ -2121,7 +2120,7 @@ sub mysql_stats {
     }
 }
 
-# Recommandations for MyISAM
+# Recommendations for MyISAM
 sub mysql_myisam {
     prettyprint
 "\n-------- MyISAM Metrics -----------------------------------------------------";
@@ -2249,7 +2248,7 @@ sub mysql_myisam {
     }
 }
 
-# Recommandations for Ariadb
+# Recommendations for Ariadb
 sub mysql_ariadb {
     prettyprint
 "\n-------- AriaDB Metrics -----------------------------------------------------";
@@ -2320,7 +2319,7 @@ sub mysql_ariadb {
     }
 }
 
-# Recommandations for Innodb
+# Recommendations for InnoDB
 sub mysql_innodb {
     prettyprint
 "\n-------- InnoDB Metrics -----------------------------------------------------";
@@ -2530,7 +2529,7 @@ sub mysql_innodb {
     $result{'Calculations'} = {%mycalc};
 }
 
-# Recommandations for MySQL Databases
+# Recommendations for Database metrics
 sub mysql_databases {
     return if ( $opt{dbstat} == 0 );
 
@@ -2600,7 +2599,7 @@ sub mysql_databases {
         infoprint " +-- TOTAL: " . hr_bytes( $dbinfo[4] ) . "";
         badprint "Index size is larger than data size for $dbinfo[0] \n"
           if $dbinfo[2] < $dbinfo[3];
-        badprint "There " . $dbinfo[5] . " storage engines. Be careful \n"
+        badprint "There are " . $dbinfo[5] . " storage engines. Be careful. \n"
           if $dbinfo[5] > 1;
         $result{'Databases'}{ $dbinfo[0] }{'Rows'}      = $dbinfo[1];
         $result{'Databases'}{ $dbinfo[0] }{'Data Size'} = $dbinfo[2];
@@ -2613,7 +2612,7 @@ sub mysql_databases {
     }
 }
 
-# Recommandations for MySQL Databases
+# Recommendations for Indexes metrics
 sub mysql_indexes {
     return if ( $opt{idxstat} == 0 );
 
@@ -2696,7 +2695,7 @@ AND object_schema != 'mysql'
 ORDER BY count_star, object_schema, object_name;
 ENDSQL
     @idxinfo = select_array($selIdxReq);
-    infoprint "Unsused indexes:";
+    infoprint "Unused indexes:";
     push( @generalrec, "Remove unused indexes." ) if ( scalar(@idxinfo) > 0 );
     foreach (@idxinfo) {
         debugprint "$_";
@@ -2745,7 +2744,7 @@ sub string2file {
   my $filename=shift;
   my $content=shift;
   open my $fh, q(>), $filename
-  or die "Unable to open $filename in write mode. please check permissions for this file or directory";
+  or die "Unable to open $filename in write mode. Please check permissions for this file or directory";
   print $fh $content if defined($content);
   close $fh;
   debugprint $content if ($opt{'debug'});
@@ -2775,7 +2774,7 @@ if ($opt{'template'} ne 0 ) {
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Report</title>
+  <title>MySQLTuner Report</title>
   <meta charset="UTF-8">
 </head>
 <body>
@@ -2905,7 +2904,7 @@ You can find documentation for this module with the perldoc command.
 
   perldoc mysqltuner
 
-=head2 INTENALS
+=head2 INTERNALS
 
 L<https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md>
 
@@ -3046,6 +3045,10 @@ Joe Ashcraft
 =item *
 
 Jean-Marie Renouard
+
+=item *
+
+Stephan Großberndt
 
 =back
 
