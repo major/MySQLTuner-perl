@@ -177,7 +177,7 @@ these guidelines is the best way to get your work included in MySQLTuner.
 **IMPORTANT**: By submitting a patch, you agree to allow the project owner to
 license your work under the [GPLv3 License](https://en.wikipedia.org/wiki/GNU_General_Public_License).
 
-Copy of the licence is available at [LICENCE](https://github.com/major/MySQLTuner-perl/blob/master/LICENSE)
+Copy of the license is available at [LICENSE](https://github.com/major/MySQLTuner-perl/blob/master/LICENSE)
 
 <a name="code-conventions"></a>
 #### MySQLTuner Code Conventions
