@@ -4,7 +4,7 @@ Please take a moment to review this document in order to make the contribution
 process easy and effective for everyone involved.
 
 Following these guidelines will help us get back to you more quickly, and will
-show that you care about making Chosen better just like we do. In return, we'll
+show that you care about making MySQLTuner better just like we do. In return, we'll
 do our best to respond to your issue or pull request as soon as possible with
 the same respect.
 
@@ -27,17 +27,17 @@ following restrictions:
   respect the opinions of others.
 
 
-##Before Submitting an issue##
+##Before submitting an issue##
 
-1. Upgrade to the latest version of MySQLtuner and see if the problem remains
+1. Upgrade to the latest version of MySQLTuner and see if the problem remains
 
 2. Look at the [closed issues](https://github.com/major/mysqltuner-perl/issues?state=closed), we may have already answered a similar problem.
 
-3. Post new features or bugs you have found at  [ Issue tracker](https://github.com/major/mysqltuner-perl/issues)
+3. Post new features or bugs you have found at [Issue tracker](https://github.com/major/mysqltuner-perl/issues)
 
 4. [Read the doc](https://github.com/major/mysqltuner-perl/). It is short and useful.
 
-5. [Read the internal doc](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md). It is a complete and detailled documentation of all checks performed by this tool and this organization.
+5. [Read the internal doc](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md). It is a complete and detailed documentation of all checks performed by this tool and this organization.
 
 <a name="bugs"></a>
 ## Bug reports
@@ -96,12 +96,12 @@ provide as much detail and context as possible.
 
 Building something great means choosing features carefully especially because it
 is much, much easier to add features than it is to take them away. Additions
-to Chosen will be evaluated on a combination of scope (how well it fits into the
+to MySQLTuner will be evaluated on a combination of scope (how well it fits into the
 project), maintenance burden and general usefulness.
 
 Creating something great often means saying no to seemingly good ideas. Don't
 dispair if your feature request isn't accepted, take action! Fork the
-repository, build your idea and share it with others. We released Chosen under
+repository, build your idea and share it with others. We released MySQLTuner under
 the MIT License for this purpose precisely. Open source works best when smart
 and dedicated people riff off of each others' ideas to make even greater things.
 
@@ -120,9 +120,9 @@ otherwise you risk spending a lot of time working on something that the
 project's developers might not want to merge into the project. You can solicit
 feedback and opinions in an open feature request thread or create a new one.
 
-Please use the [git flow for pull requests](#git-flow) and follow Chosen's
+Please use the [git flow for pull requests](#git-flow) and follow MySQLTuner's
 [code conventions](#code-conventions) before submitting your work. Adhering to
-these guidelines is the best way to get your work included in Chosen.
+these guidelines is the best way to get your work included in MySQLTuner.
 
 <a name="git-flow"></a>
 #### Git Flow for pull requests
@@ -132,11 +132,11 @@ these guidelines is the best way to get your work included in Chosen.
 
    ```bash
    # Clone your fork of the repo into the current directory
-   git clone git@github.com:<YOUR_USERNAME>/chosen.git
+   git clone git@github.com:<YOUR_USERNAME>/MySQLTuner-perl.git
    # Navigate to the newly cloned directory
-   cd chosen
+   cd MySQLTuner-perl
    # Assign the original repo to a remote called "upstream"
-   git remote add upstream https://github.com/harvesthq/chosen
+   git remote add upstream https://github.com/major/MySQLTuner-perl
    ```
 
 2. If you cloned a while ago, get the latest changes from upstream:
@@ -177,10 +177,10 @@ these guidelines is the best way to get your work included in Chosen.
 **IMPORTANT**: By submitting a patch, you agree to allow the project owner to
 license your work under the [GPLv3 License](https://en.wikipedia.org/wiki/GNU_General_Public_License).
 
-Copy of the licence is available at [LICENCE](https://github.com/major/MySQLTuner-perl/blob/master/LICENSE)
+Copy of the license is available at [LICENSE](https://github.com/major/MySQLTuner-perl/blob/master/LICENSE)
 
 <a name="code-conventions"></a>
-#### Chosen Code Conventions
+#### MySQLTuner Code Conventions
 
 1. Check code convention using  **perltidy**
 2. Don't manually update the version number in `mysqltuner.pl`. 
