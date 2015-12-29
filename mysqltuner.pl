@@ -477,14 +477,16 @@ sub mysql_setup {
         $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
 
         # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
-        if ( $opt{'forcemem'} eq 0 ) {
+        if ( $opt{'forcemem'} eq 0 && ($opt{host} ne "127.0.0.1") && ($opt{host} ne "localhost")) {
             badprint
               "The --forcemem option is required for remote connections";
             exit 1;
         }
         infoprint "Performing tests on $opt{host}:$opt{port}";
         $remotestring = " -h $opt{host} -P $opt{port}";
-        $doremote     = 1;
+		if (($opt{host} ne "127.0.0.1") && ($opt{host} ne "localhost")) {
+        	$doremote     = 1;
+		}
     }
 
     # Did we already get a username and password passed on the command line?
@@ -3048,7 +3050,7 @@ Jean-Marie Renouard
 
 =item *
 
-Stephan Gro√überndt
+Stephan Groﬂberndt
 
 =back
 
