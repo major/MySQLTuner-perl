@@ -126,6 +126,26 @@ These kinds of things are bound to happen.  Here are the details I need from you
 * The full text of the error
 * A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
 
+MySQLTuner and Vagrant
+--
+**MySQLTuner** contains a Vagrant configuration for test purpose and development
+* Install VirtualBox and Vagrant
+	https://www.virtualbox.org/wiki/Downloads
+	https://www.vagrantup.com/downloads.html
+* Clone repository
+ 	git clone https://github.com/major/MySQLTuner-perl.git
+* Install Vagrant plugins vagrant-hostmanager and  vagrant-vbguest
+	vagrant plugin install vagrant-hostmanager
+	vagrant plugin install vagrant-vbguest
+* Add Fedora Core 23 box for official Fedora Download Website
+	vagrant box add --name fc23 https://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-virtualbox.box
+* Create a data directory
+	mkdir data
+* Rename Vagrantfile_MariaDB10.0 into Vagrantfile
+	cp MySQLTuner-perl/Vagrant/Vagrantfile_for_MariaDB10.0 Vagrantfile
+* Start vagrant
+	vagrant up
+
 MySQLTuner needs you
 --
 **MySQLTuner** needs contributors for documentation, code and feedbacks..
