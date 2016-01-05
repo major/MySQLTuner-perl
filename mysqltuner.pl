@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.1
+# mysqltuner.pl - Version 1.6.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.1";
+my $tunerversion = "1.6.2";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -90,7 +90,7 @@ GetOptions(
     'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
     'passwordfile=s', 'outputfile=s', 'silent',       'dbstat',
-    'idxstat', 'noask', 'template=s', 'reportfile=s'
+    'idxstat', 'noask', 'template=s', 'reportfile=s', 'cvefile=s',
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
@@ -133,6 +133,7 @@ sub usage {
       . "      --debug              Print debug information\n"
       . "      --dbstat             Print database information\n"
       . "      --idxstat            Print index information\n"
+      . "      --cvefile            CVE File for vulnerability checks\n"
       . "      --nocolor            Don't print output in color\n"
       . "      --buffers            Print global and per-thread buffer values\n"
       . "      --outputfile <path>  Path to a output txt file\n" . "\n"
@@ -764,6 +765,36 @@ sub get_basic_passwords {
     return @lines;
 }
 
+sub cve_recommendations {
+    prettyprint
+"\n-------- CVE Security Recommendations  -------------------------------------------";
+    unless ( defined($opt{cvefile}) && -f "$opt{cvefile}" ) {
+        infoprint "Skipped due to --cvefile option";
+        return;
+    }
+
+    #prettyprint "Look for related CVE for $myvar{'version'} or lower in $opt{cvefile}";
+    my $cvefound=0;
+    open( FH, "<$opt{cvefile}" ) or die "Can't open $opt{cvefile} for read: $!";
+    while (my $cveline = <FH>)
+    {
+      my @cve=split (';', $cveline);
+      if (mysql_micro_version_le ($cve[1], $cve[2], $cve[3])) {
+        badprint "$cve[4] : $cve[5]";
+        $cvefound++;
+      }
+    
+    }
+    close FH or die "Cannot close $opt{cvefile}: $!";
+    if ($cvefound==0) {
+      goodprint "NO SECURITY CVE FOUND FOR YOUR VERSION";
+      return;
+    } 
+    badprint $cvefound . " CVE(s) found for your MySQL release.";
+    push( @generalrec, $cvefound . " CVE(s) found for your MySQL release. Consider upgrading your version !" );
+}
+
+
 sub security_recommendations {
     prettyprint
 "\n-------- Security Recommendations  -------------------------------------------";
@@ -978,6 +1009,14 @@ sub mysql_version_le {
       || $mysqlvermajor == $maj
       && ( $mysqlverminor < $min
         || $mysqlverminor == $min && $mysqlvermicro <= $mic );
+}
+
+# Checks if MySQL micro version is lower than equal to (major, minor, micro)
+sub mysql_micro_version_le {
+    my ( $maj, $min, $mic ) = @_;
+    return $mysqlvermajor == $maj
+      && ( $mysqlverminor == $min
+      && $mysqlvermicro <= $mic );
 }
 
 # Checks for 32-bit boxes with more than 2GB of RAM
@@ -2834,6 +2873,7 @@ check_storage_engines;       # Show enabled storage engines
 mysql_databases;             # Show informations about databases
 mysql_indexes;               # Show informations about indexes
 security_recommendations;    # Display some security recommendations
+cve_recommendations;         # Display related CVE
 calculations;                # Calculate everything we need
 mysql_stats;                 # Print the server stats
 mysql_myisam;                # Print MyISAM stats
@@ -2857,7 +2897,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.1 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.2 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -2887,6 +2927,7 @@ You must provide the remote server's total memory when connecting to other serve
  --passwordfile <path>Path to a password file list(one password by line)
 
 =head1 OUTPUT OPTIONS
+
  --silent             Don't output anything on screen
  --nogood             Remove OK responses
  --nobad              Remove negative/suggestion responses
@@ -2894,6 +2935,7 @@ You must provide the remote server's total memory when connecting to other serve
  --debug              Print debug information
  --dbstat             Print database information
  --idxstat            Print index information
+ --cvefile            CVE File for vulnerability checks
  --nocolor            Don't print output in color
  --buffers            Print global and per-thread buffer values
  --outputfile <path>  Path to a output txt file
@@ -3050,7 +3092,7 @@ Jean-Marie Renouard
 
 =item *
 
-Stephan Groﬂberndt
+Stephan GroBberndt
 
 =back
 

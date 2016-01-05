@@ -17,6 +17,7 @@ Compatibility:
 * Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
 * Windows is not supported at this time (Help wanted !!!!!)
 * Unrestricted read access to the MySQL server (OS root access recommended for MySQL < 5.1)
+* CVE vulnerabilites detection support from [https://cve.mitre.org](https://cve.mitre.org)
 
 ***WARNING***
 --
@@ -41,6 +42,7 @@ You can download the entire repository by using 'git clone' followed by the clon
 
 	wget http://mysqltuner.pl/ -O mysqltuner.pl
 	wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
+	wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 	perl mysqltuner.pl
 	
 Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
@@ -59,6 +61,10 @@ __Usage:__ Minimal usage remotely
 __Usage:__ Enable maximum output information around MySQL/MariaDb without debugging 
 
 	perl mysqltuner.pl --buffers --dbstat --idxstat
+
+__Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
+
+	perl mysqltuner.pl --cvefile=vulnerabilities.csv
 
 __Usage:__ Write your result in a file with information displayed  
 
@@ -125,6 +131,11 @@ These kinds of things are bound to happen.  Here are the details I need from you
 * Where you obtained your MySQL version (OS package, source, etc)
 * The full text of the error
 * A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
+
+Question: How to perform a CVE vulneralibity checks ?
+
+* Download vulnerabilities.cvs from this repository.
+* use option --cvefile to perform CVE checks
 
 MySQLTuner and Vagrant
 --

@@ -8,6 +8,7 @@
 * [Server version checks](#mysqltuner-server-version-checks)
 * [MySQL Storage engine general information](#mysql-storage-engine-general-information)
 * [Security checks](#mysqltuner-security-checks)
+* [CVE checks](#mysqltuner-cve-checks)
 * [Database information](#mysqltuner-database-information)
 * [Index information](#mysqltuner-index-information)
 * [Connections information](#mysqltuner-connections-information)
@@ -85,6 +86,11 @@
 * Weak password check (possibly using cracklib later?)
 * Using basic_passwords.txt as password database
 * Password list checks can be avoid (option: --skippassword) 
+
+## MySQLTuner CVE vulnerabilities checks
+
+* option: --cvefile
+* Check if your MariaDB or MySQL version contains CVE bulletins.
 
 ## MySQLTuner database information
 * Per database information
