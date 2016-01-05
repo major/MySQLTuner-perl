@@ -134,7 +134,7 @@ These kinds of things are bound to happen.  Here are the details I need from you
 
 Question: How to perform a CVE vulneralibity checks ?
 
-* Download vulnerabilities.cvs from this repository.
+* Download vulnerabilities.csv from this repository.
 * use option --cvefile to perform CVE checks
 
 MySQLTuner and Vagrant

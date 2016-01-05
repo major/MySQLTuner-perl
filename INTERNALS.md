@@ -87,7 +87,7 @@
 * Using basic_passwords.txt as password database
 * Password list checks can be avoid (option: --skippassword) 
 
-## MySQLTuner CVE vulnerabilities checks
+## MySQLTuner CVE vulnerabilities detection
 
 * option: --cvefile
 * Check if your MariaDB or MySQL version contains CVE bulletins.
