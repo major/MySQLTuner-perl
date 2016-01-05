@@ -3,6 +3,8 @@ use warnings;
 use strict;
 use WWW::Mechanize::GZip;
 use File::Util;
+use Data::Dumper;
+use List::MoreUtils qw(uniq);
 my $verbose;
 sub AUTOLOAD {
     use vars qw($AUTOLOAD);
@@ -36,19 +38,38 @@ $mech->add_handler("response_redirect" => sub { print '#'x80,"\nREDIRECT RESPONS
 
 
 my $url = 'http://cve.mitre.org/data/downloads/allitems.csv';
-my $resp=$mech->get($url);
+my $resp;
 
-unlink 'cve.cvs' if -f 'cve.csv';
-$mech->save_content( "cve.csv" );
+unless (-f 'cve.csv')
+{
+    $resp=$mech->get($url); 
+    $mech->save_content( "cve.csv" );
+}
 
 my $f=File::Util->new('readlimit' => 100000000, 'use_flock'=>'false');
 my(@lines) = $f->load_file('cve.csv', '--as-lines');
-
-unlink 'vulnerability.csv' if -f 'vulnerability.csv';
+my @versions;
+my $temp;
+unlink 'vulnerabilities.csv' if -f 'vulnerabilities.csv';
 foreach my $line (@lines) {
-	if ($line =~ /(mysql|mariadb)/i and $line =~ /server/i) {
-		$f->write_file('file' => 'vulnerability.csv', 'content' => "$line\n", 'mode' => 'append');
+	if ($line =~ /(mysql|mariadb)/i 
+            and $line =~ /server/i
+            and $line =~ /CANDIDATE/i 
+            and $line !~ /MaxDB/i
+            and $line !~ /\*\* REJECT \*\* /i
+            and $line !~ /\*\* DISPUTED \*\* /i
+            and $line !~ /(Radius|Proofpoint|Active\ Record|XAMPP|TGS\ Content|e107|post-installation|Apache\ HTTP|Zmanda|pforum|phpMyAdmin|Proxy\ Server|on\ Windows|ADOdb|Mac\ OS|Dreamweaver|InterWorx|libapache2|cisco|ProFTPD)/i) {
+        $line =~ s/,/;/g;
+		
+        @versions = $line =~/(\d{1,2}\.\d+\.[\d|x]+)/g;
+        
+        foreach my $vers (uniq(@versions)) {
+            my @nb=split('\.', $vers);
+            #print $vers."\n".Dumper @nb;
+            #exit 0;
+            $f->write_file('file' => 'vulnerabilities.csv', 'content' => "$vers;$nb[0];$nb[1];$nb[2];$line\n", 'mode' => 'append');
+        }
 	}
 }
-unlink 'cve.cvs' if -f 'cve.csv';
+
 exit(0);

@@ -33,6 +33,7 @@ install -p %{name}.pl $RPM_BUILD_ROOT%{_bindir}/%{name}
 install -d $RPM_BUILD_ROOT%{_datarootdir}/%{name}
 install -p LICENSE $RPM_BUILD_ROOT%{_datarootdir}/%{name}
 install -p basic_passwords.txt $RPM_BUILD_ROOT%{_datarootdir}/%{name}
+install -p vulnerabilities.csv $RPM_BUILD_ROOT%{_datarootdir}/%{name}
 install -p %{name}.1.gz $RPM_BUILD_ROOT/%{_mandir}/man1
 
 %clean
@@ -45,6 +46,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/*
 
 %changelog
-* Thu Jun 18 2015 Jean-Marie RENOUARD <jmrenouard@gmail.com> %VERSION%-1
+* Tue Jan 05 2015 Jean-Marie RENOUARD <jmrenouard@gmail.com> %VERSION%-1
 - Initial RPM release
 
