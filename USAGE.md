@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.4.9 - MySQL High Performance Tuning Script
+    MySQLTuner 1.6.2 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -28,24 +28,34 @@ You must provide the remote server's total memory when connecting to other serve
     --forcemem <size>    Amount of RAM installed in megabytes
     --forceswap <size>   Amount of swap memory configured in megabytes
     --passwordfile <path>Path to a password file list(one password by line)
-    --reportfile <path>  Path to a report txt file
 
 # OUTPUT OPTIONS
 
+    --silent             Don't output anything on screen
     --nogood             Remove OK responses
     --nobad              Remove negative/suggestion responses
     --noinfo             Remove informational responses
     --debug              Print debug information
     --dbstat             Print database information
     --idxstat            Print index information
+    --cvefile            CVE File for vulnerability checks
     --nocolor            Don't print output in color
     --buffers            Print global and per-thread buffer values
+    --outputfile <path>  Path to a output txt file
+    --reportfile <path>  Path to a report txt file
+    --template   <path>  Path to a template file
 
 # PERLDOC
 
 You can find documentation for this module with the perldoc command.
 
     perldoc mysqltuner
+
+## INTERNALS
+
+[https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md)
+
+    Internal documentation
 
 # AUTHORS
 
@@ -84,7 +94,8 @@ Major Hayden - major@mhtx.net
 - Cole Turner
 - Major Hayden
 - Joe Ashcraft
-- Stephan Großberndt
+- Jean-Marie Renouard
+- Stephan GroBberndt
 
 # SUPPORT
 
