@@ -152,6 +152,11 @@ my $basic_password_files =
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
 
+# for RPM distributions
+$opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
+  unless ( defined $opt{cvefile} and -f "$opt{cvefile}");
+$opt{cvefile} ='' unless -f "$opt{cvefile}";
+
 #
 my $outputfile = undef;
 $outputfile = abs_path( $opt{outputfile} ) unless $opt{outputfile} eq "0";
@@ -769,7 +774,7 @@ sub cve_recommendations {
     prettyprint
 "\n-------- CVE Security Recommendations  -------------------------------------------";
     unless ( defined($opt{cvefile}) && -f "$opt{cvefile}" ) {
-        infoprint "Skipped due to --cvefile option";
+        infoprint "Skipped due to --cvefile option undefined";
         return;
     }
 
