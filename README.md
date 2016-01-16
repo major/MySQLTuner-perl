@@ -31,7 +31,7 @@ MySQL in other areas.
 
 **Seriously - please review the FAQ section below.**
 
-What MySQLTuner is checking exactely ? 
+What MySQLTuner is checking exactly ? 
 --
 All checks done by **MySQLTuner** are documented in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) documentation.
 
