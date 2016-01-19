@@ -61,7 +61,7 @@ foreach my $line (@lines) {
             and $line !~ /(Radius|Proofpoint|Active\ Record|XAMPP|TGS\ Content|e107|post-installation|Apache\ HTTP|Zmanda|pforum|phpMyAdmin|Proxy\ Server|on\ Windows|ADOdb|Mac\ OS|Dreamweaver|InterWorx|libapache2|cisco|ProFTPD)/i) {
         $line =~ s/,/;/g;
 		
-        @versions = $line =~/(\d{1,2}\.\d+\.[\d|x]+)/g;
+        @versions = $line =~/(\d{1,2}\.\d+\.[\d]+)/g;
         
         foreach my $vers (uniq(@versions)) {
             my @nb=split('\.', $vers);
