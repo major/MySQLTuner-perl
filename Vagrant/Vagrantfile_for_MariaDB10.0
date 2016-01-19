@@ -76,11 +76,13 @@ Vagrant.configure(2) do |config|
      sudo chown -R root.root  /root/.ssh
      sudo yum -y install git python
      sudo pip install --upgrade pip
-     #sudo pip install twistml twitter TwitterFollowBot
      if [ ! -d "/data/MySQLTuner-perl" ]; then
       cd /data
       sudo git clone https://github.com/major/MySQLTuner-perl.git
-     fi
+      fi
+      sudo yum -y install perl-WWW-Mechanize-GZip  perl-App-cpanminus perl-List-MoreUtils
+      sudo cpanm install File::Util
+
      sudo yum -y install mariadb mariadb-server wget
      sudo systemctl start mariadb.service
      mysql -e 'select version();'
