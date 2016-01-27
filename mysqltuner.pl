@@ -2293,6 +2293,22 @@ sub mysql_myisam {
     }
 }
 
+# Recommendations for ThreadPool
+sub mariadb_threadpool {
+    prettyprint
+"\n-------- ThreadPool Metrics -----------------------------------------------------";
+
+    # AriaDB
+    unless ( defined $myvar{'have_threadpool'}
+        && $myvar{'have_threadpool'} eq "YES"
+        && defined $enginestats{'Aria'} )
+    {
+        infoprint "ThreadPool stat is disabled.";
+        return;
+    }
+    infoprint "ThreadPool stat is enabled.";
+}
+
 # Recommendations for Ariadb
 sub mariadb_ariadb {
     prettyprint
@@ -2927,6 +2943,7 @@ calculations;                # Calculate everything we need
 mysql_stats;                 # Print the server stats
 mysql_myisam;                # Print MyISAM stats
 mysql_innodb;                # Print InnoDB stats
+mariadb_threadpool;          # Print MaraiDB ThreadPool stats
 mariadb_ariadb;              # Print MaraiDB AriaDB stats
 mariadb_tokudb;              # Print MaraiDB TokuDB stats
 mariadb_galera;              # Print MaraiDB Galera Cluster stats
