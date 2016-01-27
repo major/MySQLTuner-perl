@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.6.2 - MySQL High Performance Tuning Script
+    MySQLTuner 1.6.3 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -40,6 +40,7 @@ You must provide the remote server's total memory when connecting to other serve
     --idxstat            Print index information
     --cvefile            CVE File for vulnerability checks
     --nocolor            Don't print output in color
+    --json               Print result as JSON string
     --buffers            Print global and per-thread buffer values
     --outputfile <path>  Path to a output txt file
     --reportfile <path>  Path to a report txt file
@@ -131,4 +132,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
     See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program.  If not, see &lt;http://www.gnu.org/licenses/>.
