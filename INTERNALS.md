@@ -213,8 +213,8 @@
 * wsrep_ready cluster is ready
 * wsrep_connected node is connected to other nodes
 * wsrep_cluster_status PRIMARY /NON PRIMARY.
-* PRIMARY : Coherent cluster
-* NO PRIMARY : cluster gets several states
+	* PRIMARY : Coherent cluster
+	* NO PRIMARY : cluster gets several states
 * wsrep_ local_state_comment: Node state
 	* SYNCED (uptodate),
 	* DONOR(sending information to another node)
