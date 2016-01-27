@@ -774,7 +774,7 @@ sub get_basic_passwords {
 
 sub cve_recommendations {
     prettyprint
-"\n-------- CVE Security Recommendations  -------------------------------------------";
+"\n-------- CVE Security Recommendations  ---------------------------------------";
     unless ( defined($opt{cvefile}) && -f "$opt{cvefile}" ) {
         infoprint "Skipped due to --cvefile option undefined";
         return;
@@ -2171,7 +2171,7 @@ sub mysql_stats {
 # Recommendations for MyISAM
 sub mysql_myisam {
     prettyprint
-"\n-------- MyISAM Metrics -----------------------------------------------------";
+"\n-------- MyISAM Metrics ------------------------------------------------------";
     # Key buffer usage
     if ( defined( $mycalc{'pct_key_buffer_used'} ) ) {
         if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
@@ -2296,7 +2296,7 @@ sub mysql_myisam {
 # Recommendations for ThreadPool
 sub mariadb_threadpool {
     prettyprint
-"\n-------- ThreadPool Metrics -----------------------------------------------------";
+"\n-------- ThreadPool Metrics --------------------------------------------------";
 
     # AriaDB
     unless ( defined $myvar{'have_threadpool'}
@@ -2312,7 +2312,7 @@ sub mariadb_threadpool {
 # Recommendations for Ariadb
 sub mariadb_ariadb {
     prettyprint
-"\n-------- AriaDB Metrics -----------------------------------------------------";
+"\n-------- AriaDB Metrics ------------------------------------------------------";
 
     # AriaDB
     unless ( defined $myvar{'have_aria'}
@@ -2384,7 +2384,7 @@ sub mariadb_ariadb {
 # Recommendations for TokuDB
 sub mariadb_tokudb {
     prettyprint
-"\n-------- TokuDB Metrics -----------------------------------------------------";
+"\n-------- TokuDB Metrics ------------------------------------------------------";
 
     # AriaDB
     unless ( defined $myvar{'have_tokudb'}
@@ -2402,7 +2402,7 @@ sub mariadb_tokudb {
 # Recommendations for Galera
 sub mariadb_galera {
     prettyprint
-"\n-------- Galera Metrics -----------------------------------------------------";
+"\n-------- Galera Metrics ------------------------------------------------------";
 
     # AriaDB
     unless ( defined $myvar{'have_galera'}
@@ -2419,7 +2419,7 @@ sub mariadb_galera {
 # Recommendations for InnoDB
 sub mysql_innodb {
     prettyprint
-"\n-------- InnoDB Metrics -----------------------------------------------------";
+"\n-------- InnoDB Metrics ------------------------------------------------------";
 
     # InnoDB
     unless ( defined $myvar{'have_innodb'}
@@ -2631,7 +2631,7 @@ sub mysql_databases {
     return if ( $opt{dbstat} == 0 );
 
     prettyprint
-"\n-------- Database Metrics ------------------------------------------------";
+"\n-------- Database Metrics ----------------------------------------------------";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
 "Skip Database metrics from information schema missing in this version";
@@ -2714,7 +2714,7 @@ sub mysql_indexes {
     return if ( $opt{idxstat} == 0 );
 
     prettyprint
-"\n-------- Indexes Metrics -------------------------------------------------";
+"\n-------- Indexes Metrics -----------------------------------------------------";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
 "Skip Index metrics from information schema missing in this version";
