@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.2";
+my $tunerversion = "1.6.3";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -658,7 +658,7 @@ sub mysql_setup {
 sub select_array {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = `$mysqlcmd $mysqllogin -Bse "$req"`;
+    my @result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
     chomp(@result);
     return @result;
 }
@@ -667,7 +667,7 @@ sub select_array {
 sub select_one {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my $result = `$mysqlcmd $mysqllogin -Bse "$req"`;
+    my $result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
     chomp($result);
     return $result;
 }
