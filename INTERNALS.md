@@ -23,6 +23,7 @@
 * [MYISAM information](#mysqltuner-myisam-information)
 * [GALERA information](#mysqltuner-galera-information)
 * [TOKUDB information](#mysqltuner-tokudb-information)
+* [ThreadPool information](#mysqltuner-threadpool-information)
 
 ## MySQLTuner steps
 
@@ -226,6 +227,7 @@
 
 
 ## MySQLTuner TokuDB information
+
 * tokudb_cache_size 
 * tokudb_directio 
 * tokudb_empty_scan
@@ -235,4 +237,18 @@
 * tokudb_block_size 
 * tokudb_cleaner_iterations
 * tokudb_fanout
-* 
+
+## MySQLTuner MariaDB thread pool information
+
+* thread_pool_size
+* thread_pool_stall_limit 
+
+* thread_pool_max_threads 
+* thread_pool_idle_timeout 
+
+* thread_pool_oversubscribe
+
+* threadpool_threads
+* threadpool_idle_threads
+* threadpool_threads / thread_pool_size
+* threadpool_idle_threads / thread_pool_size
