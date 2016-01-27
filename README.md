@@ -7,7 +7,7 @@ MySQLTuner-perl
 MySQLTuner is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
 
 
-![MysqlTuner](https://raw.github.com/major/MySQLTuner-perl/mysqltuner.png)
+![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
 
 Compatibility:
 ====
