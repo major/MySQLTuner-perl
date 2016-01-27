@@ -147,7 +147,8 @@ MySQLTuner and Vagrant
 * Fedora Core 23 / MySQL 5.6
 * Fedora Core 23 / MySQL 5.7
        
-** Vagrant File** are stored in Vagrant subdirectory.
+**Vagrant File** are stored in Vagrant subdirectory. 
+Follow this 2 steps after vagrant installation:
 * Rename VagrantFile_for_Mxxx into Vagrantfile
 * vagrant up
 
