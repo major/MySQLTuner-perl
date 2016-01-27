@@ -207,3 +207,16 @@
 * Key buffer read hit ratio (>95%)
 * Key buffer write hit ratio (>95%)
 
+## MySQLTuner Galera information
+* wsrep_ready cluster is ready
+* wsrep_connected node is connected to other nodes
+* wsrep_cluster_status PRIMARY /NON PRIMARY.
+* PRIMARY : Coherent cluster
+* NO PRIMARY : cluster gets several states
+* wsrep_ local_state_comment: Node state
+	* SYNCED (uptodate),
+	* DONOR(sending information to another node)
+	* Joiner(Try to reach cluster group)
+	* SYNCED state able to read/write
+* wsrep_cluster_conf_id configuration level must be identical in all nodes
+* wsrep_last_commited committed level must be identical in all nodes
