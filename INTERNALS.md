@@ -22,6 +22,7 @@
 * [ARIADB information](#mysqltuner-ariadb-information)
 * [MYISAM information](#mysqltuner-myisam-information)
 * [GALERA information](#mysqltuner-galera-information)
+* [TOKUDB information](#mysqltuner-tokudb-information)
 
 ## MySQLTuner steps
 
@@ -222,3 +223,16 @@
 	* SYNCED state able to read/write
 * wsrep_cluster_conf_id configuration level must be identical in all nodes
 * wsrep_last_commited committed level must be identical in all nodes
+
+
+## MySQLTuner TokuDB information
+* tokudb_cache_size 
+* tokudb_directio 
+* tokudb_empty_scan
+* tokudb_read_block_size
+* tokudb_commit_sync
+* tokudb_checkpointing_period
+* tokudb_block_size 
+* tokudb_cleaner_iterations
+* tokudb_fanout
+* 
