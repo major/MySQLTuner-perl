@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.2
+# mysqltuner.pl - Version 1.6.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -79,6 +79,7 @@ my %opt = (
     "skippassword" => 0,
     "noask"        => 0,
     "template"     => 0,
+    "json"         => 0,
     "reportfile"   => 0
 );
 
@@ -89,7 +90,7 @@ GetOptions(
     'host=s',         'socket=s',     'port=i',       'user=s',
     'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
-    'passwordfile=s', 'outputfile=s', 'silent',       'dbstat',
+    'passwordfile=s', 'outputfile=s', 'silent',       'dbstat', 'json',
     'idxstat', 'noask', 'template=s', 'reportfile=s', 'cvefile=s',
 );
 
@@ -135,6 +136,7 @@ sub usage {
       . "      --idxstat            Print index information\n"
       . "      --cvefile            CVE File for vulnerability checks\n"
       . "      --nocolor            Don't print output in color\n"
+      . "      --json               Print result as JSON string\n"
       . "      --buffers            Print global and per-thread buffer values\n"
       . "      --outputfile <path>  Path to a output txt file\n" . "\n"
       . "      --reportfile <path>  Path to a report txt file\n" . "\n"
@@ -2170,9 +2172,6 @@ sub mysql_stats {
 sub mysql_myisam {
     prettyprint
 "\n-------- MyISAM Metrics -----------------------------------------------------";
-
-    # AriaDB
-
     # Key buffer usage
     if ( defined( $mycalc{'pct_key_buffer_used'} ) ) {
         if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
@@ -2295,7 +2294,7 @@ sub mysql_myisam {
 }
 
 # Recommendations for Ariadb
-sub mysql_ariadb {
+sub mariadb_ariadb {
     prettyprint
 "\n-------- AriaDB Metrics -----------------------------------------------------";
 
@@ -2363,6 +2362,42 @@ sub mysql_ariadb {
             # No queries have run that would use keys
         }
     }
+}
+
+
+# Recommendations for TokuDB
+sub mariadb_tokudb {
+    prettyprint
+"\n-------- TokuDB Metrics -----------------------------------------------------";
+
+    # AriaDB
+    unless ( defined $myvar{'have_tokudb'}
+        && $myvar{'have_tokudb'} eq "YES"
+        && defined $enginestats{'TokuDb'} )
+    {
+        infoprint "TokuDB is disabled.";
+        return;
+    }
+    infoprint "TokuDB is enabled.";
+
+    # All is to done here
+}
+
+# Recommendations for Galera
+sub mariadb_galera {
+    prettyprint
+"\n-------- Galera Metrics -----------------------------------------------------";
+
+    # AriaDB
+    unless ( defined $myvar{'have_galera'}
+        && $myvar{'have_galera'} eq "YES"
+        && defined $enginestats{'Galera'} )
+    {
+        infoprint "Galera is disabled.";
+        return;
+    }
+    infoprint "Galera is enabled.";
+    # All is to done here
 }
 
 # Recommendations for InnoDB
@@ -2861,6 +2896,15 @@ sub dump_result {
       $template->fill_in(HASH =>$vars, OUTPUT=>$fh );
       close $fh;
     }
+    if ($opt{'json'} ne 0 ) {
+      eval "{ use JSON }";
+      if ($@) {
+          badprint "JSON Module is needed.";
+          exit 1;
+      }
+      my $json = JSON->new->allow_nonref;
+      print JSON->new->utf8(1)->pretty(1)->encode(%result);
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -2883,7 +2927,9 @@ calculations;                # Calculate everything we need
 mysql_stats;                 # Print the server stats
 mysql_myisam;                # Print MyISAM stats
 mysql_innodb;                # Print InnoDB stats
-mysql_ariadb;                # Print AriaDB stats
+mariadb_ariadb;              # Print MaraiDB AriaDB stats
+mariadb_tokudb;              # Print MaraiDB TokuDB stats
+mariadb_galera;              # Print MaraiDB Galera Cluster stats
 get_replication_status;      # Print replication info
 make_recommendations;        # Make recommendations based on stats
 dump_result;                 # Dump result if debug is on
@@ -2902,7 +2948,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.2 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.3 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -2942,6 +2988,7 @@ You must provide the remote server's total memory when connecting to other serve
  --idxstat            Print index information
  --cvefile            CVE File for vulnerability checks
  --nocolor            Don't print output in color
+ --json               Print result as JSON string
  --buffers            Print global and per-thread buffer values
  --outputfile <path>  Path to a output txt file
  --reportfile <path>  Path to a report txt file
