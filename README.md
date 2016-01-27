@@ -142,10 +142,11 @@ Question: How to perform a CVE vulneralibity checks ?
 MySQLTuner and Vagrant
 --
 **MySQLTuner** contains following Vagrant configurations:
-       * Fedora Core 23 / MariaDB 10.0
-       * Fedora Core 23 / MariaDB 10.1
-       * Fedora Core 23 / MySQL 5.6
-       * Fedora Core 23 / MySQL 5.7
+* Fedora Core 23 / MariaDB 10.0
+* Fedora Core 23 / MariaDB 10.1
+* Fedora Core 23 / MySQL 5.6
+* Fedora Core 23 / MySQL 5.7
+       
 ** Vagrant File** are stored in Vagrant subdirectory.
 * Rename VagrantFile_for_Mxxx into Vagrantfile
 * vagrant up
