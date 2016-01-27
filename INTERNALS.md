@@ -21,6 +21,7 @@
 * [InnoDB information](#mysqltuner-innodb-information)
 * [ARIADB information](#mysqltuner-ariadb-information)
 * [MYISAM information](#mysqltuner-myisam-information)
+* [GALERA information](#mysqltuner-galera-information)
 
 ## MySQLTuner steps
 
@@ -208,6 +209,7 @@
 * Key buffer write hit ratio (>95%)
 
 ## MySQLTuner Galera information
+
 * wsrep_ready cluster is ready
 * wsrep_connected node is connected to other nodes
 * wsrep_cluster_status PRIMARY /NON PRIMARY.
