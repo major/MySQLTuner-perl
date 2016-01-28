@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.3
+# mysqltuner.pl - Version 1.6.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.3";
+my $tunerversion = "1.6.4";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -425,8 +425,8 @@ my $osname = $^O;
 if( $osname eq 'MSWin32' ) {
   eval { require Win32; } or last;
   $osname = Win32::GetOSName();
-  print "* Windows OS($osname) is not supported.\n";
-  exit 1;
+  infoprint "* Windows OS($osname) is not fully supported.\n";
+  #exit 1;
 }
 sub mysql_setup {
     $doremote     = 0;
@@ -2965,7 +2965,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.3 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.4 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
