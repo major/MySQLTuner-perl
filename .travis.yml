@@ -32,6 +32,7 @@ before_install:
 install:
    - cpanm --quiet --notest Data::Dumper
    - cpanm --quiet --notest Text::Template
-
+   - cpanm --quiet --notest JSON
+   
 script:
-   - ./mysqltuner.pl
+   - ./mysqltuner.pl -idxstat --dbstat
