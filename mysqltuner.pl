@@ -492,9 +492,9 @@ sub mysql_setup {
         }
         infoprint "Performing tests on $opt{host}:$opt{port}";
         $remotestring = " -h $opt{host} -P $opt{port}";
-		if (($opt{host} ne "127.0.0.1") && ($opt{host} ne "localhost")) {
-        	$doremote     = 1;
-		}
+        if (($opt{host} ne "127.0.0.1") && ($opt{host} ne "localhost")) {
+            $doremote     = 1;
+        }
     }
 
     # Did we already get a username and password passed on the command line?
@@ -598,7 +598,7 @@ sub mysql_setup {
             # Login went just fine
             $mysqllogin = " $remotestring ";
 
-       # Did this go well because of a .my.cnf file or is there no password set?
+            # Did this go well because of a .my.cnf file or is there no password set?
             my $userpath = `printenv HOME`;
             if ( length($userpath) > 0 ) {
                 chomp($userpath);
@@ -615,13 +615,27 @@ sub mysql_setup {
                 badprint "Attempted to use login credentials, but they were invalid";
                 exit 1;
             }
-
-            print STDERR "Please enter your MySQL administrative login: ";
-            my $name = <>;
-            print STDERR "Please enter your MySQL administrative password: ";
-            system("stty -echo >$devnull 2>&1");
-            my $password = <>;
-            system("stty echo >$devnull 2>&1");
+            my ($name, $password);
+            # If --user is defined no need to ask for username
+            if( $opt{user} ne 0 )
+            {
+                $name = $opt{user};
+            }
+            else{
+                print STDERR "Please enter your MySQL administrative login: ";
+                $name = <STDIN>;
+            }
+            # If --pass is defined no need to ask for password
+            if( $opt{pass} ne 0 )
+            {
+                $password = $opt{pass};
+            }
+            else{
+                print STDERR "Please enter your MySQL administrative password: ";
+                system("stty -echo >$devnull 2>&1");
+                $password = <STDIN>;
+                system("stty echo >$devnull 2>&1");
+            }
             chomp($password);
             chomp($name);
             $mysqllogin = "-u $name";
