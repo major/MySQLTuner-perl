@@ -352,6 +352,14 @@ sub os_setup {
             chomp($swap_memory);
             $swap_memory = $swap_memory * 1024 * 1024;
         }
+        elsif( $os =~ /windows/i ) {
+            $physical_memory =
+              `wmic ComputerSystem get TotalPhysicalMemory | perl -ne "chomp; print if /[0-9]+/;"`
+              or memerror;
+            $swap_memory     =
+              `wmic OS get FreeVirtualMemory | perl -ne "chomp; print if /[0-9]+/;"`
+              or memerror;
+        }
     }
     debugprint "Physical Memory: $physical_memory";
     debugprint "Swap Memory: $swap_memory";
