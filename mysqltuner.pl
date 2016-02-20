@@ -90,9 +90,8 @@ GetOptions(
     'host=s',         'socket=s',     'port=i',       'user=s',
     'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
-    'passwordfile=s', 'outputfile=s', 'silent',       'dbstat',
-    'json',           'idxstat',      'noask',        'template=s',
-    'reportfile=s',   'cvefile=s',
+    'passwordfile=s', 'outputfile=s', 'silent',       'dbstat', 'json',
+    'idxstat', 'noask', 'template=s', 'reportfile=s', 'cvefile=s',
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
@@ -157,8 +156,8 @@ $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
 
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
-  unless ( defined $opt{cvefile} and -f "$opt{cvefile}" );
-$opt{cvefile} = '' unless -f "$opt{cvefile}";
+  unless ( defined $opt{cvefile} and -f "$opt{cvefile}");
+$opt{cvefile} ='' unless -f "$opt{cvefile}";
 
 #
 my $outputfile = undef;
@@ -188,7 +187,6 @@ sub goodprint  { prettyprint $good. " " . $_[0] unless ( $opt{nogood} == 1 ); }
 sub infoprint  { prettyprint $info. " " . $_[0] unless ( $opt{noinfo} == 1 ); }
 sub badprint   { prettyprint $bad. " " . $_[0]  unless ( $opt{nobad} == 1 ); }
 sub debugprint { prettyprint $deb. " " . $_[0]  unless ( $opt{debug} == 0 ); }
-
 sub redwrap {
     return ( $opt{nocolor} == 0 ) ? "\e[0;31m" . $_[0] . "\e[0m" : $_[0];
 }
@@ -284,7 +282,6 @@ sub pretty_uptime {
 my ( $physical_memory, $swap_memory, $duflags );
 
 sub os_setup {
-
     sub memerror {
         badprint
 "Unable to determine total memory/swap; use '--forcemem' and '--forceswap'";
@@ -301,7 +298,8 @@ sub os_setup {
         }
         else {
             $swap_memory = 0;
-            badprint "Assuming 0 MB of swap space (use --forceswap to specify)";
+            badprint
+              "Assuming 0 MB of swap space (use --forceswap to specify)";
         }
     }
     else {
@@ -354,12 +352,12 @@ sub os_setup {
             chomp($swap_memory);
             $swap_memory = $swap_memory * 1024 * 1024;
         }
-        elsif ( $os =~ /windows/i ) {
+        elsif( $os =~ /windows/i ) {
             $physical_memory =
-`wmic ComputerSystem get TotalPhysicalMemory | perl -ne "chomp; print if /[0-9]+/;"`
+              `wmic ComputerSystem get TotalPhysicalMemory | perl -ne "chomp; print if /[0-9]+/;"`
               or memerror;
-            $swap_memory =
-`wmic OS get FreeVirtualMemory | perl -ne "chomp; print if /[0-9]+/;"`
+            $swap_memory     =
+              `wmic OS get FreeVirtualMemory | perl -ne "chomp; print if /[0-9]+/;"`
               or memerror;
         }
     }
@@ -378,73 +376,66 @@ sub os_setup {
 
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
-    if ( $opt{checkversion} eq 0 ) {
-        infoprint "Skipped version check for MySQLTuner script";
-        return;
-    }
+  if ($opt{checkversion} eq 0) {
+    infoprint "Skipped version check for MySQLTuner script";
+    return;
+  }
 
-    my $update;
-    my $url =
-"https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
-    my $httpcli = `which curl`;
-    chomp($httpcli);
-    if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
-        debugprint "$httpcli is available.";
+  my $update;
+  my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
+  my $httpcli=`which curl`;
+  chomp($httpcli);
+  if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
+    debugprint "$httpcli is available.";
 
-        debugprint
-"$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2";
-        $update =
-`$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2`;
-        chomp($update);
-        debugprint "VERSION: $update";
+    debugprint "$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2";
+    $update = `$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2`;
+    chomp($update);
+    debugprint "VERSION: $update";
 
-        compare_tuner_version($update);
-        return;
-    }
 
-    $httpcli = `which wget`;
-    chomp($httpcli);
-    if ( defined($httpcli) and -e "$httpcli" ) {
-        debugprint "$httpcli is available.";
+    compare_tuner_version($update);
+    return;
+  }
 
-        debugprint
-"$httpcli -e timestamping=off -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
-        $update =
-`$httpcli -e timestamping=off -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
-        chomp($update);
-        compare_tuner_version($update);
-        return;
-    }
-    debugprint "curl and wget are not available.";
-    infoprint "Unable to check for the latest MySQLTuner version";
+
+  $httpcli=`which wget`;
+  chomp($httpcli);
+  if ( defined($httpcli) and -e "$httpcli" ) {
+    debugprint "$httpcli is available.";
+
+    debugprint "$httpcli -e timestamping=off -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
+    $update = `$httpcli -e timestamping=off -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
+    chomp($update);
+    compare_tuner_version($update);
+    return;
+  }
+  debugprint "curl and wget are not available.";
+  infoprint "Unable to check for the latest MySQLTuner version";
 }
 
 sub compare_tuner_version {
-    my $remoteversion = shift;
-    debugprint "Remote data: $remoteversion";
-
-    #exit 0;
-    if ( $remoteversion ne $tunerversion ) {
-        badprint
-          "There is a new version of MySQLTuner available ($remoteversion)";
-        return;
-    }
-    goodprint "You have the latest version of MySQLTuner($tunerversion)";
-    return;
+   my $remoteversion=shift;
+   debugprint "Remote data: $remoteversion";
+   #exit 0;
+   if ($remoteversion ne $tunerversion) {
+     badprint "There is a new version of MySQLTuner available ($remoteversion)";
+     return;
+   }
+   goodprint "You have the latest version of MySQLTuner($tunerversion)";
+   return;
 }
 
 # Checks to see if a MySQL login is possible
 my ( $mysqllogin, $doremote, $remotestring, $mysqlcmd, $mysqladmincmd );
 
 my $osname = $^O;
-if ( $osname eq 'MSWin32' ) {
-    eval { require Win32; } or last;
-    $osname = Win32::GetOSName();
-    infoprint "* Windows OS($osname) is not fully supported.\n";
-
-    #exit 1;
+if( $osname eq 'MSWin32' ) {
+  eval { require Win32; } or last;
+  $osname = Win32::GetOSName();
+  infoprint "* Windows OS($osname) is not fully supported.\n";
+  #exit 1;
 }
-
 sub mysql_setup {
     $doremote     = 0;
     $remotestring = '';
@@ -461,7 +452,8 @@ sub mysql_setup {
         exit 1;
     }
     elsif ( !-e $mysqladmincmd ) {
-        badprint "Couldn't find mysqladmin in your \$PATH. Is MySQL installed?";
+        badprint
+          "Couldn't find mysqladmin in your \$PATH. Is MySQL installed?";
         exit 1;
     }
     if ( $opt{mysqlcmd} ) {
@@ -481,12 +473,11 @@ sub mysql_setup {
         exit 1;
     }
     $mysqlcmd =~ s/\n$//g;
-    my $mysqlclidefaults = `$mysqlcmd --print-defaults`;
+    my $mysqlclidefaults=`$mysqlcmd --print-defaults`;
     debugprint "MySQL Client: $mysqlclidefaults";
-    if ( $mysqlclidefaults =~ /auto-vertical-output/ ) {
-        badprint
-          "Avoid auto-vertical-output in configuration file(s) for MySQL like";
-        exit 1;
+    if ( $mysqlclidefaults=~/auto-vertical-output/ ) {
+      badprint "Avoid auto-vertical-output in configuration file(s) for MySQL like";
+      exit 1;
     }
 
     debugprint "MySQL Client: $mysqlcmd";
@@ -501,18 +492,16 @@ sub mysql_setup {
         chomp( $opt{host} );
         $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
 
-# If we're doing a remote connection, but forcemem wasn't specified, we need to exit
-        if (   $opt{'forcemem'} eq 0
-            && ( $opt{host} ne "127.0.0.1" )
-            && ( $opt{host} ne "localhost" ) )
-        {
-            badprint "The --forcemem option is required for remote connections";
+        # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
+        if ( $opt{'forcemem'} eq 0 && ($opt{host} ne "127.0.0.1") && ($opt{host} ne "localhost")) {
+            badprint
+              "The --forcemem option is required for remote connections";
             exit 1;
         }
         infoprint "Performing tests on $opt{host}:$opt{port}";
         $remotestring = " -h $opt{host} -P $opt{port}";
-        if ( ( $opt{host} ne "127.0.0.1" ) && ( $opt{host} ne "localhost" ) ) {
-            $doremote = 1;
+        if (($opt{host} ne "127.0.0.1") && ($opt{host} ne "localhost")) {
+            $doremote     = 1;
         }
     }
 
@@ -521,7 +510,8 @@ sub mysql_setup {
         $mysqllogin = "-u $opt{user} -p\"$opt{pass}\"" . $remotestring;
         my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
-            goodprint "Logged in using credentials passed on the command line";
+            goodprint
+              "Logged in using credentials passed on the command line";
             return 1;
         }
         else {
@@ -546,7 +536,8 @@ sub mysql_setup {
             $mysqllogin = "-u $mysql_login -p$mysql_pass";
             my $loginstatus = `mysqladmin $mysqllogin ping 2>&1`;
             if ( $loginstatus =~ /mysqld is alive/ ) {
-                goodprint "Logged in using credentials from mysql-quickbackup.";
+                goodprint
+                  "Logged in using credentials from mysql-quickbackup.";
                 return 1;
             }
             else {
@@ -563,7 +554,7 @@ sub mysql_setup {
         my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
         unless ( $loginstatus =~ /mysqld is alive/ ) {
             badprint
-              "Attempted to use login credentials from Plesk, but they failed.";
+"Attempted to use login credentials from Plesk, but they failed.";
             exit 1;
         }
     }
@@ -615,7 +606,7 @@ sub mysql_setup {
             # Login went just fine
             $mysqllogin = " $remotestring ";
 
-       # Did this go well because of a .my.cnf file or is there no password set?
+            # Did this go well because of a .my.cnf file or is there no password set?
             my $userpath = `printenv HOME`;
             if ( length($userpath) > 0 ) {
                 chomp($userpath);
@@ -628,29 +619,27 @@ sub mysql_setup {
             return 1;
         }
         else {
-            if ( $opt{'noask'} == 1 ) {
-                badprint
-                  "Attempted to use login credentials, but they were invalid";
+            if ( $opt{'noask'}==1 ) {
+                badprint "Attempted to use login credentials, but they were invalid";
                 exit 1;
             }
-            my ( $name, $password );
-
+            my ($name, $password);
             # If --user is defined no need to ask for username
-            if ( $opt{user} ne 0 ) {
+            if( $opt{user} ne 0 )
+            {
                 $name = $opt{user};
             }
-            else {
+            else{
                 print STDERR "Please enter your MySQL administrative login: ";
                 $name = <STDIN>;
             }
-
             # If --pass is defined no need to ask for password
-            if ( $opt{pass} ne 0 ) {
+            if( $opt{pass} ne 0 )
+            {
                 $password = $opt{pass};
             }
-            else {
-                print STDERR
-                  "Please enter your MySQL administrative password: ";
+            else{
+                print STDERR "Please enter your MySQL administrative password: ";
                 system("stty -echo >$devnull 2>&1");
                 $password = <STDIN>;
                 system("stty echo >$devnull 2>&1");
@@ -664,8 +653,7 @@ sub mysql_setup {
             }
             $mysqllogin .= $remotestring;
             my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
-            debugprint
-              "Login status command: $mysqladmincmd ping $mysqllogin 2>&1";
+            debugprint "Login status command: $mysqladmincmd ping $mysqllogin 2>&1";
             if ( $loginstatus =~ /mysqld is alive/ ) {
                 print STDERR "";
                 if ( !length($password) ) {
@@ -681,8 +669,7 @@ sub mysql_setup {
                 return 1;
             }
             else {
-                badprint
-                  "Attempted to use login credentials, but they were invalid.";
+                badprint "Attempted to use login credentials, but they were invalid.";
                 exit 1;
             }
             exit 1;
@@ -811,33 +798,32 @@ sub get_basic_passwords {
 sub cve_recommendations {
     prettyprint
 "\n-------- CVE Security Recommendations  ---------------------------------------";
-    unless ( defined( $opt{cvefile} ) && -f "$opt{cvefile}" ) {
+    unless ( defined($opt{cvefile}) && -f "$opt{cvefile}" ) {
         infoprint "Skipped due to --cvefile option undefined";
         return;
     }
 
-#prettyprint "Look for related CVE for $myvar{'version'} or lower in $opt{cvefile}";
-    my $cvefound = 0;
+    #prettyprint "Look for related CVE for $myvar{'version'} or lower in $opt{cvefile}";
+    my $cvefound=0;
     open( FH, "<$opt{cvefile}" ) or die "Can't open $opt{cvefile} for read: $!";
-    while ( my $cveline = <FH> ) {
-        my @cve = split( ';', $cveline );
-        if ( mysql_micro_version_le( $cve[1], $cve[2], $cve[3] ) ) {
-            badprint "$cve[4] : $cve[5]";
-            $cvefound++;
-        }
-
+    while (my $cveline = <FH>)
+    {
+      my @cve=split (';', $cveline);
+      if (mysql_micro_version_le ($cve[1], $cve[2], $cve[3])) {
+        badprint "$cve[4] : $cve[5]";
+        $cvefound++;
+      }
+    
     }
     close FH or die "Cannot close $opt{cvefile}: $!";
-    if ( $cvefound == 0 ) {
-        goodprint "NO SECURITY CVE FOUND FOR YOUR VERSION";
-        return;
-    }
+    if ($cvefound==0) {
+      goodprint "NO SECURITY CVE FOUND FOR YOUR VERSION";
+      return;
+    } 
     badprint $cvefound . " CVE(s) found for your MySQL release.";
-    push( @generalrec,
-        $cvefound
-          . " CVE(s) found for your MySQL release. Consider upgrading your version !"
-    );
+    push( @generalrec, $cvefound . " CVE(s) found for your MySQL release. Consider upgrading your version !" );
 }
+
 
 sub security_recommendations {
     prettyprint
@@ -847,12 +833,11 @@ sub security_recommendations {
         return;
     }
 
-    my $PASS_COLUMN_NAME = 'password';
-    if ( $myvar{'version'} =~ /5.7/ ) {
-        $PASS_COLUMN_NAME = 'authentication_string';
+    my $PASS_COLUMN_NAME='password';
+    if ($myvar{'version'} =~ /5.7/) {
+      $PASS_COLUMN_NAME='authentication_string';
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
-
     #exit(0);
     # Looking for Anonymous users
     my @mysqlstatlist = select_array
@@ -988,10 +973,10 @@ sub get_replication_status {
         and ( $io_running !~ /yes/i or $sql_running !~ /yes/i ) )
     {
         badprint
-          "This replication slave is not running but seems to be configurated.";
+"This replication slave is not running but seems to be configurated.";
     }
     if (   defined($io_running)
-        && $io_running =~ /yes/i
+        && $io_running  =~ /yes/i
         && $sql_running =~ /yes/i )
     {
         if ( $myvar{'read_only'} eq 'OFF' ) {
@@ -1025,13 +1010,10 @@ sub validate_mysql_version {
           . $myvar{'version'}
           . " is EOL software!  Upgrade soon!";
     }
-    elsif ( ( mysql_version_ge(6) and mysql_version_le(9) )
-        or mysql_version_ge(12) )
-    {
+    elsif ( ( mysql_version_ge(6) and mysql_version_le(9) ) or  mysql_version_ge(12) ) {
         badprint "Currently running unsupported MySQL version "
           . $myvar{'version'} . "";
-    }
-    else {
+    } else {
         goodprint "Currently running supported MySQL version "
           . $myvar{'version'} . "";
     }
@@ -1043,7 +1025,8 @@ sub mysql_version_ge {
     $min ||= 0;
     $mic ||= 0;
     return $mysqlvermajor > $maj
-      || $mysqlvermajor == $maj && ( $mysqlverminor > $min
+      || $mysqlvermajor == $maj
+      && ( $mysqlverminor > $min
         || $mysqlverminor == $min && $mysqlvermicro >= $mic );
 }
 
@@ -1053,7 +1036,8 @@ sub mysql_version_le {
     $min ||= 0;
     $mic ||= 0;
     return $mysqlvermajor < $maj
-      || $mysqlvermajor == $maj && ( $mysqlverminor < $min
+      || $mysqlvermajor == $maj
+      && ( $mysqlverminor < $min
         || $mysqlverminor == $min && $mysqlvermicro <= $mic );
 }
 
@@ -1062,7 +1046,7 @@ sub mysql_micro_version_le {
     my ( $maj, $min, $mic ) = @_;
     return $mysqlvermajor == $maj
       && ( $mysqlverminor == $min
-        && $mysqlvermicro <= $mic );
+      && $mysqlvermicro <= $mic );
 }
 
 # Checks for 32-bit boxes with more than 2GB of RAM
@@ -1109,7 +1093,8 @@ sub check_architecture {
 "Switch to 64-bit OS - MySQL cannot currently use all of your RAM";
         }
         else {
-            goodprint "Operating on 32-bit architecture with less than 2GB RAM";
+            goodprint
+              "Operating on 32-bit architecture with less than 2GB RAM";
         }
     }
     $result{'OS'}{'Architecture'} = "$arch bits";
@@ -1175,7 +1160,7 @@ sub check_storage_engines {
           : redwrap "-NDBCluster ";
     }
 
-    my @dblist = grep { $_ ne 'lost+found' } select_array "SHOW DATABASES";
+    my @dblist = grep {$_ ne 'lost+found' } select_array "SHOW DATABASES";
 
     $result{'Databases'}{'List'} = [@dblist];
     infoprint "Status: $engines";
@@ -1211,7 +1196,7 @@ sub check_storage_engines {
         # MySQL < 5 servers take a lot of work to get table sizes
         my @tblist;
 
-# Now we build a database list, and loop through it to get storage engine stats for tables
+        # Now we build a database list, and loop through it to get storage engine stats for tables
         foreach my $db (@dblist) {
             chomp($db);
             if (   $db eq "information_schema"
@@ -1235,11 +1220,11 @@ sub check_storage_engines {
      # Parse through the table list to generate storage engine counts/statistics
         $fragtables = 0;
         foreach my $tbl (@tblist) {
-            debugprint "Data dump " . Dumper(@$tbl);
+            debugprint "Data dump ". Dumper (@$tbl);
             my ( $engine, $size, $datafree ) = @$tbl;
             next if $engine eq 'NULL';
-            $size     = 0 if $size eq 'NULL';
-            $datafree = 0 if $datafree eq 'NULL';
+            $size=0 if $size eq 'NULL';
+            $datafree=0 if $datafree eq 'NULL';
             if ( defined $enginestats{$engine} ) {
                 $enginestats{$engine} += $size;
                 $enginecount{$engine} += 1;
@@ -1458,7 +1443,7 @@ sub calculations {
                           $myvar{'key_cache_block_size'}
                     ) / $myvar{'key_buffer_size'}
                 )
-            ) * 100
+              ) * 100
         );
     }
     else {
@@ -1551,14 +1536,14 @@ sub calculations {
             (
                 $mystat{'Qcache_hits'} /
                   ( $mystat{'Com_select'} + $mystat{'Qcache_hits'} )
-            ) * 100
+              ) * 100
         );
         if ( $myvar{'query_cache_size'} ) {
             $mycalc{'pct_query_cache_used'} = sprintf(
                 "%.1f",
                 100 - (
                     $mystat{'Qcache_free_memory'} / $myvar{'query_cache_size'}
-                ) * 100
+                  ) * 100
             );
         }
         if ( $mystat{'Qcache_lowmem_prunes'} == 0 ) {
@@ -1776,10 +1761,8 @@ sub mysql_stats {
               . (
                 $myvar{'query_cache_type'} eq 0 |
                   $myvar{'query_cache_type'} eq 'OFF' ? "DISABLED"
-                : (
-                    $myvar{'query_cache_type'} eq 1 ? "ALL REQUESTS"
-                    : "ON DEMAND"
-                )
+                : ( $myvar{'query_cache_type'} eq 1 ? "ALL REQUESTS"
+                    : "ON DEMAND" )
               ) . "";
             infoprint " +-- Query Cache Size: "
               . hr_bytes( $myvar{'query_cache_size'} ) . "";
@@ -1808,7 +1791,7 @@ sub mysql_stats {
         && $mycalc{'max_used_memory'} > 2 * 1024 * 1024 * 1024 )
     {
         badprint
-          "Allocating > 2GB RAM on 32-bit systems can cause system instability";
+"Allocating > 2GB RAM on 32-bit systems can cause system instability";
         badprint "Maximum reached memory usage: "
           . hr_bytes( $mycalc{'max_used_memory'} )
           . " ($mycalc{'pct_max_used_memory'}% of installed RAM)";
@@ -2024,8 +2007,7 @@ sub mysql_stats {
 "When making adjustments, make tmp_table_size/max_heap_table_size equal"
             );
             push( @generalrec,
-                "Reduce your SELECT DISTINCT queries which have no LIMIT clause"
-            );
+                "Reduce your SELECT DISTINCT queries which have no LIMIT clause" );
         }
         elsif ($mycalc{'pct_temp_disk'} > 25
             && $mycalc{'max_tmp_table_size'} >= 256 * 1024 * 1024 )
@@ -2213,7 +2195,6 @@ sub mysql_stats {
 sub mysql_myisam {
     prettyprint
 "\n-------- MyISAM Metrics ------------------------------------------------------";
-
     # Key buffer usage
     if ( defined( $mycalc{'pct_key_buffer_used'} ) ) {
         if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
@@ -2422,6 +2403,7 @@ sub mariadb_ariadb {
     }
 }
 
+
 # Recommendations for TokuDB
 sub mariadb_tokudb {
     prettyprint
@@ -2454,7 +2436,6 @@ sub mariadb_galera {
         return;
     }
     infoprint "Galera is enabled.";
-
     # All is to done here
 }
 
@@ -2759,7 +2740,7 @@ sub mysql_indexes {
 "\n-------- Indexes Metrics -----------------------------------------------------";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-          "Skip Index metrics from information schema missing in this version";
+"Skip Index metrics from information schema missing in this version";
         return;
     }
     my $selIdxReq = <<'ENDSQL';
@@ -2863,7 +2844,8 @@ sub make_recommendations {
         foreach (@adjvars) { prettyprint "    " . $_ . ""; }
     }
     if ( @generalrec == 0 && @adjvars == 0 ) {
-        prettyprint "No additional performance recommendations are available.";
+        prettyprint
+          "No additional performance recommendations are available.";
     }
 }
 
@@ -2879,19 +2861,18 @@ sub headerprint {
 }
 
 sub string2file {
-    my $filename = shift;
-    my $content  = shift;
-    open my $fh, q(>), $filename
-      or die
-"Unable to open $filename in write mode. Please check permissions for this file or directory";
-    print $fh $content if defined($content);
-    close $fh;
-    debugprint $content if ( $opt{'debug'} );
+  my $filename=shift;
+  my $content=shift;
+  open my $fh, q(>), $filename
+  or die "Unable to open $filename in write mode. Please check permissions for this file or directory";
+  print $fh $content if defined($content);
+  close $fh;
+  debugprint $content if ($opt{'debug'});
 }
 
 sub file2array {
     my $filename = shift;
-    debugprint "* reading $filename" if ( $opt{'debug'} );
+    debugprint "* reading $filename" if ($opt{'debug'});
     my $fh;
     open( $fh, q(<), "$filename" )
       or die "Couldn't open $filename for reading: $!\n";
@@ -2901,16 +2882,15 @@ sub file2array {
 }
 
 sub file2string {
-    return join( '', file2array(@_) );
+  return join ( '', file2array(@_) );
 }
 
 my $templateModel;
-if ( $opt{'template'} ne 0 ) {
-    $templateModel = file2string( $opt{'template'} );
-}
-else {
-    # DEFAULT REPORT TEMPLATE
-    $templateModel = <<'END_TEMPLATE';
+if ($opt{'template'} ne 0 ) {
+  $templateModel=file2string ($opt{'template'});
+}else {
+  # DEFAULT REPORT TEMPLATE
+  $templateModel=<<'END_TEMPLATE';
 <!DOCTYPE html>
 <html>
 <head>
@@ -2928,46 +2908,41 @@ else {
 </html>
 END_TEMPLATE
 }
-
 sub dump_result {
-    if ( $opt{'debug'} ) {
-        debugprint Dumper( \%result );
+    if ($opt{'debug'}) {
+      debugprint Dumper( \%result );
     }
 
     debugprint "HTML REPORT: $opt{'reportfile'}";
 
-    if ( $opt{'reportfile'} ne 0 ) {
-        eval "{ use Text::Template }";
-        if ($@) {
-            badprint "Text::Template Module is needed.";
-            exit 1;
-        }
+    if ($opt{'reportfile'} ne 0 ) {
+      eval "{ use Text::Template }";
+      if ($@) {
+          badprint "Text::Template Module is needed.";
+          exit 1;
+      }
 
-        my $vars = { 'data' => Dumper( \%result ) };
+      my $vars= {'data' => Dumper( \%result ) };
 
-        my $template;
-        {
-            no warnings 'once';
-            $template = Text::Template->new(
-                TYPE    => 'STRING',
-                PREPEND => q{;},
-                SOURCE  => $templateModel
-            ) or die "Couldn't construct template: $Text::Template::ERROR";
-        }
-        open my $fh, q(>), $opt{'reportfile'}
-          or die
-"Unable to open $opt{'reportfile'} in write mode. please check permissions for this file or directory";
-        $template->fill_in( HASH => $vars, OUTPUT => $fh );
-        close $fh;
+      my $template;
+      {
+        no warnings 'once';
+        $template = Text::Template->new(TYPE => 'STRING', PREPEND => q{;}, SOURCE => $templateModel)
+        or die "Couldn't construct template: $Text::Template::ERROR";
+      }
+      open my $fh, q(>), $opt{'reportfile'}
+      or die "Unable to open $opt{'reportfile'} in write mode. please check permissions for this file or directory";
+      $template->fill_in(HASH =>$vars, OUTPUT=>$fh );
+      close $fh;
     }
-    if ( $opt{'json'} ne 0 ) {
-        eval "{ use JSON }";
-        if ($@) {
-            badprint "JSON Module is needed.";
-            exit 1;
-        }
-        my $json = JSON->new->allow_nonref;
-        print JSON->new->utf8(1)->pretty(1)->encode(%result);
+    if ($opt{'json'} ne 0 ) {
+      eval "{ use JSON }";
+      if ($@) {
+          badprint "JSON Module is needed.";
+          exit 1;
+      }
+      my $json = JSON->new->allow_nonref;
+      print JSON->new->utf8(1)->pretty(1)->encode(%result);
     }
 }
 
