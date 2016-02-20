@@ -653,7 +653,6 @@ sub mysql_setup {
             }
             $mysqllogin .= $remotestring;
             my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
-            debugprint "Login status command: $mysqladmincmd ping $mysqllogin 2>&1";
             if ( $loginstatus =~ /mysqld is alive/ ) {
                 print STDERR "";
                 if ( !length($password) ) {
