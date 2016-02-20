@@ -507,7 +507,7 @@ sub mysql_setup {
 
     # Did we already get a username and password passed on the command line?
     if ( $opt{user} ne 0 and $opt{pass} ne 0 ) {
-        $mysqllogin = "-u $opt{user} -p'$opt{pass}'" . $remotestring;
+        $mysqllogin = "-u $opt{user} -p\"$opt{pass}\"" . $remotestring;
         my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint
@@ -649,16 +649,17 @@ sub mysql_setup {
             $mysqllogin = "-u $name";
 
             if ( length($password) > 0 ) {
-                $mysqllogin .= " -p'$password'";
+                $mysqllogin .= " -p\"$password\"";
             }
             $mysqllogin .= $remotestring;
             my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
+			debugprint "Login status command: $mysqladmincmd ping $mysqllogin 2>&1";
             if ( $loginstatus =~ /mysqld is alive/ ) {
                 print STDERR "";
                 if ( !length($password) ) {
 
        # Did this go well because of a .my.cnf file or is there no password set?
-                    my $userpath = `ls -d ~`;
+                    my $userpath = `printenv HOME`;
                     chomp($userpath);
                     unless ( -e "$userpath/.my.cnf" ) {
                         badprint
@@ -668,7 +669,7 @@ sub mysql_setup {
                 return 1;
             }
             else {
-                badprint " Attempted to use login credentials, but they were invalid.";
+                badprint "Attempted to use login credentials, but they were invalid.";
                 exit 1;
             }
             exit 1;
