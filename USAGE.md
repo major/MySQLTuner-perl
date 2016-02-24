@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.6.3 - MySQL High Performance Tuning Script
+    MySQLTuner 1.6.4 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -132,4 +132,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
     See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see &lt;http://www.gnu.org/licenses/>.
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
