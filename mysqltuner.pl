@@ -2742,6 +2742,11 @@ sub mysql_indexes {
 "Skip Index metrics from information schema missing in this version";
         return;
     }
+    unless ( mysql_version_ge( 5, 6 ) ) {
+        infoprint
+"Skip Index metrics from information schema due to erronous information provided in this version";
+        return;
+    }
     my $selIdxReq = <<'ENDSQL';
 SELECT
   CONCAT(CONCAT(t.TABLE_SCHEMA, '.'),t.TABLE_NAME) AS 'table'
