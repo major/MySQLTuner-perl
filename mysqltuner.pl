@@ -377,6 +377,7 @@ sub os_setup {
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
   if ($opt{checkversion} eq 0) {
+    print "\n";
     infoprint "Skipped version check for MySQLTuner script";
     return;
   }
@@ -1651,6 +1652,8 @@ sub calculations {
           ( $myvar{'innodb_log_file_size'} * 100 /
               $myvar{'innodb_buffer_pool_size'} );
     }
+
+    # InnoDB Buffer pool read cache effiency
     (
         $mystat{'Innodb_buffer_pool_read_requests'},
         $mystat{'Innodb_buffer_pool_reads'}
@@ -1669,24 +1672,28 @@ sub calculations {
       . $mystat{'Innodb_buffer_pool_reads'} . "";
     debugprint "Innodb_buffer_pool_read_requests: "
       . $mystat{'Innodb_buffer_pool_read_requests'} . "";
+    
+
+
+    # InnoDB log write cache effiency
     (
-        $mystat{'Innodb_buffer_pool_write_requests'},
-        $mystat{'Innodb_buffer_pool_writes'}
+        $mystat{'Innodb_log_write_requests'},
+        $mystat{'Innodb_log_writes'}
       )
       = ( 1, 1 )
-      unless defined $mystat{'Innodb_buffer_pool_writes'};
+      unless defined $mystat{'Innodb_log_writes'};
     $mycalc{'pct_write_efficiency'} = percentage(
         (
-            $mystat{'Innodb_buffer_pool_write_requests'} -
-              $mystat{'Innodb_buffer_pool_writes'}
+            $mystat{'Innodb_log_write_requests'} -
+              $mystat{'Innodb_log_writes'}
         ),
-        $mystat{'Innodb_buffer_pool_write_requests'}
-    ) if defined $mystat{'Innodb_buffer_pool_write_requests'};
-    debugprint "pct_write_efficiency: " . $mycalc{'pct_read_efficiency'} . "";
-    debugprint "Innodb_buffer_pool_writes: "
-      . $mystat{'Innodb_buffer_pool_writes'} . "";
-    debugprint "Innodb_buffer_pool_write_requests: "
-      . $mystat{'Innodb_buffer_pool_write_requests'} . "";
+        $mystat{'Innodb_log_write_requests'}
+    ) if defined $mystat{'Innodb_log_write_requests'};
+    debugprint "pct_write_efficiency: " . $mycalc{'pct_write_efficiency'} . "";
+    debugprint "Innodb_log_writes: "
+      . $mystat{'Innodb_log_writes'} . "";
+    debugprint "Innodb_log_write_requests: "
+      . $mystat{'Innodb_log_write_requests'} . "";
     $mycalc{'pct_innodb_buffer_used'} = percentage(
         (
             $mystat{'Innodb_buffer_pool_pages_total'} -
@@ -2600,21 +2607,21 @@ sub mysql_innodb {
     if ( defined $mycalc{'pct_write_efficiency'}
         && $mycalc{'pct_write_efficiency'} < 90 )
     {
-        badprint "InnoDB Write buffer efficiency: "
+        badprint "InnoDB Write Log efficiency: "
           . $mycalc{'pct_write_efficiency'} . "% ("
-          . ( $mystat{'Innodb_buffer_pool_write_requests'} -
-              $mystat{'Innodb_buffer_pool_writes'} )
+          . ( $mystat{'Innodb_log_write_requests'} -
+              $mystat{'Innodb_log_writes'} )
           . " hits/ "
-          . $mystat{'Innodb_buffer_pool_write_requests'}
+          . $mystat{'Innodb_log_write_requests'}
           . " total)";
     }
     else {
-        goodprint "InnoDB Write buffer efficiency: "
+        goodprint "InnoDB Write log efficiency: "
           . $mycalc{'pct_write_efficiency'} . "% ("
-          . ( $mystat{'Innodb_buffer_pool_write_requests'} -
-              $mystat{'Innodb_buffer_pool_writes'} )
+          . ( $mystat{'Innodb_log_write_requests'} -
+              $mystat{'Innodb_log_writes'} )
           . " hits/ "
-          . $mystat{'Innodb_buffer_pool_write_requests'}
+          . $mystat{'Innodb_log_write_requests'}
           . " total)";
     }
 
