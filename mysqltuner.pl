@@ -1729,9 +1729,9 @@ sub mysql_stats {
       . " qps], "
       . hr_num( $mystat{'Connections'} )
       . " conn," . " TX: "
-      . hr_num( $mystat{'Bytes_sent'} )
+      . hr_bytes_rnd( $mystat{'Bytes_sent'} )
       . ", RX: "
-      . hr_num( $mystat{'Bytes_received'} ) . ")";
+      . hr_bytes_rnd( $mystat{'Bytes_received'} ) . ")";
     infoprint "Reads / Writes: "
       . $mycalc{'pct_reads'} . "% / "
       . $mycalc{'pct_writes'} . "%";
