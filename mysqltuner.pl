@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.4
+# mysqltuner.pl - Version 1.6.5
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.4";
+my $tunerversion = "1.6.5";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2749,11 +2749,11 @@ sub mysql_indexes {
 "Skip Index metrics from information schema missing in this version";
         return;
     }
-    unless ( mysql_version_ge( 5, 6 ) ) {
-        infoprint
-"Skip Index metrics from information schema due to erronous information provided in this version";
-        return;
-    }
+#    unless ( mysql_version_ge( 5, 6 ) ) {
+#        infoprint
+#"Skip Index metrics from information schema due to erronous information provided in this version";
+#        return;
+#    }
     my $selIdxReq = <<'ENDSQL';
 SELECT
   CONCAT(CONCAT(t.TABLE_SCHEMA, '.'),t.TABLE_NAME) AS 'table'
@@ -2762,6 +2762,7 @@ SELECT
  , s2.max_columns AS 'maxcol'
  , s.CARDINALITY  AS 'card'
  , t.TABLE_ROWS   AS 'est_rows'
+ , INDEX_TYPE as type 
  , ROUND(((s.CARDINALITY / IFNULL(t.TABLE_ROWS, 0.01)) * 100), 2) AS 'sel'
 FROM INFORMATION_SCHEMA.STATISTICS s
  INNER JOIN INFORMATION_SCHEMA.TABLES t
@@ -2775,6 +2776,7 @@ FROM INFORMATION_SCHEMA.STATISTICS s
    , MAX(SEQ_IN_INDEX) AS max_columns
   FROM INFORMATION_SCHEMA.STATISTICS
   WHERE TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema')
+  AND INDEX_TYPE <> "FULLTEXT"
   GROUP BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME
  ) AS s2
  ON s.TABLE_SCHEMA = s2.TABLE_SCHEMA
@@ -2999,7 +3001,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.4 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.5 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
