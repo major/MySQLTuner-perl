@@ -377,6 +377,7 @@ sub os_setup {
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
   if ($opt{checkversion} eq 0) {
+    print "\n";
     infoprint "Skipped version check for MySQLTuner script";
     return;
   }
@@ -507,7 +508,7 @@ sub mysql_setup {
 
     # Did we already get a username and password passed on the command line?
     if ( $opt{user} ne 0 and $opt{pass} ne 0 ) {
-        $mysqllogin = "-u $opt{user} -p'$opt{pass}'" . $remotestring;
+        $mysqllogin = "-u $opt{user} -p\"$opt{pass}\"" . $remotestring;
         my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint
@@ -649,7 +650,7 @@ sub mysql_setup {
             $mysqllogin = "-u $name";
 
             if ( length($password) > 0 ) {
-                $mysqllogin .= " -p'$password'";
+                $mysqllogin .= " -p\"$password\"";
             }
             $mysqllogin .= $remotestring;
             my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
@@ -658,7 +659,7 @@ sub mysql_setup {
                 if ( !length($password) ) {
 
        # Did this go well because of a .my.cnf file or is there no password set?
-                    my $userpath = `ls -d ~`;
+                    my $userpath = `printenv HOME`;
                     chomp($userpath);
                     unless ( -e "$userpath/.my.cnf" ) {
                         badprint
@@ -668,7 +669,7 @@ sub mysql_setup {
                 return 1;
             }
             else {
-                badprint " Attempted to use login credentials, but they were invalid.";
+                badprint "Attempted to use login credentials, but they were invalid.";
                 exit 1;
             }
             exit 1;
@@ -1651,6 +1652,8 @@ sub calculations {
           ( $myvar{'innodb_log_file_size'} * 100 /
               $myvar{'innodb_buffer_pool_size'} );
     }
+
+    # InnoDB Buffer pool read cache effiency
     (
         $mystat{'Innodb_buffer_pool_read_requests'},
         $mystat{'Innodb_buffer_pool_reads'}
@@ -1669,24 +1672,28 @@ sub calculations {
       . $mystat{'Innodb_buffer_pool_reads'} . "";
     debugprint "Innodb_buffer_pool_read_requests: "
       . $mystat{'Innodb_buffer_pool_read_requests'} . "";
+    
+
+
+    # InnoDB log write cache effiency
     (
-        $mystat{'Innodb_buffer_pool_write_requests'},
-        $mystat{'Innodb_buffer_pool_writes'}
+        $mystat{'Innodb_log_write_requests'},
+        $mystat{'Innodb_log_writes'}
       )
       = ( 1, 1 )
-      unless defined $mystat{'Innodb_buffer_pool_writes'};
+      unless defined $mystat{'Innodb_log_writes'};
     $mycalc{'pct_write_efficiency'} = percentage(
         (
-            $mystat{'Innodb_buffer_pool_write_requests'} -
-              $mystat{'Innodb_buffer_pool_writes'}
+            $mystat{'Innodb_log_write_requests'} -
+              $mystat{'Innodb_log_writes'}
         ),
-        $mystat{'Innodb_buffer_pool_write_requests'}
-    ) if defined $mystat{'Innodb_buffer_pool_write_requests'};
-    debugprint "pct_write_efficiency: " . $mycalc{'pct_read_efficiency'} . "";
-    debugprint "Innodb_buffer_pool_writes: "
-      . $mystat{'Innodb_buffer_pool_writes'} . "";
-    debugprint "Innodb_buffer_pool_write_requests: "
-      . $mystat{'Innodb_buffer_pool_write_requests'} . "";
+        $mystat{'Innodb_log_write_requests'}
+    ) if defined $mystat{'Innodb_log_write_requests'};
+    debugprint "pct_write_efficiency: " . $mycalc{'pct_write_efficiency'} . "";
+    debugprint "Innodb_log_writes: "
+      . $mystat{'Innodb_log_writes'} . "";
+    debugprint "Innodb_log_write_requests: "
+      . $mystat{'Innodb_log_write_requests'} . "";
     $mycalc{'pct_innodb_buffer_used'} = percentage(
         (
             $mystat{'Innodb_buffer_pool_pages_total'} -
@@ -1722,9 +1729,9 @@ sub mysql_stats {
       . " qps], "
       . hr_num( $mystat{'Connections'} )
       . " conn," . " TX: "
-      . hr_num( $mystat{'Bytes_sent'} )
+      . hr_bytes_rnd( $mystat{'Bytes_sent'} )
       . ", RX: "
-      . hr_num( $mystat{'Bytes_received'} ) . ")";
+      . hr_bytes_rnd( $mystat{'Bytes_received'} ) . ")";
     infoprint "Reads / Writes: "
       . $mycalc{'pct_reads'} . "% / "
       . $mycalc{'pct_writes'} . "%";
@@ -2600,21 +2607,21 @@ sub mysql_innodb {
     if ( defined $mycalc{'pct_write_efficiency'}
         && $mycalc{'pct_write_efficiency'} < 90 )
     {
-        badprint "InnoDB Write buffer efficiency: "
+        badprint "InnoDB Write Log efficiency: "
           . $mycalc{'pct_write_efficiency'} . "% ("
-          . ( $mystat{'Innodb_buffer_pool_write_requests'} -
-              $mystat{'Innodb_buffer_pool_writes'} )
+          . ( $mystat{'Innodb_log_write_requests'} -
+              $mystat{'Innodb_log_writes'} )
           . " hits/ "
-          . $mystat{'Innodb_buffer_pool_write_requests'}
+          . $mystat{'Innodb_log_write_requests'}
           . " total)";
     }
     else {
-        goodprint "InnoDB Write buffer efficiency: "
+        goodprint "InnoDB Write log efficiency: "
           . $mycalc{'pct_write_efficiency'} . "% ("
-          . ( $mystat{'Innodb_buffer_pool_write_requests'} -
-              $mystat{'Innodb_buffer_pool_writes'} )
+          . ( $mystat{'Innodb_log_write_requests'} -
+              $mystat{'Innodb_log_writes'} )
           . " hits/ "
-          . $mystat{'Innodb_buffer_pool_write_requests'}
+          . $mystat{'Innodb_log_write_requests'}
           . " total)";
     }
 
@@ -2740,6 +2747,11 @@ sub mysql_indexes {
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
 "Skip Index metrics from information schema missing in this version";
+        return;
+    }
+    unless ( mysql_version_ge( 5, 6 ) ) {
+        infoprint
+"Skip Index metrics from information schema due to erronous information provided in this version";
         return;
     }
     my $selIdxReq = <<'ENDSQL';
@@ -2948,7 +2960,7 @@ sub dump_result {
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-headerprint                  # Header Print
+headerprint;                 # Header Print
 mysql_setup;                 # Gotta login first
 validate_tuner_version;      # Check last version
 os_setup;                    # Set up some OS variables
