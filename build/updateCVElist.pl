@@ -40,17 +40,16 @@ $mech->add_handler("response_redirect" => sub { print '#'x80,"\nREDIRECT RESPONS
 my $url = 'http://cve.mitre.org/data/downloads/allitems.csv';
 my $resp;
 
-unless (-f 'cve.csv')
-{
-    $resp=$mech->get($url); 
-    $mech->save_content( "cve.csv" );
-}
+unlink ('cve.csv') if (-f 'cve.csv');
+
+$resp=$mech->get($url); 
+$mech->save_content( "cve.csv" );
 
 my $f=File::Util->new('readlimit' => 100000000, 'use_flock'=>'false');
 my(@lines) = $f->load_file('cve.csv', '--as-lines');
 my @versions;
 my $temp;
-unlink 'vulnerabilities.csv' if -f 'vulnerabilities.csv';
+unlink '../vulnerabilities.csv' if -f '../vulnerabilities.csv';
 foreach my $line (@lines) {
 	if ($line =~ /(mysql|mariadb)/i 
             and $line =~ /server/i
@@ -67,9 +66,11 @@ foreach my $line (@lines) {
             my @nb=split('\.', $vers);
             #print $vers."\n".Dumper @nb;
             #exit 0;
-            $f->write_file('file' => 'vulnerabilities.csv', 'content' => "$vers;$nb[0];$nb[1];$nb[2];$line\n", 'mode' => 'append');
+            $f->write_file('file' => '../vulnerabilities.csv', 'content' => "$vers;$nb[0];$nb[1];$nb[2];$line\n", 'mode' => 'append');
         }
 	}
 }
+
+unlink ('cve.csv') if (-f 'cve.csv');
 
 exit(0);
