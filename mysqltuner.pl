@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.5
+# mysqltuner.pl - Version 1.6.6
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.5";
+my $tunerversion = "1.6.6";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1884,6 +1884,15 @@ sub mysql_stats {
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
+    elsif (mysql_version_ge(5,6))
+    {
+      if ( $myvar{'query_cache_type'} ne "OFF" ) {
+        badprint "Query cache should be disabled by default due to mutex contention.";
+        push( @adjvars, "query_cache_type (=0)" );
+      } else {
+        goodprint "Query cache is disabled by default due to mutex contention.";
+      }
+    }
     elsif ( $myvar{'query_cache_size'} < 1 ) {
         badprint "Query cache is disabled";
         push( @adjvars, "query_cache_size (>= 8M)" );
@@ -3001,7 +3010,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.5 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.6 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
