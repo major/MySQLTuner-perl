@@ -1114,7 +1114,20 @@ sub check_storage_engines {
 "\n-------- Storage Engine Statistics -------------------------------------------";
 
     my $engines;
-    if ( mysql_version_ge( 5, 1, 5 ) ) {
+    if ( mysql_version_ge( 5, 5 ) ) {
+        my @engineresults = select_array
+"SELECT ENGINE,SUPPORT FROM information_schema.ENGINES ORDER BY ENGINE ASC";
+        foreach my $line (@engineresults) {
+            my ( $engine, $engineenabled );
+            ( $engine, $engineenabled ) = $line =~ /([a-zA-Z_]*)\s+([a-zA-Z]+)/;
+            $result{'Engine'}{$engine}{'Enabled'} = $engineenabled;
+            $engines .=
+              ( $engineenabled eq "YES" || $engineenabled eq "DEFAULT" )
+              ? greenwrap "+" . $engine . " "
+              : redwrap "-" . $engine . " ";
+        }
+    }
+    elsif ( mysql_version_ge( 5, 1, 5 ) ) {
         my @engineresults = select_array
 "SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC";
         foreach my $line (@engineresults) {
@@ -1149,10 +1162,6 @@ sub check_storage_engines {
           ( defined $myvar{'have_isam'} && $myvar{'have_isam'} eq "YES" )
           ? greenwrap "+ISAM "
           : redwrap "-ISAM ";
-        $engines .=
-          ( defined $myvar{'have_aria'} && $myvar{'have_aria'} eq "YES" )
-          ? greenwrap "+Aria "
-          : redwrap "-Aria ";
         $engines .=
           ( defined $myvar{'have_ndbcluster'}
               && $myvar{'have_ndbcluster'} eq "YES" )
@@ -2347,6 +2356,19 @@ sub mariadb_threadpool {
     infoprint "ThreadPool stat is enabled.";
 }
 
+# Recommendations for Performance Schema
+sub mysqsl_pfs {
+    prettyprint
+"\n-------- Performance schema --------------------------------------------------";
+
+    # Performance Schema
+     unless ( defined($myvar{'performance_schema'}) and $myvar{'performance_schema'} eq 'ON' ) {
+      infoprint "Performance schema is disabled.";
+     }
+    
+    infoprint "Performance schema is enabled.";
+}
+
 # Recommendations for Ariadb
 sub mariadb_ariadb {
     prettyprint
@@ -2986,10 +3008,11 @@ security_recommendations;    # Display some security recommendations
 cve_recommendations;         # Display related CVE
 calculations;                # Calculate everything we need
 mysql_stats;                 # Print the server stats
-mysql_myisam;                # Print MyISAM stats
-mysql_innodb;                # Print InnoDB stats
+mysqsl_pfs                   # Print Performance schema info
 mariadb_threadpool;          # Print MaraiDB ThreadPool stats
+mysql_myisam;                # Print MyISAM stats
 mariadb_ariadb;              # Print MaraiDB AriaDB stats
+mysql_innodb;                # Print InnoDB stats
 mariadb_tokudb;              # Print MaraiDB TokuDB stats
 mariadb_galera;              # Print MaraiDB Galera Cluster stats
 get_replication_status;      # Print replication info
