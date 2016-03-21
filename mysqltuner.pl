@@ -72,7 +72,8 @@ my %opt = (
     "skipsize"     => 0,
     "checkversion" => 0,
     "buffers"      => 0,
-    "passwordfile" => 0,
+    "passwordfile" => 0, 
+    "bannedports"  => '', 
     "outputfile"   => 0,
     "dbstat"       => 0,
     "idxstat"      => 0,
@@ -92,6 +93,7 @@ GetOptions(
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
     'passwordfile=s', 'outputfile=s', 'silent',       'dbstat', 'json',
     'idxstat', 'noask', 'template=s', 'reportfile=s', 'cvefile=s',
+    'bannedports=s',
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
@@ -134,6 +136,7 @@ sub usage {
       . "      --debug              Print debug information\n"
       . "      --dbstat             Print database information\n"
       . "      --idxstat            Print index information\n"
+      . "      --bannedports        ports banned separated by comma(,)\n"
       . "      --cvefile            CVE File for vulnerability checks\n"
       . "      --nocolor            Don't print output in color\n"
       . "      --json               Print result as JSON string\n"
@@ -159,6 +162,9 @@ $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
   unless ( defined $opt{cvefile} and -f "$opt{cvefile}");
 $opt{cvefile} ='' unless -f "$opt{cvefile}";
 $opt{cvefile} ='./vulnerabilities.csv' if -f './vulnerabilities.csv';
+
+$opt{'bannedports'}='' unless defined($opt{'bannedports'});
+my @banned_ports=split ',', $opt{'bannedports'};
 
 #
 my $outputfile = undef;
@@ -907,6 +913,14 @@ sub system_recommendations {
         push( @generalrec, "Consider dedicating a server for Application server in production !" );
     }  else {
         goodprint "No Application server runing on 8080 or 8443 port.";
+    }
+    foreach my $banport (@banned_ports) {
+	    if ( is_open_port($banport) ) {
+		    badprint "Banned port: $banport is opened..";
+		    push( @generalrec, "Port $banport is opened. Consider stopping program handling this port." );
+	    }  else {
+		    goodprint "$banport is not opened.";
+	    }
     }
 }
     
