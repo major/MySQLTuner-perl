@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.6
+# mysqltuner.pl - Version 1.6.7
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.6";
+my $tunerversion = "1.6.7";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -158,6 +158,7 @@ $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
   unless ( defined $opt{cvefile} and -f "$opt{cvefile}");
 $opt{cvefile} ='' unless -f "$opt{cvefile}";
+$opt{cvefile} ='./vulnerabilities.csv' if -f './vulnerabilities.csv';
 
 #
 my $outputfile = undef;
@@ -857,6 +858,58 @@ sub cve_recommendations {
 }
 
 
+sub get_opened_ports {
+     my @opened_ports=`netstat -ltn`;
+     map {
+	 s/.*:(\d+)\s.*$/$1/;
+	 s/\D//g;
+	} @opened_ports;
+     @opened_ports =  sort {$a <=> $b} grep { !/^$/ } @opened_ports;
+     debugprint Dumper \@opened_ports;
+     return @opened_ports;
+}
+
+sub is_open_port {
+     my $port=shift;
+     if ( grep { /^$port$/ } get_opened_ports ) {
+         return 1;
+     }
+     return 0;
+}
+sub system_recommendations {
+    prettyprint "\n-------- System Linux Recommendations  ---------------------------------------";
+    my $os = `uname`;
+
+    unless ($os =~ /Linux/i) {
+        infoprint "Skipped due to non Linux server";
+        return;
+    }    
+
+    prettyprint "Look for related Linux system recommandations";
+
+    my @opened_ports=get_opened_ports;
+    infoprint "There is ". scalar @opened_ports. " listening port(s) on this server.";
+    if (scalar(@opened_ports) > 10) {
+	badprint "There is too many listening ports: ". scalar(@opened_ports). " > 10";
+    	push( @generalrec, "Consider dedicating a server for your database installation with less services running on !" );
+    } else {
+	 goodprint "There is less than 10 opened ports on this server."; 
+    }
+
+    if ( is_open_port(80) or is_open_port(443) ) {
+	badprint "There is Apache like server running on 80 or 443 port.";
+    	push( @generalrec, "Consider dedicating a server for Web server in production !" );
+    }  else {
+	goodprint "No Web server runing on 80 and 444 port.";
+    }
+    if ( is_open_port(8080) or is_open_port(8443) ) {
+        badprint "There is Application server running on 8080 or 8443 port.";
+        push( @generalrec, "Consider dedicating a server for Application server in production !" );
+    }  else {
+        goodprint "No Application server runing on 8080 or 8443 port.";
+    }
+}
+    
 sub security_recommendations {
     prettyprint
 "\n-------- Security Recommendations  -------------------------------------------";
@@ -3035,6 +3088,7 @@ get_all_vars;                # Toss variables/status into hashes
 get_tuning_info;             # Get information about the tuning connexion
 validate_mysql_version;      # Check current MySQL version
 check_architecture;          # Suggest 64-bit upgrade
+system_recommendations;	     # avoid to many service on the same host
 check_storage_engines;       # Show enabled storage engines
 mysql_databases;             # Show informations about databases
 mysql_indexes;               # Show informations about indexes
@@ -3067,7 +3121,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.6 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.7 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
