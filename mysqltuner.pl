@@ -505,7 +505,21 @@ sub mysql_setup {
             $doremote     = 1;
         }
     }
-
+    # Did we already get a username without password on the command line?
+    if ( $opt{user} ne 0 and $opt{pass} eq 0 ) {
+        $mysqllogin = "-u $opt{user} " . $remotestring;
+        my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
+        if ( $loginstatus =~ /mysqld is alive/ ) {
+            goodprint
+              "Logged in using credentials passed on the command line";
+            return 1;
+        }
+        else {
+            badprint
+              "Attempted to use login credentials, but they were invalid";
+            exit 1;
+        }
+    }
     # Did we already get a username and password passed on the command line?
     if ( $opt{user} ne 0 and $opt{pass} ne 0 ) {
         $mysqllogin = "-u $opt{user} -p\"$opt{pass}\"" . $remotestring;
@@ -682,6 +696,15 @@ sub select_array {
     my $req = shift;
     debugprint "PERFORM: $req ";
     my @result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
+    if ($? != 0) {
+    	badprint "failed to execute: $req";
+    	badprint "FAIL Execute SQL / return code: $?";
+	debugprint "CMD    : $mysqlcmd";
+	debugprint "OPTIONS: $mysqllogin";
+	debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+	exit $?;
+    } 
+    debugprint "select_array: return code : $?";	    
     chomp(@result);
     return @result;
 }
@@ -691,6 +714,15 @@ sub select_one {
     my $req = shift;
     debugprint "PERFORM: $req ";
     my $result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
+    if ($? != 0) {
+    	badprint "failed to execute: $req";
+    	badprint "FAIL Execute SQL / return code: $?";
+	debugprint "CMD    : $mysqlcmd";
+	debugprint "OPTIONS: $mysqllogin";
+	debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+	exit $?;
+    } 
+    debugprint "select_array: return code : $?";	    
     chomp($result);
     return $result;
 }
@@ -838,10 +870,12 @@ sub security_recommendations {
       $PASS_COLUMN_NAME='authentication_string';
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
-    #exit(0);
+    
     # Looking for Anonymous users
     my @mysqlstatlist = select_array
 "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL";
+    debugprint Dumper \@mysqlstatlist;
+    #exit 0;
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
@@ -1893,7 +1927,7 @@ sub mysql_stats {
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
-    elsif (mysql_version_ge(5,6))
+    elsif (mysql_version_ge(5,5))
     {
       if ( $myvar{'query_cache_type'} ne "OFF" ) {
         badprint "Query cache should be disabled by default due to mutex contention.";
