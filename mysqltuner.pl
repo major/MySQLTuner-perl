@@ -943,7 +943,7 @@ sub system_recommendations {
     if ( (0.15*$physical_memory) < $omem) {
        badprint "Other user process except mysqld used more than 15% of total physical memory ". percentage($omem, $physical_memory). "% (".hr_bytes_rnd($omem). " / ".hr_bytes_rnd($physical_memory).")";
     	push( @generalrec, "Consider stopping or dedicate server for additionnal process other than mysqld." );
-   	push( @adjvars, "DON'T APPLY SETTINGS BECAUSE THERE IS TOO MANY PROCESS RUNNING ON THIS SERVER. OOM KILL CAN OCCURS !" );
+   	push( @adjvars, "DON'T APPLY SETTINGS BECAUSE THERE IS TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCURS !" );
 
        
     } else {
