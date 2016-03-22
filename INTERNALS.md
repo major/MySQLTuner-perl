@@ -242,7 +242,7 @@
 * tokudb_cleaner_iterations
 * tokudb_fanout
 
-## MySQLTuner MariaDB thread pool information
+## MySQLTuner Thread pool information
 
 * thread_pool_size between 16 to 36 for Innodb usage
 * thread_pool_size between 4 to 8 for MyIsam usage
