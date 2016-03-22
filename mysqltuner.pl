@@ -785,7 +785,11 @@ sub get_all_vars {
     if ( ( $myvar{'ignore_builtin_innodb'} || "" ) eq "ON" ) {
         $myvar{'have_innodb'} = "NO";
     }
-
+    
+    $myvar{'have_threadpool'} = "NO";
+    if ( defined ( $myvar{'thread_pool_size'} ) and  $myvar{'thread_pool_size'} > 0 ) {
+        $myvar{'have_threadpool'} = "YES";
+    }
     # have_* for engines is deprecated and will be removed in MySQL 5.6;
     # check SHOW ENGINES and set corresponding old style variables.
     # Also works around MySQL bug #59393 wrt. skip-innodb
@@ -2503,13 +2507,33 @@ sub mariadb_threadpool {
 
     # AriaDB
     unless ( defined $myvar{'have_threadpool'}
-        && $myvar{'have_threadpool'} eq "YES"
-        && defined $enginestats{'Aria'} )
+        && $myvar{'have_threadpool'} eq "YES" )
     {
         infoprint "ThreadPool stat is disabled.";
         return;
     }
-    infoprint "ThreadPool stat is enabled.";
+    infoprint "ThreadPool stat is enabled."; 
+    infoprint "Thread Pool Size: ".$myvar{'thread_pool_size'}. " thread(s).";
+
+    if ($myvar{'have_innodb'} eq 'YES') {
+	if  ($myvar{'thread_pool_size'}< 16 or $myvar{'thread_pool_size'}>36) {
+		badprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
+    		push( @generalrec, "Thread pool size for InnoDB usage (".$myvar{'thread_pool_size'}.")" );
+	   	push( @adjvars, "thread_pool_size between 16 and 36 for InnoDB usage" );
+    	} else {
+		goodprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
+        }
+        return;
+    } 
+    if ($myvar{'have_isam'} eq 'YES') {
+        if  ($myvar{'thread_pool_size'}<4 or $myvar{'thread_pool_size'}>8) {
+                badprint "thread_pool_size between 4 and 8 when using MyIsam storage engine.";
+                push( @generalrec, "Thread pool size for MyIsam usage (".$myvar{'thread_pool_size'}.")" );
+                push( @adjvars, "thread_pool_size between 4 and 8 for MyIsam usage" );
+        } else {
+                goodprint "thread_pool_size between 4 and 8 when using MyISAM storage engine.";
+        }
+    }
 }
 
 # Recommendations for Performance Schema
@@ -2524,6 +2548,7 @@ sub mysqsl_pfs {
     
     infoprint "Performance schema is enabled.";
 }
+
 
 # Recommendations for Ariadb
 sub mariadb_ariadb {
