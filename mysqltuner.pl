@@ -2908,7 +2908,7 @@ FROM INFORMATION_SCHEMA.STATISTICS s
    , MAX(SEQ_IN_INDEX) AS max_columns
   FROM INFORMATION_SCHEMA.STATISTICS
   WHERE TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema')
-  AND INDEX_TYPE <> "FULLTEXT"
+  AND INDEX_TYPE <> 'FULLTEXT'
   GROUP BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME
  ) AS s2
  ON s.TABLE_SCHEMA = s2.TABLE_SCHEMA
@@ -2933,18 +2933,20 @@ ENDSQL
         infoprint " +-- NB COLS     : " . $info[3] . " column(s)";
         infoprint " +-- CARDINALITY : " . $info[4] . " distinct values";
         infoprint " +-- NB ROWS     : " . $info[5] . " rows";
-        infoprint " +-- SELECTIVITY : " . $info[6] . "%";
+        infoprint " +-- TYPE        : " . $info[6] ;
+        infoprint " +-- SELECTIVITY : " . $info[7] . "%";
 
         $result{'Indexes'}{ $info[1] }{'Colunm'}            = $info[0];
         $result{'Indexes'}{ $info[1] }{'Sequence number'}   = $info[2];
         $result{'Indexes'}{ $info[1] }{'Number of collunm'} = $info[3];
         $result{'Indexes'}{ $info[1] }{'Cardianality'}      = $info[4];
         $result{'Indexes'}{ $info[1] }{'Row number'}        = $info[5];
-        $result{'Indexes'}{ $info[1] }{'Selectivity'}       = $info[6];
-        if ( $info[6] < 25 ) {
+        $result{'Indexes'}{ $info[1] }{'Index Type'}        = $info[6];
+        $result{'Indexes'}{ $info[1] }{'Selectivity'}       = $info[7];
+        if ( $info[7] < 25 ) {
             badprint "$info[1] has a low selectivity";
         }
-    }
+     }
 
     return
       unless ( defined( $myvar{'performance_schema'} )
@@ -3173,6 +3175,7 @@ You must provide the remote server's total memory when connecting to other serve
  --debug              Print debug information
  --dbstat             Print database information
  --idxstat            Print index information
+ --bannedports        ports banned separated by comma(,)
  --cvefile            CVE File for vulnerability checks
  --nocolor            Don't print output in color
  --json               Print result as JSON string
