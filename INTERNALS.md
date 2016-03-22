@@ -66,6 +66,10 @@
 
 ## MySQLTuner system checks
 * 32-bit w/>2GB RAM check
+* Check number of opened ports (warning if more than 9 ports opened)
+* Check 80, 8080, 443 and 8443 ports if warning are raised if there are opened 
+* Check if some banned ports are not opened (option --bannedports separated by comma)
+* Check if non kernel and user process except mysqld are not using more than 15% of total physical memory)
 
 ## MySQLTuner Server version checks
 * EOL MySQL version check
