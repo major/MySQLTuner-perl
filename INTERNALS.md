@@ -244,15 +244,5 @@
 
 ## MySQLTuner MariaDB thread pool information
 
-* thread_pool_size
-* thread_pool_stall_limit 
-
-* thread_pool_max_threads 
-* thread_pool_idle_timeout 
-
-* thread_pool_oversubscribe
-
-* threadpool_threads
-* threadpool_idle_threads
-* threadpool_threads / thread_pool_size
-* threadpool_idle_threads / thread_pool_size
+* thread_pool_size between 16 to 36 for Innodb usage
+* thread_pool_size between 4 to 8 for MyIsam usage
