@@ -826,12 +826,23 @@ sub get_all_vars {
     }
 }
 
-sub get_basic_passwords {
+sub remove_cr {
+    map { s/\n$//g; } @_;
+}
+sub remove_empty {
+    grep { $_ ne '' } @_;
+}
+sub get_file_contents {
     my $file = shift;
     open( FH, "< $file" ) or die "Can't open $file for read: $!";
     my @lines = <FH>;
     close FH or die "Cannot close $file: $!";
+    remove_cr \@lines;
     return @lines;
+}
+
+sub get_basic_passwords {
+    return get_file_contents(shift);
 }
 
 sub cve_recommendations {
@@ -882,16 +893,60 @@ sub is_open_port {
      }
      return 0;
 }
+
+sub get_process_memory {
+	my $pid=shift;
+	return 0 unless -f "/proc/$pid/status";
+	my @pdata= grep { /RSS:/ } get_file_contents "/proc/$pid/status";
+	map { 
+		s/.*RSS:\s*(\d+)\s*kB\s*$/$1*1024/ge 
+	    } @pdata;
+	return $pdata[0];
+}
+
+sub get_other_process_memory {
+	my @procs=`ps -eo pid,cmd`;
+	map { s/.*mysqld.*//; s/.*\[.*\].*//; s/^\s+$//g; s/.*PID.*CMD.*//; s/.*systemd.*//;} @procs;
+	map {s/\s*?(\d+)\s*.*/$1/g;} @procs;
+	remove_cr @procs;
+	@procs=remove_empty @procs;
+	my $totalMemOther=0;
+	map {
+		$totalMemOther+=get_process_memory($_);
+	} @procs;
+	return $totalMemOther;
+}
+
+sub get_os_release {
+    return "Unknown OS release" unless -f "/etc/system-release";
+    my @info_release=get_file_contents "/etc/system-release";
+    remove_cr @info_release;
+    return $info_release[0];
+}
 sub system_recommendations {
     prettyprint "\n-------- System Linux Recommendations  ---------------------------------------";
     my $os = `uname`;
-
     unless ($os =~ /Linux/i) {
         infoprint "Skipped due to non Linux server";
         return;
     }    
-
     prettyprint "Look for related Linux system recommandations";
+    #prettyprint '-'x78;
+    infoprint get_os_release;
+
+    my $omem=get_other_process_memory;
+    infoprint "User process except mysqld used ". hr_bytes_rnd($omem) . " RAM.";
+    if ( (0.15*$physical_memory) < $omem) {
+       badprint "Other user process except mysqld used more than 15% of total physical memory ". percentage($omem, $physical_memory). "% (".hr_bytes_rnd($omem). " / ".hr_bytes_rnd($physical_memory).")";
+    	push( @generalrec, "Consider stopping or dedicate server for additionnal process other than mysqld." );
+   	push( @adjvars, "DON'T APPLY SETTINGS BECAUSE THERE IS TOO MANY PROCESS RUNNING ON THIS SERVER. OOM KILL CAN OCCURS !" );
+
+       
+    } else {
+    }
+
+    #if ($omem > 
+    #exit 0;	
 
     my @opened_ports=get_opened_ports;
     infoprint "There is ". scalar @opened_ports. " listening port(s) on this server.";
@@ -1199,6 +1254,7 @@ sub check_architecture {
         }
     }
     $result{'OS'}{'Architecture'} = "$arch bits";
+
 }
 
 # Start up a ton of storage engine counts/statistics
@@ -1275,8 +1331,7 @@ sub check_storage_engines {
     $result{'Databases'}{'List'} = [@dblist];
     infoprint "Status: $engines";
     if ( mysql_version_ge( 5, 1, 5 ) ) {
-
-# MySQL 5 servers can have table sizes calculated quickly from information schema
+	# MySQL 5 servers can have table sizes calculated quickly from information schema
         my @templist = select_array
 "SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE),SUM(DATA_LENGTH),SUM(INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
 
