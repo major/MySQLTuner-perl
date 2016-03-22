@@ -2883,19 +2883,30 @@ sub mysql_databases {
     infoprint "There is " . scalar(@dblist) . " Database(s).";
     my @totaldbinfo = split /\s/,
       select_one(
-"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH) FROM information_schema.TABLES;"
+"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)) FROM information_schema.TABLES;"
       );
     infoprint "All Databases:";
-    infoprint " +-- ROWS : "
+    infoprint " +-- TABLE : "
+      . ( $totaldbinfo[4] eq 'NULL' ? 0 : $totaldbinfo[4] ) . "";
+    infoprint " +-- ROWS  : "
       . ( $totaldbinfo[0] eq 'NULL' ? 0 : $totaldbinfo[0] ) . "";
-    infoprint " +-- DATA : "
+    infoprint " +-- DATA  : "
       . hr_bytes( $totaldbinfo[1] ) . "("
       . percentage( $totaldbinfo[1], $totaldbinfo[3] ) . "%)";
-    infoprint " +-- INDEX: "
+    infoprint " +-- INDEX : "
       . hr_bytes( $totaldbinfo[2] ) . "("
       . percentage( $totaldbinfo[2], $totaldbinfo[3] ) . "%)";
-    infoprint " +-- SIZE : " . hr_bytes( $totaldbinfo[3] ) . "";
-
+    infoprint " +-- SIZE  : " . hr_bytes( $totaldbinfo[3] ) . "";
+    infoprint " +-- COLLA : "
+      . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " (".  (join ", ", select_array ("SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES;")) .")";
+ 
+    
+    if ($totaldbinfo[5]>1) {
+	badprint $totaldbinfo[5]. " differents collations for tables detected.";
+        push(@generalrec, "Check your general collation and your database table location are identical."); 
+    } else {
+	goodprint $totaldbinfo[5]. " collation for tables detected.";
+    }
     badprint "Index size is larger than data size \n"
       if $totaldbinfo[1] < $totaldbinfo[2];
 
@@ -2907,8 +2918,8 @@ sub mysql_databases {
     $result{'Databases'}{'All databases'}{'Index Size'} = $totaldbinfo[2];
     $result{'Databases'}{'All databases'}{'Index Pct'} =
       percentage( $totaldbinfo[2], $totaldbinfo[3] ) . "%";
-    $result{'Databases'}{'All databases'}{'Total Size'} = $totaldbinfo[3];
-
+    $result{'Databases'}{'All databases'}{'Total Size'} = $totaldbinfo[3]; 
+    print "\n";
     foreach (@dblist) {
         chomp($_);
         if (   $_ eq "information_schema"
@@ -2921,10 +2932,15 @@ sub mysql_databases {
 
         my @dbinfo = split /\s/,
           select_one(
-"SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
+"SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE),COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
           );
         next unless defined $dbinfo[0];
         infoprint "Database: " . $dbinfo[0] . "";
+        infoprint " +-- TABLE: "
+          . ( !defined( $dbinfo[6] ) or $dbinfo[6] eq 'NULL' ? 0 : $dbinfo[6] )
+          . "";
+        infoprint " +-- COLL : "
+      . ( $dbinfo[7] eq 'NULL' ? 0 : $dbinfo[7] ) . " (".  (join ", ", select_array ("SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES  WHERE TABLE_SCHEMA='$_';")) .")";
         infoprint " +-- ROWS : "
           . ( !defined( $dbinfo[1] ) or $dbinfo[1] eq 'NULL' ? 0 : $dbinfo[1] )
           . "";
@@ -2940,6 +2956,8 @@ sub mysql_databases {
         badprint "There are " . $dbinfo[5] . " storage engines. Be careful. \n"
           if $dbinfo[5] > 1;
         $result{'Databases'}{ $dbinfo[0] }{'Rows'}      = $dbinfo[1];
+        $result{'Databases'}{ $dbinfo[0] }{'Tables'}      = $dbinfo[6];
+        $result{'Databases'}{ $dbinfo[0] }{'Collations'}      = $dbinfo[7];
         $result{'Databases'}{ $dbinfo[0] }{'Data Size'} = $dbinfo[2];
         $result{'Databases'}{ $dbinfo[0] }{'Data Pct'} =
           percentage( $dbinfo[2], $dbinfo[4] ) . "%";
@@ -2947,6 +2965,12 @@ sub mysql_databases {
         $result{'Databases'}{ $dbinfo[0] }{'Index Pct'} =
           percentage( $dbinfo[3], $dbinfo[4] ) . "%";
         $result{'Databases'}{ $dbinfo[0] }{'Total Size'} = $dbinfo[4];
+    if ($dbinfo[7]>1) {
+	badprint $dbinfo[7]. " differents collations for database ".$dbinfo[0];
+        push(@generalrec, "Check all table collations are identical for all tables in ".$dbinfo[0]. " database."); 
+    } else {
+	goodprint $dbinfo[7]. " collation for ".$dbinfo[0]. " database.";
+    }
     }
 }
 
