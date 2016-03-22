@@ -2883,7 +2883,7 @@ sub mysql_databases {
     infoprint "There is " . scalar(@dblist) . " Database(s).";
     my @totaldbinfo = split /\s/,
       select_one(
-"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)) FROM information_schema.TABLES;"
+"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)),COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES;"
       );
     infoprint "All Databases:";
     infoprint " +-- TABLE : "
@@ -2899,17 +2899,10 @@ sub mysql_databases {
     infoprint " +-- SIZE  : " . hr_bytes( $totaldbinfo[3] ) . "";
     infoprint " +-- COLLA : "
       . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " (".  (join ", ", select_array ("SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES;")) .")";
+    infoprint " +-- ENGIN : "
+      . ( $totaldbinfo[6] eq 'NULL' ? 0 : $totaldbinfo[6] ) . " (".  (join ", ", select_array ("SELECT DISTINCT(ENGINE) FROM information_schema.TABLES;")) .")";
  
     
-    if ($totaldbinfo[5]>1) {
-	badprint $totaldbinfo[5]. " differents collations for tables detected.";
-        push(@generalrec, "Check your general collation and your database table location are identical."); 
-    } else {
-	goodprint $totaldbinfo[5]. " collation for tables detected.";
-    }
-    badprint "Index size is larger than data size \n"
-      if $totaldbinfo[1] < $totaldbinfo[2];
-
     $result{'Databases'}{'All databases'}{'Rows'} =
       ( $totaldbinfo[0] eq 'NULL' ? 0 : $totaldbinfo[0] );
     $result{'Databases'}{'All databases'}{'Data Size'} = $totaldbinfo[1];
@@ -2924,7 +2917,7 @@ sub mysql_databases {
         chomp($_);
         if (   $_ eq "information_schema"
             or $_ eq "performance_schema"
-            or $_ eq "mysql"
+           # or $_ eq "mysql"
             or $_ eq "" )
         {
             next;
@@ -2932,7 +2925,7 @@ sub mysql_databases {
 
         my @dbinfo = split /\s/,
           select_one(
-"SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE),COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
+"SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE),COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)),COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
           );
         next unless defined $dbinfo[0];
         infoprint "Database: " . $dbinfo[0] . "";
@@ -2951,6 +2944,8 @@ sub mysql_databases {
           . hr_bytes( $dbinfo[3] ) . "("
           . percentage( $dbinfo[3], $dbinfo[4] ) . "%)";
         infoprint " +-- TOTAL: " . hr_bytes( $dbinfo[4] ) . "";
+        infoprint " +-- ENGIN : "
+      . ( $dbinfo[8] eq 'NULL' ? 0 : $dbinfo[8] ) . " (".  (join ", ", select_array ("SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_'")) .")";
         badprint "Index size is larger than data size for $dbinfo[0] \n"
           if $dbinfo[2] < $dbinfo[3];
         badprint "There are " . $dbinfo[5] . " storage engines. Be careful. \n"
@@ -2971,7 +2966,32 @@ sub mysql_databases {
     } else {
 	goodprint $dbinfo[7]. " collation for ".$dbinfo[0]. " database.";
     }
+   if ($dbinfo[8]>1) {
+        badprint $dbinfo[8]. " differents engines for database ".$dbinfo[0];
+        push(@generalrec, "Check all table engines are identical for all tables in ".$dbinfo[0]. " database.");
+    } else {
+        goodprint $dbinfo[8]. " engine for ".$dbinfo[0]. " database.";
     }
+    
+    my @distinct_column_charset=select_array("select DISTINCT(CHARACTER_SET_NAME) from information_schema.COLUMNS where CHARACTER_SET_NAME IS NOT NULL AND  TABLE_SCHEMA ='$_'");
+    infoprint "Charsets for $dbinfo[0] database table column: ". join (', ', @distinct_column_charset);
+    if (scalar (@distinct_column_charset)>1 ) {
+        badprint $dbinfo[0]. " table column(s) has  several charsets defined for all text like column(s).";
+        push(@generalrec, "Limit charset for column to one charset if possible for ".$dbinfo[0]." database."); 
+    } else {
+        goodprint $dbinfo[0]. " table column(s) has same charset defined for all text like column(s)."; 
+    } 
+
+    my @distinct_column_collation=select_array("select DISTINCT(COLLATION_NAME) from information_schema.COLUMNS where COLLATION_NAME IS NOT NULL AND  TABLE_SCHEMA ='$_'");
+    infoprint "Collations for $dbinfo[0] database table column: ". join (', ', @distinct_column_collation);
+    if (scalar (@distinct_column_collation)>1 ) {
+        badprint $dbinfo[0]. " table column(s) has  several collations defined for all text like column(s).";
+        push(@generalrec, "Limit collations for column to one collation if possible for ".$dbinfo[0]." database.");
+    } else {
+        goodprint $dbinfo[0]. " table column(s) has same collation defined for all text like column(s).";
+    }
+   }
+   
 }
 
 # Recommendations for Indexes metrics

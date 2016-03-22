@@ -101,12 +101,18 @@
 
 ## MySQLTuner database information
 * Per database information
+        * Tables number
 	* Rows number
 	* Total size
 	* Data size
 	* Percentage of data size
 	* Index size
 	* Percentage of index size
+        * Collation number
+        * Check that there is only one collation for all table in a database
+        * Check that there is only one collation for ll table columns in a database
+        * Check that there is only one storage engine per user database
+
 
 ## MySQLTuner index information
 
