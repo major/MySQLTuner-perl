@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.7
+# mysqltuner.pl - Version 1.6.8
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.7";
+my $tunerversion = "1.6.8";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -73,7 +73,8 @@ my %opt = (
     "checkversion" => 0,
     "buffers"      => 0,
     "passwordfile" => 0, 
-    "bannedports"  => '', 
+    "bannedports"  => '',
+    "maxportallowed"= >0, 
     "outputfile"   => 0,
     "dbstat"       => 0,
     "idxstat"      => 0,
@@ -93,7 +94,7 @@ GetOptions(
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
     'passwordfile=s', 'outputfile=s', 'silent',       'dbstat', 'json',
     'idxstat', 'noask', 'template=s', 'reportfile=s', 'cvefile=s',
-    'bannedports=s',
+    'bannedports=s','maxportallowed=s'
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
@@ -136,7 +137,8 @@ sub usage {
       . "      --debug              Print debug information\n"
       . "      --dbstat             Print database information\n"
       . "      --idxstat            Print index information\n"
-      . "      --bannedports        ports banned separated by comma(,)\n"
+      . "      --bannedports        Ports banned separated by comma(,)\n"
+      . "      --maxportallowed     Number of ports opened allowed on this hosts\n"
       . "      --cvefile            CVE File for vulnerability checks\n"
       . "      --nocolor            Don't print output in color\n"
       . "      --json               Print result as JSON string\n"
@@ -955,16 +957,17 @@ sub system_recommendations {
     #if ($omem > 
     #exit 0;	
 
-    my @opened_ports=get_opened_ports;
-    infoprint "There is ". scalar @opened_ports. " listening port(s) on this server.";
-    if (scalar(@opened_ports) > 10) {
-	badprint "There is too many listening ports: ". scalar(@opened_ports). " > 10";
-    	push( @generalrec, "Consider dedicating a server for your database installation with less services running on !" );
-    } else {
-	 goodprint "There is less than 10 opened ports on this server."; 
+    if ($opt{'maxportallowed'} > 0) {
+      my @opened_ports=get_opened_ports;
+      infoprint "There is ". scalar @opened_ports. " listening port(s) on this server.";
+      if (scalar(@opened_ports) > $opt{'maxportallowed'}) {
+  	     badprint "There is too many listening ports: ". scalar(@opened_ports). " > 10";
+      	 push( @generalrec, "Consider dedicating a server for your database installation with less services running on !" );
+      } else {
+  	     goodprint "There is less than ".$opt{'maxportallowed'}." opened ports on this server."; 
+      }
     }
-
-#    if ( is_open_port(80) or is_open_port(443) ) {
+    #    if ( is_open_port(80) or is_open_port(443) ) {
 #	badprint "There is Apache like server running on 80 or 443 port.";
 #    	push( @generalrec, "Consider dedicating a server for Web server in production !" );
 #    }  else {
@@ -3264,7 +3267,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.7 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.8 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -3302,7 +3305,8 @@ You must provide the remote server's total memory when connecting to other serve
  --debug              Print debug information
  --dbstat             Print database information
  --idxstat            Print index information
- --bannedports        ports banned separated by comma(,)
+ --bannedports        Ports banned separated by comma(,)
+ --maxportallowed     Number of ports opened allowed on this hosts
  --cvefile            CVE File for vulnerability checks
  --nocolor            Don't print output in color
  --json               Print result as JSON string
