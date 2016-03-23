@@ -570,15 +570,18 @@ sub mysql_setup {
         }
     }
     elsif ( -r "/etc/psa/.psa.shadow" and $doremote == 0 ) {
-
         # It's a Plesk box, use the available credentials
         $mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
         my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
         unless ( $loginstatus =~ /mysqld is alive/ ) {
-            badprint
-"Attempted to use login credentials from Plesk, but they failed.";
-            exit 1;
-        }
+            # Plesk 10+
+            $mysqllogin = "-u admin -p`/usr/local/psa/bin/admin --show-password`";
+            $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
+            unless ( $loginstatus =~ /mysqld is alive/ ) {
+              badprint "Attempted to use login credentials from Plesk and Plesk 10+, but they failed.";
+              exit 1;
+            }
+          }
     }
     elsif ( -r "/usr/local/directadmin/conf/mysql.conf" and $doremote == 0 ) {
 
@@ -961,18 +964,18 @@ sub system_recommendations {
 	 goodprint "There is less than 10 opened ports on this server."; 
     }
 
-    if ( is_open_port(80) or is_open_port(443) ) {
-	badprint "There is Apache like server running on 80 or 443 port.";
-    	push( @generalrec, "Consider dedicating a server for Web server in production !" );
-    }  else {
-	goodprint "No Web server runing on 80 and 444 port.";
-    }
-    if ( is_open_port(8080) or is_open_port(8443) ) {
-        badprint "There is Application server running on 8080 or 8443 port.";
-        push( @generalrec, "Consider dedicating a server for Application server in production !" );
-    }  else {
-        goodprint "No Application server runing on 8080 or 8443 port.";
-    }
+#    if ( is_open_port(80) or is_open_port(443) ) {
+#	badprint "There is Apache like server running on 80 or 443 port.";
+#    	push( @generalrec, "Consider dedicating a server for Web server in production !" );
+#    }  else {
+#	goodprint "No Web server runing on 80 and 443 port.";
+#    }
+#    if ( is_open_port(8080) or is_open_port(8443) ) {
+#        badprint "There is Application server running on 8080 or 8443 port.";
+#        push( @generalrec, "Consider dedicating a server for Application server in production !" );
+#    }  else {
+#        goodprint "No Application server runing on 8080 or 8443 port.";
+#    }
     foreach my $banport (@banned_ports) {
 	    if ( is_open_port($banport) ) {
 		    badprint "Banned port: $banport is opened..";
