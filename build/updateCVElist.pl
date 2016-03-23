@@ -21,8 +21,8 @@ sub AUTOLOAD {
 
 my $mech = WWW::Mechanize->new();
 $mech->agent('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:41.0) Gecko/20100101 Firefox/41.0');
-#$mech->proxy( ['http'], 'http://10.236.240.71:3128' );
-#$mech->proxy( ['https'], 'http://10.236.240.71:3128' );
+#$mech->proxy( ['http'], 'http://XXX.XXX.XXX.XXX:3128' );
+#$mech->proxy( ['https'], 'http://XXX.XXX.XXX.XXX:3128' );
 $mech->env_proxy;
 
 

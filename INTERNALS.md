@@ -66,6 +66,10 @@
 
 ## MySQLTuner system checks
 * 32-bit w/>2GB RAM check
+* Check number of opened ports (warning if more than 9 ports opened)
+* Check 80, 8080, 443 and 8443 ports if warning are raised if there are opened 
+* Check if some banned ports are not opened (option --bannedports separated by comma)
+* Check if non kernel and user process except mysqld are not using more than 15% of total physical memory)
 
 ## MySQLTuner Server version checks
 * EOL MySQL version check
@@ -97,12 +101,18 @@
 
 ## MySQLTuner database information
 * Per database information
+        * Tables number
 	* Rows number
 	* Total size
 	* Data size
 	* Percentage of data size
 	* Index size
 	* Percentage of index size
+        * Collation number
+        * Check that there is only one collation for all table in a database
+        * Check that there is only one collation for ll table columns in a database
+        * Check that there is only one storage engine per user database
+
 
 ## MySQLTuner index information
 
@@ -238,17 +248,7 @@
 * tokudb_cleaner_iterations
 * tokudb_fanout
 
-## MySQLTuner MariaDB thread pool information
+## MySQLTuner Thread pool information
 
-* thread_pool_size
-* thread_pool_stall_limit 
-
-* thread_pool_max_threads 
-* thread_pool_idle_timeout 
-
-* thread_pool_oversubscribe
-
-* threadpool_threads
-* threadpool_idle_threads
-* threadpool_threads / thread_pool_size
-* threadpool_idle_threads / thread_pool_size
+* thread_pool_size between 16 to 36 for Innodb usage
+* thread_pool_size between 4 to 8 for MyIsam usage
