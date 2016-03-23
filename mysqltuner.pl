@@ -74,7 +74,7 @@ my %opt = (
     "buffers"      => 0,
     "passwordfile" => 0, 
     "bannedports"  => '',
-    "maxportallowed"= >0, 
+    "maxportallowed"=> 0, 
     "outputfile"   => 0,
     "dbstat"       => 0,
     "idxstat"      => 0,
@@ -94,7 +94,7 @@ GetOptions(
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
     'passwordfile=s', 'outputfile=s', 'silent',       'dbstat', 'json',
     'idxstat', 'noask', 'template=s', 'reportfile=s', 'cvefile=s',
-    'bannedports=s','maxportallowed=s'
+    'bannedports=s','maxportallowed=s',
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
