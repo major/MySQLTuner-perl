@@ -782,14 +782,14 @@ sub select_array {
     debugprint "PERFORM: $req ";
     my @result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
     if ($? != 0) {
-    	badprint "failed to execute: $req";
-    	badprint "FAIL Execute SQL / return code: $?";
-	debugprint "CMD    : $mysqlcmd";
-	debugprint "OPTIONS: $mysqllogin";
-	debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
-	exit $?;
+      badprint "failed to execute: $req";
+      badprint "FAIL Execute SQL / return code: $?";
+  debugprint "CMD    : $mysqlcmd";
+  debugprint "OPTIONS: $mysqllogin";
+  debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+  exit $?;
     } 
-    debugprint "select_array: return code : $?";	    
+    debugprint "select_array: return code : $?";      
     chomp(@result);
     return @result;
 }
@@ -800,14 +800,14 @@ sub select_one {
     debugprint "PERFORM: $req ";
     my $result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
     if ($? != 0) {
-    	badprint "failed to execute: $req";
-    	badprint "FAIL Execute SQL / return code: $?";
-	debugprint "CMD    : $mysqlcmd";
-	debugprint "OPTIONS: $mysqllogin";
-	debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
-	exit $?;
+      badprint "failed to execute: $req";
+      badprint "FAIL Execute SQL / return code: $?";
+  debugprint "CMD    : $mysqlcmd";
+  debugprint "OPTIONS: $mysqllogin";
+  debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+  exit $?;
     } 
-    debugprint "select_array: return code : $?";	    
+    debugprint "select_array: return code : $?";      
     chomp($result);
     return $result;
 }
@@ -960,9 +960,9 @@ sub cve_recommendations {
 sub get_opened_ports {
      my @opened_ports=`netstat -ltn`;
      map {
-	 s/.*:(\d+)\s.*$/$1/;
-	 s/\D//g;
-	} @opened_ports;
+   s/.*:(\d+)\s.*$/$1/;
+   s/\D//g;
+  } @opened_ports;
      @opened_ports =  sort {$a <=> $b} grep { !/^$/ } @opened_ports;
      debugprint Dumper \@opened_ports;
      return @opened_ports;
@@ -977,26 +977,26 @@ sub is_open_port {
 }
 
 sub get_process_memory {
-	my $pid=shift;
-	return 0 unless -f "/proc/$pid/status";
-	my @pdata= grep { /RSS:/ } get_file_contents "/proc/$pid/status";
-	map { 
-		s/.*RSS:\s*(\d+)\s*kB\s*$/$1*1024/ge 
-	    } @pdata;
-	return $pdata[0];
+  my $pid=shift;
+  return 0 unless -f "/proc/$pid/status";
+  my @pdata= grep { /RSS:/ } get_file_contents "/proc/$pid/status";
+  map { 
+    s/.*RSS:\s*(\d+)\s*kB\s*$/$1*1024/ge 
+      } @pdata;
+  return $pdata[0];
 }
 
 sub get_other_process_memory {
-	my @procs=`ps -eo pid,cmd`;
-	map { s/.*mysqld.*//; s/.*\[.*\].*//; s/^\s+$//g; s/.*PID.*CMD.*//; s/.*systemd.*//;} @procs;
-	map {s/\s*?(\d+)\s*.*/$1/g;} @procs;
-	remove_cr @procs;
-	@procs=remove_empty @procs;
-	my $totalMemOther=0;
-	map {
-		$totalMemOther+=get_process_memory($_);
-	} @procs;
-	return $totalMemOther;
+  my @procs=`ps -eo pid,cmd`;
+  map { s/.*mysqld.*//; s/.*\[.*\].*//; s/^\s+$//g; s/.*PID.*CMD.*//; s/.*systemd.*//;} @procs;
+  map {s/\s*?(\d+)\s*.*/$1/g;} @procs;
+  remove_cr @procs;
+  @procs=remove_empty @procs;
+  my $totalMemOther=0;
+  map {
+    $totalMemOther+=get_process_memory($_);
+  } @procs;
+  return $totalMemOther;
 }
 
 sub get_os_release {
@@ -1020,34 +1020,34 @@ sub system_recommendations {
     infoprint "User process except mysqld used ". hr_bytes_rnd($omem) . " RAM.";
     if ( (0.15*$physical_memory) < $omem) {
        badprint "Other user process except mysqld used more than 15% of total physical memory ". percentage($omem, $physical_memory). "% (".hr_bytes_rnd($omem). " / ".hr_bytes_rnd($physical_memory).")";
-    	push( @generalrec, "Consider stopping or dedicate server for additionnal process other than mysqld." );
-   	push( @adjvars, "DON'T APPLY SETTINGS BECAUSE THERE IS TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCURS !" );
+      push( @generalrec, "Consider stopping or dedicate server for additionnal process other than mysqld." );
+    push( @adjvars, "DON'T APPLY SETTINGS BECAUSE THERE IS TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCURS !" );
 
        
     } else {
     }
 
     #if ($omem > 
-    #exit 0;	
+    #exit 0;  
 
     if ($opt{'maxportallowed'} > 0) {
       my @opened_ports=get_opened_ports;
       infoprint "There is ". scalar @opened_ports. " listening port(s) on this server.";
       if (scalar(@opened_ports) > $opt{'maxportallowed'}) {
-  	     badprint "There is too many listening ports: ". scalar(@opened_ports). " opened > ".$opt{'maxportallowed'}. "allowed.";
-      	 push( @generalrec, "Consider dedicating a server for your database installation with less services running on !" );
+         badprint "There is too many listening ports: ". scalar(@opened_ports). " opened > ".$opt{'maxportallowed'}. "allowed.";
+         push( @generalrec, "Consider dedicating a server for your database installation with less services running on !" );
       } else {
-  	     goodprint "There is less than ".$opt{'maxportallowed'}." opened ports on this server."; 
+         goodprint "There is less than ".$opt{'maxportallowed'}." opened ports on this server."; 
       }
     }
 
     foreach my $banport (@banned_ports) {
-	    if ( is_open_port($banport) ) {
-		    badprint "Banned port: $banport is opened..";
-		    push( @generalrec, "Port $banport is opened. Consider stopping program handling this port." );
-	    }  else {
-		    goodprint "$banport is not opened.";
-	    }
+      if ( is_open_port($banport) ) {
+        badprint "Banned port: $banport is opened..";
+        push( @generalrec, "Port $banport is opened. Consider stopping program handling this port." );
+      }  else {
+        goodprint "$banport is not opened.";
+      }
     }
 }
     
@@ -1403,7 +1403,7 @@ sub check_storage_engines {
     $result{'Databases'}{'List'} = [@dblist];
     infoprint "Status: $engines";
     if ( mysql_version_ge( 5, 1, 5 ) ) {
-	# MySQL 5 servers can have table sizes calculated quickly from information schema
+  # MySQL 5 servers can have table sizes calculated quickly from information schema
         my @templist = select_array
 "SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE),SUM(DATA_LENGTH),SUM(INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
 
@@ -2584,12 +2584,12 @@ sub mariadb_threadpool {
     infoprint "Thread Pool Size: ".$myvar{'thread_pool_size'}. " thread(s).";
 
     if ($myvar{'have_innodb'} eq 'YES') {
-	if  ($myvar{'thread_pool_size'}< 16 or $myvar{'thread_pool_size'}>36) {
-		badprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
-    		push( @generalrec, "Thread pool size for InnoDB usage (".$myvar{'thread_pool_size'}.")" );
-	   	push( @adjvars, "thread_pool_size between 16 and 36 for InnoDB usage" );
-    	} else {
-		goodprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
+  if  ($myvar{'thread_pool_size'}< 16 or $myvar{'thread_pool_size'}>36) {
+    badprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
+        push( @generalrec, "Thread pool size for InnoDB usage (".$myvar{'thread_pool_size'}.")" );
+      push( @adjvars, "thread_pool_size between 16 and 36 for InnoDB usage" );
+      } else {
+    goodprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
         }
         return;
     } 
@@ -3029,10 +3029,10 @@ sub mysql_databases {
           percentage( $dbinfo[3], $dbinfo[4] ) . "%";
         $result{'Databases'}{ $dbinfo[0] }{'Total Size'} = $dbinfo[4];
     if ($dbinfo[7]>1) {
-	badprint $dbinfo[7]. " differents collations for database ".$dbinfo[0];
+  badprint $dbinfo[7]. " differents collations for database ".$dbinfo[0];
         push(@generalrec, "Check all table collations are identical for all tables in ".$dbinfo[0]. " database."); 
     } else {
-	goodprint $dbinfo[7]. " collation for ".$dbinfo[0]. " database.";
+  goodprint $dbinfo[7]. " collation for ".$dbinfo[0]. " database.";
     }
    if ($dbinfo[8]>1) {
         badprint $dbinfo[8]. " differents engines for database ".$dbinfo[0];
@@ -3296,7 +3296,7 @@ get_all_vars;                # Toss variables/status into hashes
 get_tuning_info;             # Get information about the tuning connexion
 validate_mysql_version;      # Check current MySQL version
 check_architecture;          # Suggest 64-bit upgrade
-system_recommendations;	     # avoid to many service on the same host
+system_recommendations;      # avoid to many service on the same host
 check_storage_engines;       # Show enabled storage engines
 mysql_databases;             # Show informations about databases
 mysql_indexes;               # Show informations about indexes
@@ -3354,6 +3354,7 @@ You must provide the remote server's total memory when connecting to other serve
                       (Recommended for servers with many tables)
  --skippassword       Don't perform checks on user passwords(default: off)
  --checkversion       Check for updates to MySQLTuner (default: don't check)
+ --updateversion      Check for updates to MySQLTuner and update when newer version is available (default: don't check)
  --forcemem <size>    Amount of RAM installed in megabytes
  --forceswap <size>   Amount of swap memory configured in megabytes
  --passwordfile <path>Path to a password file list(one password by line)
