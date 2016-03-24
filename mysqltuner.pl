@@ -461,10 +461,7 @@ sub update_tuner_version {
   my $receivedScripts = 0;
   my $httpcli         =`which curl`;
 
-  #foreach my $scriptKey (%{@scripts}) {
-  for my $scriptKey (0 .. $#scripts) {
-
-    my $script = $scripts[$scriptKey];
+  foreach my $script (@scripts) {
     
     chomp($httpcli);
     if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
