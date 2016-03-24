@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.8
+# mysqltuner.pl - Version 1.6.9
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
+# Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.com/
 # Git repository available at http://github.com/major/MySQLTuner-perl
@@ -51,102 +51,114 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.8";
+my $tunerversion = "1.6.9";
 my ( @adjvars, @generalrec );
 
 # Set defaults
 my %opt = (
-    "silent"       => 0,
-    "nobad"        => 0,
-    "nogood"       => 0,
-    "noinfo"       => 0,
-    "debug"        => 0,
-    "nocolor"      => 0,
-    "forcemem"     => 0,
-    "forceswap"    => 0,
-    "host"         => 0,
-    "socket"       => 0,
-    "port"         => 0,
-    "user"         => 0,
-    "pass"         => 0,
-    "skipsize"     => 0,
-    "checkversion" => 0,
-    "buffers"      => 0,
-    "passwordfile" => 0, 
-    "bannedports"  => '',
-    "maxportallowed"=> 0, 
-    "outputfile"   => 0,
-    "dbstat"       => 0,
-    "idxstat"      => 0,
-    "skippassword" => 0,
-    "noask"        => 0,
-    "template"     => 0,
-    "json"         => 0,
-    "reportfile"   => 0
+    "silent"         => 0,
+    "nobad"          => 0,
+    "nogood"         => 0,
+    "noinfo"         => 0,
+    "debug"          => 0,
+    "nocolor"        => 0,
+    "forcemem"       => 0,
+    "forceswap"      => 0,
+    "host"           => 0,
+    "socket"         => 0,
+    "port"           => 0,
+    "user"           => 0,
+    "pass"           => 0,
+    "skipsize"       => 0,
+    "checkversion"   => 0,
+    "updateversion"  => 0,
+    "buffers"        => 0,
+    "passwordfile"   => 0, 
+    "bannedports"    => '',
+    "maxportallowed" => 0, 
+    "outputfile"     => 0,
+    "dbstat"         => 0,
+    "idxstat"        => 0,
+    "skippassword"   => 0,
+    "noask"          => 0,
+    "template"       => 0,
+    "json"           => 0,
+    "prettyjson"     => 0,
+    "reportfile"     => 0,
+    "verbose"        => 0
 );
 
 # Gather the options from the command line
-GetOptions(
-    \%opt,            'nobad',        'nogood',       'noinfo',
-    'debug',          'nocolor',      'forcemem=i',   'forceswap=i',
-    'host=s',         'socket=s',     'port=i',       'user=s',
-    'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
-    'mysqlcmd=s',     'help',         'buffers',      'skippassword',
-    'passwordfile=s', 'outputfile=s', 'silent',       'dbstat', 'json',
-    'idxstat', 'noask', 'template=s', 'reportfile=s', 'cvefile=s',
-    'bannedports=s','maxportallowed=s',
+my $getOptionsCheck = GetOptions(
+  \%opt,            'nobad',        'nogood',       'noinfo',
+  'debug',          'nocolor',      'forcemem=i',   'forceswap=i',
+  'host=s',         'socket=s',     'port=i',       'user=s',
+  'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
+  'mysqlcmd=s',     'help',         'buffers',      'skippassword',
+  'passwordfile=s', 'outputfile=s', 'silent',       'dbstat',
+  'json',           'prettyjson',   'idxstat',      'noask', 
+  'template=s',     'reportfile=s', 'cvefile=s',    'bannedports=s',
+  'updateversion',   'maxportallowed=s', 'verbose'
 );
+
+#If params are incorrect return help
+if ($getOptionsCheck ne 1) {
+  usage();
+}
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
 
 sub usage {
 
-    # Shown with --help option passed
-    print "   MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n"
-      . "   Bug reports, feature requests, and downloads at http://mysqltuner.com/\n"
-      . "   Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL\n"
-      . "\n"
-      . "   Important Usage Guidelines:\n"
-      . "      To run the script with the default options, run the script without arguments\n"
-      . "      Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n"
-      . "      Some routines may require root level privileges (script will provide warnings)\n"
-      . "      You must provide the remote server's total memory when connecting to other servers\n"
-      . "\n"
-      . "   Connection and Authentication\n"
-      . "      --host <hostname>    Connect to a remote host to perform tests (default: localhost)\n"
-      . "      --socket <socket>    Use a different socket for a local connection\n"
-      . "      --port <port>        Port to use for connection (default: 3306)\n"
-      . "      --user <username>    Username to use for authentication\n"
-      . "      --pass <password>    Password to use for authentication\n"
-      . "      --mysqladmin <path>  Path to a custom mysqladmin executable\n"
-      . "      --mysqlcmd <path>    Path to a custom mysql executable\n" . "\n"
-      . "      --noask              Dont ask password if needed\n" . "\n"
-      . "   Performance and Reporting Options\n"
-      . "      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n"
-      . "                           (Recommended for servers with many tables)\n"
-      . "      --skippassword       Don't perform checks on user passwords(default: off)\n"
-      . "      --checkversion       Check for updates to MySQLTuner (default: don't check)\n"
-      . "      --forcemem <size>    Amount of RAM installed in megabytes\n"
-      . "      --forceswap <size>   Amount of swap memory configured in megabytes\n"
-      . "      --passwordfile <path>Path to a password file list(one password by line)\n"
-      . "   Output Options:\n"
-      . "      --silent             Don't output anything on screen\n"
-      . "      --nogood             Remove OK responses\n"
-      . "      --nobad              Remove negative/suggestion responses\n"
-      . "      --noinfo             Remove informational responses\n"
-      . "      --debug              Print debug information\n"
-      . "      --dbstat             Print database information\n"
-      . "      --idxstat            Print index information\n"
-      . "      --bannedports        Ports banned separated by comma(,)\n"
-      . "      --maxportallowed     Number of ports opened allowed on this hosts\n"
-      . "      --cvefile            CVE File for vulnerability checks\n"
-      . "      --nocolor            Don't print output in color\n"
-      . "      --json               Print result as JSON string\n"
-      . "      --buffers            Print global and per-thread buffer values\n"
-      . "      --outputfile <path>  Path to a output txt file\n" . "\n"
-      . "      --reportfile <path>  Path to a report txt file\n" . "\n"
-      . "      --template   <path>  Path to a template file\n" . "\n";
-    exit 0;
+  # Shown with --help option passed
+  print "   MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n"
+    . "   Bug reports, feature requests, and downloads at http://mysqltuner.com/\n"
+    . "   Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL\n"
+    . "\n"
+    . "   Important Usage Guidelines:\n"
+    . "      To run the script with the default options, run the script without arguments\n"
+    . "      Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n"
+    . "      Some routines may require root level privileges (script will provide warnings)\n"
+    . "      You must provide the remote server's total memory when connecting to other servers\n"
+    . "\n"
+    . "   Connection and Authentication\n"
+    . "      --host <hostname>    Connect to a remote host to perform tests (default: localhost)\n"
+    . "      --socket <socket>    Use a different socket for a local connection\n"
+    . "      --port <port>        Port to use for connection (default: 3306)\n"
+    . "      --user <username>    Username to use for authentication\n"
+    . "      --pass <password>    Password to use for authentication\n"
+    . "      --mysqladmin <path>  Path to a custom mysqladmin executable\n"
+    . "      --mysqlcmd <path>    Path to a custom mysql executable\n" . "\n"
+    . "      --noask              Dont ask password if needed\n" . "\n"
+    . "   Performance and Reporting Options\n"
+    . "      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n"
+    . "                           (Recommended for servers with many tables)\n"
+    . "      --skippassword       Don't perform checks on user passwords(default: off)\n"
+    . "      --checkversion       Check for updates to MySQLTuner (default: don't check)\n"
+    . "      --updateversion      Check for updates to MySQLTuner and update when newer version is available (default: don't check)\n"
+    . "      --forcemem <size>    Amount of RAM installed in megabytes\n"
+    . "      --forceswap <size>   Amount of swap memory configured in megabytes\n"
+    . "      --passwordfile <path>Path to a password file list(one password by line)\n"
+    . "   Output Options:\n"
+    . "      --silent             Don't output anything on screen\n"
+    . "      --nogood             Remove OK responses\n"
+    . "      --nobad              Remove negative/suggestion responses\n"
+    . "      --noinfo             Remove informational responses\n"
+    . "      --debug              Print debug information\n"
+    . "      --dbstat             Print database information\n"
+    . "      --idxstat            Print index information\n"
+    . "      --bannedports        Ports banned separated by comma(,)\n"
+    . "      --maxportallowed     Number of ports opened allowed on this hosts\n"
+    . "      --cvefile            CVE File for vulnerability checks\n"
+    . "      --nocolor            Don't print output in color\n"
+    . "      --json               Print result as JSON string\n"
+    . "      --prettyjson         Print result as human readable JSON\n"
+    . "      --buffers            Print global and per-thread buffer values\n"
+    . "      --outputfile <path>  Path to a output txt file\n" . "\n"
+    . "      --reportfile <path>  Path to a report txt file\n" . "\n"
+    . "      --template   <path>  Path to a template file\n" . "\n"
+    . "      --verbose            Prints out all options (default: no verbose) \n" . "\n";
+  exit 0;
 }
 
 my $devnull = File::Spec->devnull();
@@ -158,6 +170,15 @@ my $basic_password_files =
 # for RPM distributions
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
+
+# check if we need to enable verbose mode
+if ($opt{verbose}) {
+  $opt{checkversion} = 1; #Check for updates to MySQLTuner
+  $opt{dbstat}       = 1; #Print database information
+  $opt{idxstat}      = 1; #Print index information
+  $opt{buffers}      = 1; #Print global and per-thread buffer values
+  $opt{cvefile}      = 'vulnerabilities.csv'; #CVE File for vulnerability checks
+}
 
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
@@ -189,7 +210,7 @@ my %result;
 
 # Functions that handle the print styles
 sub prettyprint {
-    print $_[0] . "\n" unless $opt{'silent'};
+    print $_[0] . "\n" unless ($opt{'silent'} or $opt{'json'});
     print $fh $_[0] . "\n" if defined($fh);
 }
 sub goodprint  { prettyprint $good. " " . $_[0] unless ( $opt{nogood} == 1 ); }
@@ -385,8 +406,8 @@ sub os_setup {
 
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
-  if ($opt{checkversion} eq 0) {
-    print "\n";
+  if ($opt{'checkversion'} eq 0 and $opt{'updateversion'} eq 0) {
+    print "\n" unless ($opt{'silent'} or $opt{'json'});
     infoprint "Skipped version check for MySQLTuner script";
     return;
   }
@@ -424,12 +445,80 @@ sub validate_tuner_version {
   infoprint "Unable to check for the latest MySQLTuner version";
 }
 
+# Checks for updates to MySQLTuner
+sub update_tuner_version {
+  if ($opt{'updateversion'} eq 0) {
+    badprint "Skipped version update for MySQLTuner script";
+    print "\n" unless ($opt{'silent'} or $opt{'json'});
+    return;
+  }
+
+  #use Cwd;
+  my $update;
+  my $url             = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/";
+  my @scripts         = ("mysqltuner.pl", "basic_passwords.txt", "vulnerabilities.csv");
+  my $totalScripts    = scalar(@scripts);
+  my $receivedScripts = 0;
+  my $httpcli         =`which curl`;
+
+  foreach my $script (@scripts) {
+    
+    chomp($httpcli);
+    if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
+      debugprint "$httpcli is available.";
+
+      debugprint "$httpcli --connect-timeout 5 -silent '$url$script' > $script";
+      $update = `$httpcli --connect-timeout 5 -silent '$url$script' > $script`;
+      chomp($update);
+      debugprint "$script updated: $update";
+      
+      if ( -s $script  eq 0) {
+        badprint "Couldn't update $script";
+      } else {
+        ++$receivedScripts;
+        debugprint "$script updated: $update";
+      }
+    } else {
+
+      $httpcli=`which wget`;
+      chomp($httpcli);
+      if ( defined($httpcli) and -e "$httpcli" ) {
+        debugprint "$httpcli is available.";
+
+        debugprint "$httpcli -qe timestamping=off -T 5 -O $script '$url$script'";
+        $update = `$httpcli -qe timestamping=off -T 5 -O $script '$url$script'`;
+        chomp($update);
+
+        if ( -s $script  eq 0) {
+          badprint "Couldn't update $script";
+        } else {
+          ++$receivedScripts;
+          debugprint "$script updated: $update";
+        }
+
+      } else {
+        debugprint "curl and wget are not available.";
+        infoprint "Unable to check for the latest MySQLTuner version";
+      }
+    }
+  }
+
+  if ($receivedScripts eq $totalScripts) {
+      goodprint "Successfully updated MySQLTuner script";
+    } else {
+      badprint "Couldn't update MySQLTuner script";
+    }
+
+  exit 0;
+}
+
 sub compare_tuner_version {
    my $remoteversion=shift;
    debugprint "Remote data: $remoteversion";
    #exit 0;
    if ($remoteversion ne $tunerversion) {
      badprint "There is a new version of MySQLTuner available ($remoteversion)";
+     update_tuner_version();
      return;
    }
    goodprint "You have the latest version of MySQLTuner($tunerversion)";
@@ -709,14 +798,14 @@ sub select_array {
     debugprint "PERFORM: $req ";
     my @result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
     if ($? != 0) {
-    	badprint "failed to execute: $req";
-    	badprint "FAIL Execute SQL / return code: $?";
-	debugprint "CMD    : $mysqlcmd";
-	debugprint "OPTIONS: $mysqllogin";
-	debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
-	exit $?;
+      badprint "failed to execute: $req";
+      badprint "FAIL Execute SQL / return code: $?";
+  debugprint "CMD    : $mysqlcmd";
+  debugprint "OPTIONS: $mysqllogin";
+  debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+  exit $?;
     } 
-    debugprint "select_array: return code : $?";	    
+    debugprint "select_array: return code : $?";      
     chomp(@result);
     return @result;
 }
@@ -727,14 +816,14 @@ sub select_one {
     debugprint "PERFORM: $req ";
     my $result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
     if ($? != 0) {
-    	badprint "failed to execute: $req";
-    	badprint "FAIL Execute SQL / return code: $?";
-	debugprint "CMD    : $mysqlcmd";
-	debugprint "OPTIONS: $mysqllogin";
-	debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
-	exit $?;
+      badprint "failed to execute: $req";
+      badprint "FAIL Execute SQL / return code: $?";
+  debugprint "CMD    : $mysqlcmd";
+  debugprint "OPTIONS: $mysqllogin";
+  debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+  exit $?;
     } 
-    debugprint "select_array: return code : $?";	    
+    debugprint "select_array: return code : $?";      
     chomp($result);
     return $result;
 }
@@ -887,9 +976,9 @@ sub cve_recommendations {
 sub get_opened_ports {
      my @opened_ports=`netstat -ltn`;
      map {
-	 s/.*:(\d+)\s.*$/$1/;
-	 s/\D//g;
-	} @opened_ports;
+   s/.*:(\d+)\s.*$/$1/;
+   s/\D//g;
+  } @opened_ports;
      @opened_ports =  sort {$a <=> $b} grep { !/^$/ } @opened_ports;
      debugprint Dumper \@opened_ports;
      return @opened_ports;
@@ -904,26 +993,26 @@ sub is_open_port {
 }
 
 sub get_process_memory {
-	my $pid=shift;
-	return 0 unless -f "/proc/$pid/status";
-	my @pdata= grep { /RSS:/ } get_file_contents "/proc/$pid/status";
-	map { 
-		s/.*RSS:\s*(\d+)\s*kB\s*$/$1*1024/ge 
-	    } @pdata;
-	return $pdata[0];
+  my $pid=shift;
+  return 0 unless -f "/proc/$pid/status";
+  my @pdata= grep { /RSS:/ } get_file_contents "/proc/$pid/status";
+  map { 
+    s/.*RSS:\s*(\d+)\s*kB\s*$/$1*1024/ge 
+      } @pdata;
+  return $pdata[0];
 }
 
 sub get_other_process_memory {
-	my @procs=`ps -eo pid,cmd`;
-	map { s/.*mysqld.*//; s/.*\[.*\].*//; s/^\s+$//g; s/.*PID.*CMD.*//; s/.*systemd.*//;} @procs;
-	map {s/\s*?(\d+)\s*.*/$1/g;} @procs;
-	remove_cr @procs;
-	@procs=remove_empty @procs;
-	my $totalMemOther=0;
-	map {
-		$totalMemOther+=get_process_memory($_);
-	} @procs;
-	return $totalMemOther;
+  my @procs=`ps -eo pid,cmd`;
+  map { s/.*mysqld.*//; s/.*\[.*\].*//; s/^\s+$//g; s/.*PID.*CMD.*//; s/.*systemd.*//;} @procs;
+  map {s/\s*?(\d+)\s*.*/$1/g;} @procs;
+  remove_cr @procs;
+  @procs=remove_empty @procs;
+  my $totalMemOther=0;
+  map {
+    $totalMemOther+=get_process_memory($_);
+  } @procs;
+  return $totalMemOther;
 }
 
 sub get_os_release {
@@ -947,34 +1036,34 @@ sub system_recommendations {
     infoprint "User process except mysqld used ". hr_bytes_rnd($omem) . " RAM.";
     if ( (0.15*$physical_memory) < $omem) {
        badprint "Other user process except mysqld used more than 15% of total physical memory ". percentage($omem, $physical_memory). "% (".hr_bytes_rnd($omem). " / ".hr_bytes_rnd($physical_memory).")";
-    	push( @generalrec, "Consider stopping or dedicate server for additionnal process other than mysqld." );
-   	push( @adjvars, "DON'T APPLY SETTINGS BECAUSE THERE IS TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCURS !" );
+      push( @generalrec, "Consider stopping or dedicate server for additionnal process other than mysqld." );
+    push( @adjvars, "DON'T APPLY SETTINGS BECAUSE THERE IS TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCURS !" );
 
        
     } else {
     }
 
     #if ($omem > 
-    #exit 0;	
+    #exit 0;  
 
     if ($opt{'maxportallowed'} > 0) {
       my @opened_ports=get_opened_ports;
       infoprint "There is ". scalar @opened_ports. " listening port(s) on this server.";
       if (scalar(@opened_ports) > $opt{'maxportallowed'}) {
-  	     badprint "There is too many listening ports: ". scalar(@opened_ports) " opened > ".$opt{'maxportallowed'}. "allowed.";
-      	 push( @generalrec, "Consider dedicating a server for your database installation with less services running on !" );
+         badprint "There is too many listening ports: ". scalar(@opened_ports). " opened > ".$opt{'maxportallowed'}. "allowed.";
+         push( @generalrec, "Consider dedicating a server for your database installation with less services running on !" );
       } else {
-  	     goodprint "There is less than ".$opt{'maxportallowed'}." opened ports on this server."; 
+         goodprint "There is less than ".$opt{'maxportallowed'}." opened ports on this server."; 
       }
     }
 
     foreach my $banport (@banned_ports) {
-	    if ( is_open_port($banport) ) {
-		    badprint "Banned port: $banport is opened..";
-		    push( @generalrec, "Port $banport is opened. Consider stopping program handling this port." );
-	    }  else {
-		    goodprint "$banport is not opened.";
-	    }
+      if ( is_open_port($banport) ) {
+        badprint "Banned port: $banport is opened..";
+        push( @generalrec, "Port $banport is opened. Consider stopping program handling this port." );
+      }  else {
+        goodprint "$banport is not opened.";
+      }
     }
 }
     
@@ -1330,7 +1419,7 @@ sub check_storage_engines {
     $result{'Databases'}{'List'} = [@dblist];
     infoprint "Status: $engines";
     if ( mysql_version_ge( 5, 1, 5 ) ) {
-	# MySQL 5 servers can have table sizes calculated quickly from information schema
+  # MySQL 5 servers can have table sizes calculated quickly from information schema
         my @templist = select_array
 "SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE),SUM(DATA_LENGTH),SUM(INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
 
@@ -2511,12 +2600,12 @@ sub mariadb_threadpool {
     infoprint "Thread Pool Size: ".$myvar{'thread_pool_size'}. " thread(s).";
 
     if ($myvar{'have_innodb'} eq 'YES') {
-	if  ($myvar{'thread_pool_size'}< 16 or $myvar{'thread_pool_size'}>36) {
-		badprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
-    		push( @generalrec, "Thread pool size for InnoDB usage (".$myvar{'thread_pool_size'}.")" );
-	   	push( @adjvars, "thread_pool_size between 16 and 36 for InnoDB usage" );
-    	} else {
-		goodprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
+  if  ($myvar{'thread_pool_size'}< 16 or $myvar{'thread_pool_size'}>36) {
+    badprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
+        push( @generalrec, "Thread pool size for InnoDB usage (".$myvar{'thread_pool_size'}.")" );
+      push( @adjvars, "thread_pool_size between 16 and 36 for InnoDB usage" );
+      } else {
+    goodprint "thread_pool_size between 16 and 36 when using InnoDB storage engine.";
         }
         return;
     } 
@@ -2539,9 +2628,9 @@ sub mysqsl_pfs {
     # Performance Schema
      unless ( defined($myvar{'performance_schema'}) and $myvar{'performance_schema'} eq 'ON' ) {
       infoprint "Performance schema is disabled.";
+     } else {
+      infoprint "Performance schema is enabled.";
      }
-    
-    infoprint "Performance schema is enabled.";
 }
 
 
@@ -2907,7 +2996,7 @@ sub mysql_databases {
     $result{'Databases'}{'All databases'}{'Index Pct'} =
       percentage( $totaldbinfo[2], $totaldbinfo[3] ) . "%";
     $result{'Databases'}{'All databases'}{'Total Size'} = $totaldbinfo[3]; 
-    print "\n";
+    print "\n" unless ($opt{'silent'} or $opt{'json'});
     foreach (@dblist) {
         chomp($_);
         if (   $_ eq "information_schema"
@@ -2956,10 +3045,10 @@ sub mysql_databases {
           percentage( $dbinfo[3], $dbinfo[4] ) . "%";
         $result{'Databases'}{ $dbinfo[0] }{'Total Size'} = $dbinfo[4];
     if ($dbinfo[7]>1) {
-	badprint $dbinfo[7]. " differents collations for database ".$dbinfo[0];
+  badprint $dbinfo[7]. " differents collations for database ".$dbinfo[0];
         push(@generalrec, "Check all table collations are identical for all tables in ".$dbinfo[0]. " database."); 
     } else {
-	goodprint $dbinfo[7]. " collation for ".$dbinfo[0]. " database.";
+  goodprint $dbinfo[7]. " collation for ".$dbinfo[0]. " database.";
     }
    if ($dbinfo[8]>1) {
         badprint $dbinfo[8]. " differents engines for database ".$dbinfo[0];
@@ -3208,7 +3297,7 @@ sub dump_result {
           exit 1;
       }
       my $json = JSON->new->allow_nonref;
-      print JSON->new->utf8(1)->pretty(1)->encode(%result);
+      print $json->utf8(1)->pretty(($opt{'prettyjson'} ? 1 : 0))->encode(\%result);
     }
 }
 
@@ -3223,7 +3312,7 @@ get_all_vars;                # Toss variables/status into hashes
 get_tuning_info;             # Get information about the tuning connexion
 validate_mysql_version;      # Check current MySQL version
 check_architecture;          # Suggest 64-bit upgrade
-system_recommendations;	     # avoid to many service on the same host
+system_recommendations;      # avoid to many service on the same host
 check_storage_engines;       # Show enabled storage engines
 mysql_databases;             # Show informations about databases
 mysql_indexes;               # Show informations about indexes
@@ -3277,33 +3366,34 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
- --skipsize           Don't enumerate tables and their types/sizes (default: on)
-                      (Recommended for servers with many tables)
- --skippassword       Don't perform checks on user passwords(default: off)
- --checkversion       Check for updates to MySQLTuner (default: don't check)
- --forcemem <size>    Amount of RAM installed in megabytes
- --forceswap <size>   Amount of swap memory configured in megabytes
- --passwordfile <path>Path to a password file list(one password by line)
+ --skipsize                  Don't enumerate tables and their types/sizes (default: on)
+                             (Recommended for servers with many tables)
+ --skippassword              Don't perform checks on user passwords(default: off)
+ --checkversion              Check for updates to MySQLTuner (default: don't check)
+ --updateversion             Check for updates to MySQLTuner and update when newer version is available (default: don't check)
+ --forcemem <size>           Amount of RAM installed in megabytes
+ --forceswap <size>          Amount of swap memory configured in megabytes
+ --passwordfile <path>       Path to a password file list(one password by line)
 
 =head1 OUTPUT OPTIONS
 
- --silent             Don't output anything on screen
- --nogood             Remove OK responses
- --nobad              Remove negative/suggestion responses
- --noinfo             Remove informational responses
- --debug              Print debug information
- --dbstat             Print database information
- --idxstat            Print index information
- --bannedports        Ports banned separated by comma(,)
- --maxportallowed     Number of ports opened allowed on this hosts
- --cvefile            CVE File for vulnerability checks
- --nocolor            Don't print output in color
- --json               Print result as JSON string
- --buffers            Print global and per-thread buffer values
- --outputfile <path>  Path to a output txt file
- --reportfile <path>  Path to a report txt file
- --template   <path>  Path to a template file
-
+ --silent                    Don't output anything on screen
+ --nogood                    Remove OK responses
+ --nobad                     Remove negative/suggestion responses
+ --noinfo                    Remove informational responses
+ --debug                     Print debug information
+ --dbstat                    Print database information
+ --idxstat                   Print index information
+ --bannedports               Ports banned separated by comma(,)
+ --maxportallowed            Number of ports opened allowed on this hosts
+ --cvefile                   CVE File for vulnerability checks
+ --nocolor                   Don't print output in color
+ --json                      Print result as JSON string
+ --buffers                   Print global and per-thread buffer values
+ --outputfile <path>         Path to a output txt file
+ --reportfile <path>         Path to a report txt file
+ --template   <path>         Path to a template file
+ --verbose                   Prints out all options (default: no verbose)
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
