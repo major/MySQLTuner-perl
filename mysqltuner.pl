@@ -457,12 +457,12 @@ sub update_tuner_version {
   my $update;
   my $url             = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/";
   my @scripts         = ("mysqltuner.pl", "basic_passwords.txt", "vulnerabilities.csv");
-  my $totalScripts    = scalar(keys @scripts);
+  my $totalScripts    = scalar(@scripts);
   my $receivedScripts = 0;
   my $httpcli         =`which curl`;
 
   foreach my $script (@scripts) {
-
+    
     chomp($httpcli);
     if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
       debugprint "$httpcli is available.";
