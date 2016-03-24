@@ -82,8 +82,8 @@ my %opt = (
     "noask"        => 0,
     "template"     => 0,
     "json"         => 0,
-    "reportfile"   => 0,
-    "prettyjson"   => 0
+    "prettyjson"   => 0,
+    "reportfile"   => 0
 );
 
 # Gather the options from the command line
@@ -93,9 +93,10 @@ GetOptions(
     'host=s',         'socket=s',     'port=i',       'user=s',
     'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
-    'passwordfile=s', 'outputfile=s', 'silent',       'dbstat', 'json',
-    'idxstat', 'noask', 'template=s', 'reportfile=s', 'cvefile=s',
-    'bannedports=s','maxportallowed=s','prettyjson'
+    'passwordfile=s', 'outputfile=s', 'silent',       'dbstat',
+    'json',           'prettyjson',   'idxstat',      'noask', 
+    'template=s',     'reportfile=s', 'cvefile=s',    'bannedports=s',
+    'maxportallowed=s'
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
@@ -191,7 +192,7 @@ my %result;
 
 # Functions that handle the print styles
 sub prettyprint {
-    print $_[0] . "\n" unless $opt{'silent'};
+    print $_[0] . "\n" unless ($opt{'silent'} or $opt{'json'});
     print $fh $_[0] . "\n" if defined($fh);
 }
 sub goodprint  { prettyprint $good. " " . $_[0] unless ( $opt{nogood} == 1 ); }
@@ -388,7 +389,7 @@ sub os_setup {
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
   if ($opt{checkversion} eq 0) {
-    print "\n";
+    print "\n" unless ($opt{'silent'} or $opt{'json'});
     infoprint "Skipped version check for MySQLTuner script";
     return;
   }
@@ -2541,9 +2542,9 @@ sub mysqsl_pfs {
     # Performance Schema
      unless ( defined($myvar{'performance_schema'}) and $myvar{'performance_schema'} eq 'ON' ) {
       infoprint "Performance schema is disabled.";
+     } else {
+      infoprint "Performance schema is enabled.";
      }
-    
-    infoprint "Performance schema is enabled.";
 }
 
 
@@ -2909,7 +2910,7 @@ sub mysql_databases {
     $result{'Databases'}{'All databases'}{'Index Pct'} =
       percentage( $totaldbinfo[2], $totaldbinfo[3] ) . "%";
     $result{'Databases'}{'All databases'}{'Total Size'} = $totaldbinfo[3]; 
-    print "\n";
+    print "\n" unless ($opt{'silent'} or $opt{'json'});
     foreach (@dblist) {
         chomp($_);
         if (   $_ eq "information_schema"
@@ -3210,7 +3211,7 @@ sub dump_result {
           exit 1;
       }
       my $json = JSON->new->allow_nonref;
-      print $json->utf8(1)->pretty((defined $opt{'prettyjson'} ? 1 : 0))->encode(\%result);
+      print $json->utf8(1)->pretty(($opt{'prettyjson'} ? 1 : 0))->encode(\%result);
     }
 }
 
