@@ -56,34 +56,35 @@ my ( @adjvars, @generalrec );
 
 # Set defaults
 my %opt = (
-    "silent"       => 0,
-    "nobad"        => 0,
-    "nogood"       => 0,
-    "noinfo"       => 0,
-    "debug"        => 0,
-    "nocolor"      => 0,
-    "forcemem"     => 0,
-    "forceswap"    => 0,
-    "host"         => 0,
-    "socket"       => 0,
-    "port"         => 0,
-    "user"         => 0,
-    "pass"         => 0,
-    "skipsize"     => 0,
-    "checkversion" => 0,
-    "buffers"      => 0,
-    "passwordfile" => 0, 
-    "bannedports"  => '',
-    "maxportallowed"=> 0, 
-    "outputfile"   => 0,
-    "dbstat"       => 0,
-    "idxstat"      => 0,
-    "skippassword" => 0,
-    "noask"        => 0,
-    "template"     => 0,
-    "json"         => 0,
-    "prettyjson"   => 0,
-    "reportfile"   => 0
+    "silent"         => 0,
+    "nobad"          => 0,
+    "nogood"         => 0,
+    "noinfo"         => 0,
+    "debug"          => 0,
+    "nocolor"        => 0,
+    "forcemem"       => 0,
+    "forceswap"      => 0,
+    "host"           => 0,
+    "socket"         => 0,
+    "port"           => 0,
+    "user"           => 0,
+    "pass"           => 0,
+    "skipsize"       => 0,
+    "checkversion"   => 0,
+    "updateversion"  => 0,
+    "buffers"        => 0,
+    "passwordfile"   => 0, 
+    "bannedports"    => '',
+    "maxportallowed" => 0, 
+    "outputfile"     => 0,
+    "dbstat"         => 0,
+    "idxstat"        => 0,
+    "skippassword"   => 0,
+    "noask"          => 0,
+    "template"       => 0,
+    "json"           => 0,
+    "prettyjson"     => 0,
+    "reportfile"     => 0
 );
 
 # Gather the options from the command line
@@ -96,7 +97,7 @@ GetOptions(
     'passwordfile=s', 'outputfile=s', 'silent',       'dbstat',
     'json',           'prettyjson',   'idxstat',      'noask', 
     'template=s',     'reportfile=s', 'cvefile=s',    'bannedports=s',
-    'maxportallowed=s'
+    'updateversion',   'maxportallowed=s'
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
@@ -128,6 +129,7 @@ sub usage {
       . "                           (Recommended for servers with many tables)\n"
       . "      --skippassword       Don't perform checks on user passwords(default: off)\n"
       . "      --checkversion       Check for updates to MySQLTuner (default: don't check)\n"
+      . "      --updateversion      Check for updates to MySQLTuner and update when newer version is available (default: don't check)\n"
       . "      --forcemem <size>    Amount of RAM installed in megabytes\n"
       . "      --forceswap <size>   Amount of swap memory configured in megabytes\n"
       . "      --passwordfile <path>Path to a password file list(one password by line)\n"
@@ -388,7 +390,7 @@ sub os_setup {
 
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
-  if ($opt{checkversion} eq 0) {
+  if ($opt{'checkversion'} eq 0 and $opt{'updateversion'} eq 0) {
     print "\n" unless ($opt{'silent'} or $opt{'json'});
     infoprint "Skipped version check for MySQLTuner script";
     return;
@@ -427,12 +429,80 @@ sub validate_tuner_version {
   infoprint "Unable to check for the latest MySQLTuner version";
 }
 
+# Checks for updates to MySQLTuner
+sub update_tuner_version {
+  if ($opt{'updateversion'} eq 0) {
+    badprint "Skipped version update for MySQLTuner script";
+    print "\n" unless ($opt{'silent'} or $opt{'json'});
+    return;
+  }
+
+  #use Cwd;
+  my $update;
+  my $url             = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/";
+  my @scripts         = ("mysqltuner.pl", "basic_passwords.txt", "vulnerabilities.csv");
+  my $totalScripts    = scalar(keys @scripts);
+  my $receivedScripts = 0;
+  my $httpcli         =`which curl`;
+
+  foreach my $script (@scripts) {
+
+    chomp($httpcli);
+    if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
+      debugprint "$httpcli is available.";
+
+      debugprint "$httpcli --connect-timeout 5 -silent '$url$script' > $script";
+      $update = `$httpcli --connect-timeout 5 -silent '$url$script' > $script`;
+      chomp($update);
+      debugprint "$script updated: $update";
+      
+      if ( -s $script  eq 0) {
+        badprint "Couldn't update $script";
+      } else {
+        ++$receivedScripts;
+        debugprint "$script updated: $update";
+      }
+    } else {
+
+      $httpcli=`which wget`;
+      chomp($httpcli);
+      if ( defined($httpcli) and -e "$httpcli" ) {
+        debugprint "$httpcli is available.";
+
+        debugprint "$httpcli -qe timestamping=off -T 5 -O $script '$url$script'";
+        $update = `$httpcli -qe timestamping=off -T 5 -O $script '$url$script'`;
+        chomp($update);
+
+        if ( -s $script  eq 0) {
+          badprint "Couldn't update $script";
+        } else {
+          ++$receivedScripts;
+          debugprint "$script updated: $update";
+        }
+
+      } else {
+        debugprint "curl and wget are not available.";
+        infoprint "Unable to check for the latest MySQLTuner version";
+      }
+    }
+  }
+
+  if ($receivedScripts eq $totalScripts) {
+      goodprint "Successfully updated MySQLTuner script";
+    } else {
+      badprint "Couldn't update MySQLTuner script";
+    }
+
+  exit 0;
+}
+
 sub compare_tuner_version {
    my $remoteversion=shift;
    debugprint "Remote data: $remoteversion";
    #exit 0;
    if ($remoteversion ne $tunerversion) {
      badprint "There is a new version of MySQLTuner available ($remoteversion)";
+     update_tuner_version();
      return;
    }
    goodprint "You have the latest version of MySQLTuner($tunerversion)";
