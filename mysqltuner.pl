@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.8
+# mysqltuner.pl - Version 1.6.9
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
+# Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.com/
 # Git repository available at http://github.com/major/MySQLTuner-perl
@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.8";
+my $tunerversion = "1.6.9";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -82,7 +82,8 @@ my %opt = (
     "noask"        => 0,
     "template"     => 0,
     "json"         => 0,
-    "reportfile"   => 0
+    "reportfile"   => 0,
+    "prettyjson"   => 0
 );
 
 # Gather the options from the command line
@@ -94,7 +95,7 @@ GetOptions(
     'mysqlcmd=s',     'help',         'buffers',      'skippassword',
     'passwordfile=s', 'outputfile=s', 'silent',       'dbstat', 'json',
     'idxstat', 'noask', 'template=s', 'reportfile=s', 'cvefile=s',
-    'bannedports=s','maxportallowed=s',
+    'bannedports=s','maxportallowed=s','prettyjson'
 );
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
@@ -142,6 +143,7 @@ sub usage {
       . "      --cvefile            CVE File for vulnerability checks\n"
       . "      --nocolor            Don't print output in color\n"
       . "      --json               Print result as JSON string\n"
+      . "      --prettyjson         Print result as human readable JSON\n"
       . "      --buffers            Print global and per-thread buffer values\n"
       . "      --outputfile <path>  Path to a output txt file\n" . "\n"
       . "      --reportfile <path>  Path to a report txt file\n" . "\n"
@@ -3208,7 +3210,7 @@ sub dump_result {
           exit 1;
       }
       my $json = JSON->new->allow_nonref;
-      print JSON->new->utf8(1)->pretty(1)->encode(%result);
+      print $json->utf8(1)->pretty((defined $opt{'prettyjson'} ? 1 : 0))->encode(\%result);
     }
 }
 
