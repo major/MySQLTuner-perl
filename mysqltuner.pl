@@ -961,24 +961,13 @@ sub system_recommendations {
       my @opened_ports=get_opened_ports;
       infoprint "There is ". scalar @opened_ports. " listening port(s) on this server.";
       if (scalar(@opened_ports) > $opt{'maxportallowed'}) {
-  	     badprint "There is too many listening ports: ". scalar(@opened_ports). " > 10";
+  	     badprint "There is too many listening ports: ". scalar(@opened_ports) " opened > ".$opt{'maxportallowed'}. "allowed.";
       	 push( @generalrec, "Consider dedicating a server for your database installation with less services running on !" );
       } else {
   	     goodprint "There is less than ".$opt{'maxportallowed'}." opened ports on this server."; 
       }
     }
-    #    if ( is_open_port(80) or is_open_port(443) ) {
-#	badprint "There is Apache like server running on 80 or 443 port.";
-#    	push( @generalrec, "Consider dedicating a server for Web server in production !" );
-#    }  else {
-#	goodprint "No Web server runing on 80 and 443 port.";
-#    }
-#    if ( is_open_port(8080) or is_open_port(8443) ) {
-#        badprint "There is Application server running on 8080 or 8443 port.";
-#        push( @generalrec, "Consider dedicating a server for Application server in production !" );
-#    }  else {
-#        goodprint "No Application server runing on 8080 or 8443 port.";
-#    }
+
     foreach my $banport (@banned_ports) {
 	    if ( is_open_port($banport) ) {
 		    badprint "Banned port: $banport is opened..";
