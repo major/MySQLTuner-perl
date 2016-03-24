@@ -84,74 +84,81 @@ my %opt = (
     "template"       => 0,
     "json"           => 0,
     "prettyjson"     => 0,
-    "reportfile"     => 0
+    "reportfile"     => 0,
+    "verbose"        => 0
 );
 
 # Gather the options from the command line
-GetOptions(
-    \%opt,            'nobad',        'nogood',       'noinfo',
-    'debug',          'nocolor',      'forcemem=i',   'forceswap=i',
-    'host=s',         'socket=s',     'port=i',       'user=s',
-    'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
-    'mysqlcmd=s',     'help',         'buffers',      'skippassword',
-    'passwordfile=s', 'outputfile=s', 'silent',       'dbstat',
-    'json',           'prettyjson',   'idxstat',      'noask', 
-    'template=s',     'reportfile=s', 'cvefile=s',    'bannedports=s',
-    'updateversion',   'maxportallowed=s'
+my $getOptionsCheck = GetOptions(
+  \%opt,            'nobad',        'nogood',       'noinfo',
+  'debug',          'nocolor',      'forcemem=i',   'forceswap=i',
+  'host=s',         'socket=s',     'port=i',       'user=s',
+  'pass=s',         'skipsize',     'checkversion', 'mysqladmin=s',
+  'mysqlcmd=s',     'help',         'buffers',      'skippassword',
+  'passwordfile=s', 'outputfile=s', 'silent',       'dbstat',
+  'json',           'prettyjson',   'idxstat',      'noask', 
+  'template=s',     'reportfile=s', 'cvefile=s',    'bannedports=s',
+  'updateversion',   'maxportallowed=s', 'verbose'
 );
+
+#If params are incorrect return help
+if ($getOptionsCheck ne 1) {
+  usage();
+}
 
 if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
 
 sub usage {
 
-    # Shown with --help option passed
-    print "   MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n"
-      . "   Bug reports, feature requests, and downloads at http://mysqltuner.com/\n"
-      . "   Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL\n"
-      . "\n"
-      . "   Important Usage Guidelines:\n"
-      . "      To run the script with the default options, run the script without arguments\n"
-      . "      Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n"
-      . "      Some routines may require root level privileges (script will provide warnings)\n"
-      . "      You must provide the remote server's total memory when connecting to other servers\n"
-      . "\n"
-      . "   Connection and Authentication\n"
-      . "      --host <hostname>    Connect to a remote host to perform tests (default: localhost)\n"
-      . "      --socket <socket>    Use a different socket for a local connection\n"
-      . "      --port <port>        Port to use for connection (default: 3306)\n"
-      . "      --user <username>    Username to use for authentication\n"
-      . "      --pass <password>    Password to use for authentication\n"
-      . "      --mysqladmin <path>  Path to a custom mysqladmin executable\n"
-      . "      --mysqlcmd <path>    Path to a custom mysql executable\n" . "\n"
-      . "      --noask              Dont ask password if needed\n" . "\n"
-      . "   Performance and Reporting Options\n"
-      . "      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n"
-      . "                           (Recommended for servers with many tables)\n"
-      . "      --skippassword       Don't perform checks on user passwords(default: off)\n"
-      . "      --checkversion       Check for updates to MySQLTuner (default: don't check)\n"
-      . "      --updateversion      Check for updates to MySQLTuner and update when newer version is available (default: don't check)\n"
-      . "      --forcemem <size>    Amount of RAM installed in megabytes\n"
-      . "      --forceswap <size>   Amount of swap memory configured in megabytes\n"
-      . "      --passwordfile <path>Path to a password file list(one password by line)\n"
-      . "   Output Options:\n"
-      . "      --silent             Don't output anything on screen\n"
-      . "      --nogood             Remove OK responses\n"
-      . "      --nobad              Remove negative/suggestion responses\n"
-      . "      --noinfo             Remove informational responses\n"
-      . "      --debug              Print debug information\n"
-      . "      --dbstat             Print database information\n"
-      . "      --idxstat            Print index information\n"
-      . "      --bannedports        Ports banned separated by comma(,)\n"
-      . "      --maxportallowed     Number of ports opened allowed on this hosts\n"
-      . "      --cvefile            CVE File for vulnerability checks\n"
-      . "      --nocolor            Don't print output in color\n"
-      . "      --json               Print result as JSON string\n"
-      . "      --prettyjson         Print result as human readable JSON\n"
-      . "      --buffers            Print global and per-thread buffer values\n"
-      . "      --outputfile <path>  Path to a output txt file\n" . "\n"
-      . "      --reportfile <path>  Path to a report txt file\n" . "\n"
-      . "      --template   <path>  Path to a template file\n" . "\n";
-    exit 0;
+  # Shown with --help option passed
+  print "   MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n"
+    . "   Bug reports, feature requests, and downloads at http://mysqltuner.com/\n"
+    . "   Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL\n"
+    . "\n"
+    . "   Important Usage Guidelines:\n"
+    . "      To run the script with the default options, run the script without arguments\n"
+    . "      Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n"
+    . "      Some routines may require root level privileges (script will provide warnings)\n"
+    . "      You must provide the remote server's total memory when connecting to other servers\n"
+    . "\n"
+    . "   Connection and Authentication\n"
+    . "      --host <hostname>    Connect to a remote host to perform tests (default: localhost)\n"
+    . "      --socket <socket>    Use a different socket for a local connection\n"
+    . "      --port <port>        Port to use for connection (default: 3306)\n"
+    . "      --user <username>    Username to use for authentication\n"
+    . "      --pass <password>    Password to use for authentication\n"
+    . "      --mysqladmin <path>  Path to a custom mysqladmin executable\n"
+    . "      --mysqlcmd <path>    Path to a custom mysql executable\n" . "\n"
+    . "      --noask              Dont ask password if needed\n" . "\n"
+    . "   Performance and Reporting Options\n"
+    . "      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n"
+    . "                           (Recommended for servers with many tables)\n"
+    . "      --skippassword       Don't perform checks on user passwords(default: off)\n"
+    . "      --checkversion       Check for updates to MySQLTuner (default: don't check)\n"
+    . "      --updateversion      Check for updates to MySQLTuner and update when newer version is available (default: don't check)\n"
+    . "      --forcemem <size>    Amount of RAM installed in megabytes\n"
+    . "      --forceswap <size>   Amount of swap memory configured in megabytes\n"
+    . "      --passwordfile <path>Path to a password file list(one password by line)\n"
+    . "   Output Options:\n"
+    . "      --silent             Don't output anything on screen\n"
+    . "      --nogood             Remove OK responses\n"
+    . "      --nobad              Remove negative/suggestion responses\n"
+    . "      --noinfo             Remove informational responses\n"
+    . "      --debug              Print debug information\n"
+    . "      --dbstat             Print database information\n"
+    . "      --idxstat            Print index information\n"
+    . "      --bannedports        Ports banned separated by comma(,)\n"
+    . "      --maxportallowed     Number of ports opened allowed on this hosts\n"
+    . "      --cvefile            CVE File for vulnerability checks\n"
+    . "      --nocolor            Don't print output in color\n"
+    . "      --json               Print result as JSON string\n"
+    . "      --prettyjson         Print result as human readable JSON\n"
+    . "      --buffers            Print global and per-thread buffer values\n"
+    . "      --outputfile <path>  Path to a output txt file\n" . "\n"
+    . "      --reportfile <path>  Path to a report txt file\n" . "\n"
+    . "      --template   <path>  Path to a template file\n" . "\n"
+    . "      --verbose            Prints out all options (default: no verbose) \n" . "\n";
+  exit 0;
 }
 
 my $devnull = File::Spec->devnull();
@@ -163,6 +170,15 @@ my $basic_password_files =
 # for RPM distributions
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
+
+# check if we need to enable verbose mode
+if ($opt{verbose}) {
+  $opt{checkversion} = 1; #Check for updates to MySQLTuner
+  $opt{dbstat}       = 1; #Print database information
+  $opt{idxstat}      = 1; #Print index information
+  $opt{buffers}      = 1; #Print global and per-thread buffer values
+  $opt{cvefile}      = 'vulnerabilities.csv'; #CVE File for vulnerability checks
+}
 
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
@@ -3350,34 +3366,34 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
- --skipsize           Don't enumerate tables and their types/sizes (default: on)
-                      (Recommended for servers with many tables)
- --skippassword       Don't perform checks on user passwords(default: off)
- --checkversion       Check for updates to MySQLTuner (default: don't check)
- --updateversion      Check for updates to MySQLTuner and update when newer version is available (default: don't check)
- --forcemem <size>    Amount of RAM installed in megabytes
- --forceswap <size>   Amount of swap memory configured in megabytes
- --passwordfile <path>Path to a password file list(one password by line)
+ --skipsize                  Don't enumerate tables and their types/sizes (default: on)
+                             (Recommended for servers with many tables)
+ --skippassword              Don't perform checks on user passwords(default: off)
+ --checkversion              Check for updates to MySQLTuner (default: don't check)
+ --updateversion             Check for updates to MySQLTuner and update when newer version is available (default: don't check)
+ --forcemem <size>           Amount of RAM installed in megabytes
+ --forceswap <size>          Amount of swap memory configured in megabytes
+ --passwordfile <path>       Path to a password file list(one password by line)
 
 =head1 OUTPUT OPTIONS
 
- --silent             Don't output anything on screen
- --nogood             Remove OK responses
- --nobad              Remove negative/suggestion responses
- --noinfo             Remove informational responses
- --debug              Print debug information
- --dbstat             Print database information
- --idxstat            Print index information
- --bannedports        Ports banned separated by comma(,)
- --maxportallowed     Number of ports opened allowed on this hosts
- --cvefile            CVE File for vulnerability checks
- --nocolor            Don't print output in color
- --json               Print result as JSON string
- --buffers            Print global and per-thread buffer values
- --outputfile <path>  Path to a output txt file
- --reportfile <path>  Path to a report txt file
- --template   <path>  Path to a template file
-
+ --silent                    Don't output anything on screen
+ --nogood                    Remove OK responses
+ --nobad                     Remove negative/suggestion responses
+ --noinfo                    Remove informational responses
+ --debug                     Print debug information
+ --dbstat                    Print database information
+ --idxstat                   Print index information
+ --bannedports               Ports banned separated by comma(,)
+ --maxportallowed            Number of ports opened allowed on this hosts
+ --cvefile                   CVE File for vulnerability checks
+ --nocolor                   Don't print output in color
+ --json                      Print result as JSON string
+ --buffers                   Print global and per-thread buffer values
+ --outputfile <path>         Path to a output txt file
+ --reportfile <path>         Path to a report txt file
+ --template   <path>         Path to a template file
+ --verbose                   Prints out all options (default: no verbose)
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
