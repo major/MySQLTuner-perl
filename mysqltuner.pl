@@ -961,7 +961,7 @@ sub system_recommendations {
       my @opened_ports=get_opened_ports;
       infoprint "There is ". scalar @opened_ports. " listening port(s) on this server.";
       if (scalar(@opened_ports) > $opt{'maxportallowed'}) {
-  	     badprint "There is too many listening ports: ". scalar(@opened_ports) " opened > ".$opt{'maxportallowed'}. "allowed.";
+  	     badprint "There is too many listening ports: ". scalar(@opened_ports). " opened > ".$opt{'maxportallowed'}. "allowed.";
       	 push( @generalrec, "Consider dedicating a server for your database installation with less services running on !" );
       } else {
   	     goodprint "There is less than ".$opt{'maxportallowed'}." opened ports on this server."; 
