@@ -1055,6 +1055,72 @@ sub get_fs_info() {
       }
     }
 }
+sub is_virtual_machine() {
+  my $isVm=`grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
+  return ($isVm==0?1:0);
+}
+
+
+sub infocmd {
+  my $cmd="@_";
+  debugprint "CMD: $cmd";
+  my @result=`$cmd`;
+  remove_cr @result;
+  for my $l (@result) {
+  infoprint "$l";
+  }
+}
+sub infocmd_tab {
+  my $cmd="@_";
+  debugprint "CMD: $cmd";
+  my @result=`$cmd`;
+  remove_cr @result;
+  for my $l (@result) {
+  infoprint "\t$l";
+  }
+}
+sub infocmd_one {
+  my $cmd="@_";
+  my @result=`$cmd`;
+  remove_cr @result;
+  return join ', ' ,@result;
+}
+
+sub get_system_info() 
+{
+infoprint get_os_release;
+if (is_virtual_machine) {
+      infoprint "Machine type          : Virtual machine";
+    } else {
+      infoprint "Machine type          : Physical machine";
+}
+
+`ping -c 1 google.com &>/dev/null`;
+my $isConnected=$?;
+if ($? == 0) {
+  infoprint "Internet              : Connected";
+} else {
+  badprint  "Internet              : Disconnected";
+  }
+infoprint "Operating System Type : " . infocmd_one "uname -o";
+infoprint "Kernel Release        : ". infocmd_one "uname -r";
+infoprint "Hostname              : $ENV{'HOSTNAME'}";
+infoprint "Network Cards         : ";
+infocmd_tab "ifconfig| grep -A1 mtu";
+infoprint "Internal IP           : ". infocmd_one "hostname -I";
+infoprint "External IP           : ". infocmd_one "curl -s ipecho.net/plain" if $isConnected==0;
+badprint  "External IP           : Can't check because of Internet connectivity" if $isConnected!=0;
+infoprint "Name Servers          : ". infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
+infoprint "Logged In users       : ";
+infocmd_tab "who";
+infoprint "Ram Usages            :";
+infocmd_tab "free -h | grep -v +";
+infoprint "Load Average          : ";
+infocmd_tab "top -n 1 -b | grep 'load average:'";
+
+#infoprint "System Uptime Days/(HH:MM) : `uptime | awk '{print $3,$4}' | cut -f1 -d,`";
+}
+
 sub system_recommendations {
     prettyprint "\n-------- System Linux Recommendations  ---------------------------------------";
     my $os = `uname`;
@@ -1064,8 +1130,7 @@ sub system_recommendations {
     }    
     prettyprint "Look for related Linux system recommandations";
     #prettyprint '-'x78;
-    infoprint get_os_release;
-
+    get_system_info();
     my $omem=get_other_process_memory;
     infoprint "User process except mysqld used ". hr_bytes_rnd($omem) . " RAM.";
     if ( (0.15*$physical_memory) < $omem) {
