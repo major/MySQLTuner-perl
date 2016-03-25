@@ -1021,6 +1021,40 @@ sub get_os_release {
     remove_cr @info_release;
     return $info_release[0];
 }
+
+sub get_fs_info() {
+    my @sinfo=`df -P | grep '%'`;
+    shift @sinfo;
+    my @iinfo=`df -Pi| grep '%'`;
+    shift @iinfo;
+    map {
+      s/.*\s(\d+)%\s+(.*)/$1\t$2/g
+    } @sinfo;
+    foreach my $info (@sinfo) {
+      if ($info =~ /(\d+)\t(.*)/) {
+        if ($1 > 85) {
+            badprint "mount point $2 is using $1 % total space";
+            push(@generalrec, "Add some space to $2 mountpoint.")
+          } else {
+            infoprint "mount point $2 is using $1 % of total space";
+          }
+      }
+    }
+    
+    map {
+      s/.*\s(\d+)%\s+(.*)/$1\t$2/g
+    } @iinfo;
+    foreach my $info (@iinfo) {
+      if ($info =~ /(\d+)\t(.*)/) {
+        if ($1 > 85) {
+            badprint "mount point $2 is using $1 % of max allowed inodes";
+            push(@generalrec, "Cleanup files from $2 mountpoint or reformat you filesystem.")
+          } else {
+            infoprint "mount point $2 is using $1 % of max allowed inodes";
+          }
+      }
+    }
+}
 sub system_recommendations {
     prettyprint "\n-------- System Linux Recommendations  ---------------------------------------";
     my $os = `uname`;
@@ -1035,16 +1069,12 @@ sub system_recommendations {
     my $omem=get_other_process_memory;
     infoprint "User process except mysqld used ". hr_bytes_rnd($omem) . " RAM.";
     if ( (0.15*$physical_memory) < $omem) {
-       badprint "Other user process except mysqld used more than 15% of total physical memory ". percentage($omem, $physical_memory). "% (".hr_bytes_rnd($omem). " / ".hr_bytes_rnd($physical_memory).")";
+      badprint "Other user process except mysqld used more than 15% of total physical memory ". percentage($omem, $physical_memory). "% (".hr_bytes_rnd($omem). " / ".hr_bytes_rnd($physical_memory).")";
       push( @generalrec, "Consider stopping or dedicate server for additionnal process other than mysqld." );
-    push( @adjvars, "DON'T APPLY SETTINGS BECAUSE THERE IS TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCURS !" );
-
-       
+      push( @adjvars, "DON'T APPLY SETTINGS BECAUSE THERE IS TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCURS !" );
     } else {
+      infoprint "Other user process except mysqld used less than 15% of total physical memory ". percentage($omem, $physical_memory). "% (".hr_bytes_rnd($omem). " / ".hr_bytes_rnd($physical_memory).")";
     }
-
-    #if ($omem > 
-    #exit 0;  
 
     if ($opt{'maxportallowed'} > 0) {
       my @opened_ports=get_opened_ports;
@@ -1065,6 +1095,8 @@ sub system_recommendations {
         goodprint "$banport is not opened.";
       }
     }
+
+    get_fs_info;
 }
 
 sub security_recommendations {
