@@ -803,7 +803,7 @@ sub select_array {
   debugprint "CMD    : $mysqlcmd";
   debugprint "OPTIONS: $mysqllogin";
   debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
-  exit $?;
+  #exit $?;
     } 
     debugprint "select_array: return code : $?";      
     chomp(@result);
@@ -821,7 +821,7 @@ sub select_one {
   debugprint "CMD    : $mysqlcmd";
   debugprint "OPTIONS: $mysqllogin";
   debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
-  exit $?;
+  #exit $?;
     } 
     debugprint "select_array: return code : $?";      
     chomp($result);
@@ -1066,7 +1066,7 @@ sub system_recommendations {
       }
     }
 }
-    
+
 sub security_recommendations {
     prettyprint
 "\n-------- Security Recommendations  -------------------------------------------";
@@ -1102,7 +1102,7 @@ sub security_recommendations {
 
     # Looking for Empty Password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL) AND plugin NOT IN ('unix_socket', 'win_socket')";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
@@ -1114,6 +1114,14 @@ sub security_recommendations {
     }
     else {
         goodprint "All database users have passwords assigned";
+    }
+
+    if (mysql_version_ge(5,7)) {
+      my $valPlugin=select_one("select count(*) from information_schema.plugins where PLUGIN_NAME='validate_password' AND PLUGIN_STATUS='ACTIVE'");
+      if ($valPlugin>=1) {
+        infoprint "Bug #80860 MySQL 5.7: Avoid testing password when validate_password is activated";
+        return;
+      }
     }
 
     # Looking for User with user/ uppercase /capitalise user as password
