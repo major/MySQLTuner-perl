@@ -62,7 +62,7 @@ __Usage:__ Minimal usage locally
 
 __Usage:__ Minimal usage remotely
 
-	perl mysqltuner.pl --host targetDNS_IP --user admin_user --password admin_password
+	perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
 
 __Usage:__ Enable maximum output information around MySQL/MariaDb without debugging 
 
