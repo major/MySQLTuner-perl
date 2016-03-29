@@ -35,4 +35,4 @@ install:
    - cpanm --quiet --notest JSON
    
 script:
-   - ./mysqltuner.pl --idxstat --dbstat --user travis -pass ''
+   - ./mysqltuner.pl --idxstat --dbstat --user travis --pass ''
