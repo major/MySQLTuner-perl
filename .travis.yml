@@ -35,4 +35,6 @@ install:
    - cpanm --quiet --notest JSON
    
 script:
-   - ./mysqltuner.pl --idxstat --dbstat --user travis --pass ''
+   - echo -e "[client]\nuser=root\npassword=\"\"" > .my.cnf
+   - chmod 600 .my.cnf
+   - ./mysqltuner.pl --idxstat --dbstat
