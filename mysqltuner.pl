@@ -1057,7 +1057,7 @@ sub get_fs_info() {
 }
 sub is_virtual_machine() {
   my $isVm=`grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
-  return ($isVm==0?1:0);
+  return ($isVm==0?0:1);
 }
 
 
@@ -1102,9 +1102,9 @@ if ($? == 0) {
 } else {
   badprint  "Internet              : Disconnected";
   }
-infoprint "Operating System Type : " . infocmd_one "uname -o";
+infoprint "Operating System Type : ". infocmd_one "uname -o";
 infoprint "Kernel Release        : ". infocmd_one "uname -r";
-infoprint "Hostname              : $ENV{'HOSTNAME'}";
+infoprint "Hostname              : ". infocmd_one "hostname";
 infoprint "Network Cards         : ";
 infocmd_tab "ifconfig| grep -A1 mtu";
 infoprint "Internal IP           : ". infocmd_one "hostname -I";
@@ -1113,7 +1113,7 @@ badprint  "External IP           : Can't check because of Internet connectivity"
 infoprint "Name Servers          : ". infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
 infoprint "Logged In users       : ";
 infocmd_tab "who";
-infoprint "Ram Usages            :";
+infoprint "Ram Usages            : ";
 infocmd_tab "free -h | grep -v +";
 infoprint "Load Average          : ";
 infocmd_tab "top -n 1 -b | grep 'load average:'";
