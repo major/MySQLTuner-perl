@@ -1062,10 +1062,31 @@ sub get_other_process_memory {
 }
 
 sub get_os_release {
-    return "Unknown OS release" unless -f "/etc/system-release";
-    my @info_release = get_file_contents "/etc/system-release";
-    remove_cr @info_release;
-    return $info_release[0];
+   if( -f "/etc/system-release") {
+        my @info_release = get_file_contents "/etc/system-release";
+        remove_cr @info_release;
+        return $info_release[0];
+    } 
+
+    if ( -f "/etc/os-release") {
+        my @info_release = get_file_contents "/etc/os-release";
+        remove_cr @info_release;
+        my $os_relase = $info_release[0];
+        $os_relase =~ s/.*="//;
+        $os_relase =~ s/"$//;
+        return $os_relase;
+    } 
+
+    if ( -f "/etc/issue") {
+        my @info_release = get_file_contents "/etc/issue";
+        remove_cr @info_release;
+        my $os_relase = $info_release[0];
+        $os_relase =~ s/\s+\\n.*//;
+        return $os_relase;
+    } 
+        
+    return "Unknown OS release";
+
 }
 
 sub get_fs_info() {
