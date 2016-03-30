@@ -1094,11 +1094,11 @@ sub get_os_release {
 
 sub get_fs_info() {
     my @sinfo = `df -P | grep '%'`;
-    shift @sinfo;
     my @iinfo = `df -Pi| grep '%'`;
     shift @iinfo;
     map { s/.*\s(\d+)%\s+(.*)/$1\t$2/g } @sinfo;
     foreach my $info (@sinfo) {
+        next if $info =~ m{(\d+)\t/(run|dev|sys|proc)($|/)};
         if ( $info =~ /(\d+)\t(.*)/ ) {
             if ( $1 > 85 ) {
                 badprint "mount point $2 is using $1 % total space";
@@ -1112,6 +1112,7 @@ sub get_fs_info() {
 
     map { s/.*\s(\d+)%\s+(.*)/$1\t$2/g } @iinfo;
     foreach my $info (@iinfo) {
+        next if $info =~ m{(\d+)\t/(run|dev|sys|proc)($|/)};
         if ( $info =~ /(\d+)\t(.*)/ ) {
             if ( $1 > 85 ) {
                 badprint "mount point $2 is using $1 % of max allowed inodes";
