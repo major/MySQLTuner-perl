@@ -79,6 +79,7 @@ my %opt = (
     "outputfile"     => 0,
     "dbstat"         => 0,
     "idxstat"        => 0,
+    "sysstat"        => 0,
     "skippassword"   => 0,
     "noask"          => 0,
     "template"       => 0,
@@ -107,7 +108,7 @@ my $getOptionsCheck = GetOptions(
     'template=s',     'reportfile=s',
     'cvefile=s',      'bannedports=s',
     'updateversion',  'maxportallowed=s',
-    'verbose'
+    'verbose',        'sysstat'
 );
 
 #If params are incorrect return help
@@ -156,6 +157,7 @@ sub usage {
       . "      --debug              Print debug information\n"
       . "      --dbstat             Print database information\n"
       . "      --idxstat            Print index information\n"
+            . "--sysstat            Print system information\n"
       . "      --bannedports        Ports banned separated by comma(,)\n"
       . "      --maxportallowed     Number of ports opened allowed on this hosts\n"
       . "      --cvefile            CVE File for vulnerability checks\n"
@@ -186,6 +188,7 @@ if ( $opt{verbose} ) {
     $opt{checkversion} = 1;    #Check for updates to MySQLTuner
     $opt{dbstat}       = 1;    #Print database information
     $opt{idxstat}      = 1;    #Print index information
+    $opt{sysstat}      = 1;    #Print index information
     $opt{buffers}      = 1;    #Print global and per-thread buffer values
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
@@ -1197,6 +1200,7 @@ sub get_system_info() {
 }
 
 sub system_recommendations {
+  return if ( $opt{sysstat} == 0 );
     prettyprint
 "\n-------- System Linux Recommendations  ---------------------------------------";
     my $os = `uname`;
@@ -3681,6 +3685,7 @@ You must provide the remote server's total memory when connecting to other serve
  --debug                     Print debug information
  --dbstat                    Print database information
  --idxstat                   Print index information
+ --sysstat                   Print system information
  --bannedports               Ports banned separated by comma(,)
  --maxportallowed            Number of ports opened allowed on this hosts
  --cvefile                   CVE File for vulnerability checks
