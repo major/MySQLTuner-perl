@@ -1159,6 +1159,44 @@ sub infocmd_one {
     return join ', ', @result;
 }
 
+
+sub get_kernel_info()
+{
+       my @params=('fs.aio-max-nr', 'fs.aio-nr', 'fs.file-max', 'sunrpc.tcp_fin_timeout',
+                   'sunrpc.tcp_max_slot_table_entries', 'sunrpc.tcp_slot_table_entries',
+                   'vm.swappiness');
+       infoprint "Informations about kernel tuning:";
+       foreach my $param (@params) {
+		infocmd_tab("sysctl $param");
+       }
+       if (`sysctl -n vm.swappiness` > 10) {
+		badprint "Swappiness is > 10, please consider having a value lower than 10";
+		push @generalrec, "setup swappieness lower or equals to 10";
+		push @adjvars, 'vm.swappiness <= 10 (echo 0 > /proc/sys/vm/swappiness)';
+       } else {
+		infoprint "Swappiness is < 10.";
+	}
+  	
+       if (`sysctl -n sunrpc.tcp_slot_table_entries` < 100) {
+                badprint "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
+                push @generalrec, "setup Initial TCP slot entries greater than 100";
+                push @adjvars, 'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)';
+       } else {
+		infoprint "TCP slot entries is > 100.";
+	}
+
+
+	if (`sysctl -n fs.aio-max-nr` < 1000000) {
+                badprint "Max running total of the number of events is < 1M, please consider having a value greater than 1M";
+                push @generalrec, "setup Max running number events greater than 1M";
+                push @adjvars, 'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
+       } else {
+		infoprint "Max Number of AIO events  is > 1M.";
+	}
+
+}
+
+ 
 sub get_system_info() {
     infoprint get_os_release;
     if (is_virtual_machine) {
@@ -1272,6 +1310,7 @@ sub system_recommendations {
     }
 
     get_fs_info;
+    get_kernel_info;
 }
 
 sub security_recommendations {
