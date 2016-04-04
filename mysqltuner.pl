@@ -1230,8 +1230,8 @@ sub get_system_info() {
       . infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
     infoprint "Logged In users       : ";
     infocmd_tab "who";
-    infoprint "Ram Usages            : ";
-    infocmd_tab "free -h | grep -v +";
+    infoprint "Ram Usages in Mb      : ";
+    infocmd_tab "free -m | grep -v +";
     infoprint "Load Average          : ";
     infocmd_tab "top -n 1 -b | grep 'load average:'";
 
