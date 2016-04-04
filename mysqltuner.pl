@@ -907,7 +907,6 @@ sub get_all_vars {
         $result{'Variables'}{$1} = $2;
         debugprint "V: $1 = $2";
     }
-
     my @mysqlstatlist = select_array "SHOW /*!50000 GLOBAL */ STATUS";
     foreach my $line (@mysqlstatlist) {
         $line =~ /([a-zA-Z_]*)\s*(.*)/;
@@ -915,7 +914,11 @@ sub get_all_vars {
         $result{'Status'}{$1} = $2;
         debugprint "S: $1 = $2";
     }
-
+    $myvar{'have_galera'} = "NO";
+    if (defined($myvar{'wsrep_provider_options'})) {
+        $myvar{'have_galera'} = "YES";
+	debugprint "Galera options: ". $myvar{'wsrep_provider_options'};
+    }
     # Workaround for MySQL bug #59393 wrt. ignore-builtin-innodb
     if ( ( $myvar{'ignore_builtin_innodb'} || "" ) eq "ON" ) {
         $myvar{'have_innodb'} = "NO";
@@ -970,6 +973,7 @@ sub get_all_vars {
 
 sub remove_cr {
     map { s/\n$//g; } @_;
+    map { s/^\s+$//g; } @_;
 }
 
 sub remove_empty {
@@ -1445,8 +1449,8 @@ sub security_recommendations {
 
 sub get_replication_status {
     prettyprint
-"\n-------- Replication Metrics -------------------------------------------------";
-
+"\n-------- Replication Metrics -------------------------------------------------"; 
+    infoprint "Galera Synchronous replication: ". $myvar{'have_galera'};
     if ( scalar( keys %myslaves ) == 0 ) {
         infoprint "No replication slave(s) for this server.";
     }
@@ -2998,6 +3002,14 @@ sub mariadb_tokudb {
     # All is to done here
 }
 
+# Perl trim function to remove whitespace from the start and end of the string
+sub trim {
+     my $string = shift;
+     $string =~ s/^\s+//;
+     $string =~ s/\s+$//;
+     return $string;
+}
+
 # Recommendations for Galera
 sub mariadb_galera {
     prettyprint
@@ -3005,15 +3017,26 @@ sub mariadb_galera {
 
     # AriaDB
     unless ( defined $myvar{'have_galera'}
-        && $myvar{'have_galera'} eq "YES"
-        && defined $enginestats{'Galera'} )
+        && $myvar{'have_galera'} eq "YES" )
     {
         infoprint "Galera is disabled.";
         return;
     }
     infoprint "Galera is enabled.";
 
-    # All is to done here
+    infoprint "Galera Options:"; 
+    my @galera_options=split /;/,$myvar{'wsrep_provider_options'} ;
+    remove_cr @galera_options;
+    @galera_options=remove_empty @galera_options;
+    foreach my $gparam ( @galera_options  ) {
+	infoprint "\t".trim($gparam);
+    }
+    infoprint "Galera status:"; 
+    foreach my $gstatus ( keys %mystat ) {
+	next unless $gstatus =~ /^wsrep.*/;
+	infoprint "\t".trim($gstatus). " = ".$mystat{$gstatus};
+    }
+
 }
 
 # Recommendations for InnoDB
