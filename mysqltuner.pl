@@ -3023,6 +3023,12 @@ sub mariadb_galera {
         return;
     }
     infoprint "Galera is enabled.";
+    infoprint "Galera variables:"; 
+    foreach my $gvar ( keys %myvar ) {
+	next unless $gvar =~ /^wsrep.*/;
+	next if $gvar eq 'wsrep_provider_options';
+	infoprint "\t".trim($gvar). " = ".$myvar{$gvar};
+    }
 
     infoprint "Galera Options:"; 
     my @galera_options=split /;/,$myvar{'wsrep_provider_options'} ;
