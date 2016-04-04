@@ -3041,7 +3041,25 @@ sub mariadb_galera {
     foreach my $gstatus ( keys %mystat ) {
 	next unless $gstatus =~ /^wsrep.*/;
 	infoprint "\t".trim($gstatus). " = ".$mystat{$gstatus};
-    }
+   }
+   my @primaryKeysNbTables=select_array("select CONCAT(table_schema,CONCAT('.', table_name))  from       information_schema.columns   where table_schema not in ('mysql', 'information_schema', 'performance_schema') group by table_schema,table_name    having      sum(if(column_key in ('PRI','UNI'), 1,0)) = 0");
+   if (scalar (@primaryKeysNbTables) > 0 ) {
+	badprint "Following table(s) don't have primary key:";
+	foreach my $badtable( @primaryKeysNbTables ) {
+	badprint "\t$badtable";
+	}
+   } else {
+	goodprint "All tables get a primary key";
+   }
+   my @nonInnoDbTables=select_array("select CONCAT(table_schema,CONCAT('.', table_name)) from information_schema.tables where ENGINE <> 'InnoDb' and table_schema not in ('mysql', 'performance_schema', 'information_schema')");
+   if (scalar (@nonInnoDbTables) > 0 ) {
+	badprint "Following table(s) are not InnoDB table:";
+	foreach my $badtable( @nonInnoDbTables ) {
+	badprint "\t$badtable";
+	}
+   } else {
+	goodprint "All tables are InnoDB tables";
+   }
 
 }
 
