@@ -1923,14 +1923,14 @@ sub calculations {
 # Max used memory is memory used by MySQL based on Max_used_connections
 # This is the max memory used theorically calculated with the max concurrent connection number reached by mysql
     $mycalc{'max_used_memory'} =
-      $mycalc{'server_buffers'} + $mycalc{"max_total_per_thread_buffers"};
+      $mycalc{'server_buffers'} + $mycalc{"max_total_per_thread_buffers"} +get_pf_memory();
     $mycalc{'pct_max_used_memory'} =
       percentage( $mycalc{'max_used_memory'}, $physical_memory );
 
 # Total possible memory is memory needed by MySQL based on max_connections
 # This is the max memory MySQL can theorically used if all connections allowed has opened by mysql
     $mycalc{'max_peak_memory'} =
-      $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'};
+      $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'} + get_pf_memory();
     $mycalc{'pct_max_physical_memory'} =
       percentage( $mycalc{'max_peak_memory'}, $physical_memory );
 
@@ -1943,7 +1943,7 @@ sub calculations {
       . hr_bytes( $mycalc{'max_peak_memory'} ) . "";
     debugprint "Max Peak Percentage RAM: "
       . $mycalc{'pct_max_physical_memory'} . "%";
-
+    
     # Slow queries
     $mycalc{'pct_slow_queries'} =
       int( ( $mystat{'Slow_queries'} / $mystat{'Questions'} ) * 100 );
@@ -2275,7 +2275,7 @@ sub mysql_stats {
       . " global + "
       . hr_bytes( $mycalc{'per_thread_buffers'} )
       . " per thread ($myvar{'max_connections'} max threads)";
-
+    infoprint "P_S Max memory usage: ".hr_bytes_rnd(get_pf_memory());
     if ( $opt{buffers} ne 0 ) {
         infoprint "Global Buffers";
         infoprint " +-- Key Buffer: "
@@ -2913,6 +2913,13 @@ sub mariadb_threadpool {
     }
 }
 
+sub get_pf_memory 
+{
+
+    my @infoPFSMemory=grep /performance_schema.memory/, select_array("SHOW ENGINE PERFORMANCE_SCHEMA STATUS"); 
+    $infoPFSMemory[0] =~ s/.*\s+(\d+)$/$1/g;
+    return $infoPFSMemory[0];
+}
 # Recommendations for Performance Schema
 sub mysqsl_pfs {
     prettyprint
@@ -2927,6 +2934,7 @@ sub mysqsl_pfs {
     else {
         infoprint "Performance schema is enabled.";
     }
+    infoprint "Memory used by P_S: ". hr_bytes(get_pf_memory());
 }
 
 # Recommendations for Ariadb
@@ -3758,7 +3766,7 @@ cve_recommendations;         # Display related CVE
 calculations;                # Calculate everything we need
 mysql_stats;                 # Print the server stats
 mysqsl_pfs                   # Print Performance schema info
-  mariadb_threadpool;        # Print MaraiDB ThreadPool stats
+mariadb_threadpool;        # Print MaraiDB ThreadPool stats
 mysql_myisam;                # Print MyISAM stats
 mariadb_ariadb;              # Print MaraiDB AriaDB stats
 mysql_innodb;                # Print InnoDB stats
