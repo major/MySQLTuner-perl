@@ -70,6 +70,12 @@
 * Check 80, 8080, 443 and 8443 ports if warning are raised if there are opened 
 * Check if some banned ports are not opened (option --bannedports separated by comma)
 * Check if non kernel and user process except mysqld are not using more than 15% of total physical memory)
+* Check vm.swapiness
+* Check /etc/security/limit.conf
+* Check sysctl entries: sunrpc.tcp_slot_entries, vm.swappiness, fs.aio-fs-nr
+* Check mount point
+* Check Ethernet card
+* Check load average
 
 ## MySQLTuner Server version checks
 * EOL MySQL version check
