@@ -966,7 +966,7 @@ sub get_all_vars {
             $result{'Storage Engines'}{$engine} = $2;
         }
     }
-
+    debugprint Dumper(@mysqlenginelist);
     my @mysqlslave = select_array "SHOW SLAVE STATUS\\G";
 
     foreach my $line (@mysqlslave) {
@@ -1923,14 +1923,14 @@ sub calculations {
 # Max used memory is memory used by MySQL based on Max_used_connections
 # This is the max memory used theorically calculated with the max concurrent connection number reached by mysql
     $mycalc{'max_used_memory'} =
-      $mycalc{'server_buffers'} + $mycalc{"max_total_per_thread_buffers"} +get_pf_memory();
+      $mycalc{'server_buffers'} + $mycalc{"max_total_per_thread_buffers"} +get_pf_memory() + get_gcache_memory();
     $mycalc{'pct_max_used_memory'} =
       percentage( $mycalc{'max_used_memory'}, $physical_memory );
 
 # Total possible memory is memory needed by MySQL based on max_connections
 # This is the max memory MySQL can theorically used if all connections allowed has opened by mysql
     $mycalc{'max_peak_memory'} =
-      $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'} + get_pf_memory();
+      $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'} + get_pf_memory()+ get_gcache_memory();
     $mycalc{'pct_max_physical_memory'} =
       percentage( $mycalc{'max_peak_memory'}, $physical_memory );
 
@@ -2055,7 +2055,7 @@ sub calculations {
     if ( defined $mycalc{'total_aria_indexes'}
         and $mycalc{'total_aria_indexes'} == 0 )
     {
-        $mycalc{'total_aria_indexes'} = "fail";
+        $mycalc{'total_aria_indexes'} = 1;
     }
     elsif ( defined $mycalc{'total_aria_indexes'} ) {
         chomp( $mycalc{'total_aria_indexes'} );
@@ -2276,6 +2276,7 @@ sub mysql_stats {
       . hr_bytes( $mycalc{'per_thread_buffers'} )
       . " per thread ($myvar{'max_connections'} max threads)";
     infoprint "P_S Max memory usage: ".hr_bytes_rnd(get_pf_memory());
+    infoprint "Galera GCache Max memory usage: ".hr_bytes_rnd(get_gcache_memory());
     if ( $opt{buffers} ne 0 ) {
         infoprint "Global Buffers";
         infoprint " +-- Key Buffer: "
@@ -2944,8 +2945,7 @@ sub mariadb_ariadb {
 
     # AriaDB
     unless ( defined $myvar{'have_aria'}
-        && $myvar{'have_aria'} eq "YES"
-        && defined $enginestats{'Aria'} )
+        and $myvar{'have_aria'} eq "YES" )
     {
         infoprint "AriaDB is disabled.";
         return;
@@ -3034,12 +3034,31 @@ sub trim {
      return $string;
 }
 
+sub get_wsrep_options {
+    return () unless defined $myvar{'wsrep_provider_options'} ;
+
+    my @galera_options=split /;/,$myvar{'wsrep_provider_options'} ;
+    remove_cr @galera_options;
+    @galera_options=remove_empty @galera_options;
+    return @galera_options;
+}
+sub get_gcache_memory {
+    return 0 unless defined $myvar{'wsrep_provider_options'} ;
+    
+    my @galera_options=get_wsrep_options;
+    return 0 unless  scalar(@galera_options) >0;
+    my @memValues= grep /gcache.mem_size/, @galera_options;
+	my $memValue=$memValues[0];
+	$memValue =~ s/.*=\s*(\d+)$/$1/g;
+    return $memValue;
+	
+}
 # Recommendations for Galera
 sub mariadb_galera {
     prettyprint
 "\n-------- Galera Metrics ------------------------------------------------------";
 
-    # AriaDB
+    # Galera Cluster
     unless ( defined $myvar{'have_galera'}
         && $myvar{'have_galera'} eq "YES" )
     {
@@ -3047,26 +3066,26 @@ sub mariadb_galera {
         return;
     }
     infoprint "Galera is enabled.";
-    infoprint "Galera variables:"; 
+    debugprint "Galera variables:"; 
     foreach my $gvar ( keys %myvar ) {
 	next unless $gvar =~ /^wsrep.*/;
 	next if $gvar eq 'wsrep_provider_options';
-	infoprint "\t".trim($gvar). " = ".$myvar{$gvar};
+	debugprint "\t".trim($gvar). " = ".$myvar{$gvar};
     }
 
-    infoprint "Galera wsrep provider Options:"; 
-    my @galera_options=split /;/,$myvar{'wsrep_provider_options'} ;
-    remove_cr @galera_options;
-    @galera_options=remove_empty @galera_options;
+    debugprint "Galera wsrep provider Options:"; 
+    my @galera_options=get_wsrep_options;
     foreach my $gparam ( @galera_options  ) {
-	infoprint "\t".trim($gparam);
+	debugprint "\t".trim($gparam);
     }
-    infoprint "Galera status:"; 
+    debugprint "Galera status:"; 
     foreach my $gstatus ( keys %mystat ) {
 	next unless $gstatus =~ /^wsrep.*/;
-	infoprint "\t".trim($gstatus). " = ".$mystat{$gstatus};
+	debugprint "\t".trim($gstatus). " = ".$mystat{$gstatus};
    }
+   infoprint "GCache is using ".hr_bytes_rnd(get_gcache_memory());
    my @primaryKeysNbTables=select_array("select CONCAT(table_schema,CONCAT('.', table_name))  from       information_schema.columns   where table_schema not in ('mysql', 'information_schema', 'performance_schema') group by table_schema,table_name    having      sum(if(column_key in ('PRI','UNI'), 1,0)) = 0");
+
    if (scalar (@primaryKeysNbTables) > 0 ) {
 	badprint "Following table(s) don't have primary key:";
 	foreach my $badtable( @primaryKeysNbTables ) {
