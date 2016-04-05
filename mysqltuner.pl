@@ -2876,6 +2876,12 @@ sub mariadb_threadpool {
     infoprint "ThreadPool stat is enabled.";
     infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
 
+   if ($myvar{'version'} =~ /mariadb|percona/i ) {
+   	infoprint "Using default value is good enougth for your version (".$myvar{'version'}.")";
+	return; 
+   } 
+ 
+
     if ( $myvar{'have_innodb'} eq 'YES' ) {
         if (   $myvar{'thread_pool_size'} < 16
             or $myvar{'thread_pool_size'} > 36 )
