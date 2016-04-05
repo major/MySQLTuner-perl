@@ -418,6 +418,20 @@ sub os_setup {
 
 }
 
+sub get_http_cli {
+    my $httpcli = `which curl`;
+    chomp($httpcli);
+    if ( defined($httpcli) and -e "$httpcli" ) {
+	return $httpcli;
+    }
+    
+    $httpcli = `which wget`;
+    chomp($httpcli);
+    if ( defined($httpcli) and -e "$httpcli" ) {
+	return $httpcli;
+    }
+    return "";
+}
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
     if ( $opt{'checkversion'} eq 0 and $opt{'updateversion'} eq 0 ) {
@@ -443,6 +457,8 @@ sub validate_tuner_version {
 
         compare_tuner_version($update);
         return;
+    } else {
+    	
     }
 
     $httpcli = `which wget`;
@@ -1210,7 +1226,7 @@ sub get_system_info() {
         infoprint "Machine type          : Physical machine";
     }
 
-    `ping -c 1 google.com &>/dev/null`;
+    `ping -c 1 ipecho.net &>/dev/null`;
     my $isConnected = $?;
     if ( $? == 0 ) {
         infoprint "Internet              : Connected";
@@ -1224,12 +1240,12 @@ sub get_system_info() {
     infoprint "Network Cards         : ";
     infocmd_tab "ifconfig| grep -A1 mtu";
     infoprint "Internal IP           : " . infocmd_one "hostname -I";
+    my $httpcli=get_http_cli();
+    infoprint "HTTP client found: $httpcli" if defined $httpcli;
     infoprint "External IP           : "
-      . infocmd_one "curl -s ipecho.net/plain"
-      if $isConnected == 0;
+      . infocmd_one "$httpcli ipecho.net/plain" if defined ($httpcli);
     badprint
-      "External IP           : Can't check because of Internet connectivity"
-      if $isConnected != 0;
+      "External IP           : Can't check because of Internet connectivity" unless defined($httpcli);
     infoprint "Name Servers          : "
       . infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
     infoprint "Logged In users       : ";
