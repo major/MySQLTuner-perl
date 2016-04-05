@@ -3030,7 +3030,7 @@ sub mariadb_galera {
 	infoprint "\t".trim($gvar). " = ".$myvar{$gvar};
     }
 
-    infoprint "Galera Options:"; 
+    infoprint "Galera wsrep provider Options:"; 
     my @galera_options=split /;/,$myvar{'wsrep_provider_options'} ;
     remove_cr @galera_options;
     @galera_options=remove_empty @galera_options;
@@ -3054,13 +3054,46 @@ sub mariadb_galera {
    my @nonInnoDbTables=select_array("select CONCAT(table_schema,CONCAT('.', table_name)) from information_schema.tables where ENGINE <> 'InnoDb' and table_schema not in ('mysql', 'performance_schema', 'information_schema')");
    if (scalar (@nonInnoDbTables) > 0 ) {
 	badprint "Following table(s) are not InnoDB table:";
+	push @generalrec, "Ensure that all table(s) are InnoDB tabls for Galera replication";
 	foreach my $badtable( @nonInnoDbTables ) {
 	badprint "\t$badtable";
 	}
    } else {
 	goodprint "All tables are InnoDB tables";
    }
+   if ($myvar{'binlog_format'} ne 'ROW') {
+	badprint "Binlog format should be in ROW mode.";
+	push @adjvars, "binlog_format = ROW";
+   } else {
+	goodprint "Binlog format is in ROW mode.";
+   }
+   if ($myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
+	badprint "Innodb flush log at each commit should be disabled.";
+	push @adjvars, "innodb_flush_log_at_trx_commit = 0";
+   } else {
+	goodprint "Innodb flush log at each commit is disabled for Galera.";
+   }
 
+   infoprint "Read consistency mode :". $myvar{'wsrep_causal_reads'};
+	
+   if (  defined($myvar{'wsrep_cluster_name'}) and $myvar{'wsrep_on'} eq "ON" ) {
+	goodprint "Galera WsREP is enabled.";
+   } else {
+	badprint "Galera Wsesp is disabled";
+   }
+   if ( defined($myvar{'wsrep_cluster_address'}) and trim("$myvar{'wsrep_cluster_address'}") ne "") {
+	goodprint "Galera Cluster address is defined: ".$myvar{'wsrep_cluster_address'};
+   } else {
+	badprint "Galera Cluster address is undefined";
+	push @adjvars, "set up wsrep_cluster_address variable for Galera replication";
+   }   
+
+   if ( defined($myvar{'wsrep_cluster_name'}) and trim($myvar{'wsrep_cluster_name'}) ne "") {
+	goodprint "Galera Cluster name is defined: ".$myvar{'wsrep_cluster_name'};
+   } else {
+	badprint "Galera Cluster name is undefined";
+	push @adjvars, "set up wsrep_cluster_name variable for Galera replication";
+   }   
 }
 
 # Recommendations for InnoDB
