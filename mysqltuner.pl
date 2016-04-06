@@ -931,7 +931,7 @@ sub get_all_vars {
         debugprint "S: $1 = $2";
     }
     $myvar{'have_galera'} = "NO";
-    if (defined($myvar{'wsrep_provider_options'})) {
+    if ( defined($myvar{'wsrep_provider_options'}) && $myvar{'wsrep_provider_options'} ne "") {
         $myvar{'have_galera'} = "YES";
 	debugprint "Galera options: ". $myvar{'wsrep_provider_options'};
     }
@@ -1477,7 +1477,7 @@ sub get_replication_status {
     }
 
     if ( scalar( keys %myrepl ) == 0 and scalar( keys %myslaves ) == 0 ) {
-        infoprint "This is a standalone server..";
+        infoprint "This is a standalone server.";
         return;
     }
     if ( scalar( keys %myrepl ) == 0 ) {
@@ -3127,22 +3127,21 @@ sub mariadb_galera {
 	
    if (  defined($myvar{'wsrep_cluster_name'}) and $myvar{'wsrep_on'} eq "ON" ) {
 	goodprint "Galera WsREP is enabled.";
+        if ( defined($myvar{'wsrep_cluster_address'}) and trim("$myvar{'wsrep_cluster_address'}") ne "") {
+            goodprint "Galera Cluster address is defined: ".$myvar{'wsrep_cluster_address'};
+        } else {
+            badprint "Galera Cluster address is undefined";
+            push @adjvars, "set up wsrep_cluster_address variable for Galera replication";
+        }
+        if ( defined($myvar{'wsrep_cluster_name'}) and trim($myvar{'wsrep_cluster_name'}) ne "") {
+	    goodprint "Galera Cluster name is defined: ".$myvar{'wsrep_cluster_name'};
+        } else {
+	    badprint "Galera Cluster name is undefined";
+	    push @adjvars, "set up wsrep_cluster_name variable for Galera replication";
+        }
    } else {
-	badprint "Galera Wsesp is disabled";
+	badprint "Galera WsREP is disabled";
    }
-   if ( defined($myvar{'wsrep_cluster_address'}) and trim("$myvar{'wsrep_cluster_address'}") ne "") {
-	goodprint "Galera Cluster address is defined: ".$myvar{'wsrep_cluster_address'};
-   } else {
-	badprint "Galera Cluster address is undefined";
-	push @adjvars, "set up wsrep_cluster_address variable for Galera replication";
-   }   
-
-   if ( defined($myvar{'wsrep_cluster_name'}) and trim($myvar{'wsrep_cluster_name'}) ne "") {
-	goodprint "Galera Cluster name is defined: ".$myvar{'wsrep_cluster_name'};
-   } else {
-	badprint "Galera Cluster name is undefined";
-	push @adjvars, "set up wsrep_cluster_name variable for Galera replication";
-   }   
 }
 
 # Recommendations for InnoDB
