@@ -729,7 +729,7 @@ sub select_one {
 	debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
 	exit $?;
     } 
-    debugprint "select_array: return code : $?";	    
+    debugprint "select_array: return code : $?";
     chomp($result);
     return $result;
 }
