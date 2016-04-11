@@ -14,14 +14,14 @@ perl:
 matrix:
     include:
         - addons:
-             mariadb: 5.5
-          perl: 5.20
+             mariadb: "5.5"
+          perl: "5.20"
         - addons:
-             mariadb: 10.0
-          perl: 5.20
-        - addons:
-             mariadb: 10.1
-          perl: 5.20
+             mariadb: "10.0"
+          perl: "5.20"
+#        - addons:
+#             mariadb: "10.1"
+#          perl: "5.20"
 
 before_install:
    - git clone git://github.com/haarg/perl-travis-helper
@@ -35,4 +35,6 @@ install:
    - cpanm --quiet --notest JSON
    
 script:
-   - ./mysqltuner.pl -idxstat --dbstat
+   - echo -e "[client]\nuser=root\npassword=\"\"" > .my.cnf
+   - chmod 600 .my.cnf
+   - ./mysqltuner.pl --idxstat --dbstat
