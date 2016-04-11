@@ -213,10 +213,15 @@ open( $fh, '>', $outputfile )
 $opt{nocolor} = 1 if defined($outputfile);
 
 # Setting up the colors for the print styles
+my $me=`whoami`;
+$me =~s/\n//g;
+# Setting up the colors for the print styles
 my $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]" : "[OK]";
 my $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]" : "[!!]";
 my $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]" : "[--]";
 my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]" : "[DG]";
+my $cmd = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
+my $end = ( $opt{nocolor} == 0 ) ? "\e[0m" : "";
 
 # Super structure containing all information
 my %result;
@@ -237,6 +242,24 @@ sub redwrap {
 
 sub greenwrap {
     return ( $opt{nocolor} == 0 ) ? "\e[0;32m" . $_[0] . "\e[0m" : $_[0];
+}
+sub cmdprint { prettyprint $cmd." ". $_[0]. $end; }
+sub infoprintml { for my $ln(@_) { $ln =~s/\n//g; infoprint "\t$ln"; } }
+sub infoprintcmd { cmdprint "@_"; infoprintml grep { $_ ne '' and $_ !~ /^\s*$/ } `@_ 2>&1`; }
+sub subheaderprint {
+        my $tln=100;
+        my $sln=8;
+        my $ln=length("@_")+2;
+
+        prettyprint " ";
+        #prettyprint "-"x$tln;
+        prettyprint "-"x$sln ." @_ ". "-"x($tln-$ln-$sln);
+        #prettyprint "-"x$tln;
+}
+sub infoprinthcmd {
+#       print Dumper @_;
+        subheaderprint "$_[0]";
+        infoprintcmd "$_[1]";
 }
 
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
@@ -1010,8 +1033,7 @@ sub get_basic_passwords {
 }
 
 sub cve_recommendations {
-    prettyprint
-"\n-------- CVE Security Recommendations  ---------------------------------------";
+    subheaderprint"CVE Security Recommendations";
     unless ( defined( $opt{cvefile} ) && -f "$opt{cvefile}" ) {
         infoprint "Skipped due to --cvefile option undefined";
         return;
@@ -1260,8 +1282,7 @@ sub get_system_info() {
 
 sub system_recommendations {
   return if ( $opt{sysstat} == 0 );
-    prettyprint
-"\n-------- System Linux Recommendations  ---------------------------------------";
+    subheaderprint"System Linux Recommendations";
     my $os = `uname`;
     unless ( $os =~ /Linux/i ) {
         infoprint "Skipped due to non Linux server";
@@ -1334,8 +1355,7 @@ sub system_recommendations {
 }
 
 sub security_recommendations {
-    prettyprint
-"\n-------- Security Recommendations  -------------------------------------------";
+    subheaderprint "Security Recommendations";
     if ( $opt{skippassword} eq 1 ) {
         infoprint "Skipped due to --skippassword option";
         return;
@@ -1464,8 +1484,7 @@ sub security_recommendations {
 }
 
 sub get_replication_status {
-    prettyprint
-"\n-------- Replication Metrics -------------------------------------------------"; 
+    subheaderprint "Replication Metrics"; 
     infoprint "Galera Synchronous replication: ". $myvar{'have_galera'};
     if ( scalar( keys %myslaves ) == 0 ) {
         infoprint "No replication slave(s) for this server.";
@@ -1628,13 +1647,11 @@ my ( %enginestats, %enginecount, $fragtables );
 
 sub check_storage_engines {
     if ( $opt{skipsize} eq 1 ) {
-        prettyprint
-"\n-------- Storage Engine Statistics -------------------------------------------";
+        subheaderprint "Storage Engine Statistics";
         infoprint "Skipped due to --skipsize option";
         return;
     }
-    prettyprint
-"\n-------- Storage Engine Statistics -------------------------------------------";
+    subheaderprint "Storage Engine Statistics";
 
     my $engines;
     if ( mysql_version_ge( 5, 5 ) ) {
@@ -2234,8 +2251,7 @@ sub calculations {
 }
 
 sub mysql_stats {
-    prettyprint
-"\n-------- Performance Metrics -------------------------------------------------";
+    subheaderprint "Performance Metrics";
 
     # Show uptime, queries per second, connections, traffic stats
     my $qps;
@@ -2737,8 +2753,7 @@ sub mysql_stats {
 
 # Recommendations for MyISAM
 sub mysql_myisam {
-    prettyprint
-"\n-------- MyISAM Metrics ------------------------------------------------------";
+    subheaderprint "MyISAM Metrics";
 
     # Key buffer usage
     if ( defined( $mycalc{'pct_key_buffer_used'} ) ) {
@@ -2863,8 +2878,7 @@ sub mysql_myisam {
 
 # Recommendations for ThreadPool
 sub mariadb_threadpool {
-    prettyprint
-"\n-------- ThreadPool Metrics --------------------------------------------------";
+    subheaderprint "ThreadPool Metrics";
 
     # AriaDB
     unless ( defined $myvar{'have_threadpool'}
@@ -2922,6 +2936,8 @@ sub mariadb_threadpool {
 
 sub get_pf_memory 
 {
+    # Performance Schema
+    return 0 unless ( defined( $myvar{'performance_schema'} ) and $myvar{'performance_schema'} eq 'ON' );
 
     my @infoPFSMemory=grep /performance_schema.memory/, select_array("SHOW ENGINE PERFORMANCE_SCHEMA STATUS"); 
     $infoPFSMemory[0] =~ s/.*\s+(\d+)$/$1/g;
@@ -2929,8 +2945,7 @@ sub get_pf_memory
 }
 # Recommendations for Performance Schema
 sub mysqsl_pfs {
-    prettyprint
-"\n-------- Performance schema --------------------------------------------------";
+    subheaderprint "Performance schema";
 
     # Performance Schema
     unless ( defined( $myvar{'performance_schema'} )
@@ -2946,8 +2961,7 @@ sub mysqsl_pfs {
 
 # Recommendations for Ariadb
 sub mariadb_ariadb {
-    prettyprint
-"\n-------- AriaDB Metrics ------------------------------------------------------";
+    subheaderprint "AriaDB Metrics";
 
     # AriaDB
     unless ( defined $myvar{'have_aria'}
@@ -3016,8 +3030,7 @@ sub mariadb_ariadb {
 
 # Recommendations for TokuDB
 sub mariadb_tokudb {
-    prettyprint
-"\n-------- TokuDB Metrics ------------------------------------------------------";
+    subheaderprint "TokuDB Metrics";
 
     # AriaDB
     unless ( defined $myvar{'have_tokudb'}
@@ -3061,8 +3074,7 @@ sub get_gcache_memory {
 }
 # Recommendations for Galera
 sub mariadb_galera {
-    prettyprint
-"\n-------- Galera Metrics ------------------------------------------------------";
+    subheaderprint "Galera Metrics";
 
     # Galera Cluster
     unless ( defined $myvar{'have_galera'}
@@ -3146,8 +3158,7 @@ sub mariadb_galera {
 
 # Recommendations for InnoDB
 sub mysql_innodb {
-    prettyprint
-"\n-------- InnoDB Metrics ------------------------------------------------------";
+    subheaderprint "InnoDB Metrics";
 
     # InnoDB
     unless ( defined $myvar{'have_innodb'}
@@ -3358,8 +3369,7 @@ sub mysql_innodb {
 sub mysql_databases {
     return if ( $opt{dbstat} == 0 );
 
-    prettyprint
-"\n-------- Database Metrics ----------------------------------------------------";
+    subheaderprint "Database Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
 "Skip Database metrics from information schema missing in this version";
@@ -3543,8 +3553,7 @@ sub mysql_databases {
 sub mysql_indexes {
     return if ( $opt{idxstat} == 0 );
 
-    prettyprint
-"\n-------- Indexes Metrics -----------------------------------------------------";
+    subheaderprint "Indexes Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
           "Skip Index metrics from information schema missing in this version";
@@ -3645,8 +3654,7 @@ ENDSQL
 
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
-    prettyprint
-"\n-------- Recommendations -----------------------------------------------------";
+    subheaderprint "Recommendations";
     if ( @generalrec > 0 ) {
         prettyprint "General recommendations:";
         foreach (@generalrec) { prettyprint "    " . $_ . ""; }
