@@ -1107,6 +1107,15 @@ sub get_other_process_memory {
 }
 
 sub get_os_release {
+   if( -f "/etc/lsb-release") {
+        my @info_release = get_file_contents "/etc/lsb-release";
+        remove_cr @info_release;
+        my $os_relase = $info_release[3];
+        $os_relase =~ s/.*="//;
+        $os_relase =~ s/"$//;
+        return $os_relase;
+   }
+
    if( -f "/etc/system-release") {
         my @info_release = get_file_contents "/etc/system-release";
         remove_cr @info_release;
