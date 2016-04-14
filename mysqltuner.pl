@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.9
+# mysqltuner.pl - Version 1.6.10
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.9";
+my $tunerversion = "1.6.10";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -966,7 +966,7 @@ sub get_all_vars {
         $myvar{'have_galera'} = "YES";
         debugprint "Galera options: ". $myvar{'wsrep_provider_options'};
     }
-    
+
     # Workaround for MySQL bug #59393 wrt. ignore-builtin-innodb
     if ( ( $myvar{'ignore_builtin_innodb'} || "" ) eq "ON" ) {
         $myvar{'have_innodb'} = "NO";
@@ -3845,7 +3845,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.8 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.10 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
