@@ -46,6 +46,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/*
 
 %changelog
-* Thu Jan 5 2015 Jean-Marie RENOUARD <jmrenouard@gmail.com> %VERSION%-1
+* Thu Apr 14 20145 Jean-Marie RENOUARD <jmrenouard@gmail.com> %VERSION%-1
 - Initial RPM release
 

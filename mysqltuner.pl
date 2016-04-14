@@ -157,7 +157,7 @@ sub usage {
       . "      --debug              Print debug information\n"
       . "      --dbstat             Print database information\n"
       . "      --idxstat            Print index information\n"
-            . "--sysstat            Print system information\n"
+      . "      --sysstat            Print system information\n"
       . "      --bannedports        Ports banned separated by comma(,)\n"
       . "      --maxportallowed     Number of ports opened allowed on this hosts\n"
       . "      --cvefile            CVE File for vulnerability checks\n"
@@ -933,31 +933,40 @@ sub get_tuning_info {
 # Populates all of the variable and status hashes
 my ( %mystat, %myvar, $dummyselect, %myrepl, %myslaves );
 
-sub get_all_vars {
+sub arr2hash {
+  my $href=shift;
+  my $harr=shift;
+  my $sep=shift;
+  $sep='\s' unless defined($sep);
+  foreach my $line (@$harr) {
+        $line =~ /([a-zA-Z_]*)\s*$sep\s*(.*)/;
+        $$href{$1} = $2;
+        debugprint "V: $1 = $2";
+  }
+}
 
+sub get_all_vars {
     # We need to initiate at least one query so that our data is useable
     $dummyselect = select_one "SELECT VERSION()";
     debugprint "VERSION: " . $dummyselect . "";
     $result{'MySQL Client'}{'Version'} = $dummyselect;
-    my @mysqlvarlist = select_array "SHOW /*!50000 GLOBAL */ VARIABLES";
-    foreach my $line (@mysqlvarlist) {
-        $line =~ /([a-zA-Z_]*)\s*(.*)/;
-        $myvar{$1} = $2;
-        $result{'Variables'}{$1} = $2;
-        debugprint "V: $1 = $2";
-    }
-    my @mysqlstatlist = select_array "SHOW /*!50000 GLOBAL */ STATUS";
-    foreach my $line (@mysqlstatlist) {
-        $line =~ /([a-zA-Z_]*)\s*(.*)/;
-        $mystat{$1} = $2;
-        $result{'Status'}{$1} = $2;
-        debugprint "S: $1 = $2";
-    }
+    
+    my @mysqlvarlist = select_array ("SHOW GLOBAL VARIABLES");
+    push (@mysqlvarlist, select_array ("SHOW VARIABLES"));
+    arr2hash(\%myvar, \@mysqlvarlist);
+    $result{'Variables'}=%myvar;
+        
+    my @mysqlstatlist = select_array ("SHOW GLOBAL STATUS");
+    push (@mysqlstatlist, select_array ("SHOW STATUS"));
+    arr2hash(\%mystat, \@mysqlstatlist);
+    $result{'Status'}=%mystat;
+    
     $myvar{'have_galera'} = "NO";
     if ( defined($myvar{'wsrep_provider_options'}) && $myvar{'wsrep_provider_options'} ne "") {
         $myvar{'have_galera'} = "YES";
-	debugprint "Galera options: ". $myvar{'wsrep_provider_options'};
+        debugprint "Galera options: ". $myvar{'wsrep_provider_options'};
     }
+    
     # Workaround for MySQL bug #59393 wrt. ignore-builtin-innodb
     if ( ( $myvar{'ignore_builtin_innodb'} || "" ) eq "ON" ) {
         $myvar{'have_innodb'} = "NO";
@@ -990,16 +999,9 @@ sub get_all_vars {
         }
     }
     debugprint Dumper(@mysqlenginelist);
-    my @mysqlslave = select_array "SHOW SLAVE STATUS\\G";
-
-    foreach my $line (@mysqlslave) {
-        if ( $line =~ /\s*(.*):\s*(.*)/ ) {
-            debugprint "$1 => $2";
-            $myrepl{"$1"} = $2;
-            $result{'Replication'}{'Status'}{$1} = $2;
-        }
-    }
-
+    my @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
+    arr2hash(\%myrepl, \@mysqlslave, ':');
+    $result{'Replication'}{'Status'}=%myrepl;
     my @mysqlslaves = select_array "SHOW SLAVE HOSTS";
     my @lineitems   = ();
     foreach my $line (@mysqlslaves) {
@@ -1138,9 +1140,7 @@ sub get_os_release {
         $os_relase =~ s/\s+\\n.*//;
         return $os_relase;
     } 
-        
     return "Unknown OS release";
-
 }
 
 sub get_fs_info() {
@@ -1176,6 +1176,20 @@ sub get_fs_info() {
             }
         }
     }
+}
+
+sub merge_hash
+{
+  my $h1=shift;
+  my $h2=shift;
+  my %result={};
+  foreach my $substanceref ( $h1, $h2 ) {
+    while ( my ($k, $v) = each %$substanceref) {
+        next if (exists $result{$k});
+        $result{$k} = $v;
+    }
+  }
+  return \%result;
 }
 
 sub is_virtual_machine() {
