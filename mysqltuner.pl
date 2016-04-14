@@ -3341,8 +3341,8 @@ sub mysql_innodb {
         && $mycalc{'pct_write_efficiency'} < 90 )
     {
         badprint "InnoDB Write Log efficiency: "
-          . $mycalc{'pct_write_efficiency'} . "% ("
-          . ( $mystat{'Innodb_log_write_requests'} -
+          . abs($mycalc{'pct_write_efficiency'}) . "% ("
+          . abs( $mystat{'Innodb_log_write_requests'} -
               $mystat{'Innodb_log_writes'} )
           . " hits/ "
           . $mystat{'Innodb_log_write_requests'}
