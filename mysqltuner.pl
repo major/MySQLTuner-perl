@@ -3089,19 +3089,24 @@ sub get_wsrep_options {
     my @galera_options=split /;/,$myvar{'wsrep_provider_options'} ;
     remove_cr @galera_options;
     @galera_options=remove_empty @galera_options;
+    debugprint Dumper(\@galera_options);
     return @galera_options;
 }
 sub get_gcache_memory {
-    return 0 unless defined $myvar{'wsrep_provider_options'} ;
-    
-    my @galera_options=get_wsrep_options;
-    return 0 unless  scalar(@galera_options) >0;
-    my @memValues= grep /gcache.mem_size/, @galera_options;
-	my $memValue=$memValues[0];
-	$memValue =~ s/.*=\s*(\d+)$/$1/g;
-    return $memValue;
-	
+    return get_wsrep_option 'gcache.mem_size';
 }
+sub get_wsrep_option {
+    my $key=shift;
+    return '' unless defined $myvar{'wsrep_provider_options'} ;
+    my @galera_options=get_wsrep_options;
+    return '' unless  scalar(@galera_options) >0;
+    my @memValues= grep /\s*$key =/, @galera_options;
+    my $memValue=$memValues[0];
+    $memValue =~ s/.*=\s*(.+)$/$1/g;
+    return $memValue;
+}
+
+
 # Recommendations for Galera
 sub mariadb_galera {
     subheaderprint "Galera Metrics";
@@ -3131,7 +3136,7 @@ sub mariadb_galera {
 	next unless $gstatus =~ /^wsrep.*/;
 	debugprint "\t".trim($gstatus). " = ".$mystat{$gstatus};
    }
-   infoprint "GCache is using ".hr_bytes_rnd(get_gcache_memory());
+   infoprint "GCache is using ".hr_bytes_rnd(get_wsrep_option('gcache.mem_size'));
    my @primaryKeysNbTables=select_array("select CONCAT(table_schema,CONCAT('.', table_name))  from       information_schema.columns   where table_schema not in ('mysql', 'information_schema', 'performance_schema') group by table_schema,table_name    having      sum(if(column_key in ('PRI','UNI'), 1,0)) = 0");
 
    if (scalar (@primaryKeysNbTables) > 0 ) {
@@ -3171,6 +3176,17 @@ sub mariadb_galera {
 	goodprint "Galera WsREP is enabled.";
         if ( defined($myvar{'wsrep_cluster_address'}) and trim("$myvar{'wsrep_cluster_address'}") ne "") {
             goodprint "Galera Cluster address is defined: ".$myvar{'wsrep_cluster_address'};
+            my $nbNodes=scalar(split /,/, $myvar{'wsrep_cluster_address'});
+	    if ( $nbNodes !=3 or $nbNodes != 5) {
+                 goodprint "There is $nbNodes nodes.";
+	    }  else {
+                 badprint "There is $nbNodes nodes. Prefer 3 or 5 nodes achitecture.";
+            }
+	    if ($nbNodes != trim ($mystat{'wsrep_cluster_size'}) ) {
+		badprint "All cluster nodes dre not detected. wsrep_cluster_size != informations in wsrep_cluster_adress";
+	    } else {
+		badprint "All cluster nodes destected.";
+            }
         } else {
             badprint "Galera Cluster address is undefined";
             push @adjvars, "set up wsrep_cluster_address variable for Galera replication";
@@ -3181,9 +3197,77 @@ sub mariadb_galera {
 	    badprint "Galera Cluster name is undefined";
 	    push @adjvars, "set up wsrep_cluster_name variable for Galera replication";
         }
+         if ( defined($myvar{'wsrep_node_name'}) and trim($myvar{'wsrep_node_name'}) ne "") {
+            goodprint "Galera Node name is defined: ".$myvar{'wsrep_node_name'};
+        } else {
+            badprint "Galera node name is undefined";
+            push @adjvars, "set up wsrep_node_name variable for Galera replication";
+        }
+	if ( trim ($myvar{'wsrep_notify_cmd'}) ne "" ) {
+	    goodprint "Galera Notify command is defined.";
+	} else {
+	    badprint "Galera Notify command is not defined.";
+	    push( @adjvars, "set up parameter wsrep_notify_cmd to be notify");
+        }
+	 if ( trim ($myvar{'wsrep_sst_method'}) ne "xtrabackup" ) {
+            badprint "Galera SST method is xtrabackup.";
+            push( @adjvars, "set up parameter wsrep_sst_method to xtrabackup");
+  	} else {
+            goodprint "SST Method is inot based on xtrabackup.";
+        }
+	 if ( trim ($myvar{'wsrep_OSU_method'}) eq "TOI" ) {
+            goodprint "TOI is default mode for upgrade.";
+        } else {
+            badprint "Schema upgrade are not replicated automatically";
+            push( @adjvars, "set up parameter wsrep_OSU_method to TOI");
+        }
+   	infoprint "Max WsRep message : " .hr_bytes( $myvar{'wsrep_max_ws_size'});
    } else {
 	badprint "Galera WsREP is disabled";
    }
+
+	
+   if (defined($mystat{'wsrep_connected'}) and $mystat{'wsrep_connected'} eq "ON") {
+	goodprint "Node is connected";
+   } else {
+	badprint "Node is disconnected";
+   }
+ if (defined($mystat{'wsrep_ready'}) and $mystat{'wsrep_ready'} eq "ON") {
+        goodprint "Node is ready";
+   } else {
+        badprint "Node is not ready";
+   }
+infoprint "Cluster status :".$mystat{'wsrep_cluster_status'};
+ if (defined($mystat{'wsrep_cluster_status'}) and $mystat{'wsrep_cluster_status'} eq "Primary") {
+        goodprint "Galera cluster is consistent and ready for operations";
+   } else {
+        badprint "Cluster is not consistent and ready";
+   }
+   if ($mystat{'wsrep_local_state_uuid'} eq $mystat{'wsrep_cluster_state_uuid'}) {
+   	goodprint "Node and whole cluster at the same level: ".$mystat{'wsrep_cluster_state_uuid'};
+   } else {
+   	badprint "Node and whole cluster not the same level";
+	infoprint "Node    state uuid: ".$mystat{'wsrep_local_state_uuid'};
+	infoprint "Cluster state uuid: ".$mystat{'wsrep_cluster_state_uuid'};
+   }
+  if ($mystat{'wsrep_local_state_comment'} eq 'Synced' ) {
+        goodprint "Node is synced with whole cluster.";
+   } else {
+        badprint "Node is not synced";
+        infoprint "Node State : ".$mystat{'wsrep_local_state_comment'};
+   }
+  if ($mystat{'wsrep_local_cert_failures'} == 0 ) {
+        goodprint "There is no certification failures detected.";
+   } else {
+        badprint "There is ".$mystat{'wsrep_local_cert_failures'}." certification failure(s)detected.";
+   }
+
+   for my $key (keys %mystat) {
+	if ($key =~ /wsrep_|galera/i) {
+		debugprint "WSREP: $key = $mystat{$key}";
+	}
+   }
+   debugprint Dumper get_wsrep_options();
 }
 
 # Recommendations for InnoDB
