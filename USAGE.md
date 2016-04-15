@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.6.8 - MySQL High Performance Tuning Script
+    MySQLTuner 1.6.10 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -39,6 +39,7 @@ You must provide the remote server's total memory when connecting to other serve
     --debug                     Print debug information
     --dbstat                    Print database information
     --idxstat                   Print index information
+    --sysstat                   Print system information
     --bannedports               Ports banned separated by comma(,)
     --maxportallowed            Number of ports opened allowed on this hosts
     --cvefile                   CVE File for vulnerability checks
