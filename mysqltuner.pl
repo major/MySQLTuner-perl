@@ -1236,7 +1236,7 @@ sub get_kernel_info()
        }
        if (`sysctl -n vm.swappiness` > 10) {
 		badprint "Swappiness is > 10, please consider having a value lower than 10";
-		push @generalrec, "setup swappieness lower or equals to 10";
+		push @generalrec, "setup swappiness lower or equals to 10";
 		push @adjvars, 'vm.swappiness <= 10 (echo 0 > /proc/sys/vm/swappiness)';
        } else {
 		infoprint "Swappiness is < 10.";
@@ -2309,6 +2309,11 @@ sub mysql_stats {
     }
 
     # Memory usage
+
+    infoprint "Physical Memory     : ". hr_bytes($physical_memory);
+    infoprint "Max MySQL memory    : ". hr_bytes( $mycalc{'max_peak_memory'} );
+    infoprint "Other process memory: ". hr_bytes( get_other_process_memory()  );
+
     infoprint "Total buffers: "
       . hr_bytes( $mycalc{'server_buffers'} )
       . " global + "
@@ -2390,6 +2395,13 @@ sub mysql_stats {
           . hr_bytes( $mycalc{'max_peak_memory'} )
           . " ($mycalc{'pct_max_physical_memory'}% of installed RAM)";
     }
+
+    if ($physical_memory < ($mycalc{'max_peak_memory'}+get_other_process_memory())) {
+	badprint "Overall possible memory usage with other process exceeded memory";
+        push( @generalrec, "Dedicated this server to your database for highest performance." );
+    } else {
+	goodprint "Overall possible memory usage with other process is compatible with memory available";
+    }    
 
     # Slow queries
     if ( $mycalc{'pct_slow_queries'} > 5 ) {
@@ -2520,9 +2532,7 @@ sub mysql_stats {
 
     # Sorting
     if ( $mycalc{'total_sorts'} == 0 ) {
-
-        # For the sake of space, we will be quiet here
-        # No sorts have run yet
+	goodprint "No Sort requiring temporary tables";
     }
     elsif ( $mycalc{'pct_temp_sort_table'} > 10 ) {
         badprint
@@ -2561,8 +2571,7 @@ sub mysql_stats {
             "Adjust your join queries to always utilize indexes" );
     }
     else {
-
-        # For the sake of space, we will be quiet here
+	goodprint "No joins without indexes";
         # No joins have run without indexes
     }
 
@@ -2617,9 +2626,7 @@ sub mysql_stats {
         }
     }
     else {
-
-        # For the sake of space, we will be quiet here
-        # No temporary tables have been created
+	goodprint "No tmp tables created on disk";
     }
 
     # Thread cache
@@ -3403,7 +3410,7 @@ sub mysql_databases {
     infoprint "There is " . scalar(@dblist) . " Database(s).";
     my @totaldbinfo = split /\s/,
       select_one(
-"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)),COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES;"
+"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)),COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ( 'mysql' );"
       );
     infoprint "All Databases:";
     infoprint " +-- TABLE : "
@@ -3447,8 +3454,7 @@ sub mysql_databases {
         if (
                $_ eq "information_schema"
             or $_ eq "performance_schema"
-
-            # or $_ eq "mysql"
+            or $_ eq "mysql"
             or $_ eq ""
           )
         {
