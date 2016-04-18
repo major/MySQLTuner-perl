@@ -2967,9 +2967,11 @@ sub mariadb_threadpool {
 sub get_pf_memory 
 {
     # Performance Schema
-    return 0 unless ( defined( $myvar{'performance_schema'} ) and $myvar{'performance_schema'} eq 'ON' );
-
+    return 0 unless defined $myvar{'performance_schema'};
+    return 0 if $myvar{'performance_schema'} eq 'OFF';
+    
     my @infoPFSMemory=grep /performance_schema.memory/, select_array("SHOW ENGINE PERFORMANCE_SCHEMA STATUS"); 
+    return 0 if scalar(@infoPFSMemory)==0;
     $infoPFSMemory[0] =~ s/.*\s+(\d+)$/$1/g;
     return $infoPFSMemory[0];
 }
