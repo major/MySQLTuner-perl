@@ -3093,7 +3093,10 @@ sub get_wsrep_options {
     return @galera_options;
 }
 sub get_gcache_memory {
-    return get_wsrep_option 'gcache.mem_size';
+    my $gCacheMem=get_wsrep_option('gcache.mem_size');
+
+    return 0 unless defined $gCacheMem and $gCacheMem ne '';
+    return $gCacheMem;
 }
 sub get_wsrep_option {
     my $key=shift;
