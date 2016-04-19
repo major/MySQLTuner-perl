@@ -51,7 +51,7 @@ use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
 # for which()
-use Env;
+#use Env;
 
 # Set up a few variables for use in the script
 my $tunerversion = "1.6.10";
@@ -445,13 +445,13 @@ sub os_setup {
 }
 
 sub get_http_cli {
-    my $httpcli = which("curl", $PATH);
+    my $httpcli = which("curl", $ENV{'PATH'});
     chomp($httpcli);
     if ($httpcli) {
 	    return $httpcli;
     }
     
-    $httpcli = which("wget", $PATH);
+    $httpcli = which("wget", $ENV{'PATH'});
     chomp($httpcli);
     if ($httpcli) {
 	    return $httpcli;
@@ -608,7 +608,7 @@ sub mysql_setup {
         $mysqladmincmd = $opt{mysqladmin};
     }
     else {
-        $mysqladmincmd = which("mysqladmin", $PATH);
+        $mysqladmincmd = which("mysqladmin", $ENV{'PATH'});
     }
     chomp($mysqladmincmd);
     if ( !-e $mysqladmincmd && $opt{mysqladmin} ) {
@@ -624,7 +624,7 @@ sub mysql_setup {
         $mysqlcmd = $opt{mysqlcmd};
     }
     else {
-        $mysqlcmd = which("mysql", $PATH);
+        $mysqlcmd = which("mysql", $ENV{'PATH'});
     }
     chomp($mysqlcmd);
     if ( !-e $mysqlcmd && $opt{mysqlcmd} ) {
@@ -701,7 +701,7 @@ sub mysql_setup {
             exit 1;
         }
     }
-    my $svcprop = which("svcprop", $PATH);
+    my $svcprop = which("svcprop", $ENV{'PATH'});
     if ( substr( $svcprop, 0, 1 ) =~ "/" ) {
 
         # We are on solaris
@@ -3908,7 +3908,7 @@ sub dump_result {
 sub which {
     my $prog_name = shift;
     my $path_string = shift;
-    my @path_array = split /:/, $PATH;
+    my @path_array = split /:/, $ENV{'PATH'};
 
     for my $path ( @path_array) {
         if ( -x "$path/$prog_name" ) {
