@@ -50,6 +50,9 @@ use Cwd 'abs_path';
 use Data::Dumper;
 $Data::Dumper::Pair = " : ";
 
+# for which()
+use Env;
+
 # Set up a few variables for use in the script
 my $tunerversion = "1.6.10";
 my ( @adjvars, @generalrec );
@@ -442,19 +445,20 @@ sub os_setup {
 }
 
 sub get_http_cli {
-    my $httpcli = `which curl`;
+    my $httpcli = which("curl", $PATH);
     chomp($httpcli);
-    if ( defined($httpcli) and -e "$httpcli" ) {
-	return $httpcli;
+    if ($httpcli) {
+	    return $httpcli;
     }
     
-    $httpcli = `which wget`;
+    $httpcli = which("wget", $PATH);
     chomp($httpcli);
-    if ( defined($httpcli) and -e "$httpcli" ) {
-	return $httpcli;
+    if ($httpcli) {
+	    return $httpcli;
     }
     return "";
 }
+
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
     if ( $opt{'checkversion'} eq 0 and $opt{'updateversion'} eq 0 ) {
@@ -466,9 +470,8 @@ sub validate_tuner_version {
     my $update;
     my $url =
 "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
-    my $httpcli = `which curl`;
-    chomp($httpcli);
-    if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
+    my $httpcli = get_http_cli();
+    if ( $httpcli =~ /curl$/ ) {
         debugprint "$httpcli is available.";
 
         debugprint
@@ -484,9 +487,7 @@ sub validate_tuner_version {
     	
     }
 
-    $httpcli = `which wget`;
-    chomp($httpcli);
-    if ( defined($httpcli) and -e "$httpcli" ) {
+    if ($httpcli =~ /wget$/ ) {
         debugprint "$httpcli is available.";
 
         debugprint
@@ -516,12 +517,11 @@ sub update_tuner_version {
       ( "mysqltuner.pl", "basic_passwords.txt", "vulnerabilities.csv" );
     my $totalScripts    = scalar(@scripts);
     my $receivedScripts = 0;
-    my $httpcli         = `which curl`;
+    my $httpcli         = get_http_cli();
 
     foreach my $script (@scripts) {
 
-        chomp($httpcli);
-        if ( 1 != 1 and defined($httpcli) and -e "$httpcli" ) {
+        if ( $httpcli =~ /curl$/ ) {
             debugprint "$httpcli is available.";
 
             debugprint
@@ -539,33 +539,29 @@ sub update_tuner_version {
                 debugprint "$script updated: $update";
             }
         }
-        else {
+        elsif ( $httpcli =~ /wget$/ ) {
 
-            $httpcli = `which wget`;
-            chomp($httpcli);
-            if ( defined($httpcli) and -e "$httpcli" ) {
-                debugprint "$httpcli is available.";
+           debugprint "$httpcli is available.";
 
-                debugprint
-                  "$httpcli -qe timestamping=off -T 5 -O $script '$url$script'";
-                $update =
-                  `$httpcli -qe timestamping=off -T 5 -O $script '$url$script'`;
-                chomp($update);
+           debugprint
+             "$httpcli -qe timestamping=off -T 5 -O $script '$url$script'";
+           $update =
+             `$httpcli -qe timestamping=off -T 5 -O $script '$url$script'`;
+           chomp($update);
 
-                if ( -s $script eq 0 ) {
-                    badprint "Couldn't update $script";
-                }
-                else {
-                    ++$receivedScripts;
-                    debugprint "$script updated: $update";
-                }
-
-            }
-            else {
-                debugprint "curl and wget are not available.";
-                infoprint "Unable to check for the latest MySQLTuner version";
-            }
-        }
+           if ( -s $script eq 0 ) {
+               badprint "Couldn't update $script";
+           }
+           else {
+               ++$receivedScripts;
+               debugprint "$script updated: $update";
+           }
+       }
+       else {
+           debugprint "curl and wget are not available.";
+           infoprint "Unable to check for the latest MySQLTuner version";
+       }
+        
     }
 
     if ( $receivedScripts eq $totalScripts ) {
@@ -612,7 +608,7 @@ sub mysql_setup {
         $mysqladmincmd = $opt{mysqladmin};
     }
     else {
-        $mysqladmincmd = `which mysqladmin`;
+        $mysqladmincmd = which("mysqladmin", $PATH);
     }
     chomp($mysqladmincmd);
     if ( !-e $mysqladmincmd && $opt{mysqladmin} ) {
@@ -628,7 +624,7 @@ sub mysql_setup {
         $mysqlcmd = $opt{mysqlcmd};
     }
     else {
-        $mysqlcmd = `which mysql`;
+        $mysqlcmd = which("mysql", $PATH);
     }
     chomp($mysqlcmd);
     if ( !-e $mysqlcmd && $opt{mysqlcmd} ) {
@@ -705,7 +701,7 @@ sub mysql_setup {
             exit 1;
         }
     }
-    my $svcprop = `which svcprop 2>/dev/null`;
+    my $svcprop = which("svcprop", $PATH);
     if ( substr( $svcprop, 0, 1 ) =~ "/" ) {
 
         # We are on solaris
@@ -1287,8 +1283,14 @@ sub get_system_info() {
     infoprint "Internal IP           : " . infocmd_one "hostname -I";
     my $httpcli=get_http_cli();
     infoprint "HTTP client found: $httpcli" if defined $httpcli;
-    infoprint "External IP           : "
-      . infocmd_one "$httpcli ipecho.net/plain" if defined ($httpcli);
+    if ( $httpcli =~ /curl$/) {
+        infoprint "External IP           : "
+          . infocmd_one "$httpcli ipecho.net/plain";
+    }
+    elsif ( $httpcli =~ /wget$/ ) {
+        infoprint "External IP           : "
+          . infocmd_one "$httpcli -q -O - ipecho.net/plain";
+    }
     badprint
       "External IP           : Can't check because of Internet connectivity" unless defined($httpcli);
     infoprint "Name Servers          : "
@@ -3902,6 +3904,21 @@ sub dump_result {
           ->encode( \%result );
     }
 }
+
+sub which {
+    my $prog_name = shift;
+    my $path_string = shift;
+    my @path_array = split /:/, $PATH;
+
+    for my $path ( @path_array) {
+        if ( -x "$path/$prog_name" ) {
+            return "$path/$prog_name";
+        }
+    }
+
+    return 0
+}
+
 
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
