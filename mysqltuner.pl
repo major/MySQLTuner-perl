@@ -3179,19 +3179,26 @@ sub mariadb_galera {
 	
    if (  defined($myvar{'wsrep_cluster_name'}) and $myvar{'wsrep_on'} eq "ON" ) {
 	goodprint "Galera WsREP is enabled.";
-        if ( defined($myvar{'wsrep_cluster_address'}) and trim("$myvar{'wsrep_cluster_address'}") ne "") {
-            goodprint "Galera Cluster address is defined: ".$myvar{'wsrep_cluster_address'};
-            my $nbNodes=scalar(split /,/, $myvar{'wsrep_cluster_address'});
+      if ( defined($myvar{'wsrep_cluster_address'}) and trim("$myvar{'wsrep_cluster_address'}") ne "") {
+           goodprint "Galera Cluster address is defined: ".$myvar{'wsrep_cluster_address'};
+           my $nbNodes=scalar(split /,/, $myvar{'wsrep_cluster_address'});
 	    if ( $nbNodes !=3 or $nbNodes != 5) {
-                 goodprint "There is $nbNodes nodes.";
+                 goodprint "There is $nbNodes nodes in wsrep_cluster_address.";
 	    }  else {
-                 badprint "There is $nbNodes nodes. Prefer 3 or 5 nodes achitecture.";
-            }
+                 badprint "There is $nbNodes nodes in wsrep_cluster_address. Prefer 3 or 5 nodes achitecture.";
+      }
+      my $nbNodesSize=trim ($mystat{'wsrep_cluster_size'});
+      if ( $nbNodesSize !=3 or $nbNodesSize != 5) {
+                 goodprint "There is $nbNodes nodes in wsrep_cluster_size.";
+      }  else {
+                 badprint "There is $nbNodes nodes in wsrep_cluster_size. Prefer 3 or 5 nodes achitecture.";
+      }
+
 	    if ($nbNodes != trim ($mystat{'wsrep_cluster_size'}) ) {
-		badprint "All cluster nodes dre not detected. wsrep_cluster_size != informations in wsrep_cluster_adress";
+		    badprint "All cluster nodes dre not detected. wsrep_cluster_size != informations in wsrep_cluster_adress";
 	    } else {
-		badprint "All cluster nodes destected.";
-            }
+		    badprint "All cluster nodes detected.";
+      }
         } else {
             badprint "Galera Cluster address is undefined";
             push @adjvars, "set up wsrep_cluster_address variable for Galera replication";
