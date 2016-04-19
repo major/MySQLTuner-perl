@@ -216,15 +216,16 @@ open( $fh, '>', $outputfile )
 $opt{nocolor} = 1 if defined($outputfile);
 
 # Setting up the colors for the print styles
-my $me=`whoami`;
-$me =~s/\n//g;
+my $me = `whoami`;
+$me =~ s/\n//g;
+
 # Setting up the colors for the print styles
-my $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]" : "[OK]";
-my $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]" : "[!!]";
-my $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]" : "[--]";
-my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]" : "[DG]";
-my $cmd = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
-my $end = ( $opt{nocolor} == 0 ) ? "\e[0m" : "";
+my $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]"  : "[OK]";
+my $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]"  : "[!!]";
+my $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]"  : "[--]";
+my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]"  : "[DG]";
+my $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
+my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
 
 # Super structure containing all information
 my %result;
@@ -246,23 +247,35 @@ sub redwrap {
 sub greenwrap {
     return ( $opt{nocolor} == 0 ) ? "\e[0;32m" . $_[0] . "\e[0m" : $_[0];
 }
-sub cmdprint { prettyprint $cmd." ". $_[0]. $end; }
-sub infoprintml { for my $ln(@_) { $ln =~s/\n//g; infoprint "\t$ln"; } }
-sub infoprintcmd { cmdprint "@_"; infoprintml grep { $_ ne '' and $_ !~ /^\s*$/ } `@_ 2>&1`; }
-sub subheaderprint {
-        my $tln=100;
-        my $sln=8;
-        my $ln=length("@_")+2;
+sub cmdprint { prettyprint $cmd. " " . $_[0] . $end; }
 
-        prettyprint " ";
-        #prettyprint "-"x$tln;
-        prettyprint "-"x$sln ." @_ ". "-"x($tln-$ln-$sln);
-        #prettyprint "-"x$tln;
+sub infoprintml {
+    for my $ln (@_) { $ln =~ s/\n//g; infoprint "\t$ln"; }
 }
+
+sub infoprintcmd {
+    cmdprint "@_";
+    infoprintml grep { $_ ne '' and $_ !~ /^\s*$/ } `@_ 2>&1`;
+}
+
+sub subheaderprint {
+    my $tln = 100;
+    my $sln = 8;
+    my $ln  = length("@_") + 2;
+
+    prettyprint " ";
+
+    #prettyprint "-"x$tln;
+    prettyprint "-" x $sln . " @_ " . "-" x ( $tln - $ln - $sln );
+
+    #prettyprint "-"x$tln;
+}
+
 sub infoprinthcmd {
-#       print Dumper @_;
-        subheaderprint "$_[0]";
-        infoprintcmd "$_[1]";
+
+    #       print Dumper @_;
+    subheaderprint "$_[0]";
+    infoprintcmd "$_[1]";
 }
 
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
@@ -445,16 +458,16 @@ sub os_setup {
 }
 
 sub get_http_cli {
-    my $httpcli = which("curl", $ENV{'PATH'});
+    my $httpcli = which( "curl", $ENV{'PATH'} );
     chomp($httpcli);
     if ($httpcli) {
-	    return $httpcli;
+        return $httpcli;
     }
-    
-    $httpcli = which("wget", $ENV{'PATH'});
+
+    $httpcli = which( "wget", $ENV{'PATH'} );
     chomp($httpcli);
     if ($httpcli) {
-	    return $httpcli;
+        return $httpcli;
     }
     return "";
 }
@@ -483,11 +496,12 @@ sub validate_tuner_version {
 
         compare_tuner_version($update);
         return;
-    } else {
-    	
+    }
+    else {
+
     }
 
-    if ($httpcli =~ /wget$/ ) {
+    if ( $httpcli =~ /wget$/ ) {
         debugprint "$httpcli is available.";
 
         debugprint
@@ -541,27 +555,27 @@ sub update_tuner_version {
         }
         elsif ( $httpcli =~ /wget$/ ) {
 
-           debugprint "$httpcli is available.";
+            debugprint "$httpcli is available.";
 
-           debugprint
-             "$httpcli -qe timestamping=off -T 5 -O $script '$url$script'";
-           $update =
-             `$httpcli -qe timestamping=off -T 5 -O $script '$url$script'`;
-           chomp($update);
+            debugprint
+              "$httpcli -qe timestamping=off -T 5 -O $script '$url$script'";
+            $update =
+              `$httpcli -qe timestamping=off -T 5 -O $script '$url$script'`;
+            chomp($update);
 
-           if ( -s $script eq 0 ) {
-               badprint "Couldn't update $script";
-           }
-           else {
-               ++$receivedScripts;
-               debugprint "$script updated: $update";
-           }
-       }
-       else {
-           debugprint "curl and wget are not available.";
-           infoprint "Unable to check for the latest MySQLTuner version";
-       }
-        
+            if ( -s $script eq 0 ) {
+                badprint "Couldn't update $script";
+            }
+            else {
+                ++$receivedScripts;
+                debugprint "$script updated: $update";
+            }
+        }
+        else {
+            debugprint "curl and wget are not available.";
+            infoprint "Unable to check for the latest MySQLTuner version";
+        }
+
     }
 
     if ( $receivedScripts eq $totalScripts ) {
@@ -608,7 +622,7 @@ sub mysql_setup {
         $mysqladmincmd = $opt{mysqladmin};
     }
     else {
-        $mysqladmincmd = which("mysqladmin", $ENV{'PATH'});
+        $mysqladmincmd = which( "mysqladmin", $ENV{'PATH'} );
     }
     chomp($mysqladmincmd);
     if ( !-e $mysqladmincmd && $opt{mysqladmin} ) {
@@ -624,7 +638,7 @@ sub mysql_setup {
         $mysqlcmd = $opt{mysqlcmd};
     }
     else {
-        $mysqlcmd = which("mysql", $ENV{'PATH'});
+        $mysqlcmd = which( "mysql", $ENV{'PATH'} );
     }
     chomp($mysqlcmd);
     if ( !-e $mysqlcmd && $opt{mysqlcmd} ) {
@@ -701,7 +715,7 @@ sub mysql_setup {
             exit 1;
         }
     }
-    my $svcprop = which("svcprop", $ENV{'PATH'});
+    my $svcprop = which( "svcprop", $ENV{'PATH'} );
     if ( substr( $svcprop, 0, 1 ) =~ "/" ) {
 
         # We are on solaris
@@ -930,37 +944,40 @@ sub get_tuning_info {
 my ( %mystat, %myvar, $dummyselect, %myrepl, %myslaves );
 
 sub arr2hash {
-  my $href=shift;
-  my $harr=shift;
-  my $sep=shift;
-  $sep='\s' unless defined($sep);
-  foreach my $line (@$harr) {
+    my $href = shift;
+    my $harr = shift;
+    my $sep  = shift;
+    $sep = '\s' unless defined($sep);
+    foreach my $line (@$harr) {
         $line =~ /([a-zA-Z_]*)\s*$sep\s*(.*)/;
         $$href{$1} = $2;
         debugprint "V: $1 = $2";
-  }
+    }
 }
 
 sub get_all_vars {
+
     # We need to initiate at least one query so that our data is useable
     $dummyselect = select_one "SELECT VERSION()";
     debugprint "VERSION: " . $dummyselect . "";
     $result{'MySQL Client'}{'Version'} = $dummyselect;
-    
-    my @mysqlvarlist = select_array ("SHOW GLOBAL VARIABLES");
-    push (@mysqlvarlist, select_array ("SHOW VARIABLES"));
-    arr2hash(\%myvar, \@mysqlvarlist);
-    $result{'Variables'}=%myvar;
-        
-    my @mysqlstatlist = select_array ("SHOW GLOBAL STATUS");
-    push (@mysqlstatlist, select_array ("SHOW STATUS"));
-    arr2hash(\%mystat, \@mysqlstatlist);
-    $result{'Status'}=%mystat;
-    
+
+    my @mysqlvarlist = select_array("SHOW GLOBAL VARIABLES");
+    push( @mysqlvarlist, select_array("SHOW VARIABLES") );
+    arr2hash( \%myvar, \@mysqlvarlist );
+    $result{'Variables'} = %myvar;
+
+    my @mysqlstatlist = select_array("SHOW GLOBAL STATUS");
+    push( @mysqlstatlist, select_array("SHOW STATUS") );
+    arr2hash( \%mystat, \@mysqlstatlist );
+    $result{'Status'} = %mystat;
+
     $myvar{'have_galera'} = "NO";
-    if ( defined($myvar{'wsrep_provider_options'}) && $myvar{'wsrep_provider_options'} ne "") {
+    if ( defined( $myvar{'wsrep_provider_options'} )
+        && $myvar{'wsrep_provider_options'} ne "" )
+    {
         $myvar{'have_galera'} = "YES";
-        debugprint "Galera options: ". $myvar{'wsrep_provider_options'};
+        debugprint "Galera options: " . $myvar{'wsrep_provider_options'};
     }
 
     # Workaround for MySQL bug #59393 wrt. ignore-builtin-innodb
@@ -996,8 +1013,8 @@ sub get_all_vars {
     }
     debugprint Dumper(@mysqlenginelist);
     my @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
-    arr2hash(\%myrepl, \@mysqlslave, ':');
-    $result{'Replication'}{'Status'}=%myrepl;
+    arr2hash( \%myrepl, \@mysqlslave, ':' );
+    $result{'Replication'}{'Status'} = %myrepl;
     my @mysqlslaves = select_array "SHOW SLAVE HOSTS";
     my @lineitems   = ();
     foreach my $line (@mysqlslaves) {
@@ -1031,7 +1048,7 @@ sub get_basic_passwords {
 }
 
 sub cve_recommendations {
-    subheaderprint"CVE Security Recommendations";
+    subheaderprint "CVE Security Recommendations";
     unless ( defined( $opt{cvefile} ) && -f "$opt{cvefile}" ) {
         infoprint "Skipped due to --cvefile option undefined";
         return;
@@ -1105,37 +1122,37 @@ sub get_other_process_memory {
 }
 
 sub get_os_release {
-   if( -f "/etc/lsb-release") {
+    if ( -f "/etc/lsb-release" ) {
         my @info_release = get_file_contents "/etc/lsb-release";
         remove_cr @info_release;
         my $os_relase = $info_release[3];
         $os_relase =~ s/.*="//;
         $os_relase =~ s/"$//;
         return $os_relase;
-   }
+    }
 
-   if( -f "/etc/system-release") {
+    if ( -f "/etc/system-release" ) {
         my @info_release = get_file_contents "/etc/system-release";
         remove_cr @info_release;
         return $info_release[0];
-    } 
+    }
 
-    if ( -f "/etc/os-release") {
+    if ( -f "/etc/os-release" ) {
         my @info_release = get_file_contents "/etc/os-release";
         remove_cr @info_release;
         my $os_relase = $info_release[0];
         $os_relase =~ s/.*="//;
         $os_relase =~ s/"$//;
         return $os_relase;
-    } 
+    }
 
-    if ( -f "/etc/issue") {
+    if ( -f "/etc/issue" ) {
         my @info_release = get_file_contents "/etc/issue";
         remove_cr @info_release;
         my $os_relase = $info_release[0];
         $os_relase =~ s/\s+\\n.*//;
         return $os_relase;
-    } 
+    }
     return "Unknown OS release";
 }
 
@@ -1174,18 +1191,17 @@ sub get_fs_info() {
     }
 }
 
-sub merge_hash
-{
-  my $h1=shift;
-  my $h2=shift;
-  my %result={};
-  foreach my $substanceref ( $h1, $h2 ) {
-    while ( my ($k, $v) = each %$substanceref) {
-        next if (exists $result{$k});
-        $result{$k} = $v;
+sub merge_hash {
+    my $h1     = shift;
+    my $h2     = shift;
+    my %result = {};
+    foreach my $substanceref ( $h1, $h2 ) {
+        while ( my ( $k, $v ) = each %$substanceref ) {
+            next if ( exists $result{$k} );
+            $result{$k} = $v;
+        }
     }
-  }
-  return \%result;
+    return \%result;
 }
 
 sub is_virtual_machine() {
@@ -1220,44 +1236,51 @@ sub infocmd_one {
     return join ', ', @result;
 }
 
+sub get_kernel_info() {
+    my @params = (
+        'fs.aio-max-nr',                     'fs.aio-nr',
+        'fs.file-max',                       'sunrpc.tcp_fin_timeout',
+        'sunrpc.tcp_max_slot_table_entries', 'sunrpc.tcp_slot_table_entries',
+        'vm.swappiness'
+    );
+    infoprint "Informations about kernel tuning:";
+    foreach my $param (@params) {
+        infocmd_tab("sysctl $param");
+    }
+    if ( `sysctl -n vm.swappiness` > 10 ) {
+        badprint
+          "Swappiness is > 10, please consider having a value lower than 10";
+        push @generalrec, "setup swappiness lower or equals to 10";
+        push @adjvars, 'vm.swappiness <= 10 (echo 0 > /proc/sys/vm/swappiness)';
+    }
+    else {
+        infoprint "Swappiness is < 10.";
+    }
 
-sub get_kernel_info()
-{
-       my @params=('fs.aio-max-nr', 'fs.aio-nr', 'fs.file-max', 'sunrpc.tcp_fin_timeout',
-                   'sunrpc.tcp_max_slot_table_entries', 'sunrpc.tcp_slot_table_entries',
-                   'vm.swappiness');
-       infoprint "Informations about kernel tuning:";
-       foreach my $param (@params) {
-		infocmd_tab("sysctl $param");
-       }
-       if (`sysctl -n vm.swappiness` > 10) {
-		badprint "Swappiness is > 10, please consider having a value lower than 10";
-		push @generalrec, "setup swappiness lower or equals to 10";
-		push @adjvars, 'vm.swappiness <= 10 (echo 0 > /proc/sys/vm/swappiness)';
-       } else {
-		infoprint "Swappiness is < 10.";
-	}
-  	
-       if (`sysctl -n sunrpc.tcp_slot_table_entries` < 100) {
-                badprint "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
-                push @generalrec, "setup Initial TCP slot entries greater than 100";
-                push @adjvars, 'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)';
-       } else {
-		infoprint "TCP slot entries is > 100.";
-	}
+    if ( `sysctl -n sunrpc.tcp_slot_table_entries` < 100 ) {
+        badprint
+"Initial TCP slot entries is < 1M, please consider having a value greater than 100";
+        push @generalrec, "setup Initial TCP slot entries greater than 100";
+        push @adjvars,
+'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)';
+    }
+    else {
+        infoprint "TCP slot entries is > 100.";
+    }
 
-
-	if (`sysctl -n fs.aio-max-nr` < 1000000) {
-                badprint "Max running total of the number of events is < 1M, please consider having a value greater than 1M";
-                push @generalrec, "setup Max running number events greater than 1M";
-                push @adjvars, 'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
-       } else {
-		infoprint "Max Number of AIO events  is > 1M.";
-	}
+    if ( `sysctl -n fs.aio-max-nr` < 1000000 ) {
+        badprint
+"Max running total of the number of events is < 1M, please consider having a value greater than 1M";
+        push @generalrec, "setup Max running number events greater than 1M";
+        push @adjvars,
+          'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
+    }
+    else {
+        infoprint "Max Number of AIO events  is > 1M.";
+    }
 
 }
 
- 
 sub get_system_info() {
     infoprint get_os_release;
     if (is_virtual_machine) {
@@ -1281,9 +1304,10 @@ sub get_system_info() {
     infoprint "Network Cards         : ";
     infocmd_tab "ifconfig| grep -A1 mtu";
     infoprint "Internal IP           : " . infocmd_one "hostname -I";
-    my $httpcli=get_http_cli();
+    my $httpcli = get_http_cli();
     infoprint "HTTP client found: $httpcli" if defined $httpcli;
-    if ( $httpcli =~ /curl$/) {
+
+    if ( $httpcli =~ /curl$/ ) {
         infoprint "External IP           : "
           . infocmd_one "$httpcli ipecho.net/plain";
     }
@@ -1292,7 +1316,8 @@ sub get_system_info() {
           . infocmd_one "$httpcli -q -O - ipecho.net/plain";
     }
     badprint
-      "External IP           : Can't check because of Internet connectivity" unless defined($httpcli);
+      "External IP           : Can't check because of Internet connectivity"
+      unless defined($httpcli);
     infoprint "Name Servers          : "
       . infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
     infoprint "Logged In users       : ";
@@ -1306,8 +1331,8 @@ sub get_system_info() {
 }
 
 sub system_recommendations {
-  return if ( $opt{sysstat} == 0 );
-    subheaderprint"System Linux Recommendations";
+    return if ( $opt{sysstat} == 0 );
+    subheaderprint "System Linux Recommendations";
     my $os = `uname`;
     unless ( $os =~ /Linux/i ) {
         infoprint "Skipped due to non Linux server";
@@ -1509,8 +1534,8 @@ sub security_recommendations {
 }
 
 sub get_replication_status {
-    subheaderprint "Replication Metrics"; 
-    infoprint "Galera Synchronous replication: ". $myvar{'have_galera'};
+    subheaderprint "Replication Metrics";
+    infoprint "Galera Synchronous replication: " . $myvar{'have_galera'};
     if ( scalar( keys %myslaves ) == 0 ) {
         infoprint "No replication slave(s) for this server.";
     }
@@ -1965,14 +1990,20 @@ sub calculations {
 # Max used memory is memory used by MySQL based on Max_used_connections
 # This is the max memory used theorically calculated with the max concurrent connection number reached by mysql
     $mycalc{'max_used_memory'} =
-      $mycalc{'server_buffers'} + $mycalc{"max_total_per_thread_buffers"} +get_pf_memory() + get_gcache_memory();
+      $mycalc{'server_buffers'} +
+      $mycalc{"max_total_per_thread_buffers"} +
+      get_pf_memory() +
+      get_gcache_memory();
     $mycalc{'pct_max_used_memory'} =
       percentage( $mycalc{'max_used_memory'}, $physical_memory );
 
 # Total possible memory is memory needed by MySQL based on max_connections
 # This is the max memory MySQL can theorically used if all connections allowed has opened by mysql
     $mycalc{'max_peak_memory'} =
-      $mycalc{'server_buffers'} + $mycalc{'total_per_thread_buffers'} + get_pf_memory()+ get_gcache_memory();
+      $mycalc{'server_buffers'} +
+      $mycalc{'total_per_thread_buffers'} +
+      get_pf_memory() +
+      get_gcache_memory();
     $mycalc{'pct_max_physical_memory'} =
       percentage( $mycalc{'max_peak_memory'}, $physical_memory );
 
@@ -1985,7 +2016,7 @@ sub calculations {
       . hr_bytes( $mycalc{'max_peak_memory'} ) . "";
     debugprint "Max Peak Percentage RAM: "
       . $mycalc{'pct_max_physical_memory'} . "%";
-    
+
     # Slow queries
     $mycalc{'pct_slow_queries'} =
       int( ( $mystat{'Slow_queries'} / $mystat{'Questions'} ) * 100 );
@@ -2312,17 +2343,18 @@ sub mysql_stats {
 
     # Memory usage
 
-    infoprint "Physical Memory     : ". hr_bytes($physical_memory);
-    infoprint "Max MySQL memory    : ". hr_bytes( $mycalc{'max_peak_memory'} );
-    infoprint "Other process memory: ". hr_bytes( get_other_process_memory()  );
+    infoprint "Physical Memory     : " . hr_bytes($physical_memory);
+    infoprint "Max MySQL memory    : " . hr_bytes( $mycalc{'max_peak_memory'} );
+    infoprint "Other process memory: " . hr_bytes( get_other_process_memory() );
 
     infoprint "Total buffers: "
       . hr_bytes( $mycalc{'server_buffers'} )
       . " global + "
       . hr_bytes( $mycalc{'per_thread_buffers'} )
       . " per thread ($myvar{'max_connections'} max threads)";
-    infoprint "P_S Max memory usage: ".hr_bytes_rnd(get_pf_memory());
-    infoprint "Galera GCache Max memory usage: ".hr_bytes_rnd(get_gcache_memory());
+    infoprint "P_S Max memory usage: " . hr_bytes_rnd( get_pf_memory() );
+    infoprint "Galera GCache Max memory usage: "
+      . hr_bytes_rnd( get_gcache_memory() );
     if ( $opt{buffers} ne 0 ) {
         infoprint "Global Buffers";
         infoprint " +-- Key Buffer: "
@@ -2398,12 +2430,18 @@ sub mysql_stats {
           . " ($mycalc{'pct_max_physical_memory'}% of installed RAM)";
     }
 
-    if ($physical_memory < ($mycalc{'max_peak_memory'}+get_other_process_memory())) {
-	badprint "Overall possible memory usage with other process exceeded memory";
-        push( @generalrec, "Dedicated this server to your database for highest performance." );
-    } else {
-	goodprint "Overall possible memory usage with other process is compatible with memory available";
-    }    
+    if ( $physical_memory <
+        ( $mycalc{'max_peak_memory'} + get_other_process_memory() ) )
+    {
+        badprint
+          "Overall possible memory usage with other process exceeded memory";
+        push( @generalrec,
+            "Dedicated this server to your database for highest performance." );
+    }
+    else {
+        goodprint
+"Overall possible memory usage with other process is compatible with memory available";
+    }
 
     # Slow queries
     if ( $mycalc{'pct_slow_queries'} > 5 ) {
@@ -2534,7 +2572,7 @@ sub mysql_stats {
 
     # Sorting
     if ( $mycalc{'total_sorts'} == 0 ) {
-	goodprint "No Sort requiring temporary tables";
+        goodprint "No Sort requiring temporary tables";
     }
     elsif ( $mycalc{'pct_temp_sort_table'} > 10 ) {
         badprint
@@ -2573,7 +2611,8 @@ sub mysql_stats {
             "Adjust your join queries to always utilize indexes" );
     }
     else {
-	goodprint "No joins without indexes";
+        goodprint "No joins without indexes";
+
         # No joins have run without indexes
     }
 
@@ -2628,7 +2667,7 @@ sub mysql_stats {
         }
     }
     else {
-	goodprint "No tmp tables created on disk";
+        goodprint "No tmp tables created on disk";
     }
 
     # Thread cache
@@ -2922,11 +2961,11 @@ sub mariadb_threadpool {
     infoprint "ThreadPool stat is enabled.";
     infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
 
-   if ($myvar{'version'} =~ /mariadb|percona/i ) {
-   	infoprint "Using default value is good enougth for your version (".$myvar{'version'}.")";
-	return; 
-   } 
- 
+    if ( $myvar{'version'} =~ /mariadb|percona/i ) {
+        infoprint "Using default value is good enougth for your version ("
+          . $myvar{'version'} . ")";
+        return;
+    }
 
     if ( $myvar{'have_innodb'} eq 'YES' ) {
         if (   $myvar{'thread_pool_size'} < 16
@@ -2966,17 +3005,19 @@ sub mariadb_threadpool {
     }
 }
 
-sub get_pf_memory 
-{
+sub get_pf_memory {
+
     # Performance Schema
     return 0 unless defined $myvar{'performance_schema'};
     return 0 if $myvar{'performance_schema'} eq 'OFF';
-    
-    my @infoPFSMemory=grep /performance_schema.memory/, select_array("SHOW ENGINE PERFORMANCE_SCHEMA STATUS"); 
-    return 0 if scalar(@infoPFSMemory)==0;
+
+    my @infoPFSMemory = grep /performance_schema.memory/,
+      select_array("SHOW ENGINE PERFORMANCE_SCHEMA STATUS");
+    return 0 if scalar(@infoPFSMemory) == 0;
     $infoPFSMemory[0] =~ s/.*\s+(\d+)$/$1/g;
     return $infoPFSMemory[0];
 }
+
 # Recommendations for Performance Schema
 sub mysqsl_pfs {
     subheaderprint "Performance schema";
@@ -2990,7 +3031,7 @@ sub mysqsl_pfs {
     else {
         infoprint "Performance schema is enabled.";
     }
-    infoprint "Memory used by P_S: ". hr_bytes(get_pf_memory());
+    infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
 }
 
 # Recommendations for Ariadb
@@ -3081,38 +3122,39 @@ sub mariadb_tokudb {
 
 # Perl trim function to remove whitespace from the start and end of the string
 sub trim {
-     my $string = shift;
-     $string =~ s/^\s+//;
-     $string =~ s/\s+$//;
-     return $string;
+    my $string = shift;
+    $string =~ s/^\s+//;
+    $string =~ s/\s+$//;
+    return $string;
 }
 
 sub get_wsrep_options {
-    return () unless defined $myvar{'wsrep_provider_options'} ;
+    return () unless defined $myvar{'wsrep_provider_options'};
 
-    my @galera_options=split /;/,$myvar{'wsrep_provider_options'} ;
+    my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
     remove_cr @galera_options;
-    @galera_options=remove_empty @galera_options;
-    debugprint Dumper(\@galera_options);
+    @galera_options = remove_empty @galera_options;
+    debugprint Dumper( \@galera_options );
     return @galera_options;
 }
+
 sub get_gcache_memory {
-    my $gCacheMem=get_wsrep_option('gcache.mem_size');
+    my $gCacheMem = get_wsrep_option('gcache.mem_size');
 
     return 0 unless defined $gCacheMem and $gCacheMem ne '';
     return $gCacheMem;
 }
+
 sub get_wsrep_option {
-    my $key=shift;
-    return '' unless defined $myvar{'wsrep_provider_options'} ;
-    my @galera_options=get_wsrep_options;
-    return '' unless  scalar(@galera_options) >0;
-    my @memValues= grep /\s*$key =/, @galera_options;
-    my $memValue=$memValues[0];
+    my $key = shift;
+    return '' unless defined $myvar{'wsrep_provider_options'};
+    my @galera_options = get_wsrep_options;
+    return '' unless scalar(@galera_options) > 0;
+    my @memValues = grep /\s*$key =/, @galera_options;
+    my $memValue = $memValues[0];
     $memValue =~ s/.*=\s*(.+)$/$1/g;
     return $memValue;
 }
-
 
 # Recommendations for Galera
 sub mariadb_galera {
@@ -3126,162 +3168,215 @@ sub mariadb_galera {
         return;
     }
     infoprint "Galera is enabled.";
-    debugprint "Galera variables:"; 
+    debugprint "Galera variables:";
     foreach my $gvar ( keys %myvar ) {
-	next unless $gvar =~ /^wsrep.*/;
-	next if $gvar eq 'wsrep_provider_options';
-	debugprint "\t".trim($gvar). " = ".$myvar{$gvar};
+        next unless $gvar =~ /^wsrep.*/;
+        next if $gvar eq 'wsrep_provider_options';
+        debugprint "\t" . trim($gvar) . " = " . $myvar{$gvar};
     }
 
-    debugprint "Galera wsrep provider Options:"; 
-    my @galera_options=get_wsrep_options;
-    foreach my $gparam ( @galera_options  ) {
-	debugprint "\t".trim($gparam);
+    debugprint "Galera wsrep provider Options:";
+    my @galera_options = get_wsrep_options;
+    foreach my $gparam (@galera_options) {
+        debugprint "\t" . trim($gparam);
     }
-    debugprint "Galera status:"; 
+    debugprint "Galera status:";
     foreach my $gstatus ( keys %mystat ) {
-	next unless $gstatus =~ /^wsrep.*/;
-	debugprint "\t".trim($gstatus). " = ".$mystat{$gstatus};
-   }
-   infoprint "GCache is using ".hr_bytes_rnd(get_wsrep_option('gcache.mem_size'));
-   my @primaryKeysNbTables=select_array("select CONCAT(table_schema,CONCAT('.', table_name))  from       information_schema.columns   where table_schema not in ('mysql', 'information_schema', 'performance_schema') group by table_schema,table_name    having      sum(if(column_key in ('PRI','UNI'), 1,0)) = 0");
+        next unless $gstatus =~ /^wsrep.*/;
+        debugprint "\t" . trim($gstatus) . " = " . $mystat{$gstatus};
+    }
+    infoprint "GCache is using "
+      . hr_bytes_rnd( get_wsrep_option('gcache.mem_size') );
+    my @primaryKeysNbTables = select_array(
+"select CONCAT(table_schema,CONCAT('.', table_name))  from       information_schema.columns   where table_schema not in ('mysql', 'information_schema', 'performance_schema') group by table_schema,table_name    having      sum(if(column_key in ('PRI','UNI'), 1,0)) = 0"
+    );
 
-   if (scalar (@primaryKeysNbTables) > 0 ) {
-	badprint "Following table(s) don't have primary key:";
-	foreach my $badtable( @primaryKeysNbTables ) {
-	badprint "\t$badtable";
-	}
-   } else {
-	goodprint "All tables get a primary key";
-   }
-   my @nonInnoDbTables=select_array("select CONCAT(table_schema,CONCAT('.', table_name)) from information_schema.tables where ENGINE <> 'InnoDb' and table_schema not in ('mysql', 'performance_schema', 'information_schema')");
-   if (scalar (@nonInnoDbTables) > 0 ) {
-	badprint "Following table(s) are not InnoDB table:";
-	push @generalrec, "Ensure that all table(s) are InnoDB tabls for Galera replication";
-	foreach my $badtable( @nonInnoDbTables ) {
-	badprint "\t$badtable";
-	}
-   } else {
-	goodprint "All tables are InnoDB tables";
-   }
-   if ($myvar{'binlog_format'} ne 'ROW') {
-	badprint "Binlog format should be in ROW mode.";
-	push @adjvars, "binlog_format = ROW";
-   } else {
-	goodprint "Binlog format is in ROW mode.";
-   }
-   if ($myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
-	badprint "Innodb flush log at each commit should be disabled.";
-	push @adjvars, "innodb_flush_log_at_trx_commit = 0";
-   } else {
-	goodprint "Innodb flush log at each commit is disabled for Galera.";
-   }
+    if ( scalar(@primaryKeysNbTables) > 0 ) {
+        badprint "Following table(s) don't have primary key:";
+        foreach my $badtable (@primaryKeysNbTables) {
+            badprint "\t$badtable";
+        }
+    }
+    else {
+        goodprint "All tables get a primary key";
+    }
+    my @nonInnoDbTables = select_array(
+"select CONCAT(table_schema,CONCAT('.', table_name)) from information_schema.tables where ENGINE <> 'InnoDb' and table_schema not in ('mysql', 'performance_schema', 'information_schema')"
+    );
+    if ( scalar(@nonInnoDbTables) > 0 ) {
+        badprint "Following table(s) are not InnoDB table:";
+        push @generalrec,
+          "Ensure that all table(s) are InnoDB tabls for Galera replication";
+        foreach my $badtable (@nonInnoDbTables) {
+            badprint "\t$badtable";
+        }
+    }
+    else {
+        goodprint "All tables are InnoDB tables";
+    }
+    if ( $myvar{'binlog_format'} ne 'ROW' ) {
+        badprint "Binlog format should be in ROW mode.";
+        push @adjvars, "binlog_format = ROW";
+    }
+    else {
+        goodprint "Binlog format is in ROW mode.";
+    }
+    if ( $myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
+        badprint "Innodb flush log at each commit should be disabled.";
+        push @adjvars, "innodb_flush_log_at_trx_commit = 0";
+    }
+    else {
+        goodprint "Innodb flush log at each commit is disabled for Galera.";
+    }
 
-   infoprint "Read consistency mode :". $myvar{'wsrep_causal_reads'};
-	
-   if (  defined($myvar{'wsrep_cluster_name'}) and $myvar{'wsrep_on'} eq "ON" ) {
-	goodprint "Galera WsREP is enabled.";
-      if ( defined($myvar{'wsrep_cluster_address'}) and trim("$myvar{'wsrep_cluster_address'}") ne "") {
-           goodprint "Galera Cluster address is defined: ".$myvar{'wsrep_cluster_address'};
-           my $nbNodes=scalar(split /,/, $myvar{'wsrep_cluster_address'});
-	    if ( $nbNodes !=3 or $nbNodes != 5) {
-                 goodprint "There is $nbNodes nodes in wsrep_cluster_address.";
-	    }  else {
-                 badprint "There is $nbNodes nodes in wsrep_cluster_address. Prefer 3 or 5 nodes achitecture.";
-      }
-      my $nbNodesSize=trim ($mystat{'wsrep_cluster_size'});
-      if ( $nbNodesSize !=3 or $nbNodesSize != 5) {
-                 goodprint "There is $nbNodes nodes in wsrep_cluster_size.";
-      }  else {
-                 badprint "There is $nbNodes nodes in wsrep_cluster_size. Prefer 3 or 5 nodes achitecture.";
-      }
+    infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
 
-	    if ($nbNodes != trim ($mystat{'wsrep_cluster_size'}) ) {
-		    badprint "All cluster nodes dre not detected. wsrep_cluster_size != informations in wsrep_cluster_adress";
-	    } else {
-		    badprint "All cluster nodes detected.";
-      }
-        } else {
+    if ( defined( $myvar{'wsrep_cluster_name'} )
+        and $myvar{'wsrep_on'} eq "ON" )
+    {
+        goodprint "Galera WsREP is enabled.";
+        if ( defined( $myvar{'wsrep_cluster_address'} )
+            and trim("$myvar{'wsrep_cluster_address'}") ne "" )
+        {
+            goodprint "Galera Cluster address is defined: "
+              . $myvar{'wsrep_cluster_address'};
+            my $nbNodes = scalar( split /,/, $myvar{'wsrep_cluster_address'} );
+            if ( $nbNodes != 3 or $nbNodes != 5 ) {
+                goodprint "There is $nbNodes nodes in wsrep_cluster_address.";
+            }
+            else {
+                badprint
+"There is $nbNodes nodes in wsrep_cluster_address. Prefer 3 or 5 nodes achitecture.";
+            }
+            my $nbNodesSize = trim( $mystat{'wsrep_cluster_size'} );
+            if ( $nbNodesSize != 3 or $nbNodesSize != 5 ) {
+                goodprint "There is $nbNodes nodes in wsrep_cluster_size.";
+            }
+            else {
+                badprint
+"There is $nbNodes nodes in wsrep_cluster_size. Prefer 3 or 5 nodes achitecture.";
+            }
+
+            if ( $nbNodes != trim( $mystat{'wsrep_cluster_size'} ) ) {
+                badprint
+"All cluster nodes dre not detected. wsrep_cluster_size != informations in wsrep_cluster_adress";
+            }
+            else {
+                badprint "All cluster nodes detected.";
+            }
+        }
+        else {
             badprint "Galera Cluster address is undefined";
-            push @adjvars, "set up wsrep_cluster_address variable for Galera replication";
+            push @adjvars,
+              "set up wsrep_cluster_address variable for Galera replication";
         }
-        if ( defined($myvar{'wsrep_cluster_name'}) and trim($myvar{'wsrep_cluster_name'}) ne "") {
-	    goodprint "Galera Cluster name is defined: ".$myvar{'wsrep_cluster_name'};
-        } else {
-	    badprint "Galera Cluster name is undefined";
-	    push @adjvars, "set up wsrep_cluster_name variable for Galera replication";
+        if ( defined( $myvar{'wsrep_cluster_name'} )
+            and trim( $myvar{'wsrep_cluster_name'} ) ne "" )
+        {
+            goodprint "Galera Cluster name is defined: "
+              . $myvar{'wsrep_cluster_name'};
         }
-         if ( defined($myvar{'wsrep_node_name'}) and trim($myvar{'wsrep_node_name'}) ne "") {
-            goodprint "Galera Node name is defined: ".$myvar{'wsrep_node_name'};
-        } else {
+        else {
+            badprint "Galera Cluster name is undefined";
+            push @adjvars,
+              "set up wsrep_cluster_name variable for Galera replication";
+        }
+        if ( defined( $myvar{'wsrep_node_name'} )
+            and trim( $myvar{'wsrep_node_name'} ) ne "" )
+        {
+            goodprint "Galera Node name is defined: "
+              . $myvar{'wsrep_node_name'};
+        }
+        else {
             badprint "Galera node name is undefined";
-            push @adjvars, "set up wsrep_node_name variable for Galera replication";
+            push @adjvars,
+              "set up wsrep_node_name variable for Galera replication";
         }
-	if ( trim ($myvar{'wsrep_notify_cmd'}) ne "" ) {
-	    goodprint "Galera Notify command is defined.";
-	} else {
-	    badprint "Galera Notify command is not defined.";
-	    push( @adjvars, "set up parameter wsrep_notify_cmd to be notify");
+        if ( trim( $myvar{'wsrep_notify_cmd'} ) ne "" ) {
+            goodprint "Galera Notify command is defined.";
         }
-	 if ( trim ($myvar{'wsrep_sst_method'}) ne "xtrabackup" ) {
+        else {
+            badprint "Galera Notify command is not defined.";
+            push( @adjvars, "set up parameter wsrep_notify_cmd to be notify" );
+        }
+        if ( trim( $myvar{'wsrep_sst_method'} ) ne "xtrabackup" ) {
             badprint "Galera SST method is xtrabackup.";
-            push( @adjvars, "set up parameter wsrep_sst_method to xtrabackup");
-  	} else {
+            push( @adjvars, "set up parameter wsrep_sst_method to xtrabackup" );
+        }
+        else {
             goodprint "SST Method is inot based on xtrabackup.";
         }
-	 if ( trim ($myvar{'wsrep_OSU_method'}) eq "TOI" ) {
+        if ( trim( $myvar{'wsrep_OSU_method'} ) eq "TOI" ) {
             goodprint "TOI is default mode for upgrade.";
-        } else {
-            badprint "Schema upgrade are not replicated automatically";
-            push( @adjvars, "set up parameter wsrep_OSU_method to TOI");
         }
-   	infoprint "Max WsRep message : " .hr_bytes( $myvar{'wsrep_max_ws_size'});
-   } else {
-	badprint "Galera WsREP is disabled";
-   }
+        else {
+            badprint "Schema upgrade are not replicated automatically";
+            push( @adjvars, "set up parameter wsrep_OSU_method to TOI" );
+        }
+        infoprint "Max WsRep message : "
+          . hr_bytes( $myvar{'wsrep_max_ws_size'} );
+    }
+    else {
+        badprint "Galera WsREP is disabled";
+    }
 
-	
-   if (defined($mystat{'wsrep_connected'}) and $mystat{'wsrep_connected'} eq "ON") {
-	goodprint "Node is connected";
-   } else {
-	badprint "Node is disconnected";
-   }
- if (defined($mystat{'wsrep_ready'}) and $mystat{'wsrep_ready'} eq "ON") {
+    if ( defined( $mystat{'wsrep_connected'} )
+        and $mystat{'wsrep_connected'} eq "ON" )
+    {
+        goodprint "Node is connected";
+    }
+    else {
+        badprint "Node is disconnected";
+    }
+    if ( defined( $mystat{'wsrep_ready'} ) and $mystat{'wsrep_ready'} eq "ON" )
+    {
         goodprint "Node is ready";
-   } else {
+    }
+    else {
         badprint "Node is not ready";
-   }
-infoprint "Cluster status :".$mystat{'wsrep_cluster_status'};
- if (defined($mystat{'wsrep_cluster_status'}) and $mystat{'wsrep_cluster_status'} eq "Primary") {
+    }
+    infoprint "Cluster status :" . $mystat{'wsrep_cluster_status'};
+    if ( defined( $mystat{'wsrep_cluster_status'} )
+        and $mystat{'wsrep_cluster_status'} eq "Primary" )
+    {
         goodprint "Galera cluster is consistent and ready for operations";
-   } else {
+    }
+    else {
         badprint "Cluster is not consistent and ready";
-   }
-   if ($mystat{'wsrep_local_state_uuid'} eq $mystat{'wsrep_cluster_state_uuid'}) {
-   	goodprint "Node and whole cluster at the same level: ".$mystat{'wsrep_cluster_state_uuid'};
-   } else {
-   	badprint "Node and whole cluster not the same level";
-	infoprint "Node    state uuid: ".$mystat{'wsrep_local_state_uuid'};
-	infoprint "Cluster state uuid: ".$mystat{'wsrep_cluster_state_uuid'};
-   }
-  if ($mystat{'wsrep_local_state_comment'} eq 'Synced' ) {
+    }
+    if ( $mystat{'wsrep_local_state_uuid'} eq
+        $mystat{'wsrep_cluster_state_uuid'} )
+    {
+        goodprint "Node and whole cluster at the same level: "
+          . $mystat{'wsrep_cluster_state_uuid'};
+    }
+    else {
+        badprint "Node and whole cluster not the same level";
+        infoprint "Node    state uuid: " . $mystat{'wsrep_local_state_uuid'};
+        infoprint "Cluster state uuid: " . $mystat{'wsrep_cluster_state_uuid'};
+    }
+    if ( $mystat{'wsrep_local_state_comment'} eq 'Synced' ) {
         goodprint "Node is synced with whole cluster.";
-   } else {
+    }
+    else {
         badprint "Node is not synced";
-        infoprint "Node State : ".$mystat{'wsrep_local_state_comment'};
-   }
-  if ($mystat{'wsrep_local_cert_failures'} == 0 ) {
+        infoprint "Node State : " . $mystat{'wsrep_local_state_comment'};
+    }
+    if ( $mystat{'wsrep_local_cert_failures'} == 0 ) {
         goodprint "There is no certification failures detected.";
-   } else {
-        badprint "There is ".$mystat{'wsrep_local_cert_failures'}." certification failure(s)detected.";
-   }
+    }
+    else {
+        badprint "There is "
+          . $mystat{'wsrep_local_cert_failures'}
+          . " certification failure(s)detected.";
+    }
 
-   for my $key (keys %mystat) {
-	if ($key =~ /wsrep_|galera/i) {
-		debugprint "WSREP: $key = $mystat{$key}";
-	}
-   }
-   debugprint Dumper get_wsrep_options();
+    for my $key ( keys %mystat ) {
+        if ( $key =~ /wsrep_|galera/i ) {
+            debugprint "WSREP: $key = $mystat{$key}";
+        }
+    }
+    debugprint Dumper get_wsrep_options();
 }
 
 # Recommendations for InnoDB
@@ -3446,7 +3541,7 @@ sub mysql_innodb {
         && $mycalc{'pct_write_efficiency'} < 90 )
     {
         badprint "InnoDB Write Log efficiency: "
-          . abs($mycalc{'pct_write_efficiency'}) . "% ("
+          . abs( $mycalc{'pct_write_efficiency'} ) . "% ("
           . abs( $mystat{'Innodb_log_write_requests'} -
               $mystat{'Innodb_log_writes'} )
           . " hits/ "
@@ -3549,12 +3644,10 @@ sub mysql_databases {
 
     foreach (@dblist) {
         chomp($_);
-        if (
-               $_ eq "information_schema"
+        if (   $_ eq "information_schema"
             or $_ eq "performance_schema"
             or $_ eq "mysql"
-            or $_ eq ""
-          )
+            or $_ eq "" )
         {
             next;
         }
@@ -3906,19 +3999,18 @@ sub dump_result {
 }
 
 sub which {
-    my $prog_name = shift;
+    my $prog_name   = shift;
     my $path_string = shift;
-    my @path_array = split /:/, $ENV{'PATH'};
+    my @path_array  = split /:/, $ENV{'PATH'};
 
-    for my $path ( @path_array) {
+    for my $path (@path_array) {
         if ( -x "$path/$prog_name" ) {
             return "$path/$prog_name";
         }
     }
 
-    return 0
+    return 0;
 }
-
 
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
@@ -3940,7 +4032,7 @@ cve_recommendations;         # Display related CVE
 calculations;                # Calculate everything we need
 mysql_stats;                 # Print the server stats
 mysqsl_pfs                   # Print Performance schema info
-mariadb_threadpool;        # Print MaraiDB ThreadPool stats
+  mariadb_threadpool;        # Print MaraiDB ThreadPool stats
 mysql_myisam;                # Print MyISAM stats
 mariadb_ariadb;              # Print MaraiDB AriaDB stats
 mysql_innodb;                # Print InnoDB stats
