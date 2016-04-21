@@ -2501,7 +2501,7 @@ sub mysql_stats {
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
-    elsif ( mysql_version_ge( 5, 5 ) ) {
+    elsif ( mysql_version_ge( 5, 5 ) and  !mysql_version_ge( 10, 1 ) ) {
         if ( $myvar{'query_cache_type'} ne "OFF" ) {
             badprint
 "Query cache should be disabled by default due to mutex contention.";
@@ -3299,12 +3299,12 @@ sub mariadb_galera {
             badprint "Galera Notify command is not defined.";
             push( @adjvars, "set up parameter wsrep_notify_cmd to be notify" );
         }
-        if ( trim( $myvar{'wsrep_sst_method'} ) ne "xtrabackup" ) {
-            badprint "Galera SST method is xtrabackup.";
-            push( @adjvars, "set up parameter wsrep_sst_method to xtrabackup" );
+        if ( trim( $myvar{'wsrep_sst_method'} ) !~ "^\s*xtrabackup.*" ) {
+            badprint "Galera SST method is not xtrabackup based.";
+            push( @adjvars, "set up parameter wsrep_sst_method to xtrabackup based parameter" );
         }
         else {
-            goodprint "SST Method is inot based on xtrabackup.";
+            badprint "SST Method is based on xtrabackup.";
         }
         if ( trim( $myvar{'wsrep_OSU_method'} ) eq "TOI" ) {
             goodprint "TOI is default mode for upgrade.";
