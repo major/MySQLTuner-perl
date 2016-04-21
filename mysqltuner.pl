@@ -3299,7 +3299,7 @@ sub mariadb_galera {
             badprint "Galera Notify command is not defined.";
             push( @adjvars, "set up parameter wsrep_notify_cmd to be notify" );
         }
-        if ( trim( $myvar{'wsrep_sst_method'} ) !~ "^\s*xtrabackup.*" ) {
+        if ( trim( $myvar{'wsrep_sst_method'} ) !~ "^xtrabackup.*" ) {
             badprint "Galera SST method is not xtrabackup based.";
             push( @adjvars, "set up parameter wsrep_sst_method to xtrabackup based parameter" );
         }
