@@ -3302,7 +3302,7 @@ sub mariadb_galera {
             push( @adjvars, "set up parameter wsrep_sst_method to xtrabackup based parameter" );
         }
         else {
-            badprint "SST Method is based on xtrabackup.";
+            goodprint "SST Method is based on xtrabackup.";
         }
         if ( trim( $myvar{'wsrep_OSU_method'} ) eq "TOI" ) {
             goodprint "TOI is default mode for upgrade.";
