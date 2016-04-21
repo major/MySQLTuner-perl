@@ -197,8 +197,7 @@ if ( $opt{verbose} ) {
 }
 
 # for RPM distributions
-$opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
-  unless ( defined $opt{cvefile} and -f "$opt{cvefile}" );
+$opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv" unless ( defined $opt{cvefile} and -f "$opt{cvefile}" );
 $opt{cvefile} = '' unless -f "$opt{cvefile}";
 $opt{cvefile} = './vulnerabilities.csv' if -f './vulnerabilities.csv';
 
@@ -264,16 +263,10 @@ sub subheaderprint {
     my $ln  = length("@_") + 2;
 
     prettyprint " ";
-
-    #prettyprint "-"x$tln;
     prettyprint "-" x $sln . " @_ " . "-" x ( $tln - $ln - $sln );
-
-    #prettyprint "-"x$tln;
 }
 
 sub infoprinthcmd {
-
-    #       print Dumper @_;
     subheaderprint "$_[0]";
     infoprintcmd "$_[1]";
 }
@@ -367,8 +360,7 @@ my ( $physical_memory, $swap_memory, $duflags );
 sub os_setup {
 
     sub memerror {
-        badprint
-"Unable to determine total memory/swap; use '--forcemem' and '--forceswap'";
+        badprint "Unable to determine total memory/swap; use '--forcemem' and '--forceswap'";
         exit 1;
     }
     my $os = `uname`;
@@ -454,7 +446,8 @@ sub os_setup {
     $result{'OS'}{'Physical Memory'}{'pretty'} = hr_bytes($physical_memory);
     $result{'OS'}{'Swap Memory'}{'bytes'}      = $swap_memory;
     $result{'OS'}{'Swap Memory'}{'pretty'}     = hr_bytes($swap_memory);
-
+    $result{'OS'}{'Other Processes'}{'bytes'}      = get_other_process_memory();
+    $result{'OS'}{'Other Processes'}{'pretty'}     = hr_bytes(get_other_process_memory());
 }
 
 sub get_http_cli {
@@ -798,24 +791,20 @@ sub mysql_setup {
         }
     }
     else {
-
         # It's not Plesk or debian, we should try a login
         debugprint "$mysqladmincmd $remotestring ping 2>&1";
         my $loginstatus = `$mysqladmincmd $remotestring ping 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
-
             # Login went just fine
             $mysqllogin = " $remotestring ";
-
-       # Did this go well because of a .my.cnf file or is there no password set?
+            # Did this go well because of a .my.cnf file or is there no password set?
             my $userpath = `printenv HOME`;
             if ( length($userpath) > 0 ) {
                 chomp($userpath);
             }
             unless ( -e "${userpath}/.my.cnf" or -e "${userpath}/.mylogin.cnf" )
             {
-                badprint
-"Successfully authenticated with no password - SECURITY RISK!";
+                badprint "Successfully authenticated with no password - SECURITY RISK!";
             }
             return 1;
         }
@@ -956,7 +945,6 @@ sub arr2hash {
 }
 
 sub get_all_vars {
-
     # We need to initiate at least one query so that our data is useable
     $dummyselect = select_one "SELECT VERSION()";
     debugprint "VERSION: " . $dummyselect . "";
@@ -1054,18 +1042,20 @@ sub cve_recommendations {
         return;
     }
 
-#prettyprint "Look for related CVE for $myvar{'version'} or lower in $opt{cvefile}";
+    #prettyprint "Look for related CVE for $myvar{'version'} or lower in $opt{cvefile}";
     my $cvefound = 0;
     open( FH, "<$opt{cvefile}" ) or die "Can't open $opt{cvefile} for read: $!";
     while ( my $cveline = <FH> ) {
         my @cve = split( ';', $cveline );
         if ( mysql_micro_version_le( $cve[1], $cve[2], $cve[3] ) ) {
             badprint "$cve[4] : $cve[5]";
+            $result{'CVE'}{'List'}{$cvefound}="$cve[4] : $cve[5]";
             $cvefound++;
         }
 
     }
     close FH or die "Cannot close $opt{cvefile}: $!";
+    $result{'CVE'}{'nb'}=$cvefound;
     if ( $cvefound == 0 ) {
         goodprint "NO SECURITY CVE FOUND FOR YOUR VERSION";
         return;
@@ -3027,11 +3017,19 @@ sub mysqsl_pfs {
         and $myvar{'performance_schema'} eq 'ON' )
     {
         infoprint "Performance schema is disabled.";
+        return;
     }
     else {
         infoprint "Performance schema is enabled.";
     }
     infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
+
+    if (grep /^sys$/, select_array("SHOW DATABASES")) {
+        infoprint "Sys schema is installed.";
+    } else {
+        infoprint "Sys schema isn't installed.";
+        return;
+    }
 }
 
 # Recommendations for Ariadb
@@ -4032,7 +4030,7 @@ cve_recommendations;         # Display related CVE
 calculations;                # Calculate everything we need
 mysql_stats;                 # Print the server stats
 mysqsl_pfs                   # Print Performance schema info
-  mariadb_threadpool;        # Print MaraiDB ThreadPool stats
+mariadb_threadpool;          # Print MaraiDB ThreadPool stats
 mysql_myisam;                # Print MyISAM stats
 mariadb_ariadb;              # Print MaraiDB AriaDB stats
 mysql_innodb;                # Print InnoDB stats
