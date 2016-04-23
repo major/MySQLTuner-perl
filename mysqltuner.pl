@@ -142,7 +142,7 @@ sub usage {
       . "      --pass <password>    Password to use for authentication\n"
       . "      --mysqladmin <path>  Path to a custom mysqladmin executable\n"
       . "      --mysqlcmd <path>    Path to a custom mysql executable\n" . "\n"
-      . "      --noask              Dont ask password if needed\n" . "\n"
+      . "      --noask              Don't ask password if needed\n" . "\n"
       . "   Performance and Reporting Options\n"
       . "      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n"
       . "                           (Recommended for servers with many tables)\n"
@@ -1233,7 +1233,7 @@ sub get_kernel_info() {
         'sunrpc.tcp_max_slot_table_entries', 'sunrpc.tcp_slot_table_entries',
         'vm.swappiness'
     );
-    infoprint "Informations about kernel tuning:";
+    infoprint "Information about kernel tuning:";
     foreach my $param (@params) {
         infocmd_tab("sysctl $param");
     }
@@ -1328,7 +1328,7 @@ sub system_recommendations {
         infoprint "Skipped due to non Linux server";
         return;
     }
-    prettyprint "Look for related Linux system recommandations";
+    prettyprint "Look for related Linux system recommendations";
 
     #prettyprint '-'x78;
     get_system_info();
@@ -1342,7 +1342,7 @@ sub system_recommendations {
           . hr_bytes_rnd($omem) . " / "
           . hr_bytes_rnd($physical_memory) . ")";
         push( @generalrec,
-"Consider stopping or dedicate server for additionnal process other than mysqld."
+"Consider stopping or dedicate server for additional process other than mysqld."
         );
         push( @adjvars,
 "DON'T APPLY SETTINGS BECAUSE THERE ARE TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCUR!"
@@ -1512,14 +1512,14 @@ sub security_recommendations {
                 foreach my $line (@mysqlstatlist) {
                     chomp($line);
                     badprint "User '" . $line
-                      . "' is using weak pasword: $pass in a lower, upper or capitalize derivated version.";
+                      . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
                     $nbins++;
                 }
             }
         }
     }
     if ( $nbins > 0 ) {
-        push( @generalrec, $nbins . " user(s) used basic or weaked password." );
+        push( @generalrec, $nbins . " user(s) used basic or weak password." );
     }
 }
 
@@ -1554,7 +1554,7 @@ sub get_replication_status {
         and ( $io_running !~ /yes/i or $sql_running !~ /yes/i ) )
     {
         badprint
-          "This replication slave is not running but seems to be configurated.";
+          "This replication slave is not running but seems to be configured.";
     }
     if (   defined($io_running)
         && $io_running =~ /yes/i
@@ -2795,14 +2795,14 @@ sub mysql_stats {
               . " Memory / "
               . $mystat{'Binlog_cache_use'}
               . " Total)";
-            debugprint "Not enought data to validate binlog cache size\n"
+            debugprint "Not enough data to validate binlog cache size\n"
               if $mystat{'Binlog_cache_use'} < 10;
         }
     }
 
     # Performance options
     if ( !mysql_version_ge( 5, 1 ) ) {
-        push( @generalrec, "Upgrade to MySQL 5.5+ to use asynchrone write" );
+        push( @generalrec, "Upgrade to MySQL 5.5+ to use asynchronous write" );
     }
     elsif ( $myvar{'concurrent_insert'} eq "OFF" ) {
         push( @generalrec, "Enable concurrent_insert by setting it to 'ON'" );
@@ -2952,7 +2952,7 @@ sub mariadb_threadpool {
     infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
 
     if ( $myvar{'version'} =~ /mariadb|percona/i ) {
-        infoprint "Using default value is good enougth for your version ("
+        infoprint "Using default value is good enough for your version ("
           . $myvar{'version'} . ")";
         return;
     }
@@ -3204,7 +3204,7 @@ sub mariadb_galera {
     if ( scalar(@nonInnoDbTables) > 0 ) {
         badprint "Following table(s) are not InnoDB table:";
         push @generalrec,
-          "Ensure that all table(s) are InnoDB tabls for Galera replication";
+          "Ensure that all table(s) are InnoDB tables for Galera replication";
         foreach my $badtable (@nonInnoDbTables) {
             badprint "\t$badtable";
         }
@@ -3240,24 +3240,24 @@ sub mariadb_galera {
               . $myvar{'wsrep_cluster_address'};
             my $nbNodes = scalar( split /,/, $myvar{'wsrep_cluster_address'} );
             if ( $nbNodes != 3 or $nbNodes != 5 ) {
-                goodprint "There is $nbNodes nodes in wsrep_cluster_address.";
+                goodprint "There are $nbNodes nodes in wsrep_cluster_address.";
             }
             else {
                 badprint
-"There is $nbNodes nodes in wsrep_cluster_address. Prefer 3 or 5 nodes achitecture.";
+"There are $nbNodes nodes in wsrep_cluster_address. Prefer 3 or 5 nodes architecture.";
             }
             my $nbNodesSize = trim( $mystat{'wsrep_cluster_size'} );
             if ( $nbNodesSize != 3 or $nbNodesSize != 5 ) {
-                goodprint "There is $nbNodes nodes in wsrep_cluster_size.";
+                goodprint "There are $nbNodes nodes in wsrep_cluster_size.";
             }
             else {
                 badprint
-"There is $nbNodes nodes in wsrep_cluster_size. Prefer 3 or 5 nodes achitecture.";
+"There are $nbNodes nodes in wsrep_cluster_size. Prefer 3 or 5 nodes architecture.";
             }
 
             if ( $nbNodes != trim( $mystat{'wsrep_cluster_size'} ) ) {
                 badprint
-"All cluster nodes dre not detected. wsrep_cluster_size != informations in wsrep_cluster_adress";
+"All cluster nodes are not detected. wsrep_cluster_size != information in wsrep_cluster_address";
             }
             else {
                 badprint "All cluster nodes detected.";
@@ -3702,7 +3702,7 @@ sub mysql_databases {
 
         if ( $dbinfo[7] > 1 ) {
             badprint $dbinfo[7]
-              . " differents collations for database "
+              . " different collations for database "
               . $dbinfo[0];
             push( @generalrec,
                 "Check all table collations are identical for all tables in "
@@ -3717,7 +3717,7 @@ sub mysql_databases {
         }
         if ( $dbinfo[8] > 1 ) {
             badprint $dbinfo[8]
-              . " differents engines for database "
+              . " different engines for database "
               . $dbinfo[0];
             push( @generalrec,
                     "Check all table engines are identical for all tables in "
@@ -3780,7 +3780,7 @@ sub mysql_indexes {
 
 #    unless ( mysql_version_ge( 5, 6 ) ) {
 #        infoprint
-#"Skip Index metrics from information schema due to erronous information provided in this version";
+#"Skip Index metrics from information schema due to erroneous information provided in this version";
 #        return;
 #    }
     my $selIdxReq = <<'ENDSQL';
