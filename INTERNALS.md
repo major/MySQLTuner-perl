@@ -178,8 +178,8 @@
 ## MySQLTuner memory checks
 
 * Get total RAM/swap
-* Is there enought memory for max connections reached by MySQL ?
-* Is there enought memory for max connections allowed by MySQL ?
+* Is there enough memory for max connections reached by MySQL ?
+* Is there enough memory for max connections allowed by MySQL ?
 * Max percentage of memory used(<85%)
 
 ## MySQLTuner slow queries checks
