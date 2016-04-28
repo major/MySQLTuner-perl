@@ -3239,28 +3239,22 @@ sub mariadb_galera {
             goodprint "Galera Cluster address is defined: "
               . $myvar{'wsrep_cluster_address'};
             my $nbNodes = scalar( split /,/, $myvar{'wsrep_cluster_address'} );
-            if ( $nbNodes != 3 or $nbNodes != 5 ) {
-                goodprint "There are $nbNodes nodes in wsrep_cluster_address.";
-            }
-            else {
-                badprint
-"There are $nbNodes nodes in wsrep_cluster_address. Prefer 3 or 5 nodes architecture.";
-            }
+            infoprint "There are $nbNodes nodes in wsrep_cluster_address";
             my $nbNodesSize = trim( $mystat{'wsrep_cluster_size'} );
-            if ( $nbNodesSize != 3 or $nbNodesSize != 5 ) {
-                goodprint "There are $nbNodes nodes in wsrep_cluster_size.";
+            if ( $nbNodesSize == 3 or $nbNodesSize == 5 ) {
+                goodprint "There are $nbNodesSize nodes in wsrep_cluster_size.";
             }
             else {
                 badprint
-"There are $nbNodes nodes in wsrep_cluster_size. Prefer 3 or 5 nodes architecture.";
+"There are $nbNodesSize nodes in wsrep_cluster_size. Prefer 3 or 5 nodes architecture.";
             }
-
-            if ( $nbNodes != trim( $mystat{'wsrep_cluster_size'} ) ) {
+            # wsrep_cluster_address doesn't include garbd nodes
+            if ( $nbNodes > $nbNodesSize ) {
                 badprint
-"All cluster nodes are not detected. wsrep_cluster_size != information in wsrep_cluster_address";
+"All cluster nodes are not detected. wsrep_cluster_size less then node count in wsrep_cluster_address";
             }
             else {
-                badprint "All cluster nodes detected.";
+                goodprint "All cluster nodes detected.";
             }
         }
         else {
