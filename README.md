@@ -17,7 +17,7 @@ Compatibility:
 * MySQL 5.5 (full support)
 * MariaDB 10.1 (partial support)
 * MariaDB 10.0 (full support)
-* Percana Server 5.6 (full support)
+* Percona Server 5.6 (full support)
 * Percona XtraDB cluster (full support)
 * MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (partial support - deprecated version)
 * Perl 5.6 or later (with [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod) package)
