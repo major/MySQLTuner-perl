@@ -2494,12 +2494,12 @@ sub mysql_stats {
     elsif ( mysql_version_ge( 5, 5 ) and  !mysql_version_ge( 10, 1 ) ) {
         if ( $myvar{'query_cache_type'} ne "OFF" ) {
             badprint
-"Query cache should be disabled by default due to mutex contention.";
+"Query cache may be disabled by default due to mutex contention.";
             push( @adjvars, "query_cache_type (=0)" );
         }
         else {
             goodprint
-              "Query cache is disabled by default due to mutex contention.";
+              "Query cache is disabled by default due to mutex contention on multiprocessor machines.";
         }
     }
     elsif ( $myvar{'query_cache_size'} < 1 ) {
