@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.10
+# mysqltuner.pl - Version 1.6.11
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -54,7 +54,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.10";
+my $tunerversion = "1.6.11";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1426,7 +1426,11 @@ sub security_recommendations {
     else {
         goodprint "There are no anonymous accounts for any database users";
     }
-
+    if ( mysql_version_le( 5, 1 ) ) {
+      badprint "No more password checks for MySQL version <=5.1";
+      badprint "MySQL version <=5.1 are deprecated and end of support.";
+      return;
+    }
     # Looking for Empty Password
     @mysqlstatlist = select_array
 "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL) AND plugin NOT IN ('unix_socket', 'win_socket')";
@@ -4048,7 +4052,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.10 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.11 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
