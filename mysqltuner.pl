@@ -950,13 +950,13 @@ sub get_all_vars {
     debugprint "VERSION: " . $dummyselect . "";
     $result{'MySQL Client'}{'Version'} = $dummyselect;
 
-    my @mysqlvarlist = select_array("SHOW GLOBAL VARIABLES");
-    push( @mysqlvarlist, select_array("SHOW VARIABLES") );
+    my @mysqlvarlist = select_array("SHOW VARIABLES");
+    push( @mysqlvarlist, select_array("SHOW GLOBAL VARIABLES") );
     arr2hash( \%myvar, \@mysqlvarlist );
     $result{'Variables'} = %myvar;
 
-    my @mysqlstatlist = select_array("SHOW GLOBAL STATUS");
-    push( @mysqlstatlist, select_array("SHOW STATUS") );
+    my @mysqlstatlist = select_array("SHOW STATUS");
+    push( @mysqlstatlist, select_array("SHOW GLOBAL STATUS") );
     arr2hash( \%mystat, \@mysqlstatlist );
     $result{'Status'} = %mystat;
 
