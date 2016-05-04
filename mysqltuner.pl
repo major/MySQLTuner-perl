@@ -532,9 +532,9 @@ sub update_tuner_version {
             debugprint "$httpcli is available.";
 
             debugprint
-              "$httpcli --connect-timeout 5 -silent '$url$script' > $script";
+              "$httpcli --connect-timeout 5 '$url$script' 2>$devnull > $script";
             $update =
-              `$httpcli --connect-timeout 5 -silent '$url$script' > $script`;
+              `$httpcli --connect-timeout 5 '$url$script' 2>$devnull > $script`;
             chomp($update);
             debugprint "$script updated: $update";
 
