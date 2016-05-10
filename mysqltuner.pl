@@ -1088,15 +1088,15 @@ sub is_open_port {
 
 sub get_process_memory {
     my $pid = shift;
-    return 0 unless -f "/proc/$pid/status";
-    my @pdata = grep { /RSS:/ } get_file_contents "/proc/$pid/status";
-    map { s/.*RSS:\s*(\d+)\s*kB\s*$/$1*1024/ge } @pdata;
-    return $pdata[0];
+    my @mem = `ps -p $pid -o rss`;
+    return 0 if scalar @mem != 2;
+    return $mem[1]*1024;
 }
 
 sub get_other_process_memory {
-    my @procs = `ps -eo pid,cmd`;
+    my @procs = `ps -eaxo pid,command`;
     map {
+        s/.*PID.*//;
         s/.*mysqld.*//;
         s/.*\[.*\].*//;
         s/^\s+$//g;
