@@ -1094,7 +1094,7 @@ sub get_process_memory {
 }
 
 sub get_other_process_memory {
-    my @procs = `ps -eaxo pid,command`;
+    my @procs = `ps eaxo pid,command`;
     map {
         s/.*PID.*//;
         s/.*mysqld.*//;
