@@ -3240,7 +3240,8 @@ sub mariadb_galera {
         {
             goodprint "Galera Cluster address is defined: "
               . $myvar{'wsrep_cluster_address'};
-            my $nbNodes = scalar( split /,/, $myvar{'wsrep_cluster_address'} );
+            my @NodesTmp = split /,/, $myvar{'wsrep_cluster_address'};
+            my $nbNodes = @NodesTmp;
             infoprint "There are $nbNodes nodes in wsrep_cluster_address";
             my $nbNodesSize = trim( $mystat{'wsrep_cluster_size'} );
             if ( $nbNodesSize == 3 or $nbNodesSize == 5 ) {
