@@ -938,6 +938,7 @@ sub arr2hash {
     my $sep  = shift;
     $sep = '\s' unless defined($sep);
     foreach my $line (@$harr) {
+	next if ($line =~ m/^\*\*\*\*\*\*\*/);
         $line =~ /([a-zA-Z_]*)\s*$sep\s*(.*)/;
         $$href{$1} = $2;
         debugprint "V: $1 = $2";
@@ -953,12 +954,12 @@ sub get_all_vars {
     my @mysqlvarlist = select_array("SHOW VARIABLES");
     push( @mysqlvarlist, select_array("SHOW GLOBAL VARIABLES") );
     arr2hash( \%myvar, \@mysqlvarlist );
-    $result{'Variables'} = %myvar;
+    $result{'Variables'} = \%myvar;
 
     my @mysqlstatlist = select_array("SHOW STATUS");
     push( @mysqlstatlist, select_array("SHOW GLOBAL STATUS") );
     arr2hash( \%mystat, \@mysqlstatlist );
-    $result{'Status'} = %mystat;
+    $result{'Status'} = \%mystat;
 
     $myvar{'have_galera'} = "NO";
     if ( defined( $myvar{'wsrep_provider_options'} )
@@ -1002,7 +1003,7 @@ sub get_all_vars {
     debugprint Dumper(@mysqlenginelist);
     my @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
     arr2hash( \%myrepl, \@mysqlslave, ':' );
-    $result{'Replication'}{'Status'} = %myrepl;
+    $result{'Replication'}{'Status'} = \%myrepl;
     my @mysqlslaves = select_array "SHOW SLAVE HOSTS";
     my @lineitems   = ();
     foreach my $line (@mysqlslaves) {
@@ -1775,13 +1776,15 @@ sub check_storage_engines {
             $result{'Engine'}{$engine}{'Data Size'}    = $dsize;
             $result{'Engine'}{$engine}{'Index Size'}   = $isize;
         }
-        $fragtables = select_one
-"SELECT COUNT(TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','performance_schema', 'mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY' AND NOT ENGINE='InnoDB'";
-        chomp($fragtables);
+        my $not_innodb='';
+	if ($result{'Variables'}{'innodb_file_per_table'} eq 'OFF') {
+	    $not_innodb="AND NOT ENGINE='InnoDB'";
+        }
         $result{'Tables'}{'Fragmented tables'} =
           [ select_array
-"SELECT CONCAT(CONCAT(TABLE_SCHEMA, '.'), TABLE_NAME) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','performance_schema', 'mysql') AND Data_free > 0 AND NOT ENGINE='MEMORY' AND NOT ENGINE='InnoDB'"
+"SELECT CONCAT(CONCAT(TABLE_SCHEMA, '.'), TABLE_NAME),DATA_FREE FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND DATA_FREE*100/(DATA_LENGTH+INDEX_LENGTH+DATA_FREE) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
           ];
+	$fragtables = scalar @{$result{'Tables'}{'Fragmented tables'}};
 
     }
     else {
@@ -1870,6 +1873,16 @@ sub check_storage_engines {
         badprint "Total fragmented tables: $fragtables";
         push( @generalrec,
             "Run OPTIMIZE TABLE to defragment tables for better performance" );
+        my $total_free=0;
+	foreach my $table_line (@{$result{'Tables'}{'Fragmented tables'}}) {
+	    my ($table_name,$data_free)=split(/\s+/,$table_line);
+            $data_free=$data_free/1024/1024;
+	    $total_free+=$data_free;
+            push( @generalrec,
+		"  OPTIMZE TABLE $table_name; -- can free $data_free MB");
+        }
+        push( @generalrec,
+            "Total freed space after theses OPTIMIZE TABLE : $total_free Mb" );
     }
     else {
         goodprint "Total fragmented tables: $fragtables";
