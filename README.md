@@ -130,6 +130,10 @@ To get information about stored credentials, use the following command:
 	password = *****
 	host = localhost
 
+Question: What's minimum privileges needed by a specific mysqltuner user in database ?
+
+        mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* FOR 'mysqltuner'@'localhost' identified by pwd1234;
+
 Question: It's not working on my OS! What gives?!
 
 These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:
