@@ -2501,6 +2501,14 @@ sub mysql_stats {
 "Aborted connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})";
     }
 
+    # name resolution
+    if ($result{'Variables'}{'skip_name_resolve'} eq 'OFF') {
+        badprint
+"name resolution is active : a reverse name resolution is made for each new connection and can reduce performance";
+        push( @generalrec,
+            "Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=1" );
+    }
+
     # Query cache
     if ( !mysql_version_ge(4) ) {
 
