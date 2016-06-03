@@ -4005,7 +4005,7 @@ sub dump_result {
     if ( $opt{'json'} ne 0 ) {
         eval "{ use JSON }";
         if ($@) {
-            badprint "JSON Module is needed.";
+            print "JSON Module is needed.";
             exit 1;
         }
         my $json = JSON->new->allow_nonref;
