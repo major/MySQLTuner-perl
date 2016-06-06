@@ -1879,7 +1879,7 @@ sub check_storage_engines {
             $data_free=$data_free/1024/1024;
 	    $total_free+=$data_free;
             push( @generalrec,
-		"  OPTIMZE TABLE $table_name; -- can free $data_free MB");
+		"  OPTIMIZE TABLE $table_name; -- can free $data_free MB");
         }
         push( @generalrec,
             "Total freed space after theses OPTIMIZE TABLE : $total_free Mb" );
