@@ -227,9 +227,11 @@
 * Key buffer write hit ratio (>95%)
 
 ## MySQLTuner Galera information
-
 * wsrep_ready cluster is ready
 * wsrep_connected node is connected to other nodes
+* wsrep_cluster_name is defined.
+* wsrep_node_name is defined.
+* Check thet notification script wsrep_notify_cmd is defined
 * wsrep_cluster_status PRIMARY /NON PRIMARY.
 	* PRIMARY : Coherent cluster
 	* NO PRIMARY : cluster gets several states
@@ -240,7 +242,13 @@
 	* SYNCED state able to read/write
 * wsrep_cluster_conf_id configuration level must be identical in all nodes
 * wsrep_last_commited committed level must be identical in all nodes
-
+* Look for tables without primary keys
+* Look for non InnoDB tables for Galera
+* Variable innodb_flush_log_at_trx_commit should be set to 0.
+* Check that there is 3 or 5 members in Galera cluster.
+* Check that xtrabackup is used for SST method with wsrep_sst_method variable.
+* Check variables wsrep_OSU_method is defined to TOI for updates.
+* Check that there is no certification failures controlling wsrep_local_cert_failures status.
 
 ## MySQLTuner TokuDB information
 
