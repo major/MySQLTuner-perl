@@ -3133,8 +3133,7 @@ sub mariadb_tokudb {
 
     # AriaDB
     unless ( defined $myvar{'have_tokudb'}
-        && $myvar{'have_tokudb'} eq "YES"
-        && defined $enginestats{'TokuDb'} )
+        && $myvar{'have_tokudb'} eq "YES" )
     {
         infoprint "TokuDB is disabled.";
         return;
