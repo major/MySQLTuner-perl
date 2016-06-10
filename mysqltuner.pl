@@ -1768,7 +1768,10 @@ sub check_storage_engines {
         foreach my $line (@templist) {
             ( $engine, $size, $count, $dsize, $isize ) =
               $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/;
-            if ( !defined($size) ) { next; }
+            $size=0 unless  defined($size);
+            $isize=0 unless  defined($isize);
+            $dsize=0 unless  defined($dsize);
+            $count=0 unless  defined($count);
             $enginestats{$engine}                      = $size;
             $enginecount{$engine}                      = $count;
             $result{'Engine'}{$engine}{'Table Number'} = $count;
