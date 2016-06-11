@@ -66,6 +66,16 @@
 
 ## MySQLTuner system checks
 * 32-bit w/>2GB RAM check
+* Check number of opened ports (warning if more than 9 ports opened)
+* Check 80, 8080, 443 and 8443 ports if warning are raised if there are opened 
+* Check if some banned ports are not opened (option --bannedports separated by comma)
+* Check if non kernel and user process except mysqld are not using more than 15% of total physical memory)
+* Check vm.swapiness
+* Check /etc/security/limit.conf
+* Check sysctl entries: sunrpc.tcp_slot_entries, vm.swappiness, fs.aio-fs-nr
+* Check mount point
+* Check Ethernet card
+* Check load average
 
 ## MySQLTuner Server version checks
 * EOL MySQL version check
@@ -97,12 +107,18 @@
 
 ## MySQLTuner database information
 * Per database information
+        * Tables number
 	* Rows number
 	* Total size
 	* Data size
 	* Percentage of data size
 	* Index size
 	* Percentage of index size
+        * Collation number
+        * Check that there is only one collation for all table in a database
+        * Check that there is only one collation for ll table columns in a database
+        * Check that there is only one storage engine per user database
+
 
 ## MySQLTuner index information
 
@@ -162,8 +178,8 @@
 ## MySQLTuner memory checks
 
 * Get total RAM/swap
-* Is there enought memory for max connections reached by MySQL ?
-* Is there enought memory for max connections allowed by MySQL ?
+* Is there enough memory for max connections reached by MySQL ?
+* Is there enough memory for max connections allowed by MySQL ?
 * Max percentage of memory used(<85%)
 
 ## MySQLTuner slow queries checks
@@ -211,9 +227,11 @@
 * Key buffer write hit ratio (>95%)
 
 ## MySQLTuner Galera information
-
 * wsrep_ready cluster is ready
 * wsrep_connected node is connected to other nodes
+* wsrep_cluster_name is defined.
+* wsrep_node_name is defined.
+* Check thet notification script wsrep_notify_cmd is defined
 * wsrep_cluster_status PRIMARY /NON PRIMARY.
 	* PRIMARY : Coherent cluster
 	* NO PRIMARY : cluster gets several states
@@ -224,7 +242,13 @@
 	* SYNCED state able to read/write
 * wsrep_cluster_conf_id configuration level must be identical in all nodes
 * wsrep_last_commited committed level must be identical in all nodes
-
+* Look for tables without primary keys
+* Look for non InnoDB tables for Galera
+* Variable innodb_flush_log_at_trx_commit should be set to 0.
+* Check that there is 3 or 5 members in Galera cluster.
+* Check that xtrabackup is used for SST method with wsrep_sst_method variable.
+* Check variables wsrep_OSU_method is defined to TOI for updates.
+* Check that there is no certification failures controlling wsrep_local_cert_failures status.
 
 ## MySQLTuner TokuDB information
 
@@ -238,17 +262,7 @@
 * tokudb_cleaner_iterations
 * tokudb_fanout
 
-## MySQLTuner MariaDB thread pool information
+## MySQLTuner Thread pool information
 
-* thread_pool_size
-* thread_pool_stall_limit 
-
-* thread_pool_max_threads 
-* thread_pool_idle_timeout 
-
-* thread_pool_oversubscribe
-
-* threadpool_threads
-* threadpool_idle_threads
-* threadpool_threads / thread_pool_size
-* threadpool_idle_threads / thread_pool_size
+* thread_pool_size between 16 to 36 for Innodb usage
+* thread_pool_size between 4 to 8 for MyIsam usage

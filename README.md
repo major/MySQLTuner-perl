@@ -3,6 +3,8 @@ MySQLTuner-perl
 [![Build Status - Master](https://travis-ci.org/major/MySQLTuner-perl.svg?branch=master)](https://travis-ci.org/major/MySQLTuner-perl)
 [![Project Status](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
 [![Project Status](http://opensource.box.com/badges/maintenance.svg)](http://opensource.box.com/badges)
+[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
+[![Percentage of issues still open](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
 
 MySQLTuner is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
 
@@ -14,11 +16,12 @@ Compatibility:
 
 * MySQL 5.7 (partial support)
 * MySQL 5.6 (full support)
-* MariaDB 10.0 (full support)
-* MariaDB 10.1 (partial support)
 * MySQL 5.5 (full support)
-* MySQL 5.1 (full support)
-* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (full support)
+* MariaDB 10.1 (partial support)
+* MariaDB 10.0 (full support)
+* Percona Server 5.6 (full support)
+* Percona XtraDB cluster (full support)
+* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (partial support - deprecated version)
 * Perl 5.6 or later (with [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod) package)
 * Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
 * Windows is not supported at this time (Help wanted !!!!!)
@@ -62,7 +65,7 @@ __Usage:__ Minimal usage locally
 
 __Usage:__ Minimal usage remotely
 
-	perl mysqltuner.pl --host targetDNS_IP --user admin_user --password admin_password
+	perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
 
 __Usage:__ Enable maximum output information around MySQL/MariaDb without debugging 
 
@@ -126,6 +129,10 @@ To get information about stored credentials, use the following command:
 	user = someusername
 	password = *****
 	host = localhost
+
+Question: What's minimum privileges needed by a specific mysqltuner user in database ?
+
+        mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* FOR 'mysqltuner'@'localhost' identified by pwd1234;
 
 Question: It's not working on my OS! What gives?!
 
