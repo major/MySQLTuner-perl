@@ -4034,8 +4034,8 @@ sub which {
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 headerprint;                 # Header Print
-mysql_setup;                 # Gotta login first
 validate_tuner_version;      # Check last version
+mysql_setup;                 # Gotta login first
 os_setup;                    # Set up some OS variables
 get_all_vars;                # Toss variables/status into hashes
 get_tuning_info;             # Get information about the tuning connexion
@@ -4049,7 +4049,7 @@ security_recommendations;    # Display some security recommendations
 cve_recommendations;         # Display related CVE
 calculations;                # Calculate everything we need
 mysql_stats;                 # Print the server stats
-mysqsl_pfs                   # Print Performance schema info
+mysqsl_pfs;                  # Print Performance schema info
 mariadb_threadpool;          # Print MaraiDB ThreadPool stats
 mysql_myisam;                # Print MyISAM stats
 mariadb_ariadb;              # Print MaraiDB AriaDB stats
