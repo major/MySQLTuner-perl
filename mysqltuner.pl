@@ -593,7 +593,7 @@ sub compare_tuner_version {
         return;
     }
     goodprint "You have the latest version of MySQLTuner($tunerversion)";
-    return;
+    exit 0;
 }
 
 # Checks to see if a MySQL login is possible
