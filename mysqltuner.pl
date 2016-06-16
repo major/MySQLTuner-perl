@@ -2446,7 +2446,7 @@ sub mysql_stats {
         badprint
           "Overall possible memory usage with other process exceeded memory";
         push( @generalrec,
-            "Dedicated this server to your database for highest performance." );
+            "Dedicate this server to your database for highest performance." );
     }
     else {
         goodprint
