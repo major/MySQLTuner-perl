@@ -156,22 +156,22 @@ These kinds of things are bound to happen.  Here are the details I need from you
 
 * Connection and Authentication
 
-	Parameter --host <hostname>    Connect to a remote host to perform tests (default: localhost)
-	Parameter --socket <socket>    Use a different socket for a local connection
-	Parameter --port <port>        Port to use for connection (default: 3306)
-	Parameter --user <username>    Username to use for authentication	
-	Parameter --pass <password>    Password to use for authentication
+	Parameter host <hostname> Connect to a remote host to perform tests (default: localhost)
+	Parameter socket <socket> Use a different socket for a local connection
+	Parameter port <port>     Port to use for connection (default: 3306)
+	Parameter user <username> Username to use for authentication	
+	Parameter pass <password> Password to use for authentication
 
 * Since you are using a remote host, use parameters to supply values from the OS
 
-	Parameter --forcemem <size>    Amount of RAM installed in megabytes
-	Parameter --forceswap <size>   Amount of swap memory configured in megabytes
+	Parameter forcemem <size>  Amount of RAM installed in megabytes
+	Parameter forceswap <size> Amount of swap memory configured in megabytes
 
 * You may have to contact your remote SysAdmin to ask how much RAM and swap you have
 
 * If the database has too many tables, or very large table, use this:
 
-	Parameter --skipsize           Don't enumerate tables and their types/sizes (default: on)
+	Parameter skipsize           Don't enumerate tables and their types/sizes (default: on)
 	                     (Recommended for servers with many tables)
 
 MySQLTuner and Vagrant
