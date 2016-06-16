@@ -94,15 +94,15 @@ __Usage:__ Enable debugging information
 FAQ
 --
 
-Question: Will MySQLTuner fix my slow MySQL server?
+**Question: Will MySQLTuner fix my slow MySQL server?**
 
 **No.**  MySQLTuner is a read only script.  It won't write to any configuration files, change the status of any daemons, or call your mother to wish her a happy birthday.  It will give you an overview of your server's performance and make some basic recommendations about improvements that you can make after it completes.  *Make sure you read the warning above prior to following any recommendations.*
 
-Question: Can I fire my DBA now?
+**Question: Can I fire my DBA now?**
 
 **MySQLTuner will not replace your DBA in any form or fashion.**  If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
 
-Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?
+**Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?**
 
 The script will try its best to log in via any means possible.  It will check for ~/.my.cnf files, Plesk password files, and empty password root logins.  If none of those are available, then you'll be prompted for a password.  If you'd like the script to run in an automated fashion without user intervention, then create a .my.cnf file in your home directory which contains:
 
@@ -112,7 +112,7 @@ The script will try its best to log in via any means possible.  It will check fo
 	
 Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.  If a [T-1000 shows up in a LAPD uniform](https://en.wikipedia.org/wiki/T-1000) and demands your database credentials, you won't have much of an option.
 
-Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?
+**Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
 
 You could use mysql_config_editor utilities.
 
@@ -130,11 +130,11 @@ To get information about stored credentials, use the following command:
 	password = *****
 	host = localhost
 
-Question: What's minimum privileges needed by a specific mysqltuner user in database ?
+**Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
 
         mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* FOR 'mysqltuner'@'localhost' identified by pwd1234;
 
-Question: It's not working on my OS! What gives?!
+**Question: It's not working on my OS! What gives?!**
 
 These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:
 
@@ -145,10 +145,34 @@ These kinds of things are bound to happen.  Here are the details I need from you
 * The full text of the error
 * A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
 
-Question: How to perform a CVE vulneralibity checks ?
+**Question: How to perform a CVE vulneralibity checks ?**
 
 * Download vulnerabilities.csv from this repository.
 * use option --cvefile to perform CVE checks
+
+**Question: How to use mysqltuner from remote host ?**
+
+* You will still have to connect like a mysql client:
+
+* Connection and Authentication
+
+        --host <hostname>    Connect to a remote host to perform tests (default: localhost)
+	--socket <socket>    Use a different socket for a local connection
+	--port <port>        Port to use for connection (default: 3306)
+	--user <username>    Username to use for authentication	
+	--pass <password>    Password to use for authentication
+
+* Since you are using a remote host, use parameters to supply values from the OS
+
+	--forcemem <size>    Amount of RAM installed in megabytes
+	--forceswap <size>   Amount of swap memory configured in megabytes
+
+* You may have to contact your remote SysAdmin to ask how much RAM and swap you have
+
+* If the database has too many tables, or very large table, use this:
+
+	--skipsize           Don't enumerate tables and their types/sizes (default: on)
+	                     (Recommended for servers with many tables)
 
 MySQLTuner and Vagrant
 --
