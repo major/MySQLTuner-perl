@@ -490,9 +490,6 @@ sub validate_tuner_version {
         compare_tuner_version($update);
         return;
     }
-    else {
-
-    }
 
     if ( $httpcli =~ /wget$/ ) {
         debugprint "$httpcli is available.";
@@ -3045,9 +3042,7 @@ sub mysqsl_pfs {
         infoprint "Performance schema is disabled.";
         return;
     }
-    else {
-        infoprint "Performance schema is enabled.";
-    }
+    infoprint "Performance schema is enabled.";
     infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
 
     if (grep /^sys$/, select_array("SHOW DATABASES")) {
@@ -3056,6 +3051,7 @@ sub mysqsl_pfs {
         infoprint "Sys schema isn't installed.";
         return;
     }
+    
 }
 
 # Recommendations for Ariadb
