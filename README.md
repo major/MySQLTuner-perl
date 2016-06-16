@@ -156,15 +156,20 @@ These kinds of things are bound to happen.  Here are the details I need from you
 
 * Connection and Authentication
 
-        --host <hostname>    Connect to a remote host to perform tests (default: localhost)
+	--host <hostname>    Connect to a remote host to perform tests (default: localhost)
+
 	--socket <socket>    Use a different socket for a local connection
+
 	--port <port>        Port to use for connection (default: 3306)
+
 	--user <username>    Username to use for authentication	
+	
 	--pass <password>    Password to use for authentication
 
 * Since you are using a remote host, use parameters to supply values from the OS
 
 	--forcemem <size>    Amount of RAM installed in megabytes
+
 	--forceswap <size>   Amount of swap memory configured in megabytes
 
 * You may have to contact your remote SysAdmin to ask how much RAM and swap you have
