@@ -151,30 +151,26 @@ These kinds of things are bound to happen.  Here are the details I need from you
 * use option --cvefile to perform CVE checks
 
 **Question: How to use mysqltuner from remote host ?**
+Thanks to  [@rolandomysqldba](http://dba.stackexchange.com/users/877/rolandomysqldba)
 
 * You will still have to connect like a mysql client:
 
-* Connection and Authentication
+Connection and Authentication
 
-	--host <hostname>    Connect to a remote host to perform tests (default: localhost)
+	--host <hostname> Connect to a remote host to perform tests (default: localhost)
+	--socket <socket> Use a different socket for a local connection
+	--port <port>     Port to use for connection (default: 3306)
+	--user <username> Username to use for authentication	
+	--pass <password> Password to use for authentication
 
-	--socket <socket>    Use a different socket for a local connection
+Since you are using a remote host, use parameters to supply values from the OS
 
-	--port <port>        Port to use for connection (default: 3306)
-
-	--user <username>    Username to use for authentication	
-	
-	--pass <password>    Password to use for authentication
-
-* Since you are using a remote host, use parameters to supply values from the OS
-
-	--forcemem <size>    Amount of RAM installed in megabytes
-
-	--forceswap <size>   Amount of swap memory configured in megabytes
+	--forcemem <size>  Amount of RAM installed in megabytes
+	--forceswap <size> Amount of swap memory configured in megabytes
 
 * You may have to contact your remote SysAdmin to ask how much RAM and swap you have
 
-* If the database has too many tables, or very large table, use this:
+If the database has too many tables, or very large table, use this:
 
 	--skipsize           Don't enumerate tables and their types/sizes (default: on)
 	                     (Recommended for servers with many tables)
