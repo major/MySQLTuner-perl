@@ -945,7 +945,7 @@ sub arr2hash {
 sub get_all_vars {
     # We need to initiate at least one query so that our data is useable
     $dummyselect = select_one "SELECT VERSION()";
-    $dummyselect =~ s/(.*)\-.*?/$1/;
+    $dummyselect =~ s/(.*?)\-.*/$1/;
     debugprint "VERSION: " . $dummyselect . "";
     $result{'MySQL Client'}{'Version'} = $dummyselect;
 
