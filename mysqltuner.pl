@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.13
+# mysqltuner.pl - Version 1.6.14
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -54,7 +54,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.13";
+my $tunerversion = "1.6.14";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3321,7 +3321,8 @@ sub mariadb_galera {
         else {
             goodprint "SST Method is based on xtrabackup.";
         }
-        if ( trim( $myvar{'wsrep_OSU_method'} ) eq "TOI" ) {
+        if  ( (defined($myvar{'wsrep_OSU_method'}) && trim( $myvar{'wsrep_OSU_method'} ) eq "TOI") ||
+              (defined($myvar{'wsrep_osu_method'}) && trim( $myvar{'wsrep_osu_method'} ) eq "TOI") ) {
             goodprint "TOI is default mode for upgrade.";
         }
         else {
@@ -4071,7 +4072,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.13 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.14 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
