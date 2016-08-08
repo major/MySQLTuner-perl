@@ -945,6 +945,10 @@ sub arr2hash {
 sub get_all_vars {
     # We need to initiate at least one query so that our data is useable
     $dummyselect = select_one "SELECT VERSION()";
+    if (not defined($dummyselect) or $dummyselect== "") {
+      badprint "You probably doesn't get enough privileges for running MySQLTuner ..."
+      exit(256);
+    }
     $dummyselect =~ s/(.*?)\-.*/$1/;
     debugprint "VERSION: " . $dummyselect . "";
     $result{'MySQL Client'}{'Version'} = $dummyselect;
