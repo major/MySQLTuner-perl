@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.14
+# mysqltuner.pl - Version 1.6.15
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -54,7 +54,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.14";
+my $tunerversion = "1.6.15";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -228,7 +228,8 @@ my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
 
 # Super structure containing all information
 my %result;
-
+$result{'MySQLTuner'}{'version'}=$tunerversion;
+$result{'MySQLTuner'}{'options'}=%opt;
 # Functions that handle the print styles
 sub prettyprint {
     print $_[0] . "\n" unless ( $opt{'silent'} or $opt{'json'} );
@@ -945,7 +946,7 @@ sub arr2hash {
 sub get_all_vars {
     # We need to initiate at least one query so that our data is useable
     $dummyselect = select_one "SELECT VERSION()";
-    if (not defined($dummyselect) or $dummyselect== "") {
+    if (not defined($dummyselect) or $dummyselect eq "") {
       badprint "You probably doesn't get enough privileges for running MySQLTuner ...";
       exit(256);
     }
@@ -1238,7 +1239,7 @@ sub get_kernel_info() {
     );
     infoprint "Information about kernel tuning:";
     foreach my $param (@params) {
-        infocmd_tab("sysctl $param");
+        infocmd_tab("sysctl $param 2>/dev/null");
     }
     if ( `sysctl -n vm.swappiness` > 10 ) {
         badprint
@@ -1250,7 +1251,8 @@ sub get_kernel_info() {
         infoprint "Swappiness is < 10.";
     }
 
-    if ( `sysctl -n sunrpc.tcp_slot_table_entries` < 100 ) {
+    my $tcp_slot_entries=`sysctl -n sunrpc.tcp_slot_table_entries 2>/dev/null`;
+    if ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) {
         badprint
 "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
         push @generalrec, "setup Initial TCP slot entries greater than 100";
@@ -4076,7 +4078,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.14 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.15 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
