@@ -229,7 +229,7 @@ my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
 # Super structure containing all information
 my %result;
 $result{'MySQLTuner'}{'version'}=$tunerversion;
-$result{'MySQLTuner'}{'options'}=%opt;
+$result{'MySQLTuner'}{'options'}=\%opt;
 # Functions that handle the print styles
 sub prettyprint {
     print $_[0] . "\n" unless ( $opt{'silent'} or $opt{'json'} );
@@ -1079,6 +1079,7 @@ sub get_opened_ports {
     } @opened_ports;
     @opened_ports = sort { $a <=> $b } grep { !/^$/ } @opened_ports;
     debugprint Dumper \@opened_ports;
+    $result{'Network'}{'TCP Opened'}=\@opened_ports;
     return @opened_ports;
 }
 
@@ -1165,6 +1166,7 @@ sub get_fs_info() {
             else {
                 infoprint "mount point $2 is using $1 % of total space";
             }
+            $result{'Filesystem'}{'Space Pct'}{$2}=$1;
         }
     }
 
@@ -1181,6 +1183,7 @@ sub get_fs_info() {
             else {
                 infoprint "mount point $2 is using $1 % of max allowed inodes";
             }
+        $result{'Filesystem'}{'Inode Pct'}{$2}=$1;
         }
     }
 }
@@ -1240,6 +1243,7 @@ sub get_kernel_info() {
     infoprint "Information about kernel tuning:";
     foreach my $param (@params) {
         infocmd_tab("sysctl $param 2>/dev/null");
+        $result{'OS'}{'Config'}{$param}=`sysctl -n $param 2>/dev/null`;
     }
     if ( `sysctl -n vm.swappiness` > 10 ) {
         badprint
@@ -1277,24 +1281,33 @@ sub get_kernel_info() {
 }
 
 sub get_system_info() {
+    $result{'OS'}{'Release'}=get_os_release();
     infoprint get_os_release;
     if (is_virtual_machine) {
         infoprint "Machine type          : Virtual machine";
+         $result{'OS'}{'Virtual Machine'}='YES';
     }
     else {
         infoprint "Machine type          : Physical machine";
+        $result{'OS'}{'Virtual Machine'}='NO';
     }
 
+  $result{'Network'}{'Connected'}='NO';
     `ping -c 1 ipecho.net &>/dev/null`;
     my $isConnected = $?;
     if ( $? == 0 ) {
         infoprint "Internet              : Connected";
+        $result{'Network'}{'Connected'}='YES';
     }
     else {
         badprint "Internet              : Disconnected";
     }
+    $result{'OS'}{'Type'}=`uname -o`;
     infoprint "Operating System Type : " . infocmd_one "uname -o";
+    $result{'OS'}{'Kernel'}=`uname -r`;
     infoprint "Kernel Release        : " . infocmd_one "uname -r";
+    $result{'OS'}{'Hostname'}=`hostname`;
+    $result{'Network'}{'Internal Ip'}=`hostname -I`;
     infoprint "Hostname              : " . infocmd_one "hostname";
     infoprint "Network Cards         : ";
     infocmd_tab "ifconfig| grep -A1 mtu";
@@ -1302,14 +1315,16 @@ sub get_system_info() {
     my $httpcli = get_http_cli();
     infoprint "HTTP client found: $httpcli" if defined $httpcli;
 
+    my $ext_ip="";
     if ( $httpcli =~ /curl$/ ) {
-        infoprint "External IP           : "
-          . infocmd_one "$httpcli ipecho.net/plain";
+        $ext_ip=infocmd_one "$httpcli ipecho.net/plain";
     }
     elsif ( $httpcli =~ /wget$/ ) {
-        infoprint "External IP           : "
-          . infocmd_one "$httpcli -q -O - ipecho.net/plain";
+        
+        $ext_ip=infocmd_one "$httpcli -q -O - ipecho.net/plain";
     }
+    infoprint "External IP           : ".$ext_ip;
+    $result{'Network'}{'External Ip'}=$ext_ip;
     badprint
       "External IP           : Can't check because of Internet connectivity"
       unless defined($httpcli);
@@ -1317,11 +1332,13 @@ sub get_system_info() {
       . infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
     infoprint "Logged In users       : ";
     infocmd_tab "who";
+    $result{'OS'}{'Logged users'}=`who`;
     infoprint "Ram Usages in Mb      : ";
     infocmd_tab "free -m | grep -v +";
+    $result{'OS'}{'Free Memory RAM'}=`free -m | grep -v +`;
     infoprint "Load Average          : ";
     infocmd_tab "top -n 1 -b | grep 'load average:'";
-
+    $result{'OS'}{'Load Average'}=`top -n 1 -b | grep 'load average:'`;
 #infoprint "System Uptime Days/(HH:MM) : `uptime | awk '{print $3,$4}' | cut -f1 -d,`";
 }
 
@@ -1552,6 +1569,7 @@ sub get_replication_status {
         infoprint "No replication setup for this server.";
         return;
     }
+    $result{'Replication'}{'status'}= \%myrepl;
     my ($io_running) = $myrepl{'Slave_IO_Running'};
     debugprint "IO RUNNING: $io_running ";
     my ($sql_running) = $myrepl{'Slave_SQL_Running'};
@@ -2361,14 +2379,21 @@ sub mysql_stats {
     infoprint "Max MySQL memory    : " . hr_bytes( $mycalc{'max_peak_memory'} );
     infoprint "Other process memory: " . hr_bytes( get_other_process_memory() );
 
+    #print hr_bytes( $mycalc{'server_buffers'} );
+
     infoprint "Total buffers: "
       . hr_bytes( $mycalc{'server_buffers'} )
       . " global + "
       . hr_bytes( $mycalc{'per_thread_buffers'} )
       . " per thread ($myvar{'max_connections'} max threads)";
     infoprint "P_S Max memory usage: " . hr_bytes_rnd( get_pf_memory() );
+    $result{'P_S'}{'memory'}=get_other_process_memory();
+    $result{'P_S'}{'pretty_memory'}=hr_bytes_rnd(get_other_process_memory());
     infoprint "Galera GCache Max memory usage: "
       . hr_bytes_rnd( get_gcache_memory() );
+    $result{'Galera'}{'GCache'}{'memory'}=get_gcache_memory();
+    $result{'Galera'}{'GCache'}{'pretty_memory'}=hr_bytes_rnd(get_gcache_memory());
+      
     if ( $opt{buffers} ne 0 ) {
         infoprint "Global Buffers";
         infoprint " +-- Key Buffer: "
@@ -3199,10 +3224,12 @@ sub mariadb_galera {
         next unless $gvar =~ /^wsrep.*/;
         next if $gvar eq 'wsrep_provider_options';
         debugprint "\t" . trim($gvar) . " = " . $myvar{$gvar};
+        $result{'Galera'}{'variables'}{$gvar}= $myvar{$gvar};
     }
 
     debugprint "Galera wsrep provider Options:";
     my @galera_options = get_wsrep_options;
+    $result{'Galera'}{'wsrep options'}=get_wsrep_options();
     foreach my $gparam (@galera_options) {
         debugprint "\t" . trim($gparam);
     }
@@ -3210,6 +3237,7 @@ sub mariadb_galera {
     foreach my $gstatus ( keys %mystat ) {
         next unless $gstatus =~ /^wsrep.*/;
         debugprint "\t" . trim($gstatus) . " = " . $mystat{$gstatus};
+        $result{'Galera'}{'status'}{$gstatus}= $myvar{$gstatus};
     }
     infoprint "GCache is using "
       . hr_bytes_rnd( get_wsrep_option('gcache.mem_size') );
@@ -3221,6 +3249,7 @@ sub mariadb_galera {
         badprint "Following table(s) don't have primary key:";
         foreach my $badtable (@primaryKeysNbTables) {
             badprint "\t$badtable";
+            push @{$result{'Tables without PK'}}, $badtable;
         }
     }
     else {
@@ -3896,6 +3925,8 @@ ENDSQL
 
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
+    $result{'Recommendations'}=\@generalrec;
+    $result{'Adjust variables'}=\@adjvars;
     subheaderprint "Recommendations";
     if ( @generalrec > 0 ) {
         prettyprint "General recommendations:";
