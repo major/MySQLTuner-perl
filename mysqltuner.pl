@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.13
+# mysqltuner.pl - Version 1.6.14
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -54,7 +54,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.13";
+my $tunerversion = "1.6.14";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -490,9 +490,6 @@ sub validate_tuner_version {
         compare_tuner_version($update);
         return;
     }
-    else {
-
-    }
 
     if ( $httpcli =~ /wget$/ ) {
         debugprint "$httpcli is available.";
@@ -593,7 +590,7 @@ sub compare_tuner_version {
         return;
     }
     goodprint "You have the latest version of MySQLTuner($tunerversion)";
-    exit 0;
+    return;
 }
 
 # Checks to see if a MySQL login is possible
@@ -948,6 +945,11 @@ sub arr2hash {
 sub get_all_vars {
     # We need to initiate at least one query so that our data is useable
     $dummyselect = select_one "SELECT VERSION()";
+    if (not defined($dummyselect) or $dummyselect== "") {
+      badprint "You probably doesn't get enough privileges for running MySQLTuner ...";
+      exit(256);
+    }
+    $dummyselect =~ s/(.*?)\-.*/$1/;
     debugprint "VERSION: " . $dummyselect . "";
     $result{'MySQL Client'}{'Version'} = $dummyselect;
 
@@ -3045,9 +3047,7 @@ sub mysqsl_pfs {
         infoprint "Performance schema is disabled.";
         return;
     }
-    else {
-        infoprint "Performance schema is enabled.";
-    }
+    infoprint "Performance schema is enabled.";
     infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
 
     if (grep /^sys$/, select_array("SHOW DATABASES")) {
@@ -3056,6 +3056,7 @@ sub mysqsl_pfs {
         infoprint "Sys schema isn't installed.";
         return;
     }
+    
 }
 
 # Recommendations for Ariadb
@@ -3324,7 +3325,8 @@ sub mariadb_galera {
         else {
             goodprint "SST Method is based on xtrabackup.";
         }
-        if ( trim( $myvar{'wsrep_OSU_method'} ) eq "TOI" ) {
+        if  ( (defined($myvar{'wsrep_OSU_method'}) && trim( $myvar{'wsrep_OSU_method'} ) eq "TOI") ||
+              (defined($myvar{'wsrep_osu_method'}) && trim( $myvar{'wsrep_osu_method'} ) eq "TOI") ) {
             goodprint "TOI is default mode for upgrade.";
         }
         else {
@@ -4074,7 +4076,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.13 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.14 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 

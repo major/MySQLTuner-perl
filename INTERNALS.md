@@ -203,7 +203,7 @@
    * MySQL needs 1 instanes per 1Go of Buffer Pool
    * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
    * innodb_buffer_pool instances must be equals or lower than 64
-*  InnoDB Buffer Pool uUsage
+*  InnoDB Buffer Pool Usage
    * If more than 20% of InnoDB buffer pool is not used, MySQLTuner raise an alert.
 * InnoDB Read effiency
    * Ratio of read without locks
