@@ -1256,7 +1256,7 @@ sub get_kernel_info() {
     }
 
     my $tcp_slot_entries=`sysctl -n sunrpc.tcp_slot_table_entries 2>/dev/null`;
-    if ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) {
+    if ( -f "/proc/sys/sunrpc" and $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) {
         badprint
 "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
         push @generalrec, "setup Initial TCP slot entries greater than 100";
