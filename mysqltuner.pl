@@ -1052,8 +1052,8 @@ sub cve_recommendations {
     while ( my $cveline = <FH> ) {
         my @cve = split( ';', $cveline );
         if ( mysql_micro_version_le( $cve[1], $cve[2], $cve[3] ) ) {
-            badprint "$cve[4] : $cve[5]";
-            $result{'CVE'}{'List'}{$cvefound}="$cve[4] : $cve[5]";
+            badprint "$cve[4] : $cve[6]";
+            $result{'CVE'}{'List'}{$cvefound}="$cve[4] : $cve[6]";
             $cvefound++;
         }
 
