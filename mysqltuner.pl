@@ -1255,6 +1255,7 @@ sub get_kernel_info() {
         infoprint "Swappiness is < 10.";
     }
 
+    # only if /proc/sys/sunrpc exists
     my $tcp_slot_entries=`sysctl -n sunrpc.tcp_slot_table_entries 2>/dev/null`;
     if ( -f "/proc/sys/sunrpc" and $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) {
         badprint
