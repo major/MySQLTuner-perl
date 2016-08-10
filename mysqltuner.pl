@@ -3242,8 +3242,14 @@ sub mariadb_galera {
     infoprint "GCache is using "
       . hr_bytes_rnd( get_wsrep_option('gcache.mem_size') );
     my @primaryKeysNbTables = select_array(
-"select CONCAT(table_schema,CONCAT('.', table_name))  from       information_schema.columns   where table_schema not in ('mysql', 'information_schema', 'performance_schema') group by table_schema,table_name    having      sum(if(column_key in ('PRI','UNI'), 1,0)) = 0"
-    );
+"Select CONCAT(c.table_schema,CONCAT('.', c.table_name))
+from information_schema.columns c
+join information_schema.tables t using (TABLE_SCHEMA, TABLE_NAME)
+where c.table_schema not in ('mysql', 'information_schema', 'performance_schema')
+  and t.table_type != 'VIEW'
+group by c.table_schema,c.table_name
+having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
+);
 
     if ( scalar(@primaryKeysNbTables) > 0 ) {
         badprint "Following table(s) don't have primary key:";
