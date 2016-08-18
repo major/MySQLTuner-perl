@@ -11,8 +11,9 @@ MySQLTuner is a script written in Perl that allows you to review a MySQL install
 
 ![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
 
-MySQLTuner needs you
---
+MySQLTuner needs you:
+===
+
 **MySQLTuner** needs contributors for documentation, code and feedbacks..
 
 * Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
