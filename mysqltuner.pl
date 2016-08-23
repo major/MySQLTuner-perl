@@ -1483,7 +1483,7 @@ sub security_recommendations {
 
     # Looking for User with user/ uppercase /capitalise user as password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(LEFT(User, 1)) + SUBSTRING(User, 2, LENGTH(User)))";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(CONCAT(UPPER(LEFT(User, 1)), SUBSTRING(User, 2, LENGTH(User))))";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
@@ -1528,12 +1528,12 @@ sub security_recommendations {
               . $pass
               . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
               . $pass
-              . "')) OR $PASS_COLUMN_NAME = PASSWORD(UPPER(LEFT('"
+              . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
               . $pass
-              . "', 1)) + SUBSTRING('"
+              . "', 1)), SUBSTRING('"
               . $pass
               . "', 2, LENGTH('"
-              . $pass . "')))";
+              . $pass . "'))))";
             debugprint "There is " . scalar(@mysqlstatlist) . " items.";
             if (@mysqlstatlist) {
                 foreach my $line (@mysqlstatlist) {
