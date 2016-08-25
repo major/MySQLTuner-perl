@@ -2535,7 +2535,9 @@ sub mysql_stats {
     }
 
     # name resolution
-    if ($result{'Variables'}{'skip_name_resolve'} eq 'OFF') {
+    if (not defined($result{'Variables'}{'skip_name_resolve'})) {
+    infoprint "Skipped name resolution test due to missing skip_name_resolve in system variables. ?More info?";
+    } elsif( $result{'Variables'}{'skip_name_resolve'} eq 'OFF') {
         badprint
 "name resolution is active : a reverse name resolution is made for each new connection and can reduce performance";
         push( @generalrec,
