@@ -226,6 +226,9 @@ my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]"  : "[DG]";
 my $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
 my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
 
+# Checks for supported or EOL'ed MySQL versions
+my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro );
+
 # Super structure containing all information
 my %result;
 $result{'MySQLTuner'}{'version'}=$tunerversion;
@@ -1051,7 +1054,17 @@ sub cve_recommendations {
     open( FH, "<$opt{cvefile}" ) or die "Can't open $opt{cvefile} for read: $!";
     while ( my $cveline = <FH> ) {
         my @cve = split( ';', $cveline );
-        if ( mysql_micro_version_le( $cve[1], $cve[2], $cve[3] ) ) {
+        debugprint "Comparing $mysqlvermajor\.$mysqlverminor\.$mysqlvermicro with $cve[1]\.$cve[2]\.$cve[3] : ".(mysql_version_le( $cve[1], $cve[2], $cve[3] )?'<=':'>');
+       
+        # Fix some false positive in CVS parsing
+        next if (int($cve[1]) > 10 or int($cve[1]) == 6 or int($cve[1]) < 3);
+
+        # Removing 10.X.X CVE when version is a 3, 4 or 5 MySQL
+        next if ( ( int($mysqlvermajor) == 3 ||
+                    int($mysqlvermajor) == 4 ||
+                    int($mysqlvermajor) == 5 ) && int($cve[1]) == 10);
+
+        if ( mysql_version_le( $cve[1], $cve[2], $cve[3] ) ) {
             badprint "$cve[4] : $cve[6]";
             $result{'CVE'}{'List'}{$cvefound}="$cve[4] : $cve[6]";
             $cvefound++;
@@ -1257,7 +1270,7 @@ sub get_kernel_info() {
 
     # only if /proc/sys/sunrpc exists
     my $tcp_slot_entries=`sysctl -n sunrpc.tcp_slot_table_entries 2>/dev/null`;
-    if ( -f "/proc/sys/sunrpc" and $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) {
+    if ( -f "/proc/sys/sunrpc" and ($tcp_slot_entries eq '' or $tcp_slot_entries < 100) ) {
         badprint
 "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
         push @generalrec, "setup Initial TCP slot entries greater than 100";
@@ -1606,9 +1619,6 @@ sub get_replication_status {
     }
 }
 
-# Checks for supported or EOL'ed MySQL versions
-my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro );
-
 sub validate_mysql_version {
     ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
       $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
@@ -1636,9 +1646,9 @@ sub mysql_version_ge {
     my ( $maj, $min, $mic ) = @_;
     $min ||= 0;
     $mic ||= 0;
-    return $mysqlvermajor > $maj
-      || $mysqlvermajor == $maj && ( $mysqlverminor > $min
-        || $mysqlverminor == $min && $mysqlvermicro >= $mic );
+    return int($mysqlvermajor) > int($maj)
+      || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) > int($min)  )
+      || ( int($mysqlverminor) == int($min) && int($mysqlvermicro) >= int($mic) );
 }
 
 # Checks if MySQL version is lower than equal to (major, minor, micro)
@@ -1646,9 +1656,9 @@ sub mysql_version_le {
     my ( $maj, $min, $mic ) = @_;
     $min ||= 0;
     $mic ||= 0;
-    return $mysqlvermajor < $maj
-      || $mysqlvermajor == $maj && ( $mysqlverminor < $min
-        || $mysqlverminor == $min && $mysqlvermicro <= $mic );
+    return int($mysqlvermajor) < int($maj)
+      || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) < int($min)  )
+      || ( int($mysqlverminor) == int($min) && int($mysqlvermicro) <= int($mic) );
 }
 
 # Checks if MySQL micro version is lower than equal to (major, minor, micro)
@@ -1790,7 +1800,9 @@ sub check_storage_engines {
         my ( $engine, $size, $count, $dsize, $isize );
         foreach my $line (@templist) {
             ( $engine, $size, $count, $dsize, $isize ) =
-              $line =~ /([a-zA-Z_]*)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/;
+              $line =~ /([a-zA-Z_]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/;
+            debugprint "Engine Found: $engine";
+            next unless (defined($engine));
             $size=0 unless  defined($size);
             $isize=0 unless  defined($isize);
             $dsize=0 unless  defined($dsize);
@@ -4084,6 +4096,8 @@ os_setup;                    # Set up some OS variables
 get_all_vars;                # Toss variables/status into hashes
 get_tuning_info;             # Get information about the tuning connexion
 validate_mysql_version;      # Check current MySQL version
+
+
 check_architecture;          # Suggest 64-bit upgrade
 system_recommendations;      # avoid to many service on the same host
 check_storage_engines;       # Show enabled storage engines
