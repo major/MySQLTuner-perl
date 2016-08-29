@@ -20,9 +20,9 @@ matrix:
         - addons:
              mariadb: "10.0"
           perl: "5.20"
-#        - addons:
-#             mariadb: "10.1"
-#          perl: "5.20"
+        - addons:
+             mariadb: "10.1"
+          perl: "5.20"
 
 before_install:
    - git clone git://github.com/haarg/perl-travis-helper
