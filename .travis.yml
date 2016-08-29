@@ -37,8 +37,9 @@ install:
    - cpanm --quiet --notest Data::Dumper
    - cpanm --quiet --notest Text::Template
    - cpanm --quiet --notest JSON
-   
-script:
+
+before_script:
    - echo -e "[client]\nuser=root\npassword=\"\"" > .my.cnf
    - chmod 600 .my.cnf
-   - ./mysqltuner.pl --idxstat --dbstat
+   
+script: ./mysqltuner.pl --idxstat --dbstat
