@@ -2,39 +2,44 @@ sudo: false
 
 language: perl
 perl:
-   - "blead"
-   - "5.20"
-   - "5.18"
-   - "5.16"
-   - "5.14"
-   - "5.12"
-   - "5.10"
-   - "5.8"
+  - "5.24"
+  - "5.22"
+  - "5.20"
+  - "5.18"
+  - "5.16"
+  - "5.14"
+  - "5.12"
+  - "5.10"
+  - "5.8"
 
 matrix:
-    include:
-        - addons:
-             mariadb: "5.5"
-          perl: "5.20"
-        - addons:
-             mariadb: "10.0"
-          perl: "5.20"
-#        - addons:
-#             mariadb: "10.1"
-#          perl: "5.20"
+  include:
+  - addons:
+      mariadb: "5.5"
+    perl: "5.20"
+  - addons:
+      mariadb: "10.0"
+    perl: "5.20"
+  - addons:
+      mariadb: "10.1"
+    perl: "5.20"
+  - addons:
+      mariadb: "10.2"
+    perl: "5.20"
 
 before_install:
-   - git clone git://github.com/haarg/perl-travis-helper
-   - source perl-travis-helper/init
-   - build-perl
-   - perl -V
+  - git clone git://github.com/haarg/perl-travis-helper
+  - source perl-travis-helper/init
+  - build-perl
+  - perl -V
 
 install:
-   - cpanm --quiet --notest Data::Dumper
-   - cpanm --quiet --notest Text::Template
-   - cpanm --quiet --notest JSON
-   
-script:
-   - echo -e "[client]\nuser=root\npassword=\"\"" > .my.cnf
-   - chmod 600 .my.cnf
-   - ./mysqltuner.pl --idxstat --dbstat
+  - cpanm --quiet --notest Data::Dumper
+  - cpanm --quiet --notest Text::Template
+  - cpanm --quiet --notest JSON
+
+before_script:
+  - echo -e "[client]\nuser=root\npassword=\"\"" > .my.cnf
+  - chmod 600 .my.cnf
+
+script: ./mysqltuner.pl --idxstat --dbstat
