@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.16
+# mysqltuner.pl - Version 1.6.17
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -54,7 +54,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.16";
+my $tunerversion = "1.6.17";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1056,20 +1056,13 @@ sub cve_recommendations {
         my @cve = split( ';', $cveline );
         debugprint "Comparing $mysqlvermajor\.$mysqlverminor\.$mysqlvermicro with $cve[1]\.$cve[2]\.$cve[3] : ".(mysql_version_le( $cve[1], $cve[2], $cve[3] )?'<=':'>');
        
-        # Fix some false positive in CVS parsing
-        next if (int($cve[1]) > 10 or int($cve[1]) == 6 or int($cve[1]) < 3);
-
-        # Removing 10.X.X CVE when version is a 3, 4 or 5 MySQL
-        next if ( ( int($mysqlvermajor) == 3 ||
-                    int($mysqlvermajor) == 4 ||
-                    int($mysqlvermajor) == 5 ) && int($cve[1]) == 10);
-
-        if ( mysql_version_le( $cve[1], $cve[2], $cve[3] ) ) {
-            badprint "$cve[4] : $cve[6]";
-            $result{'CVE'}{'List'}{$cvefound}="$cve[4] : $cve[6]";
+        # Avoid not major/minor version corresponding CVEs
+        next unless (int($cve[1])==$mysqlvermajor && int($cve[2])==$mysqlverminor);
+        if ( int($cve[3]) >= $mysqlvermicro ) {
+            badprint "$cve[4](<= $cve[1]\.$cve[2]\.$cve[3]) : $cve[6]";
+            $result{'CVE'}{'List'}{$cvefound}="$cve[4](<= $cve[1]\.$cve[2]\.$cve[3]) : $cve[6]";
             $cvefound++;
         }
-
     }
     close FH or die "Cannot close $opt{cvefile}: $!";
     $result{'CVE'}{'nb'}=$cvefound;
@@ -4132,7 +4125,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.16 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.17 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
