@@ -2737,7 +2737,7 @@ sub mysql_stats {
         push( @generalrec, "Set thread_cache_size to 4 as a starting value" );
         push( @adjvars,    "thread_cache_size (start at 4)" );
     } else {
-      if  ( defined($myvar{'thread_cache_size'}) and $myvar{'thread_cache_size'} == 'pools-of-threads') {
+      if  ( defined($myvar{'thread_cache_size'}) and $myvar{'thread_cache_size'} eq 'pools-of-threads') {
         infoprint "Thread cache hit rate: not used with pool-of-threads";
       } else {
         if ( $mycalc{'thread_cache_hit_rate'} <= 50 ) {
@@ -3482,6 +3482,11 @@ sub mysql_innodb {
             infoprint " +-- InnoDB Buffer Pool Instances: "
               . $myvar{'innodb_buffer_pool_instances'} . "";
         }
+        
+        if ( defined $myvar{'innodb_buffer_pool_chunk_size'} ) {
+            infoprint " +-- InnoDB Buffer Pool Chunk Size: "
+              . hr_bytes( $myvar{'innodb_buffer_pool_chunk_size'} ) . "";
+        }
         if ( defined $myvar{'innodb_additional_mem_pool_size'} ) {
             infoprint " +-- InnoDB Additional Mem Pool: "
               . hr_bytes( $myvar{'innodb_additional_mem_pool_size'} ) . "";
@@ -3567,28 +3572,21 @@ sub mysql_innodb {
         }
     }
 
-    # InnoDB Used Buffer Pool
-    if ( defined $mycalc{'pct_innodb_buffer_used'}
-        && $mycalc{'pct_innodb_buffer_used'} < 80 )
-    {
-        badprint "InnoDB Used buffer: "
-          . $mycalc{'pct_innodb_buffer_used'} . "% ("
-          . ( $mystat{'Innodb_buffer_pool_pages_total'} -
-              $mystat{'Innodb_buffer_pool_pages_free'} )
-          . " used/ "
-          . $mystat{'Innodb_buffer_pool_pages_total'}
-          . " total)";
-    }
-    else {
-        goodprint "InnoDB Used buffer: "
-          . $mycalc{'pct_innodb_buffer_used'} . "% ("
-          . ( $mystat{'Innodb_buffer_pool_pages_total'} -
-              $mystat{'Innodb_buffer_pool_pages_free'} )
-          . " used/ "
-          . $mystat{'Innodb_buffer_pool_pages_total'}
-          . " total)";
+    # InnoDB Used Buffer Pool Size vs CHUNK size
+    if ( ! defined ($myvar{'innodb_buffer_pool_chunk_size'}) ) {
+      infoprint "InnoDB Buffer Pool Chunk Size not used or defined in your version";
+    } else {
+      infoprint "Number of InnoDB Buffer Pool Chunk : ". int($myvar{'innodb_buffer_pool_size'}) / int( $myvar{'innodb_buffer_pool_chunk_size'}) .
+      " for ". $myvar{'innodb_buffer_pool_instances'}. " Buffer Pool Instance(s)";
     }
 
+    if ( int($myvar{'innodb_buffer_pool_size'}) % ( int( $myvar{'innodb_buffer_pool_chunk_size'}) * int($myvar{'innodb_buffer_pool_instances'})) ne 0 ) {
+      goodprint "innodb_buffer_pool_size is aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
+  } else {
+      badprint "innodb_buffer_pool_size is not aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
+      #push( @adjvars, "Adjust innodb_buffer_pool_instances, innodb_buffer_pool_chunk_size with innodb_buffer_pool_size" );
+      push( @adjvars, "innodb_buffer_pool_size must always be equal to or a multiple of innodb_buffer_pool_chunk_size * innodb_buffer_pool_instances" );
+  }
     # InnoDB Read efficency
     if ( defined $mycalc{'pct_read_efficiency'}
         && $mycalc{'pct_read_efficiency'} < 90 )
