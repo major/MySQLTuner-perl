@@ -1912,7 +1912,7 @@ sub check_storage_engines {
         my $total_free=0;
 	foreach my $table_line (@{$result{'Tables'}{'Fragmented tables'}}) {
 	    my ($table_name,$data_free)=split(/\s+/,$table_line);
-            $data_free=0 if  ! defined($data_free) or $data_free == '';
+            $data_free=0 if  (!defined($data_free) or $data_free eq '');
             $data_free=$data_free/1024/1024;
 	    $total_free+=$data_free;
             push( @generalrec,
