@@ -1036,9 +1036,9 @@ sub remove_empty {
 
 sub get_file_contents {
     my $file = shift;
-    open( FH, "< $file" ) or die "Can't open $file for read: $!";
-    my @lines = <FH>;
-    close FH or die "Cannot close $file: $!";
+    open(my $fh, "<", $file) or die "Can't open $file for read: $!";
+    my @lines = <$fh>;
+    close $fh or die "Cannot close $file: $!";
     remove_cr \@lines;
     return @lines;
 }
@@ -1056,8 +1056,8 @@ sub cve_recommendations {
 
     #prettyprint "Look for related CVE for $myvar{'version'} or lower in $opt{cvefile}";
     my $cvefound = 0;
-    open( FH, "<$opt{cvefile}" ) or die "Can't open $opt{cvefile} for read: $!";
-    while ( my $cveline = <FH> ) {
+    open(my $fh, "<", $opt{cvefile}) or die "Can't open $opt{cvefile} for read: $!";
+    while ( my $cveline = <$fh> ) {
         my @cve = split( ';', $cveline );
         debugprint "Comparing $mysqlvermajor\.$mysqlverminor\.$mysqlvermicro with $cve[1]\.$cve[2]\.$cve[3] : ".(mysql_version_le( $cve[1], $cve[2], $cve[3] )?'<=':'>');
        
@@ -1069,7 +1069,7 @@ sub cve_recommendations {
             $cvefound++;
         }
     }
-    close FH or die "Cannot close $opt{cvefile}: $!";
+    close $fh or die "Cannot close $opt{cvefile}: $!";
     $result{'CVE'}{'nb'}=$cvefound;
     if ( $cvefound == 0 ) {
         goodprint "NO SECURITY CVE FOUND FOR YOUR VERSION";
