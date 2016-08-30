@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.17
+# mysqltuner.pl - Version 1.6.18
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -54,7 +54,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.17";
+my $tunerversion = "1.6.18";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2737,7 +2737,7 @@ sub mysql_stats {
         push( @generalrec, "Set thread_cache_size to 4 as a starting value" );
         push( @adjvars,    "thread_cache_size (start at 4)" );
     } else {
-      if  ( defined($myvar{'thread_cache_size'}) and $myvar{'thread_cache_size'} eq 'pools-of-threads') {
+      if  ( defined($myvar{'thread_handling'}) and $myvar{'thread_handling'} eq 'pools-of-threads') {
         infoprint "Thread cache hit rate: not used with pool-of-threads";
       } else {
         if ( $mycalc{'thread_cache_hit_rate'} <= 50 ) {
@@ -4133,7 +4133,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.17 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.18 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
