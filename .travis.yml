@@ -35,11 +35,14 @@ before_install:
 
 install:
   - cpanm --quiet --notest Data::Dumper
-  - cpanm --quiet --notest Text::Template
   - cpanm --quiet --notest JSON
+  - cpanm --quiet --notest Perl::Critic
+  - cpanm --quiet --notest Text::Template
 
 before_script:
   - echo -e "[client]\nuser=root\npassword=\"\"" > .my.cnf
   - chmod 600 .my.cnf
 
-script: ./mysqltuner.pl --idxstat --dbstat
+script:
+  - perlcritic mysqltuner.pl
+  - ./mysqltuner.pl --idxstat --dbstat
