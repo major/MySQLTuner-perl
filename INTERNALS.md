@@ -150,6 +150,7 @@
 * Number of join performed without using indexes (<250)
 * Percentage of temporary table written on disk(<25%)
 * Thread cache (=4)
+* Thread cache hit ratio (>50%) if thread_handling is different of pools-of-threads
 * Table cache hit ratio(>2°%)
 * Percentage of open file and open file limit(<85%)
 * Percentage of table locks (<95%)
@@ -211,6 +212,8 @@
    * Ratio of write without locks
 * InnoDB Log Waits
    * Checks that no lock is used on Innodb Log.
+* InnoDB Chunk Size
+   * Check InnoDB Buffer Pool size is a multiple of InnoDB Buffer Pool chunk size * InnoDB Buffer Pool instances
 
 ## MySQLTuner ARIADB information
 
