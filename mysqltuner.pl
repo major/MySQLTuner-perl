@@ -366,12 +366,12 @@ sub pretty_uptime {
 # Retrieves the memory installed on this machine
 my ( $physical_memory, $swap_memory, $duflags );
 
-sub os_setup {
+sub memerror {
+    badprint "Unable to determine total memory/swap; use '--forcemem' and '--forceswap'";
+    exit 1;
+}
 
-    sub memerror {
-        badprint "Unable to determine total memory/swap; use '--forcemem' and '--forceswap'";
-        exit 1;
-    }
+sub os_setup {
     my $os = `uname`;
     $duflags = ( $os =~ /Linux/ ) ? '-b' : '';
     if ( $opt{'forcemem'} > 0 ) {
