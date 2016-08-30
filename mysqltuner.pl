@@ -2732,29 +2732,33 @@ sub mysql_stats {
     }
 
     # Thread cache
-    #if ( $myvar{'thread_cache_size'} eq 0 ) {
-    #    badprint "Thread cache is disabled";
-    #    push( @generalrec, "Set thread_cache_size to 4 as a starting value" );
-    #    push( @adjvars,    "thread_cache_size (start at 4)" );
-    #} else {
-    #    if ( $mycalc{'thread_cache_hit_rate'} <= 50 ) {
-    #       badprint
-    #          "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}% ("
-    #          . hr_num( $mystat{'Threads_created'} )
-    #          . " created / "
-    #          . hr_num( $mystat{'Connections'} )
-    #          . " connections)";
-    #        push( @adjvars,
-    #            "thread_cache_size (> $myvar{'thread_cache_size'})" );
-    #    } else {
-    #        goodprint
-    #          "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}% ("
-    #          . hr_num( $mystat{'Threads_created'} )
-    #          . " created / "
-    #          . hr_num( $mystat{'Connections'} )
-    #          . " connections)";
-    #    }
-    #}
+    if ( $myvar{'thread_cache_size'} eq 0 ) {
+        badprint "Thread cache is disabled";
+        push( @generalrec, "Set thread_cache_size to 4 as a starting value" );
+        push( @adjvars,    "thread_cache_size (start at 4)" );
+    } else {
+      if  ( defined($myvar{'thread_cache_size'}) and $myvar{'thread_cache_size'} == 'pools-of-threads') {
+        infoprint "Thread cache hit rate: not used with pool-of-threads";
+      } else {
+        if ( $mycalc{'thread_cache_hit_rate'} <= 50 ) {
+         badprint
+            "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}% ("
+            . hr_num( $mystat{'Threads_created'} )
+            . " created / "
+            . hr_num( $mystat{'Connections'} )
+            . " connections)";
+          push( @adjvars,
+              "thread_cache_size (> $myvar{'thread_cache_size'})" );
+        } else {
+          goodprint
+            "Thread cache hit rate: $mycalc{'thread_cache_hit_rate'}% ("
+            . hr_num( $mystat{'Threads_created'} )
+            . " created / "
+            . hr_num( $mystat{'Connections'} )
+            . " connections)";
+        }
+      }
+    }
 
     # Table cache
     my $table_cache_var = "";
