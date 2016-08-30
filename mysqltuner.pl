@@ -3578,15 +3578,15 @@ sub mysql_innodb {
     } else {
       infoprint "Number of InnoDB Buffer Pool Chunk : ". int($myvar{'innodb_buffer_pool_size'}) / int( $myvar{'innodb_buffer_pool_chunk_size'}) .
       " for ". $myvar{'innodb_buffer_pool_instances'}. " Buffer Pool Instance(s)";
-    }
 
-    if ( int($myvar{'innodb_buffer_pool_size'}) % ( int( $myvar{'innodb_buffer_pool_chunk_size'}) * int($myvar{'innodb_buffer_pool_instances'})) ne 0 ) {
-      goodprint "innodb_buffer_pool_size is aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
-  } else {
-      badprint "innodb_buffer_pool_size is not aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
-      #push( @adjvars, "Adjust innodb_buffer_pool_instances, innodb_buffer_pool_chunk_size with innodb_buffer_pool_size" );
-      push( @adjvars, "innodb_buffer_pool_size must always be equal to or a multiple of innodb_buffer_pool_chunk_size * innodb_buffer_pool_instances" );
-  }
+      if ( int($myvar{'innodb_buffer_pool_size'}) % ( int( $myvar{'innodb_buffer_pool_chunk_size'}) * int($myvar{'innodb_buffer_pool_instances'})) ne 0 ) {
+        goodprint "innodb_buffer_pool_size is aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
+      } else {
+        badprint "innodb_buffer_pool_size is not aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
+        #push( @adjvars, "Adjust innodb_buffer_pool_instances, innodb_buffer_pool_chunk_size with innodb_buffer_pool_size" );
+        push( @adjvars, "innodb_buffer_pool_size must always be equal to or a multiple of innodb_buffer_pool_chunk_size * innodb_buffer_pool_instances" );
+      }
+    }
     # InnoDB Read efficency
     if ( defined $mycalc{'pct_read_efficiency'}
         && $mycalc{'pct_read_efficiency'} < 90 )
