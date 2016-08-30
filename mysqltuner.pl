@@ -30,7 +30,7 @@
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
-#   Joe Ashcraft           Jean-Marie Renouard
+#   Joe Ashcraft           Jean-Marie Renouard  Christian Loos
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -72,6 +72,7 @@ my %opt = (
     "port"           => 0,
     "user"           => 0,
     "pass"           => 0,
+    "password"       => 0,
     "skipsize"       => 0,
     "checkversion"   => 0,
     "updateversion"  => 0,
@@ -111,7 +112,8 @@ my $getOptionsCheck = GetOptions(
     'template=s',     'reportfile=s',
     'cvefile=s',      'bannedports=s',
     'updateversion',  'maxportallowed=s',
-    'verbose',        'sysstat'
+    'verbose',        'sysstat',
+    'password=s',
 );
 
 #If params are incorrect return help
@@ -181,6 +183,9 @@ my $basic_password_files =
   ( $opt{passwordfile} eq "0" )
   ? abs_path( dirname(__FILE__) ) . "/basic_passwords.txt"
   : abs_path( $opt{passwordfile} );
+
+# Related to password option
+$opt{pass}=$opt{password} if ($opt{pass} eq 0 and $opt{password} ne 0);
 
 # for RPM distributions
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
@@ -1907,6 +1912,7 @@ sub check_storage_engines {
         my $total_free=0;
 	foreach my $table_line (@{$result{'Tables'}{'Fragmented tables'}}) {
 	    my ($table_name,$data_free)=split(/\s+/,$table_line);
+            $data_free=0 unless defined($data_free) or $data_free == '';
             $data_free=$data_free/1024/1024;
 	    $total_free+=$data_free;
             push( @generalrec,
@@ -4326,6 +4332,10 @@ Jean-Marie Renouard
 =item *
 
 Stephan GroBberndt
+
+=item *
+
+Christian Loos
 
 =back
 
