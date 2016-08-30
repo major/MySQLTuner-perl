@@ -4038,7 +4038,7 @@ sub dump_result {
     debugprint "HTML REPORT: $opt{'reportfile'}";
 
     if ( $opt{'reportfile'} ne 0 ) {
-        eval "{ use Text::Template }";
+        eval {require Text::Template};
         if ($@) {
             badprint "Text::Template Module is needed.";
             exit 1;
@@ -4062,7 +4062,7 @@ sub dump_result {
         close $fh;
     }
     if ( $opt{'json'} ne 0 ) {
-        eval "{ use JSON }";
+        eval {require JSON};
         if ($@) {
             print "JSON Module is needed.";
             exit 1;
