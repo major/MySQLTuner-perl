@@ -366,12 +366,12 @@ sub pretty_uptime {
 # Retrieves the memory installed on this machine
 my ( $physical_memory, $swap_memory, $duflags );
 
-sub os_setup {
+sub memerror {
+    badprint "Unable to determine total memory/swap; use '--forcemem' and '--forceswap'";
+    exit 1;
+}
 
-    sub memerror {
-        badprint "Unable to determine total memory/swap; use '--forcemem' and '--forceswap'";
-        exit 1;
-    }
+sub os_setup {
     my $os = `uname`;
     $duflags = ( $os =~ /Linux/ ) ? '-b' : '';
     if ( $opt{'forcemem'} > 0 ) {
@@ -1026,8 +1026,12 @@ sub get_all_vars {
 }
 
 sub remove_cr {
-    map { s/\n$//g; } @_;
-    map { s/^\s+$//g; } @_;
+    return map {
+        my $line = $_;
+        $line =~ s/\n$//g;
+        $line =~ s/^\s+$//g;
+        $line;
+    } @_;
 }
 
 sub remove_empty {
@@ -1036,10 +1040,10 @@ sub remove_empty {
 
 sub get_file_contents {
     my $file = shift;
-    open( FH, "< $file" ) or die "Can't open $file for read: $!";
-    my @lines = <FH>;
-    close FH or die "Cannot close $file: $!";
-    remove_cr \@lines;
+    open(my $fh, "<", $file) or die "Can't open $file for read: $!";
+    my @lines = <$fh>;
+    close $fh or die "Cannot close $file: $!";
+    @lines = remove_cr @lines;
     return @lines;
 }
 
@@ -1056,8 +1060,8 @@ sub cve_recommendations {
 
     #prettyprint "Look for related CVE for $myvar{'version'} or lower in $opt{cvefile}";
     my $cvefound = 0;
-    open( FH, "<$opt{cvefile}" ) or die "Can't open $opt{cvefile} for read: $!";
-    while ( my $cveline = <FH> ) {
+    open(my $fh, "<", $opt{cvefile}) or die "Can't open $opt{cvefile} for read: $!";
+    while ( my $cveline = <$fh> ) {
         my @cve = split( ';', $cveline );
         debugprint "Comparing $mysqlvermajor\.$mysqlverminor\.$mysqlvermicro with $cve[1]\.$cve[2]\.$cve[3] : ".(mysql_version_le( $cve[1], $cve[2], $cve[3] )?'<=':'>');
        
@@ -1069,7 +1073,7 @@ sub cve_recommendations {
             $cvefound++;
         }
     }
-    close FH or die "Cannot close $opt{cvefile}: $!";
+    close $fh or die "Cannot close $opt{cvefile}: $!";
     $result{'CVE'}{'nb'}=$cvefound;
     if ( $cvefound == 0 ) {
         goodprint "NO SECURITY CVE FOUND FOR YOUR VERSION";
@@ -1084,9 +1088,11 @@ sub cve_recommendations {
 
 sub get_opened_ports {
     my @opened_ports = `netstat -ltn`;
-    map {
-        s/.*:(\d+)\s.*$/$1/;
-        s/\D//g;
+    @opened_ports = map {
+        my $v = $_;
+        $v =~ s/.*:(\d+)\s.*$/$1/;
+        $v =~ s/\D//g;
+        $v;
     } @opened_ports;
     @opened_ports = sort { $a <=> $b } grep { !/^$/ } @opened_ports;
     debugprint Dumper \@opened_ports;
@@ -1111,16 +1117,18 @@ sub get_process_memory {
 
 sub get_other_process_memory {
     my @procs = `ps eaxo pid,command`;
-    map {
-        s/.*PID.*//;
-        s/.*mysqld.*//;
-        s/.*\[.*\].*//;
-        s/^\s+$//g;
-        s/.*PID.*CMD.*//;
-        s/.*systemd.*//;
+    @procs = map {
+        my $v = $_;
+        $v =~ s/.*PID.*//;
+        $v =~ s/.*mysqld.*//;
+        $v =~ s/.*\[.*\].*//;
+        $v =~ s/^\s+$//g;
+        $v =~ s/.*PID.*CMD.*//;
+        $v =~ s/.*systemd.*//;
+        $v =~ s/\s*?(\d+)\s*.*/$1/g;
+        $v;
     } @procs;
-    map { s/\s*?(\d+)\s*.*/$1/g; } @procs;
-    remove_cr @procs;
+    @procs = remove_cr @procs;
     @procs = remove_empty @procs;
     my $totalMemOther = 0;
     map { $totalMemOther += get_process_memory($_); } @procs;
@@ -1130,7 +1138,6 @@ sub get_other_process_memory {
 sub get_os_release {
     if ( -f "/etc/lsb-release" ) {
         my @info_release = get_file_contents "/etc/lsb-release";
-        remove_cr @info_release;
         my $os_relase = $info_release[3];
         $os_relase =~ s/.*="//;
         $os_relase =~ s/"$//;
@@ -1139,13 +1146,11 @@ sub get_os_release {
 
     if ( -f "/etc/system-release" ) {
         my @info_release = get_file_contents "/etc/system-release";
-        remove_cr @info_release;
         return $info_release[0];
     }
 
     if ( -f "/etc/os-release" ) {
         my @info_release = get_file_contents "/etc/os-release";
-        remove_cr @info_release;
         my $os_relase = $info_release[0];
         $os_relase =~ s/.*="//;
         $os_relase =~ s/"$//;
@@ -1154,7 +1159,6 @@ sub get_os_release {
 
     if ( -f "/etc/issue" ) {
         my @info_release = get_file_contents "/etc/issue";
-        remove_cr @info_release;
         my $os_relase = $info_release[0];
         $os_relase =~ s/\s+\\n.*//;
         return $os_relase;
@@ -1166,7 +1170,11 @@ sub get_fs_info() {
     my @sinfo = `df -P | grep '%'`;
     my @iinfo = `df -Pi| grep '%'`;
     shift @iinfo;
-    map { s/.*\s(\d+)%\s+(.*)/$1\t$2/g } @sinfo;
+    @sinfo = map {
+        my $v= $_;
+        $v =~ s/.*\s(\d+)%\s+(.*)/$1\t$2/g;
+        $v;
+    } @sinfo;
     foreach my $info (@sinfo) {
         next if $info =~ m{(\d+)\t/(run|dev|sys|proc)($|/)};
         if ( $info =~ /(\d+)\t(.*)/ ) {
@@ -1181,7 +1189,11 @@ sub get_fs_info() {
         }
     }
 
-    map { s/.*\s(\d+)%\s+(.*)/$1\t$2/g } @iinfo;
+    @iinfo = map {
+        my $v = $_;
+        $v =~ s/.*\s(\d+)%\s+(.*)/$1\t$2/g;
+        $v;
+    } @iinfo;
     foreach my $info (@iinfo) {
         next if $info =~ m{(\d+)\t/(run|dev|sys|proc)($|/)};
         if ( $info =~ /(\d+)\t(.*)/ ) {
@@ -1221,7 +1233,7 @@ sub infocmd {
     my $cmd = "@_";
     debugprint "CMD: $cmd";
     my @result = `$cmd`;
-    remove_cr @result;
+    @result = remove_cr @result;
     for my $l (@result) {
         infoprint "$l";
     }
@@ -1231,7 +1243,7 @@ sub infocmd_tab {
     my $cmd = "@_";
     debugprint "CMD: $cmd";
     my @result = `$cmd`;
-    remove_cr @result;
+    @result = remove_cr @result;
     for my $l (@result) {
         infoprint "\t$l";
     }
@@ -1240,7 +1252,7 @@ sub infocmd_tab {
 sub infocmd_one {
     my $cmd    = "@_";
     my @result = `$cmd`;
-    remove_cr @result;
+    @result = remove_cr @result;
     return join ', ', @result;
 }
 
@@ -3201,7 +3213,7 @@ sub get_wsrep_options {
     return () unless defined $myvar{'wsrep_provider_options'};
 
     my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
-    remove_cr @galera_options;
+    @galera_options = remove_cr @galera_options;
     @galera_options = remove_empty @galera_options;
     debugprint Dumper( \@galera_options );
     return @galera_options;
@@ -4038,7 +4050,7 @@ sub dump_result {
     debugprint "HTML REPORT: $opt{'reportfile'}";
 
     if ( $opt{'reportfile'} ne 0 ) {
-        eval "{ use Text::Template }";
+        eval {require Text::Template};
         if ($@) {
             badprint "Text::Template Module is needed.";
             exit 1;
@@ -4062,9 +4074,9 @@ sub dump_result {
         close $fh;
     }
     if ( $opt{'json'} ne 0 ) {
-        eval "{ use JSON }";
+        eval {require JSON};
         if ($@) {
-            print "JSON Module is needed.";
+            print "$bad JSON Module is needed.\n";
             exit 1;
         }
         my $json = JSON->new->allow_nonref;
