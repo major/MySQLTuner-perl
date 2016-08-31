@@ -3578,8 +3578,8 @@ sub mysql_innodb {
     } else {
       infoprint "Number of InnoDB Buffer Pool Chunk : ". int($myvar{'innodb_buffer_pool_size'}) / int( $myvar{'innodb_buffer_pool_chunk_size'}) .
       " for ". $myvar{'innodb_buffer_pool_instances'}. " Buffer Pool Instance(s)";
-
-      if ( int($myvar{'innodb_buffer_pool_size'}) % ( int( $myvar{'innodb_buffer_pool_chunk_size'}) * int($myvar{'innodb_buffer_pool_instances'})) ne 0 ) {
+ 
+      if ( int($myvar{'innodb_buffer_pool_size'}) % ( int( $myvar{'innodb_buffer_pool_chunk_size'}) * int($myvar{'innodb_buffer_pool_instances'})) eq 0 ) {
         goodprint "innodb_buffer_pool_size is aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
       } else {
         badprint "innodb_buffer_pool_size is not aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
