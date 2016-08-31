@@ -886,7 +886,7 @@ sub mysql_setup {
 sub select_array {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
+    my @result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>/dev/null`;
     if ( $? != 0 ) {
         badprint "failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -905,7 +905,7 @@ sub select_array {
 sub select_one {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my $result = `$mysqlcmd $mysqllogin -Bse "$req" 2>>/dev/null`;
+    my $result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>/dev/null`;
     if ( $? != 0 ) {
         badprint "failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
