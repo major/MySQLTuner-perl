@@ -1081,7 +1081,7 @@ sub cve_recommendations {
         goodprint "NO SECURITY CVE FOUND FOR YOUR VERSION";
         return;
     }
-    if ($mysqlvermajor eq 5 and $mysqlverminor eq 7) {
+    if ($mysqlvermajor eq 5 and $mysqlverminor eq 5) {
       infoprint "False positive CVE(s) for MySQL and MariaDB 5.5.x can be found.";
       infoprint "Check careful each CVE for those particular versions";
     }
