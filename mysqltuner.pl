@@ -1075,9 +1075,15 @@ sub cve_recommendations {
     }
     close $fh or die "Cannot close $opt{cvefile}: $!";
     $result{'CVE'}{'nb'}=$cvefound;
+
+    my $cve_warning_notes="";
     if ( $cvefound == 0 ) {
         goodprint "NO SECURITY CVE FOUND FOR YOUR VERSION";
         return;
+    }
+    if ($mysqlvermajor eq 5 and $mysqlverminor eq 7) {
+      infoprint "False positive CVE(s) for MySQL and MariaDB 5.5.x can be found.";
+      infoprint "Check careful each CVE for those particular versions";
     }
     badprint $cvefound . " CVE(s) found for your MySQL release.";
     push( @generalrec,
