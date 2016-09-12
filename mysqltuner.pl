@@ -2598,7 +2598,7 @@ sub mysql_stats {
     # name resolution
     if ( not defined( $result{'Variables'}{'skip_name_resolve'} ) ) {
         infoprint
-"Skipped name resolution test due to missing skip_name_resolve in system variables. ?More info?";
+"Skipped name resolution test due to missing skip_name_resolve in system variables.";
     }
     elsif ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF' ) {
         badprint
