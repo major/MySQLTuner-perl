@@ -3132,7 +3132,7 @@ sub get_pf_memory {
     return 0 unless defined $myvar{'performance_schema'};
     return 0 if $myvar{'performance_schema'} eq 'OFF';
 
-    my @infoPFSMemory = grep /performance_schema.memory/,
+    my @infoaMemory = grep /performance_schema.memory/,
       select_array("SHOW ENGINE PERFORMANCE_SCHEMA STATUS");
     return 0 if scalar(@infoPFSMemory) == 0;
     $infoPFSMemory[0] =~ s/.*\s+(\d+)$/$1/g;
@@ -3160,6 +3160,16 @@ sub mysqsl_pfs {
         infoprint "Sys schema isn't installed.";
         return;
     }
+
+    #*High Cost SQL statements 
+    #select * from sys.`x$statement_analysis` 
+    #* Top 5% slower queries 
+    #select * from sys.`x$statements_with_runtimes_in_95th_percentile` 
+    #*Use temporary tables 
+    #select * from sys.`statements_with_temp_tables` 
+    #*Unused Indexes 
+    #select * from sys.`schema_unused_indexes` 
+    #* Full table scans select * from sys.`schema_tables_with_full_table_scans` 
 
 }
 
