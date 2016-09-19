@@ -24,7 +24,7 @@
 * [GALERA information](#mysqltuner-galera-information)
 * [TOKUDB information](#mysqltuner-tokudb-information)
 * [ThreadPool information](#mysqltuner-threadpool-information)
-
+* [Performance Schema information](#mysqltuner-pfs-information)
 ## MySQLTuner steps
 
 * Header Print
@@ -269,3 +269,13 @@
 
 * thread_pool_size between 16 to 36 for Innodb usage
 * thread_pool_size between 4 to 8 for MyIsam usage
+
+## MySQLTuner performance schema and sysschema information
+
+* High Cost SQL statements
+* Top 5% slower queries
+* Use temporary tables
+* Unused Indexes
+* Full table scans 
+* thread_pool_size between 4 to 8 for MyIsam usage
+
