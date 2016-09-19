@@ -24,7 +24,8 @@
 * [GALERA information](#mysqltuner-galera-information)
 * [TOKUDB information](#mysqltuner-tokudb-information)
 * [ThreadPool information](#mysqltuner-threadpool-information)
-* [Performance Schema information](#mysqltuner-pfs-information)
+* [Performance Schema information](#mysqltuner-performance-schema-and-sysschema-information)
+* 
 ## MySQLTuner steps
 
 * Header Print
