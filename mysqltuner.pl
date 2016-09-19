@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.18
+# mysqltuner.pl - Version 1.6.19
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -54,7 +54,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.18";
+my $tunerversion = "1.6.19";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3132,7 +3132,7 @@ sub get_pf_memory {
     return 0 unless defined $myvar{'performance_schema'};
     return 0 if $myvar{'performance_schema'} eq 'OFF';
 
-    my @infoaMemory = grep /performance_schema.memory/,
+    my @infoPFSMemory = grep /performance_schema.memory/,
       select_array("SHOW ENGINE PERFORMANCE_SCHEMA STATUS");
     return 0 if scalar(@infoPFSMemory) == 0;
     $infoPFSMemory[0] =~ s/.*\s+(\d+)$/$1/g;
@@ -3153,24 +3153,53 @@ sub mysqsl_pfs {
     infoprint "Performance schema is enabled.";
     infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
 
-    if ( grep /^sys$/, select_array("SHOW DATABASES") ) {
-        infoprint "Sys schema is installed.";
-    }
-    else {
-        infoprint "Sys schema isn't installed.";
-        return;
+    unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
+      infoprint "Sys schema isn't installed.";
+      return;
     }
 
+    infoprint "Sys schema is installed.";
+    
+    
     #*High Cost SQL statements 
-    #select * from sys.`x$statement_analysis` 
-    #* Top 5% slower queries 
-    #select * from sys.`x$statements_with_runtimes_in_95th_percentile` 
-    #*Use temporary tables 
-    #select * from sys.`statements_with_temp_tables` 
-    #*Unused Indexes 
-    #select * from sys.`schema_unused_indexes` 
-    #* Full table scans select * from sys.`schema_tables_with_full_table_scans` 
+    infoprint "Top 5 Most latency statements:";
+    my $nbL=1;
+    for my $lQuery(select_array ('select query, avg_latency from sys.statement_analysis order by avg_latency desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
 
+    #* Top 5% slower queries 
+    infoprint "Top 5 slower queries:";
+    $nbL=1;
+    for my $lQuery(select_array ('select query, exec_count from sys.statements_with_runtimes_in_95th_percentile order by exec_count desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery s";
+      $nbL++;
+    }
+    
+    #*Use temporary tables 
+    infoprint "Some queries using temp table:";
+    $nbL=1;
+    for my $lQuery(select_array ('select query from sys.statements_with_temp_tables LIMIT 20')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+   
+    #*Unused Indexes 
+    infoprint "Unused indexes:";
+    $nbL=1;
+    for my $lQuery(select_array ('select * from sys.schema_unused_indexes')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    #* Full table scans 
+    #select * from sys.`schema_tables_with_full_table_scans` 
+    infoprint "Tables with full table scans:";
+    $nbL=1;
+    for my $lQuery(select_array ('select * from sys.schema_tables_with_full_table_scans order by rows_full_scanned DESC')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
 }
 
 # Recommendations for Ariadb
@@ -4229,7 +4258,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.18 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.19 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
