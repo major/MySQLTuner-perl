@@ -24,10 +24,10 @@ MySQLTuner needs you:
 Compatibility:
 ====
 
-* MySQL 5.7 (partial support)
+* MySQL 5.7 (full support)
 * MySQL 5.6 (full support)
 * MySQL 5.5 (full support)
-* MariaDB 10.1 (partial support)
+* MariaDB 10.1 (full support)
 * MariaDB 10.0 (full support)
 * Percona Server 5.6 (full support)
 * Percona XtraDB cluster (full support)
@@ -172,6 +172,7 @@ Connection and Authentication
 	--port <port>     Port to use for connection (default: 3306)
 	--user <username> Username to use for authentication	
 	--pass <password> Password to use for authentication
+	--defaults-file <path> defaulfs file for credentials
 
 Since you are using a remote host, use parameters to supply values from the OS
 
