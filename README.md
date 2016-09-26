@@ -79,7 +79,8 @@ __Usage:__ Minimal usage remotely
 
 __Usage:__ Enable maximum output information around MySQL/MariaDb without debugging 
 
-	perl mysqltuner.pl --buffers --dbstat --idxstat
+	perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat
+	perl mysqltuner.pl --verbose
 
 __Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
 
