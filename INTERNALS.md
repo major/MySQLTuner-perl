@@ -273,10 +273,36 @@
 
 ## MySQLTuner performance schema and sysschema information
 
+* sys Schema version
 * High Cost SQL statements
 * Top 5% slower queries
 * Use temporary tables
 * Unused Indexes
 * Full table scans 
-* thread_pool_size between 4 to 8 for MyIsam usage
-
+* Top 5 host per connection 
+* Top 5 host per statement 
+* Top 5 host per statement latency 
+* Top 5 host per lock latency 
+* Top 5 host per nb full scans 
+* Top 5 host per rows sent 
+* Top 5 host per rows modified 
+* Top 5 host per io 
+* Top 5 host per io latency 
+* Top IO type order by total io
+* Top IO type order by total latency 
+* Top IO type order by max latency 
+* Top Stages order by total io 
+* Top Stages order by total latency 
+* Top Stages order by avg latency 
+* Top 5 host per table scans 
+* Top 5 Most latency statements 
+* Top 5 slower queries 
+* Top 10 nb statement type 
+* Top statement by total latency 
+* Top statement by lock latency 
+* Top statement by full scans 
+* Top statement by rows sent 
+* Top statement by rows modified 
+* Some queries using temp table 
+* Unused indexes
+* Tables with full table scans 

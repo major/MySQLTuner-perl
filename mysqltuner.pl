@@ -3162,45 +3162,250 @@ sub mysqsl_pfs {
     infoprint "Sys schema is installed.";
     return if ( $opt{pfstat} == 0 );
     
-    #*High Cost SQL statements 
-    infoprint "Top 5 Most latency statements:";
+    infoprint "Sys schema Version: ".select_one("select sys_version from sys.version");
+    # Top host per connection 
+    subheaderprint "Performance schema: Top 5 host per connection";
     my $nbL=1;
+    for my $lQuery(select_array ('select host, total_connections from sys.host_summary order by  total_connections desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery conn(s)";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per statement 
+    subheaderprint "Performance schema: Top 5 host per statement";
+    $nbL=1;
+    for my $lQuery(select_array ('select host, statements from sys.host_summary order by statements desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery stmt(s)";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per statement latency
+    subheaderprint "Performance schema: Top 5 host per statement latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select host, statement_avg_latency from sys.host_summary order by statement_avg_latency desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per lock latency
+    subheaderprint "Performance schema: Top 5 host per lock latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select host, lock_latency from sys.host_summary_by_statement_latency order by lock_latency desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+
+    # Top host per full scans
+    subheaderprint "Performance schema: Top 5 host per nb full scans";
+    $nbL=1;
+    for my $lQuery(select_array ('select host, full_scans from sys.host_summary_by_statement_latency order by full_scans desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    
+    # Top host per row_sent
+    subheaderprint "Performance schema: Top 5 host per rows sent";
+    $nbL=1;
+    for my $lQuery(select_array ('select host, rows_sent from sys.host_summary_by_statement_latency order by rows_sent desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
+    # Top host per row modified
+    subheaderprint "Performance schema: Top 5 host per rows modified";
+    $nbL=1;
+    for my $lQuery(select_array ('select host, rows_affected from sys.host_summary_by_statement_latency order by rows_affected desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per io
+    subheaderprint "Performance schema: Top 5 host per io";
+    $nbL=1;
+    for my $lQuery(select_array ('select host, file_ios from sys.host_summary order by file_ios desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per io latency
+    subheaderprint "Performance schema: Top 5 host per io latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select host, file_io_latency from sys.host_summary order by file_io_latency desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top IO type order by total io";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select substring(event_name,14), SUM(total)AS total from sys.host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY total DESC;')) {
+      infoprint " +-- $nbL: $lQuery i/o";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top IO type order by total latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select substring(event_name,14), format_time(ROUND(SUM(total_latency),1)) AS total_latency from sys.host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY total_latency DESC;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top IO type order by max latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select substring(event_name,14), MAX(max_latency) as max_latency from sys.host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY max_latency DESC;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
+    
+    subheaderprint "Performance schema: Top Stages order by total io";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select substring(event_name,7), SUM(total)AS total from sys.host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY total DESC;')) {
+      infoprint " +-- $nbL: $lQuery i/o";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top Stages order by total latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select substring(event_name,7), format_time(ROUND(SUM(total_latency),1)) AS total_latency from sys.host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY total_latency DESC;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top Stages order by avg latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select substring(event_name,7), MAX(avg_latency) as avg_latency from sys.host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY avg_latency DESC;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
+
+
+
+
+    # Top host per table scans
+    subheaderprint "Performance schema: Top 5 host per table scans";
+    $nbL=1;
+    for my $lQuery(select_array ('select host, table_scans from sys.host_summary order by table_scans desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+
+    #*High Cost SQL statements 
+    subheaderprint "Performance schema: Top 5 Most latency statements";
+    $nbL=1;
     for my $lQuery(select_array ('select query, avg_latency from sys.statement_analysis order by avg_latency desc LIMIT 5')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
-
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
     #* Top 5% slower queries 
-    infoprint "Top 5 slower queries:";
+    subheaderprint "Performance schema: Top 5 slower queries";
     $nbL=1;
     for my $lQuery(select_array ('select query, exec_count from sys.statements_with_runtimes_in_95th_percentile order by exec_count desc LIMIT 5')) {
       infoprint " +-- $nbL: $lQuery s";
       $nbL++;
     }
-    
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # 
+    subheaderprint "Performance schema: Top 10 nb statement type";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select statement, sum(total) as total from host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top statement by total latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select statement, sum(total_latency) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top statement by lock latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select statement, sum(lock_latency) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top statement by full scans";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select statement, sum(full_scans) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top statement by rows sent";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select statement, sum(rows_sent) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+  subheaderprint "Performance schema: Top statement by rows modified";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select statement, sum(rows_affected) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+
+
     #*Use temporary tables 
-    infoprint "Some queries using temp table:";
+    subheaderprint "Performance schema: Some queries using temp table";
     $nbL=1;
     for my $lQuery(select_array ('select query from sys.statements_with_temp_tables LIMIT 20')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
-   
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
     #*Unused Indexes 
-    infoprint "Unused indexes:";
+    subheaderprint "Performance schema: Unused indexes";
     $nbL=1;
     for my $lQuery(select_array ('select * from sys.schema_unused_indexes')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
     #* Full table scans 
     #select * from sys.`schema_tables_with_full_table_scans` 
-    infoprint "Tables with full table scans:";
+    subheaderprint "Performance schema: Tables with full table scans";
     $nbL=1;
     for my $lQuery(select_array ('select * from sys.schema_tables_with_full_table_scans order by rows_full_scanned DESC')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
 }
 
 # Recommendations for Ariadb
