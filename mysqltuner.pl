@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.19
+# mysqltuner.pl - Version 1.6.20
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -54,7 +54,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.19";
+my $tunerversion = "1.6.20";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -84,13 +84,15 @@ my %opt = (
     "dbstat"         => 0,
     "idxstat"        => 0,
     "sysstat"        => 0,
+    "pfstat"         => 0,
     "skippassword"   => 0,
     "noask"          => 0,
     "template"       => 0,
     "json"           => 0,
     "prettyjson"     => 0,
     "reportfile"     => 0,
-    "verbose"        => 0
+    "verbose"        => 0,
+    "defaults-file"  => '',
 );
 
 # Gather the options from the command line
@@ -113,7 +115,8 @@ my $getOptionsCheck = GetOptions(
     'cvefile=s',      'bannedports=s',
     'updateversion',  'maxportallowed=s',
     'verbose',        'sysstat',
-    'password=s',
+    'password=s',     'pfstat',
+    'defaults-file=s'
 );
 
 #If params are incorrect return help
@@ -142,6 +145,7 @@ sub usage {
       . "      --port <port>        Port to use for connection (default: 3306)\n"
       . "      --user <username>    Username to use for authentication\n"
       . "      --pass <password>    Password to use for authentication\n"
+      . "      --defaults-file <path>  Path to a custom .my.cnf\n"
       . "      --mysqladmin <path>  Path to a custom mysqladmin executable\n"
       . "      --mysqlcmd <path>    Path to a custom mysql executable\n" . "\n"
       . "      --noask              Don't ask password if needed\n" . "\n"
@@ -163,6 +167,7 @@ sub usage {
       . "      --dbstat             Print database information\n"
       . "      --idxstat            Print index information\n"
       . "      --sysstat            Print system information\n"
+      . "      --pfstat             Print Performance schema information\n"
       . "      --bannedports        Ports banned separated by comma(,)\n"
       . "      --maxportallowed     Number of ports opened allowed on this hosts\n"
       . "      --cvefile            CVE File for vulnerability checks\n"
@@ -198,6 +203,7 @@ if ( $opt{verbose} ) {
     $opt{idxstat}      = 1;    #Print index information
     $opt{sysstat}      = 1;    #Print index information
     $opt{buffers}      = 1;    #Print global and per-thread buffer values
+    $opt{pfstat}       = 1;    #Print performance schema info.
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
 
@@ -798,6 +804,19 @@ sub mysql_setup {
             badprint
 "Attempted to use login credentials from debian maintenance account, but they failed.";
             exit 1;
+        }
+    } elsif ($opt{'defaults-file'} ne 0 and -r "$opt{'defaults-file'}") {
+      # defaults-file
+      debugprint "defaults file detected: $opt{'defaults-file'}";
+      my $mysqlclidefaults = `$mysqlcmd --print-defaults`;
+      debugprint "MySQL Client Default File: $opt{'defaults-file'}";
+    
+        $mysqllogin = "--defaults-file=".$opt{'defaults-file'};
+        my $loginstatus = `$mysqladmincmd $mysqllogin ping 2>&1`;
+        if ( $loginstatus =~ /mysqld is alive/ ) {
+            goodprint
+              "Logged in using credentials from defaults file account.";
+            return 1;
         }
     }
     else {
@@ -2870,8 +2889,7 @@ sub mysql_stats {
               . hr_num( $myvar{'open_files_limit'} ) . ")";
             push( @adjvars,
                 "open_files_limit (> " . $myvar{'open_files_limit'} . ")" );
-        }
-        else {
+        } else {
             goodprint "Open file limit used: $mycalc{'pct_files_open'}% ("
               . hr_num( $mystat{'Open_files'} ) . "/"
               . hr_num( $myvar{'open_files_limit'} ) . ")";
@@ -2885,8 +2903,7 @@ sub mysql_stats {
 "Table locks acquired immediately: $mycalc{'pct_table_locks_immediate'}%";
             push( @generalrec,
                 "Optimize queries and/or use InnoDB to reduce lock wait" );
-        }
-        else {
+        } else {
             goodprint
 "Table locks acquired immediately: $mycalc{'pct_table_locks_immediate'}% ("
               . hr_num( $mystat{'Table_locks_immediate'} )
@@ -2900,8 +2917,7 @@ sub mysql_stats {
     # Binlog cache
     if ( defined $mycalc{'pct_binlog_cache'} ) {
         if (   $mycalc{'pct_binlog_cache'} < 90
-            && $mystat{'Binlog_cache_use'} > 0 )
-        {
+            && $mystat{'Binlog_cache_use'} > 0 ) {
             badprint "Binlog cache memory access: "
               . $mycalc{'pct_binlog_cache'} . "% ( "
               . (
@@ -2917,8 +2933,7 @@ sub mysql_stats {
                     "binlog_cache_size ("
                   . hr_bytes( $myvar{'binlog_cache_size'} + 16 * 1024 * 1024 )
                   . " ) " );
-        }
-        else {
+        } else {
             goodprint "Binlog cache memory access: "
               . $mycalc{'pct_binlog_cache'} . "% ( "
               . (
@@ -2934,11 +2949,9 @@ sub mysql_stats {
     # Performance options
     if ( !mysql_version_ge( 5, 1 ) ) {
         push( @generalrec, "Upgrade to MySQL 5.5+ to use asynchronous write" );
-    }
-    elsif ( $myvar{'concurrent_insert'} eq "OFF" ) {
+    } elsif ( $myvar{'concurrent_insert'} eq "OFF" ) {
         push( @generalrec, "Enable concurrent_insert by setting it to 'ON'" );
-    }
-    elsif ( $myvar{'concurrent_insert'} eq 0 ) {
+    } elsif ( $myvar{'concurrent_insert'} eq 0 ) {
         push( @generalrec, "Enable concurrent_insert by setting it to 1" );
     }
 }
@@ -2969,9 +2982,7 @@ sub mysql_myisam {
               . hr_num( $myvar{'key_buffer_size'} )
               . " cache)";
         }
-    }
-    else {
-
+    } else {
         # No queries have run that would use keys
         debugprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
           . hr_num(
@@ -2986,16 +2997,13 @@ sub mysql_myisam {
         push( @generalrec,
             "Unable to calculate MyISAM indexes on remote MySQL server < 5.0.0"
         );
-    }
-    elsif ( $mycalc{'total_myisam_indexes'} =~ /^fail$/ ) {
+    } elsif ( $mycalc{'total_myisam_indexes'} =~ /^fail$/ ) {
         badprint
           "Cannot calculate MyISAM index size - re-run script as root user";
-    }
-    elsif ( $mycalc{'total_myisam_indexes'} == "0" ) {
+    } elsif ( $mycalc{'total_myisam_indexes'} == "0" ) {
         badprint
           "None of your MyISAM tables are indexed - add indexes immediately";
-    }
-    else {
+    } else {
         if (   $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
             && $mycalc{'pct_keys_from_mem'} < 95 )
         {
@@ -3006,8 +3014,7 @@ sub mysql_myisam {
                     "key_buffer_size (> "
                   . hr_bytes( $mycalc{'total_myisam_indexes'} )
                   . ")" );
-        }
-        else {
+        } else {
             goodprint "Key buffer size / total MyISAM indexes: "
               . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
               . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
@@ -3020,8 +3027,7 @@ sub mysql_myisam {
                   . " cached / "
                   . hr_num( $mystat{'Key_reads'} )
                   . " reads)";
-            }
-            else {
+            } else {
                 goodprint
                   "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% ("
                   . hr_num( $mystat{'Key_read_requests'} )
@@ -3029,9 +3035,7 @@ sub mysql_myisam {
                   . hr_num( $mystat{'Key_reads'} )
                   . " reads)";
             }
-        }
-        else {
-
+        } else {
             # No queries have run that would use keys
             debugprint "Key buffer size / total MyISAM indexes: "
               . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
@@ -3045,8 +3049,7 @@ sub mysql_myisam {
                   . " cached / "
                   . hr_num( $mystat{'Key_writes'} )
                   . " writes)";
-            }
-            else {
+            } else {
                 goodprint
                   "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
                   . hr_num( $mystat{'Key_write_requests'} )
@@ -3054,9 +3057,7 @@ sub mysql_myisam {
                   . hr_num( $mystat{'Key_writes'} )
                   . " writes)";
             }
-        }
-        else {
-
+        } else {
             # No queries have run that would use keys
             debugprint
               "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
@@ -3159,7 +3160,7 @@ sub mysqsl_pfs {
     }
 
     infoprint "Sys schema is installed.";
-    
+    return if ( $opt{pfstat} == 0 );
     
     #*High Cost SQL statements 
     infoprint "Top 5 Most latency statements:";
@@ -4258,7 +4259,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.19 - MySQL High Performance Tuning Script
+ MySQLTuner 1.6.20 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -4276,7 +4277,7 @@ You must provide the remote server's total memory when connecting to other serve
  --pass <password>    Password to use for authentication
  --mysqladmin <path>  Path to a custom mysqladmin executable
  --mysqlcmd <path>    Path to a custom mysql executable
-
+  --defaults-file <path>  Path to a custom .my.cnf
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
  --skipsize                  Don't enumerate tables and their types/sizes (default: on)
@@ -4298,6 +4299,7 @@ You must provide the remote server's total memory when connecting to other serve
  --dbstat                    Print database information
  --idxstat                   Print index information
  --sysstat                   Print system information
+ --pfstat                    Print Performance schema 
  --bannedports               Ports banned separated by comma(,)
  --maxportallowed            Number of ports opened allowed on this hosts
  --cvefile                   CVE File for vulnerability checks
