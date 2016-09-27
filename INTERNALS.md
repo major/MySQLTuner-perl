@@ -279,6 +279,17 @@
 * Use temporary tables
 * Unused Indexes
 * Full table scans 
+* Top 5 user per connection
+* Top 5 user per statement
+* Top 5 user per statement latency
+* Top 5 user per lock latency
+* Top 5 user per nb full scans
+* Top 5 user per rows sent
+* Top 5 user per rows modified
+* Top 5 user per io
+* Top 5 user per io latency
+* Top 5 user per table scans
+
 * Top 5 host per connection 
 * Top 5 host per statement 
 * Top 5 host per statement latency 
@@ -288,13 +299,14 @@
 * Top 5 host per rows modified 
 * Top 5 host per io 
 * Top 5 host per io latency 
+* Top 5 host per table scans 
+
 * Top IO type order by total io
 * Top IO type order by total latency 
 * Top IO type order by max latency 
 * Top Stages order by total io 
 * Top Stages order by total latency 
 * Top Stages order by avg latency 
-* Top 5 host per table scans 
 * Top 5 Most latency statements 
 * Top 5 slower queries 
 * Top 10 nb statement type 

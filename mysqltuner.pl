@@ -3163,9 +3163,109 @@ sub mysqsl_pfs {
     return if ( $opt{pfstat} == 0 );
     
     infoprint "Sys schema Version: ".select_one("select sys_version from sys.version");
+    
+
+
+
+
+
+
+
+    # Top user per connection 
+    subheaderprint "Performance schema: Top 5 user per connection";
+    my $nbL=1;
+    for my $lQuery(select_array ('select user, total_connections from sys.user_summary order by  total_connections desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery conn(s)";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per statement 
+    subheaderprint "Performance schema: Top 5 user per statement";
+    $nbL=1;
+    for my $lQuery(select_array ('select user, statements from sys.user_summary order by statements desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery stmt(s)";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per statement latency
+    subheaderprint "Performance schema: Top 5 user per statement latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select user, statement_avg_latency from sys.user_summary order by statement_avg_latency desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per lock latency
+    subheaderprint "Performance schema: Top 5 user per lock latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select user, lock_latency from sys.user_summary_by_statement_latency order by lock_latency desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+
+    # Top host per full scans
+    subheaderprint "Performance schema: Top 5 user per nb full scans";
+    $nbL=1;
+    for my $lQuery(select_array ('select user, full_scans from sys.user_summary_by_statement_latency order by full_scans desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    
+    # Top host per row_sent
+    subheaderprint "Performance schema: Top 5 user per rows sent";
+    $nbL=1;
+    for my $lQuery(select_array ('select user, rows_sent from sys.user_summary_by_statement_latency order by rows_sent desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
+    # Top host per row modified
+    subheaderprint "Performance schema: Top 5 user per rows modified";
+    $nbL=1;
+    for my $lQuery(select_array ('select user, rows_affected from sys.user_summary_by_statement_latency order by rows_affected desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per io
+    subheaderprint "Performance schema: Top 5 user per io";
+    $nbL=1;
+    for my $lQuery(select_array ('select user, file_ios from sys.user_summary order by file_ios desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Top host per io latency
+    subheaderprint "Performance schema: Top 5 user per io latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select user, file_io_latency from sys.user_summary order by file_io_latency desc LIMIT 5')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+
+
+
+
+
+
+
+
+
     # Top host per connection 
     subheaderprint "Performance schema: Top 5 host per connection";
-    my $nbL=1;
+    $nbL=1;
     for my $lQuery(select_array ('select host, total_connections from sys.host_summary order by  total_connections desc LIMIT 5')) {
       infoprint " +-- $nbL: $lQuery conn(s)";
       $nbL++;
@@ -3294,10 +3394,6 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
-
-
-
 
     # Top host per table scans
     subheaderprint "Performance schema: Top 5 host per table scans";
@@ -3368,7 +3464,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-  subheaderprint "Performance schema: Top statement by rows modified";
+    subheaderprint "Performance schema: Top statement by rows modified";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select statement, sum(rows_affected) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
       infoprint " +-- $nbL: $lQuery";
