@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.6.20
+# mysqltuner.pl - Version 1.7.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
 #
@@ -54,7 +54,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.6.20";
+my $tunerversion = "1.7.0";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -206,7 +206,7 @@ if ( $opt{verbose} ) {
     $opt{pfstat}       = 1;    #Print performance schema info.
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
-
+ 
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
   unless ( defined $opt{cvefile} and -f "$opt{cvefile}" );
@@ -3163,13 +3163,6 @@ sub mysqsl_pfs {
     return if ( $opt{pfstat} == 0 );
     
     infoprint "Sys schema Version: ".select_one("select sys_version from sys.version");
-    
-
-
-
-
-
-
 
     # Top user per connection 
     subheaderprint "Performance schema: Top 5 user per connection";
@@ -3253,15 +3246,6 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-
-
-
-
-
-
-
-
-
 
     # Top host per connection 
     subheaderprint "Performance schema: Top 5 host per connection";
@@ -3405,7 +3389,34 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
 
-    #*High Cost SQL statements 
+    # InnoDB Buffer Pool by schema
+    subheaderprint "Performance schema: InnoDB Buffer Pool by schema";
+    $nbL=1;
+    for my $lQuery(select_array ('select object_schema, allocated, data, pages from sys.innodb_buffer_stats_by_schema ORDER BY pages DESC')) {
+      infoprint " +-- $nbL: $lQuery page(s)";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # InnoDB Buffer Pool by table
+    subheaderprint "Performance schema: InnoDB Buffer Pool by table";
+    $nbL=1;
+    for my $lQuery(select_array ("select CONCAT(object_schema,CONCAT('.', object_name)), allocated,data, pages from sys.innodb_buffer_stats_by_table ORDER BY pages DESC")) {
+      infoprint " +-- $nbL: $lQuery page(s)";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Proc per allocated memory
+    subheaderprint "Performance schema: Process per allocated memory";
+    $nbL=1;
+    for my $lQuery(select_array ("select  concat(user,concat('/', IFNULL(Command,'NONE'))) AS PROC, current_memory from sys.processlist ORDER BY current_memory DESC;" )) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # High Cost SQL statements 
     subheaderprint "Performance schema: Top 5 Most latency statements";
     $nbL=1;
     for my $lQuery(select_array ('select query, avg_latency from sys.statement_analysis order by avg_latency desc LIMIT 5')) {
@@ -3471,8 +3482,6 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-
-
 
     #*Use temporary tables 
     subheaderprint "Performance schema: Some queries using temp table";
@@ -3903,7 +3912,7 @@ sub mysql_innodb {
         }
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
-              . hr_bytes( $myvar{'innodb_log_buffer_size'} ) . "";
+              . hr_bytes( $myvar{'innodb_log_buffer_size'} ) . "(".percentage($mycalc{'innodb_log_size_pct'}).")";
         }
         if ( defined $mystat{'Innodb_buffer_pool_pages_free'} ) {
             infoprint " +-- InnoDB Log Buffer Free: "
@@ -4559,7 +4568,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.6.20 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 

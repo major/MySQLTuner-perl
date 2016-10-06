@@ -25,7 +25,7 @@
 * [TOKUDB information](#mysqltuner-tokudb-information)
 * [ThreadPool information](#mysqltuner-threadpool-information)
 * [Performance Schema information](#mysqltuner-performance-schema-and-sysschema-information)
-* 
+
 ## MySQLTuner steps
 
 * Header Print
@@ -300,6 +300,10 @@
 * Top 5 host per io 
 * Top 5 host per io latency 
 * Top 5 host per table scans 
+
+* InnoDB Buffer Pool by schema
+* InnoDB Buffer Pool by table
+* Process per allocated memory 
 
 * Top IO type order by total io
 * Top IO type order by total latency 
