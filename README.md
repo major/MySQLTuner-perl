@@ -9,7 +9,7 @@ MySQLTuner-perl
 
 **MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
 
-**MySQLTuner** supports in this last version ~250 indicators for MySQL/MariaDB like server. 
+**MySQLTuner** supports in this last version ~250 indicators for MySQL/MariaDB/Percona Server. 
 
 **MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration sush as ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
 
