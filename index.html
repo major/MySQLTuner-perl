@@ -32,8 +32,24 @@
         <h1>
 <a name="mysqltuner-perl" class="anchor" href="#mysqltuner-perl"><span class="octicon octicon-link"></span></a>MySQLTuner-perl</h1>
 
-<p>MySQLTuner is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.</p>
+<p><b>MySQLTuner</b> is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.</p>
 
+<p><b>MySQLTuner</b> supports in this last version ~250 indicators for MySQL/MariaDB/Percona Server. <p>
+
+<p><b>MySQLTuner</b> is maintained and indicator collect is increasing week after week supporting a lot of configurtion sush as:</p>
+  <ul>
+    <li><a href="http://galeracluster.com">Galera Cluster</a></li>
+      <li><a href="">TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb)</a></li>
+    <li><a href="">Performance schema](https://github.com/mysql/mysql-sys)</a> </li>
+    <li><a href="">Linux OS metrics,</a>
+         <li><a href="http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html">InnoDB</a> </li>
+        <li><a href="http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html">MyISAM</a> </li>
+        <li><a href="https://mariadb.com/kb/en/mariadb/aria">Aria, </a>
+          <li>...</li>
+        </ul>
+You can found more details on this indicators 
+![Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+        
 <img src="https://github.com/major/MySQLTuner-perl/raw/master/mysqltuner.png" alt='mysqltuner' />
 <h1>Compatibility:</h1>
 
@@ -41,6 +57,7 @@
 
 <li>MySQL 3.23, 4.0, 4.1, 5.0, 5.1, 5.5, 5.6, 5.7 (full support)</li>
 <li>MariaDB 5.5, 10.0, 10.1 (full support)</li>
+  <li>MariaDB 10.2 and MySQL 8.0 (partial support)</li>
 <li>MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (deprecated editor support)</li>
 <li>Perl 5.6 or later (with <a href="http://search.cpan.org/%7Edapm/perl-5.14.4/pod/perldoc.pod">perl-doc</a> package)</li>
 <li>Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)</li>
