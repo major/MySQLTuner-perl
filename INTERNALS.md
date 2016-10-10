@@ -352,3 +352,9 @@
 * TOP 15 high insert latency index
 * TOP 15 high update latency index
 * TOP 15 high delete latency index
+* TOP 15 most read tables
+* TOP 15 most modified tables
+* TOP 15 high select latency tables
+* TOP 15 high insert latency tables
+* TOP 15 high update latency tables
+* TOP 15 high delete latency tables

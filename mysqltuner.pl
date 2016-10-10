@@ -3695,25 +3695,61 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
 ##################################################################################
-#sc2hema_object_overview
-# Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+#schema_table_statistics
+    # TOP 15 most read tables
+    subheaderprint "TOP 15 most read tables";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, rows_fetched from schema_table_statistics ORDER BY ROWs_fetched DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-#schema_table_statistics
-# Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+    # TOP 15 most used tables
+    subheaderprint "TOP 15 most modified tables";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, rows_inserted+rows_updated+rows_deleted AS changes from schema_table_statistics ORDER BY rows_inserted+rows_updated+rows_deleted DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+ 
+    # TOP 15 high read latency tables
+    subheaderprint "TOP 15 high read latency tables";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, fetch_latency from schema_table_statistics ORDER BY fetch_latency  DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # TOP 15 high insert latency tables
+    subheaderprint "TOP 15 high insert latency tables";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, insert_latency from schema_table_statistics ORDER BY insert_latency  DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # TOP 15 high update latency tables
+    subheaderprint "TOP 15 high update latency tables";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, update_latency from schema_table_statistics ORDER BY update_latency  DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # TOP 15 high delete latency tables
+    subheaderprint "TOP 15 high delete latency tables";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, delete_latency from schema_table_statistics ORDER BY delete_latency  DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+##################################################################################
 
 #schema_table_statistics_with_buffer
 # Latest file IO by latency
@@ -3725,6 +3761,8 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+##################################################################################
+
 #schema_tables_with_full_table_scans
 # Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
@@ -3735,8 +3773,9 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+##################################################################################
+
 #statement_analysis
-# Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
     for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
@@ -3753,8 +3792,10 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+##################################################################################
+
 #statements_with_full_table_scans
-# Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
     for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
@@ -3771,8 +3812,9 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+##################################################################################
+
 #statements_with_sorting
-# Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
     for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
@@ -3780,8 +3822,10 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+##################################################################################
+
 #statements_with_temp_tables
-# Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
     for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
@@ -3789,8 +3833,9 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+##################################################################################
 #wait_classes_global_by_avg_latency
-# Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
     for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
@@ -3798,8 +3843,9 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+##################################################################################
 #wait_classes_global_by_latency
-# Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
     for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
@@ -3807,8 +3853,8 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+##################################################################################
 #waits_by_host_by_latency
-# Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
     for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
@@ -3816,8 +3862,9 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+##################################################################################
 #waits_by_user_by_latency
-# Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
     for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
@@ -3825,8 +3872,8 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+##################################################################################
 #waits_global_by_latency
-# Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
     for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
