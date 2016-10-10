@@ -3612,9 +3612,36 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+# event per wait total latency
+    subheaderprint "Performance schema: event per wait total latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select event_name, total_latency from io_global_by_wait_by_latency ORDER BY total_latency DESC LIMIT 20;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # event per wait read latency
+    subheaderprint "Performance schema: event per wait read latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select event_name, read_latency from io_global_by_wait_by_latency ORDER BY read_latency DESC LIMIT 20;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # event per wait write latency
+    subheaderprint "Performance schema: event per wait write latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select event_name, write_latency from io_global_by_wait_by_latency ORDER BY write_latency DESC LIMIT 20;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
 ##################################################################################
 
-#io_global_by_wait_by_latency
+
 # Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;

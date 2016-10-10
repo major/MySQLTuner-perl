@@ -17,13 +17,17 @@
 * [Global buffer information](#mysqltuner-global-buffer-information)
 * [Query cache checks](#mysqltuner-query-cache-checks)
 * [Slow queries checks](#mysqltuner-slow-queries-checks)
+* [ThreadPool information](#mysqltuner-threadpool-information)
 * [Replication checks](#mysqltuner-replication-checks)
 * [InnoDB information](#mysqltuner-innodb-information)
-* [ARIADB information](#mysqltuner-ariadb-information)
 * [MYISAM information](#mysqltuner-myisam-information)
-* [GALERA information](#mysqltuner-galera-information)
+* [ARIADB information](#mysqltuner-ariadb-information)
+* [XTRADB information](#mysqltuner-xtradb-information)
 * [TOKUDB information](#mysqltuner-tokudb-information)
-* [ThreadPool information](#mysqltuner-threadpool-information)
+* [ROCKDB information](#mysqltuner-rockdb-information)
+* [CONNECT information](#mysqltuner-connect-information)
+* [SPIDER information](#mysqltuner-spider-information)
+* [GALERA information](#mysqltuner-galera-information)
 * [Performance Schema information](#mysqltuner-performance-schema-and-sysschema-information)
 
 ## MySQLTuner steps
@@ -266,6 +270,22 @@
 * tokudb_cleaner_iterations
 * tokudb_fanout
 
+## MySQLTuner XtraDB information
+
+*  Nothing for the moment
+
+## MySQLTuner Connect information
+
+*  Nothing for the moment
+
+## MySQLTuner Spider information
+
+*  Nothing for the moment
+
+## MySQLTuner RocksDb information
+
+*  Nothing for the moment
+  
 ## MySQLTuner Thread pool information
 
 * thread_pool_size between 16 to 36 for Innodb usage
@@ -323,3 +343,7 @@
 * File per IO write latency
 * Event Wait by read bytes
 * Event Wait by write bytes
+* Event per wait total latency
+* Event per wait read latency
+* Event per wait write latency
+
