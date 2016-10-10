@@ -182,7 +182,7 @@ Copy of the license is available at [LICENSE](https://github.com/major/MySQLTune
 <a name="code-conventions"></a>
 #### MySQLTuner Code Conventions
 
-1. Check code convention using  **perltidy**
+1. Check code convention using **perltidy** and **perlcritic**
 2. Don't manually update the version number in `mysqltuner.pl`. 
  
 

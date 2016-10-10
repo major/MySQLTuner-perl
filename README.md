@@ -3,22 +3,42 @@ MySQLTuner-perl
 [![Build Status - Master](https://travis-ci.org/major/MySQLTuner-perl.svg?branch=master)](https://travis-ci.org/major/MySQLTuner-perl)
 [![Project Status](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
 [![Project Status](http://opensource.box.com/badges/maintenance.svg)](http://opensource.box.com/badges)
+[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
+[![Percentage of issues still open](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
+[![GPL Licence](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
-MySQLTuner is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
+**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
+
+**MySQLTuner** supports in this last version ~250 indicators for MySQL/MariaDB/Percona Server. 
+
+**MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration sush as ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
+
+You can found more details on this indicators 
+![Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 
 ![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
 
+MySQLTuner needs you:
+===
+
+**MySQLTuner** needs contributors for documentation, code and feedbacks..
+
+* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
+* Contribution guide is avalaible following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
+          
 Compatibility:
 ====
 
-* MySQL 5.7 (partial support)
+* MySQL 5.7 (full support)
 * MySQL 5.6 (full support)
-* MariaDB 10.0 (full support)
-* MariaDB 10.1 (partial support)
 * MySQL 5.5 (full support)
-* MySQL 5.1 (full support)
-* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (full support)
+* MariaDB 10.1 (full support)
+* MariaDB 10.0 (full support)
+* Percona Server 5.6 (full support)
+* Percona XtraDB cluster (full support)
+* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (partial support - deprecated version)
 * Perl 5.6 or later (with [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod) package)
 * Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
 * Windows is not supported at this time (Help wanted !!!!!)
@@ -66,7 +86,9 @@ __Usage:__ Minimal usage remotely
 
 __Usage:__ Enable maximum output information around MySQL/MariaDb without debugging 
 
-	perl mysqltuner.pl --buffers --dbstat --idxstat
+	perl mysqltuner.pl --verbose
+	perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat
+	
 
 __Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
 
@@ -91,15 +113,15 @@ __Usage:__ Enable debugging information
 FAQ
 --
 
-Question: Will MySQLTuner fix my slow MySQL server?
+**Question: Will MySQLTuner fix my slow MySQL server?**
 
 **No.**  MySQLTuner is a read only script.  It won't write to any configuration files, change the status of any daemons, or call your mother to wish her a happy birthday.  It will give you an overview of your server's performance and make some basic recommendations about improvements that you can make after it completes.  *Make sure you read the warning above prior to following any recommendations.*
 
-Question: Can I fire my DBA now?
+**Question: Can I fire my DBA now?**
 
 **MySQLTuner will not replace your DBA in any form or fashion.**  If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
 
-Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?
+**Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?**
 
 The script will try its best to log in via any means possible.  It will check for ~/.my.cnf files, Plesk password files, and empty password root logins.  If none of those are available, then you'll be prompted for a password.  If you'd like the script to run in an automated fashion without user intervention, then create a .my.cnf file in your home directory which contains:
 
@@ -109,7 +131,7 @@ The script will try its best to log in via any means possible.  It will check fo
 	
 Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.  If a [T-1000 shows up in a LAPD uniform](https://en.wikipedia.org/wiki/T-1000) and demands your database credentials, you won't have much of an option.
 
-Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?
+**Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
 
 You could use mysql_config_editor utilities.
 
@@ -127,7 +149,11 @@ To get information about stored credentials, use the following command:
 	password = *****
 	host = localhost
 
-Question: It's not working on my OS! What gives?!
+**Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
+
+        mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* FOR 'mysqltuner'@'localhost' identified by pwd1234;
+
+**Question: It's not working on my OS! What gives?!**
 
 These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:
 
@@ -138,10 +164,36 @@ These kinds of things are bound to happen.  Here are the details I need from you
 * The full text of the error
 * A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
 
-Question: How to perform a CVE vulneralibity checks ?
+**Question: How to perform a CVE vulneralibity checks ?**
 
 * Download vulnerabilities.csv from this repository.
 * use option --cvefile to perform CVE checks
+
+**Question: How to use mysqltuner from remote host ?**
+Thanks to  [@rolandomysqldba](http://dba.stackexchange.com/users/877/rolandomysqldba)
+
+* You will still have to connect like a mysql client:
+
+Connection and Authentication
+
+	--host <hostname> Connect to a remote host to perform tests (default: localhost)
+	--socket <socket> Use a different socket for a local connection
+	--port <port>     Port to use for connection (default: 3306)
+	--user <username> Username to use for authentication	
+	--pass <password> Password to use for authentication
+	--defaults-file <path> defaulfs file for credentials
+
+Since you are using a remote host, use parameters to supply values from the OS
+
+	--forcemem <size>  Amount of RAM installed in megabytes
+	--forceswap <size> Amount of swap memory configured in megabytes
+
+* You may have to contact your remote SysAdmin to ask how much RAM and swap you have
+
+If the database has too many tables, or very large table, use this:
+
+	--skipsize           Don't enumerate tables and their types/sizes (default: on)
+	                     (Recommended for servers with many tables)
 
 MySQLTuner and Vagrant
 --

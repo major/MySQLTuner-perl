@@ -24,6 +24,7 @@
 * [GALERA information](#mysqltuner-galera-information)
 * [TOKUDB information](#mysqltuner-tokudb-information)
 * [ThreadPool information](#mysqltuner-threadpool-information)
+* [Performance Schema information](#mysqltuner-performance-schema-and-sysschema-information)
 
 ## MySQLTuner steps
 
@@ -150,6 +151,7 @@
 * Number of join performed without using indexes (<250)
 * Percentage of temporary table written on disk(<25%)
 * Thread cache (=4)
+* Thread cache hit ratio (>50%) if thread_handling is different of pools-of-threads
 * Table cache hit ratio(>2°%)
 * Percentage of open file and open file limit(<85%)
 * Percentage of table locks (<95%)
@@ -178,8 +180,8 @@
 ## MySQLTuner memory checks
 
 * Get total RAM/swap
-* Is there enought memory for max connections reached by MySQL ?
-* Is there enought memory for max connections allowed by MySQL ?
+* Is there enough memory for max connections reached by MySQL ?
+* Is there enough memory for max connections allowed by MySQL ?
 * Max percentage of memory used(<85%)
 
 ## MySQLTuner slow queries checks
@@ -203,7 +205,7 @@
    * MySQL needs 1 instanes per 1Go of Buffer Pool
    * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
    * innodb_buffer_pool instances must be equals or lower than 64
-*  InnoDB Buffer Pool uUsage
+*  InnoDB Buffer Pool Usage
    * If more than 20% of InnoDB buffer pool is not used, MySQLTuner raise an alert.
 * InnoDB Read effiency
    * Ratio of read without locks
@@ -211,6 +213,8 @@
    * Ratio of write without locks
 * InnoDB Log Waits
    * Checks that no lock is used on Innodb Log.
+* InnoDB Chunk Size
+   * Check InnoDB Buffer Pool size is a multiple of InnoDB Buffer Pool chunk size * InnoDB Buffer Pool instances
 
 ## MySQLTuner ARIADB information
 
@@ -227,9 +231,11 @@
 * Key buffer write hit ratio (>95%)
 
 ## MySQLTuner Galera information
-
 * wsrep_ready cluster is ready
 * wsrep_connected node is connected to other nodes
+* wsrep_cluster_name is defined.
+* wsrep_node_name is defined.
+* Check thet notification script wsrep_notify_cmd is defined
 * wsrep_cluster_status PRIMARY /NON PRIMARY.
 	* PRIMARY : Coherent cluster
 	* NO PRIMARY : cluster gets several states
@@ -240,7 +246,13 @@
 	* SYNCED state able to read/write
 * wsrep_cluster_conf_id configuration level must be identical in all nodes
 * wsrep_last_commited committed level must be identical in all nodes
-
+* Look for tables without primary keys
+* Look for non InnoDB tables for Galera
+* Variable innodb_flush_log_at_trx_commit should be set to 0.
+* Check that there is 3 or 5 members in Galera cluster.
+* Check that xtrabackup is used for SST method with wsrep_sst_method variable.
+* Check variables wsrep_OSU_method is defined to TOI for updates.
+* Check that there is no certification failures controlling wsrep_local_cert_failures status.
 
 ## MySQLTuner TokuDB information
 
@@ -258,3 +270,55 @@
 
 * thread_pool_size between 16 to 36 for Innodb usage
 * thread_pool_size between 4 to 8 for MyIsam usage
+
+## MySQLTuner performance schema and sysschema information
+
+* sys Schema version
+* High Cost SQL statements
+* Top 5% slower queries
+* Use temporary tables
+* Unused Indexes
+* Full table scans 
+* Top 5 user per connection
+* Top 5 user per statement
+* Top 5 user per statement latency
+* Top 5 user per lock latency
+* Top 5 user per nb full scans
+* Top 5 user per rows sent
+* Top 5 user per rows modified
+* Top 5 user per io
+* Top 5 user per io latency
+* Top 5 user per table scans
+
+* Top 5 host per connection 
+* Top 5 host per statement 
+* Top 5 host per statement latency 
+* Top 5 host per lock latency 
+* Top 5 host per nb full scans 
+* Top 5 host per rows sent 
+* Top 5 host per rows modified 
+* Top 5 host per io 
+* Top 5 host per io latency 
+* Top 5 host per table scans 
+
+* InnoDB Buffer Pool by schema
+* InnoDB Buffer Pool by table
+* Process per allocated memory 
+
+* Top IO type order by total io
+* Top IO type order by total latency 
+* Top IO type order by max latency 
+* Top Stages order by total io 
+* Top Stages order by total latency 
+* Top Stages order by avg latency 
+* Top 5 Most latency statements 
+* Top 5 slower queries 
+* Top 10 nb statement type 
+* Top statement by total latency 
+* Top statement by lock latency 
+* Top statement by full scans 
+* Top statement by rows sent 
+* Top statement by rows modified 
+* Some queries using temp table 
+* Unused indexes
+* Tables with full table scans 
