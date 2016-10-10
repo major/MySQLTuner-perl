@@ -274,51 +274,45 @@
 ## MySQLTuner performance schema and sysschema information
 
 * sys Schema version
-* High Cost SQL statements
-* Top 5% slower queries
-* Use temporary tables
-* Unused Indexes
-* Full table scans 
-* Top 5 user per connection
-* Top 5 user per statement
-* Top 5 user per statement latency
-* Top 5 user per lock latency
-* Top 5 user per nb full scans
-* Top 5 user per rows sent
-* Top 5 user per rows modified
-* Top 5 user per io
-* Top 5 user per io latency
-* Top 5 user per table scans
-
-* Top 5 host per connection 
-* Top 5 host per statement 
-* Top 5 host per statement latency 
-* Top 5 host per lock latency 
-* Top 5 host per nb full scans 
-* Top 5 host per rows sent 
-* Top 5 host per rows modified 
-* Top 5 host per io 
-* Top 5 host per io latency 
-* Top 5 host per table scans 
-
+* Top user per connection
+* Top user per statement
+* Top user per statement latency
+* Top user per lock latency
+* Top user per full scans
+* Top user per row_sent
+* Top user per row modified
+* Top user per io
+* Top user per io latency
+* Top host per connection
+* Top host per statement
+* Top host per statement latency
+* Top host per lock latency
+* Top host per full scans
+* Top host per rows sent
+* Top host per rows modified
+* Top host per io
+* Top 5 host per io latency
+* Top IO type order by total io
+* Top IO type order by total latency
+* Top IO type order by max latency
+* Top Stages order by total io
+* Top Stages order by total latency
+* Top Stages order by avg latency
+* Top host per table scans
 * InnoDB Buffer Pool by schema
 * InnoDB Buffer Pool by table
-* Process per allocated memory 
-
-* Top IO type order by total io
-* Top IO type order by total latency 
-* Top IO type order by max latency 
-* Top Stages order by total io 
-* Top Stages order by total latency 
-* Top Stages order by avg latency 
-* Top 5 Most latency statements 
-* Top 5 slower queries 
-* Top 10 nb statement type 
-* Top statement by total latency 
-* Top statement by lock latency 
-* Top statement by full scans 
-* Top statement by rows sent 
-* Top statement by rows modified 
-* Some queries using temp table 
-* Unused indexes
-* Tables with full table scans 
+* Process per allocated memory
+* InnoDB Lock Waits
+* Threads IO Latency
+* High Cost SQL statements
+* Top 5% slower queries
+* Top 10 nb statement type
+* Top statement by total latency
+* Top statement by lock latency
+* Top statement by full scans
+* Top statement by rows sent
+* Top statement by rows modified
+* Use temporary tables
+* Unused Indexes
+* Full table scans
+* Latest file IO by latency
