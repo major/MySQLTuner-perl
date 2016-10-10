@@ -3658,8 +3658,8 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
  
-    # TOP 15 higth read latency index
-    subheaderprint "TOP 15 higth read latency index";
+    # TOP 15 high read latency index
+    subheaderprint "TOP 15 high read latency index";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, select_latency from schema_index_statistics ORDER BY select_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3667,7 +3667,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # TOP 15 higth insert latency index
+    # TOP 15 high insert latency index
     subheaderprint "TOP 15 most modified indexes";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, insert_latency from schema_index_statistics ORDER BY insert_latency  DESC LIMIT 15;')) {
@@ -3676,8 +3676,8 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # TOP 15 higth update latency index
-    subheaderprint "TOP 15 higth update latency index";
+    # TOP 15 high update latency index
+    subheaderprint "TOP 15 high update latency index";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, update_latency from schema_index_statistics ORDER BY update_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3685,8 +3685,8 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # TOP 15 higth delete latency index
-    subheaderprint "TOP 15 higth delete latency index";
+    # TOP 15 high delete latency index
+    subheaderprint "TOP 15 high delete latency index";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, delete_latency from schema_index_statistics ORDER BY delete_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
