@@ -346,4 +346,9 @@
 * Event per wait total latency
 * Event per wait read latency
 * Event per wait write latency
-
+* TOP 15 most read indexes 
+* TOP 15 most modified indexes
+* TOP 15 higth select latency index 
+* TOP 15 higth insert latency index
+* TOP 15 higth update latency index
+* TOP 15 higth delete latency index

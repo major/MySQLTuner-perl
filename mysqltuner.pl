@@ -3424,7 +3424,7 @@ sub mysqsl_pfs {
     # InnoDB Lock Waits
     subheaderprint "Performance schema: InnoDB Lock Waits";
     $nbL=1;
-    for my $lQuery(select_array ("select wait_age_secs, locked_table, locked_type, waiting_query from innodb_lock_waits order by wait_age_secs DESC;" )) {
+    for my $lQuery(select_array ("use sys;select wait_age_secs, locked_table, locked_type, waiting_query from innodb_lock_waits order by wait_age_secs DESC;" )) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3433,7 +3433,7 @@ sub mysqsl_pfs {
     # Threads IO Latency
     subheaderprint "Performance schema: Thread IO Latency";
     $nbL=1;
-    for my $lQuery(select_array ("select user, total_latency, max_latency from io_by_thread_by_latency order by total_latency;" )) {
+    for my $lQuery(select_array ("use sys;select user, total_latency, max_latency from io_by_thread_by_latency order by total_latency;" )) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3612,7 +3612,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-# event per wait total latency
+    # event per wait total latency
     subheaderprint "Performance schema: event per wait total latency";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select event_name, total_latency from io_global_by_wait_by_latency ORDER BY total_latency DESC LIMIT 20;')) {
@@ -3639,29 +3639,63 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    #schema_index_statistics
+    # TOP 15 most read index
+    subheaderprint "TOP 15 most read indexes";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, rows_selected from schema_index_statistics ORDER BY ROWs_selected DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # TOP 15 most used index
+    subheaderprint "TOP 15 most modified indexes";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, rows_inserted+rows_updated+rows_deleted AS changes from schema_index_statistics ORDER BY rows_inserted+rows_updated+rows_deleted DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+ 
+    # TOP 15 higth read latency index
+    subheaderprint "TOP 15 higth read latency index";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, select_latency from schema_index_statistics ORDER BY select_latency  DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # TOP 15 higth insert latency index
+    subheaderprint "TOP 15 most modified indexes";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, insert_latency from schema_index_statistics ORDER BY insert_latency  DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # TOP 15 higth update latency index
+    subheaderprint "TOP 15 higth update latency index";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, update_latency from schema_index_statistics ORDER BY update_latency  DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # TOP 15 higth delete latency index
+    subheaderprint "TOP 15 higth delete latency index";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, delete_latency from schema_index_statistics ORDER BY delete_latency  DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
 ##################################################################################
-
-
-# Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
-    $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
-      infoprint " +-- $nbL: $lQuery";
-      $nbL++;
-    }
-    infoprint "No information found or indicators desactivated." if ($nbL == 1);
-
-#schema_index_statistics
-# Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
-    $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
-      infoprint " +-- $nbL: $lQuery";
-      $nbL++;
-    }
-    infoprint "No information found or indicators desactivated." if ($nbL == 1);
-
-#schema_object_overview
+#sc2hema_object_overview
 # Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
     $nbL=1;
