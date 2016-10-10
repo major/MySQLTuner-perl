@@ -3641,7 +3641,7 @@ sub mysqsl_pfs {
 
     #schema_index_statistics
     # TOP 15 most read index
-    subheaderprint "TOP 15 most read indexes";
+    subheaderprint "Performance schema: TOP 15 most read indexes";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, rows_selected from schema_index_statistics ORDER BY ROWs_selected DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3650,7 +3650,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     # TOP 15 most used index
-    subheaderprint "TOP 15 most modified indexes";
+    subheaderprint "Performance schema: TOP 15 most modified indexes";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, rows_inserted+rows_updated+rows_deleted AS changes from schema_index_statistics ORDER BY rows_inserted+rows_updated+rows_deleted DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3659,7 +3659,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
  
     # TOP 15 high read latency index
-    subheaderprint "TOP 15 high read latency index";
+    subheaderprint "Performance schema: TOP 15 high read latency index";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, select_latency from schema_index_statistics ORDER BY select_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3668,7 +3668,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     # TOP 15 high insert latency index
-    subheaderprint "TOP 15 most modified indexes";
+    subheaderprint "Performance schema: TOP 15 most modified indexes";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, insert_latency from schema_index_statistics ORDER BY insert_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3677,7 +3677,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     # TOP 15 high update latency index
-    subheaderprint "TOP 15 high update latency index";
+    subheaderprint "Performance schema: TOP 15 high update latency index";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, update_latency from schema_index_statistics ORDER BY update_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3686,7 +3686,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     # TOP 15 high delete latency index
-    subheaderprint "TOP 15 high delete latency index";
+    subheaderprint "Performance schema: TOP 15 high delete latency index";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, delete_latency from schema_index_statistics ORDER BY delete_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3697,7 +3697,7 @@ sub mysqsl_pfs {
 ##################################################################################
 #schema_table_statistics
     # TOP 15 most read tables
-    subheaderprint "TOP 15 most read tables";
+    subheaderprint "Performance schema: TOP 15 most read tables";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name, rows_fetched from schema_table_statistics ORDER BY ROWs_fetched DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3706,7 +3706,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     # TOP 15 most used tables
-    subheaderprint "TOP 15 most modified tables";
+    subheaderprint "Performance schema: TOP 15 most modified tables";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name, rows_inserted+rows_updated+rows_deleted AS changes from schema_table_statistics ORDER BY rows_inserted+rows_updated+rows_deleted DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3715,7 +3715,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
  
     # TOP 15 high read latency tables
-    subheaderprint "TOP 15 high read latency tables";
+    subheaderprint "Performance schema: TOP 15 high read latency tables";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name, fetch_latency from schema_table_statistics ORDER BY fetch_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3724,7 +3724,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     # TOP 15 high insert latency tables
-    subheaderprint "TOP 15 high insert latency tables";
+    subheaderprint "Performance schema: TOP 15 high insert latency tables";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name, insert_latency from schema_table_statistics ORDER BY insert_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3733,7 +3733,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     # TOP 15 high update latency tables
-    subheaderprint "TOP 15 high update latency tables";
+    subheaderprint "Performance schema: TOP 15 high update latency tables";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name, update_latency from schema_table_statistics ORDER BY update_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3742,47 +3742,93 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     # TOP 15 high delete latency tables
-    subheaderprint "TOP 15 high delete latency tables";
+    subheaderprint "Performance schema: TOP 15 high delete latency tables";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select table_schema, table_name, delete_latency from schema_table_statistics ORDER BY delete_latency  DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Redundant indexes
+    subheaderprint "Performance schema: Redundant indexes";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select * from schema_redundant_indexes;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+     
 ##################################################################################
 
 #schema_table_statistics_with_buffer
-# Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+#io_read_requests: 8
+#          io_read: 66.04 KiB
+#  io_read_latency: 2.47 ms
+#io_write_requests: 0
+#         io_write: 0 bytes
+# io_write_latency: 0 ps
+# io_misc_requests: 8
+#  io_misc_latency: 1.34 ms
+#   innodb_buffer_allocated: NULL
+#        innodb_buffer_data: NULL
+#        innodb_buffer_free: NULL
+#       innodb_buffer_pages: NULL
+#innodb_buffer_pages_hashed: NULL
+#   innodb_buffer_pages_old: NULL
+# innodb_buffer_rows_cached: NULL
+# Select * from schema_table_statistics_with_buffer
+
+return;
+    subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
 ##################################################################################
-
-#schema_tables_with_full_table_scans
-# Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
-    $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
-      infoprint " +-- $nbL: $lQuery";
-      $nbL++;
-    }
-    infoprint "No information found or indicators desactivated." if ($nbL == 1);
-
-##################################################################################
-
 #statement_analysis
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+#mysql> desc statement_analysis;
+#+-------------------+---------------------+------+-----+---------------------+-------+
+#| Field             | Type                | Null | Key | Default             | Extra |
+#+-------------------+---------------------+------+-----+---------------------+-------+
+#| query             | longtext            | YES  |     | NULL                |       |
+#| db                | varchar(64)         | YES  |     | NULL                |       |
+#| full_scan         | varchar(1)          | NO   |     |                     |       |
+#| exec_count        | bigint(20) unsigned | NO   |     | NULL                |       |
+#| err_count         | bigint(20) unsigned | NO   |     | NULL                |       |
+#| warn_count        | bigint(20) unsigned | NO   |     | NULL                |       |
+#| total_latency     | text                | YES  |     | NULL                |       |
+#| max_latency       | text                | YES  |     | NULL                |       |
+#| avg_latency       | text                | YES  |     | NULL                |       |
+#| lock_latency      | text                | YES  |     | NULL                |       |
+#| rows_sent         | bigint(20) unsigned | NO   |     | NULL                |       |
+#| rows_sent_avg     | decimal(21,0)       | NO   |     | 0                   |       |
+#| rows_examined     | bigint(20) unsigned | NO   |     | NULL                |       |
+#| rows_examined_avg | decimal(21,0)       | NO   |     | 0                   |       |
+#| rows_affected     | bigint(20) unsigned | NO   |     | NULL                |       |
+#| rows_affected_avg | decimal(21,0)       | NO   |     | 0                   |       |
+#| tmp_tables        | bigint(20) unsigned | NO   |     | NULL                |       |
+#| tmp_disk_tables   | bigint(20) unsigned | NO   |     | NULL                |       |
+#| rows_sorted       | bigint(20) unsigned | NO   |     | NULL                |       |
+#| sort_merge_passes | bigint(20) unsigned | NO   |     | NULL                |       |
+#| digest            | varchar(32)         | YES  |     | NULL                |       |
+#| first_seen        | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
+#| last_seen         | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
+#+-------------------+---------------------+------+-----+---------------------+-------+
+#23 rows in set (0,01 sec)
+
+   subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#########################################################################    
 #statements_with_errors_or_warnings
 # Latest file IO by latency
     subheaderprint "Performance schema: Latest FILE IO by latency";
@@ -3796,28 +3842,107 @@ sub mysqsl_pfs {
 ##################################################################################
 
 #statements_with_full_table_scans
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+#mysql> desc statements_with_full_table_scans;
+#+--------------------------+------------------------+------+-----+---------------------+-------+
+#| Field                    | Type                   | Null | Key | Default             | Extra |
+#+--------------------------+------------------------+------+-----+---------------------+-------+
+#| query                    | longtext               | YES  |     | NULL                |       |
+#| db                       | varchar(64)            | YES  |     | NULL                |       |
+#| exec_count               | bigint(20) unsigned    | NO   |     | NULL                |       |
+#| total_latency            | text                   | YES  |     | NULL                |       |
+#| no_index_used_count      | bigint(20) unsigned    | NO   |     | NULL                |       |
+#| no_good_index_used_count | bigint(20) unsigned    | NO   |     | NULL                |       |
+#| no_index_used_pct        | decimal(24,0)          | NO   |     | 0                   |       |
+#| rows_sent                | bigint(20) unsigned    | NO   |     | NULL                |       |
+#| rows_examined            | bigint(20) unsigned    | NO   |     | NULL                |       |
+#| rows_sent_avg            | decimal(21,0) unsigned | YES  |     | NULL                |       |
+#| rows_examined_avg        | decimal(21,0) unsigned | YES  |     | NULL                |       |
+#| first_seen               | timestamp              | NO   |     | 0000-00-00 00:00:00 |       |
+#| last_seen                | timestamp              | NO   |     | 0000-00-00 00:00:00 |       |
+#| digest                   | varchar(32)            | YES  |     | NULL                |       |
+#+--------------------------+------------------------+------+-----+---------------------+-------+
+#14 rows in set (0,00 sec)
+#
+   subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#########################################################################
+
 #statements_with_runtimes_in_95th_percentile
-# Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+
+#mysql> select * from statements_with_runtimes_in_95th_percentile;
+#+-------------------------------------------------------------------+------+-----------+------------+-----------+------------+---------------+-------------+-------------+-----------+---------------+---------------+-------------------+---------------------+---------------------+----------------------------------+
+#| query                                                             | db   | full_scan | exec_count | err_count | warn_count | total_latency | max_latency | avg_latency | rows_sent | rows_sent_avg | rows_examined | rows_examined_avg | first_seen          | last_seen           | digest                           |
+#+-------------------------------------------------------------------+------+-----------+------------+-----------+------------+---------------+-------------+-------------+-----------+---------------+---------------+-------------------+---------------------+---------------------+----------------------------------+
+#| SELECT `sys` . `format_path` ( ... DER BY `performance_schema` .  | sys  | *         |         31 |         0 |          0 | 5.88 s        | 248.36 ms   | 189.62 ms   |       878 |            28 |       4309600 |            139019 | 2016-10-10 15:06:03 | 2016-10-10 18:57:03 | 5725848cdc48f0d86f4894b6fe0f87af |
+#| SELECT IF ( ( `locate` ( ? , ` ...  . `COMPRESSED_SIZE` ) ) DESC  | sys  | *         |          3 |         0 |          0 | 307.41 ms     | 109.74 ms   | 102.47 ms   |         6 |             2 |         52303 |             17434 | 2016-10-10 18:43:59 | 2016-10-10 18:45:24 | 59abe341d11b5307fbd8419b0b9a7bc3 |
+#| SELECT IF ( ( `locate` ( ? , ` ...  . `COMPRESSED_SIZE` ) ) DESC  | NULL | *         |         14 |         0 |          0 | 1.31 s        | 184.00 ms   | 93.61 ms    |        42 |             3 |        232435 |             16603 | 2016-10-10 14:12:20 | 2016-10-10 18:57:02 | a7a8900602e4ad6155c15c5d15d49950 |
+#| SELECT `sys` . `format_path` ( ...  ) ) , ? ) ) AS `avg_write` ,  | sys  | *         |         36 |         6 |          0 | 3.19 s        | 290.44 ms   | 88.57 ms    |      1510 |            42 |       1777309 |             49370 | 2016-10-10 14:55:31 | 2016-10-10 18:57:03 | 907d39d1d563a1d31828e55581f8b59e |
+#| SELECT IF ( ( `locate` ( ? , ` ...  . `COMPRESSED_SIZE` ) ) DESC  | NULL | *         |         14 |         0 |          0 | 1.13 s        | 104.12 ms   | 81.03 ms    |       378 |            27 |        233942 |             16710 | 2016-10-10 14:12:20 | 2016-10-10 18:57:02 | 6643b924d5cbf8d1b01448d7ab04a957 |
+#+-------------------------------------------------------------------+------+-----------+------------+-----------+------------+---------------+-------------+-------------+-----------+---------------+---------------+-------------------+---------------------+---------------------+----------------------------------+
+#5 rows in set (0,02 sec)
+#
+#mysql> desc statements_with_runtimes_in_95th_percentile;
+#+-------------------+---------------------+------+-----+---------------------+-------+
+#| Field             | Type                | Null | Key | Default             | Extra |
+#+-------------------+---------------------+------+-----+---------------------+-------+
+#| query             | longtext            | YES  |     | NULL                |       |
+#| db                | varchar(64)         | YES  |     | NULL                |       |
+#| full_scan         | varchar(1)          | NO   |     |                     |       |
+#| exec_count        | bigint(20) unsigned | NO   |     | NULL                |       |
+#| err_count         | bigint(20) unsigned | NO   |     | NULL                |       |
+#| warn_count        | bigint(20) unsigned | NO   |     | NULL                |       |
+#| total_latency     | text                | YES  |     | NULL                |       |
+#| max_latency       | text                | YES  |     | NULL                |       |
+#| avg_latency       | text                | YES  |     | NULL                |       |
+#| rows_sent         | bigint(20) unsigned | NO   |     | NULL                |       |
+#| rows_sent_avg     | decimal(21,0)       | NO   |     | 0                   |       |
+#| rows_examined     | bigint(20) unsigned | NO   |     | NULL                |       |
+#| rows_examined_avg | decimal(21,0)       | NO   |     | 0                   |       |
+#| first_seen        | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
+#| last_seen         | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
+#| digest            | varchar(32)         | YES  |     | NULL                |       |
+#+-------------------+---------------------+------+-----+---------------------+-------+
+#16 rows in set (0,00 sec)
+
+   subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#########################################################################
 ##################################################################################
 
 #statements_with_sorting
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+#mysql> desc statements_with_sorting;
+#+-------------------+---------------------+------+-----+---------------------+-------+
+#| Field             | Type                | Null | Key | Default             | Extra |
+#+-------------------+---------------------+------+-----+---------------------+-------+
+#| query             | longtext            | YES  |     | NULL                |       |
+#| db                | varchar(64)         | YES  |     | NULL                |       |
+#| exec_count        | bigint(20) unsigned | NO   |     | NULL                |       |
+#| total_latency     | text                | YES  |     | NULL                |       |
+#| sort_merge_passes | bigint(20) unsigned | NO   |     | NULL                |       |
+#| avg_sort_merges   | decimal(21,0)       | NO   |     | 0                   |       |
+#| sorts_using_scans | bigint(20) unsigned | NO   |     | NULL                |       |
+#| sort_using_range  | bigint(20) unsigned | NO   |     | NULL                |       |
+#| rows_sorted       | bigint(20) unsigned | NO   |     | NULL                |       |
+#| avg_rows_sorted   | decimal(21,0)       | NO   |     | 0                   |       |
+#| first_seen        | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
+#| last_seen         | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
+#| digest            | varchar(32)         | YES  |     | NULL                |       |
+#+-------------------+---------------------+------+-----+---------------------+-------+
+#13 rows in set (0,00 sec)
+
+      subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3826,9 +3951,28 @@ sub mysqsl_pfs {
 ##################################################################################
 
 #statements_with_temp_tables
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+
+#mysql> desc statements_with_temp_tables;
+#+--------------------------+---------------------+------+-----+---------------------+-------+
+#| Field                    | Type                | Null | Key | Default             | Extra |
+#+--------------------------+---------------------+------+-----+---------------------+-------+
+#| query                    | longtext            | YES  |     | NULL                |       |
+#| db                       | varchar(64)         | YES  |     | NULL                |       |
+#| exec_count               | bigint(20) unsigned | NO   |     | NULL                |       |
+#| total_latency            | text                | YES  |     | NULL                |       |
+#| memory_tmp_tables        | bigint(20) unsigned | NO   |     | NULL                |       |
+#| disk_tmp_tables          | bigint(20) unsigned | NO   |     | NULL                |       |
+#| avg_tmp_tables_per_query | decimal(21,0)       | NO   |     | 0                   |       |
+#| tmp_tables_to_disk_pct   | decimal(24,0)       | NO   |     | 0                   |       |
+#| first_seen               | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
+#| last_seen                | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
+#| digest                   | varchar(32)         | YES  |     | NULL                |       |
+#+--------------------------+---------------------+------+-----+---------------------+-------+
+#11 rows in set (0,01 sec)#
+#
+    subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3836,9 +3980,19 @@ sub mysqsl_pfs {
 
 ##################################################################################
 #wait_classes_global_by_avg_latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+#mysql> select * from wait_classes_global_by_avg_latency;
+#+-----------------+-------+---------------+-------------+-------------+-------------+
+#| event_class     | total | total_latency | min_latency | avg_latency | max_latency |
+#+-----------------+-------+---------------+-------------+-------------+-------------+
+#| wait/io/table   |    54 | 7.34 ms       | 5.45 us     | 135.89 us   | 3.95 ms     |
+#| wait/io/file    | 14441 | 1.22 s        | 0 ps        | 84.48 us    | 230.64 ms   |
+#| wait/lock/table |    63 | 2.29 ms       | 658.84 ns   | 36.38 us    | 1.10 ms     |
+#+-----------------+-------+---------------+-------------+-------------+-------------+
+#3 rows in set (0,02 sec)
+#
+   subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3846,18 +4000,72 @@ sub mysqsl_pfs {
 
 ##################################################################################
 #wait_classes_global_by_latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+
+#ysql> select * from wait_classes_global_by_latency;
+#-----------------+-------+---------------+-------------+-------------+-------------+
+# event_class     | total | total_latency | min_latency | avg_latency | max_latency |
+#-----------------+-------+---------------+-------------+-------------+-------------+
+# wait/io/file    | 15381 | 1.23 s        | 0 ps        | 80.12 us    | 230.64 ms   |
+# wait/io/table   |    59 | 7.57 ms       | 5.45 us     | 128.24 us   | 3.95 ms     |
+# wait/lock/table |    69 | 3.22 ms       | 658.84 ns   | 46.64 us    | 1.10 ms     |
+#-----------------+-------+---------------+-------------+-------------+-------------+
+# rows in set (0,00 sec)
+
+subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
 ##################################################################################
 #waits_by_host_by_latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+#+---------------+---------------------+------+-----+---------+-------+
+#| Field         | Type                | Null | Key | Default | Extra |
+#+---------------+---------------------+------+-----+---------+-------+
+#| host          | varchar(60)         | YES  |     | NULL    |       |
+#| event         | varchar(128)        | NO   |     | NULL    |       |
+#| total         | bigint(20) unsigned | NO   |     | NULL    |       |
+#| total_latency | text                | YES  |     | NULL    |       |
+#| avg_latency   | text                | YES  |     | NULL    |       |
+#| max_latency   | text                | YES  |     | NULL    |       |
+#+---------------+---------------------+------+-----+---------+-------+
+#6 rows in set (0,00 sec)
+#
+#mysql> select * from waits_by_host_by_latency;
+#+------------+--------------------------------------+-------+---------------+-------------+-------------+
+#| host       | event                                | total | total_latency | avg_latency | max_latency |
+#+------------+--------------------------------------+-------+---------------+-------------+-------------+
+#| background | wait/io/file/innodb/innodb_data_file |  3557 | 542.77 ms     | 152.59 us   | 230.64 ms   |
+#| background | wait/io/file/sql/FRM                 |  1365 | 299.94 ms     | 219.74 us   | 57.13 ms    |
+#| background | wait/io/file/innodb/innodb_log_file  |    22 | 117.31 ms     | 5.33 ms     | 67.12 ms    |
+#| background | wait/io/file/sql/ERRMSG              |     5 | 40.72 ms      | 8.14 ms     | 20.47 ms    |
+#| background | wait/io/file/myisam/kfile            |    33 | 20.30 ms      | 615.27 us   | 13.90 ms    |
+#| background | wait/io/file/myisam/dfile            |    24 | 6.38 ms       | 265.94 us   | 2.20 ms     |
+#| background | wait/io/file/sql/casetest            |    15 | 3.82 ms       | 254.61 us   | 3.40 ms     |
+#| background | wait/io/file/mysys/charset           |     3 | 3.51 ms       | 1.17 ms     | 3.46 ms     |
+#| background | wait/io/file/mysys/cnf               |     5 | 1.72 ms       | 344.81 us   | 1.61 ms     |
+#| background | wait/io/file/sql/pid                 |     3 | 59.35 us      | 19.78 us    | 41.86 us    |
+#| background | wait/io/file/sql/global_ddl_log      |     2 | 50.55 us      | 25.28 us    | 47.35 us    |
+#| localhost  | wait/io/file/sql/FRM                 |   702 | 74.00 ms      | 105.41 us   | 4.04 ms     |
+#| localhost  | wait/io/file/myisam/dfile            |  7845 | 62.58 ms      | 7.98 us     | 4.95 ms     |
+#| localhost  | wait/io/file/sql/io_cache            |   256 | 17.74 ms      | 69.28 us    | 1.19 ms     |
+#| localhost  | wait/io/file/innodb/innodb_data_file |    76 | 14.54 ms      | 191.30 us   | 2.79 ms     |
+#| localhost  | wait/io/table/sql/handler            |    54 | 7.34 ms       | 135.89 us   | 3.95 ms     |
+#| localhost  | wait/io/file/sql/file_parser         |   328 | 7.01 ms       | 21.37 us    | 840.04 us   |
+#| localhost  | wait/io/file/csv/data                |   163 | 2.61 ms       | 15.99 us    | 859.49 us   |
+#| localhost  | wait/lock/table/sql/handler          |    63 | 2.29 ms       | 36.38 us    | 1.10 ms     |
+#| localhost  | wait/io/file/myisam/kfile            |    12 | 1.65 ms       | 137.40 us   | 565.79 us   |
+#| localhost  | wait/io/file/csv/metadata            |     8 | 1.51 ms       | 188.29 us   | 529.71 us   |
+#| localhost  | wait/io/file/sql/dbopt               |    16 | 1.26 ms       | 78.96 us    | 821.28 us   |
+#| localhost  | wait/io/file/archive/data            |     7 | 566.20 us     | 80.89 us    | 449.58 us   |
+#+------------+--------------------------------------+-------+---------------+-------------+-------------+
+#23 rows in set (0,01 sec)
+#
+   subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3865,18 +4073,89 @@ sub mysqsl_pfs {
 
 ##################################################################################
 #waits_by_user_by_latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+#mysql> select * from waits_by_user_by_latency;
+#+------+--------------------------------------+-------+---------------+-------------+-------------+
+#| user | event                                | total | total_latency | avg_latency | max_latency |
+#+------+--------------------------------------+-------+---------------+-------------+-------------+
+#| root | wait/io/file/sql/FRM                 |   702 | 74.00 ms      | 105.41 us   | 4.04 ms     |
+#| root | wait/io/file/myisam/dfile            |  7845 | 62.58 ms      | 7.98 us     | 4.95 ms     |
+#| root | wait/io/file/sql/io_cache            |   256 | 17.74 ms      | 69.28 us    | 1.19 ms     |
+#| root | wait/io/file/innodb/innodb_data_file |    76 | 14.54 ms      | 191.30 us   | 2.79 ms     |
+#| root | wait/io/table/sql/handler            |    54 | 7.34 ms       | 135.89 us   | 3.95 ms     |
+#| root | wait/io/file/sql/file_parser         |   328 | 7.01 ms       | 21.37 us    | 840.04 us   |
+#| root | wait/io/file/csv/data                |   163 | 2.61 ms       | 15.99 us    | 859.49 us   |
+#| root | wait/lock/table/sql/handler          |    63 | 2.29 ms       | 36.38 us    | 1.10 ms     |
+#| root | wait/io/file/myisam/kfile            |    12 | 1.65 ms       | 137.40 us   | 565.79 us   |
+#| root | wait/io/file/csv/metadata            |     8 | 1.51 ms       | 188.29 us   | 529.71 us   |
+#| root | wait/io/file/sql/dbopt               |    16 | 1.26 ms       | 78.96 us    | 821.28 us   |
+#| root | wait/io/file/archive/data            |     7 | 566.20 us     | 80.89 us    | 449.58 us   |
+#+------+--------------------------------------+-------+---------------+-------------+-------------+
+#12 rows in set (0,01 sec)
+#
+#mysql> desc waits_by_user_by_latency;
+#+---------------+---------------------+------+-----+---------+-------+
+#| Field         | Type                | Null | Key | Default | Extra |
+#+---------------+---------------------+------+-----+---------+-------+
+#| user          | varchar(32)         | YES  |     | NULL    |       |
+#| event         | varchar(128)        | NO   |     | NULL    |       |
+#| total         | bigint(20) unsigned | NO   |     | NULL    |       |
+#| total_latency | text                | YES  |     | NULL    |       |
+#| avg_latency   | text                | YES  |     | NULL    |       |
+#| max_latency   | text                | YES  |     | NULL    |       |
+#+---------------+---------------------+------+-----+---------+-------+
+#6 rows in set (0,00 sec)
+#
+    subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 ##################################################################################
 #waits_global_by_latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+#mysql> select * from waits_global_by_latency;
+#+--------------------------------------+-------+---------------+-------------+-------------+
+#| events                               | total | total_latency | avg_latency | max_latency |
+#+--------------------------------------+-------+---------------+-------------+-------------+
+#| wait/io/file/innodb/innodb_data_file |  3636 | 557.43 ms     | 153.31 us   | 230.64 ms   |
+#| wait/io/file/sql/FRM                 |  2167 | 375.60 ms     | 173.33 us   | 57.13 ms    |
+#| wait/io/file/innodb/innodb_log_file  |    22 | 117.31 ms     | 5.33 ms     | 67.12 ms    |
+#| wait/io/file/myisam/dfile            |  7869 | 68.97 ms      | 8.76 us     | 4.95 ms     |
+#| wait/io/file/sql/ERRMSG              |     5 | 40.72 ms      | 8.14 ms     | 20.47 ms    |
+#| wait/io/file/myisam/kfile            |    45 | 21.95 ms      | 487.84 us   | 13.90 ms    |
+#| wait/io/file/sql/io_cache            |   256 | 17.74 ms      | 69.28 us    | 1.19 ms     |
+#| wait/io/table/sql/handler            |    54 | 7.34 ms       | 135.89 us   | 3.95 ms     |
+#| wait/io/file/sql/file_parser         |   228 | 5.35 ms       | 23.48 us    | 840.04 us   |
+#| wait/io/file/sql/casetest            |    15 | 3.82 ms       | 254.61 us   | 3.40 ms     |
+#| wait/io/file/mysys/charset           |     3 | 3.51 ms       | 1.17 ms     | 3.46 ms     |
+#| wait/io/file/csv/data                |   163 | 2.61 ms       | 15.99 us    | 859.49 us   |
+#| wait/lock/table/sql/handler          |    63 | 2.29 ms       | 36.38 us    | 1.10 ms     |
+#| wait/io/file/mysys/cnf               |     5 | 1.72 ms       | 344.81 us   | 1.61 ms     |
+#| wait/io/file/csv/metadata            |     8 | 1.51 ms       | 188.29 us   | 529.71 us   |
+#| wait/io/file/sql/dbopt               |    16 | 1.26 ms       | 78.96 us    | 821.28 us   |
+#| wait/io/file/archive/data            |     7 | 566.20 us     | 80.89 us    | 449.58 us   |
+#| wait/io/file/sql/pid                 |     3 | 59.35 us      | 19.78 us    | 41.86 us    |
+#| wait/io/file/sql/global_ddl_log      |     2 | 50.55 us      | 25.28 us    | 47.35 us    |
+#+--------------------------------------+-------+---------------+-------------+-------------+
+#19 rows in set (0,01 sec)
+#
+#mysql> desc waits_global_by_latency
+#    -> ;
+#+---------------+---------------------+------+-----+---------+-------+
+#| Field         | Type                | Null | Key | Default | Extra |
+#+---------------+---------------------+------+-----+---------+-------+
+#| events        | varchar(128)        | NO   |     | NULL    |       |
+#| total         | bigint(20) unsigned | NO   |     | NULL    |       |
+#| total_latency | text                | YES  |     | NULL    |       |
+#| avg_latency   | text                | YES  |     | NULL    |       |
+#| max_latency   | text                | YES  |     | NULL    |       |
+#+---------------+---------------------+------+-----+---------+-------+
+#5 rows in set (0,00 sec)
+#
+   subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ('select "none";')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
