@@ -3594,16 +3594,25 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-##################################################################################
-#io_global_by_wait_by_bytes
-# Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+    # Event Wait by read bytes
+    subheaderprint "Performance schema: Event Wait by read bytes";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array ("use sys;(select event_name, total_read from io_global_by_wait_by_bytes where total_read like '%MiB' order by total_read DESC) UNION (select event_name, total_read from io_global_by_wait_by_bytes where total_read like '%KiB' order by total_read DESC LIMIT 15);")) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # Event Wait by write bytes
+    subheaderprint "Performance schema: Event Wait  written bytes";
+    $nbL=1;
+    for my $lQuery(select_array ("use sys;(select event_name, total_written from io_global_by_wait_by_bytes where total_written like '%MiB' order by total_written DESC) UNION (select event_name, total_written from io_global_by_wait_by_bytes where total_written like '%KiB' order by total_written DESC LIMIT 15);")) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+##################################################################################
 
 #io_global_by_wait_by_latency
 # Latest file IO by latency

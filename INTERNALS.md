@@ -321,3 +321,5 @@
 * File per IO total latency
 * File per IO read latency
 * File per IO write latency
+* Event Wait by read bytes
+* Event Wait by write bytes
