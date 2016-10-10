@@ -3173,7 +3173,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Top host per statement 
+    # Top user per statement 
     subheaderprint "Performance schema: Top 5 user per statement";
     $nbL=1;
     for my $lQuery(select_array ('select user, statements from sys.user_summary order by statements desc LIMIT 5')) {
@@ -3182,7 +3182,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Top host per statement latency
+    # Top user per statement latency
     subheaderprint "Performance schema: Top 5 user per statement latency";
     $nbL=1;
     for my $lQuery(select_array ('select user, statement_avg_latency from sys.user_summary order by statement_avg_latency desc LIMIT 5')) {
@@ -3191,7 +3191,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Top host per lock latency
+    # Top user per lock latency
     subheaderprint "Performance schema: Top 5 user per lock latency";
     $nbL=1;
     for my $lQuery(select_array ('select user, lock_latency from sys.user_summary_by_statement_latency order by lock_latency desc LIMIT 5')) {
@@ -3201,7 +3201,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
 
-    # Top host per full scans
+    # Top user per full scans
     subheaderprint "Performance schema: Top 5 user per nb full scans";
     $nbL=1;
     for my $lQuery(select_array ('select user, full_scans from sys.user_summary_by_statement_latency order by full_scans desc LIMIT 5')) {
@@ -3211,7 +3211,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     
-    # Top host per row_sent
+    # Top user per row_sent
     subheaderprint "Performance schema: Top 5 user per rows sent";
     $nbL=1;
     for my $lQuery(select_array ('select user, rows_sent from sys.user_summary_by_statement_latency order by rows_sent desc LIMIT 5')) {
@@ -3220,7 +3220,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
     
-    # Top host per row modified
+    # Top user per row modified
     subheaderprint "Performance schema: Top 5 user per rows modified";
     $nbL=1;
     for my $lQuery(select_array ('select user, rows_affected from sys.user_summary_by_statement_latency order by rows_affected desc LIMIT 5')) {
@@ -3229,7 +3229,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Top host per io
+    # Top user per io
     subheaderprint "Performance schema: Top 5 user per io";
     $nbL=1;
     for my $lQuery(select_array ('select user, file_ios from sys.user_summary order by file_ios desc LIMIT 5')) {
@@ -3238,7 +3238,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Top host per io latency
+    # Top user per io latency
     subheaderprint "Performance schema: Top 5 user per io latency";
     $nbL=1;
     for my $lQuery(select_array ('select user, file_io_latency from sys.user_summary order by file_io_latency desc LIMIT 5')) {
@@ -3294,7 +3294,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     
-    # Top host per row_sent
+    # Top host per rows sent
     subheaderprint "Performance schema: Top 5 host per rows sent";
     $nbL=1;
     for my $lQuery(select_array ('select host, rows_sent from sys.host_summary_by_statement_latency order by rows_sent desc LIMIT 5')) {
@@ -3303,7 +3303,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
     
-    # Top host per row modified
+    # Top host per rows modified
     subheaderprint "Performance schema: Top 5 host per rows modified";
     $nbL=1;
     for my $lQuery(select_array ('select host, rows_affected from sys.host_summary_by_statement_latency order by rows_affected desc LIMIT 5')) {
@@ -3321,7 +3321,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Top host per io latency
+    # Top 5 host per io latency
     subheaderprint "Performance schema: Top 5 host per io latency";
     $nbL=1;
     for my $lQuery(select_array ('select host, file_io_latency from sys.host_summary order by file_io_latency desc LIMIT 5')) {
@@ -3330,6 +3330,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top IO type order by total io
     subheaderprint "Performance schema: Top IO type order by total io";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select substring(event_name,14), SUM(total)AS total from sys.host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY total DESC;')) {
@@ -3338,6 +3339,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top IO type order by total latency
     subheaderprint "Performance schema: Top IO type order by total latency";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select substring(event_name,14), format_time(ROUND(SUM(total_latency),1)) AS total_latency from sys.host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY total_latency DESC;')) {
@@ -3346,6 +3348,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top IO type order by max latency
     subheaderprint "Performance schema: Top IO type order by max latency";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select substring(event_name,14), MAX(max_latency) as max_latency from sys.host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY max_latency DESC;')) {
@@ -3354,7 +3357,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
     
-    
+    # Top Stages order by total io
     subheaderprint "Performance schema: Top Stages order by total io";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select substring(event_name,7), SUM(total)AS total from sys.host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY total DESC;')) {
@@ -3363,6 +3366,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top Stages order by total latency
     subheaderprint "Performance schema: Top Stages order by total latency";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select substring(event_name,7), format_time(ROUND(SUM(total_latency),1)) AS total_latency from sys.host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY total_latency DESC;')) {
@@ -3371,6 +3375,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top Stages order by avg latency
     subheaderprint "Performance schema: Top Stages order by avg latency";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select substring(event_name,7), MAX(avg_latency) as avg_latency from sys.host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY avg_latency DESC;')) {
@@ -3407,10 +3412,28 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Proc per allocated memory
+    # Process per allocated memory
     subheaderprint "Performance schema: Process per allocated memory";
     $nbL=1;
     for my $lQuery(select_array ("select  concat(user,concat('/', IFNULL(Command,'NONE'))) AS PROC, current_memory from sys.processlist ORDER BY current_memory DESC;" )) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # InnoDB Lock Waits
+    subheaderprint "Performance schema: InnoDB Lock Waits";
+    $nbL=1;
+    for my $lQuery(select_array ("select wait_age_secs, locked_table, locked_type, waiting_query from innodb_lock_waits order by wait_age_secs DESC;" )) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
+    # Threads IO Latency
+    subheaderprint "Performance schema: Thread IO Latency";
+    $nbL=1;
+    for my $lQuery(select_array ("select user, total_latency, max_latency from io_by_thread_by_latency order by total_latency;" )) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3425,7 +3448,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
     
-    #* Top 5% slower queries 
+    # Top 5% slower queries 
     subheaderprint "Performance schema: Top 5 slower queries";
     $nbL=1;
     for my $lQuery(select_array ('select query, exec_count from sys.statements_with_runtimes_in_95th_percentile order by exec_count desc LIMIT 5')) {
@@ -3434,7 +3457,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # 
+    # Top 10 nb statement type
     subheaderprint "Performance schema: Top 10 nb statement type";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select statement, sum(total) as total from host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
@@ -3443,6 +3466,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top statement by total latency
     subheaderprint "Performance schema: Top statement by total latency";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select statement, sum(total_latency) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
@@ -3451,6 +3475,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top statement by lock latency
     subheaderprint "Performance schema: Top statement by lock latency";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select statement, sum(lock_latency) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
@@ -3459,6 +3484,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top statement by full scans
     subheaderprint "Performance schema: Top statement by full scans";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select statement, sum(full_scans) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
@@ -3467,6 +3493,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top statement by rows sent
     subheaderprint "Performance schema: Top statement by rows sent";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select statement, sum(rows_sent) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
@@ -3475,6 +3502,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+    # Top statement by rows modified
     subheaderprint "Performance schema: Top statement by rows modified";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select statement, sum(rows_affected) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;')) {
@@ -3483,16 +3511,16 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    #*Use temporary tables 
+    # Use temporary tables 
     subheaderprint "Performance schema: Some queries using temp table";
     $nbL=1;
-    for my $lQuery(select_array ('select query from sys.statements_with_temp_tables LIMIT 20')) {
+    for my $lQuery(select_array ('use sys;select query from sys.statements_with_temp_tables LIMIT 20')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
     
-    #*Unused Indexes 
+    # Unused Indexes 
     subheaderprint "Performance schema: Unused indexes";
     $nbL=1;
     for my $lQuery(select_array ('select * from sys.schema_unused_indexes')) {
@@ -3501,8 +3529,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    #* Full table scans 
-    #select * from sys.`schema_tables_with_full_table_scans` 
+    # Full table scans 
     subheaderprint "Performance schema: Tables with full table scans";
     $nbL=1;
     for my $lQuery(select_array ('select * from sys.schema_tables_with_full_table_scans order by rows_full_scanned DESC')) {
@@ -3510,7 +3537,234 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
+
+    # Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+
+    # FILE  by IO read bytes
+    subheaderprint "Performance schema: FILE by IO read bytes";
+    $nbL=1;
+    for my $lQuery(select_array ("use sys;(select file, total_read from io_global_by_file_by_bytes where total_read like '%MiB' order by total_read DESC) UNION (select file, total_read from io_global_by_file_by_bytes where total_read like '%KiB' order by total_read DESC LIMIT 15);")) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # FILE  by IO written bytes
+    subheaderprint "Performance schema: FILE by IO written bytes";
+    $nbL=1;
+    for my $lQuery(select_array ("use sys;(select file, total_written from io_global_by_file_by_bytes where total_written like '%MiB' order by total_written DESC) UNION (select file, total_written from io_global_by_file_by_bytes where total_written like '%KiB' order by total_written DESC LIMIT 15);")) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+
+    # file per IO total latency
+    subheaderprint "Performance schema: file per IO total latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select file, total_latency from io_global_by_file_by_latency ORDER BY total_latency DESC LIMIT 20;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # file per IO read latency
+    subheaderprint "Performance schema: file per IO read latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select file, read_latency from io_global_by_file_by_latency ORDER BY read_latency DESC LIMIT 20;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    # file per IO write latency
+    subheaderprint "Performance schema: file per IO write latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select file, write_latency from io_global_by_file_by_latency ORDER BY write_latency DESC LIMIT 20;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+##################################################################################
+#io_global_by_wait_by_bytes
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+#io_global_by_wait_by_latency
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+#schema_index_statistics
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+#schema_object_overview
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+#schema_table_statistics
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+#schema_table_statistics_with_buffer
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+#schema_tables_with_full_table_scans
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+#statement_analysis
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#statements_with_errors_or_warnings
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#statements_with_full_table_scans
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#statements_with_runtimes_in_95th_percentile
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#statements_with_sorting
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#statements_with_temp_tables
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#wait_classes_global_by_avg_latency
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#wait_classes_global_by_latency
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#waits_by_host_by_latency
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#waits_by_user_by_latency
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+#waits_global_by_latency
+# Latest file IO by latency
+    subheaderprint "Performance schema: Latest FILE IO by latency";
+    $nbL=1;
+    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
 }
 
 # Recommendations for Ariadb
@@ -3591,6 +3845,67 @@ sub mariadb_tokudb {
         && $myvar{'have_tokudb'} eq "YES" )
     {
         infoprint "TokuDB is disabled.";
+        return;
+    }
+    infoprint "TokuDB is enabled.";
+
+    # All is to done here
+}
+
+# Recommendations for XtraDB
+sub mariadb_xtradb {
+    subheaderprint "XtraDB Metrics";
+
+    # XtraDB
+    unless ( defined $myvar{'have_xtradb'}
+        && $myvar{'have_xtradb'} eq "YES" )
+    {
+        infoprint "XtraDB is disabled.";
+        return;
+    }
+    infoprint "XtraDB is enabled.";
+
+    # All is to done here
+}
+# Recommendations for RocksDB
+sub mariadb_rockdb {
+    subheaderprint "RocksDB Metrics";
+
+    # RocksDB
+    unless ( defined $myvar{'have_rocksdb'}
+        && $myvar{'have_rocksdb'} eq "YES" )
+    {
+        infoprint "RocksDB is disabled.";
+        return;
+    }
+    infoprint "RocksDB is enabled.";
+
+    # All is to done here
+}
+# Recommendations for Spider
+sub mariadb_spider {
+    subheaderprint "Spider Metrics";
+
+    # Spider
+    unless ( defined $myvar{'have_spider'}
+        && $myvar{'have_spider'} eq "YES" )
+    {
+        infoprint "Spider is disabled.";
+        return;
+    }
+    infoprint "Spider is enabled.";
+
+    # All is to done here
+}
+# Recommendations for Connect
+sub mariadb_connect {
+    subheaderprint "Connect Metrics";
+
+    # Connect
+    unless ( defined $myvar{'have_connect'}
+        && $myvar{'have_connect'} eq "YES" )
+    {
+        infoprint "Connect is disabled.";
         return;
     }
     infoprint "TokuDB is enabled.";
@@ -4547,10 +4862,14 @@ mysql_stats;               # Print the server stats
 mysqsl_pfs;                # Print Performance schema info
 mariadb_threadpool;        # Print MaraiDB ThreadPool stats
 mysql_myisam;              # Print MyISAM stats
-mariadb_ariadb;            # Print MaraiDB AriaDB stats
 mysql_innodb;              # Print InnoDB stats
-mariadb_tokudb;            # Print MaraiDB TokuDB stats
-mariadb_galera;            # Print MaraiDB Galera Cluster stats
+mariadb_ariadb;            # Print MaraiDB AriaDB stats
+mariadb_tokudb;            # Print MariaDB Tokudb stats 
+mariadb_xtradb;            # Print MariaDB XtraDB stats
+mariadb_rockdb;            # Print MariaDB RockDB stats
+mariadb_spider;            # Print MariaDB Spider stats
+mariadb_connect;            # Print MariaDB Connect stats
+mariadb_galera;            # Print MariaDB Galera Cluster stats
 get_replication_status;    # Print replication info
 make_recommendations;      # Make recommendations based on stats
 dump_result;               # Dump result if debug is on

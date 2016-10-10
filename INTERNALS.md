@@ -316,3 +316,8 @@
 * Unused Indexes
 * Full table scans
 * Latest file IO by latency
+* File by IO read bytes
+* File by IO written bytes
+* File per IO total latency
+* File per IO read latency
+* File per IO write latency
