@@ -359,3 +359,22 @@
 * TOP 15 high update latency tables
 * TOP 15 high delete latency tables
 * Redundant indexes
+* Tables not using InnoDb buffer
+* Top 15 Tables using InnoDb buffer
+* Top 15 Tables with InnoDb buffer free
+* Top 15 Most executed queries
+* Latest SQL queries in errors or warnings
+* Top 20 queries with full table scans
+* TOP 15 reader queries (95% percentile)
+* TOP 15 row look queries (95% percentile)
+* TOP 15 total latency queries (95% percentile)
+* TOP 15 max latency queries (95% percentile)
+* TOP 15 average latency queries (95% percentile)
+* Top 20 queries with sort
+* Last 50 queries with sort
+* TOP 15 row sorting queries with sort
+* TOP 15 total latency queries with sort
+* TOP 15 merge queries with sort
+* TOP 15 average sort merges queries with sort
+* TOP 15 scans queries with sort
+* TOP 15 range queries with sort 

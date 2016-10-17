@@ -3694,8 +3694,6 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-##################################################################################
-#schema_table_statistics
     # TOP 15 most read tables
     subheaderprint "Performance schema: TOP 15 most read tables";
     $nbL=1;
@@ -3759,81 +3757,57 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-     
-##################################################################################
-
-#schema_table_statistics_with_buffer
-#io_read_requests: 8
-#          io_read: 66.04 KiB
-#  io_read_latency: 2.47 ms
-#io_write_requests: 0
-#         io_write: 0 bytes
-# io_write_latency: 0 ps
-# io_misc_requests: 8
-#  io_misc_latency: 1.34 ms
-#   innodb_buffer_allocated: NULL
-#        innodb_buffer_data: NULL
-#        innodb_buffer_free: NULL
-#       innodb_buffer_pages: NULL
-#innodb_buffer_pages_hashed: NULL
-#   innodb_buffer_pages_old: NULL
-# innodb_buffer_rows_cached: NULL
-# Select * from schema_table_statistics_with_buffer
-
-return;
-    subheaderprint "Performance schema: XXXXXXX";
+    subheaderprint "Performance schema: Tables not using InnoDb buffer";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array (' Select table_schema, table_name from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-##################################################################################
-#statement_analysis
-#mysql> desc statement_analysis;
-#+-------------------+---------------------+------+-----+---------------------+-------+
-#| Field             | Type                | Null | Key | Default             | Extra |
-#+-------------------+---------------------+------+-----+---------------------+-------+
-#| query             | longtext            | YES  |     | NULL                |       |
-#| db                | varchar(64)         | YES  |     | NULL                |       |
-#| full_scan         | varchar(1)          | NO   |     |                     |       |
-#| exec_count        | bigint(20) unsigned | NO   |     | NULL                |       |
-#| err_count         | bigint(20) unsigned | NO   |     | NULL                |       |
-#| warn_count        | bigint(20) unsigned | NO   |     | NULL                |       |
-#| total_latency     | text                | YES  |     | NULL                |       |
-#| max_latency       | text                | YES  |     | NULL                |       |
-#| avg_latency       | text                | YES  |     | NULL                |       |
-#| lock_latency      | text                | YES  |     | NULL                |       |
-#| rows_sent         | bigint(20) unsigned | NO   |     | NULL                |       |
-#| rows_sent_avg     | decimal(21,0)       | NO   |     | 0                   |       |
-#| rows_examined     | bigint(20) unsigned | NO   |     | NULL                |       |
-#| rows_examined_avg | decimal(21,0)       | NO   |     | 0                   |       |
-#| rows_affected     | bigint(20) unsigned | NO   |     | NULL                |       |
-#| rows_affected_avg | decimal(21,0)       | NO   |     | 0                   |       |
-#| tmp_tables        | bigint(20) unsigned | NO   |     | NULL                |       |
-#| tmp_disk_tables   | bigint(20) unsigned | NO   |     | NULL                |       |
-#| rows_sorted       | bigint(20) unsigned | NO   |     | NULL                |       |
-#| sort_merge_passes | bigint(20) unsigned | NO   |     | NULL                |       |
-#| digest            | varchar(32)         | YES  |     | NULL                |       |
-#| first_seen        | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
-#| last_seen         | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
-#+-------------------+---------------------+------+-----+---------------------+-------+
-#23 rows in set (0,01 sec)
-
-   subheaderprint "Performance schema: XXXXXXX";
+    subheaderprint "Performance schema: Table not using InnoDb buffer";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array (' Select table_schema, table_name from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-#########################################################################    
-#statements_with_errors_or_warnings
-# Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+        subheaderprint "Performance schema: Table not using InnoDb buffer";
     $nbL=1;
-    for my $lQuery(select_array ('select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;')) {
+    for my $lQuery(select_array (' Select table_schema, table_name from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Top 15 Tables using InnoDb buffer";
+    $nbL=1;
+    for my $lQuery(select_array ('Select  table_schema, table_name,innodb_buffer_allocated from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_allocated DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+
+    subheaderprint "Performance schema: Top 15 Tables with InnoDb buffer free";
+    $nbL=1;
+    for my $lQuery(select_array ('Select  table_schema, table_name,innodb_buffer_free from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_free DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+   subheaderprint "Performance schema: Top 15 Most executed queries";
+    $nbL=1;
+    for my $lQuery(select_array ('select db, query, exec_count from sys.statement_analysis order by exec_count DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: Latest SQL queries in errors or warnings";
+    $nbL=1;
+    for my $lQuery(select_array ('select query, last_seen from sys.statements_with_errors_or_warnings ORDER BY last_seen LIMIT 100;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3863,62 +3837,131 @@ return;
 #+--------------------------+------------------------+------+-----+---------------------+-------+
 #14 rows in set (0,00 sec)
 #
-   subheaderprint "Performance schema: XXXXXXX";
+   subheaderprint "Performance schema: Top 20 queries with full table scans";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array ('select db, query, exec_count from sys.statements_with_full_table_scans order BY exec_count DESC LIMIT 20;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-#########################################################################
 
-#statements_with_runtimes_in_95th_percentile
-
-#mysql> select * from statements_with_runtimes_in_95th_percentile;
-#+-------------------------------------------------------------------+------+-----------+------------+-----------+------------+---------------+-------------+-------------+-----------+---------------+---------------+-------------------+---------------------+---------------------+----------------------------------+
-#| query                                                             | db   | full_scan | exec_count | err_count | warn_count | total_latency | max_latency | avg_latency | rows_sent | rows_sent_avg | rows_examined | rows_examined_avg | first_seen          | last_seen           | digest                           |
-#+-------------------------------------------------------------------+------+-----------+------------+-----------+------------+---------------+-------------+-------------+-----------+---------------+---------------+-------------------+---------------------+---------------------+----------------------------------+
-#| SELECT `sys` . `format_path` ( ... DER BY `performance_schema` .  | sys  | *         |         31 |         0 |          0 | 5.88 s        | 248.36 ms   | 189.62 ms   |       878 |            28 |       4309600 |            139019 | 2016-10-10 15:06:03 | 2016-10-10 18:57:03 | 5725848cdc48f0d86f4894b6fe0f87af |
-#| SELECT IF ( ( `locate` ( ? , ` ...  . `COMPRESSED_SIZE` ) ) DESC  | sys  | *         |          3 |         0 |          0 | 307.41 ms     | 109.74 ms   | 102.47 ms   |         6 |             2 |         52303 |             17434 | 2016-10-10 18:43:59 | 2016-10-10 18:45:24 | 59abe341d11b5307fbd8419b0b9a7bc3 |
-#| SELECT IF ( ( `locate` ( ? , ` ...  . `COMPRESSED_SIZE` ) ) DESC  | NULL | *         |         14 |         0 |          0 | 1.31 s        | 184.00 ms   | 93.61 ms    |        42 |             3 |        232435 |             16603 | 2016-10-10 14:12:20 | 2016-10-10 18:57:02 | a7a8900602e4ad6155c15c5d15d49950 |
-#| SELECT `sys` . `format_path` ( ...  ) ) , ? ) ) AS `avg_write` ,  | sys  | *         |         36 |         6 |          0 | 3.19 s        | 290.44 ms   | 88.57 ms    |      1510 |            42 |       1777309 |             49370 | 2016-10-10 14:55:31 | 2016-10-10 18:57:03 | 907d39d1d563a1d31828e55581f8b59e |
-#| SELECT IF ( ( `locate` ( ? , ` ...  . `COMPRESSED_SIZE` ) ) DESC  | NULL | *         |         14 |         0 |          0 | 1.13 s        | 104.12 ms   | 81.03 ms    |       378 |            27 |        233942 |             16710 | 2016-10-10 14:12:20 | 2016-10-10 18:57:02 | 6643b924d5cbf8d1b01448d7ab04a957 |
-#+-------------------------------------------------------------------+------+-----------+------------+-----------+------------+---------------+-------------+-------------+-----------+---------------+---------------+-------------------+---------------------+---------------------+----------------------------------+
-#5 rows in set (0,02 sec)
-#
-#mysql> desc statements_with_runtimes_in_95th_percentile;
-#+-------------------+---------------------+------+-----+---------------------+-------+
-#| Field             | Type                | Null | Key | Default             | Extra |
-#+-------------------+---------------------+------+-----+---------------------+-------+
-#| query             | longtext            | YES  |     | NULL                |       |
-#| db                | varchar(64)         | YES  |     | NULL                |       |
-#| full_scan         | varchar(1)          | NO   |     |                     |       |
-#| exec_count        | bigint(20) unsigned | NO   |     | NULL                |       |
-#| err_count         | bigint(20) unsigned | NO   |     | NULL                |       |
-#| warn_count        | bigint(20) unsigned | NO   |     | NULL                |       |
-#| total_latency     | text                | YES  |     | NULL                |       |
-#| max_latency       | text                | YES  |     | NULL                |       |
-#| avg_latency       | text                | YES  |     | NULL                |       |
-#| rows_sent         | bigint(20) unsigned | NO   |     | NULL                |       |
-#| rows_sent_avg     | decimal(21,0)       | NO   |     | 0                   |       |
-#| rows_examined     | bigint(20) unsigned | NO   |     | NULL                |       |
-#| rows_examined_avg | decimal(21,0)       | NO   |     | 0                   |       |
-#| first_seen        | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
-#| last_seen         | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
-#| digest            | varchar(32)         | YES  |     | NULL                |       |
-#+-------------------+---------------------+------+-----+---------------------+-------+
-#16 rows in set (0,00 sec)
-
-   subheaderprint "Performance schema: XXXXXXX";
+   subheaderprint "Performance schema: Last 50 queries with full table scans";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array ('select db, query, last_seen from sys.statements_with_full_table_scans order BY last_seen DESC LIMIT 50;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-#########################################################################
+
+     subheaderprint "Performance schema: TOP 15 reader queries (95% percentile)";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query , rows_sent from statements_with_runtimes_in_95th_percentile ORDER BY ROWs_sent DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: TOP 15 most row look queries (95% percentile)";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, rows_examined AS search from statements_with_runtimes_in_95th_percentile ORDER BY rows_examined DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+ 
+    subheaderprint "Performance schema: TOP 15 total latency queries (95% percentile)";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, total_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY total_latency DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: TOP 15 max latency queries (95% percentile)";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, max_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY max_latency DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
+    subheaderprint "Performance schema: TOP 15 average latency queries (95% percentile)";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, avg_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY avg_latency DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+ 
+   subheaderprint "Performance schema: Top 20 queries with sort";
+    $nbL=1;
+    for my $lQuery(select_array ('select db, query, exec_count from sys.statements_with_sorting order BY exec_count DESC LIMIT 20;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+   subheaderprint "Performance schema: Last 50 queries with sort";
+    $nbL=1;
+    for my $lQuery(select_array ('select db, query, last_seen from sys.statements_with_sorting order BY last_seen DESC LIMIT 50;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+     subheaderprint "Performance schema: TOP 15 row sorting queries with sort";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query , rows_sorted from statements_with_sorting ORDER BY ROWs_sorted DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: TOP 15 total latency queries with sort";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, total_latency AS search from statements_with_sorting  ORDER BY total_latency DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: TOP 15 merge queries with sort";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, sort_merge_passes AS search from statements_with_sorting  ORDER BY sort_merge_passes DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
+    subheaderprint "Performance schema: TOP 15 average sort merges queries with sort";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, avg_sort_merges AS search from statements_with_sorting  ORDER BY avg_sort_merges DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
+    subheaderprint "Performance schema: TOP 15 scans queries with sort";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, sorts_using_scans AS search from statements_with_sorting  ORDER BY sorts_using_scans DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: TOP 15 range queries with sort";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, sort_using_range AS search from statements_with_sorting  ORDER BY sort_using_range DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+return;
+
+##
 ##################################################################################
-
 #statements_with_sorting
 #mysql> desc statements_with_sorting;
 #+-------------------+---------------------+------+-----+---------------------+-------+
@@ -3939,6 +3982,32 @@ return;
 #| digest            | varchar(32)         | YES  |     | NULL                |       |
 #+-------------------+---------------------+------+-----+---------------------+-------+
 #13 rows in set (0,00 sec)
+return;
+
+    subheaderprint "Performance schema: TOP 15 most row look queries (95% percentile)";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, rows_examined AS search from statements_with_runtimes_in_95th_percentile ORDER BY rows_examined DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+ 
+
+    subheaderprint "Performance schema: TOP 15 max latency queries (95% percentile)";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, max_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY max_latency DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+    
+    subheaderprint "Performance schema: TOP 15 average latency queries (95% percentile)";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, avg_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY avg_latency DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
       subheaderprint "Performance schema: XXXXXXX";
     $nbL=1;
@@ -3948,6 +4017,8 @@ return;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
+
+return;
 ##################################################################################
 
 #statements_with_temp_tables
