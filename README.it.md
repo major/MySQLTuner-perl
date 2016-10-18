@@ -164,7 +164,6 @@ Questo genere di cose sono destinate ad accadere. Ecco i dettagli di cui ho biso
 * Il testo completo dell'errore
 * L'output dei comandi `SHOW VARIABLES;` e `SHOW GLOBAL STATUS;`(se possibile)
 
-**Domanda: How to perform a CVE vulneralibity checks ?**
 **Domanda: Come eseguo il check per le vulnerabilità CVE ?**
 
 * Scarica il file `vulnerabilities.csv`da questo repository.
