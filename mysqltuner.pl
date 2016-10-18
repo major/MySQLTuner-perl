@@ -3958,65 +3958,6 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-return;
-
-##
-##################################################################################
-#statements_with_sorting
-#mysql> desc statements_with_sorting;
-#+-------------------+---------------------+------+-----+---------------------+-------+
-#| Field             | Type                | Null | Key | Default             | Extra |
-#+-------------------+---------------------+------+-----+---------------------+-------+
-#| query             | longtext            | YES  |     | NULL                |       |
-#| db                | varchar(64)         | YES  |     | NULL                |       |
-#| exec_count        | bigint(20) unsigned | NO   |     | NULL                |       |
-#| total_latency     | text                | YES  |     | NULL                |       |
-#| sort_merge_passes | bigint(20) unsigned | NO   |     | NULL                |       |
-#| avg_sort_merges   | decimal(21,0)       | NO   |     | 0                   |       |
-#| sorts_using_scans | bigint(20) unsigned | NO   |     | NULL                |       |
-#| sort_using_range  | bigint(20) unsigned | NO   |     | NULL                |       |
-#| rows_sorted       | bigint(20) unsigned | NO   |     | NULL                |       |
-#| avg_rows_sorted   | decimal(21,0)       | NO   |     | 0                   |       |
-#| first_seen        | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
-#| last_seen         | timestamp           | NO   |     | 0000-00-00 00:00:00 |       |
-#| digest            | varchar(32)         | YES  |     | NULL                |       |
-#+-------------------+---------------------+------+-----+---------------------+-------+
-#13 rows in set (0,00 sec)
-return;
-
-    subheaderprint "Performance schema: TOP 15 most row look queries (95% percentile)";
-    $nbL=1;
-    for my $lQuery(select_array ('use sys;select db, query, rows_examined AS search from statements_with_runtimes_in_95th_percentile ORDER BY rows_examined DESC LIMIT 15;')) {
-      infoprint " +-- $nbL: $lQuery";
-      $nbL++;
-    }
-    infoprint "No information found or indicators desactivated." if ($nbL == 1);
- 
-
-    subheaderprint "Performance schema: TOP 15 max latency queries (95% percentile)";
-    $nbL=1;
-    for my $lQuery(select_array ('use sys;select db, query, max_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY max_latency DESC LIMIT 15;')) {
-      infoprint " +-- $nbL: $lQuery";
-      $nbL++;
-    }
-    infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
-    subheaderprint "Performance schema: TOP 15 average latency queries (95% percentile)";
-    $nbL=1;
-    for my $lQuery(select_array ('use sys;select db, query, avg_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY avg_latency DESC LIMIT 15;')) {
-      infoprint " +-- $nbL: $lQuery";
-      $nbL++;
-    }
-    infoprint "No information found or indicators desactivated." if ($nbL == 1);
-
-      subheaderprint "Performance schema: XXXXXXX";
-    $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
-      infoprint " +-- $nbL: $lQuery";
-      $nbL++;
-    }
-    infoprint "No information found or indicators desactivated." if ($nbL == 1);
-
 
 return;
 ##################################################################################
@@ -4692,9 +4633,14 @@ sub mysql_innodb {
             infoprint " +-- InnoDB Additional Mem Pool: "
               . hr_bytes( $myvar{'innodb_additional_mem_pool_size'} ) . "";
         }
+        if ( defined $myvar{'innodb_log_file_size'} ) {
+            infoprint " +-- InnoDB Log File Size: "
+              . hr_bytes( $myvar{'innodb_log_file_size'} ) . "(".$mycalc{'innodb_log_size_pct'}." % of buffer pool)";
+        }
+        
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
-              . hr_bytes( $myvar{'innodb_log_buffer_size'} ) . "(".percentage($mycalc{'innodb_log_size_pct'}).")";
+              . hr_bytes( $myvar{'innodb_log_buffer_size'} ) ;
         }
         if ( defined $mystat{'Innodb_buffer_pool_pages_free'} ) {
             infoprint " +-- InnoDB Log Buffer Free: "
@@ -4721,7 +4667,19 @@ sub mysql_innodb {
               . hr_bytes_rnd( $enginestats{'InnoDB'} )
               . ") if possible." );
     }
-
+    if ($mycalc{'innodb_log_size_pct'} < 20 or $mycalc{'innodb_log_size_pct'} > 30) {
+        badprint "Ratio InnoDB log file size / InnoDb Buffer pool size (".
+          $mycalc{'innodb_log_size_pct'}.
+          " %): " . hr_bytes( $myvar{'innodb_log_file_size'} ) . "/"
+          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " should be equal 25%";
+        push( @adjvars,
+                "innodb_log_file_size should be equals to 1/4 of buffer pool size (= "
+              . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'}/4 ) . ") if possible." );
+    } else {
+      goodprint "InnoDB log file size / InnoDb Buffer pool size: "
+          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . "/"
+          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " should be equal 25%";
+    }
     # InnoDB Buffer Pull Instances (MySQL 5.6.6+)
     if ( defined( $myvar{'innodb_buffer_pool_instances'} ) ) {
 
@@ -4763,7 +4721,7 @@ sub mysql_innodb {
         else {
             if ( $myvar{'innodb_buffer_pool_instances'} != 1 ) {
                 badprint
-"InnoDB buffer pool <= 1G and innodb_buffer_pool_instances(!=1).";
+"InnoDB buffer pool <= 1G and Innodb_buffer_pool_instances(!=1).";
                 push( @adjvars, "innodb_buffer_pool_instances (=1)" );
             }
             else {
@@ -4793,11 +4751,11 @@ sub mysql_innodb {
           )
         {
             goodprint
-"innodb_buffer_pool_size is aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
+"Innodb_buffer_pool_size aligned with Innodb_buffer_pool_chunk_size & Innodb_buffer_pool_instances";
         }
         else {
             badprint
-"innodb_buffer_pool_size is not aligned with value innodb_buffer_pool_chunk_size and innodb_buffer_pool_instances";
+"Innodb_buffer_pool_size aligned with Innodb_buffer_pool_chunk_size & Innodb_buffer_pool_instances";
 
 #push( @adjvars, "Adjust innodb_buffer_pool_instances, innodb_buffer_pool_chunk_size with innodb_buffer_pool_size" );
             push( @adjvars,
