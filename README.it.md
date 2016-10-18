@@ -22,7 +22,7 @@ Maggiori dettagli sugli indicatori
 MySQLTuner ha bisogno di te:
 ===
 
-**MySQLTuner** ha bisogno di collaboratori per la documentazione, il codice e suggerimenti..
+**MySQLTuner** ha bisogno di collaboratori per documentazione, codice e suggerimenti ..
 
 * Problemi e suggerimenti possono essere riportati su [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * La guida per contribuire è disponibile in inglese: [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
@@ -53,91 +53,95 @@ Testa **sempre** le modifiche su ambienti ad hoc e tieni sempre presente che mig
 
 **Seriamente - consulta la sezione FAQ che segue.**
 
-What MySQLTuner is checking exactly ?
+Cosa verifica esattamente MySQLTuner ?
 --
-All checks done by **MySQLTuner** are documented in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) documentation.
+Tutti i controlli effettuati da **MySQLTuner** sono documentati in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
-Download/Installation
+Download/Installazione
 --
 
-You can download the entire repository by using 'git clone' followed by the cloning URL above. The simplest and shortest method is:
+Si può semplicemente scaricare l'intero codice utilizzando `git clone` seguito dalla URL riportata sopra.
+Il modo più semplice è il seguente:
 
 	wget http://mysqltuner.pl/ -O mysqltuner.pl
 	wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
 	wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 	perl mysqltuner.pl
 
-Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
+Ovviamente è possibile assegnare il permesso di esecuzione in modo da poter lanciare il comando senza chiamare l'interprete `perl` (`chmod +x mysqltuner.pl`).
 
-Specific usage
+Casi d'uso
 --
 
-__Usage:__ Minimal usage locally
+__Uso:__ Minimale locale
 
 	perl mysqltuner.pl
 
-__Usage:__ Minimal usage remotely
+__Uso:__ Minimale da remoto
 
 	perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
 
-__Usage:__ Enable maximum output information around MySQL/MariaDb without debugging
+__Uso:__ Abilitando il massimo livello di informazione in output su MySQL/MariaDb senza usare l'optione di debug
 
 	perl mysqltuner.pl --verbose
 	perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat
 
 
-__Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
+__Uso:__ Abilitando la verifica delle vulnerabilità CVE per la versione di MariaDB o MySQL installata
 
 	perl mysqltuner.pl --cvefile=vulnerabilities.csv
 
-__Usage:__ Write your result in a file with information displayed
+__Uso:__ Salvando i risultati su un file con le stesse informazione mostrate a video
 
 	perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 
-__Usage:__ Write your result in a file **without outputting information**
+__Uso:__ Salvando i risultati su un file **senza mostrare nulla a video**
 
 	perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 
-__Usage:__ Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
+__Uso:__ Utilizzando un modello per personalizzare il file di output, con la sintassi di [Text::Template](https://metacpan.org/pod/Text::Template).
 
  	perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
 
-__Usage:__ Enable debugging information
+__Uso:__ Abilitando la modalità di debug
 
 	perl mysqltuner.pl --debug
 
 FAQ
 --
 
-**Question: Will MySQLTuner fix my slow MySQL server?**
+**Domanda: MySQLTuner sistemerà il mio server MySQL lento?**
 
-**No.**  MySQLTuner is a read only script.  It won't write to any configuration files, change the status of any daemons, or call your mother to wish her a happy birthday.  It will give you an overview of your server's performance and make some basic recommendations about improvements that you can make after it completes.  *Make sure you read the warning above prior to following any recommendations.*
+**No.**  MySQLTuner è uno script che legge solamente.  Non scriverà alcun file di configurazione, non modificherà lo stato di alcun demone né chiamerà tua madre per augurarle buon compleanno.
+Ti darà una panoramica delle prestazioni del tuo server, facendo alcune raccomandazioni basilari circa i miglioramenti che tu puoi apportare. *assicurati di leggere l'avviso precedente prima di seguire qualsiasi raccomandazione.*
 
-**Question: Can I fire my DBA now?**
+**Domanda: Posso eliminare il mio DBA ora?**
 
-**MySQLTuner will not replace your DBA in any form or fashion.**  If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
+**MySQLTuner non sostituirà il tuo DBA in alcun modo.** Se il tuo DBA continuamente occupa il tuo parcheggio e ruba il tuo cibo dal frigo puoi considerare l'opzione - ma resta una tua scelta.
 
-**Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?**
+**Domanda: Perché MySQLTuner continua a chiedermi ogni volta le credenziali di login di MySQL?**
 
-The script will try its best to log in via any means possible.  It will check for ~/.my.cnf files, Plesk password files, and empty password root logins.  If none of those are available, then you'll be prompted for a password.  If you'd like the script to run in an automated fashion without user intervention, then create a .my.cnf file in your home directory which contains:
+Lo script cerca di arguirle in ogni modo possibile. Cercando file `~/.my.cnf`, file di password di Plesk e provando il login di root con password vuota.
+Se nessuno di questi modi ha successo, allora la password viene richiesta. Se preferisci che lo script giri in modo automatico, senza interazione con l'utente, allora crea un file `.my.cnf` nella tua cartella home che contenga:
 
 	[client]
 	user=someusername
 	pass=thatuserspassword
 
-Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.  If a [T-1000 shows up in a LAPD uniform](https://en.wikipedia.org/wiki/T-1000) and demands your database credentials, you won't have much of an option.
+Una volta creato, assicurati che tu sia il proprietario (owner) e che i permessi siano 0600. Questo dovrebbe preservare le tue credenziali di login per i database da occhi indiscreti, in condizioni normali.
+Se un [Terminator modello T-1000 apparisse vestito da Carabiniere](https://it.wikipedia.org/wiki/T-1000) e chiedesse le tue credenziali non avresti poi tante scelte.
 
-**Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
+**Domanda: C'è qualche altro modo per rendere sicure le credenziali sulle ultime versioni di MySQL e MariaDB ?**
 
-You could use mysql_config_editor utilities.
+Potresti utilizzare il comando `mysql_config_editor`.
 
 	$ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
 	Enter passord: ********
 	$
 
-At this time, ~/.mylogin.cnf has been written with appropriated rigth access.
+Che crea il file `~/.mylogin.cnf` con i prmessi di accesso appropriati.
 
-To get information about stored credentials, use the following command:
+Per avere informazioni sulle credenziali salvate, si usi ilseguente comando:
 
 	$mysql_config_editor print
 	[client]
@@ -145,88 +149,91 @@ To get information about stored credentials, use the following command:
 	password = *****
 	host = localhost
 
-**Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
+**Domanda: Quali sono i privilegi minimi, nel database, necessari per un utente *mysqltuner* ad hoc ?**
 
         mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* FOR 'mysqltuner'@'localhost' identified by pwd1234;
 
-**Question: It's not working on my OS! What gives?!**
+**Domanda: Non funziona sul mio SO! Che succede?!**
 
-These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:
+Questo genere di cose sono destinate ad accadere. Ecco i dettagli di cui ho bisogno per indagare sul problema:
 
-* OS and OS version
-* Architecture (x86, x86_64, IA64, Commodore 64)
-* Exact MySQL version
-* Where you obtained your MySQL version (OS package, source, etc)
-* The full text of the error
-* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
+* SO e versione del SO
+* Architettura (x86, x86_64, IA64, Commodore 64)
+* Versione esatta di MySQL
+* Da dove viene la tua versione di MySQL (pacchetto del SO, sorgenti, etc.)
+* Il testo completo dell'errore
+* L'output dei comandi `SHOW VARIABLES;` e `SHOW GLOBAL STATUS;`(se possibile)
 
-**Question: How to perform a CVE vulneralibity checks ?**
+**Domanda: How to perform a CVE vulneralibity checks ?**
+**Domanda: Come eseguo il check per le vulnerabilità CVE ?**
 
-* Download vulnerabilities.csv from this repository.
-* use option --cvefile to perform CVE checks
+* Scarica il file `vulnerabilities.csv`da questo repository.
+* Usa l'opzione `--cvefile` per eseguire i test delle CVE
 
-**Question: How to use mysqltuner from remote host ?**
-Thanks to  [@rolandomysqldba](http://dba.stackexchange.com/users/877/rolandomysqldba)
+**Domanda: Come uso  mysqltuner da un altro computer ?**
+Grazie a [@rolandomysqldba](http://dba.stackexchange.com/users/877/rolandomysqldba)
 
 * You will still have to connect like a mysql client:
+* Ti dovrai collegare come un client mysql:
 
-Connection and Authentication
+Connessione e Autenticazione
 
-	--host <hostname> Connect to a remote host to perform tests (default: localhost)
-	--socket <socket> Use a different socket for a local connection
-	--port <port>     Port to use for connection (default: 3306)
-	--user <username> Username to use for authentication
-	--pass <password> Password to use for authentication
-	--defaults-file <path> defaulfs file for credentials
+	--host <hostname> Si connette a un host remoto per eseguire i test (default: localhost)
+	--socket <socket> Usa un socket per effettuare una connessione locale
+	--port <port>     Porta per la connessione (default: 3306)
+	--user <username> Username per l'autenticazione
+	--pass <password> Password per l'autenticazione
+	--defaults-file <path> defaults file per le credenziali
 
-Since you are using a remote host, use parameters to supply values from the OS
+Poiché si sta utilizzando un host remoto, si utilizzino i seguenti parametri per fornire allo script i valori del SO
 
-	--forcemem <size>  Amount of RAM installed in megabytes
-	--forceswap <size> Amount of swap memory configured in megabytes
+	--forcemem <size>  Valore della RAM installata, in megabyte
+	--forceswap <size> Valore della memoria di swap configurata, in megabyte
 
-* You may have to contact your remote SysAdmin to ask how much RAM and swap you have
+* Potresti dover contattare il sistemista del server remoto per conoscere i valori di RAM e swap
 
-If the database has too many tables, or very large table, use this:
+Se il database ha troppe tabelle, o tabelle veramente grandi, si usi:
 
-	--skipsize           Don't enumerate tables and their types/sizes (default: on)
-	                     (Recommended for servers with many tables)
+	--skipsize           Non elenca le tabelle ed i rispettivi tipi e dimensioni (default: on)
+	                     (Raccomandato per server con molte tabelle)
 
-MySQLTuner and Vagrant
+MySQLTuner e Vagrant
 --
-**MySQLTuner** contains following Vagrant configurations:
+**MySQLTuner** contiene le seguenti configurazioni per Vagrant:
 * Fedora Core 23 / MariaDB 10.0
 * Fedora Core 23 / MariaDB 10.1
 * Fedora Core 23 / MySQL 5.6
 * Fedora Core 23 / MySQL 5.7
 
-**Vagrant File** are stored in Vagrant subdirectory.
-* Follow this 2 steps after vagrant installation:
-* Rename VagrantFile_for_Mxxx into Vagrantfile
-* vagrant up
+**Vagrant File** sono collocati nella sotto-directory di Vagrant.
+* Segui questi due passaggi dopo l'installazione di Vagrant:
+	* Rinominare `VagrantFile_for_Mxxx` in `Vagrantfile`
+	* `vagrant up`
 
-**MySQLTuner** contains a Vagrant configurations for test purpose and development
-* Install VirtualBox and Vagrant
+**MySQLTuner** contiene una configurazione Vagrant a scopo di test e sviluppo
+* Installare VirtualBox e Vagrant
 	* https://www.virtualbox.org/wiki/Downloads
 	* https://www.vagrantup.com/downloads.html
-* Clone repository
+* Clone del repository
  	* git clone https://github.com/major/MySQLTuner-perl.git
-* Install Vagrant plugins vagrant-hostmanager and  vagrant-vbguest
-	* vagrant plugin install vagrant-hostmanager
-	* vagrant plugin install vagrant-vbguest
-* Add Fedora Core 23 box for official Fedora Download Website
-	* vagrant box add --name fc23 https://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-virtualbox.box
-* Create a data directory
-	* mkdir data
-* Rename Vagrantfile_MariaDB10.0 into Vagrantfile
-	* cp MySQLTuner-perl/Vagrant/Vagrantfile_for_MariaDB10.0 Vagrantfile
+* Installare i plugin di Vagrant `vagrant-hostmanager` e `vagrant-vbguest`
+	* `vagrant plugin install vagrant-hostmanager`
+	* `vagrant plugin install vagrant-vbguest`
+* Aggiungere un box Fedora Core 23 dal sito ufficiale di Fedora
+	* `vagrant box add --name fc23 https://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-virtualbox.box`
+* Creare una directory `data`
+	* `mkdir data`
+* Rinominare `Vagrantfile_MariaDB10.0` in `Vagrantfile`
+	* `cp MySQLTuner-perl/Vagrant/Vagrantfile_for_MariaDB10.0 Vagrantfile`
 * Start vagrant
-	* vagrant up
+	* `vagrant up`
 
-MySQLTuner needs you
+MySQLTuner ha bisogno di te:
 --
-**MySQLTuner** needs contributors for documentation, code and feedbacks..
 
-* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
-* Contribution guide is avalaible following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
+**MySQLTuner** ha bisogno di collaboratori per documentazione, codice e suggerimenti ..
+
+* Problemi e suggerimenti possono essere riportati su [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
+* La guida per contribuire è disponibile in inglese: [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Dai un Stella a **MySQLTuner project** su [GitHub](https://github.com/major/MySQLTuner-perl)
 
