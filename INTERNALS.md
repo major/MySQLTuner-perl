@@ -378,3 +378,13 @@
 * TOP 15 average sort merges queries with sort
 * TOP 15 scans queries with sort
 * TOP 15 range queries with sort 
+* Top 20 queries with temp table
+* Last 50 queries with temp table
+* TOP 15 total latency queries with temp table
+* TOP 15 queries with temp table to disk
+* TOP 15 class events by number
+* TOP 30 events by number
+* TOP 15 class events by total latency
+* TOP 30 events by total latency
+* TOP 15 class events by max latency
+* TOP 30 events by max latency

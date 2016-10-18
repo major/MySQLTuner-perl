@@ -3813,30 +3813,6 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-##################################################################################
-
-#statements_with_full_table_scans
-#mysql> desc statements_with_full_table_scans;
-#+--------------------------+------------------------+------+-----+---------------------+-------+
-#| Field                    | Type                   | Null | Key | Default             | Extra |
-#+--------------------------+------------------------+------+-----+---------------------+-------+
-#| query                    | longtext               | YES  |     | NULL                |       |
-#| db                       | varchar(64)            | YES  |     | NULL                |       |
-#| exec_count               | bigint(20) unsigned    | NO   |     | NULL                |       |
-#| total_latency            | text                   | YES  |     | NULL                |       |
-#| no_index_used_count      | bigint(20) unsigned    | NO   |     | NULL                |       |
-#| no_good_index_used_count | bigint(20) unsigned    | NO   |     | NULL                |       |
-#| no_index_used_pct        | decimal(24,0)          | NO   |     | 0                   |       |
-#| rows_sent                | bigint(20) unsigned    | NO   |     | NULL                |       |
-#| rows_examined            | bigint(20) unsigned    | NO   |     | NULL                |       |
-#| rows_sent_avg            | decimal(21,0) unsigned | YES  |     | NULL                |       |
-#| rows_examined_avg        | decimal(21,0) unsigned | YES  |     | NULL                |       |
-#| first_seen               | timestamp              | NO   |     | 0000-00-00 00:00:00 |       |
-#| last_seen                | timestamp              | NO   |     | 0000-00-00 00:00:00 |       |
-#| digest                   | varchar(32)            | YES  |     | NULL                |       |
-#+--------------------------+------------------------+------+-----+---------------------+-------+
-#14 rows in set (0,00 sec)
-#
    subheaderprint "Performance schema: Top 20 queries with full table scans";
     $nbL=1;
     for my $lQuery(select_array ('select db, query, exec_count from sys.statements_with_full_table_scans order BY exec_count DESC LIMIT 20;')) {
@@ -3959,7 +3935,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
 
-return;
+
 ##################################################################################
 
 #statements_with_temp_tables
@@ -3982,29 +3958,33 @@ return;
 #+--------------------------+---------------------+------+-----+---------------------+-------+
 #11 rows in set (0,01 sec)#
 #
-    subheaderprint "Performance schema: XXXXXXX";
+   subheaderprint "Performance schema: Top 20 queries with temp table";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array ('select db, query, exec_count from sys.statements_with_temp_tables order BY exec_count DESC LIMIT 20;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-##################################################################################
-#wait_classes_global_by_avg_latency
-#mysql> select * from wait_classes_global_by_avg_latency;
-#+-----------------+-------+---------------+-------------+-------------+-------------+
-#| event_class     | total | total_latency | min_latency | avg_latency | max_latency |
-#+-----------------+-------+---------------+-------------+-------------+-------------+
-#| wait/io/table   |    54 | 7.34 ms       | 5.45 us     | 135.89 us   | 3.95 ms     |
-#| wait/io/file    | 14441 | 1.22 s        | 0 ps        | 84.48 us    | 230.64 ms   |
-#| wait/lock/table |    63 | 2.29 ms       | 658.84 ns   | 36.38 us    | 1.10 ms     |
-#+-----------------+-------+---------------+-------------+-------------+-------------+
-#3 rows in set (0,02 sec)
-#
-   subheaderprint "Performance schema: XXXXXXX";
+   subheaderprint "Performance schema: Last 50 queries with temp table";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array ('select db, query, last_seen from sys.statements_with_temp_tables order BY last_seen DESC LIMIT 50;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: TOP 15 total latency queries with temp table";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, total_latency AS search from statements_with_temp_tables ORDER BY total_latency DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: TOP 15 queries with temp table to disk";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select db, query, disk_tmp_tables from statements_with_sorting  ORDER BY disk_tmp_tables DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -4023,151 +4003,49 @@ return;
 #-----------------+-------+---------------+-------------+-------------+-------------+
 # rows in set (0,00 sec)
 
-subheaderprint "Performance schema: XXXXXXX";
+    subheaderprint "Performance schema: TOP 15 class events by number";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array ('use sys;select event_class, total from wait_classes_global_by_latency  ORDER BY total DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-##################################################################################
-#waits_by_host_by_latency
-#+---------------+---------------------+------+-----+---------+-------+
-#| Field         | Type                | Null | Key | Default | Extra |
-#+---------------+---------------------+------+-----+---------+-------+
-#| host          | varchar(60)         | YES  |     | NULL    |       |
-#| event         | varchar(128)        | NO   |     | NULL    |       |
-#| total         | bigint(20) unsigned | NO   |     | NULL    |       |
-#| total_latency | text                | YES  |     | NULL    |       |
-#| avg_latency   | text                | YES  |     | NULL    |       |
-#| max_latency   | text                | YES  |     | NULL    |       |
-#+---------------+---------------------+------+-----+---------+-------+
-#6 rows in set (0,00 sec)
-#
-#mysql> select * from waits_by_host_by_latency;
-#+------------+--------------------------------------+-------+---------------+-------------+-------------+
-#| host       | event                                | total | total_latency | avg_latency | max_latency |
-#+------------+--------------------------------------+-------+---------------+-------------+-------------+
-#| background | wait/io/file/innodb/innodb_data_file |  3557 | 542.77 ms     | 152.59 us   | 230.64 ms   |
-#| background | wait/io/file/sql/FRM                 |  1365 | 299.94 ms     | 219.74 us   | 57.13 ms    |
-#| background | wait/io/file/innodb/innodb_log_file  |    22 | 117.31 ms     | 5.33 ms     | 67.12 ms    |
-#| background | wait/io/file/sql/ERRMSG              |     5 | 40.72 ms      | 8.14 ms     | 20.47 ms    |
-#| background | wait/io/file/myisam/kfile            |    33 | 20.30 ms      | 615.27 us   | 13.90 ms    |
-#| background | wait/io/file/myisam/dfile            |    24 | 6.38 ms       | 265.94 us   | 2.20 ms     |
-#| background | wait/io/file/sql/casetest            |    15 | 3.82 ms       | 254.61 us   | 3.40 ms     |
-#| background | wait/io/file/mysys/charset           |     3 | 3.51 ms       | 1.17 ms     | 3.46 ms     |
-#| background | wait/io/file/mysys/cnf               |     5 | 1.72 ms       | 344.81 us   | 1.61 ms     |
-#| background | wait/io/file/sql/pid                 |     3 | 59.35 us      | 19.78 us    | 41.86 us    |
-#| background | wait/io/file/sql/global_ddl_log      |     2 | 50.55 us      | 25.28 us    | 47.35 us    |
-#| localhost  | wait/io/file/sql/FRM                 |   702 | 74.00 ms      | 105.41 us   | 4.04 ms     |
-#| localhost  | wait/io/file/myisam/dfile            |  7845 | 62.58 ms      | 7.98 us     | 4.95 ms     |
-#| localhost  | wait/io/file/sql/io_cache            |   256 | 17.74 ms      | 69.28 us    | 1.19 ms     |
-#| localhost  | wait/io/file/innodb/innodb_data_file |    76 | 14.54 ms      | 191.30 us   | 2.79 ms     |
-#| localhost  | wait/io/table/sql/handler            |    54 | 7.34 ms       | 135.89 us   | 3.95 ms     |
-#| localhost  | wait/io/file/sql/file_parser         |   328 | 7.01 ms       | 21.37 us    | 840.04 us   |
-#| localhost  | wait/io/file/csv/data                |   163 | 2.61 ms       | 15.99 us    | 859.49 us   |
-#| localhost  | wait/lock/table/sql/handler          |    63 | 2.29 ms       | 36.38 us    | 1.10 ms     |
-#| localhost  | wait/io/file/myisam/kfile            |    12 | 1.65 ms       | 137.40 us   | 565.79 us   |
-#| localhost  | wait/io/file/csv/metadata            |     8 | 1.51 ms       | 188.29 us   | 529.71 us   |
-#| localhost  | wait/io/file/sql/dbopt               |    16 | 1.26 ms       | 78.96 us    | 821.28 us   |
-#| localhost  | wait/io/file/archive/data            |     7 | 566.20 us     | 80.89 us    | 449.58 us   |
-#+------------+--------------------------------------+-------+---------------+-------------+-------------+
-#23 rows in set (0,01 sec)
-#
-   subheaderprint "Performance schema: XXXXXXX";
+    subheaderprint "Performance schema: TOP 30 events by number";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array ('use sys;select events, total from waits_global_by_latency ORDER BY total DESC LIMIT 30;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-##################################################################################
-#waits_by_user_by_latency
-#mysql> select * from waits_by_user_by_latency;
-#+------+--------------------------------------+-------+---------------+-------------+-------------+
-#| user | event                                | total | total_latency | avg_latency | max_latency |
-#+------+--------------------------------------+-------+---------------+-------------+-------------+
-#| root | wait/io/file/sql/FRM                 |   702 | 74.00 ms      | 105.41 us   | 4.04 ms     |
-#| root | wait/io/file/myisam/dfile            |  7845 | 62.58 ms      | 7.98 us     | 4.95 ms     |
-#| root | wait/io/file/sql/io_cache            |   256 | 17.74 ms      | 69.28 us    | 1.19 ms     |
-#| root | wait/io/file/innodb/innodb_data_file |    76 | 14.54 ms      | 191.30 us   | 2.79 ms     |
-#| root | wait/io/table/sql/handler            |    54 | 7.34 ms       | 135.89 us   | 3.95 ms     |
-#| root | wait/io/file/sql/file_parser         |   328 | 7.01 ms       | 21.37 us    | 840.04 us   |
-#| root | wait/io/file/csv/data                |   163 | 2.61 ms       | 15.99 us    | 859.49 us   |
-#| root | wait/lock/table/sql/handler          |    63 | 2.29 ms       | 36.38 us    | 1.10 ms     |
-#| root | wait/io/file/myisam/kfile            |    12 | 1.65 ms       | 137.40 us   | 565.79 us   |
-#| root | wait/io/file/csv/metadata            |     8 | 1.51 ms       | 188.29 us   | 529.71 us   |
-#| root | wait/io/file/sql/dbopt               |    16 | 1.26 ms       | 78.96 us    | 821.28 us   |
-#| root | wait/io/file/archive/data            |     7 | 566.20 us     | 80.89 us    | 449.58 us   |
-#+------+--------------------------------------+-------+---------------+-------------+-------------+
-#12 rows in set (0,01 sec)
-#
-#mysql> desc waits_by_user_by_latency;
-#+---------------+---------------------+------+-----+---------+-------+
-#| Field         | Type                | Null | Key | Default | Extra |
-#+---------------+---------------------+------+-----+---------+-------+
-#| user          | varchar(32)         | YES  |     | NULL    |       |
-#| event         | varchar(128)        | NO   |     | NULL    |       |
-#| total         | bigint(20) unsigned | NO   |     | NULL    |       |
-#| total_latency | text                | YES  |     | NULL    |       |
-#| avg_latency   | text                | YES  |     | NULL    |       |
-#| max_latency   | text                | YES  |     | NULL    |       |
-#+---------------+---------------------+------+-----+---------+-------+
-#6 rows in set (0,00 sec)
-#
-    subheaderprint "Performance schema: XXXXXXX";
+    subheaderprint "Performance schema: TOP 15 class events by total latency";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array ('use sys;select event_class, total_latency from wait_classes_global_by_latency  ORDER BY total_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-##################################################################################
-#waits_global_by_latency
-#mysql> select * from waits_global_by_latency;
-#+--------------------------------------+-------+---------------+-------------+-------------+
-#| events                               | total | total_latency | avg_latency | max_latency |
-#+--------------------------------------+-------+---------------+-------------+-------------+
-#| wait/io/file/innodb/innodb_data_file |  3636 | 557.43 ms     | 153.31 us   | 230.64 ms   |
-#| wait/io/file/sql/FRM                 |  2167 | 375.60 ms     | 173.33 us   | 57.13 ms    |
-#| wait/io/file/innodb/innodb_log_file  |    22 | 117.31 ms     | 5.33 ms     | 67.12 ms    |
-#| wait/io/file/myisam/dfile            |  7869 | 68.97 ms      | 8.76 us     | 4.95 ms     |
-#| wait/io/file/sql/ERRMSG              |     5 | 40.72 ms      | 8.14 ms     | 20.47 ms    |
-#| wait/io/file/myisam/kfile            |    45 | 21.95 ms      | 487.84 us   | 13.90 ms    |
-#| wait/io/file/sql/io_cache            |   256 | 17.74 ms      | 69.28 us    | 1.19 ms     |
-#| wait/io/table/sql/handler            |    54 | 7.34 ms       | 135.89 us   | 3.95 ms     |
-#| wait/io/file/sql/file_parser         |   228 | 5.35 ms       | 23.48 us    | 840.04 us   |
-#| wait/io/file/sql/casetest            |    15 | 3.82 ms       | 254.61 us   | 3.40 ms     |
-#| wait/io/file/mysys/charset           |     3 | 3.51 ms       | 1.17 ms     | 3.46 ms     |
-#| wait/io/file/csv/data                |   163 | 2.61 ms       | 15.99 us    | 859.49 us   |
-#| wait/lock/table/sql/handler          |    63 | 2.29 ms       | 36.38 us    | 1.10 ms     |
-#| wait/io/file/mysys/cnf               |     5 | 1.72 ms       | 344.81 us   | 1.61 ms     |
-#| wait/io/file/csv/metadata            |     8 | 1.51 ms       | 188.29 us   | 529.71 us   |
-#| wait/io/file/sql/dbopt               |    16 | 1.26 ms       | 78.96 us    | 821.28 us   |
-#| wait/io/file/archive/data            |     7 | 566.20 us     | 80.89 us    | 449.58 us   |
-#| wait/io/file/sql/pid                 |     3 | 59.35 us      | 19.78 us    | 41.86 us    |
-#| wait/io/file/sql/global_ddl_log      |     2 | 50.55 us      | 25.28 us    | 47.35 us    |
-#+--------------------------------------+-------+---------------+-------------+-------------+
-#19 rows in set (0,01 sec)
-#
-#mysql> desc waits_global_by_latency
-#    -> ;
-#+---------------+---------------------+------+-----+---------+-------+
-#| Field         | Type                | Null | Key | Default | Extra |
-#+---------------+---------------------+------+-----+---------+-------+
-#| events        | varchar(128)        | NO   |     | NULL    |       |
-#| total         | bigint(20) unsigned | NO   |     | NULL    |       |
-#| total_latency | text                | YES  |     | NULL    |       |
-#| avg_latency   | text                | YES  |     | NULL    |       |
-#| max_latency   | text                | YES  |     | NULL    |       |
-#+---------------+---------------------+------+-----+---------+-------+
-#5 rows in set (0,00 sec)
-#
-   subheaderprint "Performance schema: XXXXXXX";
+
+    subheaderprint "Performance schema: TOP 30 events by total latency";
     $nbL=1;
-    for my $lQuery(select_array ('select "none";')) {
+    for my $lQuery(select_array ('use sys;select events, total_latency from waits_global_by_latency ORDER BY total_latency DESC LIMIT 30;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+  subheaderprint "Performance schema: TOP 15 class events by max latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select event_class, max_latency from wait_classes_global_by_latency  ORDER BY max_latency DESC LIMIT 15;')) {
+      infoprint " +-- $nbL: $lQuery";
+      $nbL++;
+    }
+    infoprint "No information found or indicators desactivated." if ($nbL == 1);
+
+    subheaderprint "Performance schema: TOP 30 events by max latency";
+    $nbL=1;
+    for my $lQuery(select_array ('use sys;select events, max_latency from waits_global_by_latency ORDER BY max_latency DESC LIMIT 30;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
