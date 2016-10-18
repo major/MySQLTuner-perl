@@ -1,63 +1,59 @@
 MySQLTuner-perl
 ====
-[![Build Status - Master](https://travis-ci.org/major/MySQLTuner-perl.svg?branch=master)](https://travis-ci.org/major/MySQLTuner-perl)
-[![Project Status](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
-[![Project Status](http://opensource.box.com/badges/maintenance.svg)](http://opensource.box.com/badges)
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
-[![GPL Licence](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
+[![Stato della build - Master](https://travis-ci.org/major/MySQLTuner-perl.svg?branch=master)](https://travis-ci.org/major/MySQLTuner-perl)
+[![Stato del progetto](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
+[![Stato del progetto](http://opensource.box.com/badges/maintenance.svg)](http://opensource.box.com/badges)
+[![Tempo medio per la soluzione di problemi](http://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
+[![Percentuale di problemi non risolti](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
+[![Licenza GPL](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
-**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
+**MySQLTuner** è uno script Perl che permette di analizzare velocemente una installazione di MySQL, nonché di apportare modifiche per migliorare le prestazioni e la stabilità.  In modo coinciso sono riportati lo stato attuale delle variabili di configurazione e i dati sullo stato del sistema, corredati da suggerimenti di base per il miglioramento delle prestazioni.
 
-**MySQLTuner** supports in this last version ~250 indicators for MySQL/MariaDB/Percona Server. 
+**MySQLTuner** supporta, in quest'ultima versione, circa 250 indicatori per i server MySQL/MariaDB/Percona.
 
-**MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration sush as ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
+**MySQLTuner** è attivamente manutenuto e nuovi indicatori sono aggiunti di settimana in settimana, supportando un gran numero di configurazioni tra le quali ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), metriche relative al SO Linux, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ...
 
-You can found more details on this indicators 
+Maggiori dettagli sugli indicatori
 ![Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 
 ![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
 
-MySQLTuner needs you:
+MySQLTuner ha bisogno di te:
 ===
 
-**MySQLTuner** needs contributors for documentation, code and feedbacks..
+**MySQLTuner** ha bisogno di collaboratori per la documentazione, il codice e suggerimenti..
 
-* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
-* Contribution guide is avalaible following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
-          
-Compatibility:
+* Problemi e suggerimenti possono essere riportati su [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
+* La guida per contribuire è disponibile in inglese: [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Dai un Stella a **MySQLTuner project** su [GitHub](https://github.com/major/MySQLTuner-perl)
+
+Compatibilità:
 ====
 
-* MySQL 5.7 (full support)
-* MySQL 5.6 (full support)
-* MySQL 5.5 (full support)
-* MariaDB 10.1 (full support)
-* MariaDB 10.0 (full support)
-* Percona Server 5.6 (full support)
-* Percona XtraDB cluster (full support)
-* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (partial support - deprecated version)
-* Perl 5.6 or later (with [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod) package)
-* Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
-* Windows is not supported at this time (Help wanted !!!!!)
-* Unrestricted read access to the MySQL server (OS root access recommended for MySQL < 5.1)
-* CVE vulnerabilites detection support from [https://cve.mitre.org](https://cve.mitre.org)
+* MySQL 5.7 (pieno supporto)
+* MySQL 5.6 (pieno supporto)
+* MySQL 5.5 (pieno supporto)
+* MariaDB 10.1 (pieno supporto)
+* MariaDB 10.0 (pieno supporto)
+* Percona Server 5.6 (pieno supporto)
+* Percona XtraDB cluster (pieno supporto)
+* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (supporto parziale - versione deprecata)
+* Perl 5.6 o successivi (col pacchetto [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod))
+* Sistemi operativi basati su Unix/Linux (testato su Linux, varianti di BSD e di Solaris)
+* Windows non è supportato al momento (gradito aiuto!!!!!)
+* Accesso completo in lettura al server MySQL (accesso root a livello di SO raccomandato per MySQL < 5.1)
+* supporto al rilevamento di vulnerabilità CVE da [https://cve.mitre.org](https://cve.mitre.org)
 
-***WARNING***
+***ATTENZIONE***
 --
-It is **extremely important** for you to fully understand each change 
-you make to a MySQL database server.  If you don't understand portions 
-of the script's output, or if you don't understand the recommendations, 
-**you should consult** a knowledgeable DBA or system administrator 
-that you trust.  **Always** test your changes on staging environments, and 
-always keep in mind that improvements in one area can **negatively affect** 
-MySQL in other areas.
+È **estremamente importante** che tu capisca appieno ogni singola modifica apportata alla configurazione del server MySQL.
+Qualora non capissi appieno qualche parte dell'output dello script o se non capissi quanto raccomandato **dovresti consultare** un DBA esperto o un amministratore di sistema di cui hai fiducia.
+Testa **sempre** le modifiche su ambienti ad hoc e tieni sempre presente che miglioramenti in un settore potrebbero **influenzare negativamente** MySQL in altri settori.
 
-**Seriously - please review the FAQ section below.**
+**Seriamente - consulta la sezione FAQ che segue.**
 
-What MySQLTuner is checking exactly ? 
+What MySQLTuner is checking exactly ?
 --
 All checks done by **MySQLTuner** are documented in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) documentation.
 
@@ -70,7 +66,7 @@ You can download the entire repository by using 'git clone' followed by the clon
 	wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
 	wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 	perl mysqltuner.pl
-	
+
 Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
 
 Specific usage
@@ -78,27 +74,27 @@ Specific usage
 
 __Usage:__ Minimal usage locally
 
-	perl mysqltuner.pl 
+	perl mysqltuner.pl
 
 __Usage:__ Minimal usage remotely
 
 	perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
 
-__Usage:__ Enable maximum output information around MySQL/MariaDb without debugging 
+__Usage:__ Enable maximum output information around MySQL/MariaDb without debugging
 
 	perl mysqltuner.pl --verbose
 	perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat
-	
+
 
 __Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
 
 	perl mysqltuner.pl --cvefile=vulnerabilities.csv
 
-__Usage:__ Write your result in a file with information displayed  
+__Usage:__ Write your result in a file with information displayed
 
 	perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 
-__Usage:__ Write your result in a file **without outputting information** 
+__Usage:__ Write your result in a file **without outputting information**
 
 	perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 
@@ -106,7 +102,7 @@ __Usage:__ Using template model to customize your reporting file based on [Text:
 
  	perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
 
-__Usage:__ Enable debugging information 
+__Usage:__ Enable debugging information
 
 	perl mysqltuner.pl --debug
 
@@ -128,7 +124,7 @@ The script will try its best to log in via any means possible.  It will check fo
 	[client]
 	user=someusername
 	pass=thatuserspassword
-	
+
 Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.  If a [T-1000 shows up in a LAPD uniform](https://en.wikipedia.org/wiki/T-1000) and demands your database credentials, you won't have much of an option.
 
 **Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
@@ -179,7 +175,7 @@ Connection and Authentication
 	--host <hostname> Connect to a remote host to perform tests (default: localhost)
 	--socket <socket> Use a different socket for a local connection
 	--port <port>     Port to use for connection (default: 3306)
-	--user <username> Username to use for authentication	
+	--user <username> Username to use for authentication
 	--pass <password> Password to use for authentication
 	--defaults-file <path> defaulfs file for credentials
 
@@ -202,8 +198,8 @@ MySQLTuner and Vagrant
 * Fedora Core 23 / MariaDB 10.1
 * Fedora Core 23 / MySQL 5.6
 * Fedora Core 23 / MySQL 5.7
-       
-**Vagrant File** are stored in Vagrant subdirectory. 
+
+**Vagrant File** are stored in Vagrant subdirectory.
 * Follow this 2 steps after vagrant installation:
 * Rename VagrantFile_for_Mxxx into Vagrantfile
 * vagrant up
@@ -233,4 +229,4 @@ MySQLTuner needs you
 * Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
 * Contribution guide is avalaible following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
-          
+
