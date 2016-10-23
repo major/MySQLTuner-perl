@@ -4555,7 +4555,7 @@ sub mysql_innodb {
               . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'}/4 ) . ") if possible." );
     } else {
       goodprint "InnoDB log file size / InnoDb Buffer pool size: "
-          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . "/"
+          . hr_bytes( $myvar{'innodb_log_file_size'} ) . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " should be equal 25%";
     }
     # InnoDB Buffer Pull Instances (MySQL 5.6.6+)
