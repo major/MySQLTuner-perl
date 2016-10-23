@@ -2868,7 +2868,7 @@ sub mysql_stats {
                   . $myvar{'open_files_limit'}
                   . ") variable " );
             push( @generalrec,
-                    "should be greater than $table_cache_var ( "
+                    "should be greater than $table_cache_var ("
                   . $myvar{$table_cache_var}
                   . ")" );
         }
@@ -2919,25 +2919,23 @@ sub mysql_stats {
         if (   $mycalc{'pct_binlog_cache'} < 90
             && $mystat{'Binlog_cache_use'} > 0 ) {
             badprint "Binlog cache memory access: "
-              . $mycalc{'pct_binlog_cache'} . "% ( "
-              . (
-                $mystat{'Binlog_cache_use'} - $mystat{'Binlog_cache_disk_use'} )
+              . $mycalc{'pct_binlog_cache'} . "% ("
+              . ( $mystat{'Binlog_cache_use'} - $mystat{'Binlog_cache_disk_use'} )
               . " Memory / "
               . $mystat{'Binlog_cache_use'}
               . " Total)";
             push( @generalrec,
                     "Increase binlog_cache_size (Actual value: "
                   . $myvar{'binlog_cache_size'}
-                  . ") " );
+                  . ")" );
             push( @adjvars,
                     "binlog_cache_size ("
                   . hr_bytes( $myvar{'binlog_cache_size'} + 16 * 1024 * 1024 )
-                  . " ) " );
+                  . ")" );
         } else {
             goodprint "Binlog cache memory access: "
-              . $mycalc{'pct_binlog_cache'} . "% ( "
-              . (
-                $mystat{'Binlog_cache_use'} - $mystat{'Binlog_cache_disk_use'} )
+              . $mycalc{'pct_binlog_cache'} . "% ("
+              . ( $mystat{'Binlog_cache_use'} - $mystat{'Binlog_cache_disk_use'} )
               . " Memory / "
               . $mystat{'Binlog_cache_use'}
               . " Total)";
@@ -3661,7 +3659,7 @@ sub mysqsl_pfs {
     # TOP 15 high read latency index
     subheaderprint "Performance schema: TOP 15 high read latency index";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, select_latency from schema_index_statistics ORDER BY select_latency  DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, select_latency from schema_index_statistics ORDER BY select_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3670,7 +3668,7 @@ sub mysqsl_pfs {
     # TOP 15 high insert latency index
     subheaderprint "Performance schema: TOP 15 most modified indexes";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, insert_latency from schema_index_statistics ORDER BY insert_latency  DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, insert_latency from schema_index_statistics ORDER BY insert_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3679,7 +3677,7 @@ sub mysqsl_pfs {
     # TOP 15 high update latency index
     subheaderprint "Performance schema: TOP 15 high update latency index";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, update_latency from schema_index_statistics ORDER BY update_latency  DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, update_latency from schema_index_statistics ORDER BY update_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3688,7 +3686,7 @@ sub mysqsl_pfs {
     # TOP 15 high delete latency index
     subheaderprint "Performance schema: TOP 15 high delete latency index";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, delete_latency from schema_index_statistics ORDER BY delete_latency  DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name,index_name, delete_latency from schema_index_statistics ORDER BY delete_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3715,7 +3713,7 @@ sub mysqsl_pfs {
     # TOP 15 high read latency tables
     subheaderprint "Performance schema: TOP 15 high read latency tables";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select table_schema, table_name, fetch_latency from schema_table_statistics ORDER BY fetch_latency  DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, fetch_latency from schema_table_statistics ORDER BY fetch_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3724,7 +3722,7 @@ sub mysqsl_pfs {
     # TOP 15 high insert latency tables
     subheaderprint "Performance schema: TOP 15 high insert latency tables";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select table_schema, table_name, insert_latency from schema_table_statistics ORDER BY insert_latency  DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, insert_latency from schema_table_statistics ORDER BY insert_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3733,7 +3731,7 @@ sub mysqsl_pfs {
     # TOP 15 high update latency tables
     subheaderprint "Performance schema: TOP 15 high update latency tables";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select table_schema, table_name, update_latency from schema_table_statistics ORDER BY update_latency  DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, update_latency from schema_table_statistics ORDER BY update_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3742,7 +3740,7 @@ sub mysqsl_pfs {
     # TOP 15 high delete latency tables
     subheaderprint "Performance schema: TOP 15 high delete latency tables";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select table_schema, table_name, delete_latency from schema_table_statistics ORDER BY delete_latency  DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select table_schema, table_name, delete_latency from schema_table_statistics ORDER BY delete_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3757,7 +3755,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    subheaderprint "Performance schema: Tables not using InnoDb buffer";
+    subheaderprint "Performance schema: Tables not using InnoDB buffer";
     $nbL=1;
     for my $lQuery(select_array (' Select table_schema, table_name from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3765,14 +3763,14 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    subheaderprint "Performance schema: Table not using InnoDb buffer";
+    subheaderprint "Performance schema: Table not using InnoDB buffer";
     $nbL=1;
     for my $lQuery(select_array (' Select table_schema, table_name from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-        subheaderprint "Performance schema: Table not using InnoDb buffer";
+        subheaderprint "Performance schema: Table not using InnoDB buffer";
     $nbL=1;
     for my $lQuery(select_array (' Select table_schema, table_name from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3780,7 +3778,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    subheaderprint "Performance schema: Top 15 Tables using InnoDb buffer";
+    subheaderprint "Performance schema: Top 15 Tables using InnoDB buffer";
     $nbL=1;
     for my $lQuery(select_array ('Select  table_schema, table_name,innodb_buffer_allocated from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_allocated DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3789,7 +3787,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
 
-    subheaderprint "Performance schema: Top 15 Tables with InnoDb buffer free";
+    subheaderprint "Performance schema: Top 15 Tables with InnoDB buffer free";
     $nbL=1;
     for my $lQuery(select_array ('Select  table_schema, table_name,innodb_buffer_free from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_free DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
@@ -3896,7 +3894,7 @@ sub mysqsl_pfs {
 
     subheaderprint "Performance schema: TOP 15 total latency queries with sort";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select db, query, total_latency AS search from statements_with_sorting  ORDER BY total_latency DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select db, query, total_latency AS search from statements_with_sorting ORDER BY total_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3904,7 +3902,7 @@ sub mysqsl_pfs {
 
     subheaderprint "Performance schema: TOP 15 merge queries with sort";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select db, query, sort_merge_passes AS search from statements_with_sorting  ORDER BY sort_merge_passes DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select db, query, sort_merge_passes AS search from statements_with_sorting ORDER BY sort_merge_passes DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3912,7 +3910,7 @@ sub mysqsl_pfs {
     
     subheaderprint "Performance schema: TOP 15 average sort merges queries with sort";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select db, query, avg_sort_merges AS search from statements_with_sorting  ORDER BY avg_sort_merges DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select db, query, avg_sort_merges AS search from statements_with_sorting ORDER BY avg_sort_merges DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3920,7 +3918,7 @@ sub mysqsl_pfs {
     
     subheaderprint "Performance schema: TOP 15 scans queries with sort";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select db, query, sorts_using_scans AS search from statements_with_sorting  ORDER BY sorts_using_scans DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select db, query, sorts_using_scans AS search from statements_with_sorting ORDER BY sorts_using_scans DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3928,7 +3926,7 @@ sub mysqsl_pfs {
 
     subheaderprint "Performance schema: TOP 15 range queries with sort";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select db, query, sort_using_range AS search from statements_with_sorting  ORDER BY sort_using_range DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select db, query, sort_using_range AS search from statements_with_sorting ORDER BY sort_using_range DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3984,7 +3982,7 @@ sub mysqsl_pfs {
 
     subheaderprint "Performance schema: TOP 15 queries with temp table to disk";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select db, query, disk_tmp_tables from statements_with_sorting  ORDER BY disk_tmp_tables DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select db, query, disk_tmp_tables from statements_with_sorting ORDER BY disk_tmp_tables DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -4005,7 +4003,7 @@ sub mysqsl_pfs {
 
     subheaderprint "Performance schema: TOP 15 class events by number";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select event_class, total from wait_classes_global_by_latency  ORDER BY total DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select event_class, total from wait_classes_global_by_latency ORDER BY total DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -4021,7 +4019,7 @@ sub mysqsl_pfs {
 
     subheaderprint "Performance schema: TOP 15 class events by total latency";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select event_class, total_latency from wait_classes_global_by_latency  ORDER BY total_latency DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select event_class, total_latency from wait_classes_global_by_latency ORDER BY total_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -4037,7 +4035,7 @@ sub mysqsl_pfs {
 
   subheaderprint "Performance schema: TOP 15 class events by max latency";
     $nbL=1;
-    for my $lQuery(select_array ('use sys;select event_class, max_latency from wait_classes_global_by_latency  ORDER BY max_latency DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('use sys;select event_class, max_latency from wait_classes_global_by_latency ORDER BY max_latency DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -4289,14 +4287,14 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     else {
         goodprint "All tables get a primary key";
     }
-    my @nonInnoDbTables = select_array(
-"select CONCAT(table_schema,CONCAT('.', table_name)) from information_schema.tables where ENGINE <> 'InnoDb' and table_schema not in ('mysql', 'performance_schema', 'information_schema')"
+    my @nonInnoDBTables = select_array(
+"select CONCAT(table_schema,CONCAT('.', table_name)) from information_schema.tables where ENGINE <> 'InnoDB' and table_schema not in ('mysql', 'performance_schema', 'information_schema')"
     );
-    if ( scalar(@nonInnoDbTables) > 0 ) {
+    if ( scalar(@nonInnoDBTables) > 0 ) {
         badprint "Following table(s) are not InnoDB table:";
         push @generalrec,
           "Ensure that all table(s) are InnoDB tables for Galera replication";
-        foreach my $badtable (@nonInnoDbTables) {
+        foreach my $badtable (@nonInnoDBTables) {
             badprint "\t$badtable";
         }
     }
@@ -4311,11 +4309,11 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
         goodprint "Binlog format is in ROW mode.";
     }
     if ( $myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
-        badprint "Innodb flush log at each commit should be disabled.";
+        badprint "InnoDB flush log at each commit should be disabled.";
         push @adjvars, "innodb_flush_log_at_trx_commit = 0";
     }
     else {
-        goodprint "Innodb flush log at each commit is disabled for Galera.";
+        goodprint "InnoDB flush log at each commit is disabled for Galera.";
     }
 
     infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
@@ -4546,15 +4544,15 @@ sub mysql_innodb {
               . ") if possible." );
     }
     if ($mycalc{'innodb_log_size_pct'} < 20 or $mycalc{'innodb_log_size_pct'} > 30) {
-        badprint "Ratio InnoDB log file size / InnoDb Buffer pool size (".
+        badprint "Ratio InnoDB log file size / InnoDB Buffer pool size (".
           $mycalc{'innodb_log_size_pct'}.
           " %): " . hr_bytes( $myvar{'innodb_log_file_size'} ) . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " should be equal 25%";
         push( @adjvars,
-                "innodb_log_file_size should be equals to 1/4 of buffer pool size (= "
+                "innodb_log_file_size should be equals to 1/4 of buffer pool size (="
               . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'}/4 ) . ") if possible." );
     } else {
-      goodprint "InnoDB log file size / InnoDb Buffer pool size: "
+      goodprint "InnoDB log file size / InnoDB Buffer pool size: "
           . hr_bytes( $myvar{'innodb_log_file_size'} ) . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " should be equal 25%";
     }
