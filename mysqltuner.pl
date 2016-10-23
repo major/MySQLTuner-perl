@@ -3780,7 +3780,7 @@ sub mysqsl_pfs {
 
     subheaderprint "Performance schema: Top 15 Tables using InnoDB buffer";
     $nbL=1;
-    for my $lQuery(select_array ('select table_schema, table_name,innodb_buffer_allocated from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_allocated DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('select table_schema,table_name,innodb_buffer_allocated from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_allocated DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -3789,7 +3789,7 @@ sub mysqsl_pfs {
 
     subheaderprint "Performance schema: Top 15 Tables with InnoDB buffer free";
     $nbL=1;
-    for my $lQuery(select_array ('select table_schema, table_name,innodb_buffer_free from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_free DESC LIMIT 15;')) {
+    for my $lQuery(select_array ('select table_schema,table_name,innodb_buffer_free from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_free DESC LIMIT 15;')) {
       infoprint " +-- $nbL: $lQuery";
       $nbL++;
     }
@@ -5441,3 +5441,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # cperl-indent-level: 8
 # perl-indent-level: 8
 # End:
+
