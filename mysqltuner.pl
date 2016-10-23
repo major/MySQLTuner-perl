@@ -681,7 +681,7 @@ sub mysql_setup {
         $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
 
 # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
-        if (   $opt{'forcemem'} eq 0
+        if ( $opt{'forcemem'} eq 0
             && ( $opt{host} ne "127.0.0.1" )
             && ( $opt{host} ne "localhost" ) )
         {
@@ -1658,7 +1658,7 @@ sub get_replication_status {
         badprint
           "This replication slave is not running but seems to be configured.";
     }
-    if (   defined($io_running)
+    if ( defined($io_running)
         && $io_running =~ /yes/i
         && $sql_running =~ /yes/i )
     {
@@ -1898,7 +1898,7 @@ sub check_storage_engines {
 # Now we build a database list, and loop through it to get storage engine stats for tables
         foreach my $db (@dblist) {
             chomp($db);
-            if (   $db eq "information_schema"
+            if ( $db eq "information_schema"
                 or $db eq "performance_schema"
                 or $db eq "mysql"
                 or $db eq "lost+found" )
@@ -2516,7 +2516,7 @@ sub mysql_stats {
         }
     }
 
-    if (   $arch
+    if ( $arch
         && $arch == 32
         && $mycalc{'max_used_memory'} > 2 * 1024 * 1024 * 1024 )
     {
@@ -2751,7 +2751,7 @@ sub mysql_stats {
 
     # Temporary tables
     if ( $mystat{'Created_tmp_tables'} > 0 ) {
-        if (   $mycalc{'pct_temp_disk'} > 25
+        if ( $mycalc{'pct_temp_disk'} > 25
             && $mycalc{'max_tmp_table_size'} < 256 * 1024 * 1024 )
         {
             badprint
@@ -2916,7 +2916,7 @@ sub mysql_stats {
 
     # Binlog cache
     if ( defined $mycalc{'pct_binlog_cache'} ) {
-        if (   $mycalc{'pct_binlog_cache'} < 90
+        if ( $mycalc{'pct_binlog_cache'} < 90
             && $mystat{'Binlog_cache_use'} > 0 ) {
             badprint "Binlog cache memory access: "
               . $mycalc{'pct_binlog_cache'} . "% ("
@@ -3002,7 +3002,7 @@ sub mysql_myisam {
         badprint
           "None of your MyISAM tables are indexed - add indexes immediately";
     } else {
-        if (   $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
+        if ( $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
             && $mycalc{'pct_keys_from_mem'} < 95 )
         {
             badprint "Key buffer size / total MyISAM indexes: "
@@ -3088,7 +3088,7 @@ sub mariadb_threadpool {
     }
 
     if ( $myvar{'have_innodb'} eq 'YES' ) {
-        if (   $myvar{'thread_pool_size'} < 16
+        if ( $myvar{'thread_pool_size'} < 16
             or $myvar{'thread_pool_size'} > 36 )
         {
             badprint
@@ -4770,7 +4770,7 @@ sub mysql_databases {
 
     foreach (@dblist) {
         chomp($_);
-        if (   $_ eq "information_schema"
+        if ( $_ eq "information_schema"
             or $_ eq "performance_schema"
             or $_ eq "mysql"
             or $_ eq "" )
