@@ -206,7 +206,7 @@ if ( $opt{verbose} ) {
     $opt{pfstat}       = 1;    #Print performance schema info.
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
- 
+
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
   unless ( defined $opt{cvefile} and -f "$opt{cvefile}" );
@@ -810,7 +810,7 @@ sub mysql_setup {
       debugprint "defaults file detected: $opt{'defaults-file'}";
       my $mysqlclidefaults = `$mysqlcmd --print-defaults`;
       debugprint "MySQL Client Default File: $opt{'defaults-file'}";
-    
+
         $mysqllogin = "--defaults-file=".$opt{'defaults-file'};
         my $loginstatus = `$mysqladmincmd $mysqllogin ping 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
@@ -3159,10 +3159,10 @@ sub mysqsl_pfs {
 
     infoprint "Sys schema is installed.";
     return if ( $opt{pfstat} == 0 );
-    
+
     infoprint "Sys schema Version: ".select_one("select sys_version from sys.version");
 
-    # Top user per connection 
+    # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
     my $nbL=1;
     for my $lQuery(select_array ('select user, total_connections from sys.user_summary order by  total_connections desc LIMIT 5')) {
@@ -3171,7 +3171,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Top user per statement 
+    # Top user per statement
     subheaderprint "Performance schema: Top 5 user per statement";
     $nbL=1;
     for my $lQuery(select_array ('select user, statements from sys.user_summary order by statements desc LIMIT 5')) {
@@ -3208,7 +3208,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    
+
     # Top user per row_sent
     subheaderprint "Performance schema: Top 5 user per rows sent";
     $nbL=1;
@@ -3217,7 +3217,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
+
     # Top user per row modified
     subheaderprint "Performance schema: Top 5 user per rows modified";
     $nbL=1;
@@ -3245,7 +3245,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Top host per connection 
+    # Top host per connection
     subheaderprint "Performance schema: Top 5 host per connection";
     $nbL=1;
     for my $lQuery(select_array ('select host, total_connections from sys.host_summary order by  total_connections desc LIMIT 5')) {
@@ -3254,7 +3254,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Top host per statement 
+    # Top host per statement
     subheaderprint "Performance schema: Top 5 host per statement";
     $nbL=1;
     for my $lQuery(select_array ('select host, statements from sys.host_summary order by statements desc LIMIT 5')) {
@@ -3291,7 +3291,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    
+
     # Top host per rows sent
     subheaderprint "Performance schema: Top 5 host per rows sent";
     $nbL=1;
@@ -3300,7 +3300,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
+
     # Top host per rows modified
     subheaderprint "Performance schema: Top 5 host per rows modified";
     $nbL=1;
@@ -3354,7 +3354,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
+
     # Top Stages order by total io
     subheaderprint "Performance schema: Top Stages order by total io";
     $nbL=1;
@@ -3427,7 +3427,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
+
     # Threads IO Latency
     subheaderprint "Performance schema: Thread IO Latency";
     $nbL=1;
@@ -3437,7 +3437,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # High Cost SQL statements 
+    # High Cost SQL statements
     subheaderprint "Performance schema: Top 5 Most latency statements";
     $nbL=1;
     for my $lQuery(select_array ('select query, avg_latency from sys.statement_analysis order by avg_latency desc LIMIT 5')) {
@@ -3445,8 +3445,8 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
-    # Top 5% slower queries 
+
+    # Top 5% slower queries
     subheaderprint "Performance schema: Top 5 slower queries";
     $nbL=1;
     for my $lQuery(select_array ('select query, exec_count from sys.statements_with_runtimes_in_95th_percentile order by exec_count desc LIMIT 5')) {
@@ -3509,7 +3509,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Use temporary tables 
+    # Use temporary tables
     subheaderprint "Performance schema: Some queries using temp table";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select query from sys.statements_with_temp_tables LIMIT 20')) {
@@ -3517,8 +3517,8 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
-    # Unused Indexes 
+
+    # Unused Indexes
     subheaderprint "Performance schema: Unused indexes";
     $nbL=1;
     for my $lQuery(select_array ('select * from sys.schema_unused_indexes')) {
@@ -3527,7 +3527,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # Full table scans 
+    # Full table scans
     subheaderprint "Performance schema: Tables with full table scans";
     $nbL=1;
     for my $lQuery(select_array ('select * from sys.schema_tables_with_full_table_scans order by rows_full_scanned DESC')) {
@@ -3655,7 +3655,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
- 
+
     # TOP 15 high read latency index
     subheaderprint "Performance schema: TOP 15 high read latency index";
     $nbL=1;
@@ -3709,7 +3709,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
- 
+
     # TOP 15 high read latency tables
     subheaderprint "Performance schema: TOP 15 high read latency tables";
     $nbL=1;
@@ -3842,7 +3842,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
- 
+
     subheaderprint "Performance schema: TOP 15 total latency queries (95% percentile)";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select db, query, total_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY total_latency DESC LIMIT 15;')) {
@@ -3858,7 +3858,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
+
     subheaderprint "Performance schema: TOP 15 average latency queries (95% percentile)";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select db, query, avg_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY avg_latency DESC LIMIT 15;')) {
@@ -3867,7 +3867,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
- 
+
    subheaderprint "Performance schema: Top 20 queries with sort";
     $nbL=1;
     for my $lQuery(select_array ('select db, query, exec_count from sys.statements_with_sorting order BY exec_count DESC LIMIT 20;')) {
@@ -3907,7 +3907,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
+
     subheaderprint "Performance schema: TOP 15 average sort merges queries with sort";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select db, query, avg_sort_merges AS search from statements_with_sorting ORDER BY avg_sort_merges DESC LIMIT 15;')) {
@@ -3915,7 +3915,7 @@ sub mysqsl_pfs {
       $nbL++;
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
-    
+
     subheaderprint "Performance schema: TOP 15 scans queries with sort";
     $nbL=1;
     for my $lQuery(select_array ('use sys;select db, query, sorts_using_scans AS search from statements_with_sorting ORDER BY sorts_using_scans DESC LIMIT 15;')) {
@@ -4513,7 +4513,7 @@ sub mysql_innodb {
             infoprint " +-- InnoDB Log File Size: "
               . hr_bytes( $myvar{'innodb_log_file_size'} ) . "(".$mycalc{'innodb_log_size_pct'}." % of buffer pool)";
         }
-        
+
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
               . hr_bytes( $myvar{'innodb_log_buffer_size'} ) ;
@@ -4919,7 +4919,7 @@ SELECT
  , s2.max_columns AS 'maxcol'
  , s.CARDINALITY  AS 'card'
  , t.TABLE_ROWS   AS 'est_rows'
- , INDEX_TYPE as type 
+ , INDEX_TYPE as type
  , ROUND(((s.CARDINALITY / IFNULL(t.TABLE_ROWS, 0.01)) * 100), 2) AS 'sel'
 FROM INFORMATION_SCHEMA.STATISTICS s
  INNER JOIN INFORMATION_SCHEMA.TABLES t
@@ -5165,7 +5165,7 @@ mariadb_threadpool;        # Print MaraiDB ThreadPool stats
 mysql_myisam;              # Print MyISAM stats
 mysql_innodb;              # Print InnoDB stats
 mariadb_ariadb;            # Print MaraiDB AriaDB stats
-mariadb_tokudb;            # Print MariaDB Tokudb stats 
+mariadb_tokudb;            # Print MariaDB Tokudb stats
 mariadb_xtradb;            # Print MariaDB XtraDB stats
 mariadb_rockdb;            # Print MariaDB RockDB stats
 mariadb_spider;            # Print MariaDB Spider stats
@@ -5228,7 +5228,7 @@ You must provide the remote server's total memory when connecting to other serve
  --dbstat                    Print database information
  --idxstat                   Print index information
  --sysstat                   Print system information
- --pfstat                    Print Performance schema 
+ --pfstat                    Print Performance schema
  --bannedports               Ports banned separated by comma(,)
  --maxportallowed            Number of ports opened allowed on this hosts
  --cvefile                   CVE File for vulnerability checks
