@@ -1343,7 +1343,7 @@ sub get_kernel_info() {
           'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
     }
     else {
-        infoprint "Max Number of AIO events  is > 1M.";
+        infoprint "Max Number of AIO events is > 1M.";
     }
 
 }
@@ -1767,7 +1767,7 @@ sub check_architecture {
     }
     elsif ( `uname` =~ /Darwin/ && `uname -m` =~ /x86_64/ ) {
 
-# Darwin gibas.local 12.3.0 Darwin Kernel Version 12.3.0: Sun Jan  6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
+# Darwin gibas.local 12.3.0 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
@@ -3165,7 +3165,7 @@ sub mysqsl_pfs {
     # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
     my $nbL=1;
-    for my $lQuery(select_array ('select user, total_connections from sys.user_summary order by  total_connections desc LIMIT 5')) {
+    for my $lQuery(select_array ('select user, total_connections from sys.user_summary order by total_connections desc LIMIT 5')) {
       infoprint " +-- $nbL: $lQuery conn(s)";
       $nbL++;
     }
@@ -3248,7 +3248,7 @@ sub mysqsl_pfs {
     # Top host per connection
     subheaderprint "Performance schema: Top 5 host per connection";
     $nbL=1;
-    for my $lQuery(select_array ('select host, total_connections from sys.host_summary order by  total_connections desc LIMIT 5')) {
+    for my $lQuery(select_array ('select host, total_connections from sys.host_summary order by total_connections desc LIMIT 5')) {
       infoprint " +-- $nbL: $lQuery conn(s)";
       $nbL++;
     }
@@ -3546,7 +3546,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
 
-    # FILE  by IO read bytes
+    # FILE by IO read bytes
     subheaderprint "Performance schema: FILE by IO read bytes";
     $nbL=1;
     for my $lQuery(select_array ("use sys;(select file, total_read from io_global_by_file_by_bytes where total_read like '%MiB' order by total_read DESC) UNION (select file, total_read from io_global_by_file_by_bytes where total_read like '%KiB' order by total_read DESC LIMIT 15);")) {
@@ -3555,7 +3555,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
-    # FILE  by IO written bytes
+    # FILE by IO written bytes
     subheaderprint "Performance schema: FILE by IO written bytes";
     $nbL=1;
     for my $lQuery(select_array ("use sys;(select file, total_written from io_global_by_file_by_bytes where total_written like '%MiB' order by total_written DESC) UNION (select file, total_written from io_global_by_file_by_bytes where total_written like '%KiB' order by total_written DESC LIMIT 15);")) {
@@ -3602,7 +3602,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators desactivated." if ($nbL == 1);
 
     # Event Wait by write bytes
-    subheaderprint "Performance schema: Event Wait  written bytes";
+    subheaderprint "Performance schema: Event Wait written bytes";
     $nbL=1;
     for my $lQuery(select_array ("use sys;(select event_name, total_written from io_global_by_wait_by_bytes where total_written like '%MiB' order by total_written DESC) UNION (select event_name, total_written from io_global_by_wait_by_bytes where total_written like '%KiB' order by total_written DESC LIMIT 15);")) {
       infoprint " +-- $nbL: $lQuery";
@@ -4792,7 +4792,7 @@ sub mysql_databases {
           . (
             join ", ",
             select_array(
-"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES  WHERE TABLE_SCHEMA='$_';"
+"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_';"
             )
           ) . ")";
         infoprint " +-- ROWS : "
@@ -4857,13 +4857,13 @@ sub mysql_databases {
         }
 
         my @distinct_column_charset = select_array(
-"select DISTINCT(CHARACTER_SET_NAME) from information_schema.COLUMNS where CHARACTER_SET_NAME IS NOT NULL AND  TABLE_SCHEMA ='$_'"
+"select DISTINCT(CHARACTER_SET_NAME) from information_schema.COLUMNS where CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA ='$_'"
         );
         infoprint "Charsets for $dbinfo[0] database table column: "
           . join( ', ', @distinct_column_charset );
         if ( scalar(@distinct_column_charset) > 1 ) {
             badprint $dbinfo[0]
-              . " table column(s) has  several charsets defined for all text like column(s).";
+              . " table column(s) has several charsets defined for all text like column(s).";
             push( @generalrec,
                     "Limit charset for column to one charset if possible for "
                   . $dbinfo[0]
@@ -4875,13 +4875,13 @@ sub mysql_databases {
         }
 
         my @distinct_column_collation = select_array(
-"select DISTINCT(COLLATION_NAME) from information_schema.COLUMNS where COLLATION_NAME IS NOT NULL AND  TABLE_SCHEMA ='$_'"
+"select DISTINCT(COLLATION_NAME) from information_schema.COLUMNS where COLLATION_NAME IS NOT NULL AND TABLE_SCHEMA ='$_'"
         );
         infoprint "Collations for $dbinfo[0] database table column: "
           . join( ', ', @distinct_column_collation );
         if ( scalar(@distinct_column_collation) > 1 ) {
             badprint $dbinfo[0]
-              . " table column(s) has  several collations defined for all text like column(s).";
+              . " table column(s) has several collations defined for all text like column(s).";
             push( @generalrec,
                 "Limit collations for column to one collation if possible for "
                   . $dbinfo[0]
