@@ -4515,7 +4515,6 @@ sub mysql_innodb {
             infoprint " +-- InnoDB Log File Size: "
               . hr_bytes( $myvar{'innodb_log_file_size'} ) . "(".$mycalc{'innodb_log_size_pct'}." % of buffer pool)";
         }
-        
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
               . hr_bytes( $myvar{'innodb_log_buffer_size'} ) ;
@@ -4528,6 +4527,19 @@ sub mysql_innodb {
             infoprint " +-- InnoDB Log Buffer Used: "
               . hr_bytes( $mystat{'Innodb_buffer_pool_pages_total'} ) . "";
         }
+    }
+    if ( defined $myvar{'innodb_thread_concurrency'} ) {
+        infoprint "InnoDB Thread Cucurrency: "
+              .  $myvar{'innodb_thread_concurrency'} ;
+    }
+    # InnoDB Buffer Pull Size
+    if ( $myvar{'innodb_file_per_table'} == "ON" ) {
+        goodprint "InnoDB File per table is activated";
+    }
+    else {
+        badprint "InnoDB File per table is not activated";
+        push( @adjvars,
+                "innodb_file_per_table=ON" );
     }
 
     # InnoDB Buffer Pull Size
@@ -4642,6 +4654,7 @@ sub mysql_innodb {
         }
     }
 
+ 
     # InnoDB Read efficency
     if ( defined $mycalc{'pct_read_efficiency'}
         && $mycalc{'pct_read_efficiency'} < 90 )
