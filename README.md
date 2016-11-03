@@ -25,7 +25,7 @@ MySQLTuner needs you:
 **MySQLTuner** needs contributors for documentation, code and feedbacks..
 
 * Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
-* Contribution guide is avalaible following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
           
 Compatibility:
