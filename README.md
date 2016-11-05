@@ -11,7 +11,7 @@ MySQLTuner-perl
 
 **MySQLTuner** supports in this last version ~300 indicators for MySQL/MariaDB/Percona Server. 
 
-**MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration sush as ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
+**MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration such as ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
 
 You can found more details on this indicators 
 ![Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
@@ -164,12 +164,12 @@ These kinds of things are bound to happen.  Here are the details I need from you
 * The full text of the error
 * A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
 
-**Question: How to perform a CVE vulneralibity checks ?**
+**Question: How to perform CVE vulnerability checks?**
 
 * Download vulnerabilities.csv from this repository.
 * use option --cvefile to perform CVE checks
 
-**Question: How to use mysqltuner from remote host ?**
+**Question: How to use mysqltuner from a remote host?**
 Thanks to  [@rolandomysqldba](http://dba.stackexchange.com/users/877/rolandomysqldba)
 
 * You will still have to connect like a mysql client:
