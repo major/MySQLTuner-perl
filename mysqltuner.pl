@@ -5122,7 +5122,7 @@ sub mysql_innodb {
         }
     }
     if ( defined $myvar{'innodb_thread_concurrency'} ) {
-        infoprint "InnoDB Thread Cucurrency: "
+        infoprint "InnoDB Thread Concurrency: "
           . $myvar{'innodb_thread_concurrency'};
     }
 
