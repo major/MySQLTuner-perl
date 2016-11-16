@@ -116,6 +116,7 @@ my $getOptionsCheck = GetOptions(
     'updateversion',  'maxportallowed=s',
     'verbose',        'sysstat',
     'password=s',     'pfstat',
+    'passenv=s',      'userenv=s',
     'defaults-file=s'
 );
 
@@ -144,7 +145,9 @@ sub usage {
       . "      --socket <socket>    Use a different socket for a local connection\n"
       . "      --port <port>        Port to use for connection (default: 3306)\n"
       . "      --user <username>    Username to use for authentication\n"
+      . "      --userenv <envvar>   Name of env variable which contains username to use for authentication\n"
       . "      --pass <password>    Password to use for authentication\n"
+      . "      --passenv <envvar>   Name of env variable which contains password to use for authentication\n"
       . "      --defaults-file <path>  Path to a custom .my.cnf\n"
       . "      --mysqladmin <path>  Path to a custom mysqladmin executable\n"
       . "      --mysqlcmd <path>    Path to a custom mysql executable\n" . "\n"
@@ -189,7 +192,15 @@ my $basic_password_files =
   ? abs_path( dirname(__FILE__) ) . "/basic_passwords.txt"
   : abs_path( $opt{passwordfile} );
 
+# Username from envvar
+if (exists $opt{userenv} && exists $ENV{ $opt{userenv} }) {
+    $opt{user} = $ENV{ $opt{userenv} };
+}
+
 # Related to password option
+if (exists $opt{passenv} && exists $ENV{ $opt{passenv} }) {
+    $opt{pass} = $ENV{ $opt{passenv} };
+}
 $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
 
 # for RPM distributions
@@ -5817,7 +5828,9 @@ You must provide the remote server's total memory when connecting to other serve
  --socket <socket>    Use a different socket for a local connection
  --port <port>        Port to use for connection (default: 3306)
  --user <username>    Username to use for authentication
+ --userenv <envvar>   Name of env variable which contains username to use for authentication
  --pass <password>    Password to use for authentication
+ --passenv <envvar>   Name of env variable which contains password to use for authentication
  --mysqladmin <path>  Path to a custom mysqladmin executable
  --mysqlcmd <path>    Path to a custom mysql executable
   --defaults-file <path>  Path to a custom .my.cnf
