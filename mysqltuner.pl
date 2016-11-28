@@ -319,6 +319,9 @@ sub hr_bytes {
 # Calculates the parameter passed in bytes, then rounds it to the nearest integer
 sub hr_bytes_rnd {
     my $num = shift;
+    
+    return "0B" if $num eq "NULL" ;
+    
     if ( $num >= ( 1024**3 ) ) {       #GB
         return int( ( $num / ( 1024**3 ) ) ) . "G";
     }
@@ -355,6 +358,7 @@ sub percentage {
     my $value = shift;
     my $total = shift;
     $total = 0 unless defined $total;
+    $total = 0 if $total eq "NULL";
     return 100, 00 if $total == 0;
     return sprintf( "%.2f", ( $value * 100 / $total ) );
 }
@@ -5450,7 +5454,7 @@ sub mysql_databases {
             )
           ) . ")";
         badprint "Index size is larger than data size for $dbinfo[0] \n"
-          if $dbinfo[2] < $dbinfo[3];
+          if ( $dbinfo[2] ne 'NULL' ) and ( $dbinfo[3] ne 'NULL' ) and ( $dbinfo[2] < $dbinfo[3] );
         badprint "There are " . $dbinfo[5] . " storage engines. Be careful. \n"
           if $dbinfo[5] > 1;
         $result{'Databases'}{ $dbinfo[0] }{'Rows'}       = $dbinfo[1];
