@@ -2382,7 +2382,7 @@ sub calculations {
     # InnoDB
     if ( $myvar{'have_innodb'} eq "YES" ) {
         $mycalc{'innodb_log_size_pct'} =
-          ( $myvar{'innodb_log_file_size'} * 100 /
+          ( $myvar{'innodb_log_file_size'} *$myvar{'innodb_log_files_in_group'} * 100 /
               $myvar{'innodb_buffer_pool_size'} );
     }
 
@@ -5122,6 +5122,14 @@ sub mysql_innodb {
               . $mycalc{'innodb_log_size_pct'}
               . " % of buffer pool)";
         }
+        if ( defined $myvar{'innodb_log_files_in_group'} ) {
+            infoprint " +-- InnoDB Log File In Group: "
+              . $myvar{'innodb_log_files_in_group'};
+        }
+        if ( defined $myvar{'innodb_log_files_in_group'} ) {
+            infoprint " +-- InnoDB Total Log File Size: "
+              . hr_bytes( $myvar{'innodb_log_files_in_group'}*$myvar{'innodb_log_file_size'});
+        }
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
               . hr_bytes( $myvar{'innodb_log_buffer_size'} );
@@ -5169,7 +5177,7 @@ sub mysql_innodb {
     {
         badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
           . $mycalc{'innodb_log_size_pct'} . " %): "
-          . hr_bytes( $myvar{'innodb_log_file_size'} ) . "/"
+          . hr_bytes( $myvar{'innodb_log_file_size'} )." * ".$myvar{'innodb_log_files_in_group'}. "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
         push( @adjvars,
@@ -5179,7 +5187,7 @@ sub mysql_innodb {
     }
     else {
         goodprint "InnoDB log file size / InnoDB Buffer pool size: "
-          . hr_bytes( $myvar{'innodb_log_file_size'} ) . "/"
+          . hr_bytes( $myvar{'innodb_log_file_size'} ) ." * ".$myvar{'innodb_log_files_in_group'}. "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
     }
