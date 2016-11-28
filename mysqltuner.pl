@@ -4823,7 +4823,7 @@ sub get_wsrep_options {
 }
 
 sub get_gcache_memory {
-    my $gCacheMem = get_wsrep_option('gcache.mem_size');
+    my $gCacheMem = get_wsrep_option('gcache.size');
 
     return 0 unless defined $gCacheMem and $gCacheMem ne '';
     return $gCacheMem;
