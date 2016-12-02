@@ -1117,7 +1117,7 @@ sub log_file_recommandations {
 		badprint "Log file $myvar{'log_error'} is empty";
 	}
 	
-	if ( (stat $myvar{'log_error'})[7] < 2*1024*1024) {
+	if ( (stat $myvar{'log_error'})[7] < 32*1024*1024) {
 		goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
 	} else {
 		badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
