@@ -1125,6 +1125,46 @@ sub log_file_recommandations {
         $myvar{'log_error'} ."is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!" );
 	}
 	
+  my @log_content=get_file_contents($myvar{'log_error'});
+
+  my $numLi=0;
+  my $nbWarnLog=0;
+  my $nbErrLog=0;
+  my @lastShutdowns;
+  my @lastStarts;
+  foreach my $logLi(@log_content) {
+    $numLi++;
+    debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i;
+    $nbErrLog++ if $logLi =~ /error/i;
+    $nbWarnLog++ if $logLi =~ /warning/i;
+    push @lastShutdowns, $logLi if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
+    push @lastStarts, $logLi if $logLi =~ /ready for connections/;
+  }
+  if ($nbWarnLog > 0) {
+    badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
+    push( @generalrec, "Control warning line(s) into $myvar{'log_error'} file");
+  } else {
+    goodprint "$myvar{'log_error'} doesn't contain any warning.";
+  }
+  if ($nbErrLog > 0) {
+    badprint "$myvar{'log_error'} contains $nbErrLog error(s).";
+    push( @generalrec, "Control error line(s) into $myvar{'log_error'} file");
+  } else {
+    goodprint "$myvar{'log_error'} doesn't contain any error.";
+  }
+  
+  infoprint scalar(@lastStarts). " start(s) detected in $myvar{'log_error'}";
+  my $nStart=0;
+  for my $startd (reverse @lastStarts[-10..-1]) {
+    $nStart++;
+    infoprint "$nStart) $startd";
+  }
+  infoprint scalar(@lastShutdowns). " shutdown(s) detected in $myvar{'log_error'}";
+  my $nShut=0;
+  for my $shutd (reverse @lastShutdowns[-10..-1]) {
+    $nShut++;
+    infoprint "$nShut) $shutd";
+  }
 	#exit 0;
 }
 
