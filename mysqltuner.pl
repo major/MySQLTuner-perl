@@ -1086,6 +1086,10 @@ sub remove_empty {
     grep { $_ ne '' } @_;
 }
 
+sub grep_file_contents {
+    my $file = shift;
+	my $patt
+}
 sub get_file_contents {
     my $file = shift;
     open( my $fh, "<", $file ) or die "Can't open $file for read: $!";
@@ -1098,6 +1102,33 @@ sub get_file_contents {
 sub get_basic_passwords {
     return get_file_contents(shift);
 }
+
+sub log_file_recommandations {
+    subheaderprint "Log file Recommendations";
+	infoprint "Log file: " . $myvar{'log_error'}. "(".hr_bytes_rnd((stat $myvar{'log_error'})[7]).")";
+	if (-f "$myvar{'log_error'}") {
+		goodprint "Log file $myvar{'log_error'} exists";
+	} else {
+		badprint "Log file $myvar{'log_error'} doesn't exist";
+	}
+	if ( (stat $myvar{'log_error'})[7] > 0) {
+		goodprint "Log file $myvar{'log_error'} is not empty";
+	} else {
+		badprint "Log file $myvar{'log_error'} is empty";
+	}
+	
+	if ( (stat $myvar{'log_error'})[7] < 2*1024*1024) {
+		goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
+	} else {
+		badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
+		push( @generalrec,
+        $myvar{'log_error'} ."is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!" );
+	}
+	
+	#exit 0;
+}
+
+
 
 sub cve_recommendations {
     subheaderprint "CVE Security Recommendations";
@@ -1612,8 +1643,12 @@ sub security_recommendations {
     my $nbins = 0;
     my $passreq;
     if (@passwords) {
+        my $nbInterPass=0;
         foreach my $pass (@passwords) {
+            $nbInterPass++;
+
             $pass =~ s/\s//g;
+            $pass =~ s/\'/\\\'/g;
             chomp($pass);
 
             # Looking for User with user/ uppercase /capitalise weak password
@@ -1638,6 +1673,7 @@ sub security_recommendations {
                     $nbins++;
                 }
             }
+        debugprint "$nbInterPass / ".scalar(@passwords) if ($nbInterPass %1000 ==0);
         }
     }
     if ( $nbins > 0 ) {
@@ -5793,6 +5829,7 @@ validate_mysql_version;    # Check current MySQL version
 
 check_architecture;        # Suggest 64-bit upgrade
 system_recommendations;    # avoid to many service on the same host
+log_file_recommandations;  # check log file content
 check_storage_engines;     # Show enabled storage engines
 mysql_databases;           # Show informations about databases
 mysql_indexes;             # Show informations about indexes
