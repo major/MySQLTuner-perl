@@ -319,7 +319,7 @@ sub hr_bytes {
 # Calculates the parameter passed in bytes, then rounds it to the nearest integer
 sub hr_bytes_rnd {
     my $num = shift;
-    
+    return "0B" unless  defined($num) ;
     return "0B" if $num eq "NULL" ;
     
     if ( $num >= ( 1024**3 ) ) {       #GB
