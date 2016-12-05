@@ -1111,6 +1111,12 @@ sub log_file_recommandations {
 	} else {
 		badprint "Log file $myvar{'log_error'} doesn't exist";
 	}
+  if (-r "$myvar{'log_error'}") {
+    goodprint "Log file $myvar{'log_error'} is readable.";
+  } else {
+    badprint "Log file $myvar{'log_error'} isn't readable.";
+    return;
+  }
 	if ( (stat $myvar{'log_error'})[7] > 0) {
 		goodprint "Log file $myvar{'log_error'} is not empty";
 	} else {
