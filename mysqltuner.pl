@@ -1161,15 +1161,23 @@ sub log_file_recommandations {
   
   infoprint scalar(@lastStarts). " start(s) detected in $myvar{'log_error'}";
   my $nStart=0;
-  for my $startd (reverse @lastStarts[-10..-1]) {
+ my $nEnd = 10;
+  if (scalar(@lastStarts) < $nEnd) {
+    $nEnd = scalar(@lastStarts);
+  }
+  for my $startd (reverse @lastStarts[-$nEnd..-1]) {
     $nStart++;
     infoprint "$nStart) $startd";
   }
   infoprint scalar(@lastShutdowns). " shutdown(s) detected in $myvar{'log_error'}";
-  my $nShut=0;
-  for my $shutd (reverse @lastShutdowns[-10..-1]) {
-    $nShut++;
-    infoprint "$nShut) $shutd";
+  $nStart=0;
+  $nEnd=10;
+  if (scalar(@lastShutdowns) < $nEnd) {
+    $nEnd = scalar(@lastShutdowns);
+  }
+  for my $shutd (reverse @lastShutdowns[-$nEnd..-1]) {
+    $nStart++;
+    infoprint "$nStart) $shutd";
   }
 	#exit 0;
 }
