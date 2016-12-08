@@ -1106,71 +1106,79 @@ sub get_basic_passwords {
 sub log_file_recommandations {
     subheaderprint "Log file Recommendations";
 	infoprint "Log file: " . $myvar{'log_error'}. "(".hr_bytes_rnd((stat $myvar{'log_error'})[7]).")";
-	if (-f "$myvar{'log_error'}") {
+	if ( -f "$myvar{'log_error'}" ) {
 		goodprint "Log file $myvar{'log_error'} exists";
 	} else {
 		badprint "Log file $myvar{'log_error'} doesn't exist";
 	}
-  if (-r "$myvar{'log_error'}") {
-    goodprint "Log file $myvar{'log_error'} is readable.";
-  } else {
-    badprint "Log file $myvar{'log_error'} isn't readable.";
-    return;
-  }
-	if ( (stat $myvar{'log_error'})[7] > 0) {
+    if ( -r "$myvar{'log_error'}" ) {
+        goodprint "Log file $myvar{'log_error'} is readable.";
+    } else {
+        badprint "Log file $myvar{'log_error'} isn't readable.";
+        return;
+    }
+	if ( (stat $myvar{'log_error'})[7] > 0 ) {
 		goodprint "Log file $myvar{'log_error'} is not empty";
 	} else {
 		badprint "Log file $myvar{'log_error'} is empty";
 	}
 	
-	if ( (stat $myvar{'log_error'})[7] < 32*1024*1024) {
+	if ( (stat $myvar{'log_error'})[7] < 32*1024*1024 ) {
 		goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
 	} else {
 		badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
-		push( @generalrec,
-        $myvar{'log_error'} ."is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!" );
+		push @generalrec,
+        $myvar{'log_error'} ."is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!" ;
 	}
 	
-  my @log_content=get_file_contents($myvar{'log_error'});
-
-  my $numLi=0;
-  my $nbWarnLog=0;
-  my $nbErrLog=0;
-  my @lastShutdowns;
-  my @lastStarts;
-  foreach my $logLi(@log_content) {
-    $numLi++;
-    debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i;
-    $nbErrLog++ if $logLi =~ /error/i;
-    $nbWarnLog++ if $logLi =~ /warning/i;
-    push @lastShutdowns, $logLi if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
-    push @lastStarts, $logLi if $logLi =~ /ready for connections/;
-  }
-  if ($nbWarnLog > 0) {
-    badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
-    push( @generalrec, "Control warning line(s) into $myvar{'log_error'} file");
-  } else {
-    goodprint "$myvar{'log_error'} doesn't contain any warning.";
-  }
-  if ($nbErrLog > 0) {
-    badprint "$myvar{'log_error'} contains $nbErrLog error(s).";
-    push( @generalrec, "Control error line(s) into $myvar{'log_error'} file");
-  } else {
-    goodprint "$myvar{'log_error'} doesn't contain any error.";
-  }
-  
-  infoprint scalar(@lastStarts). " start(s) detected in $myvar{'log_error'}";
-  my $nStart=0;
-  for my $startd (reverse @lastStarts[-10..-1]) {
-    $nStart++;
-    infoprint "$nStart) $startd";
-  }
-  infoprint scalar(@lastShutdowns). " shutdown(s) detected in $myvar{'log_error'}";
-  my $nShut=0;
-  for my $shutd (reverse @lastShutdowns[-10..-1]) {
-    $nShut++;
-    infoprint "$nShut) $shutd";
-  }
+    my @log_content = get_file_contents($myvar{'log_error'});
+    
+    my $numLi = 0;
+    my $nbWarnLog = 0;
+    my $nbErrLog = 0;
+    my @lastShutdowns;
+    my @lastStarts;
+    foreach my $logLi ( @log_content ) {
+      $numLi++;
+      debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i;
+      $nbErrLog++ if $logLi =~ /error/i;
+      $nbWarnLog++ if $logLi =~ /warning/i;
+      push @lastShutdowns, $logLi if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
+      push @lastStarts, $logLi if $logLi =~ /ready for connections/;
+    }
+    if ( $nbWarnLog > 0 ) {
+      badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
+      push @generalrec, "Control warning line(s) into $myvar{'log_error'} file";
+    } else {
+      goodprint "$myvar{'log_error'} doesn't contain any warning.";
+    }
+    if ( $nbErrLog > 0 ) {
+      badprint "$myvar{'log_error'} contains $nbErrLog error(s).";
+      push @generalrec, "Control error line(s) into $myvar{'log_error'} file";
+    } else {
+      goodprint "$myvar{'log_error'} doesn't contain any error.";
+    }
+    
+    infoprint scalar @lastStarts . " start(s) detected in $myvar{'log_error'}";
+    my $nStart = 0;
+    my $nEnd = 10;
+    if ( scalar @lastStarts < $nEnd ) {
+        $nEnd = scalar @lastStarts;
+    }
+    for my $startd ( reverse @lastStarts[-$nEnd..-1] ) {
+        $nStart++;
+        infoprint "$nStart) $startd";
+    }
+    infoprint scalar @lastShutdowns . " shutdown(s) detected in $myvar{'log_error'}";
+    $nStart=0;
+    $nEnd=10;
+    if ( scalar @lastShutdowns < $nEnd ) {
+      $nEnd = scalar @lastShutdowns;
+    }
+    for my $shutd ( reverse @lastShutdowns[-$nEnd..-1] ) {
+      $nStart++;
+      infoprint "$nStart) $shutd";
+    }
 	#exit 0;
 }
 
@@ -2736,16 +2744,9 @@ sub mysql_stats {
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
-    elsif ( mysql_version_ge( 5, 5 ) and !mysql_version_ge( 10, 1 ) ) {
-        if ( $myvar{'query_cache_type'} ne "OFF" ) {
-            badprint
-              "Query cache may be disabled by default due to mutex contention.";
-            push( @adjvars, "query_cache_type (=0)" );
-        }
-        else {
-            goodprint
-"Query cache is disabled by default due to mutex contention on multiprocessor machines.";
-        }
+    elsif ( mysql_version_ge( 5, 5 ) and !mysql_version_ge( 10, 1 ) and $myvar{'query_cache_type'} eq "OFF" ) {
+        goodprint
+            "Query cache is disabled by default due to mutex contention on multiprocessor machines.";
     }
     elsif ( $myvar{'query_cache_size'} < 1 ) {
         badprint "Query cache is disabled";
@@ -2760,6 +2761,9 @@ sub mysql_stats {
           "Query cache cannot be analyzed - no SELECT statements executed";
     }
     else {
+        badprint
+          "Query cache may be disabled by default due to mutex contention.";
+        push( @adjvars, "query_cache_type (=0)" );
         if ( $mycalc{'query_cache_efficiency'} < 20 ) {
             badprint
               "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
