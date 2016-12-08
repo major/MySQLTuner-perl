@@ -2744,16 +2744,9 @@ sub mysql_stats {
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
-    elsif ( mysql_version_ge( 5, 5 ) and !mysql_version_ge( 10, 1 ) ) {
-        if ( $myvar{'query_cache_type'} ne "OFF" ) {
-            badprint
-              "Query cache may be disabled by default due to mutex contention.";
-            push( @adjvars, "query_cache_type (=0)" );
-        }
-        else {
-            goodprint
-"Query cache is disabled by default due to mutex contention on multiprocessor machines.";
-        }
+    elsif ( mysql_version_ge( 5, 5 ) and !mysql_version_ge( 10, 1 ) and $myvar{'query_cache_type'} eq "OFF" ) {
+        goodprint
+            "Query cache is disabled by default due to mutex contention on multiprocessor machines.";
     }
     elsif ( $myvar{'query_cache_size'} < 1 ) {
         badprint "Query cache is disabled";
@@ -2768,6 +2761,9 @@ sub mysql_stats {
           "Query cache cannot be analyzed - no SELECT statements executed";
     }
     else {
+        badprint
+          "Query cache may be disabled by default due to mutex contention.";
+        push( @adjvars, "query_cache_type (=0)" );
         if ( $mycalc{'query_cache_efficiency'} < 20 ) {
             badprint
               "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
