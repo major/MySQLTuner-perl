@@ -1991,7 +1991,9 @@ sub check_storage_engines {
             $result{'Engine'}{$engine}{'Index Size'}   = $isize;
         }
         my $not_innodb = '';
-        if ( $result{'Variables'}{'innodb_file_per_table'} eq 'OFF' ) {
+        if ( not defined $result{'Variables'}{'innodb_file_per_table'} ) {
+            $not_innodb = "AND NOT ENGINE='InnoDB'";
+        } elsif ( $result{'Variables'}{'innodb_file_per_table'} eq 'OFF' ) {
             $not_innodb = "AND NOT ENGINE='InnoDB'";
         }
         $result{'Tables'}{'Fragmented tables'} =
