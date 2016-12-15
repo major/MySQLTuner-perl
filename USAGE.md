@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.6.10 - MySQL High Performance Tuning Script
+    MySQLTuner 1.6.20 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -18,8 +18,8 @@ You must provide the remote server's total memory when connecting to other serve
     --pass <password>    Password to use for authentication
     --mysqladmin <path>  Path to a custom mysqladmin executable
     --mysqlcmd <path>    Path to a custom mysql executable
-
-# PERFORMANCE AND REPORTING OPTIONS
+     --defaults-file <path>  Path to a custom .my.cnf
+   =head1 PERFORMANCE AND REPORTING OPTIONS
 
     --skipsize                  Don't enumerate tables and their types/sizes (default: on)
                                 (Recommended for servers with many tables)
@@ -40,6 +40,7 @@ You must provide the remote server's total memory when connecting to other serve
     --dbstat                    Print database information
     --idxstat                   Print index information
     --sysstat                   Print system information
+    --pfstat                    Print Performance schema 
     --bannedports               Ports banned separated by comma(,)
     --maxportallowed            Number of ports opened allowed on this hosts
     --cvefile                   CVE File for vulnerability checks
@@ -101,6 +102,7 @@ Major Hayden - major@mhtx.net
 - Joe Ashcraft
 - Jean-Marie Renouard
 - Stephan GroBberndt
+- Christian Loos
 
 # SUPPORT
 

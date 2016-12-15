@@ -17,13 +17,18 @@
 * [Global buffer information](#mysqltuner-global-buffer-information)
 * [Query cache checks](#mysqltuner-query-cache-checks)
 * [Slow queries checks](#mysqltuner-slow-queries-checks)
+* [ThreadPool information](#mysqltuner-threadpool-information)
 * [Replication checks](#mysqltuner-replication-checks)
 * [InnoDB information](#mysqltuner-innodb-information)
-* [ARIADB information](#mysqltuner-ariadb-information)
 * [MYISAM information](#mysqltuner-myisam-information)
-* [GALERA information](#mysqltuner-galera-information)
+* [ARIADB information](#mysqltuner-ariadb-information)
+* [XTRADB information](#mysqltuner-xtradb-information)
 * [TOKUDB information](#mysqltuner-tokudb-information)
-* [ThreadPool information](#mysqltuner-threadpool-information)
+* [ROCKDB information](#mysqltuner-rockdb-information)
+* [CONNECT information](#mysqltuner-connect-information)
+* [SPIDER information](#mysqltuner-spider-information)
+* [GALERA information](#mysqltuner-galera-information)
+* [Performance Schema information](#mysqltuner-performance-schema-and-sysschema-information)
 
 ## MySQLTuner steps
 
@@ -150,6 +155,7 @@
 * Number of join performed without using indexes (<250)
 * Percentage of temporary table written on disk(<25%)
 * Thread cache (=4)
+* Thread cache hit ratio (>50%) if thread_handling is different of pools-of-threads
 * Table cache hit ratio(>2°%)
 * Percentage of open file and open file limit(<85%)
 * Percentage of table locks (<95%)
@@ -211,6 +217,8 @@
    * Ratio of write without locks
 * InnoDB Log Waits
    * Checks that no lock is used on Innodb Log.
+* InnoDB Chunk Size
+   * Check InnoDB Buffer Pool size is a multiple of InnoDB Buffer Pool chunk size * InnoDB Buffer Pool instances
 
 ## MySQLTuner ARIADB information
 
@@ -262,7 +270,121 @@
 * tokudb_cleaner_iterations
 * tokudb_fanout
 
+## MySQLTuner XtraDB information
+
+*  Nothing for the moment
+
+## MySQLTuner Connect information
+
+*  Nothing for the moment
+
+## MySQLTuner Spider information
+
+*  Nothing for the moment
+
+## MySQLTuner RocksDb information
+
+*  Nothing for the moment
+  
 ## MySQLTuner Thread pool information
 
 * thread_pool_size between 16 to 36 for Innodb usage
 * thread_pool_size between 4 to 8 for MyIsam usage
+
+## MySQLTuner performance schema and sysschema information
+
+* sys Schema version
+* Top user per connection
+* Top user per statement
+* Top user per statement latency
+* Top user per lock latency
+* Top user per full scans
+* Top user per row_sent
+* Top user per row modified
+* Top user per io
+* Top user per io latency
+* Top host per connection
+* Top host per statement
+* Top host per statement latency
+* Top host per lock latency
+* Top host per full scans
+* Top host per rows sent
+* Top host per rows modified
+* Top host per io
+* Top 5 host per io latency
+* Top IO type order by total io
+* Top IO type order by total latency
+* Top IO type order by max latency
+* Top Stages order by total io
+* Top Stages order by total latency
+* Top Stages order by avg latency
+* Top host per table scans
+* InnoDB Buffer Pool by schema
+* InnoDB Buffer Pool by table
+* Process per allocated memory
+* InnoDB Lock Waits
+* Threads IO Latency
+* High Cost SQL statements
+* Top 5% slower queries
+* Top 10 nb statement type
+* Top statement by total latency
+* Top statement by lock latency
+* Top statement by full scans
+* Top statement by rows sent
+* Top statement by rows modified
+* Use temporary tables
+* Unused Indexes
+* Full table scans
+* Latest file IO by latency
+* File by IO read bytes
+* File by IO written bytes
+* File per IO total latency
+* File per IO read latency
+* File per IO write latency
+* Event Wait by read bytes
+* Event Wait by write bytes
+* Event per wait total latency
+* Event per wait read latency
+* Event per wait write latency
+* TOP 15 most read indexes 
+* TOP 15 most modified indexes
+* TOP 15 high select latency index 
+* TOP 15 high insert latency index
+* TOP 15 high update latency index
+* TOP 15 high delete latency index
+* TOP 15 most read tables
+* TOP 15 most modified tables
+* TOP 15 high select latency tables
+* TOP 15 high insert latency tables
+* TOP 15 high update latency tables
+* TOP 15 high delete latency tables
+* Redundant indexes
+* Tables not using InnoDb buffer
+* Top 15 Tables using InnoDb buffer
+* Top 15 Tables with InnoDb buffer free
+* Top 15 Most executed queries
+* Latest SQL queries in errors or warnings
+* Top 20 queries with full table scans
+* TOP 15 reader queries (95% percentile)
+* TOP 15 row look queries (95% percentile)
+* TOP 15 total latency queries (95% percentile)
+* TOP 15 max latency queries (95% percentile)
+* TOP 15 average latency queries (95% percentile)
+* Top 20 queries with sort
+* Last 50 queries with sort
+* TOP 15 row sorting queries with sort
+* TOP 15 total latency queries with sort
+* TOP 15 merge queries with sort
+* TOP 15 average sort merges queries with sort
+* TOP 15 scans queries with sort
+* TOP 15 range queries with sort 
+* Top 20 queries with temp table
+* Last 50 queries with temp table
+* TOP 15 total latency queries with temp table
+* TOP 15 queries with temp table to disk
+* TOP 15 class events by number
+* TOP 30 events by number
+* TOP 15 class events by total latency
+* TOP 30 events by total latency
+* TOP 15 class events by max latency
+* TOP 30 events by max latency
