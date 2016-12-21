@@ -7,11 +7,11 @@ MySQLTuner-perl
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
 [![GPL Licence](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
-**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
+**MySQLTuner** est un script écrit en Perl qui permet d'effectuer une revue de configuration pour MySQL/MAriaDB/PerconaDB rapidement et propose des ajustements pour améliorer la performance et la stabilité du serveur. L'état des variables et statuts est analysé et présenté de manière synthétique et structurée ainsi que plusieurs suggestions basiques concernant  la performance.
 
-**MySQLTuner** supports in this last version ~300 indicators for MySQL/MariaDB/Percona Server. 
+**MySQLTuner** supporte dans a dernière version plus de ~300 indicators pour MySQL/MariaDB/Percona Server. 
 
-**MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration such as ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
+**MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration sush as ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
 
 You can found more details on this indicators 
 ![Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
@@ -25,7 +25,7 @@ MySQLTuner needs you:
 **MySQLTuner** needs contributors for documentation, code and feedbacks..
 
 * Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
-* Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Contribution guide is avalaible following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
           
 Compatibility:
@@ -164,12 +164,12 @@ These kinds of things are bound to happen.  Here are the details I need from you
 * The full text of the error
 * A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
 
-**Question: How to perform CVE vulnerability checks?**
+**Question: How to perform a CVE vulneralibity checks ?**
 
 * Download vulnerabilities.csv from this repository.
 * use option --cvefile to perform CVE checks
 
-**Question: How to use mysqltuner from a remote host?**
+**Question: How to use mysqltuner from remote host ?**
 Thanks to  [@rolandomysqldba](http://dba.stackexchange.com/users/877/rolandomysqldba)
 
 * You will still have to connect like a mysql client:
@@ -226,11 +226,11 @@ MySQLTuner and Vagrant
 * Start vagrant
 	* vagrant up
 
-MySQLTuner needs you
+MySQLTuner a besoin de vous
 --
-**MySQLTuner** needs contributors for documentation, code and feedbacks..
+**MySQLTuner** a besoin de contributeurs pour la documentation, le code, des tests et des retours d'expérience.
 
-* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
-* Contribution guide is avalaible following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
-          
+* Rejoignez-nous sur le suivi de ticket à [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
+* Le guide de contribution en anglais est disponible ici [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Ajouter une étoile à **MySQLTuner project** ici [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
+
