@@ -1312,7 +1312,7 @@ sub get_os_release {
     return "Unknown OS release";
 }
 
-sub get_fs_info() {
+sub get_fs_info {
     my @sinfo = `df -P | grep '%'`;
     my @iinfo = `df -Pi| grep '%'`;
     shift @iinfo;
@@ -1370,7 +1370,7 @@ sub merge_hash {
     return \%result;
 }
 
-sub is_virtual_machine() {
+sub is_virtual_machine {
     my $isVm = `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
     return ( $isVm == 0 ? 0 : 1 );
 }
@@ -1402,7 +1402,7 @@ sub infocmd_one {
     return join ', ', @result;
 }
 
-sub get_kernel_info() {
+sub get_kernel_info {
     my @params = (
         'fs.aio-max-nr',                     'fs.aio-nr',
         'fs.file-max',                       'sunrpc.tcp_fin_timeout',
@@ -1453,7 +1453,7 @@ sub get_kernel_info() {
 
 }
 
-sub get_system_info() {
+sub get_system_info {
     $result{'OS'}{'Release'} = get_os_release();
     infoprint get_os_release;
     if (is_virtual_machine) {
