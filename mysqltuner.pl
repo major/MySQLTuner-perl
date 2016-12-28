@@ -302,6 +302,9 @@ sub infoprinthcmd {
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
 sub hr_bytes {
     my $num = shift;
+    return "0B" unless  defined($num) ;
+    return "0B" if $num eq "NULL" ;
+    
     if ( $num >= ( 1024**3 ) ) {    #GB
         return sprintf( "%.1f", ( $num / ( 1024**3 ) ) ) . "G";
     }
