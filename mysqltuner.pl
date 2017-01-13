@@ -5039,6 +5039,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             else {
                 badprint
 "There are $nbNodesSize nodes in wsrep_cluster_size. Prefer 3 or 5 nodes architecture.";
+                push @generalrec, "Prefer 3 or 5 nodes architecture.";
             }
 
             # wsrep_cluster_address doesn't include garbd nodes
