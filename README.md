@@ -61,7 +61,9 @@ MySQL in other areas.
 Security recommandations
 --
 
-Hi directadmin user! We detected that you run mysqltuner with da_admin's credentials taken from /usr/local/directadmin/conf/my.cnf, which might bring to a password discovery! Read link for more details.
+Hi directadmin user! 
+We detected that you run mysqltuner with da_admin's credentials taken from /usr/local/directadmin/conf/my.cnf, which might bring to a password discovery! 
+Read link for more details[Issue #289](https://github.com/major/MySQLTuner-perl/issues/289).
 
 What MySQLTuner is checking exactly ? 
 --
