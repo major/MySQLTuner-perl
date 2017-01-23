@@ -319,6 +319,25 @@ sub hr_bytes {
     }
 }
 
+sub hr_raw {
+    my $num = shift;
+    return "0" unless  defined($num) ;
+    return "0" if $num eq "NULL" ;
+    if ($num =~ /^(\d+)G$/) {
+      return $1 * 1024* 1024* 1024;
+    }
+    if ($num =~ /^(\d+)M$/) {
+      return $1 * 1024* 1024;
+    }
+    if ($num =~ /^(\d+)K$/) {
+      return $1 * 1024;
+    }
+    if ($num =~ /^(\d+)$/) {
+      return $1;
+    }
+    return $num;
+}
+
 # Calculates the parameter passed in bytes, then rounds it to the nearest integer
 sub hr_bytes_rnd {
     my $num = shift;
@@ -4918,7 +4937,7 @@ sub get_wsrep_options {
 }
 
 sub get_gcache_memory {
-    my $gCacheMem = get_wsrep_option('gcache.size');
+    my $gCacheMem = hr_raw(get_wsrep_option('gcache.size'));
 
     return 0 unless defined $gCacheMem and $gCacheMem ne '';
     return $gCacheMem;
