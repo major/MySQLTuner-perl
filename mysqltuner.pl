@@ -5704,7 +5704,7 @@ ENDSQL
         my @info = split /\s/;
         infoprint "Index: " . $info[1] . "";
 
-        infoprint " +-- COLUNM      : " . $info[0] . "";
+        infoprint " +-- COLUMN      : " . $info[0] . "";
         infoprint " +-- NB SEQS     : " . $info[2] . " sequence(s)";
         infoprint " +-- NB COLS     : " . $info[3] . " column(s)";
         infoprint " +-- CARDINALITY : " . $info[4] . " distinct values";
@@ -5712,7 +5712,7 @@ ENDSQL
         infoprint " +-- TYPE        : " . $info[6];
         infoprint " +-- SELECTIVITY : " . $info[7] . "%";
 
-        $result{'Indexes'}{ $info[1] }{'Colunm'}            = $info[0];
+        $result{'Indexes'}{ $info[1] }{'Column'}            = $info[0];
         $result{'Indexes'}{ $info[1] }{'Sequence number'}   = $info[2];
         $result{'Indexes'}{ $info[1] }{'Number of collunm'} = $info[3];
         $result{'Indexes'}{ $info[1] }{'Cardianality'}      = $info[4];
