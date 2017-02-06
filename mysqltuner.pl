@@ -560,6 +560,8 @@ sub validate_tuner_version {
     }
     debugprint "curl and wget are not available.";
     infoprint "Unable to check for the latest MySQLTuner version";
+    infoprint "Using --pass and --password option is insecure during MySQLTuner execution(Password disclosure)" 
+      if ( defined($opt{'pass'}));
 }
 
 # Checks for updates to MySQLTuner
@@ -5296,8 +5298,8 @@ sub mysql_innodb {
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
         push( @adjvars,
-"innodb_log_file_size should be equals to 1/4 of buffer pool size (="
-              . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'} / 4 )
+"innodb_log_file_size * innodb_log_files_in_group should be equals to 1/4 of buffer pool size (="
+              . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'} * $myvar{'innodb_log_files_in_group'} / 4 )
               . ") if possible." );
     }
     else {
