@@ -193,12 +193,12 @@ my $basic_password_files =
   : abs_path( $opt{passwordfile} );
 
 # Username from envvar
-if (exists $opt{userenv} && exists $ENV{ $opt{userenv} }) {
+if ( exists $opt{userenv} && exists $ENV{ $opt{userenv} } ) {
     $opt{user} = $ENV{ $opt{userenv} };
 }
 
 # Related to password option
-if (exists $opt{passenv} && exists $ENV{ $opt{passenv} }) {
+if ( exists $opt{passenv} && exists $ENV{ $opt{passenv} } ) {
     $opt{pass} = $ENV{ $opt{passenv} };
 }
 $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
@@ -302,9 +302,9 @@ sub infoprinthcmd {
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
 sub hr_bytes {
     my $num = shift;
-    return "0B" unless  defined($num) ;
-    return "0B" if $num eq "NULL" ;
-    
+    return "0B" unless defined($num);
+    return "0B" if $num eq "NULL";
+
     if ( $num >= ( 1024**3 ) ) {    #GB
         return sprintf( "%.1f", ( $num / ( 1024**3 ) ) ) . "G";
     }
@@ -321,19 +321,19 @@ sub hr_bytes {
 
 sub hr_raw {
     my $num = shift;
-    return "0" unless  defined($num) ;
-    return "0" if $num eq "NULL" ;
-    if ($num =~ /^(\d+)G$/) {
-      return $1 * 1024* 1024* 1024;
+    return "0" unless defined($num);
+    return "0" if $num eq "NULL";
+    if ( $num =~ /^(\d+)G$/ ) {
+        return $1 * 1024 * 1024 * 1024;
     }
-    if ($num =~ /^(\d+)M$/) {
-      return $1 * 1024* 1024;
+    if ( $num =~ /^(\d+)M$/ ) {
+        return $1 * 1024 * 1024;
     }
-    if ($num =~ /^(\d+)K$/) {
-      return $1 * 1024;
+    if ( $num =~ /^(\d+)K$/ ) {
+        return $1 * 1024;
     }
-    if ($num =~ /^(\d+)$/) {
-      return $1;
+    if ( $num =~ /^(\d+)$/ ) {
+        return $1;
     }
     return $num;
 }
@@ -341,10 +341,10 @@ sub hr_raw {
 # Calculates the parameter passed in bytes, then rounds it to the nearest integer
 sub hr_bytes_rnd {
     my $num = shift;
-    return "0B" unless  defined($num) ;
-    return "0B" if $num eq "NULL" ;
-    
-    if ( $num >= ( 1024**3 ) ) {       #GB
+    return "0B" unless defined($num);
+    return "0B" if $num eq "NULL";
+
+    if ( $num >= ( 1024**3 ) ) {    #GB
         return int( ( $num / ( 1024**3 ) ) ) . "G";
     }
     elsif ( $num >= ( 1024**2 ) ) {    #MB
@@ -560,8 +560,9 @@ sub validate_tuner_version {
     }
     debugprint "curl and wget are not available.";
     infoprint "Unable to check for the latest MySQLTuner version";
-    infoprint "Using --pass and --password option is insecure during MySQLTuner execution(Password disclosure)" 
-      if ( defined($opt{'pass'}));
+    infoprint
+"Using --pass and --password option is insecure during MySQLTuner execution(Password disclosure)"
+      if ( defined( $opt{'pass'} ) );
 }
 
 # Checks for updates to MySQLTuner
@@ -710,6 +711,7 @@ sub mysql_setup {
     debugprint "MySQL Client: $mysqlcmd";
 
     $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
+
     # Are we being asked to connect via a socket?
     if ( $opt{socket} ne 0 ) {
         $remotestring = " -S $opt{socket} -P $opt{port}";
@@ -1055,7 +1057,8 @@ sub get_all_vars {
 
     # Support GTID MODE FOR MARIADB
     # Issue MariaDB GTID mode #272
-    $myvar{'gtid_mode'}=$myvar{'gtid_strict_mode'} if (defined($myvar{'gtid_strict_mode'}));
+    $myvar{'gtid_mode'} = $myvar{'gtid_strict_mode'}
+      if ( defined( $myvar{'gtid_strict_mode'} ) );
 
     $myvar{'have_threadpool'} = "NO";
     if ( defined( $myvar{'thread_pool_size'} )
@@ -1112,8 +1115,9 @@ sub remove_empty {
 
 sub grep_file_contents {
     my $file = shift;
-	my $patt
+    my $patt;
 }
+
 sub get_file_contents {
     my $file = shift;
     open( my $fh, "<", $file ) or die "Can't open $file for read: $!";
@@ -1129,84 +1133,95 @@ sub get_basic_passwords {
 
 sub log_file_recommandations {
     subheaderprint "Log file Recommendations";
-	infoprint "Log file: " . $myvar{'log_error'}. "(".hr_bytes_rnd((stat $myvar{'log_error'})[7]).")";
-	if ( -f "$myvar{'log_error'}" ) {
-		goodprint "Log file $myvar{'log_error'} exists";
-	} else {
-		badprint "Log file $myvar{'log_error'} doesn't exist";
-	}
+    infoprint "Log file: "
+      . $myvar{'log_error'} . "("
+      . hr_bytes_rnd( ( stat $myvar{'log_error'} )[7] ) . ")";
+    if ( -f "$myvar{'log_error'}" ) {
+        goodprint "Log file $myvar{'log_error'} exists";
+    }
+    else {
+        badprint "Log file $myvar{'log_error'} doesn't exist";
+    }
     if ( -r "$myvar{'log_error'}" ) {
         goodprint "Log file $myvar{'log_error'} is readable.";
-    } else {
+    }
+    else {
         badprint "Log file $myvar{'log_error'} isn't readable.";
         return;
     }
-	if ( (stat $myvar{'log_error'})[7] > 0 ) {
-		goodprint "Log file $myvar{'log_error'} is not empty";
-	} else {
-		badprint "Log file $myvar{'log_error'} is empty";
-	}
-	
-	if ( (stat $myvar{'log_error'})[7] < 32*1024*1024 ) {
-		goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
-	} else {
-		badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
-		push @generalrec,
-        $myvar{'log_error'} ."is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!" ;
-	}
-	
-    my @log_content = get_file_contents($myvar{'log_error'});
-    
-    my $numLi = 0;
+    if ( ( stat $myvar{'log_error'} )[7] > 0 ) {
+        goodprint "Log file $myvar{'log_error'} is not empty";
+    }
+    else {
+        badprint "Log file $myvar{'log_error'} is empty";
+    }
+
+    if ( ( stat $myvar{'log_error'} )[7] < 32 * 1024 * 1024 ) {
+        goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
+    }
+    else {
+        badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
+        push @generalrec,
+          $myvar{'log_error'}
+          . "is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!";
+    }
+
+    my @log_content = get_file_contents( $myvar{'log_error'} );
+
+    my $numLi     = 0;
     my $nbWarnLog = 0;
-    my $nbErrLog = 0;
+    my $nbErrLog  = 0;
     my @lastShutdowns;
     my @lastStarts;
-    foreach my $logLi ( @log_content ) {
-      $numLi++;
-      debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i;
-      $nbErrLog++ if $logLi =~ /error/i;
-      $nbWarnLog++ if $logLi =~ /warning/i;
-      push @lastShutdowns, $logLi if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
-      push @lastStarts, $logLi if $logLi =~ /ready for connections/;
+    foreach my $logLi (@log_content) {
+        $numLi++;
+        debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i;
+        $nbErrLog++                 if $logLi =~ /error/i;
+        $nbWarnLog++                if $logLi =~ /warning/i;
+        push @lastShutdowns, $logLi
+          if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
+        push @lastStarts, $logLi if $logLi =~ /ready for connections/;
     }
     if ( $nbWarnLog > 0 ) {
-      badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
-      push @generalrec, "Control warning line(s) into $myvar{'log_error'} file";
-    } else {
-      goodprint "$myvar{'log_error'} doesn't contain any warning.";
+        badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
+        push @generalrec,
+          "Control warning line(s) into $myvar{'log_error'} file";
+    }
+    else {
+        goodprint "$myvar{'log_error'} doesn't contain any warning.";
     }
     if ( $nbErrLog > 0 ) {
-      badprint "$myvar{'log_error'} contains $nbErrLog error(s).";
-      push @generalrec, "Control error line(s) into $myvar{'log_error'} file";
-    } else {
-      goodprint "$myvar{'log_error'} doesn't contain any error.";
+        badprint "$myvar{'log_error'} contains $nbErrLog error(s).";
+        push @generalrec, "Control error line(s) into $myvar{'log_error'} file";
     }
-    
+    else {
+        goodprint "$myvar{'log_error'} doesn't contain any error.";
+    }
+
     infoprint scalar @lastStarts . " start(s) detected in $myvar{'log_error'}";
     my $nStart = 0;
-    my $nEnd = 10;
+    my $nEnd   = 10;
     if ( scalar @lastStarts < $nEnd ) {
         $nEnd = scalar @lastStarts;
     }
-    for my $startd ( reverse @lastStarts[-$nEnd..-1] ) {
+    for my $startd ( reverse @lastStarts[ -$nEnd .. -1 ] ) {
         $nStart++;
         infoprint "$nStart) $startd";
     }
-    infoprint scalar @lastShutdowns . " shutdown(s) detected in $myvar{'log_error'}";
-    $nStart=0;
-    $nEnd=10;
+    infoprint scalar @lastShutdowns
+      . " shutdown(s) detected in $myvar{'log_error'}";
+    $nStart = 0;
+    $nEnd   = 10;
     if ( scalar @lastShutdowns < $nEnd ) {
-      $nEnd = scalar @lastShutdowns;
+        $nEnd = scalar @lastShutdowns;
     }
-    for my $shutd ( reverse @lastShutdowns[-$nEnd..-1] ) {
-      $nStart++;
-      infoprint "$nStart) $shutd";
+    for my $shutd ( reverse @lastShutdowns[ -$nEnd .. -1 ] ) {
+        $nStart++;
+        infoprint "$nStart) $shutd";
     }
-	#exit 0;
+
+    #exit 0;
 }
-
-
 
 sub cve_recommendations {
     subheaderprint "CVE Security Recommendations";
@@ -1721,7 +1736,7 @@ sub security_recommendations {
     my $nbins = 0;
     my $passreq;
     if (@passwords) {
-        my $nbInterPass=0;
+        my $nbInterPass = 0;
         foreach my $pass (@passwords) {
             $nbInterPass++;
 
@@ -1751,7 +1766,8 @@ sub security_recommendations {
                     $nbins++;
                 }
             }
-        debugprint "$nbInterPass / ".scalar(@passwords) if ($nbInterPass %1000 ==0);
+            debugprint "$nbInterPass / " . scalar(@passwords)
+              if ( $nbInterPass % 1000 == 0 );
         }
     }
     if ( $nbins > 0 ) {
@@ -2017,7 +2033,8 @@ sub check_storage_engines {
         my $not_innodb = '';
         if ( not defined $result{'Variables'}{'innodb_file_per_table'} ) {
             $not_innodb = "AND NOT ENGINE='InnoDB'";
-        } elsif ( $result{'Variables'}{'innodb_file_per_table'} eq 'OFF' ) {
+        }
+        elsif ( $result{'Variables'}{'innodb_file_per_table'} eq 'OFF' ) {
             $not_innodb = "AND NOT ENGINE='InnoDB'";
         }
         $result{'Tables'}{'Fragmented tables'} =
@@ -2502,7 +2519,8 @@ sub calculations {
     # InnoDB
     if ( $myvar{'have_innodb'} eq "YES" ) {
         $mycalc{'innodb_log_size_pct'} =
-          ( $myvar{'innodb_log_file_size'} *$myvar{'innodb_log_files_in_group'} * 100 /
+          ( $myvar{'innodb_log_file_size'} *
+              $myvar{'innodb_log_files_in_group'} * 100 /
               $myvar{'innodb_buffer_pool_size'} );
     }
 
@@ -2770,9 +2788,12 @@ sub mysql_stats {
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
-    elsif ( mysql_version_ge( 5, 5 ) and !mysql_version_ge( 10, 1 ) and $myvar{'query_cache_type'} eq "OFF" ) {
+    elsif ( mysql_version_ge( 5, 5 )
+        and !mysql_version_ge( 10, 1 )
+        and $myvar{'query_cache_type'} eq "OFF" )
+    {
         goodprint
-            "Query cache is disabled by default due to mutex contention on multiprocessor machines.";
+"Query cache is disabled by default due to mutex contention on multiprocessor machines.";
     }
     elsif ( $myvar{'query_cache_size'} < 1 ) {
         badprint "Query cache is disabled";
@@ -3292,22 +3313,36 @@ sub mysqsl_pfs {
     subheaderprint "Performance schema";
 
     # Performance Schema
-    unless ( defined( $myvar{'performance_schema'} )
-        and $myvar{'performance_schema'} eq 'ON' )
-    {
+    $myvar{'performance_schema'} = 'OFF'
+      unless defined( $myvar{'performance_schema'} );
+    unless ( $myvar{'performance_schema'} eq 'ON' ) {
         infoprint "Performance schema is disabled.";
-        return;
+        if ( mysql_version_ge( 5, 5 ) ) {
+            push( @generalrec,
+                "Performance should be activated for better diagnostics" );
+            push( @adjvars, "performance_schema = ON enable PFS" );
+        }
+        else {
+            push( @generalrec,
+"Performance shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
+            );
+            push( @adjvars, "performance_schema = OFF disable PFS" );
+        }
     }
-    infoprint "Performance schema is enabled.";
+    debugprint "Performance schema is " . $myvar{'performance_schema'};
     infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
 
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
         infoprint "Sys schema isn't installed.";
+        push( @generalrec,
+"Consider installing Sys schema from https://github.com/mysql/mysql-sys"
+        );
         return;
     }
-
-    infoprint "Sys schema is installed.";
-    return if ( $opt{pfstat} == 0 );
+    else {
+        infoprint "Sys schema is installed.";
+    }
+    return if ( $opt{pfstat} == 0 or $myvar{'performance_schema'} ne 'ON' );
 
     infoprint "Sys schema Version: "
       . select_one("select sys_version from sys.version");
@@ -4939,7 +4974,7 @@ sub get_wsrep_options {
 }
 
 sub get_gcache_memory {
-    my $gCacheMem = hr_raw(get_wsrep_option('gcache.size'));
+    my $gCacheMem = hr_raw( get_wsrep_option('gcache.size') );
 
     return 0 unless defined $gCacheMem and $gCacheMem ne '';
     return $gCacheMem;
@@ -5245,7 +5280,8 @@ sub mysql_innodb {
         }
         if ( defined $myvar{'innodb_log_files_in_group'} ) {
             infoprint " +-- InnoDB Total Log File Size: "
-              . hr_bytes( $myvar{'innodb_log_files_in_group'}*$myvar{'innodb_log_file_size'});
+              . hr_bytes( $myvar{'innodb_log_files_in_group'} *
+                  $myvar{'innodb_log_file_size'} );
         }
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
@@ -5294,17 +5330,24 @@ sub mysql_innodb {
     {
         badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
           . $mycalc{'innodb_log_size_pct'} . " %): "
-          . hr_bytes( $myvar{'innodb_log_file_size'} )." * ".$myvar{'innodb_log_files_in_group'}. "/"
+          . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
+          . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
-        push( @adjvars,
+        push(
+            @adjvars,
 "innodb_log_file_size * innodb_log_files_in_group should be equals to 1/4 of buffer pool size (="
-              . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'} * $myvar{'innodb_log_files_in_group'} / 4 )
-              . ") if possible." );
+              . hr_bytes_rnd(
+                $myvar{'innodb_buffer_pool_size'} *
+                  $myvar{'innodb_log_files_in_group'} / 4
+              )
+              . ") if possible."
+        );
     }
     else {
         goodprint "InnoDB log file size / InnoDB Buffer pool size: "
-          . hr_bytes( $myvar{'innodb_log_file_size'} ) ." * ".$myvar{'innodb_log_files_in_group'}. "/"
+          . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
+          . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
     }
@@ -5567,7 +5610,9 @@ sub mysql_databases {
             )
           ) . ")";
         badprint "Index size is larger than data size for $dbinfo[0] \n"
-          if ( $dbinfo[2] ne 'NULL' ) and ( $dbinfo[3] ne 'NULL' ) and ( $dbinfo[2] < $dbinfo[3] );
+          if ( $dbinfo[2] ne 'NULL' )
+          and ( $dbinfo[3] ne 'NULL' )
+          and ( $dbinfo[2] < $dbinfo[3] );
         badprint "There are " . $dbinfo[5] . " storage engines. Be careful. \n"
           if $dbinfo[5] > 1;
         $result{'Databases'}{ $dbinfo[0] }{'Rows'}       = $dbinfo[1];

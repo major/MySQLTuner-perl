@@ -292,7 +292,9 @@
 * thread_pool_size between 4 to 8 for MyIsam usage
 
 ## MySQLTuner performance schema and sysschema information
-
+* Check that Performance schema is activated for 5.6+ version
+* Check that Performance schema is disactivated for 5.5- version
+* Check that Sys schema is installed
 * sys Schema version
 * Top user per connection
 * Top user per statement
