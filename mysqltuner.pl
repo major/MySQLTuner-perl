@@ -2769,7 +2769,11 @@ sub mysql_stats {
     }
 
     # name resolution
-    if ( not defined( $result{'Variables'}{'skip_name_resolve'} ) ) {
+    if ( defined( $result{'Variables'}{'skip_networking'} ) && $result{'Variables'}{'skip_networking'} eq 'ON' ) {
+        infoprint
+"Skipped name resolution test due to skip_networking=ON in system variables.";
+    }
+    elsif ( not defined( $result{'Variables'}{'skip_name_resolve'} ) ) {
         infoprint
 "Skipped name resolution test due to missing skip_name_resolve in system variables.";
     }
