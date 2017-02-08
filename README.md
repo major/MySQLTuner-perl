@@ -13,7 +13,7 @@ MySQLTuner-perl
 
 **MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration such as [Galera Cluster](http://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, [InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
 
-You can found more details on this indicators 
+You can find more details on these indicators here:
 [Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 
