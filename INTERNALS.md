@@ -249,6 +249,10 @@
 	* Joiner(Try to reach cluster group)
 	* SYNCED state able to read/write
 * wsrep_cluster_conf_id configuration level must be identical in all nodes
+* wsrep_slave_thread is between 3 or 4 times number of CPU core.
+* gcs.limit should be equal to wsrep_slave_threads * 5
+* gcs.fc_factor should be equal to 0.8
+* Flow control fraction should be lower than 0.02 (wsrep_flow_control_paused < 0.02)
 * wsrep_last_commited committed level must be identical in all nodes
 * Look for tables without primary keys
 * Look for non InnoDB tables for Galera

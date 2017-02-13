@@ -1514,6 +1514,8 @@ sub get_system_info {
     else {
         badprint "Internet              : Disconnected";
     }
+    $result{'OS'}{'NbCore'}= `nproc`;
+    infoprint "Number of Core CPU : ". `nproc`;
     $result{'OS'}{'Type'} = `uname -o`;
     infoprint "Operating System Type : " . infocmd_one "uname -o";
     $result{'OS'}{'Kernel'} = `uname -r`;
@@ -5039,6 +5041,33 @@ group by c.table_schema,c.table_name
 having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     );
 
+    if (get_wsrep_option('wsrep_slave_threads') > `nproc`*4 or get_wsrep_option('wsrep_slave_threads') < `nproc`*3) {
+        badprint "wsrep_slave_threads is not equal to 3 or 4 times number of CPU(s)";
+        push @adjvars, "wsrep_slave_threads= Nb of Core CPU * 4";
+      } else {
+        goodprint "wsrep_slave_threads is equal to 3 or 4 times number of CPU(s)";
+      }
+
+    if (get_wsrep_option('gcs.limit') != get_wsrep_option('wsrep_slave_threads') *5 ) {
+        badprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
+        push @adjvars, "gcs.limit= wsrep_slave_threads * 5";
+    }
+    else {
+        goodprint "gcs.limit is equal to 5 * wsrep_slave_threads";
+    }
+    if (get_wsrep_option('gcs.fc_factor') == 0.8 ) {
+        badprint "gcs.fc_factor should be equal to 0.8";
+        push @adjvars, "gcs.fc_factor=0.8";
+    }
+    else {
+        goodprint "gcs.limit is equal to 5 * wsrep_slave_threads";
+    }
+    if (get_wsrep_option('wsrep_flow_control_paused') > 0.02) {
+        badprint "Fraction of time node pause flow control > 0.02";
+    }
+    else {
+        goodprint "Flow control fraction seems to be OK (wsrep_flow_control_paused<=0.02)";
+    }
     if ( scalar(@primaryKeysNbTables) > 0 ) {
         badprint "Following table(s) don't have primary key:";
         foreach my $badtable (@primaryKeysNbTables) {
