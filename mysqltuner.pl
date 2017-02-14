@@ -3323,7 +3323,7 @@ sub mysqsl_pfs {
       unless defined( $myvar{'performance_schema'} );
     unless ( $myvar{'performance_schema'} eq 'ON' ) {
         infoprint "Performance schema is disabled.";
-        if ( mysql_version_ge( 5, 5 ) ) {
+        if ( mysql_version_ge( 5, 6 ) ) {
             push( @generalrec,
                 "Performance should be activated for better diagnostics" );
             push( @adjvars, "performance_schema = ON enable PFS" );
