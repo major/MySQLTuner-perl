@@ -31,6 +31,7 @@
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
 #   Joe Ashcraft           Jean-Marie Renouard  Christian Loos
+#   Julien Francoz
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -5044,9 +5045,24 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     if (get_wsrep_option('wsrep_slave_threads') > `nproc`*4 or get_wsrep_option('wsrep_slave_threads') < `nproc`*3) {
         badprint "wsrep_slave_threads is not equal to 3 or 4 times number of CPU(s)";
         push @adjvars, "wsrep_slave_threads= Nb of Core CPU * 4";
-      } else {
+    } else {
         goodprint "wsrep_slave_threads is equal to 3 or 4 times number of CPU(s)";
-      }
+    }
+
+    if ($myvar{'wsrep_slave_threads'} > 1) {
+	badprint "wsrep parallel slave can cause frequent inconsistency crash.";
+        push @adjvars, "Set wsrep_slave_threads to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
+        # check options for parallel slave
+        if ($myvar{'wsrep_slave_FK_checks'} eq "OFF") {
+            badprint "wsrep_slave_FK_checks is off with parallel slave";
+            push @adjvars, "wsrep_slave_FK_checks should be ON when using parallel slave";
+        }
+	# wsrep_slave_UK_checks seems useless in MySQL source code
+        if ($myvar{'innodb_autoinc_lock_mode'} != 2) {
+            badprint "innodb_autoinc_lock_mode is incorrect with parallel slave";
+            push @adjvars, "innodb_autoinc_lock_mode should be 2 when using parallel slave";
+        }
+    }
 
     if (get_wsrep_option('gcs.limit') != get_wsrep_option('wsrep_slave_threads') *5 ) {
         badprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
