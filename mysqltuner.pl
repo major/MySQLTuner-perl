@@ -5055,12 +5055,12 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     else {
         goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads";
     }
-    if (get_wsrep_option('gcs.fc_factor') == 0.8 ) {
+    if (get_wsrep_option('gcs.fc_factor') != 0.8 ) {
         badprint "gcs.fc_factor should be equal to 0.8";
         push @adjvars, "gcs.fc_factor=0.8";
     }
     else {
-        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads";
+        goodprint "gcs.fc_factor is equal to 0.8";
     }
     if ($mystat{'wsrep_flow_control_paused'} > 0.02) {
         badprint "Fraction of time node pause flow control > 0.02";
