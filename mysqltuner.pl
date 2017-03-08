@@ -5063,22 +5063,22 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             push @adjvars, "innodb_autoinc_lock_mode should be 2 when using parallel slave";
         }
     }
-
-    if (get_wsrep_option('gcs.limit') != get_wsrep_option('wsrep_slave_threads') *5 ) {
-        badprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
-        push @adjvars, "gcs.limit= wsrep_slave_threads * 5";
+    
+    if (get_wsrep_option('gcs.fc_limit') != $myvar{'wsrep_slave_threads'} * 5 ) {
+        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads";
+        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5";
     }
     else {
-        goodprint "gcs.limit is equal to 5 * wsrep_slave_threads";
+        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads";
     }
-    if (get_wsrep_option('gcs.fc_factor') == 0.8 ) {
+    if (get_wsrep_option('gcs.fc_factor') != 0.8 ) {
         badprint "gcs.fc_factor should be equal to 0.8";
         push @adjvars, "gcs.fc_factor=0.8";
     }
     else {
-        goodprint "gcs.limit is equal to 5 * wsrep_slave_threads";
+        goodprint "gcs.fc_factor is equal to 0.8";
     }
-    if (get_wsrep_option('wsrep_flow_control_paused') > 0.02) {
+    if ($mystat{'wsrep_flow_control_paused'} > 0.02) {
         badprint "Fraction of time node pause flow control > 0.02";
     }
     else {
