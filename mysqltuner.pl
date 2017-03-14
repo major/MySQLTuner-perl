@@ -2367,14 +2367,7 @@ sub calculations {
 
     if ( $mystat{'Key_write_requests'} > 0 ) {
         $mycalc{'pct_wkeys_from_mem'} = sprintf(
-            "%.1f",
-            (
-                100 - (
-                    ( $mystat{'Key_writes'} / $mystat{'Key_write_requests'} ) *
-                      100
-                )
-            )
-        );
+            "%.1f",( ($mystat{'Key_writes'} / $mystat{'Key_write_requests'} ) * 100 ) );
     }
     else {
         $mycalc{'pct_wkeys_from_mem'} = 0;
