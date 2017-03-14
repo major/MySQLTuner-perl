@@ -5049,15 +5049,15 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     );
 
     if (   get_wsrep_option('wsrep_slave_threads') > `nproc` * 4
-        or get_wsrep_option('wsrep_slave_threads') < `nproc` * 3 )
+        or get_wsrep_option('wsrep_slave_threads') < `nproc` * 2 )
     {
         badprint
-          "wsrep_slave_threads is not equal to 3 or 4 times number of CPU(s)";
+          "wsrep_slave_threads is not equal to 2, 3 or 4 times number of CPU(s)";
         push @adjvars, "wsrep_slave_threads= Nb of Core CPU * 4";
     }
     else {
         goodprint
-          "wsrep_slave_threads is equal to 3 or 4 times number of CPU(s)";
+          "wsrep_slave_threads is equal to 2, 3 or 4 times number of CPU(s)";
     }
 
     if ( get_wsrep_option('gcs.limit') !=
@@ -5066,18 +5066,18 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
         badprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
         push @adjvars, "gcs.limit= wsrep_slave_threads * 5";
     } else {
-        goodprint "wsrep_slave_threads is equal to 3 or 4 times number of CPU(s)";
+        goodprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
     }
 
     if (get_wsrep_option('wsrep_slave_threads') > 1) {
-  badprint "wsrep parallel slave can cause frequent inconsistency crash.";
+        infoprint "wsrep parallel slave can cause frequent inconsistency crash.";
         push @adjvars, "Set wsrep_slave_threads to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
         # check options for parallel slave
         if (get_wsrep_option('wsrep_slave_FK_checks') eq "OFF") {
             badprint "wsrep_slave_FK_checks is off with parallel slave";
             push @adjvars, "wsrep_slave_FK_checks should be ON when using parallel slave";
         }
-  # wsrep_slave_UK_checks seems useless in MySQL source code
+        # wsrep_slave_UK_checks seems useless in MySQL source code
         if ($myvar{'innodb_autoinc_lock_mode'} != 2) {
             badprint "innodb_autoinc_lock_mode is incorrect with parallel slave";
             push @adjvars, "innodb_autoinc_lock_mode should be 2 when using parallel slave";
@@ -5100,10 +5100,8 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     }
    if ( get_wsrep_option('wsrep_flow_control_paused') > 0.02 ) {
         badprint "Fraction of time node pause flow control > 0.02";
-    }
-    else {
-        goodprint
-"Flow control fraction seems to be OK (wsrep_flow_control_paused<=0.02)";
+    } else {
+        goodprint "Flow control fraction seems to be OK (wsrep_flow_control_paused<=0.02)";
     }
 
     if ( scalar(@primaryKeysNbTables) > 0 ) {
@@ -5112,8 +5110,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             badprint "\t$badtable";
             push @{ $result{'Tables without PK'} }, $badtable;
         }
-    }
-    else {
+    } else {
         goodprint "All tables get a primary key";
     }
     my @nonInnoDBTables = select_array(
@@ -5126,22 +5123,19 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
         foreach my $badtable (@nonInnoDBTables) {
             badprint "\t$badtable";
         }
-    }
-    else {
+    } else {
         goodprint "All tables are InnoDB tables";
     }
     if ( $myvar{'binlog_format'} ne 'ROW' ) {
         badprint "Binlog format should be in ROW mode.";
         push @adjvars, "binlog_format = ROW";
-    }
-    else {
+    } else {
         goodprint "Binlog format is in ROW mode.";
     }
     if ( $myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
         badprint "InnoDB flush log at each commit should be disabled.";
         push @adjvars, "innodb_flush_log_at_trx_commit = 0";
-    }
-    else {
+    } else {
         goodprint "InnoDB flush log at each commit is disabled for Galera.";
     }
 
