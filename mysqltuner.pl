@@ -300,6 +300,12 @@ sub infoprinthcmd {
     infoprintcmd "$_[1]";
 }
 
+# Calculates the number of phyiscal cores considering HyperThreading 
+sub cpu_cores {
+    my $cntCPU = `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
+    return ( $cntCPU == 0 ? `nproc` : $cntCPU );
+}
+
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
 sub hr_bytes {
     my $num = shift;
@@ -1518,8 +1524,8 @@ sub get_system_info {
     else {
         badprint "Internet              : Disconnected";
     }
-    $result{'OS'}{'NbCore'} = `nproc`;
-    infoprint "Number of Core CPU : " . `nproc`;
+    $result{'OS'}{'NbCore'} = cpu_cores;
+    infoprint "Number of Core CPU : " . cpu_cores;
     $result{'OS'}{'Type'} = `uname -o`;
     infoprint "Operating System Type : " . infocmd_one "uname -o";
     $result{'OS'}{'Kernel'} = `uname -r`;
@@ -5048,8 +5054,8 @@ group by c.table_schema,c.table_name
 having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     );
 
-    if (   get_wsrep_option('wsrep_slave_threads') > `nproc` * 4
-        or get_wsrep_option('wsrep_slave_threads') < `nproc` * 3 )
+    if (   get_wsrep_option('wsrep_slave_threads') > cpu_cores * 4
+        or get_wsrep_option('wsrep_slave_threads') < cpu_cores * 3 )
     {
         badprint
           "wsrep_slave_threads is not equal to 3 or 4 times number of CPU(s)";
