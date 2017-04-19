@@ -2800,7 +2800,6 @@ sub mysql_stats {
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
     elsif ( mysql_version_ge( 5, 5 )
-        and !mysql_version_ge( 10, 1 )
         and $myvar{'query_cache_type'} eq "OFF" )
     {
         goodprint
