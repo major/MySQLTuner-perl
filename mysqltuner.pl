@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # mysqltuner.pl - Version 1.7.1
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
+# Copyright (C) 2006-2017 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.com/
 # Git repository available at http://github.com/major/MySQLTuner-perl
@@ -537,16 +537,15 @@ sub validate_tuner_version {
     }
 
     my $update;
-    my $url =
-"https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
+    my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
     my $httpcli = get_http_cli();
     if ( $httpcli =~ /curl$/ ) {
         debugprint "$httpcli is available.";
 
         debugprint
-"$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2";
+"$httpcli -m 3 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2";
         $update =
-`$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2`;
+`$httpcli -m 3 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2`;
         chomp($update);
         debugprint "VERSION: $update";
 
@@ -558,9 +557,9 @@ sub validate_tuner_version {
         debugprint "$httpcli is available.";
 
         debugprint
-"$httpcli -e timestamping=off -t 1 -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
+"$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
         $update =
-`$httpcli -e timestamping=off -t 1 -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
+`$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
         chomp($update);
         compare_tuner_version($update);
         return;
@@ -580,7 +579,6 @@ sub update_tuner_version {
         return;
     }
 
-    #use Cwd;
     my $update;
     my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/";
     my @scripts =
@@ -595,9 +593,9 @@ sub update_tuner_version {
             debugprint "$httpcli is available.";
 
             debugprint
-              "$httpcli --connect-timeout 5 '$url$script' 2>$devnull > $script";
+              "$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $script";
             $update =
-              `$httpcli --connect-timeout 5 '$url$script' 2>$devnull > $script`;
+              `$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $script`;
             chomp($update);
             debugprint "$script updated: $update";
 
@@ -614,9 +612,9 @@ sub update_tuner_version {
             debugprint "$httpcli is available.";
 
             debugprint
-              "$httpcli -qe timestamping=off -T 5 -O $script '$url$script'";
+              "$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'";
             $update =
-              `$httpcli -qe timestamping=off -T 5 -O $script '$url$script'`;
+              `$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'`;
             chomp($update);
 
             if ( -s $script eq 0 ) {
@@ -651,7 +649,7 @@ sub compare_tuner_version {
     #exit 0;
     if ( $remoteversion ne $tunerversion ) {
         badprint
-          "There is a new version of MySQLTuner available ($remoteversion)";
+          "There is a new version of MySQLTuner available($remoteversion)";
         update_tuner_version();
         return;
     }
@@ -1170,7 +1168,7 @@ sub log_file_recommandations {
         badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
         push @generalrec,
           $myvar{'log_error'}
-          . "is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!";
+          . " is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!";
     }
 
     my @log_content = get_file_contents( $myvar{'log_error'} );
@@ -1541,11 +1539,11 @@ sub get_system_info {
 
     my $ext_ip = "";
     if ( $httpcli =~ /curl$/ ) {
-        $ext_ip = infocmd_one "$httpcli ipecho.net/plain";
+        $ext_ip = infocmd_one "$httpcli -m 3 ipecho.net/plain";
     }
     elsif ( $httpcli =~ /wget$/ ) {
 
-        $ext_ip = infocmd_one "$httpcli -q -O - ipecho.net/plain";
+        $ext_ip = infocmd_one "$httpcli -t 1 -T 3 -q -O - ipecho.net/plain";
     }
     infoprint "External IP           : " . $ext_ip;
     $result{'Network'}{'External Ip'} = $ext_ip;
@@ -2149,7 +2147,7 @@ sub check_storage_engines {
             $data_free = $data_free / 1024 / 1024;
             $total_free += $data_free;
             push( @generalrec,
-                "  OPTIMIZE TABLE $table_name; -- can free $data_free MB" );
+                "  OPTIMIZE TABLE `$table_name`; -- can free $data_free MB" );
         }
         push( @generalrec,
             "Total freed space after theses OPTIMIZE TABLE : $total_free Mb" );
