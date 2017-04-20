@@ -721,7 +721,7 @@ sub mysql_setup {
     if ( $opt{socket} ne 0 ) {
         $remotestring = " -S $opt{socket} -P $opt{port}";
     }
-
+    
     # Are we being asked to connect to a remote server?
     if ( $opt{host} ne 0 ) {
         chomp( $opt{host} );
@@ -739,6 +739,8 @@ sub mysql_setup {
         if ( ( $opt{host} ne "127.0.0.1" ) && ( $opt{host} ne "localhost" ) ) {
             $doremote = 1;
         }
+    } else {
+      $opt{host}='127.0.0.1';
     }
 
     # Did we already get a username without password on the command line?
