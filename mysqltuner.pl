@@ -5817,8 +5817,8 @@ ENDSQL
 
         $result{'Indexes'}{ $info[1] }{'Column'}            = $info[0];
         $result{'Indexes'}{ $info[1] }{'Sequence number'}   = $info[2];
-        $result{'Indexes'}{ $info[1] }{'Number of collunm'} = $info[3];
-        $result{'Indexes'}{ $info[1] }{'Cardianality'}      = $info[4];
+        $result{'Indexes'}{ $info[1] }{'Number of column'}  = $info[3];
+        $result{'Indexes'}{ $info[1] }{'Cardinality'}       = $info[4];
         $result{'Indexes'}{ $info[1] }{'Row number'}        = $info[5];
         $result{'Indexes'}{ $info[1] }{'Index Type'}        = $info[6];
         $result{'Indexes'}{ $info[1] }{'Selectivity'}       = $info[7];
