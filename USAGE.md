@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.7.0 - MySQL High Performance Tuning Script
+    MySQLTuner 1.7.2 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -45,7 +45,7 @@ You must provide the remote server's total memory when connecting to other serve
     --pfstat                    Print Performance schema
     --bannedports               Ports banned separated by comma(,)
     --maxportallowed            Number of ports opened allowed on this hosts
-    --cvefile                   CVE File for vulnerability checks
+    --cvefile <path>            CVE File for vulnerability checks
     --nocolor                   Don't print output in color
     --json                      Print result as JSON string
     --buffers                   Print global and per-thread buffer values
@@ -122,7 +122,7 @@ Maintained by Major Hayden (major\\@mhtx.net) - Licensed under GPL
 
 # COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2015 Major Hayden - major@mhtx.net
+Copyright (C) 2006-2017 Major Hayden - major@mhtx.net
 
 For the latest updates, please visit http://mysqltuner.com/
 
