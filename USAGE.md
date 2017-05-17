@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.6.20 - MySQL High Performance Tuning Script
+    MySQLTuner 1.7.0 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -15,7 +15,9 @@ You must provide the remote server's total memory when connecting to other serve
     --socket <socket>    Use a different socket for a local connection
     --port <port>        Port to use for connection (default: 3306)
     --user <username>    Username to use for authentication
+    --userenv <envvar>   Name of env variable which contains username to use for authentication
     --pass <password>    Password to use for authentication
+    --passenv <envvar>   Name of env variable which contains password to use for authentication
     --mysqladmin <path>  Path to a custom mysqladmin executable
     --mysqlcmd <path>    Path to a custom mysql executable
      --defaults-file <path>  Path to a custom .my.cnf
@@ -40,7 +42,7 @@ You must provide the remote server's total memory when connecting to other serve
     --dbstat                    Print database information
     --idxstat                   Print index information
     --sysstat                   Print system information
-    --pfstat                    Print Performance schema 
+    --pfstat                    Print Performance schema
     --bannedports               Ports banned separated by comma(,)
     --maxportallowed            Number of ports opened allowed on this hosts
     --cvefile                   CVE File for vulnerability checks

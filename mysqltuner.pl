@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.0
+# mysqltuner.pl - Version 1.7.1
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2016 Major Hayden - major@mhtx.net
+# Copyright (C) 2006-2017 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.com/
 # Git repository available at http://github.com/major/MySQLTuner-perl
@@ -31,6 +31,7 @@
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
 #   Joe Ashcraft           Jean-Marie Renouard  Christian Loos
+#   Julien Francoz
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://forge.mysql.com/projects/view.php?id=44
@@ -54,7 +55,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.0";
+my $tunerversion = "1.7.1";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -193,12 +194,12 @@ my $basic_password_files =
   : abs_path( $opt{passwordfile} );
 
 # Username from envvar
-if (exists $opt{userenv} && exists $ENV{ $opt{userenv} }) {
+if ( exists $opt{userenv} && exists $ENV{ $opt{userenv} } ) {
     $opt{user} = $ENV{ $opt{userenv} };
 }
 
 # Related to password option
-if (exists $opt{passenv} && exists $ENV{ $opt{passenv} }) {
+if ( exists $opt{passenv} && exists $ENV{ $opt{passenv} } ) {
     $opt{pass} = $ENV{ $opt{passenv} };
 }
 $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
@@ -299,9 +300,18 @@ sub infoprinthcmd {
     infoprintcmd "$_[1]";
 }
 
+# Calculates the number of phyiscal cores considering HyperThreading 
+sub cpu_cores {
+    my $cntCPU = `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
+    return ( $cntCPU == 0 ? `nproc` : $cntCPU );
+}
+
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
 sub hr_bytes {
     my $num = shift;
+    return "0B" unless defined($num);
+    return "0B" if $num eq "NULL";
+
     if ( $num >= ( 1024**3 ) ) {    #GB
         return sprintf( "%.1f", ( $num / ( 1024**3 ) ) ) . "G";
     }
@@ -316,13 +326,32 @@ sub hr_bytes {
     }
 }
 
+sub hr_raw {
+    my $num = shift;
+    return "0" unless defined($num);
+    return "0" if $num eq "NULL";
+    if ( $num =~ /^(\d+)G$/ ) {
+        return $1 * 1024 * 1024 * 1024;
+    }
+    if ( $num =~ /^(\d+)M$/ ) {
+        return $1 * 1024 * 1024;
+    }
+    if ( $num =~ /^(\d+)K$/ ) {
+        return $1 * 1024;
+    }
+    if ( $num =~ /^(\d+)$/ ) {
+        return $1;
+    }
+    return $num;
+}
+
 # Calculates the parameter passed in bytes, then rounds it to the nearest integer
 sub hr_bytes_rnd {
     my $num = shift;
-    return "0B" unless  defined($num) ;
-    return "0B" if $num eq "NULL" ;
-    
-    if ( $num >= ( 1024**3 ) ) {       #GB
+    return "0B" unless defined($num);
+    return "0B" if $num eq "NULL";
+
+    if ( $num >= ( 1024**3 ) ) {    #GB
         return int( ( $num / ( 1024**3 ) ) ) . "G";
     }
     elsif ( $num >= ( 1024**2 ) ) {    #MB
@@ -508,16 +537,15 @@ sub validate_tuner_version {
     }
 
     my $update;
-    my $url =
-"https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
+    my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
     my $httpcli = get_http_cli();
     if ( $httpcli =~ /curl$/ ) {
         debugprint "$httpcli is available.";
 
         debugprint
-"$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2";
+"$httpcli -m 3 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2";
         $update =
-`$httpcli --connect-timeout 5 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2`;
+`$httpcli -m 3 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2`;
         chomp($update);
         debugprint "VERSION: $update";
 
@@ -529,15 +557,18 @@ sub validate_tuner_version {
         debugprint "$httpcli is available.";
 
         debugprint
-"$httpcli -e timestamping=off -t 1 -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
+"$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
         $update =
-`$httpcli -e timestamping=off -t 1 -T 5 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
+`$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
         chomp($update);
         compare_tuner_version($update);
         return;
     }
     debugprint "curl and wget are not available.";
     infoprint "Unable to check for the latest MySQLTuner version";
+    infoprint
+"Using --pass and --password option is insecure during MySQLTuner execution(Password disclosure)"
+      if ( defined( $opt{'pass'} ) );
 }
 
 # Checks for updates to MySQLTuner
@@ -548,7 +579,6 @@ sub update_tuner_version {
         return;
     }
 
-    #use Cwd;
     my $update;
     my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/";
     my @scripts =
@@ -563,9 +593,9 @@ sub update_tuner_version {
             debugprint "$httpcli is available.";
 
             debugprint
-              "$httpcli --connect-timeout 5 '$url$script' 2>$devnull > $script";
+              "$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $script";
             $update =
-              `$httpcli --connect-timeout 5 '$url$script' 2>$devnull > $script`;
+              `$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $script`;
             chomp($update);
             debugprint "$script updated: $update";
 
@@ -582,9 +612,9 @@ sub update_tuner_version {
             debugprint "$httpcli is available.";
 
             debugprint
-              "$httpcli -qe timestamping=off -T 5 -O $script '$url$script'";
+              "$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'";
             $update =
-              `$httpcli -qe timestamping=off -T 5 -O $script '$url$script'`;
+              `$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'`;
             chomp($update);
 
             if ( -s $script eq 0 ) {
@@ -619,7 +649,7 @@ sub compare_tuner_version {
     #exit 0;
     if ( $remoteversion ne $tunerversion ) {
         badprint
-          "There is a new version of MySQLTuner available ($remoteversion)";
+          "There is a new version of MySQLTuner available($remoteversion)";
         update_tuner_version();
         return;
     }
@@ -685,15 +715,16 @@ sub mysql_setup {
 
     debugprint "MySQL Client: $mysqlcmd";
 
+    $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
+
     # Are we being asked to connect via a socket?
     if ( $opt{socket} ne 0 ) {
-        $remotestring = " -S $opt{socket}";
+        $remotestring = " -S $opt{socket} -P $opt{port}";
     }
-
+    
     # Are we being asked to connect to a remote server?
     if ( $opt{host} ne 0 ) {
         chomp( $opt{host} );
-        $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
 
 # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
         if (   $opt{'forcemem'} eq 0
@@ -708,6 +739,8 @@ sub mysql_setup {
         if ( ( $opt{host} ne "127.0.0.1" ) && ( $opt{host} ne "localhost" ) ) {
             $doremote = 1;
         }
+    } else {
+      $opt{host}='127.0.0.1';
     }
 
     # Did we already get a username without password on the command line?
@@ -1031,7 +1064,8 @@ sub get_all_vars {
 
     # Support GTID MODE FOR MARIADB
     # Issue MariaDB GTID mode #272
-    $myvar{'gtid_mode'}=$myvar{'gtid_strict_mode'} if (defined($myvar{'gtid_strict_mode'}));
+    $myvar{'gtid_mode'} = $myvar{'gtid_strict_mode'}
+      if ( defined( $myvar{'gtid_strict_mode'} ) );
 
     $myvar{'have_threadpool'} = "NO";
     if ( defined( $myvar{'thread_pool_size'} )
@@ -1088,8 +1122,9 @@ sub remove_empty {
 
 sub grep_file_contents {
     my $file = shift;
-	my $patt
+    my $patt;
 }
+
 sub get_file_contents {
     my $file = shift;
     open( my $fh, "<", $file ) or die "Can't open $file for read: $!";
@@ -1105,84 +1140,95 @@ sub get_basic_passwords {
 
 sub log_file_recommandations {
     subheaderprint "Log file Recommendations";
-	infoprint "Log file: " . $myvar{'log_error'}. "(".hr_bytes_rnd((stat $myvar{'log_error'})[7]).")";
-	if ( -f "$myvar{'log_error'}" ) {
-		goodprint "Log file $myvar{'log_error'} exists";
-	} else {
-		badprint "Log file $myvar{'log_error'} doesn't exist";
-	}
+    infoprint "Log file: "
+      . $myvar{'log_error'} . "("
+      . hr_bytes_rnd( ( stat $myvar{'log_error'} )[7] ) . ")";
+    if ( -f "$myvar{'log_error'}" ) {
+        goodprint "Log file $myvar{'log_error'} exists";
+    }
+    else {
+        badprint "Log file $myvar{'log_error'} doesn't exist";
+    }
     if ( -r "$myvar{'log_error'}" ) {
         goodprint "Log file $myvar{'log_error'} is readable.";
-    } else {
+    }
+    else {
         badprint "Log file $myvar{'log_error'} isn't readable.";
         return;
     }
-	if ( (stat $myvar{'log_error'})[7] > 0 ) {
-		goodprint "Log file $myvar{'log_error'} is not empty";
-	} else {
-		badprint "Log file $myvar{'log_error'} is empty";
-	}
-	
-	if ( (stat $myvar{'log_error'})[7] < 32*1024*1024 ) {
-		goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
-	} else {
-		badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
-		push @generalrec,
-        $myvar{'log_error'} ."is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!" ;
-	}
-	
-    my @log_content = get_file_contents($myvar{'log_error'});
-    
-    my $numLi = 0;
+    if ( ( stat $myvar{'log_error'} )[7] > 0 ) {
+        goodprint "Log file $myvar{'log_error'} is not empty";
+    }
+    else {
+        badprint "Log file $myvar{'log_error'} is empty";
+    }
+
+    if ( ( stat $myvar{'log_error'} )[7] < 32 * 1024 * 1024 ) {
+        goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
+    }
+    else {
+        badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
+        push @generalrec,
+          $myvar{'log_error'}
+          . " is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!";
+    }
+
+    my @log_content = get_file_contents( $myvar{'log_error'} );
+
+    my $numLi     = 0;
     my $nbWarnLog = 0;
-    my $nbErrLog = 0;
+    my $nbErrLog  = 0;
     my @lastShutdowns;
     my @lastStarts;
-    foreach my $logLi ( @log_content ) {
-      $numLi++;
-      debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i;
-      $nbErrLog++ if $logLi =~ /error/i;
-      $nbWarnLog++ if $logLi =~ /warning/i;
-      push @lastShutdowns, $logLi if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
-      push @lastStarts, $logLi if $logLi =~ /ready for connections/;
+    foreach my $logLi (@log_content) {
+        $numLi++;
+        debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i;
+        $nbErrLog++                 if $logLi =~ /error/i;
+        $nbWarnLog++                if $logLi =~ /warning/i;
+        push @lastShutdowns, $logLi
+          if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
+        push @lastStarts, $logLi if $logLi =~ /ready for connections/;
     }
     if ( $nbWarnLog > 0 ) {
-      badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
-      push @generalrec, "Control warning line(s) into $myvar{'log_error'} file";
-    } else {
-      goodprint "$myvar{'log_error'} doesn't contain any warning.";
+        badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
+        push @generalrec,
+          "Control warning line(s) into $myvar{'log_error'} file";
+    }
+    else {
+        goodprint "$myvar{'log_error'} doesn't contain any warning.";
     }
     if ( $nbErrLog > 0 ) {
-      badprint "$myvar{'log_error'} contains $nbErrLog error(s).";
-      push @generalrec, "Control error line(s) into $myvar{'log_error'} file";
-    } else {
-      goodprint "$myvar{'log_error'} doesn't contain any error.";
+        badprint "$myvar{'log_error'} contains $nbErrLog error(s).";
+        push @generalrec, "Control error line(s) into $myvar{'log_error'} file";
     }
-    
+    else {
+        goodprint "$myvar{'log_error'} doesn't contain any error.";
+    }
+
     infoprint scalar @lastStarts . " start(s) detected in $myvar{'log_error'}";
     my $nStart = 0;
-    my $nEnd = 10;
+    my $nEnd   = 10;
     if ( scalar @lastStarts < $nEnd ) {
         $nEnd = scalar @lastStarts;
     }
-    for my $startd ( reverse @lastStarts[-$nEnd..-1] ) {
+    for my $startd ( reverse @lastStarts[ -$nEnd .. -1 ] ) {
         $nStart++;
         infoprint "$nStart) $startd";
     }
-    infoprint scalar @lastShutdowns . " shutdown(s) detected in $myvar{'log_error'}";
-    $nStart=0;
-    $nEnd=10;
+    infoprint scalar @lastShutdowns
+      . " shutdown(s) detected in $myvar{'log_error'}";
+    $nStart = 0;
+    $nEnd   = 10;
     if ( scalar @lastShutdowns < $nEnd ) {
-      $nEnd = scalar @lastShutdowns;
+        $nEnd = scalar @lastShutdowns;
     }
-    for my $shutd ( reverse @lastShutdowns[-$nEnd..-1] ) {
-      $nStart++;
-      infoprint "$nStart) $shutd";
+    for my $shutd ( reverse @lastShutdowns[ -$nEnd .. -1 ] ) {
+        $nStart++;
+        infoprint "$nStart) $shutd";
     }
-	#exit 0;
+
+    #exit 0;
 }
-
-
 
 sub cve_recommendations {
     subheaderprint "CVE Security Recommendations";
@@ -1191,6 +1237,9 @@ sub cve_recommendations {
         return;
     }
 
+#$mysqlvermajor=10;
+#$mysqlverminor=1;
+#$mysqlvermicro=17;
 #prettyprint "Look for related CVE for $myvar{'version'} or lower in $opt{cvefile}";
     my $cvefound = 0;
     open( my $fh, "<", $opt{cvefile} )
@@ -1312,7 +1361,7 @@ sub get_os_release {
     return "Unknown OS release";
 }
 
-sub get_fs_info() {
+sub get_fs_info {
     my @sinfo = `df -P | grep '%'`;
     my @iinfo = `df -Pi| grep '%'`;
     shift @iinfo;
@@ -1370,7 +1419,7 @@ sub merge_hash {
     return \%result;
 }
 
-sub is_virtual_machine() {
+sub is_virtual_machine {
     my $isVm = `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
     return ( $isVm == 0 ? 0 : 1 );
 }
@@ -1402,7 +1451,7 @@ sub infocmd_one {
     return join ', ', @result;
 }
 
-sub get_kernel_info() {
+sub get_kernel_info {
     my @params = (
         'fs.aio-max-nr',                     'fs.aio-nr',
         'fs.file-max',                       'sunrpc.tcp_fin_timeout',
@@ -1418,7 +1467,7 @@ sub get_kernel_info() {
         badprint
           "Swappiness is > 10, please consider having a value lower than 10";
         push @generalrec, "setup swappiness lower or equals to 10";
-        push @adjvars, 'vm.swappiness <= 10 (echo 0 > /proc/sys/vm/swappiness)';
+        push @adjvars, 'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness)';
     }
     else {
         infoprint "Swappiness is < 10.";
@@ -1453,7 +1502,7 @@ sub get_kernel_info() {
 
 }
 
-sub get_system_info() {
+sub get_system_info {
     $result{'OS'}{'Release'} = get_os_release();
     infoprint get_os_release;
     if (is_virtual_machine) {
@@ -1475,6 +1524,8 @@ sub get_system_info() {
     else {
         badprint "Internet              : Disconnected";
     }
+    $result{'OS'}{'NbCore'} = cpu_cores;
+    infoprint "Number of Core CPU : " . cpu_cores;
     $result{'OS'}{'Type'} = `uname -o`;
     infoprint "Operating System Type : " . infocmd_one "uname -o";
     $result{'OS'}{'Kernel'} = `uname -r`;
@@ -1490,11 +1541,11 @@ sub get_system_info() {
 
     my $ext_ip = "";
     if ( $httpcli =~ /curl$/ ) {
-        $ext_ip = infocmd_one "$httpcli ipecho.net/plain";
+        $ext_ip = infocmd_one "$httpcli -m 3 ipecho.net/plain";
     }
     elsif ( $httpcli =~ /wget$/ ) {
 
-        $ext_ip = infocmd_one "$httpcli -q -O - ipecho.net/plain";
+        $ext_ip = infocmd_one "$httpcli -t 1 -T 3 -q -O - ipecho.net/plain";
     }
     infoprint "External IP           : " . $ext_ip;
     $result{'Network'}{'External Ip'} = $ext_ip;
@@ -1697,7 +1748,7 @@ sub security_recommendations {
     my $nbins = 0;
     my $passreq;
     if (@passwords) {
-        my $nbInterPass=0;
+        my $nbInterPass = 0;
         foreach my $pass (@passwords) {
             $nbInterPass++;
 
@@ -1727,7 +1778,8 @@ sub security_recommendations {
                     $nbins++;
                 }
             }
-        debugprint "$nbInterPass / ".scalar(@passwords) if ($nbInterPass %1000 ==0);
+            debugprint "$nbInterPass / " . scalar(@passwords)
+              if ( $nbInterPass % 1000 == 0 );
         }
     }
     if ( $nbins > 0 ) {
@@ -1993,7 +2045,8 @@ sub check_storage_engines {
         my $not_innodb = '';
         if ( not defined $result{'Variables'}{'innodb_file_per_table'} ) {
             $not_innodb = "AND NOT ENGINE='InnoDB'";
-        } elsif ( $result{'Variables'}{'innodb_file_per_table'} eq 'OFF' ) {
+        }
+        elsif ( $result{'Variables'}{'innodb_file_per_table'} eq 'OFF' ) {
             $not_innodb = "AND NOT ENGINE='InnoDB'";
         }
         $result{'Tables'}{'Fragmented tables'} =
@@ -2096,7 +2149,7 @@ sub check_storage_engines {
             $data_free = $data_free / 1024 / 1024;
             $total_free += $data_free;
             push( @generalrec,
-                "  OPTIMIZE TABLE $table_name; -- can free $data_free MB" );
+                "  OPTIMIZE TABLE `$table_name`; -- can free $data_free MB" );
         }
         push( @generalrec,
             "Total freed space after theses OPTIMIZE TABLE : $total_free Mb" );
@@ -2314,14 +2367,7 @@ sub calculations {
 
     if ( $mystat{'Key_write_requests'} > 0 ) {
         $mycalc{'pct_wkeys_from_mem'} = sprintf(
-            "%.1f",
-            (
-                100 - (
-                    ( $mystat{'Key_writes'} / $mystat{'Key_write_requests'} ) *
-                      100
-                )
-            )
-        );
+            "%.1f",( ($mystat{'Key_writes'} / $mystat{'Key_write_requests'} ) * 100 ) );
     }
     else {
         $mycalc{'pct_wkeys_from_mem'} = 0;
@@ -2478,7 +2524,8 @@ sub calculations {
     # InnoDB
     if ( $myvar{'have_innodb'} eq "YES" ) {
         $mycalc{'innodb_log_size_pct'} =
-          ( $myvar{'innodb_log_file_size'} *$myvar{'innodb_log_files_in_group'} * 100 /
+          ( $myvar{'innodb_log_file_size'} *
+              $myvar{'innodb_log_files_in_group'} * 100 /
               $myvar{'innodb_buffer_pool_size'} );
     }
 
@@ -2727,7 +2774,13 @@ sub mysql_stats {
     }
 
     # name resolution
-    if ( not defined( $result{'Variables'}{'skip_name_resolve'} ) ) {
+    if ( defined( $result{'Variables'}{'skip_networking'} )
+        && $result{'Variables'}{'skip_networking'} eq 'ON' )
+    {
+        infoprint
+"Skipped name resolution test due to skip_networking=ON in system variables.";
+    }
+    elsif ( not defined( $result{'Variables'}{'skip_name_resolve'} ) ) {
         infoprint
 "Skipped name resolution test due to missing skip_name_resolve in system variables.";
     }
@@ -2746,17 +2799,11 @@ sub mysql_stats {
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
-    elsif ( mysql_version_ge( 5, 5 ) and !mysql_version_ge( 10, 1 ) and $myvar{'query_cache_type'} eq "OFF" ) {
+    elsif ( $myvar{'query_cache_size'} < 1
+        and $myvar{'query_cache_type'} eq "OFF" )
+    {
         goodprint
-            "Query cache is disabled by default due to mutex contention on multiprocessor machines.";
-    }
-    elsif ( $myvar{'query_cache_size'} < 1 ) {
-        badprint "Query cache is disabled";
-        push( @adjvars, "query_cache_size (>= 8M)" );
-    }
-    elsif ( $myvar{'query_cache_type'} eq "OFF" ) {
-        badprint "Query cache is disabled";
-        push( @adjvars, "query_cache_type (=1)" );
+"Query cache is disabled by default due to mutex contention on multiprocessor machines.";
     }
     elsif ( $mystat{'Com_select'} == 0 ) {
         badprint
@@ -2765,6 +2812,7 @@ sub mysql_stats {
     else {
         badprint
           "Query cache may be disabled by default due to mutex contention.";
+        push( @adjvars, "query_cache_size (=0)" );
         push( @adjvars, "query_cache_type (=0)" );
         if ( $mycalc{'query_cache_efficiency'} < 20 ) {
             badprint
@@ -3268,22 +3316,36 @@ sub mysqsl_pfs {
     subheaderprint "Performance schema";
 
     # Performance Schema
-    unless ( defined( $myvar{'performance_schema'} )
-        and $myvar{'performance_schema'} eq 'ON' )
-    {
+    $myvar{'performance_schema'} = 'OFF'
+      unless defined( $myvar{'performance_schema'} );
+    unless ( $myvar{'performance_schema'} eq 'ON' ) {
         infoprint "Performance schema is disabled.";
-        return;
+        if ( mysql_version_ge( 5, 6 ) ) {
+            push( @generalrec,
+                "Performance should be activated for better diagnostics" );
+            push( @adjvars, "performance_schema = ON enable PFS" );
+        }
+        else {
+            push( @generalrec,
+"Performance shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
+            );
+            push( @adjvars, "performance_schema = OFF disable PFS" );
+        }
     }
-    infoprint "Performance schema is enabled.";
+    debugprint "Performance schema is " . $myvar{'performance_schema'};
     infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
 
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
         infoprint "Sys schema isn't installed.";
+        push( @generalrec,
+"Consider installing Sys schema from https://github.com/mysql/mysql-sys"
+        );
         return;
     }
-
-    infoprint "Sys schema is installed.";
-    return if ( $opt{pfstat} == 0 );
+    else {
+        infoprint "Sys schema is installed.";
+    }
+    return if ( $opt{pfstat} == 0 or $myvar{'performance_schema'} ne 'ON' );
 
     infoprint "Sys schema Version: "
       . select_one("select sys_version from sys.version");
@@ -4915,7 +4977,7 @@ sub get_wsrep_options {
 }
 
 sub get_gcache_memory {
-    my $gCacheMem = get_wsrep_option('gcache.size');
+    my $gCacheMem = hr_raw( get_wsrep_option('gcache.size') );
 
     return 0 unless defined $gCacheMem and $gCacheMem ne '';
     return $gCacheMem;
@@ -4928,6 +4990,7 @@ sub get_wsrep_option {
     return '' unless scalar(@galera_options) > 0;
     my @memValues = grep /\s*$key =/, @galera_options;
     my $memValue = $memValues[0];
+    return 0 unless defined $memValue;
     $memValue =~ s/.*=\s*(.+)$/$1/g;
     return $memValue;
 }
@@ -4976,14 +5039,69 @@ group by c.table_schema,c.table_name
 having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     );
 
+    if (   get_wsrep_option('wsrep_slave_threads') > cpu_cores * 4
+        or get_wsrep_option('wsrep_slave_threads') < cpu_cores * 3 )
+    {
+        badprint
+          "wsrep_slave_threads is not equal to 2, 3 or 4 times number of CPU(s)";
+        push @adjvars, "wsrep_slave_threads= Nb of Core CPU * 4";
+    }
+    else {
+        goodprint
+          "wsrep_slave_threads is equal to 2, 3 or 4 times number of CPU(s)";
+    }
+
+    if ( get_wsrep_option('gcs.limit') !=
+        get_wsrep_option('wsrep_slave_threads') * 5 )
+    {
+        badprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
+        push @adjvars, "gcs.limit= wsrep_slave_threads * 5";
+    } else {
+        goodprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
+    }
+
+    if (get_wsrep_option('wsrep_slave_threads') > 1) {
+        infoprint "wsrep parallel slave can cause frequent inconsistency crash.";
+        push @adjvars, "Set wsrep_slave_threads to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
+        # check options for parallel slave
+        if (get_wsrep_option('wsrep_slave_FK_checks') eq "OFF") {
+            badprint "wsrep_slave_FK_checks is off with parallel slave";
+            push @adjvars, "wsrep_slave_FK_checks should be ON when using parallel slave";
+        }
+        # wsrep_slave_UK_checks seems useless in MySQL source code
+        if ($myvar{'innodb_autoinc_lock_mode'} != 2) {
+            badprint "innodb_autoinc_lock_mode is incorrect with parallel slave";
+            push @adjvars, "innodb_autoinc_lock_mode should be 2 when using parallel slave";
+        }
+    }
+    
+    if (get_wsrep_option('gcs.fc_limit') != $myvar{'wsrep_slave_threads'} * 5 ) {
+        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads";
+        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5";
+    } else {
+        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads";
+    }
+    
+    if (get_wsrep_option('gcs.fc_factor') != 0.8 ) {
+        badprint "gcs.fc_factor should be equal to 0.8";
+        push @adjvars, "gcs.fc_factor=0.8";
+    }
+    else {
+        goodprint "gcs.fc_factor is equal to 0.8";
+    }
+   if ( get_wsrep_option('wsrep_flow_control_paused') > 0.02 ) {
+        badprint "Fraction of time node pause flow control > 0.02";
+    } else {
+        goodprint "Flow control fraction seems to be OK (wsrep_flow_control_paused<=0.02)";
+    }
+
     if ( scalar(@primaryKeysNbTables) > 0 ) {
         badprint "Following table(s) don't have primary key:";
         foreach my $badtable (@primaryKeysNbTables) {
             badprint "\t$badtable";
             push @{ $result{'Tables without PK'} }, $badtable;
         }
-    }
-    else {
+    } else {
         goodprint "All tables get a primary key";
     }
     my @nonInnoDBTables = select_array(
@@ -4996,22 +5114,19 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
         foreach my $badtable (@nonInnoDBTables) {
             badprint "\t$badtable";
         }
-    }
-    else {
+    } else {
         goodprint "All tables are InnoDB tables";
     }
     if ( $myvar{'binlog_format'} ne 'ROW' ) {
         badprint "Binlog format should be in ROW mode.";
         push @adjvars, "binlog_format = ROW";
-    }
-    else {
+    } else {
         goodprint "Binlog format is in ROW mode.";
     }
     if ( $myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
         badprint "InnoDB flush log at each commit should be disabled.";
         push @adjvars, "innodb_flush_log_at_trx_commit = 0";
-    }
-    else {
+    } else {
         goodprint "InnoDB flush log at each commit is disabled for Galera.";
     }
 
@@ -5036,6 +5151,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             else {
                 badprint
 "There are $nbNodesSize nodes in wsrep_cluster_size. Prefer 3 or 5 nodes architecture.";
+                push @generalrec, "Prefer 3 or 5 nodes architecture.";
             }
 
             # wsrep_cluster_address doesn't include garbd nodes
@@ -5220,7 +5336,8 @@ sub mysql_innodb {
         }
         if ( defined $myvar{'innodb_log_files_in_group'} ) {
             infoprint " +-- InnoDB Total Log File Size: "
-              . hr_bytes( $myvar{'innodb_log_files_in_group'}*$myvar{'innodb_log_file_size'});
+              . hr_bytes( $myvar{'innodb_log_files_in_group'} *
+                  $myvar{'innodb_log_file_size'} );
         }
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
@@ -5269,17 +5386,24 @@ sub mysql_innodb {
     {
         badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
           . $mycalc{'innodb_log_size_pct'} . " %): "
-          . hr_bytes( $myvar{'innodb_log_file_size'} )." * ".$myvar{'innodb_log_files_in_group'}. "/"
+          . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
+          . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
-        push( @adjvars,
-"innodb_log_file_size should be equals to 1/4 of buffer pool size (="
-              . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'} / 4 )
-              . ") if possible." );
+        push(
+            @adjvars,
+"innodb_log_file_size * innodb_log_files_in_group should be equals to 1/4 of buffer pool size (="
+              . hr_bytes_rnd(
+                $myvar{'innodb_buffer_pool_size'} *
+                  $myvar{'innodb_log_files_in_group'} / 4
+              )
+              . ") if possible."
+        );
     }
     else {
         goodprint "InnoDB log file size / InnoDB Buffer pool size: "
-          . hr_bytes( $myvar{'innodb_log_file_size'} ) ." * ".$myvar{'innodb_log_files_in_group'}. "/"
+          . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
+          . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
     }
@@ -5542,7 +5666,9 @@ sub mysql_databases {
             )
           ) . ")";
         badprint "Index size is larger than data size for $dbinfo[0] \n"
-          if ( $dbinfo[2] ne 'NULL' ) and ( $dbinfo[3] ne 'NULL' ) and ( $dbinfo[2] < $dbinfo[3] );
+          if ( $dbinfo[2] ne 'NULL' )
+          and ( $dbinfo[3] ne 'NULL' )
+          and ( $dbinfo[2] < $dbinfo[3] );
         badprint "There are " . $dbinfo[5] . " storage engines. Be careful. \n"
           if $dbinfo[5] > 1;
         $result{'Databases'}{ $dbinfo[0] }{'Rows'}       = $dbinfo[1];
@@ -5681,7 +5807,7 @@ ENDSQL
         my @info = split /\s/;
         infoprint "Index: " . $info[1] . "";
 
-        infoprint " +-- COLUNM      : " . $info[0] . "";
+        infoprint " +-- COLUMN      : " . $info[0] . "";
         infoprint " +-- NB SEQS     : " . $info[2] . " sequence(s)";
         infoprint " +-- NB COLS     : " . $info[3] . " column(s)";
         infoprint " +-- CARDINALITY : " . $info[4] . " distinct values";
@@ -5689,10 +5815,10 @@ ENDSQL
         infoprint " +-- TYPE        : " . $info[6];
         infoprint " +-- SELECTIVITY : " . $info[7] . "%";
 
-        $result{'Indexes'}{ $info[1] }{'Colunm'}            = $info[0];
+        $result{'Indexes'}{ $info[1] }{'Column'}            = $info[0];
         $result{'Indexes'}{ $info[1] }{'Sequence number'}   = $info[2];
-        $result{'Indexes'}{ $info[1] }{'Number of collunm'} = $info[3];
-        $result{'Indexes'}{ $info[1] }{'Cardianality'}      = $info[4];
+        $result{'Indexes'}{ $info[1] }{'Number of column'}  = $info[3];
+        $result{'Indexes'}{ $info[1] }{'Cardinality'}       = $info[4];
         $result{'Indexes'}{ $info[1] }{'Row number'}        = $info[5];
         $result{'Indexes'}{ $info[1] }{'Index Type'}        = $info[6];
         $result{'Indexes'}{ $info[1] }{'Selectivity'}       = $info[7];
@@ -5917,7 +6043,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.0 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 

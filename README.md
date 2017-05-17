@@ -11,10 +11,10 @@ MySQLTuner-perl
 
 **MySQLTuner** supports in this last version ~300 indicators for MySQL/MariaDB/Percona Server. 
 
-**MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration such as ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
+**MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration such as [Galera Cluster](http://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, [InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
 
-You can found more details on this indicators 
-![Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+You can find more details on these indicators here:
+[Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 
 ![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
@@ -24,7 +24,7 @@ MySQLTuner needs you:
 
 **MySQLTuner** needs contributors for documentation, code and feedbacks..
 
-* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
+* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
           
@@ -56,6 +56,14 @@ always keep in mind that improvements in one area can **negatively affect**
 MySQL in other areas.
 
 **Seriously - please review the FAQ section below.**
+
+
+Security recommandations
+--
+
+Hi directadmin user! 
+We detected that you run mysqltuner with da_admin's credentials taken from /usr/local/directadmin/conf/my.cnf, which might bring to a password discovery! 
+Read link for more details [Issue #289](https://github.com/major/MySQLTuner-perl/issues/289).
 
 What MySQLTuner is checking exactly ? 
 --
@@ -230,7 +238,7 @@ MySQLTuner needs you
 --
 **MySQLTuner** needs contributors for documentation, code and feedbacks..
 
-* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
+* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * Contribution guide is avalaible following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
           

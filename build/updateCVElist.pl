@@ -64,9 +64,11 @@ foreach my $line (@lines) {
         
         foreach my $vers (uniq(@versions)) {
             my @nb=split('\.', $vers);
+            $nb[2]-- if ($line =~ /before/i);
             #print $vers."\n".Dumper @nb;
-            #exit 0;
-            $f->write_file('file' => '../vulnerabilities.csv', 'content' => "$vers;$nb[0];$nb[1];$nb[2];$line\n", 'mode' => 'append');
+            #print "$line";
+            #exit 0 if ($line =~/before/i) ;
+            $f->write_file('file' => '../vulnerabilities.csv', 'content' => "$nb[0].$nb[1].$nb[2];$nb[0];$nb[1];$nb[2];$line\n", 'mode' => 'append');
         }
 	}
 }
