@@ -300,10 +300,9 @@ sub infoprinthcmd {
     infoprintcmd "$_[1]";
 }
 
-# Calculates the number of phyiscal cores considering HyperThreading
+# Calculates the number of phyiscal cores considering HyperThreading 
 sub cpu_cores {
-    my $cntCPU =
-`awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
+    my $cntCPU = `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
     return ( $cntCPU == 0 ? `nproc` : $cntCPU );
 }
 
@@ -538,8 +537,7 @@ sub validate_tuner_version {
     }
 
     my $update;
-    my $url =
-"https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
+    my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
     my $httpcli = get_http_cli();
     if ( $httpcli =~ /curl$/ ) {
         debugprint "$httpcli is available.";
@@ -614,9 +612,9 @@ sub update_tuner_version {
             debugprint "$httpcli is available.";
 
             debugprint
-"$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'";
+              "$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'";
             $update =
-`$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'`;
+              `$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'`;
             chomp($update);
 
             if ( -s $script eq 0 ) {
@@ -723,7 +721,7 @@ sub mysql_setup {
     if ( $opt{socket} ne 0 ) {
         $remotestring = " -S $opt{socket} -P $opt{port}";
     }
-
+    
     # Are we being asked to connect to a remote server?
     if ( $opt{host} ne 0 ) {
         chomp( $opt{host} );
@@ -741,9 +739,8 @@ sub mysql_setup {
         if ( ( $opt{host} ne "127.0.0.1" ) && ( $opt{host} ne "localhost" ) ) {
             $doremote = 1;
         }
-    }
-    else {
-        $opt{host} = '127.0.0.1';
+    } else {
+      $opt{host}='127.0.0.1';
     }
 
     # Did we already get a username without password on the command line?
@@ -872,7 +869,6 @@ sub mysql_setup {
         }
     }
     else {
-
         # It's not Plesk or debian, we should try a login
         debugprint "$mysqladmincmd $remotestring ping 2>&1";
         my $loginstatus = `$mysqladmincmd $remotestring ping 2>&1`;
@@ -1471,8 +1467,7 @@ sub get_kernel_info {
         badprint
           "Swappiness is > 10, please consider having a value lower than 10";
         push @generalrec, "setup swappiness lower or equals to 10";
-        push @adjvars,
-          'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness)';
+        push @adjvars, 'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness)';
     }
     else {
         infoprint "Swappiness is < 10.";
@@ -1827,7 +1822,7 @@ sub get_replication_status {
           "This replication slave is not running but seems to be configured.";
     }
     if (   defined($io_running)
-        && $io_running  =~ /yes/i
+        && $io_running =~ /yes/i
         && $sql_running =~ /yes/i )
     {
         if ( $myvar{'read_only'} eq 'OFF' ) {
@@ -2093,7 +2088,7 @@ sub check_storage_engines {
             debugprint "Data dump " . Dumper(@$tbl);
             my ( $engine, $size, $datafree ) = @$tbl;
             next if $engine eq 'NULL';
-            $size     = 0 if $size     eq 'NULL';
+            $size     = 0 if $size eq 'NULL';
             $datafree = 0 if $datafree eq 'NULL';
             if ( defined $enginestats{$engine} ) {
                 $enginestats{$engine} += $size;
@@ -2330,7 +2325,7 @@ sub calculations {
                           $myvar{'key_cache_block_size'}
                     ) / $myvar{'key_buffer_size'}
                 )
-              ) * 100
+            ) * 100
         );
     }
     else {
@@ -2371,9 +2366,8 @@ sub calculations {
     }
 
     if ( $mystat{'Key_write_requests'} > 0 ) {
-        $mycalc{'pct_wkeys_from_mem'} = sprintf( "%.1f",
-            ( ( $mystat{'Key_writes'} / $mystat{'Key_write_requests'} ) * 100 )
-        );
+        $mycalc{'pct_wkeys_from_mem'} = sprintf(
+            "%.1f",( ($mystat{'Key_writes'} / $mystat{'Key_write_requests'} ) * 100 ) );
     }
     else {
         $mycalc{'pct_wkeys_from_mem'} = 0;
@@ -2417,14 +2411,14 @@ sub calculations {
             (
                 $mystat{'Qcache_hits'} /
                   ( $mystat{'Com_select'} + $mystat{'Qcache_hits'} )
-              ) * 100
+            ) * 100
         );
         if ( $myvar{'query_cache_size'} ) {
             $mycalc{'pct_query_cache_used'} = sprintf(
                 "%.1f",
                 100 - (
                     $mystat{'Qcache_free_memory'} / $myvar{'query_cache_size'}
-                  ) * 100
+                ) * 100
             );
         }
         if ( $mystat{'Qcache_lowmem_prunes'} == 0 ) {
@@ -2649,7 +2643,7 @@ sub mysql_stats {
 
         if ( defined $myvar{'query_cache_type'} ) {
             infoprint "Query Cache Buffers";
-            infoprint " +-- Query Cache: " 
+            infoprint " +-- Query Cache: "
               . $myvar{'query_cache_type'} . " - "
               . (
                 $myvar{'query_cache_type'} eq 0 |
@@ -3152,7 +3146,6 @@ sub mysql_myisam {
         }
     }
     else {
-
         # No queries have run that would use keys
         debugprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
           . hr_num(
@@ -3212,7 +3205,6 @@ sub mysql_myisam {
             }
         }
         else {
-
             # No queries have run that would use keys
             debugprint "Key buffer size / total MyISAM indexes: "
               . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
@@ -3237,7 +3229,6 @@ sub mysql_myisam {
             }
         }
         else {
-
             # No queries have run that would use keys
             debugprint
               "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
@@ -5048,11 +5039,11 @@ group by c.table_schema,c.table_name
 having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     );
 
-    if (   get_wsrep_option('wsrep_slave_threads') > cpu_cores *4
-        or get_wsrep_option('wsrep_slave_threads') < cpu_cores *3 )
+    if (   get_wsrep_option('wsrep_slave_threads') > cpu_cores * 4
+        or get_wsrep_option('wsrep_slave_threads') < cpu_cores * 3 )
     {
         badprint
-"wsrep_slave_threads is not equal to 2, 3 or 4 times number of CPU(s)";
+          "wsrep_slave_threads is not equal to 2, 3 or 4 times number of CPU(s)";
         push @adjvars, "wsrep_slave_threads= Nb of Core CPU * 4";
     }
     else {
@@ -5065,55 +5056,43 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     {
         badprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
         push @adjvars, "gcs.limit= wsrep_slave_threads * 5";
-    }
-    else {
+    } else {
         goodprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
     }
 
-    if ( get_wsrep_option('wsrep_slave_threads') > 1 ) {
-        infoprint
-          "wsrep parallel slave can cause frequent inconsistency crash.";
-        push @adjvars,
-"Set wsrep_slave_threads to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
-
+    if (get_wsrep_option('wsrep_slave_threads') > 1) {
+        infoprint "wsrep parallel slave can cause frequent inconsistency crash.";
+        push @adjvars, "Set wsrep_slave_threads to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
         # check options for parallel slave
-        if ( get_wsrep_option('wsrep_slave_FK_checks') eq "OFF" ) {
+        if (get_wsrep_option('wsrep_slave_FK_checks') eq "OFF") {
             badprint "wsrep_slave_FK_checks is off with parallel slave";
-            push @adjvars,
-              "wsrep_slave_FK_checks should be ON when using parallel slave";
+            push @adjvars, "wsrep_slave_FK_checks should be ON when using parallel slave";
         }
-
         # wsrep_slave_UK_checks seems useless in MySQL source code
-        if ( $myvar{'innodb_autoinc_lock_mode'} != 2 ) {
-            badprint
-              "innodb_autoinc_lock_mode is incorrect with parallel slave";
-            push @adjvars,
-              "innodb_autoinc_lock_mode should be 2 when using parallel slave";
+        if ($myvar{'innodb_autoinc_lock_mode'} != 2) {
+            badprint "innodb_autoinc_lock_mode is incorrect with parallel slave";
+            push @adjvars, "innodb_autoinc_lock_mode should be 2 when using parallel slave";
         }
     }
-
-    if ( get_wsrep_option('gcs.fc_limit') != $myvar{'wsrep_slave_threads'} * 5 )
-    {
+    
+    if (get_wsrep_option('gcs.fc_limit') != $myvar{'wsrep_slave_threads'} * 5 ) {
         badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads";
         push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5";
-    }
-    else {
+    } else {
         goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads";
     }
-
-    if ( get_wsrep_option('gcs.fc_factor') != 0.8 ) {
+    
+    if (get_wsrep_option('gcs.fc_factor') != 0.8 ) {
         badprint "gcs.fc_factor should be equal to 0.8";
         push @adjvars, "gcs.fc_factor=0.8";
     }
     else {
         goodprint "gcs.fc_factor is equal to 0.8";
     }
-    if ( get_wsrep_option('wsrep_flow_control_paused') > 0.02 ) {
+   if ( get_wsrep_option('wsrep_flow_control_paused') > 0.02 ) {
         badprint "Fraction of time node pause flow control > 0.02";
-    }
-    else {
-        goodprint
-"Flow control fraction seems to be OK (wsrep_flow_control_paused<=0.02)";
+    } else {
+        goodprint "Flow control fraction seems to be OK (wsrep_flow_control_paused<=0.02)";
     }
 
     if ( scalar(@primaryKeysNbTables) > 0 ) {
@@ -5122,8 +5101,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             badprint "\t$badtable";
             push @{ $result{'Tables without PK'} }, $badtable;
         }
-    }
-    else {
+    } else {
         goodprint "All tables get a primary key";
     }
     my @nonInnoDBTables = select_array(
@@ -5136,22 +5114,19 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
         foreach my $badtable (@nonInnoDBTables) {
             badprint "\t$badtable";
         }
-    }
-    else {
+    } else {
         goodprint "All tables are InnoDB tables";
     }
     if ( $myvar{'binlog_format'} ne 'ROW' ) {
         badprint "Binlog format should be in ROW mode.";
         push @adjvars, "binlog_format = ROW";
-    }
-    else {
+    } else {
         goodprint "Binlog format is in ROW mode.";
     }
     if ( $myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
         badprint "InnoDB flush log at each commit should be disabled.";
         push @adjvars, "innodb_flush_log_at_trx_commit = 0";
-    }
-    else {
+    } else {
         goodprint "InnoDB flush log at each commit is disabled for Galera.";
     }
 
@@ -5417,7 +5392,7 @@ sub mysql_innodb {
           . " should be equal 25%";
         push(
             @adjvars,
-"innodb_log_file_size * innodb_log_files_in_group should be equals to 1/4 of buffer pool size (="
+"innodb_log_file_size * innodb_log_files_in_group should be equal to 1/4 of buffer pool size (="
               . hr_bytes_rnd(
                 $myvar{'innodb_buffer_pool_size'} *
                   $myvar{'innodb_log_files_in_group'} / 4
@@ -5840,13 +5815,13 @@ ENDSQL
         infoprint " +-- TYPE        : " . $info[6];
         infoprint " +-- SELECTIVITY : " . $info[7] . "%";
 
-        $result{'Indexes'}{ $info[1] }{'Column'}           = $info[0];
-        $result{'Indexes'}{ $info[1] }{'Sequence number'}  = $info[2];
-        $result{'Indexes'}{ $info[1] }{'Number of column'} = $info[3];
-        $result{'Indexes'}{ $info[1] }{'Cardinality'}      = $info[4];
-        $result{'Indexes'}{ $info[1] }{'Row number'}       = $info[5];
-        $result{'Indexes'}{ $info[1] }{'Index Type'}       = $info[6];
-        $result{'Indexes'}{ $info[1] }{'Selectivity'}      = $info[7];
+        $result{'Indexes'}{ $info[1] }{'Column'}            = $info[0];
+        $result{'Indexes'}{ $info[1] }{'Sequence number'}   = $info[2];
+        $result{'Indexes'}{ $info[1] }{'Number of column'}  = $info[3];
+        $result{'Indexes'}{ $info[1] }{'Cardinality'}       = $info[4];
+        $result{'Indexes'}{ $info[1] }{'Row number'}        = $info[5];
+        $result{'Indexes'}{ $info[1] }{'Index Type'}        = $info[6];
+        $result{'Indexes'}{ $info[1] }{'Selectivity'}       = $info[7];
         if ( $info[7] < 25 ) {
             badprint "$info[1] has a low selectivity";
         }
@@ -5942,7 +5917,6 @@ if ( $opt{'template'} ne 0 ) {
     $templateModel = file2string( $opt{'template'} );
 }
 else {
-
     # DEFAULT REPORT TEMPLATE
     $templateModel = <<'END_TEMPLATE';
 <!DOCTYPE html>
@@ -6063,7 +6037,6 @@ close_outputfile;          # Close reportfile if needed
 1;
 
 __END__
-
 =pod
 
 =encoding UTF-8
