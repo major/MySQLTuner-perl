@@ -4906,7 +4906,7 @@ sub mariadb_xtradb {
         return;
     }
     infoprint "XtraDB is enabled.";
-
+    infoprint "Note that MariaDB 10.2 makes use of InnoDB, not XtraDB."
     # All is to done here
 }
 
