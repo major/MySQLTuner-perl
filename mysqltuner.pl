@@ -988,6 +988,35 @@ sub select_one {
     return $result;
 }
 
+# MySQL Request one
+sub select_one_g {
+    my $pattern = shift;
+   
+    my $req = shift;
+    debugprint "PERFORM: $req ";
+    my @result = `$mysqlcmd $mysqllogin -re "\\w$req\\G" 2>>/dev/null`;
+    if ( $? != 0 ) {
+        badprint "failed to execute: $req";
+        badprint "FAIL Execute SQL / return code: $?";
+        debugprint "CMD    : $mysqlcmd";
+        debugprint "OPTIONS: $mysqllogin";
+        debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+
+        #exit $?;
+    }
+    debugprint "select_array: return code : $?";
+    chomp(@result);
+    return (grep { /$pattern/ } @result)[0];
+}
+sub select_str_g {
+    my $pattern = shift;
+   
+    my $req = shift;
+    my $str=select_one_g $pattern, $req;
+    my @val=split /:/, $str;
+    shift @val;
+    return trim(@val);
+}
 sub get_tuning_info {
     my @infoconn = select_array "\\s";
     my ( $tkey, $tval );
@@ -5577,13 +5606,13 @@ sub mysql_databases {
         return;
     }
 
-    my @dblist = select_array("SHOW DATABASES;");
+    my @dblist =  select_array("SELECT DISTINCT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );");
     infoprint "There is " . scalar(@dblist) . " Database(s).";
     my @totaldbinfo = split /\s/,
       select_one(
-"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)),COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ( 'mysql' );"
+"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)),COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
       );
-    infoprint "All Databases:";
+    infoprint "All User Databases:";
     infoprint " +-- TABLE : "
       . ( $totaldbinfo[4] eq 'NULL' ? 0 : $totaldbinfo[4] ) . "";
     infoprint " +-- ROWS  : "
@@ -5621,15 +5650,6 @@ sub mysql_databases {
     print "\n" unless ( $opt{'silent'} or $opt{'json'} );
 
     foreach (@dblist) {
-        chomp($_);
-        if (   $_ eq "information_schema"
-            or $_ eq "performance_schema"
-            or $_ eq "mysql"
-            or $_ eq "" )
-        {
-            next;
-        }
-
         my @dbinfo = split /\s/,
           select_one(
 "SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE),COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)),COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
@@ -5747,6 +5767,58 @@ sub mysql_databases {
         }
     }
 
+}
+
+
+# Recommendations for database columns
+sub mysql_tables {
+    return if ( $opt{dbstat} == 0 );
+
+    subheaderprint "Table Column Metrics";
+    unless ( mysql_version_ge( 5, 5 ) ) {
+        infoprint
+"Skip Database metrics from information schema missing in this version";
+        return;
+    }
+    my @dblist =  select_array("SELECT DISTINCT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );");
+    foreach (@dblist) {
+        my $dbname=$_;
+        next unless defined $_;
+        infoprint "Database: " . $_ . "";
+        my @dbtable = select_array(
+"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbname' AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME"
+          );
+          foreach(@dbtable) {
+            my $tbname=$_;
+            infoprint " +-- TABLE: $tbname";
+            my @tbcol=select_array(
+"SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname'" );
+            foreach(@tbcol) {
+              my $ctype=select_one(
+"SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname' AND COLUMN_NAME='$_' " );
+              my $isnull=select_one(
+"SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname' AND COLUMN_NAME='$_' " );
+              infoprint "     +-- Column $tbname.$_:" ;
+              my $current_type=uc($ctype). ($isnull eq 'NO'?" NOT NULL":"");
+              my $optimal_type=select_str_g("Optimal_fieldtype", "SELECT $_ FROM $dbname.$tbname PROCEDURE ANALYSE(100000)");
+              
+          if ( $current_type ne $optimal_type )
+        {
+              infoprint "      Current Fieldtype: $current_type";
+              infoprint "      Optimal Fieldtype: $optimal_type";
+            badprint
+              "Consider changing type for column $_ in table $dbname.$tbname";
+            push( @generalrec,
+                "ALTER TABLE $dbname.$tbname MODIFY $_ $optimal_type;" );
+
+        }
+        else {
+            goodprint "$dbname.$tbname ($_) type: $current_type";
+        }
+            }
+          }
+        
+    }
 }
 
 # Recommendations for Indexes metrics
@@ -5998,6 +6070,7 @@ sub which {
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 headerprint;               # Header Print
+
 validate_tuner_version;    # Check last version
 mysql_setup;               # Gotta login first
 os_setup;                  # Set up some OS variables
@@ -6010,6 +6083,8 @@ system_recommendations;    # avoid to many service on the same host
 log_file_recommandations;  # check log file content
 check_storage_engines;     # Show enabled storage engines
 mysql_databases;           # Show informations about databases
+mysql_tables;              # Show informations about table column
+
 mysql_indexes;             # Show informations about indexes
 security_recommendations;  # Display some security recommendations
 cve_recommendations;       # Display related CVE
