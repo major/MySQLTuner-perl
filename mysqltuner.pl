@@ -2173,12 +2173,13 @@ sub check_storage_engines {
             "Run OPTIMIZE TABLE to defragment tables for better performance" );
         my $total_free = 0;
         foreach my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } ) {
-            my ( $table_name, $data_free ) = split( /\s+/, $table_line );
+            my ( $full_table_name, $data_free ) = split( /\s+/, $table_line );
             $data_free = 0 if ( !defined($data_free) or $data_free eq '' );
             $data_free = $data_free / 1024 / 1024;
             $total_free += $data_free;
+            my ( $table_schema, $table_name ) = split( /\./, $full_table_name );
             push( @generalrec,
-                "  OPTIMIZE TABLE `$table_name`; -- can free $data_free MB" );
+                "  OPTIMIZE TABLE `$table_schema`.`$table_name`; -- can free $data_free MB" );
         }
         push( @generalrec,
             "Total freed space after theses OPTIMIZE TABLE : $total_free Mb" );
