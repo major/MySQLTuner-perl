@@ -6076,16 +6076,16 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 CONNECTION AND AUTHENTIFICATION
 
- --host <hostname>    Connect to a remote host to perform tests (default: localhost)
- --socket <socket>    Use a different socket for a local connection
- --port <port>        Port to use for connection (default: 3306)
- --user <username>    Username to use for authentication
- --userenv <envvar>   Name of env variable which contains username to use for authentication
- --pass <password>    Password to use for authentication
- --passenv <envvar>   Name of env variable which contains password to use for authentication
- --mysqladmin <path>  Path to a custom mysqladmin executable
- --mysqlcmd <path>    Path to a custom mysql executable
-  --defaults-file <path>  Path to a custom .my.cnf
+ --host <hostname>           Connect to a remote host to perform tests (default: localhost)
+ --socket <socket>           Use a different socket for a local connection
+ --port <port>               Port to use for connection (default: 3306)
+ --user <username>           Username to use for authentication
+ --userenv <envvar>          Name of env variable which contains username to use for authentication
+ --pass <password>           Password to use for authentication
+ --passenv <envvar>          Name of env variable which contains password to use for authentication
+ --mysqladmin <path>         Path to a custom mysqladmin executable
+ --mysqlcmd <path>           Path to a custom mysql executable
+ --defaults-file <path>      Path to a custom .my.cnf
 
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
