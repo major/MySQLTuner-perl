@@ -6113,6 +6113,7 @@ close_outputfile;          # Close reportfile if needed
 1;
 
 __END__
+
 =pod
 
 =encoding UTF-8
@@ -6140,6 +6141,7 @@ You must provide the remote server's total memory when connecting to other serve
  --mysqladmin <path>  Path to a custom mysqladmin executable
  --mysqlcmd <path>    Path to a custom mysql executable
   --defaults-file <path>  Path to a custom .my.cnf
+
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
  --skipsize                  Don't enumerate tables and their types/sizes (default: on)
@@ -6172,6 +6174,7 @@ You must provide the remote server's total memory when connecting to other serve
  --reportfile <path>         Path to a report txt file
  --template   <path>         Path to a template file
  --verbose                   Prints out all options (default: no verbose)
+
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
