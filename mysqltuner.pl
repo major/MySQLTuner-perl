@@ -1902,7 +1902,7 @@ sub mysql_version_ge {
     return
          int($mysqlvermajor) > int($maj)
       || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) > int($min) )
-      || ( int($mysqlverminor) == int($min)
+      || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) == int($min)
         && int($mysqlvermicro) >= int($mic) );
 }
 
@@ -1914,7 +1914,7 @@ sub mysql_version_le {
     return
          int($mysqlvermajor) < int($maj)
       || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) < int($min) )
-      || ( int($mysqlverminor) == int($min)
+      || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) == int($min)
         && int($mysqlvermicro) <= int($mic) );
 }
 
