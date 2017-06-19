@@ -45,6 +45,7 @@ use warnings;
 use diagnostics;
 use File::Spec;
 use Getopt::Long;
+use Pod::Usage;
 use File::Basename;
 use Cwd 'abs_path';
 
@@ -97,7 +98,7 @@ my %opt = (
 );
 
 # Gather the options from the command line
-my $getOptionsCheck = GetOptions(
+GetOptions(
     \%opt,            'nobad',
     'nogood',         'noinfo',
     'debug',          'nocolor',
@@ -119,72 +120,16 @@ my $getOptionsCheck = GetOptions(
     'password=s',     'pfstat',
     'passenv=s',      'userenv=s',
     'defaults-file=s'
-);
+) or pod2usage(-exitval => 1, -verbose => 99,
+               -sections => [ "NAME", "IMPORTANT USAGE GUIDELINES", "CONNECTION AND AUTHENTIFICATION",
+                              "PERFORMANCE AND REPORTING OPTIONS", "OUTPUT OPTIONS" ]
+              );
 
-#If params are incorrect return help
-if ( $getOptionsCheck ne 1 ) {
-    usage();
-}
-
-if ( defined $opt{'help'} && $opt{'help'} == 1 ) { usage(); }
-
-sub usage {
-
-    # Shown with --help option passed
-    print "   MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n"
-      . "   Bug reports, feature requests, and downloads at http://mysqltuner.com/\n"
-      . "   Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL\n"
-      . "\n"
-      . "   Important Usage Guidelines:\n"
-      . "      To run the script with the default options, run the script without arguments\n"
-      . "      Allow MySQL server to run for at least 24-48 hours before trusting suggestions\n"
-      . "      Some routines may require root level privileges (script will provide warnings)\n"
-      . "      You must provide the remote server's total memory when connecting to other servers\n"
-      . "\n"
-      . "   Connection and Authentication\n"
-      . "      --host <hostname>    Connect to a remote host to perform tests (default: localhost)\n"
-      . "      --socket <socket>    Use a different socket for a local connection\n"
-      . "      --port <port>        Port to use for connection (default: 3306)\n"
-      . "      --user <username>    Username to use for authentication\n"
-      . "      --userenv <envvar>   Name of env variable which contains username to use for authentication\n"
-      . "      --pass <password>    Password to use for authentication\n"
-      . "      --passenv <envvar>   Name of env variable which contains password to use for authentication\n"
-      . "      --defaults-file <path>  Path to a custom .my.cnf\n"
-      . "      --mysqladmin <path>  Path to a custom mysqladmin executable\n"
-      . "      --mysqlcmd <path>    Path to a custom mysql executable\n" . "\n"
-      . "      --noask              Don't ask password if needed\n" . "\n"
-      . "   Performance and Reporting Options\n"
-      . "      --skipsize           Don't enumerate tables and their types/sizes (default: on)\n"
-      . "                           (Recommended for servers with many tables)\n"
-      . "      --skippassword       Don't perform checks on user passwords(default: off)\n"
-      . "      --checkversion       Check for updates to MySQLTuner (default: don't check)\n"
-      . "      --updateversion      Check for updates to MySQLTuner and update when newer version is available (default: don't check)\n"
-      . "      --forcemem <size>    Amount of RAM installed in megabytes\n"
-      . "      --forceswap <size>   Amount of swap memory configured in megabytes\n"
-      . "      --passwordfile <path>Path to a password file list(one password by line)\n"
-      . "   Output Options:\n"
-      . "      --silent             Don't output anything on screen\n"
-      . "      --nogood             Remove OK responses\n"
-      . "      --nobad              Remove negative/suggestion responses\n"
-      . "      --noinfo             Remove informational responses\n"
-      . "      --debug              Print debug information\n"
-      . "      --dbstat             Print database information\n"
-      . "      --idxstat            Print index information\n"
-      . "      --sysstat            Print system information\n"
-      . "      --pfstat             Print Performance schema information\n"
-      . "      --bannedports        Ports banned separated by comma(,)\n"
-      . "      --maxportallowed     Number of ports opened allowed on this hosts\n"
-      . "      --cvefile <path>     CVE File for vulnerability checks\n"
-      . "      --nocolor            Don't print output in color\n"
-      . "      --json               Print result as JSON string\n"
-      . "      --prettyjson         Print result as human readable JSON\n"
-      . "      --buffers            Print global and per-thread buffer values\n"
-      . "      --outputfile <path>  Path to a output txt file\n" . "\n"
-      . "      --reportfile <path>  Path to a report txt file\n" . "\n"
-      . "      --template   <path>  Path to a template file\n" . "\n"
-      . "      --verbose            Prints out all options (default: no verbose) \n"
-      . "\n";
-    exit 0;
+if ( defined $opt{'help'} && $opt{'help'} == 1 ) {
+    pod2usage(-exitval => 0, -verbose => 99,
+              -sections => [ "NAME", "IMPORTANT USAGE GUIDELINES", "CONNECTION AND AUTHENTIFICATION",
+                             "PERFORMANCE AND REPORTING OPTIONS", "OUTPUT OPTIONS" ]
+              );
 }
 
 my $devnull = File::Spec->devnull();
@@ -6113,6 +6058,7 @@ close_outputfile;          # Close reportfile if needed
 1;
 
 __END__
+
 =pod
 
 =encoding UTF-8
@@ -6130,16 +6076,17 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 CONNECTION AND AUTHENTIFICATION
 
- --host <hostname>    Connect to a remote host to perform tests (default: localhost)
- --socket <socket>    Use a different socket for a local connection
- --port <port>        Port to use for connection (default: 3306)
- --user <username>    Username to use for authentication
- --userenv <envvar>   Name of env variable which contains username to use for authentication
- --pass <password>    Password to use for authentication
- --passenv <envvar>   Name of env variable which contains password to use for authentication
- --mysqladmin <path>  Path to a custom mysqladmin executable
- --mysqlcmd <path>    Path to a custom mysql executable
-  --defaults-file <path>  Path to a custom .my.cnf
+ --host <hostname>           Connect to a remote host to perform tests (default: localhost)
+ --socket <socket>           Use a different socket for a local connection
+ --port <port>               Port to use for connection (default: 3306)
+ --user <username>           Username to use for authentication
+ --userenv <envvar>          Name of env variable which contains username to use for authentication
+ --pass <password>           Password to use for authentication
+ --passenv <envvar>          Name of env variable which contains password to use for authentication
+ --mysqladmin <path>         Path to a custom mysqladmin executable
+ --mysqlcmd <path>           Path to a custom mysql executable
+ --defaults-file <path>      Path to a custom .my.cnf
+
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
  --skipsize                  Don't enumerate tables and their types/sizes (default: on)
@@ -6172,6 +6119,7 @@ You must provide the remote server's total memory when connecting to other serve
  --reportfile <path>         Path to a report txt file
  --template   <path>         Path to a template file
  --verbose                   Prints out all options (default: no verbose)
+
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
