@@ -4975,6 +4975,8 @@ sub get_wsrep_options {
     return () unless defined $myvar{'wsrep_provider_options'};
 
     my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
+    my $wsrep_slave_threads = $myvar{'wsrep_slave_threads'};
+    push @galera_options, ' wsrep_slave_threads = '.$wsrep_slave_threads;
     @galera_options = remove_cr @galera_options;
     @galera_options = remove_empty @galera_options;
     debugprint Dumper( \@galera_options );
@@ -5044,8 +5046,8 @@ group by c.table_schema,c.table_name
 having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     );
 
-    if (   get_wsrep_option('wsrep_slave_threads') > cpu_cores *4
-        or get_wsrep_option('wsrep_slave_threads') < cpu_cores *3 )
+    if (   get_wsrep_option('wsrep_slave_threads') > (cpu_cores) *4
+        or get_wsrep_option('wsrep_slave_threads') < (cpu_cores) *3 )
     {
         badprint
 "wsrep_slave_threads is not equal to 2, 3 or 4 times number of CPU(s)";
