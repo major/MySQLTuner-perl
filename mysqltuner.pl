@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.2
+# mysqltuner.pl - Version 1.7.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2017 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.2";
+my $tunerversion = "1.7.3";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3329,7 +3329,8 @@ sub mysqsl_pfs {
                 "Performance should be activated for better diagnostics" );
             push( @adjvars, "performance_schema = ON enable PFS" );
         }
-        else {
+    } else {
+         if ( mysql_version_le( 5, 5 ) ) {
             push( @generalrec,
 "Performance shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
             );
@@ -6123,7 +6124,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.2 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.3 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
