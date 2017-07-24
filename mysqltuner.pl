@@ -5349,9 +5349,7 @@ sub mysql_innodb {
         }
         if ( defined $myvar{'innodb_log_file_size'} ) {
             infoprint " +-- InnoDB Log File Size: "
-              . hr_bytes( $myvar{'innodb_log_file_size'} ) . "("
-              . $mycalc{'innodb_log_size_pct'}
-              . " % of buffer pool)";
+              . hr_bytes( $myvar{'innodb_log_file_size'} );
         }
         if ( defined $myvar{'innodb_log_files_in_group'} ) {
             infoprint " +-- InnoDB Log File In Group: "
@@ -5360,7 +5358,9 @@ sub mysql_innodb {
         if ( defined $myvar{'innodb_log_files_in_group'} ) {
             infoprint " +-- InnoDB Total Log File Size: "
               . hr_bytes( $myvar{'innodb_log_files_in_group'} *
-                  $myvar{'innodb_log_file_size'} );
+                  $myvar{'innodb_log_file_size'} ) . "("
+                  . $mycalc{'innodb_log_size_pct'}
+                  . " % of buffer pool)";
         }
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
@@ -5413,18 +5413,17 @@ sub mysql_innodb {
           . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
-        push(
-            @adjvars,
-"innodb_log_file_size * innodb_log_files_in_group should be equal to 1/4 of buffer pool size (="
+        push( @adjvars,
+                "innodb_log_file_size should be (="
               . hr_bytes_rnd(
-                $myvar{'innodb_buffer_pool_size'} *
+                $myvar{'innodb_buffer_pool_size'} /
                   $myvar{'innodb_log_files_in_group'} / 4
               )
-              . ") if possible."
+              . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
         );
     }
     else {
-        goodprint "InnoDB log file size / InnoDB Buffer pool size: "
+        goodprint "Ratio InnoDB log file size / InnoDB Buffer pool size: "
           . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
           . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
