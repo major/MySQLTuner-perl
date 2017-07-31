@@ -203,6 +203,10 @@ If the database has too many tables, or very large table, use this:
 	--skipsize           Don't enumerate tables and their types/sizes (default: on)
 	                     (Recommended for servers with many tables)
 
+**Question: Can I install this project using homebrew on Apple Macintosh?**
+
+Yes! `brew install mysqltuner` can be used to install this application using [homebrew](https://brew.sh/) on Apple Macintosh.
+
 MySQLTuner and Vagrant
 --
 **MySQLTuner** contains following Vagrant configurations:
