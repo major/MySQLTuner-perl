@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.3
+# mysqltuner.pl - Version 1.7.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2017 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.3";
+my $tunerversion = "1.7.4";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -801,7 +801,7 @@ sub mysql_setup {
             exit 1;
         }
     }
-    elsif ( -r "/etc/mysql/debian.cnf" and $doremote == 0 ) {
+    elsif ( -r "/etc/mysql/debian.cnf" and $doremote == 0 and $opt{'defaults-file'} eq '' ) {
 
         # We have a debian maintenance account, use it
         $mysqllogin = "--defaults-file=/etc/mysql/debian.cnf";
@@ -813,11 +813,12 @@ sub mysql_setup {
         }
         else {
             badprint
-"Attempted to use login credentials from debian maintenance account, but they failed.";
+"Attempted to use login credentials from debian maintena
+nce account, but they failed.";
             exit 1;
         }
     }
-    elsif ( $opt{'defaults-file'} ne 0 and -r "$opt{'defaults-file'}" ) {
+    elsif ( $opt{'defaults-file'} ne '' and -r "$opt{'defaults-file'}" ) {
 
         # defaults-file
         debugprint "defaults file detected: $opt{'defaults-file'}";
@@ -6123,7 +6124,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.3 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.4 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
