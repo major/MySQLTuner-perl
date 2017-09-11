@@ -72,7 +72,7 @@
 ## MySQLTuner system checks
 * 32-bit w/>2GB RAM check
 * Check number of opened ports (warning if more than 9 ports opened)
-* Check 80, 8080, 443 and 8443 ports if warning are raised if there are opened 
+* Check 80, 8080, 443 and 8443 ports if warning are raised if there are opened
 * Check if some banned ports are not opened (option --bannedports separated by comma)
 * Check if non kernel and user process except mysqld are not using more than 15% of total physical memory)
 * Check vm.swapiness
@@ -103,7 +103,7 @@
 * Users w/o host restriction
 * Weak password check (possibly using cracklib later?)
 * Using basic_passwords.txt as password database
-* Password list checks can be avoid (option: --skippassword) 
+* Password list checks can be avoid (option: --skippassword)
 
 ## MySQLTuner CVE vulnerabilities detection
 
@@ -131,7 +131,7 @@
 * Per index information
 	* Index Cardinality
 	* Index Selectivity
-	* Misc information about index definition 
+	* Misc information about index definition
 	* Misc information about index size
 
 ## MySQLTuner Connections information
@@ -180,7 +180,7 @@
    * Query Cache DISABLED, ALL REQUEST or ON DEMAND
    * Query Cache Size
    * Query cache hit ratio (cache efficienty)
-    
+
 ## MySQLTuner memory checks
 
 * Get total RAM/swap
@@ -209,8 +209,10 @@
    * MySQL needs 1 instanes per 1Go of Buffer Pool
    * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
    * innodb_buffer_pool instances must be equals or lower than 64
-*  InnoDB Buffer Pool Usage
+* InnoDB Buffer Pool Usage
    * If more than 20% of InnoDB buffer pool is not used, MySQLTuner raise an alert.
+* InnoDB Buffer Pool Log Size
+   * InnoDB total log file size should be 25% of innodb_buffer_pool_size
 * InnoDB Read effiency
    * Ratio of read without locks
 * InnoDB Write effiency
@@ -225,7 +227,7 @@
 * Is Aria indexes size is greater than page cache size ?
 * Page cache read hit ratio (>95%)
 * Page cache write hit ratio (>95%)
- 
+
 
 ## MySQLTuner MYISAM information
 
@@ -264,13 +266,13 @@
 
 ## MySQLTuner TokuDB information
 
-* tokudb_cache_size 
-* tokudb_directio 
+* tokudb_cache_size
+* tokudb_directio
 * tokudb_empty_scan
 * tokudb_read_block_size
 * tokudb_commit_sync
 * tokudb_checkpointing_period
-* tokudb_block_size 
+* tokudb_block_size
 * tokudb_cleaner_iterations
 * tokudb_fanout
 
@@ -289,7 +291,7 @@
 ## MySQLTuner RocksDb information
 
 *  Nothing for the moment
-  
+
 ## MySQLTuner Thread pool information
 
 * thread_pool_size between 16 to 36 for Innodb usage
@@ -352,9 +354,9 @@
 * Event per wait total latency
 * Event per wait read latency
 * Event per wait write latency
-* TOP 15 most read indexes 
+* TOP 15 most read indexes
 * TOP 15 most modified indexes
-* TOP 15 high select latency index 
+* TOP 15 high select latency index
 * TOP 15 high insert latency index
 * TOP 15 high update latency index
 * TOP 15 high delete latency index
@@ -383,7 +385,7 @@
 * TOP 15 merge queries with sort
 * TOP 15 average sort merges queries with sort
 * TOP 15 scans queries with sort
-* TOP 15 range queries with sort 
+* TOP 15 range queries with sort
 * Top 20 queries with temp table
 * Last 50 queries with temp table
 * TOP 15 total latency queries with temp table

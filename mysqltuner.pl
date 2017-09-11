@@ -2645,7 +2645,7 @@ sub mysql_stats {
 
         if ( defined $myvar{'query_cache_type'} ) {
             infoprint "Query Cache Buffers";
-            infoprint " +-- Query Cache: " 
+            infoprint " +-- Query Cache: "
               . $myvar{'query_cache_type'} . " - "
               . (
                 $myvar{'query_cache_type'} eq 0 |
@@ -5382,7 +5382,7 @@ sub mysql_innodb {
           . $myvar{'innodb_thread_concurrency'};
     }
 
-    # InnoDB Buffer Pull Size
+    # InnoDB Buffer Pool Size
     if ( $myvar{'innodb_file_per_table'} eq "ON" ) {
         goodprint "InnoDB File per table is activated";
     }
@@ -5391,7 +5391,7 @@ sub mysql_innodb {
         push( @adjvars, "innodb_file_per_table=ON" );
     }
 
-    # InnoDB Buffer Pull Size
+    # InnoDB Buffer Pool Size
     if ( $myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'} ) {
         goodprint "InnoDB buffer pool / data size: "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . "/"
@@ -5416,12 +5416,15 @@ sub mysql_innodb {
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
         push( @adjvars,
-                "innodb_log_file_size should be (="
-              . hr_bytes_rnd(
-                $myvar{'innodb_buffer_pool_size'} /
-                  $myvar{'innodb_log_files_in_group'} / 4
-              )
-              . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
+              "innodb_log_file_size should be (="
+                . hr_bytes_rnd(
+                  $myvar{'innodb_buffer_pool_size'} /
+                    $myvar{'innodb_log_files_in_group'} / 4
+                )
+                . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
+        );
+        push( @generalrec,
+"Read this before changing innodb_log_file_size and/or innodb_log_files_in_group: http://bit.ly/2wgkDvS"
         );
     }
     else {
@@ -5432,7 +5435,7 @@ sub mysql_innodb {
           . " should be equal 25%";
     }
 
-    # InnoDB Buffer Pull Instances (MySQL 5.6.6+)
+    # InnoDB Buffer Pool Instances (MySQL 5.6.6+)
     if ( defined( $myvar{'innodb_buffer_pool_instances'} ) ) {
 
         # Bad Value if > 64
@@ -5442,12 +5445,12 @@ sub mysql_innodb {
             push( @adjvars, "innodb_buffer_pool_instances (<= 64)" );
         }
 
-        # InnoDB Buffer Pull Size > 1Go
+        # InnoDB Buffer Pool Size > 1Go
         if ( $myvar{'innodb_buffer_pool_size'} > 1024 * 1024 * 1024 ) {
 
-# InnoDB Buffer Pull Size / 1Go = InnoDB Buffer Pull Instances limited to 64 max.
+# InnoDB Buffer Pool Size / 1Go = InnoDB Buffer Pool Instances limited to 64 max.
 
-            #  InnoDB Buffer Pull Size > 64Go
+            #  InnoDB Buffer Pool Size > 64Go
             my $max_innodb_buffer_pool_instances =
               int( $myvar{'innodb_buffer_pool_size'} / ( 1024 * 1024 * 1024 ) );
             $max_innodb_buffer_pool_instances = 64
@@ -5468,7 +5471,7 @@ sub mysql_innodb {
                   . $myvar{'innodb_buffer_pool_instances'} . "";
             }
 
-            # InnoDB Buffer Pull Size < 1Go
+            # InnoDB Buffer Pool Size < 1Go
         }
         else {
             if ( $myvar{'innodb_buffer_pool_instances'} != 1 ) {
@@ -6381,4 +6384,3 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # cperl-indent-level: 8
 # perl-indent-level: 8
 # End:
-
