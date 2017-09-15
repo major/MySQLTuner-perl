@@ -75,6 +75,7 @@ my %opt = (
     "user"           => 0,
     "pass"           => 0,
     "password"       => 0,
+    "ssl-ca"         => 0,
     "skipsize"       => 0,
     "checkversion"   => 0,
     "updateversion"  => 0,
@@ -119,7 +120,7 @@ GetOptions(
     'verbose',        'sysstat',
     'password=s',     'pfstat',
     'passenv=s',      'userenv=s',
-    'defaults-file=s'
+    'defaults-file=s','ssl-ca=s'
   )
   or pod2usage(
     -exitval  => 1,
@@ -704,6 +705,19 @@ sub mysql_setup {
     }
     else {
         $opt{host} = '127.0.0.1';
+    }
+
+    if ( $opt{'ssl-ca'} ne 0 ) {
+      if ( -e -r -f $opt{'ssl-ca'} ) {
+        $remotestring .= " --ssl-ca=$opt{'ssl-ca'}";
+        infoprint "Will connect using ssl public key passed on the command line";
+        return 1;
+      }
+      else {
+        badprint
+          "Attempted to use passed ssl public key, but it was not found or could not be read";
+        exit 1;
+      }
     }
 
     # Did we already get a username without password on the command line?
@@ -6145,6 +6159,7 @@ You must provide the remote server's total memory when connecting to other serve
  --userenv <envvar>          Name of env variable which contains username to use for authentication
  --pass <password>           Password to use for authentication
  --passenv <envvar>          Name of env variable which contains password to use for authentication
+ --ssl-ca <path>             Path to public key
  --mysqladmin <path>         Path to a custom mysqladmin executable
  --mysqlcmd <path>           Path to a custom mysql executable
  --defaults-file <path>      Path to a custom .my.cnf
