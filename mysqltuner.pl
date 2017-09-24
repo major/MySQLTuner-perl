@@ -1148,7 +1148,26 @@ sub get_basic_passwords {
     return get_file_contents(shift);
 }
 
+sub get_log_file_real_path {
+    my $file = shift;
+    my $hostname = shift;
+    my $datadir = shift;
+    if ( -f "$file" ) {
+        return $file;
+    }
+    elsif ( -f "$hostname.err" ) {
+        return "$hostname.err"
+    }
+    elsif ( $datadir ne "" ) {
+        return "$datadir$hostname.err";
+    }
+    else {
+        return $file;
+    }
+}
+
 sub log_file_recommandations {
+    $myvar{'log_error'} = get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'}, $myvar{'datadir'} );
     subheaderprint "Log file Recommendations";
     infoprint "Log file: "
       . $myvar{'log_error'} . "("
