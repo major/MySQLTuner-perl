@@ -1202,14 +1202,16 @@ sub log_file_recommandations {
           . " is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!";
     }
 
-    my @log_content = get_file_contents( $myvar{'log_error'} );
-
     my $numLi     = 0;
     my $nbWarnLog = 0;
     my $nbErrLog  = 0;
     my @lastShutdowns;
     my @lastStarts;
-    foreach my $logLi (@log_content) {
+    
+    open( my $fh, '<', $myvar{'log_error'} ) or die "Can't open $myvar{'log_error'} for read: $!";
+
+    while ( my $logLi = <$fh> ) {
+        chomp $logLi;
         $numLi++;
         debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i;
         $nbErrLog++                 if $logLi =~ /error/i;
@@ -1218,6 +1220,8 @@ sub log_file_recommandations {
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
         push @lastStarts, $logLi if $logLi =~ /ready for connections/;
     }
+    close $fh;
+    
     if ( $nbWarnLog > 0 ) {
         badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
         push @generalrec,
