@@ -5097,14 +5097,14 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
           "wsrep_slave_threads is equal to 2, 3 or 4 times number of CPU(s)";
     }
 
-    if ( get_wsrep_option('gcs.limit') !=
+    if ( get_wsrep_option('gcs.fc_limit') !=
         get_wsrep_option('wsrep_slave_threads') * 5 )
     {
-        badprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
-        push @adjvars, "gcs.limit= wsrep_slave_threads * 5";
+        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads";
+        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5";
     }
     else {
-        goodprint "gcs.limit should be equal to 5 * wsrep_slave_threads";
+        goodprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads";
     }
 
     if ( get_wsrep_option('wsrep_slave_threads') > 1 ) {
