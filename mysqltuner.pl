@@ -1207,7 +1207,7 @@ sub log_file_recommandations {
     my $nbErrLog  = 0;
     my @lastShutdowns;
     my @lastStarts;
-    
+
     open( my $fh, '<', $myvar{'log_error'} ) or die "Can't open $myvar{'log_error'} for read: $!";
 
     while ( my $logLi = <$fh> ) {
@@ -1221,7 +1221,7 @@ sub log_file_recommandations {
         push @lastStarts, $logLi if $logLi =~ /ready for connections/;
     }
     close $fh;
-    
+
     if ( $nbWarnLog > 0 ) {
         badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
         push @generalrec,
@@ -1716,7 +1716,7 @@ sub security_recommendations {
     # Looking for Empty Password
     if ( mysql_version_ge( 5, 5 ) ) {
         @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL) AND plugin NOT IN ('unix_socket', 'win_socket')";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL) AND plugin NOT IN ('unix_socket', 'win_socket', 'auth_pam_compat')";
     }
     else {
         @mysqlstatlist = select_array
