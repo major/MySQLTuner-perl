@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.4
+# mysqltuner.pl - Version 1.7.5
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2017 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.4";
+my $tunerversion = "1.7.5";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -66,7 +66,7 @@ my %opt = (
     "nogood"         => 0,
     "noinfo"         => 0,
     "debug"          => 0,
-    "nocolor"        => ( ! -t STDOUT ),
+    "nocolor"        => ( !-t STDOUT ),
     "forcemem"       => 0,
     "forceswap"      => 0,
     "host"           => 0,
@@ -100,27 +100,27 @@ my %opt = (
 
 # Gather the options from the command line
 GetOptions(
-    \%opt,            'nobad',
-    'nogood',         'noinfo',
-    'debug',          'nocolor',
-    'forcemem=i',     'forceswap=i',
-    'host=s',         'socket=s',
-    'port=i',         'user=s',
-    'pass=s',         'skipsize',
-    'checkversion',   'mysqladmin=s',
-    'mysqlcmd=s',     'help',
-    'buffers',        'skippassword',
-    'passwordfile=s', 'outputfile=s',
-    'silent',         'dbstat',
-    'json',           'prettyjson',
-    'idxstat',        'noask',
-    'template=s',     'reportfile=s',
-    'cvefile=s',      'bannedports=s',
-    'updateversion',  'maxportallowed=s',
-    'verbose',        'sysstat',
-    'password=s',     'pfstat',
-    'passenv=s',      'userenv=s',
-    'defaults-file=s','ssl-ca=s'
+    \%opt,             'nobad',
+    'nogood',          'noinfo',
+    'debug',           'nocolor',
+    'forcemem=i',      'forceswap=i',
+    'host=s',          'socket=s',
+    'port=i',          'user=s',
+    'pass=s',          'skipsize',
+    'checkversion',    'mysqladmin=s',
+    'mysqlcmd=s',      'help',
+    'buffers',         'skippassword',
+    'passwordfile=s',  'outputfile=s',
+    'silent',          'dbstat',
+    'json',            'prettyjson',
+    'idxstat',         'noask',
+    'template=s',      'reportfile=s',
+    'cvefile=s',       'bannedports=s',
+    'updateversion',   'maxportallowed=s',
+    'verbose',         'sysstat',
+    'password=s',      'pfstat',
+    'passenv=s',       'userenv=s',
+    'defaults-file=s', 'ssl-ca=s'
   )
   or pod2usage(
     -exitval  => 1,
@@ -708,16 +708,17 @@ sub mysql_setup {
     }
 
     if ( $opt{'ssl-ca'} ne 0 ) {
-      if ( -e -r -f $opt{'ssl-ca'} ) {
-        $remotestring .= " --ssl-ca=$opt{'ssl-ca'}";
-        infoprint "Will connect using ssl public key passed on the command line";
-        return 1;
-      }
-      else {
-        badprint
-          "Attempted to use passed ssl public key, but it was not found or could not be read";
-        exit 1;
-      }
+        if ( -e -r -f $opt{'ssl-ca'} ) {
+            $remotestring .= " --ssl-ca=$opt{'ssl-ca'}";
+            infoprint
+              "Will connect using ssl public key passed on the command line";
+            return 1;
+        }
+        else {
+            badprint
+"Attempted to use passed ssl public key, but it was not found or could not be read";
+            exit 1;
+        }
     }
 
     # Did we already get a username without password on the command line?
@@ -815,7 +816,10 @@ sub mysql_setup {
             exit 1;
         }
     }
-    elsif ( -r "/etc/mysql/debian.cnf" and $doremote == 0 and $opt{'defaults-file'} eq '' ) {
+    elsif ( -r "/etc/mysql/debian.cnf"
+        and $doremote == 0
+        and $opt{'defaults-file'} eq '' )
+    {
 
         # We have a debian maintenance account, use it
         $mysqllogin = "--defaults-file=/etc/mysql/debian.cnf";
@@ -826,8 +830,7 @@ sub mysql_setup {
             return 1;
         }
         else {
-            badprint
-"Attempted to use login credentials from debian maintena
+            badprint "Attempted to use login credentials from debian maintena
 nce account, but they failed.";
             exit 1;
         }
@@ -1149,14 +1152,14 @@ sub get_basic_passwords {
 }
 
 sub get_log_file_real_path {
-    my $file = shift;
+    my $file     = shift;
     my $hostname = shift;
-    my $datadir = shift;
+    my $datadir  = shift;
     if ( -f "$file" ) {
         return $file;
     }
     elsif ( -f "$hostname.err" ) {
-        return "$hostname.err"
+        return "$hostname.err";
     }
     elsif ( $datadir ne "" ) {
         return "$datadir$hostname.err";
@@ -1167,7 +1170,9 @@ sub get_log_file_real_path {
 }
 
 sub log_file_recommandations {
-    $myvar{'log_error'} = get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'}, $myvar{'datadir'} );
+    $myvar{'log_error'} =
+      get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
+        $myvar{'datadir'} );
     subheaderprint "Log file Recommendations";
     infoprint "Log file: "
       . $myvar{'log_error'} . "("
@@ -1208,7 +1213,8 @@ sub log_file_recommandations {
     my @lastShutdowns;
     my @lastStarts;
 
-    open( my $fh, '<', $myvar{'log_error'} ) or die "Can't open $myvar{'log_error'} for read: $!";
+    open( my $fh, '<', $myvar{'log_error'} )
+      or die "Can't open $myvar{'log_error'} for read: $!";
 
     while ( my $logLi = <$fh> ) {
         chomp $logLi;
@@ -2682,7 +2688,7 @@ sub mysql_stats {
 
         if ( defined $myvar{'query_cache_type'} ) {
             infoprint "Query Cache Buffers";
-            infoprint " +-- Query Cache: "
+            infoprint " +-- Query Cache: " 
               . $myvar{'query_cache_type'} . " - "
               . (
                 $myvar{'query_cache_type'} eq 0 |
@@ -3367,8 +3373,9 @@ sub mysqsl_pfs {
                 "Performance should be activated for better diagnostics" );
             push( @adjvars, "performance_schema = ON enable PFS" );
         }
-    } else {
-         if ( mysql_version_le( 5, 5 ) ) {
+    }
+    else {
+        if ( mysql_version_le( 5, 5 ) ) {
             push( @generalrec,
 "Performance shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
             );
@@ -3380,7 +3387,7 @@ sub mysqsl_pfs {
 
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
         infoprint "Sys schema isn't installed.";
-         push( @generalrec,
+        push( @generalrec,
 "Consider installing Sys schema from https://github.com/mysql/mysql-sys"
         ) unless ( mysql_version_le( 5, 5 ) );
         return;
@@ -5015,7 +5022,7 @@ sub get_wsrep_options {
 
     my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
     my $wsrep_slave_threads = $myvar{'wsrep_slave_threads'};
-    push @galera_options, ' wsrep_slave_threads = '.$wsrep_slave_threads;
+    push @galera_options, ' wsrep_slave_threads = ' . $wsrep_slave_threads;
     @galera_options = remove_cr @galera_options;
     @galera_options = remove_empty @galera_options;
     debugprint Dumper( \@galera_options );
@@ -5085,8 +5092,8 @@ group by c.table_schema,c.table_name
 having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     );
 
-    if (   get_wsrep_option('wsrep_slave_threads') > (cpu_cores) *4
-        or get_wsrep_option('wsrep_slave_threads') < (cpu_cores) *3 )
+    if (   get_wsrep_option('wsrep_slave_threads') > (cpu_cores) * 4
+        or get_wsrep_option('wsrep_slave_threads') < (cpu_cores) * 3 )
     {
         badprint
 "wsrep_slave_threads is not equal to 2, 3 or 4 times number of CPU(s)";
@@ -5397,9 +5404,10 @@ sub mysql_innodb {
         if ( defined $myvar{'innodb_log_files_in_group'} ) {
             infoprint " +-- InnoDB Total Log File Size: "
               . hr_bytes( $myvar{'innodb_log_files_in_group'} *
-                  $myvar{'innodb_log_file_size'} ) . "("
-                  . $mycalc{'innodb_log_size_pct'}
-                  . " % of buffer pool)";
+                  $myvar{'innodb_log_file_size'} )
+              . "("
+              . $mycalc{'innodb_log_size_pct'}
+              . " % of buffer pool)";
         }
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
@@ -5452,13 +5460,14 @@ sub mysql_innodb {
           . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal 25%";
-        push( @adjvars,
-              "innodb_log_file_size should be (="
-                . hr_bytes_rnd(
-                  $myvar{'innodb_buffer_pool_size'} /
-                    $myvar{'innodb_log_files_in_group'} / 4
-                )
-                . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
+        push(
+            @adjvars,
+            "innodb_log_file_size should be (="
+              . hr_bytes_rnd(
+                $myvar{'innodb_buffer_pool_size'} /
+                  $myvar{'innodb_log_files_in_group'} / 4
+              )
+              . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
         );
         push( @generalrec,
 "Read this before changing innodb_log_file_size and/or innodb_log_files_in_group: http://bit.ly/2wgkDvS"
@@ -6164,7 +6173,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.4 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.5 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 

@@ -4,3 +4,4 @@ build/build.log
 build/cve*
 build/vulnerabilities*
 *.bak
+Vagrant/Vagrantfile
