@@ -84,7 +84,7 @@
 
 ## MySQLTuner Server version checks
 * EOL MySQL version check
-* Currently MySQL < 5.1 are EOF considerated.
+* Currently MySQL < 5.1 are EOF considered.
 * Using 5.5+ version of MySQL for performance issue (asynchronous IO).
 
 ## MySQL Storage engine general information
