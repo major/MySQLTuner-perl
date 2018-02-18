@@ -6,7 +6,7 @@ pod2markdown mysqltuner.pl >USAGE.md
 echo "* TIDYFY SCRIPT"
 perltidy -b mysqltuner.pl
 )
-echo "* Udate CVE list"
+echo "* Update CVE list"
 perl updateCVElist.pl
 
 git add ../vulnerabilities.csv ../mysqltuner.pl ./USAGE.md
