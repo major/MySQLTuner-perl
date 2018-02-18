@@ -194,11 +194,11 @@
 
 ## MySQLTuner replication checks
 
-* Is server replication configuarted as slave ?
+* Is server replication configured as slave ?
 * SQL replacation thread running ?
 * IO replacation thread running ?
 * Replication lag in seconds
-* Is Slave configuratedd in read only ?
+* Is Slave configured in read only ?
 
 ## MySQLTuner InnoDB information
 
