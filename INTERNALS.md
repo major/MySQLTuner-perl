@@ -179,7 +179,7 @@
    * Query Cache Buffers
    * Query Cache DISABLED, ALL REQUEST or ON DEMAND
    * Query Cache Size
-   * Query cache hit ratio (cache efficienty)
+   * Query cache hit ratio (cache efficiency)
 
 ## MySQLTuner memory checks
 
@@ -213,9 +213,9 @@
    * If more than 20% of InnoDB buffer pool is not used, MySQLTuner raise an alert.
 * InnoDB Buffer Pool Log Size
    * InnoDB total log file size should be 25% of innodb_buffer_pool_size
-* InnoDB Read effiency
+* InnoDB Read efficiency
    * Ratio of read without locks
-* InnoDB Write effiency
+* InnoDB Write efficiency
    * Ratio of write without locks
 * InnoDB Log Waits
    * Checks that no lock is used on Innodb Log.

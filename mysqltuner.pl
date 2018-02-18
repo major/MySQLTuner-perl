@@ -2574,7 +2574,7 @@ sub calculations {
               $myvar{'innodb_buffer_pool_size'} );
     }
 
-    # InnoDB Buffer pool read cache effiency
+    # InnoDB Buffer pool read cache efficiency
     (
         $mystat{'Innodb_buffer_pool_read_requests'},
         $mystat{'Innodb_buffer_pool_reads'}
@@ -2594,7 +2594,7 @@ sub calculations {
     debugprint "Innodb_buffer_pool_read_requests: "
       . $mystat{'Innodb_buffer_pool_read_requests'} . "";
 
-    # InnoDB log write cache effiency
+    # InnoDB log write cache efficiency
     ( $mystat{'Innodb_log_write_requests'}, $mystat{'Innodb_log_writes'} ) =
       ( 1, 1 )
       unless defined $mystat{'Innodb_log_writes'};
@@ -5565,7 +5565,7 @@ sub mysql_innodb {
         }
     }
 
-    # InnoDB Read efficency
+    # InnoDB Read efficiency
     if ( defined $mycalc{'pct_read_efficiency'}
         && $mycalc{'pct_read_efficiency'} < 90 )
     {
