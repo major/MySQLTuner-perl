@@ -11,5 +11,5 @@ perl updateCVElist.pl
 
 git add ../vulnerabilities.csv ../mysqltuner.pl ./USAGE.md
 git commit -m 'Update Vulnerabilities list
-Identing mysqltuner
+Indenting mysqltuner
 Update Usage information'
