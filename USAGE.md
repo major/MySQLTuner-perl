@@ -9,7 +9,7 @@ Allow MySQL server to run for at least 24-48 hours before trusting suggestions
 Some routines may require root level privileges (script will provide warnings)
 You must provide the remote server's total memory when connecting to other servers
 
-# CONNECTION AND AUTHENTIFICATION
+# CONNECTION AND AUTHENTICATION
 
     --host <hostname>           Connect to a remote host to perform tests (default: localhost)
     --socket <socket>           Use a different socket for a local connection

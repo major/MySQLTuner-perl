@@ -128,7 +128,7 @@ GetOptions(
     -sections => [
         "NAME",
         "IMPORTANT USAGE GUIDELINES",
-        "CONNECTION AND AUTHENTIFICATION",
+        "CONNECTION AND AUTHENTICATION",
         "PERFORMANCE AND REPORTING OPTIONS",
         "OUTPUT OPTIONS"
     ]
@@ -141,7 +141,7 @@ if ( defined $opt{'help'} && $opt{'help'} == 1 ) {
         -sections => [
             "NAME",
             "IMPORTANT USAGE GUIDELINES",
-            "CONNECTION AND AUTHENTIFICATION",
+            "CONNECTION AND AUTHENTICATION",
             "PERFORMANCE AND REPORTING OPTIONS",
             "OUTPUT OPTIONS"
         ]
@@ -6182,7 +6182,7 @@ Allow MySQL server to run for at least 24-48 hours before trusting suggestions
 Some routines may require root level privileges (script will provide warnings)
 You must provide the remote server's total memory when connecting to other servers
 
-=head1 CONNECTION AND AUTHENTIFICATION
+=head1 CONNECTION AND AUTHENTICATION
 
  --host <hostname>           Connect to a remote host to perform tests (default: localhost)
  --socket <socket>           Use a different socket for a local connection
