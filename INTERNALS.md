@@ -206,7 +206,7 @@
    * If possible, innodb_buffer_pool_size should be greater data and index size for Innodb Table
    * Innodb_buffer_pool_size should around 75 to 80 % of the available system memory.
 * InnoDB Buffer Pool Instances
-   * MySQL needs 1 instanes per 1Go of Buffer Pool
+   * MySQL needs 1 instance per 1Go of Buffer Pool
    * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
    * innodb_buffer_pool instances must be equals or lower than 64
 * InnoDB Buffer Pool Usage
