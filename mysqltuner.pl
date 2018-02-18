@@ -1169,7 +1169,7 @@ sub get_log_file_real_path {
     }
 }
 
-sub log_file_recommandations {
+sub log_file_recommendations {
     $myvar{'log_error'} =
       get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
         $myvar{'datadir'} );
@@ -6134,7 +6134,7 @@ validate_mysql_version;    # Check current MySQL version
 
 check_architecture;        # Suggest 64-bit upgrade
 system_recommendations;    # avoid to many service on the same host
-log_file_recommandations;  # check log file content
+log_file_recommendations;  # check log file content
 check_storage_engines;     # Show enabled storage engines
 mysql_databases;           # Show informations about databases
 mysql_tables;              # Show informations about table column
