@@ -299,7 +299,7 @@
 
 ## MySQLTuner performance schema and sysschema information
 * Check that Performance schema is activated for 5.6+ version
-* Check that Performance schema is disactivated for 5.5- version
+* Check that Performance schema is deactivated for 5.5- version
 * Check that Sys schema is installed
 * sys Schema version
 * Top user per connection

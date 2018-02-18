@@ -3412,7 +3412,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery conn(s)";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top user per statement
@@ -3427,7 +3427,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery stmt(s)";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top user per statement latency
@@ -3442,7 +3442,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top user per lock latency
@@ -3457,7 +3457,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top user per full scans
@@ -3472,7 +3472,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top user per row_sent
@@ -3487,7 +3487,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top user per row modified
@@ -3502,7 +3502,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top user per io
@@ -3517,7 +3517,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top user per io latency
@@ -3532,7 +3532,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top host per connection
@@ -3547,7 +3547,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery conn(s)";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top host per statement
@@ -3562,7 +3562,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery stmt(s)";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top host per statement latency
@@ -3577,7 +3577,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top host per lock latency
@@ -3592,7 +3592,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top host per full scans
@@ -3607,7 +3607,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top host per rows sent
@@ -3622,7 +3622,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top host per rows modified
@@ -3637,7 +3637,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top host per io
@@ -3652,7 +3652,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top 5 host per io latency
@@ -3667,7 +3667,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top IO type order by total io
@@ -3682,7 +3682,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery i/o";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top IO type order by total latency
@@ -3697,7 +3697,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top IO type order by max latency
@@ -3712,7 +3712,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top Stages order by total io
@@ -3727,7 +3727,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery i/o";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top Stages order by total latency
@@ -3742,7 +3742,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top Stages order by avg latency
@@ -3757,7 +3757,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top host per table scans
@@ -3772,7 +3772,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # InnoDB Buffer Pool by schema
@@ -3787,7 +3787,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery page(s)";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # InnoDB Buffer Pool by table
@@ -3802,7 +3802,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery page(s)";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Process per allocated memory
@@ -3817,7 +3817,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # InnoDB Lock Waits
@@ -3832,7 +3832,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Threads IO Latency
@@ -3847,7 +3847,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # High Cost SQL statements
@@ -3862,7 +3862,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top 5% slower queries
@@ -3877,7 +3877,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery s";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top 10 nb statement type
@@ -3892,7 +3892,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top statement by total latency
@@ -3907,7 +3907,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top statement by lock latency
@@ -3922,7 +3922,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top statement by full scans
@@ -3937,7 +3937,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top statement by rows sent
@@ -3952,7 +3952,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Top statement by rows modified
@@ -3967,7 +3967,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Use temporary tables
@@ -3982,7 +3982,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Unused Indexes
@@ -3992,7 +3992,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Full table scans
@@ -4007,7 +4007,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Latest file IO by latency
@@ -4022,7 +4022,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # FILE by IO read bytes
@@ -4037,7 +4037,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # FILE by IO written bytes
@@ -4052,7 +4052,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # file per IO total latency
@@ -4067,7 +4067,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # file per IO read latency
@@ -4082,7 +4082,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # file per IO write latency
@@ -4097,7 +4097,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Event Wait by read bytes
@@ -4112,7 +4112,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Event Wait by write bytes
@@ -4127,7 +4127,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # event per wait total latency
@@ -4142,7 +4142,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # event per wait read latency
@@ -4157,7 +4157,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # event per wait write latency
@@ -4172,7 +4172,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     #schema_index_statistics
@@ -4188,7 +4188,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 most used index
@@ -4203,7 +4203,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 high read latency index
@@ -4218,7 +4218,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 high insert latency index
@@ -4233,7 +4233,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 high update latency index
@@ -4248,7 +4248,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 high delete latency index
@@ -4263,7 +4263,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 most read tables
@@ -4278,7 +4278,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 most used tables
@@ -4293,7 +4293,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 high read latency tables
@@ -4308,7 +4308,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 high insert latency tables
@@ -4323,7 +4323,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 high update latency tables
@@ -4338,7 +4338,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # TOP 15 high delete latency tables
@@ -4353,7 +4353,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     # Redundant indexes
@@ -4365,7 +4365,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Tables not using InnoDB buffer";
@@ -4379,7 +4379,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Table not using InnoDB buffer";
@@ -4393,7 +4393,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
     subheaderprint "Performance schema: Table not using InnoDB buffer";
     $nbL = 1;
@@ -4406,7 +4406,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Top 15 Tables using InnoDB buffer";
@@ -4420,7 +4420,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Top 15 Tables with InnoDB buffer free";
@@ -4434,7 +4434,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Top 15 Most executed queries";
@@ -4448,7 +4448,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint
@@ -4463,7 +4463,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Top 20 queries with full table scans";
@@ -4477,7 +4477,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Last 50 queries with full table scans";
@@ -4491,7 +4491,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 15 reader queries (95% percentile)";
@@ -4505,7 +4505,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint
@@ -4520,7 +4520,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint
@@ -4535,7 +4535,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint
@@ -4550,7 +4550,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint
@@ -4565,7 +4565,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Top 20 queries with sort";
@@ -4579,7 +4579,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Last 50 queries with sort";
@@ -4593,7 +4593,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 15 row sorting queries with sort";
@@ -4607,7 +4607,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 15 total latency queries with sort";
@@ -4621,7 +4621,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 15 merge queries with sort";
@@ -4635,7 +4635,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint
@@ -4650,7 +4650,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 15 scans queries with sort";
@@ -4664,7 +4664,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 15 range queries with sort";
@@ -4678,7 +4678,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
 ##################################################################################
@@ -4714,7 +4714,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: Last 50 queries with temp table";
@@ -4728,7 +4728,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint
@@ -4743,7 +4743,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 15 queries with temp table to disk";
@@ -4757,7 +4757,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
 ##################################################################################
@@ -4784,7 +4784,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 30 events by number";
@@ -4798,7 +4798,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 15 class events by total latency";
@@ -4812,7 +4812,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 30 events by total latency";
@@ -4826,7 +4826,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 15 class events by max latency";
@@ -4840,7 +4840,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
     subheaderprint "Performance schema: TOP 30 events by max latency";
@@ -4854,7 +4854,7 @@ sub mysqsl_pfs {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
-    infoprint "No information found or indicators desactivated."
+    infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
 }
