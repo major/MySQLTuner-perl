@@ -144,7 +144,7 @@ Once you create it, make sure it's owned by your user and the mode on the file i
 You could use mysql_config_editor utilities.
 
 	$ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
-	Enter passord: ********
+	Enter password: ********
 	$
 
 After which, ~/.mylogin.cnf will be created with the appropriate access.

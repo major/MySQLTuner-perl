@@ -84,7 +84,7 @@
 
 ## MySQLTuner Server version checks
 * EOL MySQL version check
-* Currently MySQL < 5.1 are EOF considerated.
+* Currently MySQL < 5.1 are EOF considered.
 * Using 5.5+ version of MySQL for performance issue (asynchronous IO).
 
 ## MySQL Storage engine general information
@@ -179,7 +179,7 @@
    * Query Cache Buffers
    * Query Cache DISABLED, ALL REQUEST or ON DEMAND
    * Query Cache Size
-   * Query cache hit ratio (cache efficienty)
+   * Query cache hit ratio (cache efficiency)
 
 ## MySQLTuner memory checks
 
@@ -194,11 +194,11 @@
 
 ## MySQLTuner replication checks
 
-* Is server replication configuarted as slave ?
-* SQL replacation thread running ?
-* IO replacation thread running ?
+* Is server replication configured as slave ?
+* SQL replication thread running ?
+* IO replication thread running ?
 * Replication lag in seconds
-* Is Slave configuratedd in read only ?
+* Is Slave configured in read only ?
 
 ## MySQLTuner InnoDB information
 
@@ -206,16 +206,16 @@
    * If possible, innodb_buffer_pool_size should be greater data and index size for Innodb Table
    * Innodb_buffer_pool_size should around 75 to 80 % of the available system memory.
 * InnoDB Buffer Pool Instances
-   * MySQL needs 1 instanes per 1Go of Buffer Pool
+   * MySQL needs 1 instance per 1Go of Buffer Pool
    * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
    * innodb_buffer_pool instances must be equals or lower than 64
 * InnoDB Buffer Pool Usage
    * If more than 20% of InnoDB buffer pool is not used, MySQLTuner raise an alert.
 * InnoDB Buffer Pool Log Size
    * InnoDB total log file size should be 25% of innodb_buffer_pool_size
-* InnoDB Read effiency
+* InnoDB Read efficiency
    * Ratio of read without locks
-* InnoDB Write effiency
+* InnoDB Write efficiency
    * Ratio of write without locks
 * InnoDB Log Waits
    * Checks that no lock is used on Innodb Log.
@@ -299,7 +299,7 @@
 
 ## MySQLTuner performance schema and sysschema information
 * Check that Performance schema is activated for 5.6+ version
-* Check that Performance schema is disactivated for 5.5- version
+* Check that Performance schema is deactivated for 5.5- version
 * Check that Sys schema is installed
 * sys Schema version
 * Top user per connection
