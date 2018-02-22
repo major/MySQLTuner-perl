@@ -1906,6 +1906,16 @@ sub validate_mysql_version {
     }
 }
 
+# Checks if MySQL version is equal to (major, minor, micro)
+sub mysql_version_eq {
+    my ( $maj, $min, $mic ) = @_;
+    $min ||= 0;
+    $mic ||= 0;
+    return
+         ( int($mysqlvermajor) == int($maj)
+        && int($mysqlverminor) == int($min)
+        && int($mysqlvermicro) == int($mic) );
+}
 # Checks if MySQL version is greater than equal to (major, minor, micro)
 sub mysql_version_ge {
     my ( $maj, $min, $mic ) = @_;
@@ -3386,6 +3396,13 @@ sub mysqsl_pfs {
     debugprint "Performance schema is " . $myvar{'performance_schema'};
     infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
 
+    if ( mysql_version_eq(10, 0) ) {
+         push( @generalrec,
+"Performance shouldn't be activated for MariaDB 10.0 for performance issue"
+            );
+            push( @adjvars, "performance_schema = OFF disable PFS" );
+            return;   
+    }
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
         infoprint "Sys schema isn't installed.";
         push( @generalrec,
