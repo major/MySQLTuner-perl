@@ -198,7 +198,7 @@ open( $fh, '>', $outputfile )
   or die("Fail opening $outputfile")
   if defined($outputfile);
 $opt{nocolor} = 1 if defined($outputfile);
-
+$opt{nocolor} = 1 unless(-t STDOUT);
 # Setting up the colors for the print styles
 my $me = `whoami`;
 $me =~ s/\n//g;
