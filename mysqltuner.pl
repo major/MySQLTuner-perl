@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.5
+# mysqltuner.pl - Version 1.7.6
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2017 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.5";
+my $tunerversion = "1.7.6";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -5266,7 +5266,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             badprint "Galera Notify command is not defined.";
             push( @adjvars, "set up parameter wsrep_notify_cmd to be notify" );
         }
-        if ( trim( $myvar{'wsrep_sst_method'} ) !~ "^xtrabackup.*" ) {
+        if ( trim( $myvar{'wsrep_sst_method'} ) !~ "^xtrabackup.*" and trim( $myvar{'wsrep_sst_method'} ) !~ "^mariabackup") {
             badprint "Galera SST method is not xtrabackup based.";
             push( @adjvars,
 "set up parameter wsrep_sst_method to xtrabackup based parameter"
@@ -6173,7 +6173,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.5 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.6 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
