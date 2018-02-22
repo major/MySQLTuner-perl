@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.6
+# mysqltuner.pl - Version 1.7.7
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2017 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.6";
+my $tunerversion = "1.7.7";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3457,7 +3457,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select user, statement_avg_latency from sys.user_summary order by statement_avg_latency desc LIMIT 5'
+'select user, statement_avg_latency from sys.x\\$user_summary order by statement_avg_latency desc LIMIT 5'
         )
       )
     {
@@ -3472,7 +3472,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select user, lock_latency from sys.user_summary_by_statement_latency order by lock_latency desc LIMIT 5'
+'select user, lock_latency from sys.x\\$user_summary_by_statement_latency order by lock_latency desc LIMIT 5'
         )
       )
     {
@@ -3487,7 +3487,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select user, full_scans from sys.user_summary_by_statement_latency order by full_scans desc LIMIT 5'
+'select user, full_scans from sys.x\\$user_summary_by_statement_latency order by full_scans desc LIMIT 5'
         )
       )
     {
@@ -3502,7 +3502,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select user, rows_sent from sys.user_summary_by_statement_latency order by rows_sent desc LIMIT 5'
+'select user, rows_sent from sys.x\\$user_summary_by_statement_latency order by rows_sent desc LIMIT 5'
         )
       )
     {
@@ -3517,7 +3517,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select user, rows_affected from sys.user_summary_by_statement_latency order by rows_affected desc LIMIT 5'
+'select user, rows_affected from sys.x\\$user_summary_by_statement_latency order by rows_affected desc LIMIT 5'
         )
       )
     {
@@ -3532,7 +3532,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select user, file_ios from sys.user_summary order by file_ios desc LIMIT 5'
+'select user, file_ios from sys.x\\$user_summary order by file_ios desc LIMIT 5'
         )
       )
     {
@@ -3547,7 +3547,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select user, file_io_latency from sys.user_summary order by file_io_latency desc LIMIT 5'
+'select user, file_io_latency from sys.x\\$user_summary order by file_io_latency desc LIMIT 5'
         )
       )
     {
@@ -3562,7 +3562,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, total_connections from sys.host_summary order by total_connections desc LIMIT 5'
+'select host, total_connections from sys.x\\$host_summary order by total_connections desc LIMIT 5'
         )
       )
     {
@@ -3577,7 +3577,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, statements from sys.host_summary order by statements desc LIMIT 5'
+'select host, statements from sys.x\\$host_summary order by statements desc LIMIT 5'
         )
       )
     {
@@ -3592,7 +3592,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, statement_avg_latency from sys.host_summary order by statement_avg_latency desc LIMIT 5'
+'select host, statement_avg_latency from sys.x\\$host_summary order by statement_avg_latency desc LIMIT 5'
         )
       )
     {
@@ -3607,7 +3607,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, lock_latency from sys.host_summary_by_statement_latency order by lock_latency desc LIMIT 5'
+'select host, lock_latency from sys.x\\$host_summary_by_statement_latency order by lock_latency desc LIMIT 5'
         )
       )
     {
@@ -3622,7 +3622,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, full_scans from sys.host_summary_by_statement_latency order by full_scans desc LIMIT 5'
+'select host, full_scans from sys.x\\$host_summary_by_statement_latency order by full_scans desc LIMIT 5'
         )
       )
     {
@@ -3637,7 +3637,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, rows_sent from sys.host_summary_by_statement_latency order by rows_sent desc LIMIT 5'
+'select host, rows_sent from sys.x\\$host_summary_by_statement_latency order by rows_sent desc LIMIT 5'
         )
       )
     {
@@ -3652,7 +3652,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, rows_affected from sys.host_summary_by_statement_latency order by rows_affected desc LIMIT 5'
+'select host, rows_affected from sys.x\\$host_summary_by_statement_latency order by rows_affected desc LIMIT 5'
         )
       )
     {
@@ -3667,7 +3667,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, file_ios from sys.host_summary order by file_ios desc LIMIT 5'
+'select host, file_ios from sys.x\\$host_summary order by file_ios desc LIMIT 5'
         )
       )
     {
@@ -3682,7 +3682,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, file_io_latency from sys.host_summary order by file_io_latency desc LIMIT 5'
+'select host, file_io_latency from sys.x\\$host_summary order by file_io_latency desc LIMIT 5'
         )
       )
     {
@@ -3697,7 +3697,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select substring(event_name,14), SUM(total)AS total from sys.host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY total DESC;'
+'use sys;select substring(event_name,14), SUM(total)AS total from sys.x\\$host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY total DESC;'
         )
       )
     {
@@ -3712,7 +3712,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select substring(event_name,14), format_time(ROUND(SUM(total_latency),1)) AS total_latency from sys.host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY total_latency DESC;'
+'select substring(event_name,14), ROUND(SUM(total_latency),1) AS total_latency from sys.x\\$host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY total_latency DESC;'
         )
       )
     {
@@ -3727,7 +3727,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select substring(event_name,14), MAX(max_latency) as max_latency from sys.host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY max_latency DESC;'
+'use sys;select substring(event_name,14), MAX(max_latency) as max_latency from sys.x\\$host_summary_by_file_io_type GROUP BY substring(event_name,14) ORDER BY max_latency DESC;'
         )
       )
     {
@@ -3742,7 +3742,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select substring(event_name,7), SUM(total)AS total from sys.host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY total DESC;'
+'use sys;select substring(event_name,7), SUM(total)AS total from sys.x\\$host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY total DESC;'
         )
       )
     {
@@ -3757,7 +3757,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select substring(event_name,7), format_time(ROUND(SUM(total_latency),1)) AS total_latency from sys.host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY total_latency DESC;'
+'use sys;select substring(event_name,7), ROUND(SUM(total_latency),1) AS total_latency from sys.x\\$host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY total_latency DESC;'
         )
       )
     {
@@ -3772,7 +3772,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select substring(event_name,7), MAX(avg_latency) as avg_latency from sys.host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY avg_latency DESC;'
+'use sys;select substring(event_name,7), MAX(avg_latency) as avg_latency from sys.x\\$host_summary_by_stages GROUP BY substring(event_name,7) ORDER BY avg_latency DESC;'
         )
       )
     {
@@ -3787,7 +3787,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select host, table_scans from sys.host_summary order by table_scans desc LIMIT 5'
+'select host, table_scans from sys.x\\$host_summary order by table_scans desc LIMIT 5'
         )
       )
     {
@@ -3796,13 +3796,12 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
-
     # InnoDB Buffer Pool by schema
     subheaderprint "Performance schema: InnoDB Buffer Pool by schema";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select object_schema, allocated, data, pages from sys.innodb_buffer_stats_by_schema ORDER BY pages DESC'
+'select object_schema, allocated, data, pages from sys.x\\$innodb_buffer_stats_by_schema ORDER BY pages DESC'
         )
       )
     {
@@ -3817,7 +3816,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-"select CONCAT(object_schema,CONCAT('.', object_name)), allocated,data, pages from sys.innodb_buffer_stats_by_table ORDER BY pages DESC"
+'select object_schema,  object_name, allocated,data, pages from sys.x\\$innodb_buffer_stats_by_table ORDER BY pages DESC'
         )
       )
     {
@@ -3828,11 +3827,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Process per allocated memory
-    subheaderprint "Performance schema: Process per allocated memory";
+    subheaderprint "Performance schema: Process per time";
     $nbL = 1;
     for my $lQuery (
         select_array(
-"select concat(user,concat('/', IFNULL(Command,'NONE'))) AS PROC, current_memory from sys.processlist ORDER BY current_memory DESC;"
+'select user, Command AS PROC, time from sys.x\\$processlist ORDER BY time DESC;'
         )
       )
     {
@@ -3847,7 +3846,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-"use sys;select wait_age_secs, locked_table, locked_type, waiting_query from innodb_lock_waits order by wait_age_secs DESC;"
+'select wait_age_secs, locked_table, locked_type, waiting_query from sys.x\\$innodb_lock_waits order by wait_age_secs DESC;'
         )
       )
     {
@@ -3862,7 +3861,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-"use sys;select user, total_latency, max_latency from io_by_thread_by_latency order by total_latency;"
+'select user, total_latency, max_latency from sys.x\\$io_by_thread_by_latency order by total_latency DESC;'
         )
       )
     {
@@ -3877,7 +3876,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select query, avg_latency from sys.statement_analysis order by avg_latency desc LIMIT 5'
+'select query, avg_latency from sys.x\\$statement_analysis order by avg_latency desc LIMIT 5'
         )
       )
     {
@@ -3892,7 +3891,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select query, exec_count from sys.statements_with_runtimes_in_95th_percentile order by exec_count desc LIMIT 5'
+'select query, exec_count from sys.x\\$statements_with_runtimes_in_95th_percentile order by exec_count desc LIMIT 5'
         )
       )
     {
@@ -3907,7 +3906,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(total) as total from host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(total) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
         )
       )
     {
@@ -3922,7 +3921,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(total_latency) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(total_latency) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
         )
       )
     {
@@ -3937,7 +3936,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(lock_latency) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(lock_latency) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
         )
       )
     {
@@ -3952,7 +3951,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(full_scans) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(full_scans) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
         )
       )
     {
@@ -3967,7 +3966,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(rows_sent) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(rows_sent) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
         )
       )
     {
@@ -3982,7 +3981,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(rows_affected) as total from sys.host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(rows_affected) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
         )
       )
     {
@@ -3997,7 +3996,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-            'use sys;select query from sys.statements_with_temp_tables LIMIT 20'
+            'use sys;select query from sys.x\\$statements_with_temp_tables LIMIT 20'
         )
       )
     {
@@ -4022,7 +4021,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select * from sys.schema_tables_with_full_table_scans order by rows_full_scanned DESC'
+'select * from sys.x\\$schema_tables_with_full_table_scans order by rows_full_scanned DESC'
         )
       )
     {
@@ -4037,7 +4036,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select thread, file, latency, operation from latest_file_io ORDER BY latency LIMIT 10;'
+'use sys;select thread, file, latency, operation from sys.x\\$latest_file_io ORDER BY latency LIMIT 10;'
         )
       )
     {
@@ -4052,7 +4051,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-"use sys;(select file, total_read from io_global_by_file_by_bytes where total_read like '%MiB' order by total_read DESC) UNION (select file, total_read from io_global_by_file_by_bytes where total_read like '%KiB' order by total_read DESC LIMIT 15);"
+'select file, total_read from sys.x\\$io_global_by_file_by_bytes order by total_read DESC LIMIT 15;'
         )
       )
     {
@@ -4067,7 +4066,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-"use sys;(select file, total_written from io_global_by_file_by_bytes where total_written like '%MiB' order by total_written DESC) UNION (select file, total_written from io_global_by_file_by_bytes where total_written like '%KiB' order by total_written DESC LIMIT 15);"
+'select file, total_written from sys.x\\$io_global_by_file_by_bytes order by total_written DESC LIMIT 15'
         )
       )
     {
@@ -4082,7 +4081,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select file, total_latency from io_global_by_file_by_latency ORDER BY total_latency DESC LIMIT 20;'
+'select file, total_latency from sys.x\\$io_global_by_file_by_latency ORDER BY total_latency DESC LIMIT 20;'
         )
       )
     {
@@ -4097,7 +4096,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select file, read_latency from io_global_by_file_by_latency ORDER BY read_latency DESC LIMIT 20;'
+'use sys;select file, read_latency from sys.x\\$io_global_by_file_by_latency ORDER BY read_latency DESC LIMIT 20;'
         )
       )
     {
@@ -4112,7 +4111,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select file, write_latency from io_global_by_file_by_latency ORDER BY write_latency DESC LIMIT 20;'
+'use sys;select file, write_latency from sys.x\\$io_global_by_file_by_latency ORDER BY write_latency DESC LIMIT 20;'
         )
       )
     {
@@ -4127,7 +4126,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-"use sys;(select event_name, total_read from io_global_by_wait_by_bytes where total_read like '%MiB' order by total_read DESC) UNION (select event_name, total_read from io_global_by_wait_by_bytes where total_read like '%KiB' order by total_read DESC LIMIT 15);"
+'select event_name, total_read from sys.x\\$io_global_by_wait_by_bytes order by total_read DESC LIMIT 15;'
         )
       )
     {
@@ -4142,7 +4141,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-"use sys;(select event_name, total_written from io_global_by_wait_by_bytes where total_written like '%MiB' order by total_written DESC) UNION (select event_name, total_written from io_global_by_wait_by_bytes where total_written like '%KiB' order by total_written DESC LIMIT 15);"
+'select event_name, total_written from sys.x\\$io_global_by_wait_by_bytes order by total_written DESC LIMIT 15;'
         )
       )
     {
@@ -4157,7 +4156,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select event_name, total_latency from io_global_by_wait_by_latency ORDER BY total_latency DESC LIMIT 20;'
+'use sys;select event_name, total_latency from sys.x\\$io_global_by_wait_by_latency ORDER BY total_latency DESC LIMIT 20;'
         )
       )
     {
@@ -4172,7 +4171,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select event_name, read_latency from io_global_by_wait_by_latency ORDER BY read_latency DESC LIMIT 20;'
+'use sys;select event_name, read_latency from sys.x\\$io_global_by_wait_by_latency ORDER BY read_latency DESC LIMIT 20;'
         )
       )
     {
@@ -4187,7 +4186,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select event_name, write_latency from io_global_by_wait_by_latency ORDER BY write_latency DESC LIMIT 20;'
+'use sys;select event_name, write_latency from sys.x\\$io_global_by_wait_by_latency ORDER BY write_latency DESC LIMIT 20;'
         )
       )
     {
@@ -4203,7 +4202,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name,index_name, rows_selected from schema_index_statistics ORDER BY ROWs_selected DESC LIMIT 15;'
+'use sys;select table_schema, table_name,index_name, rows_selected from sys.x\\$schema_index_statistics ORDER BY ROWs_selected DESC LIMIT 15;'
         )
       )
     {
@@ -4218,7 +4217,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name,index_name, rows_inserted+rows_updated+rows_deleted AS changes from schema_index_statistics ORDER BY rows_inserted+rows_updated+rows_deleted DESC LIMIT 15;'
+'use sys;select table_schema, table_name,index_name, rows_inserted+rows_updated+rows_deleted AS changes from sys.x\\$schema_index_statistics ORDER BY rows_inserted+rows_updated+rows_deleted DESC LIMIT 15;'
         )
       )
     {
@@ -4233,7 +4232,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name,index_name, select_latency from schema_index_statistics ORDER BY select_latency DESC LIMIT 15;'
+'use sys;select table_schema, table_name,index_name, select_latency from sys.x\\$schema_index_statistics ORDER BY select_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4248,7 +4247,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name,index_name, insert_latency from schema_index_statistics ORDER BY insert_latency DESC LIMIT 15;'
+'use sys;select table_schema, table_name,index_name, insert_latency from sys.x\\$schema_index_statistics ORDER BY insert_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4263,7 +4262,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name,index_name, update_latency from schema_index_statistics ORDER BY update_latency DESC LIMIT 15;'
+'use sys;select table_schema, table_name,index_name, update_latency from sys.x\\$schema_index_statistics ORDER BY update_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4278,7 +4277,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name,index_name, delete_latency from schema_index_statistics ORDER BY delete_latency DESC LIMIT 15;'
+'use sys;select table_schema, table_name,index_name, delete_latency from sys.x\\$schema_index_statistics ORDER BY delete_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4293,7 +4292,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name, rows_fetched from schema_table_statistics ORDER BY ROWs_fetched DESC LIMIT 15;'
+'use sys;select table_schema, table_name, rows_fetched from sys.x\\$schema_table_statistics ORDER BY ROWs_fetched DESC LIMIT 15;'
         )
       )
     {
@@ -4308,7 +4307,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name, rows_inserted+rows_updated+rows_deleted AS changes from schema_table_statistics ORDER BY rows_inserted+rows_updated+rows_deleted DESC LIMIT 15;'
+'use sys;select table_schema, table_name, rows_inserted+rows_updated+rows_deleted AS changes from sys.x\\$schema_table_statistics ORDER BY rows_inserted+rows_updated+rows_deleted DESC LIMIT 15;'
         )
       )
     {
@@ -4323,7 +4322,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name, fetch_latency from schema_table_statistics ORDER BY fetch_latency DESC LIMIT 15;'
+'use sys;select table_schema, table_name, fetch_latency from sys.x\\$schema_table_statistics ORDER BY fetch_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4338,7 +4337,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name, insert_latency from schema_table_statistics ORDER BY insert_latency DESC LIMIT 15;'
+'use sys;select table_schema, table_name, insert_latency from sys.x\\$schema_table_statistics ORDER BY insert_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4353,7 +4352,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name, update_latency from schema_table_statistics ORDER BY update_latency DESC LIMIT 15;'
+'use sys;select table_schema, table_name, update_latency from sys.x\\$schema_table_statistics ORDER BY update_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4368,7 +4367,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select table_schema, table_name, delete_latency from schema_table_statistics ORDER BY delete_latency DESC LIMIT 15;'
+'use sys;select table_schema, table_name, delete_latency from sys.x\\$schema_table_statistics ORDER BY delete_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4394,7 +4393,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-' Select table_schema, table_name from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;'
+' Select table_schema, table_name from sys.x\\$schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;'
         )
       )
     {
@@ -4408,7 +4407,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-' Select table_schema, table_name from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;'
+' Select table_schema, table_name from sys.x\\$schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;'
         )
       )
     {
@@ -4421,7 +4420,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-' Select table_schema, table_name from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;'
+' Select table_schema, table_name from sys.x\\$schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;'
         )
       )
     {
@@ -4435,7 +4434,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select table_schema,table_name,innodb_buffer_allocated from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_allocated DESC LIMIT 15;'
+'select table_schema,table_name,innodb_buffer_allocated from sys.x\\$schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_allocated DESC LIMIT 15;'
         )
       )
     {
@@ -4449,7 +4448,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select table_schema,table_name,innodb_buffer_free from sys.schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_free DESC LIMIT 15;'
+'select table_schema,table_name,innodb_buffer_free from sys.x\\$schema_table_statistics_with_buffer where innodb_buffer_allocated IS NOT NULL ORDER BY innodb_buffer_free DESC LIMIT 15;'
         )
       )
     {
@@ -4463,7 +4462,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, exec_count from sys.statement_analysis order by exec_count DESC LIMIT 15;'
+'select db, query, exec_count from sys.x\\$statement_analysis order by exec_count DESC LIMIT 15;'
         )
       )
     {
@@ -4478,7 +4477,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select query, last_seen from sys.statements_with_errors_or_warnings ORDER BY last_seen LIMIT 100;'
+'select query, last_seen from sys.x\\$statements_with_errors_or_warnings ORDER BY last_seen LIMIT 100;'
         )
       )
     {
@@ -4492,7 +4491,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, exec_count from sys.statements_with_full_table_scans order BY exec_count DESC LIMIT 20;'
+'select db, query, exec_count from sys.x\\$statements_with_full_table_scans order BY exec_count DESC LIMIT 20;'
         )
       )
     {
@@ -4506,7 +4505,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, last_seen from sys.statements_with_full_table_scans order BY last_seen DESC LIMIT 50;'
+'select db, query, last_seen from sys.x\\$statements_with_full_table_scans order BY last_seen DESC LIMIT 50;'
         )
       )
     {
@@ -4520,7 +4519,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query , rows_sent from statements_with_runtimes_in_95th_percentile ORDER BY ROWs_sent DESC LIMIT 15;'
+'use sys;select db, query , rows_sent from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY ROWs_sent DESC LIMIT 15;'
         )
       )
     {
@@ -4535,7 +4534,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, rows_examined AS search from statements_with_runtimes_in_95th_percentile ORDER BY rows_examined DESC LIMIT 15;'
+'use sys;select db, query, rows_examined AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY rows_examined DESC LIMIT 15;'
         )
       )
     {
@@ -4550,7 +4549,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, total_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY total_latency DESC LIMIT 15;'
+'use sys;select db, query, total_latency AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY total_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4565,7 +4564,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, max_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY max_latency DESC LIMIT 15;'
+'use sys;select db, query, max_latency AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY max_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4580,7 +4579,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, avg_latency AS search from statements_with_runtimes_in_95th_percentile ORDER BY avg_latency DESC LIMIT 15;'
+'use sys;select db, query, avg_latency AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY avg_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4594,7 +4593,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, exec_count from sys.statements_with_sorting order BY exec_count DESC LIMIT 20;'
+'select db, query, exec_count from sys.x\\$statements_with_sorting order BY exec_count DESC LIMIT 20;'
         )
       )
     {
@@ -4608,7 +4607,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, last_seen from sys.statements_with_sorting order BY last_seen DESC LIMIT 50;'
+'select db, query, last_seen from sys.x\\$statements_with_sorting order BY last_seen DESC LIMIT 50;'
         )
       )
     {
@@ -4622,7 +4621,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query , rows_sorted from statements_with_sorting ORDER BY ROWs_sorted DESC LIMIT 15;'
+'use sys;select db, query , rows_sorted from sys.x\\$statements_with_sorting ORDER BY ROWs_sorted DESC LIMIT 15;'
         )
       )
     {
@@ -4636,7 +4635,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, total_latency AS search from statements_with_sorting ORDER BY total_latency DESC LIMIT 15;'
+'use sys;select db, query, total_latency AS search from sys.x\\$statements_with_sorting ORDER BY total_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4650,7 +4649,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, sort_merge_passes AS search from statements_with_sorting ORDER BY sort_merge_passes DESC LIMIT 15;'
+'use sys;select db, query, sort_merge_passes AS search from sys.x\\$statements_with_sorting ORDER BY sort_merge_passes DESC LIMIT 15;'
         )
       )
     {
@@ -4665,7 +4664,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, avg_sort_merges AS search from statements_with_sorting ORDER BY avg_sort_merges DESC LIMIT 15;'
+'select db, query, avg_sort_merges AS search from sys.x\\$statements_with_sorting ORDER BY avg_sort_merges DESC LIMIT 15;'
         )
       )
     {
@@ -4679,7 +4678,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, sorts_using_scans AS search from statements_with_sorting ORDER BY sorts_using_scans DESC LIMIT 15;'
+'use sys;select db, query, sorts_using_scans AS search from sys.x\\$statements_with_sorting ORDER BY sorts_using_scans DESC LIMIT 15;'
         )
       )
     {
@@ -4693,7 +4692,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, sort_using_range AS search from statements_with_sorting ORDER BY sort_using_range DESC LIMIT 15;'
+'use sys;select db, query, sort_using_range AS search from sys.x\\$statements_with_sorting ORDER BY sort_using_range DESC LIMIT 15;'
         )
       )
     {
@@ -4729,7 +4728,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, exec_count from sys.statements_with_temp_tables order BY exec_count DESC LIMIT 20;'
+'select db, query, exec_count from sys.x\\$statements_with_temp_tables order BY exec_count DESC LIMIT 20;'
         )
       )
     {
@@ -4743,7 +4742,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, last_seen from sys.statements_with_temp_tables order BY last_seen DESC LIMIT 50;'
+'select db, query, last_seen from sys.x\\$statements_with_temp_tables order BY last_seen DESC LIMIT 50;'
         )
       )
     {
@@ -4758,7 +4757,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, total_latency AS search from statements_with_temp_tables ORDER BY total_latency DESC LIMIT 15;'
+'select db, query, total_latency AS search from sys.x\\$statements_with_temp_tables ORDER BY total_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4772,7 +4771,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, disk_tmp_tables from statements_with_temp_tables ORDER BY disk_tmp_tables DESC LIMIT 15;'
+'use sys;select db, query, disk_tmp_tables from sys.x\\$statements_with_temp_tables ORDER BY disk_tmp_tables DESC LIMIT 15;'
         )
       )
     {
@@ -4799,7 +4798,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select event_class, total from wait_classes_global_by_latency ORDER BY total DESC LIMIT 15;'
+'use sys;select event_class, total from sys.x\\$wait_classes_global_by_latency ORDER BY total DESC LIMIT 15;'
         )
       )
     {
@@ -4813,7 +4812,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select events, total from waits_global_by_latency ORDER BY total DESC LIMIT 30;'
+'use sys;select events, total from sys.x\\$waits_global_by_latency ORDER BY total DESC LIMIT 30;'
         )
       )
     {
@@ -4827,7 +4826,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select event_class, total_latency from wait_classes_global_by_latency ORDER BY total_latency DESC LIMIT 15;'
+'use sys;select event_class, total_latency from sys.x\\$wait_classes_global_by_latency ORDER BY total_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4841,7 +4840,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select events, total_latency from waits_global_by_latency ORDER BY total_latency DESC LIMIT 30;'
+'use sys;select events, total_latency from sys.x\\$waits_global_by_latency ORDER BY total_latency DESC LIMIT 30;'
         )
       )
     {
@@ -4855,7 +4854,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select event_class, max_latency from wait_classes_global_by_latency ORDER BY max_latency DESC LIMIT 15;'
+'select event_class, max_latency from sys.x\\$wait_classes_global_by_latency ORDER BY max_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4869,7 +4868,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select events, max_latency from waits_global_by_latency ORDER BY max_latency DESC LIMIT 30;'
+'select events, max_latency from sys.x\\$waits_global_by_latency ORDER BY max_latency DESC LIMIT 30;'
         )
       )
     {
@@ -6200,7 +6199,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.6 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.7 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
