@@ -1372,7 +1372,7 @@ sub get_other_process_memory {
 sub get_os_release {
     if ( -f "/etc/lsb-release" ) {
         my @info_release = get_file_contents "/etc/lsb-release";
-        my $os_release    = $info_release[3];
+        my $os_release   = $info_release[3];
         $os_release =~ s/.*="//;
         $os_release =~ s/"$//;
         return $os_release;
@@ -1385,7 +1385,7 @@ sub get_os_release {
 
     if ( -f "/etc/os-release" ) {
         my @info_release = get_file_contents "/etc/os-release";
-        my $os_release    = $info_release[0];
+        my $os_release   = $info_release[0];
         $os_release =~ s/.*="//;
         $os_release =~ s/"$//;
         return $os_release;
@@ -1393,7 +1393,7 @@ sub get_os_release {
 
     if ( -f "/etc/issue" ) {
         my @info_release = get_file_contents "/etc/issue";
-        my $os_release    = $info_release[0];
+        my $os_release   = $info_release[0];
         $os_release =~ s/\s+\\n.*//;
         return $os_release;
     }
@@ -1690,7 +1690,8 @@ sub security_recommendations {
 
     my $PASS_COLUMN_NAME = 'password';
     if ( $myvar{'version'} =~ /5\.7|10\..*MariaDB*/ ) {
-        $PASS_COLUMN_NAME = "IF(plugin='mysql_native_password', authentication_string, password)";
+        $PASS_COLUMN_NAME =
+          "IF(plugin='mysql_native_password', authentication_string, password)";
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
 
@@ -5266,7 +5267,9 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             badprint "Galera Notify command is not defined.";
             push( @adjvars, "set up parameter wsrep_notify_cmd to be notify" );
         }
-        if ( trim( $myvar{'wsrep_sst_method'} ) !~ "^xtrabackup.*" and trim( $myvar{'wsrep_sst_method'} ) !~ "^mariabackup") {
+        if (    trim( $myvar{'wsrep_sst_method'} ) !~ "^xtrabackup.*"
+            and trim( $myvar{'wsrep_sst_method'} ) !~ "^mariabackup" )
+        {
             badprint "Galera SST method is not xtrabackup based.";
             push( @adjvars,
 "set up parameter wsrep_sst_method to xtrabackup based parameter"
