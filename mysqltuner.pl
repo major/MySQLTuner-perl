@@ -1689,8 +1689,8 @@ sub security_recommendations {
     }
 
     my $PASS_COLUMN_NAME = 'password';
-    if ( $myvar{'version'} =~ /5.7/ ) {
-        $PASS_COLUMN_NAME = 'authentication_string';
+    if ( $myvar{'version'} =~ /5\.7|10\..*MariaDB*/ ) {
+        $PASS_COLUMN_NAME = 'IF(plugin=\'mysql_native_password\', authentication_string, password)';
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
 
