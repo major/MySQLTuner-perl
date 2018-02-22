@@ -930,6 +930,7 @@ nce account, but they failed.";
             exit 1;
         }
     }
+
 }
 
 # MySQL Request Array
@@ -3075,6 +3076,9 @@ sub mysql_stats {
                     "Read this before increasing "
                   . $table_cache_var
                   . " over 64: http://bit.ly/1mi7c4C" );
+            push( @generalrec, "This is MyISAM only table_cache scalability problem, InnoDB not affected.");
+            push ( @generalrec, "See more details here: https://bugs.mysql.com/bug.php?id=49177");
+            push ( @generalrec, "This bug already fixed in MySQL 5.7.9 and newer MySQL versions.");
             push( @generalrec,
                     "Beware that open_files_limit ("
                   . $myvar{'open_files_limit'}
@@ -6147,6 +6151,9 @@ headerprint;    # Header Print
 
 validate_tuner_version;    # Check last version
 mysql_setup;               # Gotta login first
+debugprint "MySQL FINAL Client : $mysqlcmd $mysqllogin";
+debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
+#exit(0);
 os_setup;                  # Set up some OS variables
 get_all_vars;              # Toss variables/status into hashes
 get_tuning_info;           # Get information about the tuning connexion
