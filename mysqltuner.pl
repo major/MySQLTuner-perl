@@ -67,6 +67,7 @@ my %opt = (
     "noinfo"         => 0,
     "debug"          => 0,
     "nocolor"        => ( !-t STDOUT ),
+    "color"          => 0,
     "forcemem"       => 0,
     "forceswap"      => 0,
     "host"           => 0,
@@ -120,7 +121,7 @@ GetOptions(
     'verbose',         'sysstat',
     'password=s',      'pfstat',
     'passenv=s',       'userenv=s',
-    'defaults-file=s', 'ssl-ca=s'
+    'defaults-file=s', 'ssl-ca=s', 'color'
   )
   or pod2usage(
     -exitval  => 1,
@@ -199,6 +200,8 @@ open( $fh, '>', $outputfile )
   if defined($outputfile);
 $opt{nocolor} = 1 if defined($outputfile);
 $opt{nocolor} = 1 unless(-t STDOUT);
+
+$opt{nocolor} = 0 if ($opt{color} == 1);
 # Setting up the colors for the print styles
 my $me = `whoami`;
 $me =~ s/\n//g;
