@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # mysqltuner.pl - Version 1.7.7
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2017 Major Hayden - major@mhtx.net
+# Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.com/
 # Git repository available at http://github.com/major/MySQLTuner-perl
