@@ -197,8 +197,13 @@
 * Is server replication configured as slave ?
 * SQL replication thread running ?
 * IO replication thread running ?
-* Replication lag in seconds
+* Replication lag in seconds (Seconds_behind_master)
 * Is Slave configured in read only ?
+* replication type ROW, MIX, STMT
+* replication Semisync master
+* replication Semisync slave
+* XA support activated
+* replication started ?
 
 ## MySQLTuner InnoDB information
 
