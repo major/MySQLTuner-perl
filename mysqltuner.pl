@@ -121,7 +121,8 @@ GetOptions(
     'verbose',         'sysstat',
     'password=s',      'pfstat',
     'passenv=s',       'userenv=s',
-    'defaults-file=s', 'ssl-ca=s', 'color'
+    'defaults-file=s', 'ssl-ca=s',
+    'color'
   )
   or pod2usage(
     -exitval  => 1,
@@ -199,9 +200,10 @@ open( $fh, '>', $outputfile )
   or die("Fail opening $outputfile")
   if defined($outputfile);
 $opt{nocolor} = 1 if defined($outputfile);
-$opt{nocolor} = 1 unless(-t STDOUT);
+$opt{nocolor} = 1 unless ( -t STDOUT );
 
-$opt{nocolor} = 0 if ($opt{color} == 1);
+$opt{nocolor} = 0 if ( $opt{color} == 1 );
+
 # Setting up the colors for the print styles
 my $me = `whoami`;
 $me =~ s/\n//g;
@@ -1695,7 +1697,7 @@ sub security_recommendations {
     my $PASS_COLUMN_NAME = 'password';
     if ( $myvar{'version'} =~ /5\.7|10\..*MariaDB*/ ) {
         $PASS_COLUMN_NAME =
-          "IF(plugin='mysql_native_password', authentication_string, 'password')";
+"IF(plugin='mysql_native_password', authentication_string, 'password')";
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
 
@@ -1843,16 +1845,19 @@ sub get_replication_status {
           . scalar( keys %myslaves )
           . " server(s).";
     }
-    infoprint "Binlog format: ". $myvar{'binlog_format'};
-    infoprint "XA support enabled: ". $myvar{'innodb_support_xa'};
-    infoprint "Semi synchronous replication Master: ". $myvar{'rpl_semi_sync_master_enabled'};
-    infoprint "Semi synchronous replication Slave: ". $myvar{'rpl_semi_sync_slave_enabled'};
+    infoprint "Binlog format: " . $myvar{'binlog_format'};
+    infoprint "XA support enabled: " . $myvar{'innodb_support_xa'};
+    infoprint "Semi synchronous replication Master: "
+      . $myvar{'rpl_semi_sync_master_enabled'};
+    infoprint "Semi synchronous replication Slave: "
+      . $myvar{'rpl_semi_sync_slave_enabled'};
     if ( scalar( keys %myrepl ) == 0 and scalar( keys %myslaves ) == 0 ) {
         infoprint "This is a standalone server";
         return;
     }
     if ( scalar( keys %myrepl ) == 0 ) {
-        infoprint "No replication setup for this server or replication not started.";
+        infoprint
+          "No replication setup for this server or replication not started.";
         return;
     }
 
@@ -1919,11 +1924,11 @@ sub mysql_version_eq {
     my ( $maj, $min, $mic ) = @_;
     $min ||= 0;
     $mic ||= 0;
-    return
-         ( int($mysqlvermajor) == int($maj)
-        && int($mysqlverminor) == int($min)
-        && int($mysqlvermicro) == int($mic) );
+    return ( int($mysqlvermajor) == int($maj)
+          && int($mysqlverminor) == int($min)
+          && int($mysqlvermicro) == int($mic) );
 }
+
 # Checks if MySQL version is greater than equal to (major, minor, micro)
 sub mysql_version_ge {
     my ( $maj, $min, $mic ) = @_;
@@ -3083,9 +3088,15 @@ sub mysql_stats {
                     "Read this before increasing "
                   . $table_cache_var
                   . " over 64: http://bit.ly/1mi7c4C" );
-            push( @generalrec, "This is MyISAM only table_cache scalability problem, InnoDB not affected.");
-            push ( @generalrec, "See more details here: https://bugs.mysql.com/bug.php?id=49177");
-            push ( @generalrec, "This bug already fixed in MySQL 5.7.9 and newer MySQL versions.");
+            push( @generalrec,
+"This is MyISAM only table_cache scalability problem, InnoDB not affected."
+            );
+            push( @generalrec,
+                "See more details here: https://bugs.mysql.com/bug.php?id=49177"
+            );
+            push( @generalrec,
+"This bug already fixed in MySQL 5.7.9 and newer MySQL versions."
+            );
             push( @generalrec,
                     "Beware that open_files_limit ("
                   . $myvar{'open_files_limit'}
@@ -3407,12 +3418,12 @@ sub mysqsl_pfs {
     debugprint "Performance schema is " . $myvar{'performance_schema'};
     infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
 
-    if ( mysql_version_eq(10, 0) ) {
-         push( @generalrec,
+    if ( mysql_version_eq( 10, 0 ) ) {
+        push( @generalrec,
 "Performance shouldn't be activated for MariaDB 10.0 for performance issue"
-            );
-            push( @adjvars, "performance_schema = OFF disable PFS" );
-            return;   
+        );
+        push( @adjvars, "performance_schema = OFF disable PFS" );
+        return;
     }
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
         infoprint "Sys schema isn't installed.";
@@ -3803,6 +3814,7 @@ sub mysqsl_pfs {
     }
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
+
     # InnoDB Buffer Pool by schema
     subheaderprint "Performance schema: InnoDB Buffer Pool by schema";
     $nbL = 1;
@@ -4003,7 +4015,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-            'use sys;select query from sys.x\\$statements_with_temp_tables LIMIT 20'
+'use sys;select query from sys.x\\$statements_with_temp_tables LIMIT 20'
         )
       )
     {
@@ -6159,6 +6171,7 @@ validate_tuner_version;    # Check last version
 mysql_setup;               # Gotta login first
 debugprint "MySQL FINAL Client : $mysqlcmd $mysqllogin";
 debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
+
 #exit(0);
 os_setup;                  # Set up some OS variables
 get_all_vars;              # Toss variables/status into hashes
