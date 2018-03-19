@@ -1843,15 +1843,19 @@ sub get_replication_status {
           . scalar( keys %myslaves )
           . " server(s).";
     }
-
+    infoprint "Binlog format: ". $myvar{'binlog_format'};
+    infoprint "XA support enabled: ". $myvar{'innodb_support_xa'};
+    infoprint "Semi synchronous replication Master: ". $myvar{'rpl_semi_sync_master_enabled'};
+    infoprint "Semi synchronous replication Slave: ". $myvar{'rpl_semi_sync_slave_enabled'};
     if ( scalar( keys %myrepl ) == 0 and scalar( keys %myslaves ) == 0 ) {
-        infoprint "This is a standalone server.";
+        infoprint "This is a standalone server";
         return;
     }
     if ( scalar( keys %myrepl ) == 0 ) {
-        infoprint "No replication setup for this server.";
+        infoprint "No replication setup for this server or replication not started.";
         return;
     }
+
     $result{'Replication'}{'status'} = \%myrepl;
     my ($io_running) = $myrepl{'Slave_IO_Running'};
     debugprint "IO RUNNING: $io_running ";
