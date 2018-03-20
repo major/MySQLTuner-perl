@@ -1848,9 +1848,9 @@ sub get_replication_status {
     infoprint "Binlog format: " . $myvar{'binlog_format'};
     infoprint "XA support enabled: " . $myvar{'innodb_support_xa'};
     infoprint "Semi synchronous replication Master: "
-      . $myvar{'rpl_semi_sync_master_enabled'};
+      . defined($myvar{'rpl_semi_sync_master_enabled'})?$myvar{'rpl_semi_sync_master_enabled'}:'Not Activated';
     infoprint "Semi synchronous replication Slave: "
-      . $myvar{'rpl_semi_sync_slave_enabled'};
+      . defined($myvar{'rpl_semi_sync_slave_enabled'})?$myvar{'rpl_semi_sync_slave_enabled'}:'Not Activated';
     if ( scalar( keys %myrepl ) == 0 and scalar( keys %myslaves ) == 0 ) {
         infoprint "This is a standalone server";
         return;
