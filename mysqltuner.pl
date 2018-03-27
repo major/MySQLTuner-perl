@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.7
+# mysqltuner.pl - Version 1.7.8
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.7";
+my $tunerversion = "1.7.8";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1848,9 +1848,9 @@ sub get_replication_status {
     infoprint "Binlog format: " . $myvar{'binlog_format'};
     infoprint "XA support enabled: " . $myvar{'innodb_support_xa'};
     infoprint "Semi synchronous replication Master: "
-      . defined($myvar{'rpl_semi_sync_master_enabled'})?$myvar{'rpl_semi_sync_master_enabled'}:'Not Activated';
+      . (defined($myvar{'rpl_semi_sync_master_enabled'})?$myvar{'rpl_semi_sync_master_enabled'}:'Not Activated');
     infoprint "Semi synchronous replication Slave: "
-      . defined($myvar{'rpl_semi_sync_slave_enabled'})?$myvar{'rpl_semi_sync_slave_enabled'}:'Not Activated';
+      . (defined($myvar{'rpl_semi_sync_slave_enabled'})?$myvar{'rpl_semi_sync_slave_enabled'}:'Not Activated');
     if ( scalar( keys %myrepl ) == 0 and scalar( keys %myslaves ) == 0 ) {
         infoprint "This is a standalone server";
         return;
@@ -6219,7 +6219,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.7 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.8 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
