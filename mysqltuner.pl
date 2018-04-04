@@ -5059,6 +5059,7 @@ sub mariadb_connect {
 # Perl trim function to remove whitespace from the start and end of the string
 sub trim {
     my $string = shift;
+    return "" unless defined($string);
     $string =~ s/^\s+//;
     $string =~ s/\s+$//;
     return $string;
