@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.8
+# mysqltuner.pl - Version 1.7.9
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.8";
+my $tunerversion = "1.7.9";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1002,6 +1002,7 @@ sub select_str_g {
 
     my $req = shift;
     my $str = select_one_g $pattern, $req;
+    return () unless defined $str;
     my @val = split /:/, $str;
     shift @val;
     return trim(@val);
@@ -6225,7 +6226,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.8 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.9 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
