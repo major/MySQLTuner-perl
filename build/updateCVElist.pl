@@ -5,7 +5,7 @@ use WWW::Mechanize::GZip;
 use File::Util;
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
-my $verbose;
+my $verbose=1;
 sub AUTOLOAD {
     use vars qw($AUTOLOAD);
     my $cmd = $AUTOLOAD;
