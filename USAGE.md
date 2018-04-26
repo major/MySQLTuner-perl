@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.7.8 - MySQL High Performance Tuning Script
+    MySQLTuner 1.7.9 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 

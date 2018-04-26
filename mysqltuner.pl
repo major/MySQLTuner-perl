@@ -1852,12 +1852,14 @@ sub get_replication_status {
       . (
         defined( $myvar{'rpl_semi_sync_master_enabled'} )
         ? $myvar{'rpl_semi_sync_master_enabled'}
-        : 'Not Activated' );
+        : 'Not Activated'
+      );
     infoprint "Semi synchronous replication Slave: "
       . (
         defined( $myvar{'rpl_semi_sync_slave_enabled'} )
         ? $myvar{'rpl_semi_sync_slave_enabled'}
-        : 'Not Activated' );
+        : 'Not Activated'
+      );
     if ( scalar( keys %myrepl ) == 0 and scalar( keys %myslaves ) == 0 ) {
         infoprint "This is a standalone server";
         return;
@@ -5904,8 +5906,11 @@ sub mysql_tables {
                 my $optimal_type = select_str_g( "Optimal_fieldtype",
                     "SELECT $_ FROM $dbname.$tbname PROCEDURE ANALYSE(100000)"
                 );
-
-                if ( $current_type ne $optimal_type ) {
+                if ( not defined($optimal_type) or $optimal_type eq '' ) {
+                    infoprint "      Current Fieldtype: $current_type";
+                    infoprint "      Optimal Fieldtype: Not available";
+                }
+                elsif ( $current_type ne $optimal_type ) {
                     infoprint "      Current Fieldtype: $current_type";
                     infoprint "      Optimal Fieldtype: $optimal_type";
                     badprint
