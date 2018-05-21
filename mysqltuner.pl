@@ -266,7 +266,7 @@ sub infoprinthcmd {
     infoprintcmd "$_[1]";
 }
 
-# Calculates the number of phyiscal cores considering HyperThreading
+# Calculates the number of physical cores considering HyperThreading
 sub cpu_cores {
     my $cntCPU =
 `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
@@ -2342,7 +2342,7 @@ sub calculations {
 
 # Global memory
 # Max used memory is memory used by MySQL based on Max_used_connections
-# This is the max memory used theorically calculated with the max concurrent connection number reached by mysql
+# This is the max memory used theoretically calculated with the max concurrent connection number reached by mysql
     $mycalc{'max_used_memory'} =
       $mycalc{'server_buffers'} +
       $mycalc{"max_total_per_thread_buffers"} +
@@ -2352,7 +2352,7 @@ sub calculations {
       percentage( $mycalc{'max_used_memory'}, $physical_memory );
 
 # Total possible memory is memory needed by MySQL based on max_connections
-# This is the max memory MySQL can theorically used if all connections allowed has opened by mysql
+# This is the max memory MySQL can theoretically used if all connections allowed has opened by mysql
     $mycalc{'max_peak_memory'} =
       $mycalc{'server_buffers'} +
       $mycalc{'total_per_thread_buffers'} +
@@ -6204,10 +6204,10 @@ cve_recommendations;       # Display related CVE
 calculations;              # Calculate everything we need
 mysql_stats;               # Print the server stats
 mysqsl_pfs;                # Print Performance schema info
-mariadb_threadpool;        # Print MaraiDB ThreadPool stats
+mariadb_threadpool;        # Print MariaDB ThreadPool stats
 mysql_myisam;              # Print MyISAM stats
 mysql_innodb;              # Print InnoDB stats
-mariadb_ariadb;            # Print MaraiDB AriaDB stats
+mariadb_ariadb;            # Print MariaDB AriaDB stats
 mariadb_tokudb;            # Print MariaDB Tokudb stats
 mariadb_xtradb;            # Print MariaDB XtraDB stats
 mariadb_rockdb;            # Print MariaDB RockDB stats
