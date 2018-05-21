@@ -27,7 +27,7 @@ following restrictions:
   respect the opinions of others.
 
 
-##Before submitting an issue##
+## Before submitting an issue
 
 1. Upgrade to the latest version of MySQLTuner and see if the problem remains
 
@@ -47,7 +47,7 @@ Good bug reports are extremely helpful &mdash; thank you!
 
 Guidelines for bug reports:
 
-1. **Use the [GitHub issue search](https://github.com/major/MySQLTuner-perl/search?type=Issues)** &mdash; check if the issue has already been
+1. **Use the [GitHub issue search]** &mdash; check if the issue has already been
    reported.
 
 2. **Check if the bug has already been fixed** &mdash; try to reproduce it using the
@@ -100,13 +100,13 @@ to MySQLTuner will be evaluated on a combination of scope (how well it fits into
 project), maintenance burden and general usefulness.
 
 Creating something great often means saying no to seemingly good ideas. Don't
-dispair if your feature request isn't accepted, take action! Fork the
+despair if your feature request isn't accepted, take action! Fork the
 repository, build your idea and share it with others. We released MySQLTuner under
 the MIT License for this purpose precisely. Open source works best when smart
 and dedicated people riff off of each others' ideas to make even greater things.
 
-## New feature request ##
-* You can find Enhancement asked by community at [Enhancement issue](https://github.com/major/MySQLTuner-perl/labels/enhancement)
+## New feature request
+You can find Enhancement asked by community at [Enhancement issue]
 
 <a name="pull-requests"></a>
 ## Pull requests
@@ -153,8 +153,7 @@ these guidelines is the best way to get your work included in MySQLTuner.
    git checkout -b <topic-branch-name>
    ```
 
-4. Commit your changes in logical chunks. Please adhere to these [git commit
-   message guidelines](http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html)
+4. Commit your changes in logical chunks. Please adhere to these [git commit message guidelines]
    or your code is unlikely be merged into the main project. Use Git's
    [interactive rebase](https://help.github.com/articles/interactive-rebase)
    feature to tidy up your commits before making them public.
@@ -171,18 +170,23 @@ these guidelines is the best way to get your work included in MySQLTuner.
    git push origin <topic-branch-name>
    ```
 
-7. [Open a Pull Request](https://help.github.com/articles/using-pull-requests/)
-    with a clear title and description.
+7. [Open a Pull Request] with a clear title and description.
 
 **IMPORTANT**: By submitting a patch, you agree to allow the project owner to
-license your work under the [GPLv3 License](https://en.wikipedia.org/wiki/GNU_General_Public_License).
+license your work under the [GPLv3 License].
 
-Copy of the license is available at [LICENSE](https://github.com/major/MySQLTuner-perl/blob/master/LICENSE)
+Copy of the license is available at [LICENSE]
 
 <a name="code-conventions"></a>
-#### MySQLTuner Code Conventions
+## MySQLTuner Code Conventions
 
 1. Check code convention using **perltidy** and **perlcritic**
 2. Don't manually update the version number in `mysqltuner.pl`. 
- 
 
+
+[Enhancement issue]:https://github.com/major/MySQLTuner-perl/labels/enhancement
+[GitHub issue search]:https://github.com/major/MySQLTuner-perl/search?type=Issues
+[git commit message guidelines]:http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+[Open a Pull Request]:https://help.github.com/articles/using-pull-requests/
+[GPLv3 License]:https://en.wikipedia.org/wiki/GNU_General_Public_License
+[LICENSE]:https://github.com/major/MySQLTuner-perl/blob/master/LICENSE

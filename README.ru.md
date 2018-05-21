@@ -13,10 +13,11 @@ MySQLTuner-perl
 
 **MySQLTuner** поддерживает порядка 300 показателей для MySQL/MariaDB/Percona Server последних версий.
 
-**MySQLTuner** поддерживает сбор показателей для множества таких конфигураций, как ![Galera Cluster](http://galeracluster.com/), ![TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), ![                                                                                                                         Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, ![InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), ![MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), ![Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
+**MySQLTuner** поддерживает сбор показателей для множества таких конфигураций, как [Galera Cluster](http://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), метрики ОС Linux, [InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/kb/en/mariadb/aria/), ... 
+
 
 Вы можете найти больше информации об этих показателях на 
-![Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+[Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 
 ![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
@@ -26,7 +27,7 @@ MySQLTuner нуждается в вас:
 
 **MySQLTuner** нуждается в вашем вкладе в документацию и код, а так же ждёт обратную связь.
 
-* Присоединяйтесь, пожалуйста, к нашему трекеру ошибок [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
+* Присоединяйтесь, пожалуйста, к нашему трекеру ошибок [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * Руководство по поддержке проекта доступно на [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Ставьте "звезды" **проекту MySQLTuner** на [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
 
@@ -60,6 +61,15 @@ MySQLTuner нуждается в вас:
 отрицательный эфект в работе MySQL в другой области.
 
 **Серьезно - прочитайте раздел ЧаВо, который расположен чуть ниже.**
+
+
+Рекомендации по безопасности
+--
+
+Здравствуй, пользователь directadmin!
+Мы обнаружили, что запуск mysqltuner с доступами da_admin, взятыми из файла /usr/local/directadmin/conf/my.cnf, может привести к компрометации пароля!
+Детали можно прочитать по ссылке [Issue #289](https://github.com/major/MySQLTuner-perl/issues/289).
+
 
 Что именно проверяет MySQLTuner?
 --
@@ -199,6 +209,10 @@ __Пример:__ Включение вывода отладочной инфо�
 	--skipsize           Don't enumerate tables and their types/sizes (default: on)
 	                     (Recommended for servers with many tables)
 
+**Вопрос: Я могу установить этот проект с помощью homebrew на Apple Macintosh?**
+
+Да! Вы можете уставновить его командой `brew install mysqltuner` с помощью [homebrew](https://brew.sh/) на Apple Macintosh.
+
 MySQLTuner и Vagrant
 --
 **MySQLTuner** содержится в следующих конфигурациях Vagrant:
@@ -235,7 +249,7 @@ MySQLTuner нуждается в Вас:
 
 **MySQLTuner** нуждается в вашем вкладе в документацию и код, а так же ждёт обратную связь.
 
-* Присоединяйтесь, пожалуйста, к нашему трекеру ошибок [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
+* Присоединяйтесь, пожалуйста, к нашему трекеру ошибок [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * Руководство по поддержке проекта доступно на [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Ставьте "звезды" **проекту MySQLTuner** на [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
 

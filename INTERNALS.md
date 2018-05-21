@@ -72,7 +72,7 @@
 ## MySQLTuner system checks
 * 32-bit w/>2GB RAM check
 * Check number of opened ports (warning if more than 9 ports opened)
-* Check 80, 8080, 443 and 8443 ports if warning are raised if there are opened 
+* Check 80, 8080, 443 and 8443 ports if warning are raised if there are opened
 * Check if some banned ports are not opened (option --bannedports separated by comma)
 * Check if non kernel and user process except mysqld are not using more than 15% of total physical memory)
 * Check vm.swapiness
@@ -84,7 +84,7 @@
 
 ## MySQLTuner Server version checks
 * EOL MySQL version check
-* Currently MySQL < 5.1 are EOF considerated.
+* Currently MySQL < 5.1 are EOF considered.
 * Using 5.5+ version of MySQL for performance issue (asynchronous IO).
 
 ## MySQL Storage engine general information
@@ -103,7 +103,7 @@
 * Users w/o host restriction
 * Weak password check (possibly using cracklib later?)
 * Using basic_passwords.txt as password database
-* Password list checks can be avoid (option: --skippassword) 
+* Password list checks can be avoid (option: --skippassword)
 
 ## MySQLTuner CVE vulnerabilities detection
 
@@ -131,7 +131,7 @@
 * Per index information
 	* Index Cardinality
 	* Index Selectivity
-	* Misc information about index definition 
+	* Misc information about index definition
 	* Misc information about index size
 
 ## MySQLTuner Connections information
@@ -179,8 +179,8 @@
    * Query Cache Buffers
    * Query Cache DISABLED, ALL REQUEST or ON DEMAND
    * Query Cache Size
-   * Query cache hit ratio (cache efficienty)
-    
+   * Query cache hit ratio (cache efficiency)
+
 ## MySQLTuner memory checks
 
 * Get total RAM/swap
@@ -194,11 +194,16 @@
 
 ## MySQLTuner replication checks
 
-* Is server replication configuarted as slave ?
-* SQL replacation thread running ?
-* IO replacation thread running ?
-* Replication lag in seconds
-* Is Slave configuratedd in read only ?
+* Is server replication configured as slave ?
+* SQL replication thread running ?
+* IO replication thread running ?
+* Replication lag in seconds (Seconds_behind_master)
+* Is Slave configured in read only ?
+* replication type ROW, MIX, STMT
+* replication Semisync master
+* replication Semisync slave
+* XA support activated
+* replication started ?
 
 ## MySQLTuner InnoDB information
 
@@ -206,14 +211,16 @@
    * If possible, innodb_buffer_pool_size should be greater data and index size for Innodb Table
    * Innodb_buffer_pool_size should around 75 to 80 % of the available system memory.
 * InnoDB Buffer Pool Instances
-   * MySQL needs 1 instanes per 1Go of Buffer Pool
+   * MySQL needs 1 instance per 1Go of Buffer Pool
    * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
    * innodb_buffer_pool instances must be equals or lower than 64
-*  InnoDB Buffer Pool Usage
+* InnoDB Buffer Pool Usage
    * If more than 20% of InnoDB buffer pool is not used, MySQLTuner raise an alert.
-* InnoDB Read effiency
+* InnoDB Buffer Pool Log Size
+   * InnoDB total log file size should be 25% of innodb_buffer_pool_size
+* InnoDB Read efficiency
    * Ratio of read without locks
-* InnoDB Write effiency
+* InnoDB Write efficiency
    * Ratio of write without locks
 * InnoDB Log Waits
    * Checks that no lock is used on Innodb Log.
@@ -225,7 +232,7 @@
 * Is Aria indexes size is greater than page cache size ?
 * Page cache read hit ratio (>95%)
 * Page cache write hit ratio (>95%)
- 
+
 
 ## MySQLTuner MYISAM information
 
@@ -249,6 +256,10 @@
 	* Joiner(Try to reach cluster group)
 	* SYNCED state able to read/write
 * wsrep_cluster_conf_id configuration level must be identical in all nodes
+* wsrep_slave_thread is between 3 or 4 times number of CPU core.
+* gcs.limit should be equal to wsrep_slave_threads * 5
+* gcs.fc_factor should be equal to 0.8
+* Flow control fraction should be lower than 0.02 (wsrep_flow_control_paused < 0.02)
 * wsrep_last_commited committed level must be identical in all nodes
 * Look for tables without primary keys
 * Look for non InnoDB tables for Galera
@@ -260,13 +271,13 @@
 
 ## MySQLTuner TokuDB information
 
-* tokudb_cache_size 
-* tokudb_directio 
+* tokudb_cache_size
+* tokudb_directio
 * tokudb_empty_scan
 * tokudb_read_block_size
 * tokudb_commit_sync
 * tokudb_checkpointing_period
-* tokudb_block_size 
+* tokudb_block_size
 * tokudb_cleaner_iterations
 * tokudb_fanout
 
@@ -285,14 +296,16 @@
 ## MySQLTuner RocksDb information
 
 *  Nothing for the moment
-  
+
 ## MySQLTuner Thread pool information
 
 * thread_pool_size between 16 to 36 for Innodb usage
 * thread_pool_size between 4 to 8 for MyIsam usage
 
 ## MySQLTuner performance schema and sysschema information
-
+* Check that Performance schema is activated for 5.6+ version
+* Check that Performance schema is deactivated for 5.5- version
+* Check that Sys schema is installed
 * sys Schema version
 * Top user per connection
 * Top user per statement
@@ -346,9 +359,9 @@
 * Event per wait total latency
 * Event per wait read latency
 * Event per wait write latency
-* TOP 15 most read indexes 
+* TOP 15 most read indexes
 * TOP 15 most modified indexes
-* TOP 15 high select latency index 
+* TOP 15 high select latency index
 * TOP 15 high insert latency index
 * TOP 15 high update latency index
 * TOP 15 high delete latency index
@@ -377,7 +390,7 @@
 * TOP 15 merge queries with sort
 * TOP 15 average sort merges queries with sort
 * TOP 15 scans queries with sort
-* TOP 15 range queries with sort 
+* TOP 15 range queries with sort
 * Top 20 queries with temp table
 * Last 50 queries with temp table
 * TOP 15 total latency queries with temp table
