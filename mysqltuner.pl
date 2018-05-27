@@ -1778,7 +1778,7 @@ sub security_recommendations {
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
-            badprint "User '" . $line . "' hasn't specific host restriction.";
+            badprint "User '" . $line . "' does not specify hostname restrictions";
         }
         push( @generalrec,
             "Restrict Host for user\@% to user\@SpecificDNSorIp" );
@@ -2664,7 +2664,7 @@ sub mysql_stats {
         $qps = sprintf( "%.3f", $mystat{'Questions'} / $mystat{'Uptime'} );
     }
     push( @generalrec,
-        "MySQL started within last 24 hours - recommendations may be inaccurate"
+        "MySQL was started within the last 24 hours - recommendations may be inaccurate"
     ) if ( $mystat{'Uptime'} < 86400 );
     infoprint "Up for: "
       . pretty_uptime( $mystat{'Uptime'} ) . " ("
@@ -2973,7 +2973,7 @@ sub mysql_stats {
         push( @adjvars,
                 "join_buffer_size (> "
               . hr_bytes( $myvar{'join_buffer_size'} )
-              . ", or always use indexes with joins)" );
+              . ", or always use indexes with JOINs)" );
         push( @generalrec,
             "Adjust your join queries to always utilize indexes" );
     }
@@ -3412,14 +3412,14 @@ sub mysqsl_pfs {
         infoprint "Performance schema is disabled.";
         if ( mysql_version_ge( 5, 6 ) ) {
             push( @generalrec,
-                "Performance should be activated for better diagnostics" );
+                "Performance schema should be activated for better diagnostics" );
             push( @adjvars, "performance_schema = ON enable PFS" );
         }
     }
     else {
         if ( mysql_version_le( 5, 5 ) ) {
             push( @generalrec,
-"Performance shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
+"Performance schema shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
             );
             push( @adjvars, "performance_schema = OFF disable PFS" );
         }
@@ -3429,7 +3429,7 @@ sub mysqsl_pfs {
 
     if ( mysql_version_eq( 10, 0 ) ) {
         push( @generalrec,
-"Performance shouldn't be activated for MariaDB 10.0 for performance issue"
+"Performance schema shouldn't be activated for MariaDB 10.0 for performance issue"
         );
         push( @adjvars, "performance_schema = OFF disable PFS" );
         return;
@@ -5522,7 +5522,7 @@ sub mysql_innodb {
               . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
         );
         push( @generalrec,
-"Read this before changing innodb_log_file_size and/or innodb_log_files_in_group: http://bit.ly/2wgkDvS"
+"Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: http://bit.ly/2wgkDvS"
         );
     }
     else {
