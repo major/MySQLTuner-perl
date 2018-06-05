@@ -1778,7 +1778,7 @@ sub security_recommendations {
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
-            badprint "User '" . $line . "' does not specify hostname restrictions";
+            badprint "User '" . $line . "' does not specify hostname restrictions.";
         }
         push( @generalrec,
             "Restrict Host for user\@% to user\@SpecificDNSorIp" );
