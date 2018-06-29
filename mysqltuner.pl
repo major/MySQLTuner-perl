@@ -1778,7 +1778,8 @@ sub security_recommendations {
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
-            badprint "User '" . $line . "' does not specify hostname restrictions.";
+            badprint "User '" . $line
+              . "' does not specify hostname restrictions.";
         }
         push( @generalrec,
             "Restrict Host for user\@% to user\@SpecificDNSorIp" );
@@ -1847,7 +1848,7 @@ sub get_replication_status {
           . " server(s).";
     }
     infoprint "Binlog format: " . $myvar{'binlog_format'};
-    infoprint "XA support enabled: " . $myvar{'innodb_support_xa'};
+    infoprint "XA support enabled: " . defined($myvar{'innodb_support_xa'})?$myvar{'innodb_support_xa'}:'UNKONOWN';
     infoprint "Semi synchronous replication Master: "
       . (
         defined( $myvar{'rpl_semi_sync_master_enabled'} )
@@ -2664,7 +2665,7 @@ sub mysql_stats {
         $qps = sprintf( "%.3f", $mystat{'Questions'} / $mystat{'Uptime'} );
     }
     push( @generalrec,
-        "MySQL was started within the last 24 hours - recommendations may be inaccurate"
+"MySQL was started within the last 24 hours - recommendations may be inaccurate"
     ) if ( $mystat{'Uptime'} < 86400 );
     infoprint "Up for: "
       . pretty_uptime( $mystat{'Uptime'} ) . " ("
@@ -3412,7 +3413,8 @@ sub mysqsl_pfs {
         infoprint "Performance schema is disabled.";
         if ( mysql_version_ge( 5, 6 ) ) {
             push( @generalrec,
-                "Performance schema should be activated for better diagnostics" );
+                "Performance schema should be activated for better diagnostics"
+            );
             push( @adjvars, "performance_schema = ON enable PFS" );
         }
     }
