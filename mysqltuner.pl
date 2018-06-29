@@ -2484,7 +2484,9 @@ sub calculations {
     }
 
     # Query cache
-    if ( mysql_version_ge(4) ) {
+    if ( mysql_version_ge(8) and mysql_version_le(10) ) {
+        $mycalc{'query_cache_efficiency'} = 0;
+    } elsif ( mysql_version_ge(4) ) {
         $mycalc{'query_cache_efficiency'} = sprintf(
             "%.1f",
             (
