@@ -2181,7 +2181,7 @@ sub check_storage_engines {
     }
     while ( my ( $engine, $size ) = each(%enginestats) ) {
         infoprint "Data in $engine tables: "
-          . hr_bytes_rnd($size)
+          . hr_bytes($size)
           . " (Tables: "
           . $enginecount{$engine} . ")" . "";
     }
@@ -5504,7 +5504,7 @@ sub mysql_innodb {
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
         push( @adjvars,
                 "innodb_buffer_pool_size (>= "
-              . hr_bytes_rnd( $enginestats{'InnoDB'} )
+              . hr_bytes( $enginestats{'InnoDB'} )
               . ") if possible." );
     }
     if (   $mycalc{'innodb_log_size_pct'} < 20
