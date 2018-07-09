@@ -44,5 +44,5 @@ before_script:
   - chmod 600 .my.cnf
 
 script:
-  - perlcritic mysqltuner.pl
+  - perlcritic --exclude InputOutput::ProhibitInteractiveTest mysqltuner.pl
   - ./mysqltuner.pl --idxstat --dbstat
