@@ -1848,7 +1848,12 @@ sub get_replication_status {
           . " server(s).";
     }
     infoprint "Binlog format: " . $myvar{'binlog_format'};
-    infoprint "XA support enabled: " . defined($myvar{'innodb_support_xa'})?$myvar{'innodb_support_xa'}:'UNKONOWN';
+    infoprint "XA support enabled: "
+      . (
+        defined( $myvar{'innodb_support_xa'} )
+        ? $myvar{'innodb_support_xa'}
+        : 'UNKNOWN'
+      );
     infoprint "Semi synchronous replication Master: "
       . (
         defined( $myvar{'rpl_semi_sync_master_enabled'} )
