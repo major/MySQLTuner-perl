@@ -826,17 +826,16 @@ sub mysql_setup {
         and $opt{'defaults-file'} eq '' )
     {
 
-        # We have a debian maintenance account, use it
+        # We have a Debian maintenance account, use it
         $mysqllogin = "--defaults-file=/etc/mysql/debian.cnf";
         my $loginstatus = `$mysqladmincmd $mysqllogin ping 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint
-              "Logged in using credentials from debian maintenance account.";
+              "Logged in using credentials from Debian maintenance account.";
             return 1;
         }
         else {
-            badprint "Attempted to use login credentials from debian maintena
-nce account, but they failed.";
+            badprint "Attempted to use login credentials from Debian maintenance account, but they failed.";
             exit 1;
         }
     }
@@ -856,7 +855,7 @@ nce account, but they failed.";
     }
     else {
 
-        # It's not Plesk or debian, we should try a login
+        # It's not Plesk or Debian, we should try a login
         debugprint "$mysqladmincmd $remotestring ping 2>&1";
         my $loginstatus = `$mysqladmincmd $remotestring ping 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
@@ -1052,7 +1051,7 @@ sub get_all_vars {
     $dummyselect = select_one "SELECT VERSION()";
     if ( not defined($dummyselect) or $dummyselect eq "" ) {
         badprint
-"You probably doesn't get enough privileges for running MySQLTuner ...";
+"You probably did not get enough privileges for running MySQLTuner ...";
         exit(256);
     }
     $dummyselect =~ s/(.*?)\-.*/$1/;
