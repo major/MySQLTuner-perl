@@ -1067,6 +1067,9 @@ sub get_all_vars {
     push( @mysqlstatlist, select_array("SHOW GLOBAL STATUS") );
     arr2hash( \%mystat, \@mysqlstatlist );
     $result{'Status'} = \%mystat;
+    unless( defined ($myvar{'innodb_support_xa'}) ) {
+        $myvar{'innodb_support_xa'}='ON';
+    }
 
     $myvar{'have_galera'} = "NO";
     if ( defined( $myvar{'wsrep_provider_options'} )
@@ -1847,12 +1850,8 @@ sub get_replication_status {
           . " server(s).";
     }
     infoprint "Binlog format: " . $myvar{'binlog_format'};
-    infoprint "XA support enabled: "
-      . (
-        defined( $myvar{'innodb_support_xa'} )
-        ? $myvar{'innodb_support_xa'}
-        : 'UNKNOWN'
-      );
+    infoprint "XA support enabled: " . $myvar{'innodb_support_xa'};
+
     infoprint "Semi synchronous replication Master: "
       . (
         defined( $myvar{'rpl_semi_sync_master_enabled'} )
@@ -1986,7 +1985,7 @@ sub check_architecture {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( `uname` !~ /SunOS/ && `uname -m` =~ /64/ ) {
+    elsif ( `uname` !~ /SunOS/ && `uname -m` =~ /64/ && `uname -m` !~ /s390x/ ) {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
