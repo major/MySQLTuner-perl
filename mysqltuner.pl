@@ -5030,7 +5030,7 @@ sub mariadb_rockdb {
     }
     infoprint "RocksDB is enabled.";
 
-    # All is to done here
+    # All is to do here
 }
 
 # Recommendations for Spider
@@ -5046,7 +5046,7 @@ sub mariadb_spider {
     }
     infoprint "Spider is enabled.";
 
-    # All is to done here
+    # All is to do here
 }
 
 # Recommendations for Connect
@@ -5060,9 +5060,9 @@ sub mariadb_connect {
         infoprint "Connect is disabled.";
         return;
     }
-    infoprint "TokuDB is enabled.";
+    infoprint "Connect is enabled.";
 
-    # All is to done here
+    # All is to do here
 }
 
 # Perl trim function to remove whitespace from the start and end of the string
@@ -5154,7 +5154,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     {
         badprint
 "wsrep_slave_threads is not equal to 2, 3 or 4 times number of CPU(s)";
-        push @adjvars, "wsrep_slave_threads= Nb of Core CPU * 4";
+        push @adjvars, "wsrep_slave_threads = ".(cpu_cores * 4);
     }
     else {
         goodprint
