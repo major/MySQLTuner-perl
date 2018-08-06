@@ -31,7 +31,7 @@ MySQLTuner needs you:
 
 [![Stargazers over time](https://starcharts.herokuapp.com/major/MySQLTuner-perl.svg)](https://starcharts.herokuapp.com/major/MySQLTuner-perl)
 
-Compatibility:
+Compatibility
 ====
 
 * MySQL 5.7 (full support)
@@ -68,7 +68,7 @@ Security recommendations
 --
 
 Hi directadmin user!
-We detected that you run mysqltuner with da_admin's credentials taken from /usr/local/directadmin/conf/my.cnf, which might bring to a password discovery!
+We detected that you run mysqltuner with da_admin's credentials taken from `/usr/local/directadmin/conf/my.cnf`, which might bring to a password discovery!
 Read link for more details [Issue #289](https://github.com/major/MySQLTuner-perl/issues/289).
 
 What MySQLTuner is checking exactly ?
@@ -148,12 +148,11 @@ Once you create it, make sure it's owned by your user and the mode on the file i
 **Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
 
 You could use mysql_config_editor utilities.
-
+~~~bash
 	$ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
 	Enter password: ********
-	$
-
-After which, ~/.mylogin.cnf will be created with the appropriate access.
+~~~
+After which, `~/.mylogin.cnf` will be created with the appropriate access.
 
 To get information about stored credentials, use the following command:
 
