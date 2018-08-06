@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.9
+# mysqltuner.pl - Version 1.7.10
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.9";
+my $tunerversion = "1.7.10";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2351,8 +2351,8 @@ sub calculations {
     $mycalc{'max_used_memory'} =
       $mycalc{'server_buffers'} +
       $mycalc{"max_total_per_thread_buffers"} +
-      get_pf_memory() +
-      get_gcache_memory();
+      get_pf_memory();
+    #   + get_gcache_memory();
     $mycalc{'pct_max_used_memory'} =
       percentage( $mycalc{'max_used_memory'}, $physical_memory );
 
@@ -2361,8 +2361,8 @@ sub calculations {
     $mycalc{'max_peak_memory'} =
       $mycalc{'server_buffers'} +
       $mycalc{'total_per_thread_buffers'} +
-      get_pf_memory() +
-      get_gcache_memory();
+      get_pf_memory();
+      # +  get_gcache_memory();
     $mycalc{'pct_max_physical_memory'} =
       percentage( $mycalc{'max_peak_memory'}, $physical_memory );
 
@@ -6240,7 +6240,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.9 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.10 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
