@@ -1985,7 +1985,7 @@ sub check_architecture {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( `uname` !~ /SunOS/ && `uname -m` =~ /64/ && `uname -m` !~ /s390x/ ) {
+    elsif ( `uname` !~ /SunOS/ && `uname -m` =~ /(64|s390x)/ ) {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
