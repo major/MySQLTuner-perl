@@ -5149,6 +5149,7 @@ group by c.table_schema,c.table_name
 having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     );
 
+    infoprint "CPU core detected: ". (cpu_cores);
     if (   get_wsrep_option('wsrep_slave_threads') > (cpu_cores) * 4
         or get_wsrep_option('wsrep_slave_threads') < (cpu_cores) * 3 )
     {
