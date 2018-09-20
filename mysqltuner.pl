@@ -1079,7 +1079,8 @@ sub get_all_vars {
 
     $myvar{'have_galera'} = "NO";
     if ( defined( $myvar{'wsrep_provider_options'} )
-        && $myvar{'wsrep_provider_options'} ne "" )
+        && $myvar{'wsrep_provider_options'} ne "" 
+        && $myvar{'wsrep_on'} ne "OFF" )
     {
         $myvar{'have_galera'} = "YES";
         debugprint "Galera options: " . $myvar{'wsrep_provider_options'};
@@ -5709,7 +5710,7 @@ sub mysql_innodb {
 sub check_metadata_perf {
     subheaderprint "Analysis Performance Metrics";
     infoprint "innodb_stats_on_metadata: ".$myvar{'innodb_stats_on_metadata'};
-    if ($myvar{'innodb_stats_on_metadata'} == 'ON') {
+    if ($myvar{'innodb_stats_on_metadata'} eq 'ON') {
         badprint "Stat are updated during querying INFORMATION_SCHEMA.";
         push @adjvars, "SET innodb_stats_on_metadata = OFF";
         #Disabling innodb_stats_on_metadata 
