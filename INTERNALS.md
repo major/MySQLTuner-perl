@@ -111,6 +111,7 @@
 * Check if your MariaDB or MySQL version contains CVE bulletins.
 
 ## MySQLTuner database information
+* Performance analysis parameter checks
 * Per database information
         * Tables number
 	* Rows number

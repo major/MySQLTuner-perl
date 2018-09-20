@@ -5706,6 +5706,19 @@ sub mysql_innodb {
     $result{'Calculations'} = {%mycalc};
 }
 
+sub check_metadata_perf {
+    subheaderprint "Analysis Performance Metrics";
+    infoprint "innodb_stats_on_metadata: ".$myvar{'innodb_stats_on_metadata'};
+    if ($myvar{'innodb_stats_on_metadata'} == 'ON') {
+        badprint "Stat are updated during querying INFORMATION_SCHEMA.";
+        push @adjvars, "SET innodb_stats_on_metadata = OFF";
+        #Disabling innodb_stats_on_metadata 
+        select_one("SET GLOBAL innodb_stats_on_metadata = OFF;");
+        return 1;
+    }
+    goodprint "No stat updates during querying INFORMATION_SCHEMA.";
+    return 0 
+}
 # Recommendations for Database metrics
 sub mysql_databases {
     return if ( $opt{dbstat} == 0 );
@@ -6210,6 +6223,8 @@ check_architecture;        # Suggest 64-bit upgrade
 system_recommendations;    # avoid to many service on the same host
 log_file_recommendations;  # check log file content
 check_storage_engines;     # Show enabled storage engines
+
+check_metadata_perf;       # Show parameter impacting performance during analysis 
 mysql_databases;           # Show informations about databases
 mysql_tables;              # Show informations about table column
 
