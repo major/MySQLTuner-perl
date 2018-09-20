@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.7.9 - MySQL High Performance Tuning Script
+    MySQLTuner 1.7.11 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -42,6 +42,8 @@ You must provide the remote server's total memory when connecting to other serve
     --noinfo                    Remove informational responses
     --debug                     Print debug information
     --dbstat                    Print database information
+    --tbstat                    Print table information
+    --notbstat                  Don't Print table information
     --idxstat                   Print index information
     --sysstat                   Print system information
     --pfstat                    Print Performance schema
@@ -143,4 +145,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
     See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see &lt;http://www.gnu.org/licenses/>.
+along with this program.  If not, see <http://www.gnu.org/licenses/>.

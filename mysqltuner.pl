@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.10
+# mysqltuner.pl - Version 1.7.11
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.10";
+my $tunerversion = "1.7.11";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -86,6 +86,8 @@ my %opt = (
     "maxportallowed" => 0,
     "outputfile"     => 0,
     "dbstat"         => 0,
+    "tbstat"         => 0,
+    "notbstat"       => 0,
     "idxstat"        => 0,
     "sysstat"        => 0,
     "pfstat"         => 0,
@@ -122,7 +124,8 @@ GetOptions(
     'password=s',      'pfstat',
     'passenv=s',       'userenv=s',
     'defaults-file=s', 'ssl-ca=s',
-    'color'
+    'color',	       'tbstat',
+    'notbstat'
   )
   or pod2usage(
     -exitval  => 1,
@@ -175,13 +178,16 @@ $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
 if ( $opt{verbose} ) {
     $opt{checkversion} = 1;    #Check for updates to MySQLTuner
     $opt{dbstat}       = 1;    #Print database information
+    $opt{tbstat}       = 1;    #Print database information
     $opt{idxstat}      = 1;    #Print index information
     $opt{sysstat}      = 1;    #Print index information
     $opt{buffers}      = 1;    #Print global and per-thread buffer values
     $opt{pfstat}       = 1;    #Print performance schema info.
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
-
+$opt{nocolor} = 1 if defined($opt{outputfile});
+$opt{tbstat}  = 1 if ($opt{notbstat} != 0);    # Don't Print database information
+    
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
   unless ( defined $opt{cvefile} and -f "$opt{cvefile}" );
@@ -5139,7 +5145,8 @@ sub mariadb_galera {
     }
     infoprint "GCache is using "
       . hr_bytes_rnd( get_wsrep_option('gcache.mem_size') );
-    my @primaryKeysNbTables = select_array(
+	#my @primaryKeysNbTables=(); 
+   my @primaryKeysNbTables = select_array(
         "Select CONCAT(c.table_schema,CONCAT('.', c.table_name))
 from information_schema.columns c
 join information_schema.tables t using (TABLE_SCHEMA, TABLE_NAME)
@@ -5877,7 +5884,7 @@ sub mysql_databases {
 
 # Recommendations for database columns
 sub mysql_tables {
-    return if ( $opt{dbstat} == 0 );
+    return if ( $opt{tbstat} == 0 );
 
     subheaderprint "Table Column Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
@@ -6240,7 +6247,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.10 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.11 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -6282,6 +6289,8 @@ You must provide the remote server's total memory when connecting to other serve
  --noinfo                    Remove informational responses
  --debug                     Print debug information
  --dbstat                    Print database information
+ --tbstat                    Print table information
+ --notbstat                  Don't Print table information
  --idxstat                   Print index information
  --sysstat                   Print system information
  --pfstat                    Print Performance schema
