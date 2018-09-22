@@ -10,7 +10,7 @@ perl:
   - "5.14"
   - "5.12"
   - "5.10"
-  - "5.8"
+#  - "5.8"
 
 matrix:
   include:
@@ -26,7 +26,19 @@ matrix:
   - addons:
       mariadb: "10.2"
     perl: "5.20"
-
+ - addons:
+      mysql: "5.5"
+    perl: "5.20"
+ - addons:
+      mysql: "5.6"
+    perl: "5.20"
+ - addons:
+      mysql: "5.7"
+    perl: "5.20" 
+ - addons:
+      mysql: "8"
+    perl: "5.20"
+       
 before_install:
   - git clone git://github.com/haarg/perl-travis-helper
   - source perl-travis-helper/init
@@ -45,4 +57,4 @@ before_script:
 
 script:
   - perlcritic --exclude InputOutput::ProhibitInteractiveTest mysqltuner.pl
-  - ./mysqltuner.pl --idxstat --dbstat
+  - ./mysqltuner.pl --verbose --tbstat
