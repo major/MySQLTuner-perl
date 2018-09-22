@@ -62,7 +62,12 @@ matrix:
     name: "MySQL 5.6/Perl 5.16"
     perl: "5.16"
   - addons:
-      mysql: "5.7"
+      apt:
+        sources:
+          - mysql-5.7-trusty
+        packages:
+          - mysql-server
+          - mysql-client
     name: "MySQL 5.7/Perl 5.16"
     perl: "5.16" 
   - addons:
@@ -95,7 +100,12 @@ matrix:
     name: "MySQL 5.6/Perl 5.10"
     perl: "5.10"
   - addons:
-      mysql: "5.7"
+      apt:
+        sources:
+          - mysql-5.7-trusty
+        packages:
+          - mysql-server
+          - mysql-client
     name: "MySQL 5.7/Perl 5.10"
     perl: "5.10" 
   - addons:
