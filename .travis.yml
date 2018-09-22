@@ -14,7 +14,8 @@ perl:
 matrix:
   include:
   - addons:
-      mariadb: "5.5"
+    - env: NAME="MariaDB 5.5"
+    - mariadb: "5.5"
     perl: "5.24"
   - addons:
       mariadb: "10.0"
@@ -57,7 +58,7 @@ before_script:
   - tar xvjf employees_db-full-1.0.6.tar.bz2
   - cd employees_db
   - cat employees.sql | mysql
-  
+
 script:
   - perlcritic --exclude InputOutput::ProhibitInteractiveTest mysqltuner.pl
   - ./mysqltuner.pl --verbose --tbstat
