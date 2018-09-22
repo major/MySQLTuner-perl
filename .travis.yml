@@ -15,67 +15,67 @@ matrix:
   include:
   - addons:
       mariadb: "5.5"
-    NAME="MariaDB 5.5/Perl 5.24"
+    name: "MariaDB 5.5/Perl 5.24"
     perl: "5.24"
   - addons:
       mariadb: "10.0"
-    NAME="MariaDB 10.0/Perl 5.24"
+    name: "MariaDB 10.0/Perl 5.24"
     perl: "5.24"
   - addons:
       mariadb: "10.1"
-    NAME="MariaDB 10.1/Perl 5.24"
+    name: "MariaDB 10.1/Perl 5.24"
     perl: "5.24"
   - addons:
       mariadb: "10.2"
-    NAME="MariaDB 10.2/Perl 5.24"
+    name: "MariaDB 10.2/Perl 5.24"
     perl: "5.24"
   - addons:
       mysql: "5.5"
-    NAME="MySQL 5.5/Perl 5.24"
+    name: "MySQL 5.5/Perl 5.24"
     perl: "5.24"
   - addons:
       mysql: "5.6"
-    NAME="MySQL 5.6/Perl 5.24"
+    name: "MySQL 5.6/Perl 5.24"
     perl: "5.24"
   - addons:
       mysql: "5.7"
-    NAME="MySQL 5.7/Perl 5.24"
+    name: "MySQL 5.7/Perl 5.24"
     perl: "5.24" 
   - addons:
       mysql: "8"
-    NAME="MySQL 8/Perl 5.24"
+    name: "MySQL 8/Perl 5.24"
     perl: "5.24"
   - addons:
       mariadb: "5.5"
-    NAME="MariaDB 5.5/Perl 5.10"
+    name: "MariaDB 5.5/Perl 5.10"
     perl: "5.10"
   - addons:
       mariadb: "10.0"
-    NAME="MariaDB 10.0/Perl 5.10"
+    name: "MariaDB 10.0/Perl 5.10"
     perl: "5.10"
   - addons:
       mariadb: "10.1"
-    NAME="MariaDB 10.1/Perl 5.10"
+    name: "MariaDB 10.1/Perl 5.10"
     perl: "5.10"
   - addons:
       mariadb: "10.2"
-    NAME="MariaDB 10.2/Perl 5.10"
+    name: "MariaDB 10.2/Perl 5.10"
     perl: "5.10"
   - addons:
       mysql: "5.5"
-    NAME="MySQL 5.5/Perl 5.10"
+    name: "MySQL 5.5/Perl 5.10"
     perl: "5.10"
   - addons:
       mysql: "5.6"
-    NAME="MySQL 5.6/Perl 5.10"
+    name: "MySQL 5.6/Perl 5.10"
     perl: "5.10"
   - addons:
       mysql: "5.7"
-    NAME="MySQL 5.7/Perl 5.10"
+    name: "MySQL 5.7/Perl 5.10"
     perl: "5.10" 
   - addons:
       mysql: "8"
-    NAME="MySQL 8/Perl 5.10"
+    name: "MySQL 8/Perl 5.10"
     perl: "5.10"
        
 before_install:
