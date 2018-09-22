@@ -1,15 +1,6 @@
 sudo: false
 
 language: perl
-perl:
-  - "5.24"
-  - "5.22"
-  - "5.20"  
-  - "5.18"
-  - "5.16"
-  - "5.14"
-  - "5.12"
-  - "5.10"
 
 matrix:
   include:
@@ -45,6 +36,40 @@ matrix:
       mysql: "8"
     name: "MySQL 8/Perl 5.24"
     perl: "5.24"
+
+  - addons:
+      mariadb: "5.5"
+    name: "MariaDB 5.5/Perl 5.16"
+    perl: "5.16"
+  - addons:
+      mariadb: "10.0"
+    name: "MariaDB 10.0/Perl 5.16"
+    perl: "5.16"
+  - addons:
+      mariadb: "10.1"
+    name: "MariaDB 10.1/Perl 5.16"
+    perl: "5.16"
+  - addons:
+      mariadb: "10.2"
+    name: "MariaDB 10.2/Perl 5.16"
+    perl: "5.16"
+  - addons:
+      mysql: "5.5"
+    name: "MySQL 5.5/Perl 5.16"
+    perl: "5.16"
+  - addons:
+      mysql: "5.6"
+    name: "MySQL 5.6/Perl 5.16"
+    perl: "5.16"
+  - addons:
+      mysql: "5.7"
+    name: "MySQL 5.7/Perl 5.16"
+    perl: "5.16" 
+  - addons:
+      mysql: "8"
+    name: "MySQL 8/Perl 5.16"
+    perl: "5.16"
+
   - addons:
       mariadb: "5.5"
     name: "MariaDB 5.5/Perl 5.10"
