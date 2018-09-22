@@ -58,6 +58,7 @@ before_script:
   - tar xvjf employees_db-full-1.0.6.tar.bz2
   - cd employees_db
   - cat employees.sql | mysql
+  - cd ..
 
 script:
   - perlcritic --exclude InputOutput::ProhibitInteractiveTest mysqltuner.pl
