@@ -15,7 +15,7 @@ matrix:
   include:
   - addons:
       mariadb: "5.5"
-      env: 
+    env: 
       - NAME="MariaDB 5.5"
     perl: "5.24"
   - addons:
