@@ -6142,7 +6142,6 @@ if ( $opt{'template'} ne 0 ) {
     $templateModel = file2string( $opt{'template'} );
 }
 else {
-
     # DEFAULT REPORT TEMPLATE
     $templateModel = <<'END_TEMPLATE';
 <!DOCTYPE html>
@@ -6164,21 +6163,17 @@ END_TEMPLATE
 }
 
 sub dump_result {
-    if ( $opt{'debug'} ) {
-        debugprint Dumper( \%result );
-    }
-
+    debugprint Dumper( \%result ) if ( $opt{'debug'} );
     debugprint "HTML REPORT: $opt{'reportfile'}";
 
     if ( $opt{'reportfile'} ne 0 ) {
         eval { require Text::Template };
         if ($@) {
             badprint "Text::Template Module is needed.";
-            exit 1;
+            die "Text::Template Module is needed.";
         }
 
         my $vars = { 'data' => Dumper( \%result ) };
-
         my $template;
         {
             no warnings 'once';
@@ -6188,21 +6183,32 @@ sub dump_result {
                 SOURCE  => $templateModel
             ) or die "Couldn't construct template: $Text::Template::ERROR";
         }
+
         open my $fh, q(>), $opt{'reportfile'}
           or die
-"Unable to open $opt{'reportfile'} in write mode. please check permissions for this file or directory";
+    "Unable to open $opt{'reportfile'} in write mode. please check permissions for this file or directory";
         $template->fill_in( HASH => $vars, OUTPUT => $fh );
         close $fh;
     }
+
     if ( $opt{'json'} ne 0 ) {
         eval { require JSON };
-        if ($@) {
+        if ($@) {   
             print "$bad JSON Module is needed.\n";
-            exit 1;
+            return 1;
         }
+
         my $json = JSON->new->allow_nonref;
         print $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
-          ->encode( \%result );
+              ->encode( \%result ) unless ( $opt{'silent'} );
+
+        if ( $opt{'outputfile'} ne 0 ) {
+            open my $fh, q(>), $opt{'outputfile'}
+              or die
+    "Unable to open $opt{'outputfile'} in write mode. please check permissions for this file or directory";
+              print $fh  $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) );
+              close $fh;
+        }
     }
 }
 
@@ -6212,9 +6218,7 @@ sub which {
     my @path_array  = split /:/, $ENV{'PATH'};
 
     for my $path (@path_array) {
-        if ( -x "$path/$prog_name" ) {
-            return "$path/$prog_name";
-        }
+        return "$path/$prog_name" if ( -x "$path/$prog_name" );
     }
 
     return 0;
