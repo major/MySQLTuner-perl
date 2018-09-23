@@ -1599,6 +1599,7 @@ sub get_system_info {
     infoprint "Network Cards         : ";
     infocmd_tab "ifconfig| grep -A1 mtu";
     infoprint "Internal IP           : " . infocmd_one "hostname -I";
+    $result{'Network'}{'Internal Ip'} = `ifconfig| grep -A1 mtu`;
     my $httpcli = get_http_cli();
     infoprint "HTTP client found: $httpcli" if defined $httpcli;
 
@@ -1627,7 +1628,9 @@ sub get_system_info {
     infocmd_tab "top -n 1 -b | grep 'load average:'";
     $result{'OS'}{'Load Average'} = `top -n 1 -b | grep 'load average:'`;
 
-#infoprint "System Uptime Days/(HH:MM) : `uptime | awk '{print $3,$4}' | cut -f1 -d,`";
+    infoprint "System Uptime         : ";
+    infocmd_tab "uptime";
+    $result{'OS'}{'Uptime'}= `uptime`;
 }
 
 sub system_recommendations {
@@ -6199,14 +6202,15 @@ sub dump_result {
         }
 
         my $json = JSON->new->allow_nonref;
-        print $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
-              ->encode( \%result ) unless ( $opt{'silent'} );
+        print $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )->encode( \%result );
+
 
         if ( $opt{'outputfile'} ne 0 ) {
+            unlink $opt{'outputfile'} if (-e $opt{'outputfile'});
             open my $fh, q(>), $opt{'outputfile'}
               or die
     "Unable to open $opt{'outputfile'} in write mode. please check permissions for this file or directory";
-              print $fh  $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) );
+              print $fh  $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )->encode( \%result );
               close $fh;
         }
     }
