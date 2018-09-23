@@ -143,7 +143,7 @@ before_script:
   - wget "https://launchpad.net/test-db/employees-db-1/1.0.6/+download/employees_db-full-1.0.6.tar.bz2"
   - tar xvjf employees_db-full-1.0.6.tar.bz2
   - cd employees_db
-  - cat employees.sql | mysql
+  - cat employees.sql | grep -v 'set storage_engine' | mysql
   - cd ..
 
 script:
