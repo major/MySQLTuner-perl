@@ -21,6 +21,10 @@ matrix:
     name: "MariaDB 10.2/Perl 5.24"
     perl: "5.24"
   - addons:
+      mariadb: "10.3"
+    name: "MariaDB 10.3/Perl 5.24"
+    perl: "5.24"
+  - addons:
       mysql: "5.5"
     name: "MySQL 5.5/Perl 5.24"
     perl: "5.24"
@@ -33,7 +37,7 @@ matrix:
     name: "MySQL 5.7/Perl 5.24"
     perl: "5.24" 
   - addons:
-      mysql: "8"
+      mysql: "8.0"
     name: "MySQL 8/Perl 5.24"
     perl: "5.24"
 
@@ -54,6 +58,10 @@ matrix:
     name: "MariaDB 10.2/Perl 5.16"
     perl: "5.16"
   - addons:
+      mariadb: "10.3"
+    name: "MariaDB 10.3/Perl 5.16"
+    perl: "5.16"
+  - addons:
       mysql: "5.5"
     name: "MySQL 5.5/Perl 5.16"
     perl: "5.16"
@@ -71,7 +79,7 @@ matrix:
     name: "MySQL 5.7/Perl 5.16"
     perl: "5.16" 
   - addons:
-      mysql: "8"
+      mysql: "8.0"
     name: "MySQL 8/Perl 5.16"
     perl: "5.16"
 
@@ -92,6 +100,10 @@ matrix:
     name: "MariaDB 10.2/Perl 5.10"
     perl: "5.10"
   - addons:
+      mariadb: "10.3"
+    name: "MariaDB 10.3/Perl 5.10"
+    perl: "5.10"
+  - addons:
       mysql: "5.5"
     name: "MySQL 5.5/Perl 5.10"
     perl: "5.10"
@@ -109,7 +121,7 @@ matrix:
     name: "MySQL 5.7/Perl 5.10"
     perl: "5.10" 
   - addons:
-      mysql: "8"
+      mysql: "8.0"
     name: "MySQL 8/Perl 5.10"
     perl: "5.10"
        
