@@ -94,8 +94,6 @@ Be sure that innodb_stats_on_metadata is disabled.
 
 	set global innodb_stats_on_metadata = 0; 
 
-__Usage:__ Minimal usage locally
-
 Specific usage
 --
 
