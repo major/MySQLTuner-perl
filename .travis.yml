@@ -148,4 +148,9 @@ before_script:
 
 script:
   - perlcritic --exclude InputOutput::ProhibitInteractiveTest mysqltuner.pl
-  - ./mysqltuner.pl --verbose --tbstat
+  - ./mysqltuner.pl --verbose --tbstat 1> stdout.txt 2>stderr.txt
+
+after_script:
+  - echo "Standard Output: $(cat stdout.txt)"
+  - echo "Standard Error : $(cat stderr.txt)"
+
