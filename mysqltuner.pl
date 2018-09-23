@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.11
+# mysqltuner.pl - Version 1.7.12
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.11";
+my $tunerversion = "1.7.12";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -613,7 +613,7 @@ sub update_tuner_version {
         badprint "Couldn't update MySQLTuner script";
     }
 
-    exit 0;
+    #exit 0;
 }
 
 sub compare_tuner_version {
@@ -1501,7 +1501,7 @@ sub infocmd_tab {
 
 sub infocmd_one {
     my $cmd    = "@_";
-    my @result = `$cmd`;
+    my @result = `$cmd 2>&1`;
     @result = remove_cr @result;
     return join ', ', @result;
 }
@@ -1699,6 +1699,12 @@ sub system_recommendations {
 
 sub security_recommendations {
     subheaderprint "Security Recommendations";
+ 
+    if ( mysql_version_eq(8) ) {
+        infoprint "Skipped due to unsupported feature for MySQL 8";
+        return;
+    }
+    #exit 0;
     if ( $opt{skippassword} eq 1 ) {
         infoprint "Skipped due to --skippassword option";
         return;
@@ -1942,8 +1948,8 @@ sub validate_mysql_version {
 # Checks if MySQL version is equal to (major, minor, micro)
 sub mysql_version_eq {
     my ( $maj, $min, $mic ) = @_;
-    $min ||= 0;
-    $mic ||= 0;
+    return int($mysqlvermajor) == int($maj) if ( !defined($min) && !defined($mic));
+    return int($mysqlvermajor) == int($maj)&& int($mysqlverminor) == int($min)  if ( !defined($mic));
     return ( int($mysqlvermajor) == int($maj)
           && int($mysqlverminor) == int($min)
           && int($mysqlvermicro) == int($mic) );
@@ -2885,10 +2891,13 @@ sub mysql_stats {
 
     # Query cache
     if ( !mysql_version_ge(4) ) {
-
         # MySQL versions < 4.01 don't support query caching
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
+    }
+    elsif (mysql_version_eq(8)) {
+        infoprint "Query cache have been removed in MySQL 8";
+        #return;
     }
     elsif ( $myvar{'query_cache_size'} < 1
         and $myvar{'query_cache_type'} eq "OFF" )
@@ -6241,9 +6250,9 @@ mysql_innodb;              # Print InnoDB stats
 mariadb_ariadb;            # Print MariaDB AriaDB stats
 mariadb_tokudb;            # Print MariaDB Tokudb stats
 mariadb_xtradb;            # Print MariaDB XtraDB stats
-mariadb_rockdb;            # Print MariaDB RockDB stats
-mariadb_spider;            # Print MariaDB Spider stats
-mariadb_connect;           # Print MariaDB Connect stats
+#mariadb_rockdb;            # Print MariaDB RockDB stats
+#mariadb_spider;            # Print MariaDB Spider stats
+#mariadb_connect;           # Print MariaDB Connect stats
 mariadb_galera;            # Print MariaDB Galera Cluster stats
 get_replication_status;    # Print replication info
 make_recommendations;      # Make recommendations based on stats
@@ -6263,7 +6272,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.11 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.12 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
