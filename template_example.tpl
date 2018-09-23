@@ -1,39 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>MySQL Tuner report</title>
+<!-- Required meta tags -->
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>MySQL Tuner report</title>
+  
+   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+   <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
 
 <div class="container">
   <h3>MySQLTuner Report</h3>
-  <ul class="nav nav-tabs">
-    <li class="active"><a href="#debug">Home</a></li>
-    <!--
-    <li class="dropdown">
-      <a class="dropdown-toggle" data-toggle="dropdown" href="#">Menu 1 <span class="caret"></span></a>
-      <ul class="dropdown-menu">
-        <li><a href="#">Submenu 1-1</a></li>
-        <li><a href="#">Submenu 1-2</a></li>
-        <li><a href="#">Submenu 1-3</a></li>                        
-      </ul>
-    </li>
-    <li><a href="#">Menu 2</a></li>
-    <li><a href="#">Menu 3</a></li>
--->
+ <div class="tabs">
+    <ul>
+      <li class="active"><a href="#home">Home</a></li>
+      <li><a href="#debug">Debug</a></li>
   </ul>
- <div class="tab-content">
+    <div id="home" class="tab-pane fade active">
+      <h3>Home</h3>
+      <h5>Report date: </h5>
+      <h5>Report host: </h5>
+      <h5>Server version: </h5>
+      <ul class="nav nav-tabs">
+        <pre>{$data}</pre>
+  </div>
     <div id="debug" class="tab-pane fade active">
       <h3>Raw Result Data Structure</h3>
-		<pre>
-		{$data}
-		</pre>
-    </div>
+      <h5>Report date: </h5>
+      <h5>Report host: </h5>
+      <h5>Server version: </h5>
+      <ul class="nav nav-tabs">
+        <pre>{$data}</pre>
+  </div>
     <!--
     <div id="home" class="tab-pane fade in active">
       <h3>HOME</h3>
@@ -50,6 +59,11 @@
     -->
   </div>
 </div>
+  <script>
 
+ $( function() {
+    $( "#tabs" ).tabs();
+  } );
+  </script>
 </body>
 </html>

@@ -962,6 +962,13 @@ sub select_array {
     return @result;
 }
 
+sub human_size {
+    my( $size, $n ) =( shift, 0 );
+    ++$n and $size /= 1024 until $size < 1024;
+    return sprintf "%.2f %s", 
+          $size, ( qw[ bytes KB MB GB ] )[ $n ];
+}
+
 # MySQL Request one
 sub select_one {
     my $req = shift;
