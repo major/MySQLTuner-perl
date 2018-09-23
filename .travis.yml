@@ -153,4 +153,5 @@ script:
 after_script:
   - echo "Standard Output: $(cat stdout.txt)"
   - echo "Standard Error : $(cat stderr.txt)"
+  - [ "0" = "$(wl -l stderr.txt)" ] || exit 2
 
