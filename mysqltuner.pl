@@ -3130,6 +3130,9 @@ sub mysql_stats {
                   . $table_cache_var
                   . " over 64: http://bit.ly/1mi7c4C" );
             push( @generalrec,
+                    "Read this before increasing for MAriaDB"
+                  . " https://mariadb.com/kb/en/library/optimizing-table_open_cache/");
+            push( @generalrec,
 "This is MyISAM only table_cache scalability problem, InnoDB not affected."
             );
             push( @generalrec,
