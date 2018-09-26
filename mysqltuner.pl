@@ -5182,12 +5182,12 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
 
     infoprint "CPU core detected  : ". (cpu_cores);
     infoprint "wsrep_slave_threads: ". get_wsrep_option('wsrep_slave_threads');
-    if (   get_wsrep_option('wsrep_slave_threads') > (cpu_cores) * 4
-        or get_wsrep_option('wsrep_slave_threads') < (cpu_cores) * 2 )
+    if (   get_wsrep_option('wsrep_slave_threads') > ((cpu_cores) * 4)
+        or get_wsrep_option('wsrep_slave_threads') < ((cpu_cores) * 2) )
     {
         badprint
 "wsrep_slave_threads is not equal to 2, 3 or 4 times number of CPU(s)";
-        push @adjvars, "wsrep_slave_threads = ".(cpu_cores * 4);
+        push @adjvars, "wsrep_slave_threads = ".((cpu_cores) * 4);
     }
     else {
         goodprint
