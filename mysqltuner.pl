@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.12
+# mysqltuner.pl - Version 1.7.13
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.12";
+my $tunerversion = "1.7.13";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3070,17 +3070,32 @@ sub mysql_stats {
     }
 
     # Thread cache
-    if ( $myvar{'thread_cache_size'} eq 0 ) {
-        badprint "Thread cache is disabled";
-        push( @generalrec, "Set thread_cache_size to 4 as a starting value" );
-        push( @adjvars,    "thread_cache_size (start at 4)" );
-    }
-    else {
-        if ( defined( $myvar{'thread_handling'} )
-            and $myvar{'thread_handling'} eq 'pools-of-threads' )
-        {
-            infoprint "Thread cache hit rate: not used with pool-of-threads";
-        }
+#    if ( $myvar{'thread_cache_size'} eq 0 ) {
+#        badprint "Thread cache is disabled";
+#        push( @generalrec, "Set thread_cache_size to 4 as a starting value" );
+#        push( @adjvars,    "thread_cache_size (start at 4)" );
+#    }
+#    else {
+#        if ( defined( $myvar{'thread_handling'} )
+#            and $myvar{'thread_handling'} eq 'pools-of-threads' )
+#        {
+#            infoprint "Thread cache hit rate: not used with pool-of-threads";
+#        }
+
+    if ( defined( $myvar{'thread_handling'} )
+        and $myvar{'thread_handling'} eq 'pool-of-threads' )
+    {
+        # https://www.percona.com/doc/percona-server/LATEST/performance/threadpool.html
+        # When thread pool is enabled, the value of the thread_cache_size variable
+        # is ignored. The Threads_cached status variable contains 0 in this case.
+        infoprint "Thread cache not used with thread_handling=pool-of-threads";
+     }
+     else {
+        if ( $myvar{'thread_cache_size'} eq 0 ) {
+            badprint "Thread cache is disabled";
+            push( @generalrec, "Set thread_cache_size to 4 as a starting value" );
+            push( @adjvars,    "thread_cache_size (start at 4)" );
+         }
         else {
             if ( $mycalc{'thread_cache_hit_rate'} <= 50 ) {
                 badprint
@@ -6292,7 +6307,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.12 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.13 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
