@@ -3070,18 +3070,6 @@ sub mysql_stats {
     }
 
     # Thread cache
-#    if ( $myvar{'thread_cache_size'} eq 0 ) {
-#        badprint "Thread cache is disabled";
-#        push( @generalrec, "Set thread_cache_size to 4 as a starting value" );
-#        push( @adjvars,    "thread_cache_size (start at 4)" );
-#    }
-#    else {
-#        if ( defined( $myvar{'thread_handling'} )
-#            and $myvar{'thread_handling'} eq 'pools-of-threads' )
-#        {
-#            infoprint "Thread cache hit rate: not used with pool-of-threads";
-#        }
-
     if ( defined( $myvar{'thread_handling'} )
         and $myvar{'thread_handling'} eq 'pool-of-threads' )
     {
@@ -3089,8 +3077,8 @@ sub mysql_stats {
         # When thread pool is enabled, the value of the thread_cache_size variable
         # is ignored. The Threads_cached status variable contains 0 in this case.
         infoprint "Thread cache not used with thread_handling=pool-of-threads";
-     }
-     else {
+    }
+    else {
         if ( $myvar{'thread_cache_size'} eq 0 ) {
             badprint "Thread cache is disabled";
             push( @generalrec, "Set thread_cache_size to 4 as a starting value" );
