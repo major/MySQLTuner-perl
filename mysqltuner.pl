@@ -5565,7 +5565,7 @@ sub mysql_innodb {
               . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
         );
         push( @generalrec,
-"Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: http://bit.ly/2wgkDvS"
+"Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU"
         );
     }
     else {
