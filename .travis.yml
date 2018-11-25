@@ -160,8 +160,8 @@ install:
 before_script:
   - echo -e "[client]\nuser=root\npassword=\"\"" > .my.cnf
   - chmod 600 .my.cnf
-  - tar xvjf build/employees_db-full-1.0.6.tar.bz2
-  - cd employees_db
+  - git clone https://github.com/datacharmer/test_db.git
+  - cd test_db
   - cat employees.sql | grep -v 'storage_engine' | mysql
   - cd ..
 
