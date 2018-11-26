@@ -3499,8 +3499,12 @@ sub mysqsl_pfs {
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
         infoprint "Sys schema isn't installed.";
         push( @generalrec,
-"Consider installing Sys schema from https://github.com/mysql/mysql-sys"
-        ) unless ( mysql_version_le( 5, 5 ) );
+"Consider installing Sys schema from https://github.com/mysql/mysql-sys for MySQL"
+        ) unless ( mysql_version_le( 5, 6 ) );
+        push( @generalrec,
+"Consider installing Sys schema from https://github.com/good-dba/mariadb-sys for MariaDB"
+        ) unless ( mysql_version_gt( 10, 0 ) );
+        
         return;
     }
     else {
