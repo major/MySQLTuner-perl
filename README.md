@@ -87,6 +87,38 @@ You can download the entire repository by using 'git clone' followed by the clon
 
 Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
 
+Optional Sysschema installation for MySQL 5.6
+--
+
+Sysschema is installed by default under MySQL 5.7 and MySQL 8 from Oracle.
+By default, on MySQL 5.6/5.7/8, performance schema is enabled by default.
+For previous 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
+	
+	curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
+	# check zip file
+	unzip -l sysschema.zip
+	unzip sysschema.zip
+	cd mysql-sys-master
+	mysql -uroot -p < sys_56.sql 
+
+Optional Performance schema and Sysschema installation for MariaDB 10.x
+--
+
+Sysschema is not installed by default under MariaDB 10.x.
+By default, on MariaDB, performance schema is disabled by default. consider activating performance schema across your my.cnf configuration file:
+
+	[mysqld]
+	performance_schema = on
+
+You can follow this command to create a new database sys containing very useful view on Performance schema:
+	
+	curl "https://codeload.github.com/good-dba/mariadb-sys/zip/master" > mariadb-sys.zip
+	# check zip file
+	unzip -l mariadb-sys.zip
+	unzip mariadb-sys.zip
+	cd mariadb-sys/
+	mysql -u root -p < ./mariadb_sys_install.sql
+
 Performance tips
 --
 Metadata statistic updates can impact strongly performance of database servers and MySQLTuner.
