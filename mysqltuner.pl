@@ -3503,7 +3503,7 @@ sub mysqsl_pfs {
         ) unless ( mysql_version_le( 5, 6 ) );
         push( @generalrec,
 "Consider installing Sys schema from https://github.com/good-dba/mariadb-sys for MariaDB"
-        ) unless ( mysql_version_gt( 10, 0 ) );
+        ) unless ( mysql_version_eq( 10, 0 ) or  mysql_version_eq( 5, 5 )  );
         
         return;
     }
