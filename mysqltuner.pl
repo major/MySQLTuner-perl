@@ -5183,7 +5183,10 @@ sub mariadb_galera {
         debugprint "\t" . trim($gvar) . " = " . $myvar{$gvar};
         $result{'Galera'}{'variables'}{$gvar} = $myvar{$gvar};
     }
-
+    if ( not defined( $myvar{'wsrep_on'} ) or $myvar{'wsrep_on'} ne "ON" ) {
+        infoprint "Galera is disabled.";
+        return;
+    }
     debugprint "Galera wsrep provider Options:";
     my @galera_options = get_wsrep_options;
     $result{'Galera'}{'wsrep options'} = get_wsrep_options();
