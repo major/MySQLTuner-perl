@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.7.11 - MySQL High Performance Tuning Script
+    MySQLTuner 1.7.14 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -41,12 +41,19 @@ You must provide the remote server's total memory when connecting to other serve
     --nobad                     Remove negative/suggestion responses
     --noinfo                    Remove informational responses
     --debug                     Print debug information
+    --noprocess                Consider no other process is running
     --dbstat                    Print database information
+    --nodbstat                  Don't Print database information
     --tbstat                    Print table information
     --notbstat                  Don't Print table information
     --idxstat                   Print index information
+    --noidxstat                 Don't Print index information
     --sysstat                   Print system information
+    --nosysstat                 Don't Print system information
     --pfstat                    Print Performance schema
+    --nopfstat                  Don't Print Performance schema
+    --verbose                   Prints out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
+     
     --bannedports               Ports banned separated by comma(,)
     --maxportallowed            Number of ports opened allowed on this hosts
     --cvefile <path>            CVE File for vulnerability checks
@@ -56,7 +63,6 @@ You must provide the remote server's total memory when connecting to other serve
     --outputfile <path>         Path to a output txt file
     --reportfile <path>         Path to a report txt file
     --template   <path>         Path to a template file
-    --verbose                   Prints out all options (default: no verbose)
 
 # PERLDOC
 
