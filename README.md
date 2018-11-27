@@ -30,10 +30,10 @@ MySQLTuner needs you:
 ## Stargazers over time
 
 [![Stargazers over time](https://starcharts.herokuapp.com/major/MySQLTuner-perl.svg)](https://starcharts.herokuapp.com/major/MySQLTuner-perl)
-	
+
 Compatibility
 ====
-Test result are avalaible here: [Travis CI/MySQLTuner-perl](https://travis-ci.org/major/MySQLTuner-perl)
+Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.org/major/MySQLTuner-perl)
 * MySQL 8 (partial support, password checks don't work)
 * MySQL 5.7 (full support)
 * MySQL 5.6 (full support)
