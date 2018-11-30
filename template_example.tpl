@@ -11,24 +11,24 @@
     <style type="text/css" media="screen">
       /* Sticky footer styles
          -------------------------------------------------- */
-      /*html {
-    /*  position: relative;
-    /*  min-height: 100%;
-    /*}
-    /*body {
-    /*  /* Margin bottom by footer height */
-    /*  margin-bottom: 10px;
-    /*}
-    /*.footer {
-    /*  position: absolute;
-    /*  #margin-left: 5px;
-    /*  bottom: 0;
-    /*  width: 100%;
-    /*  /* Set the fixed height of the footer here */
-    /*  height: 30px;
-    /*  line-height: 30px; /* Vertically center the text there */
-    /*  background-color: #f5f5f5;
-    /*}
+    html {
+      position: relative;
+      min-height: 100%;
+    }
+    body {
+      /* Margin bottom by footer height */
+      margin-bottom: 10px;
+    }
+    .footer {
+      position: absolute;
+      #margin-left: 5px;
+      bottom: 0;
+      width: 100%;
+      /* Set the fixed height of the footer here */
+      height: 30px;
+      line-height: 30px; /* Vertically center the text there */
+      background-color: #f5f5f5;
+    }
 
 
     /* /* Custom page CSS
@@ -70,7 +70,7 @@
       </ul>
 
       <div class="tab-content">
-        <div id="home" class="tab-pane">
+        <div id="home" class="tab-pane active">
           <h3>Home</h3>
           <h5>Report date: [% localtime %]</h5>
           <h5>Report host: [% $data{'Variables'}{'hostname'} %]</h5>
