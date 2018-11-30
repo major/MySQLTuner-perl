@@ -6211,26 +6211,33 @@ sub dump_result {
 
     if ( $opt{'reportfile'} ne 0 ) {
         eval { require Text::Template };
+        eval { require JSON };
         if ($@) {
             badprint "Text::Template Module is needed.";
             die "Text::Template Module is needed.";
         }
 
-        my $vars = { 'data' => Dumper( \%result ) };
+        my $json = JSON->new->allow_nonref;
+        my $json_text   = $json->pretty->encode( \%result );
+        my %vars = (
+            'data' => \%result,
+            'debug' => $json_text,
+        );
         my $template;
         {
             no warnings 'once';
             $template = Text::Template->new(
                 TYPE    => 'STRING',
                 PREPEND => q{;},
-                SOURCE  => $templateModel
+                SOURCE  => $templateModel,
+                DELIMITERS => [ '[%', '%]' ]
             ) or die "Couldn't construct template: $Text::Template::ERROR";
         }
 
         open my $fh, q(>), $opt{'reportfile'}
           or die
 "Unable to open $opt{'reportfile'} in write mode. please check permissions for this file or directory";
-        $template->fill_in( HASH => $vars, OUTPUT => $fh );
+        $template->fill_in( HASH => \%vars, OUTPUT => $fh );
         close $fh;
     }
 
@@ -6382,7 +6389,6 @@ You must provide the remote server's total memory when connecting to other serve
  --pfstat                    Print Performance schema
  --nopfstat                  Don't Print Performance schema
  --verbose                   Prints out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
-  
  --bannedports               Ports banned separated by comma(,)
  --maxportallowed            Number of ports opened allowed on this hosts
  --cvefile <path>            CVE File for vulnerability checks
