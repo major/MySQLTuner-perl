@@ -78,6 +78,8 @@ All checks done by **MySQLTuner** are documented in [MySQLTuner Internals](https
 Download/Installation
 --
 
+Choose one of these methods:
+
 1) Script direct download (the simplest and shortest method):
 
 	wget http://mysqltuner.pl/ -O mysqltuner.pl
