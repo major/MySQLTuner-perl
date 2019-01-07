@@ -215,6 +215,11 @@
    * MySQL needs 1 instance per 1Go of Buffer Pool
    * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
    * innodb_buffer_pool instances must be equals or lower than 64
+   
+   - However, this variable is already set to default value 1.
+   - If you read note in MySQL 5.6 Reference Manual:
+    - A bug in MySQL 5.6 causes SHOW VARIABLES to report an innodb_buffer_pool_instances value of 8 when innodb_buffer_pool_size is less than 1GB and only one buffer pool instance is present (Bug #18343670).
+
 * InnoDB Buffer Pool Usage
    * If more than 20% of InnoDB buffer pool is not used, MySQLTuner raise an alert.
 * InnoDB Buffer Pool Log Size
