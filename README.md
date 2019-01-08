@@ -82,9 +82,11 @@ Choose one of these methods:
 
 1) Script direct download (the simplest and shortest method):
 
-	wget http://mysqltuner.pl/ -O mysqltuner.pl
-	wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
-	wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
+```
+wget http://mysqltuner.pl/ -O mysqltuner.pl
+wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
+wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
+```
 
 2) You can download the entire repository by using `git clone` or `git clone --depth 1 -b master` followed by the cloning URL above.
 
