@@ -185,7 +185,7 @@ The script will try its best to log in via any means possible.  It will check fo
 
 	[client]
 	user=someusername
-	pass=thatuserspassword
+	password=thatuserspassword
 
 Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.  If a [T-1000 shows up in a LAPD uniform](https://en.wikipedia.org/wiki/T-1000) and demands your database credentials, you won't have much of an option.
 
