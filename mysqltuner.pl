@@ -1739,7 +1739,7 @@ sub security_recommendations {
     my $PASS_COLUMN_NAME = 'password';
     if ( $myvar{'version'} =~ /5\.7|10\..*MariaDB*/ ) {
         $PASS_COLUMN_NAME =
-"IF(plugin='mysql_native_password', authentication_string, 'password')";
+"IF(plugin='mysql_native_password', authentication_string, password)";
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
 
@@ -3504,7 +3504,7 @@ sub mysqsl_pfs {
         push( @generalrec,
 "Consider installing Sys schema from https://github.com/good-dba/mariadb-sys for MariaDB"
         ) unless ( mysql_version_eq( 10, 0 ) or  mysql_version_eq( 5, 5 )  );
-        
+
         return;
     }
     else {
