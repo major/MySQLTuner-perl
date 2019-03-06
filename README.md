@@ -61,6 +61,9 @@ that you trust.  **Always** test your changes on staging environments, and
 always keep in mind that improvements in one area can **negatively affect**
 MySQL in other areas.
 
+It's **also important** to wait at least a day of uptime to get accurated results. In fact, running
+**mysqltuner** on a fresh restarted server is completely useless.
+
 **Seriously - please review the FAQ section below.**
 
 
@@ -96,13 +99,13 @@ Optional Sysschema installation for MySQL 5.6
 Sysschema is installed by default under MySQL 5.7 and MySQL 8 from Oracle.
 By default, on MySQL 5.6/5.7/8, performance schema is enabled by default.
 For previous 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
-	
+
 	curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
 	# check zip file
 	unzip -l sysschema.zip
 	unzip sysschema.zip
 	cd mysql-sys-master
-	mysql -uroot -p < sys_56.sql 
+	mysql -uroot -p < sys_56.sql
 
 Optional Performance schema and Sysschema installation for MariaDB 10.x
 --
@@ -114,7 +117,7 @@ By default, on MariaDB, performance schema is disabled by default. consider acti
 	performance_schema = on
 
 You can follow this command to create a new database sys containing very useful view on Performance schema:
-	
+
 	curl "https://codeload.github.com/good-dba/mariadb-sys/zip/master" > mariadb-sys.zip
 	# check zip file
 	unzip -l mariadb-sys.zip
@@ -127,7 +130,7 @@ Performance tips
 Metadata statistic updates can impact strongly performance of database servers and MySQLTuner.
 Be sure that innodb_stats_on_metadata is disabled.
 
-	set global innodb_stats_on_metadata = 0; 
+	set global innodb_stats_on_metadata = 0;
 
 Specific usage
 --
@@ -152,7 +155,7 @@ __Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
 
 	perl mysqltuner.pl --cvefile=vulnerabilities.csv
 
-__Usage:__ Write your result in a file with information displayed  
+__Usage:__ Write your result in a file with information displayed
 
 	perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 
