@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.14
+# mysqltuner.pl - Version 1.7.15
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.14";
+my $tunerversion = "1.7.15";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1097,7 +1097,7 @@ sub get_all_vars {
     unless ( defined( $myvar{'innodb_support_xa'} ) ) {
         $myvar{'innodb_support_xa'} = 'ON';
     }
-
+    $mystat{'Uptime'} = 1 unless defined($mystat{'Uptime'}) and $mystat{'Uptime'}>0;
     $myvar{'have_galera'} = "NO";
     if (   defined( $myvar{'wsrep_provider_options'} )
         && $myvar{'wsrep_provider_options'} ne ""
@@ -6336,7 +6336,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.14 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.15 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
