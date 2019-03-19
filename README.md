@@ -61,7 +61,7 @@ that you trust.  **Always** test your changes on staging environments, and
 always keep in mind that improvements in one area can **negatively affect**
 MySQL in other areas.
 
-It's **also important** to wait at least a day of uptime to get accurated results. In fact, running
+It's **also important** to wait at least a day of uptime to get accurate results. In fact, running
 **mysqltuner** on a fresh restarted server is completely useless.
 
 **Seriously - please review the FAQ section below.**
