@@ -5584,7 +5584,7 @@ sub mysql_innodb {
           . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
           . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
-          . " should be equal 25%";
+          . " should be equal to 25%";
         push(
             @adjvars,
             "innodb_log_file_size should be (="
@@ -5603,7 +5603,7 @@ sub mysql_innodb {
           . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
           . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
-          . " should be equal 25%";
+          . " should be equal to 25%";
     }
 
     # InnoDB Buffer Pool Instances (MySQL 5.6.6+)
