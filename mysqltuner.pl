@@ -4,7 +4,7 @@
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.com/
-# Git repository available at http://github.com/major/MySQLTuner-perl
+# Git repository available at https://github.com/major/MySQLTuner-perl
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # This project would not be possible without help from:
 #   Matthew Montgomery     Paul Kehrer          Dave Burgess
@@ -34,7 +34,7 @@
 #   Julien Francoz
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
-# http://forge.mysql.com/projects/view.php?id=44
+# http://www.day32.com/MySQL/
 #
 package main;
 
@@ -3153,7 +3153,7 @@ sub mysql_stats {
             push( @generalrec,
                     "Read this before increasing "
                   . $table_cache_var
-                  . " over 64: http://bit.ly/1mi7c4C" );
+                  . " over 64: https://bit.ly/1mi7c4C" );
             push( @generalrec,
                     "Read this before increasing for MariaDB"
                   . " https://mariadb.com/kb/en/library/optimizing-table_open_cache/"
@@ -6579,7 +6579,7 @@ Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 
 For the latest updates, please visit http://mysqltuner.com/
 
-Git repository available at http://github.com/major/MySQLTuner-perl
+Git repository available at https://github.com/major/MySQLTuner-perl
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -6593,7 +6593,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 =cut
 
