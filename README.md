@@ -211,7 +211,7 @@ To get information about stored credentials, use the following command:
 
 **Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
 
-        mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* FOR 'mysqltuner'@'localhost' identified by pwd1234;
+        mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* TO 'mysqltuner'@'localhost' identified by pwd1234;
 
 **Question: It's not working on my OS! What gives?!**
 
