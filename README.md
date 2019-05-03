@@ -122,7 +122,7 @@ You can follow this command to create a new database sys containing very useful 
 	# check zip file
 	unzip -l mariadb-sys.zip
 	unzip mariadb-sys.zip
-	cd mariadb-sys/
+	cd mariadb-sys-master/
 	mysql -u root -p < ./mariadb_sys_install.sql
 
 Performance tips
