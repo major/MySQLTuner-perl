@@ -5766,7 +5766,7 @@ sub mysql_innodb {
 
 sub check_metadata_perf {
     subheaderprint "Analysis Performance Metrics";
-    if (defined $myvars{'innodb_stats_on_metadata'}) {
+    if (defined $myvar{'innodb_stats_on_metadata'}) {
         infoprint "innodb_stats_on_metadata: " . $myvar{'innodb_stats_on_metadata'};
         if ( $myvar{'innodb_stats_on_metadata'} eq 'ON' ) {
             badprint "Stat are updated during querying INFORMATION_SCHEMA.";
