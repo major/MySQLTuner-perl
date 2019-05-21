@@ -5766,14 +5766,16 @@ sub mysql_innodb {
 
 sub check_metadata_perf {
     subheaderprint "Analysis Performance Metrics";
-    infoprint "innodb_stats_on_metadata: " . $myvar{'innodb_stats_on_metadata'};
-    if ( $myvar{'innodb_stats_on_metadata'} eq 'ON' ) {
-        badprint "Stat are updated during querying INFORMATION_SCHEMA.";
-        push @adjvars, "SET innodb_stats_on_metadata = OFF";
+    if (defined $myvar{'innodb_stats_on_metadata'}) {
+        infoprint "innodb_stats_on_metadata: " . $myvar{'innodb_stats_on_metadata'};
+        if ( $myvar{'innodb_stats_on_metadata'} eq 'ON' ) {
+            badprint "Stat are updated during querying INFORMATION_SCHEMA.";
+            push @adjvars, "SET innodb_stats_on_metadata = OFF";
 
-        #Disabling innodb_stats_on_metadata
-        select_one("SET GLOBAL innodb_stats_on_metadata = OFF;");
-        return 1;
+            #Disabling innodb_stats_on_metadata
+            select_one("SET GLOBAL innodb_stats_on_metadata = OFF;");
+            return 1;
+        }
     }
     goodprint "No stat updates during querying INFORMATION_SCHEMA.";
     return 0;
