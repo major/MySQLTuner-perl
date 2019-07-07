@@ -5,3 +5,5 @@ build/cve*
 build/vulnerabilities*
 *.bak
 Vagrant/Vagrantfile
+Vagrant/data
+Vagrant/.vagrant
