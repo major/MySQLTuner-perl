@@ -5994,7 +5994,7 @@ sub mysql_tables {
                 my $current_type =
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "" );
                 my $optimal_type = select_str_g( "Optimal_fieldtype",
-                    "SELECT $_ FROM $dbname.$tbname PROCEDURE ANALYSE(100000)"
+                    "SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
                 );
                 if ( not defined($optimal_type) or $optimal_type eq '' ) {
                     infoprint "      Current Fieldtype: $current_type";
@@ -6006,7 +6006,7 @@ sub mysql_tables {
                     badprint
 "Consider changing type for column $_ in table $dbname.$tbname";
                     push( @generalrec,
-                        "ALTER TABLE $dbname.$tbname MODIFY $_ $optimal_type;"
+                        "ALTER TABLE \`$dbname\`.\`$tbname\` MODIFY \`$_\` $optimal_type;"
                     );
 
                 }
