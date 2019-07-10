@@ -118,12 +118,12 @@ By default, on MariaDB, performance schema is disabled by default. consider acti
 
 You can follow this command to create a new database sys containing very useful view on Performance schema:
 
-	curl "https://codeload.github.com/good-dba/mariadb-sys/zip/master" > mariadb-sys.zip
+	curl "https://codeload.github.com/FromDual/mariadb-sys/zip/master" > mariadb-sys.zip
 	# check zip file
 	unzip -l mariadb-sys.zip
 	unzip mariadb-sys.zip
 	cd mariadb-sys-master/
-	mysql -u root -p < ./mariadb_sys_install.sql
+	mysql -u root -p < ./sys_10.sql
 
 Performance tips
 --
