@@ -137,7 +137,7 @@ Specific usage
 
 __Usage:__ Minimal usage locally
 
-	perl mysqltuner.pl
+	perl mysqltuner.pl --host 127.0.0.1
 
 Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
 
