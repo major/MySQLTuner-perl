@@ -52,7 +52,7 @@ my $temp;
 unlink '../vulnerabilities.csv' if -f '../vulnerabilities.csv';
 open(CVE, 'cve.csv') or die("Could not open  file.");
 foreach my $line (<CVE>) {
-	if ($line =~ /(mysql|mariadb)/i 
+	if ($line =~ /(mysql|mariadb|percona)/i 
             and $line =~ /server/i
             and $line =~ /CANDIDATE/i 
             and $line !~ /MaxDB/i
