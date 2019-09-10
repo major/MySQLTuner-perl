@@ -1738,8 +1738,14 @@ sub security_recommendations {
 
     my $PASS_COLUMN_NAME = 'password';
     if ( $myvar{'version'} =~ /5\.7|10\..*MariaDB*/ ) {
-        $PASS_COLUMN_NAME =
+        my $password_column_exists = `$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'" 2>>/dev/null`;
+        if ($password_column_exists) {
+            $PASS_COLUMN_NAME =
 "IF(plugin='mysql_native_password', authentication_string, password)";
+        }
+        else {
+            $PASS_COLUMN_NAME = 'authentication_string';
+        }
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
 
