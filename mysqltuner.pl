@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.15
+# mysqltuner.pl - Version 1.7.16
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.15";
+my $tunerversion = "1.7.16";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1963,26 +1963,27 @@ sub validate_mysql_version {
       $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
     $mysqlverminor ||= 0;
     $mysqlvermicro ||= 0;
-    if ( !mysql_version_ge( 5, 1 ) ) {
+
+    if ( mysql_version_eq(8) or mysql_version_eq(5, 6) or mysql_version_eq(5, 7)
+        or mysql_version_eq(10, 1)  or mysql_version_eq(10, 2) or mysql_version_eq(10, 3)
+         or mysql_version_eq(10, 4) )
+    {
+        goodprint "Currently running supported MySQL version " . $myvar{'version'} . "";
+        return;
+    }
+    if ( mysql_version_ge( 5 ) or mysql_version_ge( 4 ) or mysql_version_eq(10, 0) ) {
         badprint "Your MySQL version "
           . $myvar{'version'}
           . " is EOL software!  Upgrade soon!";
-    }
-    elsif ( ( mysql_version_ge(6) and mysql_version_le(9) )
-        or mysql_version_ge(12) )
-    {
-        badprint "Currently running unsupported MySQL version "
-          . $myvar{'version'} . "";
-    }
-    else {
-        goodprint "Currently running supported MySQL version "
-          . $myvar{'version'} . "";
     }
 }
 
 # Checks if MySQL version is equal to (major, minor, micro)
 sub mysql_version_eq {
     my ( $maj, $min, $mic ) = @_;
+    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+
     return int($mysqlvermajor) == int($maj)
       if ( !defined($min) && !defined($mic) );
     return int($mysqlvermajor) == int($maj) && int($mysqlverminor) == int($min)
@@ -1997,6 +1998,9 @@ sub mysql_version_ge {
     my ( $maj, $min, $mic ) = @_;
     $min ||= 0;
     $mic ||= 0;
+    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+
     return
          int($mysqlvermajor) > int($maj)
       || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) > int($min) )
@@ -2010,6 +2014,8 @@ sub mysql_version_le {
     my ( $maj, $min, $mic ) = @_;
     $min ||= 0;
     $mic ||= 0;
+    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
     return
          int($mysqlvermajor) < int($maj)
       || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) < int($min) )
@@ -2021,6 +2027,9 @@ sub mysql_version_le {
 # Checks if MySQL micro version is lower than equal to (major, minor, micro)
 sub mysql_micro_version_le {
     my ( $maj, $min, $mic ) = @_;
+    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+
     return $mysqlvermajor == $maj
       && ( $mysqlverminor == $min
         && $mysqlvermicro <= $mic );
@@ -3278,7 +3287,10 @@ sub mysql_stats {
 # Recommendations for MyISAM
 sub mysql_myisam {
     subheaderprint "MyISAM Metrics";
-
+    if (mysql_version_ge(8) and mysql_version_le(10) ) {
+        infoprint "MyISAM Metrics are disabled on last MySQL versions.";
+        return;
+    }
     # Key buffer usage
     if ( defined( $mycalc{'pct_key_buffer_used'} ) ) {
         if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
@@ -6348,7 +6360,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.15 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.16 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
