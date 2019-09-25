@@ -2090,12 +2090,11 @@ sub check_architecture {
 my ( %enginestats, %enginecount, $fragtables );
 
 sub check_storage_engines {
+    subheaderprint "Storage Engine Statistics";
     if ( $opt{skipsize} eq 1 ) {
-        subheaderprint "Storage Engine Statistics";
         infoprint "Skipped due to --skipsize option";
         return;
     }
-    subheaderprint "Storage Engine Statistics";
 
     my $engines;
     if ( mysql_version_ge( 5, 5 ) ) {
@@ -5511,6 +5510,10 @@ sub mysql_innodb {
         && $myvar{'have_innodb'} eq "YES"
         && defined $enginestats{'InnoDB'} )
     {
+       if ( $opt{skipsize} eq 1 ) {
+            infoprint "Skipped due to --skipsize option";
+            return;
+        }
         infoprint "InnoDB is disabled.";
         if ( mysql_version_ge( 5, 5 ) ) {
             badprint
