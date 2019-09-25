@@ -198,7 +198,7 @@ $opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
 $opt{noprocess} = 0
   if ( $opt{noprocess} == 1 );                # Don't Print process information
 $opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't Print sysstat information
-$opt{pfstat} = 0
+$opt{pfstat}  = 0
   if ( $opt{nopfstat} == 1 );    # Don't Print performance schema information
 $opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't Print index information
 
@@ -1097,7 +1097,9 @@ sub get_all_vars {
     unless ( defined( $myvar{'innodb_support_xa'} ) ) {
         $myvar{'innodb_support_xa'} = 'ON';
     }
-    $mystat{'Uptime'} = 1 unless defined($mystat{'Uptime'}) and $mystat{'Uptime'}>0;
+    $mystat{'Uptime'} = 1
+      unless defined( $mystat{'Uptime'} )
+      and $mystat{'Uptime'} > 0;
     $myvar{'have_galera'} = "NO";
     if (   defined( $myvar{'wsrep_provider_options'} )
         && $myvar{'wsrep_provider_options'} ne ""
@@ -1738,7 +1740,8 @@ sub security_recommendations {
 
     my $PASS_COLUMN_NAME = 'password';
     if ( $myvar{'version'} =~ /5\.7|10\..*MariaDB*/ ) {
-        my $password_column_exists = `$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'" 2>>/dev/null`;
+        my $password_column_exists =
+`$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'" 2>>/dev/null`;
         if ($password_column_exists) {
             $PASS_COLUMN_NAME =
 "IF(plugin='mysql_native_password', authentication_string, password)";
@@ -3509,7 +3512,7 @@ sub mysqsl_pfs {
         ) unless ( mysql_version_le( 5, 6 ) );
         push( @generalrec,
 "Consider installing Sys schema from https://github.com/good-dba/mariadb-sys for MariaDB"
-        ) unless ( mysql_version_eq( 10, 0 ) or  mysql_version_eq( 5, 5 )  );
+        ) unless ( mysql_version_eq( 10, 0 ) or mysql_version_eq( 5, 5 ) );
 
         return;
     }
@@ -5142,7 +5145,7 @@ sub trim {
 sub get_wsrep_options {
     return () unless defined $myvar{'wsrep_provider_options'};
 
-    my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
+    my @galera_options      = split /;/, $myvar{'wsrep_provider_options'};
     my $wsrep_slave_threads = $myvar{'wsrep_slave_threads'};
     push @galera_options, ' wsrep_slave_threads = ' . $wsrep_slave_threads;
     @galera_options = remove_cr @galera_options;
@@ -5164,7 +5167,7 @@ sub get_wsrep_option {
     my @galera_options = get_wsrep_options;
     return '' unless scalar(@galera_options) > 0;
     my @memValues = grep /\s*$key =/, @galera_options;
-    my $memValue = $memValues[0];
+    my $memValue  = $memValues[0];
     return 0 unless defined $memValue;
     $memValue =~ s/.*=\s*(.+)$/$1/g;
     return $memValue;
@@ -5340,7 +5343,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             goodprint "Galera Cluster address is defined: "
               . $myvar{'wsrep_cluster_address'};
             my @NodesTmp = split /,/, $myvar{'wsrep_cluster_address'};
-            my $nbNodes = @NodesTmp;
+            my $nbNodes  = @NodesTmp;
             infoprint "There are $nbNodes nodes in wsrep_cluster_address";
             my $nbNodesSize = trim( $mystat{'wsrep_cluster_size'} );
             if ( $nbNodesSize == 3 or $nbNodesSize == 5 ) {
@@ -5772,8 +5775,9 @@ sub mysql_innodb {
 
 sub check_metadata_perf {
     subheaderprint "Analysis Performance Metrics";
-    if (defined $myvar{'innodb_stats_on_metadata'}) {
-        infoprint "innodb_stats_on_metadata: " . $myvar{'innodb_stats_on_metadata'};
+    if ( defined $myvar{'innodb_stats_on_metadata'} ) {
+        infoprint "innodb_stats_on_metadata: "
+          . $myvar{'innodb_stats_on_metadata'};
         if ( $myvar{'innodb_stats_on_metadata'} eq 'ON' ) {
             badprint "Stat are updated during querying INFORMATION_SCHEMA.";
             push @adjvars, "SET innodb_stats_on_metadata = OFF";
@@ -6000,7 +6004,7 @@ sub mysql_tables {
                 my $current_type =
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "" );
                 my $optimal_type = select_str_g( "Optimal_fieldtype",
-                    "SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
+"SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
                 );
                 if ( not defined($optimal_type) or $optimal_type eq '' ) {
                     infoprint "      Current Fieldtype: $current_type";
@@ -6012,7 +6016,7 @@ sub mysql_tables {
                     badprint
 "Consider changing type for column $_ in table $dbname.$tbname";
                     push( @generalrec,
-                        "ALTER TABLE \`$dbname\`.\`$tbname\` MODIFY \`$_\` $optimal_type;"
+"ALTER TABLE \`$dbname\`.\`$tbname\` MODIFY \`$_\` $optimal_type;"
                     );
 
                 }
@@ -6225,19 +6229,19 @@ sub dump_result {
             die "Text::Template Module is needed.";
         }
 
-        my $json = JSON->new->allow_nonref;
-        my $json_text   = $json->pretty->encode( \%result );
-        my %vars = (
-            'data' => \%result,
+        my $json      = JSON->new->allow_nonref;
+        my $json_text = $json->pretty->encode( \%result );
+        my %vars      = (
+            'data'  => \%result,
             'debug' => $json_text,
         );
         my $template;
         {
             no warnings 'once';
             $template = Text::Template->new(
-                TYPE    => 'STRING',
-                PREPEND => q{;},
-                SOURCE  => $templateModel,
+                TYPE       => 'STRING',
+                PREPEND    => q{;},
+                SOURCE     => $templateModel,
                 DELIMITERS => [ '[%', '%]' ]
             ) or die "Couldn't construct template: $Text::Template::ERROR";
         }
