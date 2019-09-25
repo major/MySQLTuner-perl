@@ -125,7 +125,7 @@ You can follow this command to create a new database sys containing very useful 
 	cd mariadb-sys-master/
 	mysql -u root -p < ./sys_10.sql
 
-Errors & solutions for performance schema
+Errors & solutions for performance schema installation
 
      ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
      Have a look at #452 solution given by @ericx

@@ -1197,11 +1197,35 @@ sub get_log_file_real_path {
     if ( -f "$file" ) {
         return $file;
     }
+    elsif ( -f "$hostname.log" ) {
+        return "$hostname.log";
+    }
     elsif ( -f "$hostname.err" ) {
         return "$hostname.err";
     }
-    elsif ( $datadir ne "" ) {
+    elsif ( -f "$datadir$hostname.err" ) {
         return "$datadir$hostname.err";
+    }
+    elsif ( -f "$datadir$hostname.log" ) {
+        return "$datadir$hostname.log";
+    }
+    elsif ( -f "$datadir"."mysql_error.log" ) {
+        return "$datadir"."mysql_error.log";
+    }
+     elsif ( -f "/var/log/mysql.log" ) {
+        return "/var/log/mysql.log";
+    }
+    elsif ( -f "/var/log/mysqld.log" ) {
+        return "/var/log/mysqld.log";
+    }
+    elsif ( -f "/var/log/mysql/$hostname.err" ) {
+        return "/var/log/mysql/$hostname.err";
+    }
+    elsif ( -f "/var/log/mysql/$hostname.log" ) {
+        return "/var/log/mysql/$hostname.log";
+    }
+    elsif ( -f "/var/log/mysql/"."mysql_error.log" ) {
+        return "/var/log/mysql/"."mysql_error.log";
     }
     else {
         return $file;
@@ -1212,16 +1236,19 @@ sub log_file_recommendations {
     $myvar{'log_error'} =
       get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
         $myvar{'datadir'} );
+
     subheaderprint "Log file Recommendations";
-    infoprint "Log file: "
-      . $myvar{'log_error'} . "("
-      . hr_bytes_rnd( ( stat $myvar{'log_error'} )[7] ) . ")";
     if ( -f "$myvar{'log_error'}" ) {
         goodprint "Log file $myvar{'log_error'} exists";
     }
     else {
         badprint "Log file $myvar{'log_error'} doesn't exist";
+        return;
     }
+    infoprint "Log file: "
+      . $myvar{'log_error'} . "("
+      . hr_bytes_rnd( ( stat $myvar{'log_error'} )[7] ) . ")";
+
     if ( -r "$myvar{'log_error'}" ) {
         goodprint "Log file $myvar{'log_error'} is readable.";
     }
