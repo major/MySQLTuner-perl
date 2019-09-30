@@ -21,7 +21,11 @@ case "$1" in
     "fetch")
         [ -z "$2" ] && exit 1
         mkdir -p ./contents
-        wget -O contents/$(basename $(getVal "DB_$2_URL")) $(getVal "DB_$2_URL")
+        [ -f "contents/$(basename $(getVal "DB_$2_URL"))" ] || wget -O contents/$(basename $(getVal "DB_$2_URL")) $(getVal "DB_$2_URL")
+        [ $? -eq 0 ] && (cd contents;unzip $(basename $(getVal "DB_$2_URL")))
+        ;;
+    "clean")
+        rm -rf contents
         ;;
     "load")
 
