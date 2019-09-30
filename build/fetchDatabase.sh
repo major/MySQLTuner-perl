@@ -13,11 +13,18 @@ getVal()
     eval "echo \$$vari"
 }
 case "$1" in
+    "fetchall")
+        for sample in WORLD WORLDX SAKILA MESSAGERIE TESTDB; do
+            sh $0 fetch $sample
+        done
+        ;;
     "fetch")
+        [ -z "$2" ] && exit 1
         mkdir -p ./contents
         wget -O contents/$(basename $(getVal "DB_$2_URL")) $(getVal "DB_$2_URL")
         ;;
     "load")
+
         ;;
     *)
         echo "Unknown operation: $1"
