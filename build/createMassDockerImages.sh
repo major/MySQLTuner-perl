@@ -47,12 +47,14 @@ do
     docker ps -a | grep -qE "$container_name^"
     docker rm -f $container_name
 
+    if [ 1 -eq 0 ]; then
     echo "* DELETING DATADIR: $container_datadir"
     sudo rm -rf $container_datadir
     [ "$1" = "clean" ] && continue
 
     echo "* CREATING DATADIR: $container_datadir"
-    sudo mkdir $container_datadir
+    sudo mkdir -p $container_datadir
+    fi
     #sudo chown -R mysql.mysql $container_datadir
     sudo chmod 777 $container_datadir
     echo "* STARTING CONTAINER: $container_name($container_port/TCP) BASED ON $image_name -> $container_datadir"
@@ -72,10 +74,7 @@ do
     ls -ls $container_datadir
     #break
     docker logs $container_name | grep -q "ready for connections"
-    alias mysql_$container_name="mysql -u root -P $container_port"
 done < "$input"
-
-[ "$1" = "clean" ] || docker system prune -a -f
 
 echo "* LISTING DOCKER IMAGES"
 docker images
