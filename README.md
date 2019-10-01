@@ -273,7 +273,7 @@ MySQLTuner and Vagrant
 
 **Vagrant File** is stored in Vagrant subdirectory.
 * Follow following step after vagrant installation:
-* vagrant up
+    $ vagrant up
 
 **MySQLTuner** contains a Vagrant configurations for test purpose and development
 * Install VirtualBox and Vagrant
@@ -292,40 +292,40 @@ MySQLTuner and Vagrant
 
 ## setup test environments
 
- $ sh build/createTestEnvs.sh
+    $ sh build/createTestEnvs.sh
 
- $ source build/bashrc
- $ mysql_percona80 sakila
- sakila> ...
+    $ source build/bashrc
+    $ mysql_percona80 sakila
+    sakila> ...
 
-$ docker images                                                                                                                                          REPOSITORY               TAG                 IMAGE ID            CREATED             SIZE
-mariadb                  10.1                fc612450e1f1        12 days ago         352MB
-mariadb                  10.2                027b7c57b8c6        12 days ago         340MB
-mariadb                  10.3                47dff68107c4        12 days ago         343MB
-mariadb                  10.4                92495405fc36        12 days ago         356MB
-mysql                    5.6                 95e0fc47b096        2 weeks ago         257MB
-mysql                    5.7                 383867b75fd2        2 weeks ago         373MB
-mysql                    8.0                 b8fd9553f1f0        2 weeks ago         445MB
-percona/percona-server   5.7                 ddd245ed3496        5 weeks ago         585MB
-percona/percona-server   5.6                 ed0a36e0cf1b        6 weeks ago         421MB
-percona/percona-server   8.0                 390ae97d57c6        6 weeks ago         697MB
-mariadb                  5.5                 c7bf316a4325        4 months ago        352MB
-mariadb                  10.0                d1bde56970c6        4 months ago        353MB
-mysql                    5.5                 d404d78aa797        4 months ago        205MB
+    $ docker images
+    mariadb                  10.1                fc612450e1f1        12 days ago         352MB
+    mariadb                  10.2                027b7c57b8c6        12 days ago         340MB
+    mariadb                  10.3                47dff68107c4        12 days ago         343MB
+    mariadb                  10.4                92495405fc36        12 days ago         356MB
+    mysql                    5.6                 95e0fc47b096        2 weeks ago         257MB
+    mysql                    5.7                 383867b75fd2        2 weeks ago         373MB
+    mysql                    8.0                 b8fd9553f1f0        2 weeks ago         445MB
+    percona/percona-server   5.7                 ddd245ed3496        5 weeks ago         585MB
+    percona/percona-server   5.6                 ed0a36e0cf1b        6 weeks ago         421MB
+    percona/percona-server   8.0                 390ae97d57c6        6 weeks ago         697MB
+    mariadb                  5.5                 c7bf316a4325        4 months ago        352MB
+    mariadb                  10.0                d1bde56970c6        4 months ago        353MB
+    mysql                    5.5                 d404d78aa797        4 months ago        205MB
 
-$ docker ps
-CONTAINER ID        IMAGE                        COMMAND                  CREATED             STATUS              PORTS                               NAMES
-da2be9b050c9        mariadb:5.5                  "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5311->3306/tcp              mariadb55
-5deca25d5ac8        mariadb:10.0                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5310->3306/tcp              mariadb100
-73aaeb37e2c2        mariadb:10.1                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5309->3306/tcp              mariadb101
-72ffa77e01ec        mariadb:10.2                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5308->3306/tcp              mariadb102
-f5996f2041df        mariadb:10.3                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5307->3306/tcp              mariadb103
-4890c52372bb        mariadb:10.4                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5306->3306/tcp              mariadb104
-6b9dc078e921        percona/percona-server:5.6   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          0.0.0.0:4308->3306/tcp              percona56
-3a4c7c826d4c        percona/percona-server:5.7   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          0.0.0.0:4307->3306/tcp              percona57
-3dda408c91b0        percona/percona-server:8.0   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:4306->3306/tcp   percona80
-600a4e7e9dcd        mysql:5.5                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3309->3306/tcp              mysql55
-4bbe54342e5d        mysql:5.6                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3308->3306/tcp              mysql56
+    $ docker ps
+    CONTAINER ID        IMAGE                        COMMAND                  CREATED             STATUS              PORTS                               NAMES
+    da2be9b050c9        mariadb:5.5                  "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5311->3306/tcp              mariadb55
+    5deca25d5ac8        mariadb:10.0                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5310->3306/tcp              mariadb100
+    73aaeb37e2c2        mariadb:10.1                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5309->3306/tcp              mariadb101
+    72ffa77e01ec        mariadb:10.2                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5308->3306/tcp              mariadb102
+    f5996f2041df        mariadb:10.3                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5307->3306/tcp              mariadb103
+    4890c52372bb        mariadb:10.4                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5306->3306/tcp              mariadb104
+    6b9dc078e921        percona/percona-server:5.6   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          0.0.0.0:4308->3306/tcp              percona56
+    3a4c7c826d4c        percona/percona-server:5.7   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          0.0.0.0:4307->3306/tcp              percona57
+    3dda408c91b0        percona/percona-server:8.0   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:4306->3306/tcp   percona80
+    600a4e7e9dcd        mysql:5.5                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3309->3306/tcp              mysql55
+    4bbe54342e5d        mysql:5.6                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3308->3306/tcp              mysql56
 a49783249a11        mysql:5.7                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:3307->3306/tcp   mysql57
 d985820667c2        mysql:8.0                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3306->3306/tcp, 33060/tcp   mysql80
 
