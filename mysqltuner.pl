@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.16
+# mysqltuner.pl - Version 1.7.17
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.16";
+my $tunerversion = "1.7.17";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1238,6 +1238,10 @@ sub log_file_recommendations {
         $myvar{'datadir'} );
 
     subheaderprint "Log file Recommendations";
+    if ( "$myvar{'log_error'}" eq "stderr" ) {
+        badprint "log_error is set to $myvar{'log_error'} MT can't read stderr";
+        return
+    }
     if ( -f "$myvar{'log_error'}" ) {
         goodprint "Log file $myvar{'log_error'} exists";
     }
@@ -3953,11 +3957,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # InnoDB Buffer Pool by table
-    subheaderprint "Performance schema: InnoDB Buffer Pool by table";
+    subheaderprint "Performance schema: 40 InnoDB Buffer Pool by table";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select object_schema,  object_name, allocated,data, pages from sys.x\\$innodb_buffer_stats_by_table ORDER BY pages DESC'
+'select object_schema,  object_name, allocated,data, pages from sys.x\\$innodb_buffer_stats_by_table ORDER BY pages DESC LIMIT 40'
         )
       )
     {
@@ -4013,11 +4017,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # High Cost SQL statements
-    subheaderprint "Performance schema: Top 5 Most latency statements";
+    subheaderprint "Performance schema: Top 15 Most latency statements";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select query, avg_latency from sys.x\\$statement_analysis order by avg_latency desc LIMIT 5'
+'select LEFT(query, 120), avg_latency from sys.x\\$statement_analysis order by avg_latency desc LIMIT 15'
         )
       )
     {
@@ -4028,11 +4032,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Top 5% slower queries
-    subheaderprint "Performance schema: Top 5 slower queries";
+    subheaderprint "Performance schema: Top 15 slower queries";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select query, exec_count from sys.x\\$statements_with_runtimes_in_95th_percentile order by exec_count desc LIMIT 5'
+'select LEFT(query, 120), exec_count from sys.x\\$statements_with_runtimes_in_95th_percentile order by exec_count desc LIMIT 15'
         )
       )
     {
@@ -4043,11 +4047,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Top 10 nb statement type
-    subheaderprint "Performance schema: Top 10 nb statement type";
+    subheaderprint "Performance schema: Top 15 nb statement type";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(total) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(total) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 15;'
         )
       )
     {
@@ -4058,11 +4062,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Top statement by total latency
-    subheaderprint "Performance schema: Top statement by total latency";
+    subheaderprint "Performance schema: Top 15 statement by total latency";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(total_latency) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(total_latency) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 15;'
         )
       )
     {
@@ -4073,11 +4077,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Top statement by lock latency
-    subheaderprint "Performance schema: Top statement by lock latency";
+    subheaderprint "Performance schema: Top 15 statement by lock latency";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(lock_latency) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(lock_latency) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 15;'
         )
       )
     {
@@ -4088,11 +4092,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Top statement by full scans
-    subheaderprint "Performance schema: Top statement by full scans";
+    subheaderprint "Performance schema: Top 15 statement by full scans";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(full_scans) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(full_scans) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 15;'
         )
       )
     {
@@ -4103,11 +4107,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Top statement by rows sent
-    subheaderprint "Performance schema: Top statement by rows sent";
+    subheaderprint "Performance schema: Top 15 statement by rows sent";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(rows_sent) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(rows_sent) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 15;'
         )
       )
     {
@@ -4118,11 +4122,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Top statement by rows modified
-    subheaderprint "Performance schema: Top statement by rows modified";
+    subheaderprint "Performance schema: Top 15 statement by rows modified";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select statement, sum(rows_affected) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 10;'
+'use sys;select statement, sum(rows_affected) as total from sys.x\\$host_summary_by_statement_type group by statement order by total desc LIMIT 15;'
         )
       )
     {
@@ -4133,11 +4137,11 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Use temporary tables
-    subheaderprint "Performance schema: Some queries using temp table";
+    subheaderprint "Performance schema: 15 sample queries using temp table";
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select query from sys.x\\$statements_with_temp_tables LIMIT 20'
+'use sys;select left(query, 120) from sys.x\\$statements_with_temp_tables LIMIT 15'
         )
       )
     {
@@ -4150,7 +4154,7 @@ sub mysqsl_pfs {
     # Unused Indexes
     subheaderprint "Performance schema: Unused indexes";
     $nbL = 1;
-    for my $lQuery ( select_array('select * from sys.schema_unused_indexes') ) {
+    for my $lQuery ( select_array("select \* from sys.schema_unused_indexes where object_schema not in ('performance_schema')" )) {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
@@ -4530,33 +4534,6 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: Tables not using InnoDB buffer";
-    $nbL = 1;
-    for my $lQuery (
-        select_array(
-' Select table_schema, table_name from sys.x\\$schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;'
-        )
-      )
-    {
-        infoprint " +-- $nbL: $lQuery";
-        $nbL++;
-    }
-    infoprint "No information found or indicators deactivated."
-      if ( $nbL == 1 );
-
-    subheaderprint "Performance schema: Table not using InnoDB buffer";
-    $nbL = 1;
-    for my $lQuery (
-        select_array(
-' Select table_schema, table_name from sys.x\\$schema_table_statistics_with_buffer where innodb_buffer_allocated IS NULL;'
-        )
-      )
-    {
-        infoprint " +-- $nbL: $lQuery";
-        $nbL++;
-    }
-    infoprint "No information found or indicators deactivated."
-      if ( $nbL == 1 );
     subheaderprint "Performance schema: Table not using InnoDB buffer";
     $nbL = 1;
     for my $lQuery (
@@ -4603,7 +4580,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, exec_count from sys.x\\$statement_analysis order by exec_count DESC LIMIT 15;'
+'select db, LEFT(query, 120), exec_count from sys.x\\$statement_analysis order by exec_count DESC LIMIT 15;'
         )
       )
     {
@@ -4618,7 +4595,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select query, last_seen from sys.x\\$statements_with_errors_or_warnings ORDER BY last_seen LIMIT 100;'
+'select LEFT(query, 120), last_seen from sys.x\\$statements_with_errors_or_warnings ORDER BY last_seen LIMIT 40;'
         )
       )
     {
@@ -4632,7 +4609,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, exec_count from sys.x\\$statements_with_full_table_scans order BY exec_count DESC LIMIT 20;'
+'select db, LEFT(query, 120), exec_count from sys.x\\$statements_with_full_table_scans order BY exec_count DESC LIMIT 20;'
         )
       )
     {
@@ -4646,7 +4623,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, last_seen from sys.x\\$statements_with_full_table_scans order BY last_seen DESC LIMIT 50;'
+'select db, LEFT(query, 120), last_seen from sys.x\\$statements_with_full_table_scans order BY last_seen DESC LIMIT 50;'
         )
       )
     {
@@ -4660,7 +4637,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query , rows_sent from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY ROWs_sent DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), rows_sent from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY ROWs_sent DESC LIMIT 15;'
         )
       )
     {
@@ -4675,7 +4652,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, rows_examined AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY rows_examined DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), rows_examined AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY rows_examined DESC LIMIT 15;'
         )
       )
     {
@@ -4690,7 +4667,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, total_latency AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY total_latency DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), total_latency AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY total_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4705,7 +4682,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, max_latency AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY max_latency DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), max_latency AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY max_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4720,7 +4697,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, avg_latency AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY avg_latency DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), avg_latency AS search from sys.x\\$statements_with_runtimes_in_95th_percentile ORDER BY avg_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4734,7 +4711,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, exec_count from sys.x\\$statements_with_sorting order BY exec_count DESC LIMIT 20;'
+'select db, LEFT(query, 120), exec_count from sys.x\\$statements_with_sorting order BY exec_count DESC LIMIT 20;'
         )
       )
     {
@@ -4748,7 +4725,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, last_seen from sys.x\\$statements_with_sorting order BY last_seen DESC LIMIT 50;'
+'select db, LEFT(query, 120), last_seen from sys.x\\$statements_with_sorting order BY last_seen DESC LIMIT 50;'
         )
       )
     {
@@ -4762,7 +4739,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query , rows_sorted from sys.x\\$statements_with_sorting ORDER BY ROWs_sorted DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), rows_sorted from sys.x\\$statements_with_sorting ORDER BY ROWs_sorted DESC LIMIT 15;'
         )
       )
     {
@@ -4776,7 +4753,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, total_latency AS search from sys.x\\$statements_with_sorting ORDER BY total_latency DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), total_latency AS search from sys.x\\$statements_with_sorting ORDER BY total_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4790,7 +4767,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, sort_merge_passes AS search from sys.x\\$statements_with_sorting ORDER BY sort_merge_passes DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), sort_merge_passes AS search from sys.x\\$statements_with_sorting ORDER BY sort_merge_passes DESC LIMIT 15;'
         )
       )
     {
@@ -4805,7 +4782,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, avg_sort_merges AS search from sys.x\\$statements_with_sorting ORDER BY avg_sort_merges DESC LIMIT 15;'
+'select db, LEFT(query, 120), avg_sort_merges AS search from sys.x\\$statements_with_sorting ORDER BY avg_sort_merges DESC LIMIT 15;'
         )
       )
     {
@@ -4819,7 +4796,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, sorts_using_scans AS search from sys.x\\$statements_with_sorting ORDER BY sorts_using_scans DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), sorts_using_scans AS search from sys.x\\$statements_with_sorting ORDER BY sorts_using_scans DESC LIMIT 15;'
         )
       )
     {
@@ -4833,7 +4810,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, sort_using_range AS search from sys.x\\$statements_with_sorting ORDER BY sort_using_range DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), sort_using_range AS search from sys.x\\$statements_with_sorting ORDER BY sort_using_range DESC LIMIT 15;'
         )
       )
     {
@@ -4869,7 +4846,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, exec_count from sys.x\\$statements_with_temp_tables order BY exec_count DESC LIMIT 20;'
+'select db, LEFT(query, 120), exec_count from sys.x\\$statements_with_temp_tables order BY exec_count DESC LIMIT 20;'
         )
       )
     {
@@ -4883,7 +4860,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, last_seen from sys.x\\$statements_with_temp_tables order BY last_seen DESC LIMIT 50;'
+'select db, LEFT(query, 120), last_seen from sys.x\\$statements_with_temp_tables order BY last_seen DESC LIMIT 50;'
         )
       )
     {
@@ -4898,7 +4875,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'select db, query, total_latency AS search from sys.x\\$statements_with_temp_tables ORDER BY total_latency DESC LIMIT 15;'
+'select db, LEFT(query, 120), total_latency AS search from sys.x\\$statements_with_temp_tables ORDER BY total_latency DESC LIMIT 15;'
         )
       )
     {
@@ -4912,7 +4889,7 @@ sub mysqsl_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-'use sys;select db, query, disk_tmp_tables from sys.x\\$statements_with_temp_tables ORDER BY disk_tmp_tables DESC LIMIT 15;'
+'use sys;select db, LEFT(query, 120), disk_tmp_tables from sys.x\\$statements_with_temp_tables ORDER BY disk_tmp_tables DESC LIMIT 15;'
         )
       )
     {
@@ -6019,6 +5996,9 @@ sub mysql_tables {
 "Skip Database metrics from information schema missing in this version";
         return;
     }
+    if (mysql_version_ge(8) and not mysql_version_eq(10)) {
+        infoprint "MySQL and Percona version 8 and greater have remove PROCEDURE ANALYSE feature"
+    }
     my @dblist = select_array(
 "SELECT DISTINCT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
     );
@@ -6042,15 +6022,17 @@ sub mysql_tables {
                 my $isnull = select_one(
 "SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname' AND COLUMN_NAME='$_' "
                 );
+
                 infoprint "     +-- Column $tbname.$_:";
                 my $current_type =
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "" );
-                my $optimal_type = select_str_g( "Optimal_fieldtype",
+                my $optimal_type='';
+                $optimal_type = select_str_g( "Optimal_fieldtype",
 "SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
-                );
-                if ( not defined($optimal_type) or $optimal_type eq '' ) {
+                ) unless (mysql_version_ge(8) and not mysql_version_eq(10));
+                if ( $optimal_type eq '' ) {
                     infoprint "      Current Fieldtype: $current_type";
-                    infoprint "      Optimal Fieldtype: Not available";
+                    #infoprint "      Optimal Fieldtype: Not available";
                 }
                 elsif ( $current_type ne $optimal_type ) {
                     infoprint "      Current Fieldtype: $current_type";
@@ -6159,7 +6141,7 @@ FROM performance_schema.table_io_waits_summary_by_index_usage
 WHERE index_name IS NOT NULL
 AND count_star =0
 AND index_name <> 'PRIMARY'
-AND object_schema != 'mysql'
+AND object_schema NOT IN ( 'mysql', 'performance_schema', 'information_schema' )
 ORDER BY count_star, object_schema, object_name;
 ENDSQL
     @idxinfo = select_array($selIdxReq);
@@ -6341,19 +6323,19 @@ debugprint "MySQL FINAL Client : $mysqlcmd $mysqllogin";
 debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
 
 #exit(0);
-os_setup;                  # Set up some OS variables
-get_all_vars;              # Toss variables/status into hashes
-get_tuning_info;           # Get information about the tuning connexion
-validate_mysql_version;    # Check current MySQL version
+os_setup;                    # Set up some OS variables
+get_all_vars;                # Toss variables/status into hashes
+get_tuning_info;             # Get information about the tuning connexion
+validate_mysql_version;      # Check current MySQL version
 
-check_architecture;        # Suggest 64-bit upgrade
-system_recommendations;    # avoid to many service on the same host
-log_file_recommendations;  # check log file content
-check_storage_engines;     # Show enabled storage engines
+check_architecture;          # Suggest 64-bit upgrade
+system_recommendations;      # avoid to many service on the same host
+log_file_recommendations;    # check log file content
+check_storage_engines;       # Show enabled storage engines
 
-check_metadata_perf;    # Show parameter impacting performance during analysis
-mysql_databases;        # Show informations about databases
-mysql_tables;           # Show informations about table column
+check_metadata_perf;         # Show parameter impacting performance during analysis
+mysql_databases;             # Show informations about databases
+mysql_tables;                # Show informations about table column
 
 mysql_indexes;               # Show informations about indexes
 security_recommendations;    # Display some security recommendations
@@ -6368,14 +6350,14 @@ mariadb_ariadb;              # Print MariaDB AriaDB stats
 mariadb_tokudb;              # Print MariaDB Tokudb stats
 mariadb_xtradb;              # Print MariaDB XtraDB stats
 
-#mariadb_rockdb;            # Print MariaDB RockDB stats
-#mariadb_spider;            # Print MariaDB Spider stats
-#mariadb_connect;           # Print MariaDB Connect stats
-mariadb_galera;            # Print MariaDB Galera Cluster stats
-get_replication_status;    # Print replication info
-make_recommendations;      # Make recommendations based on stats
-dump_result;               # Dump result if debug is on
-close_outputfile;          # Close reportfile if needed
+#mariadb_rockdb;             # Print MariaDB RockDB stats
+#mariadb_spider;             # Print MariaDB Spider stats
+#mariadb_connect;            # Print MariaDB Connect stats
+mariadb_galera;              # Print MariaDB Galera Cluster stats
+get_replication_status;      # Print replication info
+make_recommendations;        # Make recommendations based on stats
+dump_result;                 # Dump result if debug is on
+close_outputfile;            # Close reportfile if needed
 
 # ---------------------------------------------------------------------------
 # END 'MAIN'
@@ -6390,7 +6372,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.16 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.17 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 

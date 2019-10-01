@@ -2,7 +2,13 @@
 
 input="./build/configimg.conf"
 default_password="secret"
-#rm -f $input
+
+eco "[client]
+user=root
+password=$default_password" > $HOME/.my.cnf
+
+chmod 600 $HOME/.my.cnf
+
 [ -f "$input" ] || echo "
 3306;mysql80;/var/lib/mysql8;mysql:8.0
 3307;mysql57;/var/lib/mysql57;mysql:5.7
@@ -21,10 +27,9 @@ default_password="secret"
 5311;mariadb55;/var/lib/mariadb55;mariadb:5.5
 " > $input
 
-
 #
 
-echo '* PRUNING DOCKER SYSTEM DATA'
+#echo '* PRUNING DOCKER SYSTEM DATA'
 
 #[ "$1" = "clean" ] || docker system prune -a -f
 # download all images
