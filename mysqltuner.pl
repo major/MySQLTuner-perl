@@ -6034,14 +6034,19 @@ sub mysql_tables {
                     infoprint "      Current Fieldtype: $current_type";
                     #infoprint "      Optimal Fieldtype: Not available";
                 }
-                elsif ( $current_type ne $optimal_type ) {
+                elsif ( $current_type ne $optimal_type and $current_type !~ /.*DATETIME.*/ and $current_type !~ /.*TIMESTAMP.*/) {
                     infoprint "      Current Fieldtype: $current_type";
-                    infoprint "      Optimal Fieldtype: $optimal_type";
-                    badprint
+                    if ($optimal_type =~ /.*ENUM\(.*/ ) {
+                        $optimal_type ="ENUM( ... )";
+                    }
+                    infoprint "      Optimal Fieldtype: $optimal_type ";
+                    if ($optimal_type !~ /.*ENUM\(.*/ ) {
+                        badprint
 "Consider changing type for column $_ in table $dbname.$tbname";
                     push( @generalrec,
 "ALTER TABLE \`$dbname\`.\`$tbname\` MODIFY \`$_\` $optimal_type;"
                     );
+                }
 
                 }
                 else {
