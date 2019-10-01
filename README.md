@@ -284,7 +284,7 @@ MySQLTuner and Vagrant
 * Install Vagrant plugins vagrant-hostmanager and  vagrant-vbguest
 	* vagrant plugin install vagrant-hostmanager
 	* vagrant plugin install vagrant-vbguest
-* Add Fedora Core 23 box for official Fedora Download Website
+* Add Fedora Core 30 box for official Fedora Download Website
 	* vagrant box add --name generic/fedora30
 * Create a data directory
 	* mkdir data
