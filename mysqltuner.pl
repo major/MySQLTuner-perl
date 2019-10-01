@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.17
+# mysqltuner.pl - Version 1.7.18
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.17";
+my $tunerversion = "1.7.18";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2704,7 +2704,10 @@ sub calculations {
               $myvar{'innodb_log_files_in_group'} * 100 /
               $myvar{'innodb_buffer_pool_size'} );
     }
-
+      if( !defined $myvar{'innodb_buffer_pool_size'}) {
+      $mycalc{'innodb_log_size_pct'} = 0;
+      $myvar{'innodb_buffer_pool_size'} = 0;
+    }
     # InnoDB Buffer pool read cache efficiency
     (
         $mystat{'Innodb_buffer_pool_read_requests'},
@@ -6377,7 +6380,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.17 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.18 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
