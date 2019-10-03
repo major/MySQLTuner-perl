@@ -5645,6 +5645,11 @@ sub mysql_innodb {
               )
               . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
         );
+        if (mysql_version_le(5 ,6 , 2)) {
+            push(
+            @adjvars,
+            "For MySQL 5.6.2 and lower, Max combined innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB.");
+        }
         push( @generalrec,
 "Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU"
         );
