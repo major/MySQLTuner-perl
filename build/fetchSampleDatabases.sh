@@ -23,10 +23,7 @@ case "$1" in
         mkdir -p ./contents
         [ -f "contents/$(basename $(getVal "DB_$2_URL"))" ] || wget -O contents/$(basename $(getVal "DB_$2_URL")) $(getVal "DB_$2_URL")
         if [ $? -eq 0 ];then
-             (
-                cd contents
-                unzip $(basename $(getVal "DB_$2_URL")))
-             )
+             (cd contents; unzip $( basename $(getVal "DB_$2_URL")) )
         fi
         ;;
     "clean")

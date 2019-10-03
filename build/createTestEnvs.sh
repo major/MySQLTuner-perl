@@ -1,20 +1,23 @@
 #!/bin/sh
 
 source build/bashrc
-sudo dnf install -y yum-utils device-mapper-persistent-data lvm2
-sudo dnf -y install dnf-plugins-core
-sudo dnf config-manager \
---add-repo \
-https://download.docker.com/linux/fedora/docker-ce.repo
 
-sudo dnf -y install docker-ce docker-ce-cli containerd.io
-dnf list docker-ce  --showduplicates | sort -r
+systemctl status docker &>/dev/null
+if [ $? -ne 0 ];then
+    sudo dnf install -y yum-utils device-mapper-persistent-data lvm2
+    sudo dnf -y install dnf-plugins-core
+    sudo dnf config-manager \
+    --add-repo \
+    https://download.docker.com/linux/fedora/docker-ce.repo
 
-sudo systemctl start docker
-sudo systemctl enable docker
-sudo usermod -aG docker vagrant
-sudo systemctl daemon-reload
+    sudo dnf -y install docker-ce docker-ce-cli containerd.io
+    dnf list docker-ce --showduplicates | sort -r
 
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    sudo usermod -aG docker vagrant
+    sudo systemctl daemon-reload
+fi
 
 sh build/createMassDockerImages.sh
 

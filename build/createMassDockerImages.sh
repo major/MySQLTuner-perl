@@ -3,7 +3,7 @@
 input="./build/configimg.conf"
 default_password="secret"
 
-eco "[client]
+echo "[client]
 user=root
 password=$default_password" > $HOME/.my.cnf
 
@@ -25,7 +25,7 @@ chmod 600 $HOME/.my.cnf
 5309;mariadb101;/var/lib/mariadb101;mariadb:10.1
 5310;mariadb100;/var/lib/mariadb100;mariadb:10.0
 5311;mariadb55;/var/lib/mariadb55;mariadb:5.5
-" > $input
+" > "$input"
 
 #
 
@@ -46,7 +46,8 @@ do
         [ $? -eq 0 ] || continue
     fi
     echo "* PULLING DOCKER IMAGE: $image_name"
-    docker pull $image_name
+    docker images | grep -E " $image_name$"
+    [ $? -ne 0 ] && docker pull $image_name
 
     echo "* REMOVING CONTAINER : $image_name"
     docker ps -a | grep -qE "$container_name^"

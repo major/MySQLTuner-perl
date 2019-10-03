@@ -3079,7 +3079,9 @@ sub mysql_stats {
               . hr_bytes( $myvar{'join_buffer_size'} )
               . ", or always use indexes with JOINs)" );
         push( @generalrec,
-            "Adjust your join queries to always utilize indexes" );
+            "We will suggest raising the 'join_buffer_size' until JOINs not using indexes are found.
+             See https://dev.mysql.com/doc/internals/en/join-buffer-size.html
+             (specially the conclusions at the bottom of the page).");
     }
     else {
         goodprint "No joins without indexes";
