@@ -13,7 +13,7 @@ do
     if [ -n "$1" -a "$1" != "$container_name" ]; then
         continue
     fi
-    #set -x
+    shift
     sudo rm -f /var/lib/mysql
     sudo ln -sf $container_datadir /var/lib/mysql
     sudo chmod 777 /var/lib/mysql
@@ -21,5 +21,5 @@ do
     #sudo docker logs $container_name > /tmp/mysqld.log
     ls -ls /var/lib | grep -E 'mysql$'
     #set +x
-    perl mysqltuner.pl --verbose --host 127.0.0.1 --port $container_port
+    perl mysqltuner.pl $* --host 127.0.0.1 --port $container_port
 done < "$input"

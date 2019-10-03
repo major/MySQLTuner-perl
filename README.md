@@ -178,6 +178,10 @@ __Usage:__ Enable debugging information
 
 	perl mysqltuner.pl --debug
 
+__Usage:__ Update MySQLTuner and data files (password and cve) if needed
+
+    perl mysqltuner.pl --checkversion --updateversion
+
 FAQ
 --
 

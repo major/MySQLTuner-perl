@@ -517,7 +517,7 @@ sub get_http_cli {
 
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
-    if ( $opt{'checkversion'} eq 0 and $opt{'updateversion'} eq 0 ) {
+    if ( $opt{'checkversion'} eq 0 ) {
         print "\n" unless ( $opt{'silent'} or $opt{'json'} );
         infoprint "Skipped version check for MySQLTuner script";
         return;
@@ -626,8 +626,8 @@ sub update_tuner_version {
     else {
         badprint "Couldn't update MySQLTuner script";
     }
-
-    #exit 0;
+    infoprint "Stopping program: MySQLTuner has be updated.";
+    exit 0;
 }
 
 sub compare_tuner_version {
@@ -2198,7 +2198,6 @@ sub check_storage_engines {
             ( $engine, $size, $count, $dsize, $isize ) =
               $line =~ /([a-zA-Z_]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/;
             debugprint "Engine Found: $engine";
-            trim $engine;
             next       unless ( defined($engine) or trim($engine) eq '' );
             $size  = 0 unless ( defined($size)   or trim($engine) eq '' );
             $isize = 0 unless ( defined($isize)  or trim($engine) eq '' );
