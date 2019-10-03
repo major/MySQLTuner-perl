@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.18
+# mysqltuner.pl - Version 1.7.19
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.18";
+my $tunerversion = "1.7.19";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2198,11 +2198,12 @@ sub check_storage_engines {
             ( $engine, $size, $count, $dsize, $isize ) =
               $line =~ /([a-zA-Z_]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/;
             debugprint "Engine Found: $engine";
-            next unless ( defined($engine) );
-            $size  = 0 unless defined($size);
-            $isize = 0 unless defined($isize);
-            $dsize = 0 unless defined($dsize);
-            $count = 0 unless defined($count);
+            trim $engine;
+            next       unless ( defined($engine) or trim($engine) eq '' );
+            $size  = 0 unless ( defined($size)   or trim($engine) eq '' );
+            $isize = 0 unless ( defined($isize)  or trim($engine) eq '' );
+            $dsize = 0 unless ( defined($dsize)  or trim($engine) eq '' );
+            $count = 0 unless ( defined($count)  or trim($engine) eq '' );
             $enginestats{$engine}                      = $size;
             $enginecount{$engine}                      = $count;
             $result{'Engine'}{$engine}{'Table Number'} = $count;
@@ -2255,9 +2256,9 @@ sub check_storage_engines {
         foreach my $tbl (@tblist) {
             debugprint "Data dump " . Dumper(@$tbl);
             my ( $engine, $size, $datafree ) = @$tbl;
-            next if $engine eq 'NULL';
-            $size     = 0 if $size eq 'NULL';
-            $datafree = 0 if $datafree eq 'NULL';
+            next if $engine eq 'NULL' or not defined($engine);
+            $size     = 0 if $size eq 'NULL' or not defined($size);
+            $datafree = 0 if $datafree eq 'NULL' or not defined($datafree);
             if ( defined $enginestats{$engine} ) {
                 $enginestats{$engine} += $size;
                 $enginecount{$engine} += 1;
@@ -6399,7 +6400,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.18 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.19 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
