@@ -167,6 +167,7 @@
 * Thread cache (=4)
 * Thread cache hit ratio (>50%) if thread_handling is different of pools-of-threads
 * Table cache hit ratio(>2°%)
+* Table cache definition should be upper that total number of tables or in autoresizing mode
 * Percentage of open file and open file limit(<85%)
 * Percentage of table locks (<95%)
 * Percentage of binlog cache lock (<90%)

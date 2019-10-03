@@ -3238,6 +3238,23 @@ sub mysql_stats {
         }
     }
 
+    # Table definition cache
+    my $nbtables=select_one('SELECT COUNT(*) FROM information_schema.tables');
+    if ( defined $myvar{'table_definition_cache'} ) {
+        if ( $myvar{'table_definition_cache'} == -1 ) {
+            infoprint ("table_definition_cache(".$myvar{'table_definition_cache'} .") is in autosizing mode");
+        } elsif ($myvar{'table_definition_cache'} < $nbtables ) {
+            badprint "table_definition_cache(".$myvar{'table_definition_cache'} .") is lower than number of tables($nbtables) ";
+            push( @adjvars,
+                "table_definition_cache(".$myvar{'table_definition_cache'} .") > " . $$nbtables . " or -1 (autosizing if supported)" );
+        }
+        else {
+            goodprint "table_definition_cache(".$myvar{'table_definition_cache'} .") is upper than number of tables($nbtables)";
+        }
+    } else {
+        infoprint "No table_definition_cache variable found.";
+    }
+
     # Open files
     if ( defined $mycalc{'pct_files_open'} ) {
         if ( $mycalc{'pct_files_open'} > 85 ) {
