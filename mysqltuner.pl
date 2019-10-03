@@ -875,7 +875,6 @@ sub mysql_setup {
         }
     }
     else {
-
         # It's not Plesk or Debian, we should try a login
         debugprint "$mysqladmincmd $remotestring ping 2>&1";
         my $loginstatus = `$mysqladmincmd $remotestring ping 2>&1`;
@@ -1798,6 +1797,8 @@ sub security_recommendations {
                 "Remove Anonymous User accounts - there are "
               . scalar(@mysqlstatlist)
               . " anonymous accounts." );
+        push( @generalrec,
+                "DELETE FROM ymsql.user WHERE user ='';" );
     }
     else {
         goodprint "There are no anonymous accounts for any database users";
@@ -1821,10 +1822,8 @@ sub security_recommendations {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             badprint "User '" . $line . "' has no password set.";
+           push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR '".(split /@/, $line)[0]."'\@'SpecificDNSorIp' = PASSWORD('secure_password');")
         }
-        push( @generalrec,
-"Set up a Password for user with the following SQL statement ( SET PASSWORD FOR 'user'\@'SpecificDNSorIp' = PASSWORD('secure_password'); )"
-        );
     }
     else {
         goodprint "All database users have passwords assigned";
@@ -1848,10 +1847,8 @@ sub security_recommendations {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             badprint "User '" . $line . "' has user name as password.";
+            push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR '".(split /@/, $line)[0]."'\@'SpecificDNSorIp' = PASSWORD('secure_password');");
         }
-        push( @generalrec,
-"Set up a Secure Password for user\@host ( SET PASSWORD FOR 'user'\@'SpecificDNSorIp' = PASSWORD('secure_password'); )"
-        );
     }
 
     @mysqlstatlist = select_array
@@ -1859,11 +1856,13 @@ sub security_recommendations {
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
-            badprint "User '" . $line
-              . "' does not specify hostname restrictions.";
+            my $luser = (split /@/, $line)[0];
+            badprint "User '" . $line. "' does not specify hostname restrictions.";
+            push( @generalrec,
+            "Restrict Host for '$luser'\@% to $luser\@SpecificDNSorIp" );
+            push( @generalrec,
+            "UPDATE mysql.user SET host ='SpecificDNSorIp' WHERE user='" . $luser. "' AND host ='%'; FLUSH PRIVILEGES;" );
         }
-        push( @generalrec,
-            "Restrict Host for user\@% to user\@SpecificDNSorIp" );
     }
 
     unless ( -f $basic_password_files ) {
@@ -1905,6 +1904,8 @@ sub security_recommendations {
                     chomp($line);
                     badprint "User '" . $line
                       . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
+
+                    push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR '" . (split /@/, $line)[0] . "'\@'".(split /@/, $line)[1]."' = PASSWORD('secure_password');");
                     $nbins++;
                 }
             }
@@ -1913,7 +1914,7 @@ sub security_recommendations {
         }
     }
     if ( $nbins > 0 ) {
-        push( @generalrec, $nbins . " user(s) used basic or weak password." );
+        push( @generalrec, $nbins . " user(s) used basic or weak password from basic dictionary." );
     }
 }
 

@@ -22,4 +22,5 @@ do
     ls -ls /var/lib | grep -E 'mysql$'
     #set +x
     perl mysqltuner.pl $* --host 127.0.0.1 --port $container_port
+    exit $?
 done < "$input"
