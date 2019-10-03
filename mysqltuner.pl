@@ -5647,7 +5647,7 @@ sub mysql_innodb {
         );
         if (mysql_version_le(5 ,6 , 2)) {
             push(
-            @adjvars,
+            @generalrec,
             "For MySQL 5.6.2 and lower, Max combined innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB.");
         }
         push( @generalrec,
