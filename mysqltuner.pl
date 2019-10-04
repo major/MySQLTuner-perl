@@ -3247,7 +3247,7 @@ sub mysql_stats {
         } elsif ($myvar{'table_definition_cache'} < $nbtables ) {
             badprint "table_definition_cache(".$myvar{'table_definition_cache'} .") is lower than number of tables($nbtables) ";
             push( @adjvars,
-                "table_definition_cache(".$myvar{'table_definition_cache'} .") > " . $$nbtables . " or -1 (autosizing if supported)" );
+                "table_definition_cache(".$myvar{'table_definition_cache'} .") > " . $nbtables . " or -1 (autosizing if supported)" );
         }
         else {
             goodprint "table_definition_cache(".$myvar{'table_definition_cache'} .") is upper than number of tables($nbtables)";
