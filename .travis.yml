@@ -4,18 +4,19 @@ language: perl
 
 matrix:
   include:
-  - addons:
-      mariadb: "5.5"
-    name: "MariaDB 5.5/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      mariadb: "10.0"
-    name: "MariaDB 10.0/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      mariadb: "10.1"
     name: "MariaDB 10.1/Perl 5.24"
-    perl: "5.24"
+#  - addons:
+#      mariadb: "5.5"
+#    name: "MariaDB 5.5/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      mariadb: "10.0"
+#    name: "MariaDB 10.0/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      mariadb: "10.1"
+#    name: "MariaDB 10.1/Perl 5.24"
+#    perl: "5.24"
   - addons:
       mariadb: "10.2"
     name: "MariaDB 10.2/Perl 5.24"
@@ -24,36 +25,36 @@ matrix:
       mariadb: "10.3"
     name: "MariaDB 10.3/Perl 5.24"
     perl: "5.24"
-  - addons:
-      mariadb: "10.4"
-    name: "MariaDB 10.4/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      mysql: "5.5"
-    name: "MySQL 5.5/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      mysql: "5.6"
-    name: "MySQL 5.6/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      apt:
-        sources:
-          - mysql-5.7-trusty
-        packages:
-          - mysql-server
-          - mysql-client
-    name: "MySQL 5.7/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      apt:
-        sources:
-          - mysql-8.0-trusty
-        packages:
-          - mysql-server
-          - mysql-client
-    name: "MySQL 8/Perl 5.24"
-    perl: "5.24"
+#  - addons:
+#      mariadb: "10.4"
+#    name: "MariaDB 10.4/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      mysql: "5.5"
+#    name: "MySQL 5.5/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      mysql: "5.6"
+#    name: "MySQL 5.6/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      apt:
+#        sources:
+#          - mysql-5.7-trusty
+#        packages:
+#          - mysql-server
+#          - mysql-client
+#    name: "MySQL 5.7/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      apt:
+#        sources:
+#          - mysql-8.0-trusty
+#        packages:
+#          - mysql-server
+#          - mysql-client
+#    name: "MySQL 8/Perl 5.24"
+#    perl: "5.24"
 
 before_install:
   - git clone git://github.com/haarg/perl-travis-helper
