@@ -44,7 +44,7 @@ matrix:
           - mysql-server
           - mysql-client
     name: "MySQL 5.7/Perl 5.24"
-    perl: "5.24" 
+    perl: "5.24"
   - addons:
       apt:
         sources:
@@ -95,7 +95,7 @@ matrix:
           - mysql-server
           - mysql-client
     name: "MySQL 5.7/Perl 5.16"
-    perl: "5.16" 
+    perl: "5.16"
   - addons:
       apt:
         sources:
@@ -146,7 +146,7 @@ matrix:
           - mysql-server
           - mysql-client
     name: "MySQL 5.7/Perl 5.10"
-    perl: "5.10" 
+    perl: "5.10"
   - addons:
       apt:
         sources:
@@ -156,7 +156,7 @@ matrix:
           - mysql-client
     name: "MySQL 8/Perl 5.10"
     perl: "5.10"
-       
+
 before_install:
   - git clone git://github.com/haarg/perl-travis-helper
   - source perl-travis-helper/init
@@ -178,8 +178,8 @@ before_script:
   - cd ..
 
 script:
-  - perlcritic --exclude InputOutput::ProhibitInteractiveTest mysqltuner.pl
-  - ./mysqltuner.pl --verbose --tbstat 2>stderr.txt | tee -a "stdout.txt" 
+#  - perlcritic --exclude InputOutput::ProhibitInteractiveTest mysqltuner.pl
+  - ./mysqltuner.pl --verbose --tbstat 2>stderr.txt | tee -a "stdout.txt"
 
 after_script:
   - echo "Standard Output: $(cat stdout.txt)"
