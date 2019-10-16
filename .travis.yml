@@ -72,7 +72,7 @@ before_script:
   - chmod 600 .my.cnf
   - git clone https://github.com/datacharmer/test_db.git
   - cd test_db
-  - cat employees.sql | grep -v 'storage_engine' | mysql
+  - "cat employees.sql | grep -v 'storage_engine' | mysql"
   - cd ..
 
 script:
@@ -81,5 +81,3 @@ script:
 after_script:
   - echo "Standard Output: $(cat stdout.txt)"
   - echo "Standard Error : $(cat stderr.txt)"
-#  - [ "0" = "$(wl -l stderr.txt)" ] || exit 2
-
