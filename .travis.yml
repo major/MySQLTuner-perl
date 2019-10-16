@@ -4,7 +4,6 @@ language: perl
 
 matrix:
   include:
-    name: "MariaDB 10.1/Perl 5.24"
 #  - addons:
 #      mariadb: "5.5"
 #    name: "MariaDB 5.5/Perl 5.24"
