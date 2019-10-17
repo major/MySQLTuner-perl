@@ -1798,7 +1798,7 @@ sub security_recommendations {
               . scalar(@mysqlstatlist)
               . " anonymous accounts." );
         push( @generalrec,
-                "DELETE FROM ymsql.user WHERE user ='';" );
+                "DELETE FROM mysql.user WHERE user ='';" );
     }
     else {
         goodprint "There are no anonymous accounts for any database users";
