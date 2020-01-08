@@ -2393,6 +2393,7 @@ sub calculations {
           $myvar{'read_rnd_buffer_size'} +
           $myvar{'sort_buffer_size'} +
           $myvar{'thread_stack'} +
+          $myvar{'max_allowed_packet'} +
           $myvar{'join_buffer_size'};
     }
     else {
