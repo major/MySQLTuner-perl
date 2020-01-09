@@ -3208,7 +3208,7 @@ sub mysql_stats {
             push( @generalrec,
                     "Read this before increasing "
                   . $table_cache_var
-                  . " over 64: https://bit.ly/1mi7c4C" );
+                  . " over 64: https://bit.ly/2Fulv7r" );
             push( @generalrec,
                     "Read this before increasing for MariaDB"
                   . " https://mariadb.com/kb/en/library/optimizing-table_open_cache/"
