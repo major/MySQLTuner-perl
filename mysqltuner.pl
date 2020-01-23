@@ -1289,7 +1289,7 @@ sub log_file_recommendations {
         chomp $logLi;
         $numLi++;
         debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i;
-        $nbErrLog++                 if $logLi =~ /error/i;
+        $nbErrLog++                 if $logLi =~ /error/i and  $logLi !~ /Logging to/;
         $nbWarnLog++                if $logLi =~ /warning/i;
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
