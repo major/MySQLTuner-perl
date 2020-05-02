@@ -181,7 +181,7 @@ Copy of the license is available at [LICENSE]
 ## MySQLTuner Code Conventions
 
 1. Check code convention using **perltidy** and **perlcritic**
-2. Don't manually update the version number in `mysqltuner.pl`. 
+2. Don't manually update the version number in `mysqltuner.pl`.
 
 
 [Enhancement issue]:https://github.com/major/MySQLTuner-perl/labels/enhancement

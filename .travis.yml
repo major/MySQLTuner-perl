@@ -4,18 +4,18 @@ language: perl
 
 matrix:
   include:
-  - addons:
-      mariadb: "5.5"
-    name: "MariaDB 5.5/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      mariadb: "10.0"
-    name: "MariaDB 10.0/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      mariadb: "10.1"
-    name: "MariaDB 10.1/Perl 5.24"
-    perl: "5.24"
+#  - addons:
+#      mariadb: "5.5"
+#    name: "MariaDB 5.5/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      mariadb: "10.0"
+#    name: "MariaDB 10.0/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      mariadb: "10.1"
+#    name: "MariaDB 10.1/Perl 5.24"
+#    perl: "5.24"
   - addons:
       mariadb: "10.2"
     name: "MariaDB 10.2/Perl 5.24"
@@ -24,139 +24,37 @@ matrix:
       mariadb: "10.3"
     name: "MariaDB 10.3/Perl 5.24"
     perl: "5.24"
-  - addons:
-      mariadb: "10.4"
-    name: "MariaDB 10.4/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      mysql: "5.5"
-    name: "MySQL 5.5/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      mysql: "5.6"
-    name: "MySQL 5.6/Perl 5.24"
-    perl: "5.24"
-  - addons:
-      apt:
-        sources:
-          - mysql-5.7-trusty
-        packages:
-          - mysql-server
-          - mysql-client
-    name: "MySQL 5.7/Perl 5.24"
-    perl: "5.24" 
-  - addons:
-      apt:
-        sources:
-          - mysql-8.0-trusty
-        packages:
-          - mysql-server
-          - mysql-client
-    name: "MySQL 8/Perl 5.24"
-    perl: "5.24"
+#  - addons:
+#      mariadb: "10.4"
+#    name: "MariaDB 10.4/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      mysql: "5.5"
+#    name: "MySQL 5.5/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      mysql: "5.6"
+#    name: "MySQL 5.6/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      apt:
+#        sources:
+#          - mysql-5.7-trusty
+#        packages:
+#          - mysql-server
+#          - mysql-client
+#    name: "MySQL 5.7/Perl 5.24"
+#    perl: "5.24"
+#  - addons:
+#      apt:
+#        sources:
+#          - mysql-8.0-trusty
+#        packages:
+#          - mysql-server
+#          - mysql-client
+#    name: "MySQL 8/Perl 5.24"
+#    perl: "5.24"
 
-  - addons:
-      mariadb: "5.5"
-    name: "MariaDB 5.5/Perl 5.16"
-    perl: "5.16"
-  - addons:
-      mariadb: "10.0"
-    name: "MariaDB 10.0/Perl 5.16"
-    perl: "5.16"
-  - addons:
-      mariadb: "10.1"
-    name: "MariaDB 10.1/Perl 5.16"
-    perl: "5.16"
-  - addons:
-      mariadb: "10.2"
-    name: "MariaDB 10.2/Perl 5.16"
-    perl: "5.16"
-  - addons:
-      mariadb: "10.3"
-    name: "MariaDB 10.3/Perl 5.16"
-    perl: "5.16"
-  - addons:
-      mariadb: "10.4"
-    name: "MariaDB 10.4/Perl 5.16"
-    perl: "5.16"
-  - addons:
-      mysql: "5.5"
-    name: "MySQL 5.5/Perl 5.16"
-    perl: "5.16"
-  - addons:
-      mysql: "5.6"
-    name: "MySQL 5.6/Perl 5.16"
-    perl: "5.16"
-  - addons:
-      apt:
-        sources:
-          - mysql-5.7-trusty
-        packages:
-          - mysql-server
-          - mysql-client
-    name: "MySQL 5.7/Perl 5.16"
-    perl: "5.16" 
-  - addons:
-      apt:
-        sources:
-          - mysql-8.0-trusty
-        packages:
-          - mysql-server
-          - mysql-client
-    name: "MySQL 8/Perl 5.16"
-    perl: "5.16"
-
-  - addons:
-      mariadb: "5.5"
-    name: "MariaDB 5.5/Perl 5.10"
-    perl: "5.10"
-  - addons:
-      mariadb: "10.0"
-    name: "MariaDB 10.0/Perl 5.10"
-    perl: "5.10"
-  - addons:
-      mariadb: "10.1"
-    name: "MariaDB 10.1/Perl 5.10"
-    perl: "5.10"
-  - addons:
-      mariadb: "10.2"
-    name: "MariaDB 10.2/Perl 5.10"
-    perl: "5.10"
-  - addons:
-      mariadb: "10.3"
-    name: "MariaDB 10.3/Perl 5.10"
-    perl: "5.10"
-  - addons:
-      mariadb: "10.4"
-    name: "MariaDB 10.4/Perl 5.10"
-    perl: "5.10"
-  - addons:
-      mysql: "5.5"
-    name: "MySQL 5.5/Perl 5.10"
-    perl: "5.10"
-  - addons:
-      mysql: "5.6"
-    name: "MySQL 5.6/Perl 5.10"
-    perl: "5.10"
-  - addons:
-      apt:
-        sources:
-          - mysql-5.7-trusty
-        packages:
-          - mysql-server
-          - mysql-client
-    name: "MySQL 5.7/Perl 5.10"
-    perl: "5.10" 
-  - addons:
-      apt:
-        sources:
-          - mysql-8.0-trusty
-        packages:
-          - mysql-server
-          - mysql-client
-    name: "MySQL 8/Perl 5.10"
-    perl: "5.10"
-       
 before_install:
   - git clone git://github.com/haarg/perl-travis-helper
   - source perl-travis-helper/init
@@ -174,15 +72,12 @@ before_script:
   - chmod 600 .my.cnf
   - git clone https://github.com/datacharmer/test_db.git
   - cd test_db
-  - cat employees.sql | grep -v 'storage_engine' | mysql
+  - "cat employees.sql | grep -v 'storage_engine' | mysql"
   - cd ..
 
 script:
-  - perlcritic --exclude InputOutput::ProhibitInteractiveTest mysqltuner.pl
-  - ./mysqltuner.pl --verbose --tbstat 2>stderr.txt | tee -a "stdout.txt" 
+  - ./mysqltuner.pl --verbose --tbstat 2>stderr.txt | tee -a "stdout.txt"
 
 after_script:
   - echo "Standard Output: $(cat stdout.txt)"
   - echo "Standard Error : $(cat stderr.txt)"
-  - [ "0" = "$(wl -l stderr.txt)" ] || exit 2
-

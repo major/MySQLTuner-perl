@@ -7,3 +7,5 @@ build/vulnerabilities*
 Vagrant/Vagrantfile
 Vagrant/data
 Vagrant/.vagrant
+contents
+contents/*

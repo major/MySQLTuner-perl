@@ -1,0 +1,69 @@
+alias gst='git status'
+alias gcm='git commit -m'
+alias gmh='git log --follow -p --'
+alias ll='ls -ls'
+alias lh='ls -lsh'
+alias la='ls -lsa'
+alias gam='git status | grep "modified" | cut -d: -f2 | xargs -n 1 git add'
+alias serve="python -m $(python -c 'import sys; print("http.server" if sys.version_info[:2] > (2,7) else "SimpleHTTPServer")')"
+
+dcmd()
+{
+    docker  exec -i -t $1 bash
+}
+
+gen_mysqlalias()
+{
+    input="$1"
+
+    while IFS='' read -r line
+    do
+        [ -z "$line" ] && continue
+        container_port=$(echo "$line" | cut -d\; -f1)
+        container_name=$(echo "$line" | cut -d\; -f2)
+        container_datadir=$(echo "$line" | cut -d\; -f3)
+        image_name=$(echo "$line" | cut -d\; -f4)
+
+        alias mysql_$container_name="mysql -u root -h 127.0.0.1 -P $container_port"
+    done < "$input"
+}
+
+exec_mysql()
+{
+    input="$1"
+    name=$2
+    db=$3
+    sqlfile=$4
+    while IFS='' read -r line
+    do
+        [ -z "$line" ] && continue
+        echo "$line" | grep -q $name
+        [ $? -ne 0 ] && continue
+        container_port=$(echo "$line" | cut -d\; -f1)
+        container_name=$(echo "$line" | cut -d\; -f2)
+        container_datadir=$(echo "$line" | cut -d\; -f3)
+        image_name=$(echo "$line" | cut -d\; -f4)
+
+
+        echo "* Executing $sqlfile on $container_name"
+        cat $sqlfile | mysql -u root -h 127.0.0.1 -P $container_port
+    done < "$input"
+}
+exec_mysqls()
+{
+    input="$1"
+    db=$2
+    sqlfile=$3
+    while IFS='' read -r line
+    do
+        [ -z "$line" ] && continue
+        container_port=$(echo "$line" | cut -d\; -f1)
+        container_name=$(echo "$line" | cut -d\; -f2)
+        container_datadir=$(echo "$line" | cut -d\; -f3)
+        image_name=$(echo "$line" | cut -d\; -f4)
+
+
+        echo "* Executing $sqlfile on $container_name"
+        cat $sqlfile | mysql -u root -h 127.0.0.1 -P $container_port
+    done < "$input"
+}

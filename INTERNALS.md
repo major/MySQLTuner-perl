@@ -6,6 +6,7 @@
 * [Get login information steps](#mysqltuner-get-login-information-steps)
 * [System checks](#mysqltuner-system-checks)
 * [Server version checks](#mysqltuner-server-version-checks)
+* [Error log file checks](#mysql-error-log-file-analysis)
 * [MySQL Storage engine general information](#mysql-storage-engine-general-information)
 * [Security checks](#mysqltuner-security-checks)
 * [CVE checks](#mysqltuner-cve-checks)
@@ -39,6 +40,7 @@
 * Get information about the tuning connexion
 * Check current MySQL version
 * Suggest 64-bit upgrade
+* Analyze mysqld error log file
 * Show enabled storage engines
 * Show informations about databases (option: --dbstat)
 * Show informations about indexes (option: --idxstat)
@@ -86,6 +88,13 @@
 * EOL MySQL version check
 * Currently MySQL < 5.1 are EOF considered.
 * Using 5.5+ version of MySQL for performance issue (asynchronous IO).
+
+## Mysql error log file analysis
+* Look for potential current error log file name
+* Check permission on error log file
+* Check size on error log file
+* Check error and warning on error log file
+* Find last start and shutdown on error log file
 
 ## MySQL Storage engine general information
 
@@ -158,6 +167,7 @@
 * Thread cache (=4)
 * Thread cache hit ratio (>50%) if thread_handling is different of pools-of-threads
 * Table cache hit ratio(>2°%)
+* Table cache definition should be upper that total number of tables or in autoresizing mode
 * Percentage of open file and open file limit(<85%)
 * Percentage of table locks (<95%)
 * Percentage of binlog cache lock (<90%)
@@ -215,7 +225,7 @@
    * MySQL needs 1 instance per 1Go of Buffer Pool
    * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
    * innodb_buffer_pool instances must be equals or lower than 64
-   
+
    - A bug in MySQL 5.6 causes SHOW VARIABLES to report an innodb_buffer_pool_instances value of 8 when innodb_buffer_pool_size is less than 1GB and only one buffer pool instance is present (Bug #18343670).
 
 * InnoDB Buffer Pool Usage
