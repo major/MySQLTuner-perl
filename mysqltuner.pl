@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #!/usr/bin/env perl
 # mysqltuner.pl - Version 1.7.15
 # High Performance MySQL Tuning Script
