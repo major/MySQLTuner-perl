@@ -20,7 +20,7 @@ end
   config.vm.hostname = 'fedora-generic'
   config.hostmanager.aliases = %w(fedora-generic.localdomain fedora-generic.local fcg.local)
 
-  config.vm.synced_folder "/home/jmren/VagrantMachines/VagrantData", "/data"
+  config.vm.synced_folder ".", "/data"
 
   config.vm.provider "virtualbox" do |vb|
      vb.name="fedora-generic"
