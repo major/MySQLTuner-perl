@@ -118,7 +118,7 @@ Major Hayden - major@mhtx.net
 
 # SUPPORT
 
-Bug reports, feature requests, and downloads at http://mysqltuner.com/
+Bug reports, feature requests, and downloads at http://mysqltuner.pl/
 
 Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
 
@@ -134,7 +134,7 @@ Maintained by Major Hayden (major\\@mhtx.net) - Licensed under GPL
 
 Copyright (C) 2006-2018 Major Hayden - major@mhtx.net
 
-For the latest updates, please visit http://mysqltuner.com/
+For the latest updates, please visit http://mysqltuner.pl/
 
 Git repository available at https://github.com/major/MySQLTuner-perl
 
