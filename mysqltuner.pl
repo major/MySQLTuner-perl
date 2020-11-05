@@ -3,7 +3,7 @@
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2020 Major Hayden - major@mhtx.net
 #
-# For the latest updates, please visit http://mysqltuner.com/
+# For the latest updates, please visit http://mysqltuner.pl/
 # Git repository available at https://github.com/major/MySQLTuner-perl
 #
 # This program is free software: you can redistribute it and/or modify
@@ -6220,7 +6220,7 @@ sub close_outputfile {
 sub headerprint {
     prettyprint
       " >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n"
-      . " >>  Bug reports, feature requests, and downloads at http://mysqltuner.com/\n"
+      . " >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/\n"
       . " >>  Run with '--help' for additional options and output filtering";
 }
 
@@ -6631,7 +6631,7 @@ Christian Loos
 =head1 SUPPORT
 
 
-Bug reports, feature requests, and downloads at http://mysqltuner.com/
+Bug reports, feature requests, and downloads at http://mysqltuner.pl/
 
 Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
 
@@ -6647,7 +6647,7 @@ L<https://github.com/major/MySQLTuner-perl>
 
 Copyright (C) 2006-2020 Major Hayden - major@mhtx.net
 
-For the latest updates, please visit http://mysqltuner.com/
+For the latest updates, please visit http://mysqltuner.pl/
 
 Git repository available at https://github.com/major/MySQLTuner-perl
 

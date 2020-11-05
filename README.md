@@ -34,17 +34,18 @@ MySQLTuner needs you:
 Compatibility
 ====
 Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.org/major/MySQLTuner-perl)
-* MySQL 8 (full support, password checks don't work)
+* MySQL 8 (partial support, password checks don't work)
 * MySQL 5.7 (full support)
 * MySQL 5.6 (full support)
-* MySQL 5.5 (full support)
+* MySQL 5.5 (full support, no more MySQL support)
+* MariaDB 10.5 (partial support)
 * MariaDB 10.4 (full support)
 * MariaDB 10.3 (full support)
 * MariaDB 10.2 (full support)
 * MariaDB 10.1 (full support)
 * MariaDB 10.0 (full support, 6 last month support)
 * MariaDB 5.5 (full support, no more MariaDB support)
-* Percona Server 8.0 (full support, password checks don't work)
+* Percona Server 8.0 (partial support, password checks don't work)
 * Percona Server 5.7 (full support)
 * Percona Server 5.6 (full support)
 
