@@ -5664,7 +5664,7 @@ sub mysql_innodb {
     }
 
     # InnoDB Buffer Pool Instances (MySQL 5.6.6+)
-    if ( defined( $myvar{'innodb_buffer_pool_instances'} ) ) {
+    if ( not mysql_version_ge(10, 5) and defined( $myvar{'innodb_buffer_pool_instances'} ) ) {
 
         # Bad Value if > 64
         if ( $myvar{'innodb_buffer_pool_instances'} > 64 ) {
@@ -5698,7 +5698,6 @@ sub mysql_innodb {
                 goodprint "InnoDB buffer pool instances: "
                   . $myvar{'innodb_buffer_pool_instances'} . "";
             }
-
             # InnoDB Buffer Pool Size < 1Go
         }
         else {
