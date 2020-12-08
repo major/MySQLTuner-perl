@@ -1810,13 +1810,17 @@ sub security_recommendations {
     }
 
     # Looking for Empty Password
-    if ( mysql_version_ge( 5, 5 ) ) {
+    if ( mysql_version_ge(10, 4) ) {
         @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL) AND plugin NOT IN ('unix_socket', 'win_socket', 'auth_pam_compat')";
+q{SELECT CONCAT(user, '@', host) FROM mysql.global_priv WHERE
+    JSON_CONTAINS(Priv, '"mysql_native_password"', '$.plugin') AND JSON_CONTAINS(Priv, '""', '$.authentication_string')
+    AND NOT JSON_CONTAINS(Priv, 'true', '$.account_locked')};
     }
     else {
         @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL)";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL)
+    /*!50501 AND plugin NOT IN ('unix_socket', 'win_socket', 'auth_pam_compat') */
+    /*!80000 AND account_locked = 'N' AND password_expired = 'N' */";
     }
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
