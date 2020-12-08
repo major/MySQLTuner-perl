@@ -1997,8 +1997,8 @@ sub validate_mysql_version {
     $mysqlvermicro ||= 0;
 
     if ( mysql_version_eq(8) or mysql_version_eq(5, 6) or mysql_version_eq(5, 7)
-        or mysql_version_eq(10, 1)  or mysql_version_eq(10, 2) or mysql_version_eq(10, 3)
-         or mysql_version_eq(10, 4) )
+        or mysql_version_eq(10, 2)  or mysql_version_eq(10, 3) or mysql_version_eq(10, 4)
+         or mysql_version_eq(10, 5) )
     {
         goodprint "Currently running supported MySQL version " . $myvar{'version'} . "";
         return;
