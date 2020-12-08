@@ -1784,21 +1784,19 @@ sub security_recommendations {
 
     # Looking for Anonymous users
     my @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL";
+"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL";
     debugprint Dumper \@mysqlstatlist;
 
     #exit 0;
     if (@mysqlstatlist) {
-        foreach my $line ( sort @mysqlstatlist ) {
-            chomp($line);
-            badprint "User '" . $line . "' is an anonymous account.";
-        }
         push( @generalrec,
                 "Remove Anonymous User accounts - there are "
               . scalar(@mysqlstatlist)
               . " anonymous accounts." );
-        push( @generalrec,
-                "DELETE FROM mysql.user WHERE user ='';" );
+        foreach my $line ( sort @mysqlstatlist ) {
+            chomp($line);
+            badprint "User " . $line . " is an anonymous account. Remove with DROP USER " . $line . ";";
+        }
     }
     else {
         goodprint "There are no anonymous accounts for any database users";
