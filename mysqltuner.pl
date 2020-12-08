@@ -1819,7 +1819,7 @@ q{SELECT CONCAT(user, '@', host) FROM mysql.global_priv WHERE
     else {
         @mysqlstatlist = select_array
 "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL)
-    /*!50501 AND plugin NOT IN ('unix_socket', 'win_socket', 'auth_pam_compat') */
+    /*!50501 AND plugin NOT IN ('auth_socket', 'unix_socket', 'win_socket', 'auth_pam_compat') */
     /*!80000 AND account_locked = 'N' AND password_expired = 'N' */";
     }
     if (@mysqlstatlist) {
