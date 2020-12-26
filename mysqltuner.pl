@@ -1780,10 +1780,10 @@ sub security_recommendations {
             $PASS_COLUMN_NAME =
 "IF(plugin='mysql_native_password', authentication_string, password)";
         }
-        else if ($authstring_column_exists) {
+        elsif ($authstring_column_exists) {
             $PASS_COLUMN_NAME = 'authentication_string';
         }
-        else if (!$password_column_exists) {
+        elsif (!$password_column_exists) {
             infoprint "Skipped due to none of known auth columns exists";
             return;
         }
