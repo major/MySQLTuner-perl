@@ -1769,15 +1769,23 @@ sub security_recommendations {
     }
 
     my $PASS_COLUMN_NAME = 'password';
-    if ( $myvar{'version'} =~ /5\.7|10\..*MariaDB*/ ) {
+    # New table schema available since mysql-5.7 and mariadb-10.2
+    # But need to be checked
+    if ( $myvar{'version'} =~ /5\.7|10\.[2-5]\..*MariaDB*/ ) {
         my $password_column_exists =
 `$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'" 2>>/dev/null`;
-        if ($password_column_exists) {
+        my $authstring_column_exists =
+`$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'authentication_string'" 2>>/dev/null`;
+        if ($password_column_exists && $authstring_column_exists) {
             $PASS_COLUMN_NAME =
 "IF(plugin='mysql_native_password', authentication_string, password)";
         }
-        else {
+        else if ($authstring_column_exists) {
             $PASS_COLUMN_NAME = 'authentication_string';
+        }
+        else if (!$password_column_exists) {
+            infoprint "Skipped due to none of known auth columns exists";
+            return;
         }
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
