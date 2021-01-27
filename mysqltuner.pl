@@ -1819,12 +1819,14 @@ sub security_recommendations {
     if ( mysql_version_ge(10, 4) ) {
         @mysqlstatlist = select_array
 q{SELECT CONCAT(user, '@', host) FROM mysql.global_priv WHERE
-    JSON_CONTAINS(Priv, '"mysql_native_password"', '$.plugin') AND JSON_CONTAINS(Priv, '""', '$.authentication_string')
+    user != ''
+    AND JSON_CONTAINS(Priv, '"mysql_native_password"', '$.plugin') AND JSON_CONTAINS(Priv, '""', '$.authentication_string')
     AND NOT JSON_CONTAINS(Priv, 'true', '$.account_locked')};
     }
     else {
         @mysqlstatlist = select_array
 "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL)
+    AND user != ''
     /*!50501 AND plugin NOT IN ('auth_socket', 'unix_socket', 'win_socket', 'auth_pam_compat') */
     /*!80000 AND account_locked = 'N' AND password_expired = 'N' */";
     }
@@ -1852,7 +1854,7 @@ q{SELECT CONCAT(user, '@', host) FROM mysql.global_priv WHERE
 
     # Looking for User with user/ uppercase /capitalise user as password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(CONCAT(UPPER(LEFT(User, 1)), SUBSTRING(User, 2, LENGTH(User))))";
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE user != '' AND (CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(CONCAT(UPPER(LEFT(User, 1)), SUBSTRING(User, 2, LENGTH(User)))))";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
