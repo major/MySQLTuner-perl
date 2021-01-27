@@ -403,7 +403,7 @@ sub pretty_uptime {
 }
 
 # Retrieves the memory installed on this machine
-my ( $physical_memory, $swap_memory, $duflags );
+my ( $physical_memory, $swap_memory, $duflags, $xargsflags );
 
 sub memerror {
     badprint
@@ -414,6 +414,7 @@ sub memerror {
 sub os_setup {
     my $os = `uname`;
     $duflags = ( $os =~ /Linux/ ) ? '-b' : '';
+    $xargsflags = ( $os =~ /Darwin|SunOS/ ) ? '' : '-r';
     if ( $opt{'forcemem'} > 0 ) {
         $physical_memory = $opt{'forcemem'} * 1048576;
         infoprint "Assuming $opt{'forcemem'} MB of physical memory";
@@ -2562,9 +2563,12 @@ sub calculations {
         my $size = 0;
         $size += (split)[0]
           for
-`find $myvar{'datadir'} -name "*.MYI" 2>&1 | xargs du -L $duflags 2>&1`;
+`find "$myvar{'datadir'}" -name "*.MYI" -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1`;
         $mycalc{'total_myisam_indexes'} = $size;
-        $mycalc{'total_aria_indexes'}   = 0;
+        $size = 0 + (split)[0]
+          for
+`find "$myvar{'datadir'}" -name "*.MAI" -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1`;
+        $mycalc{'total_aria_indexes'}   = $size;
     }
     elsif ( mysql_version_ge(5) ) {
         $mycalc{'total_myisam_indexes'} = select_one
@@ -2572,20 +2576,10 @@ sub calculations {
         $mycalc{'total_aria_indexes'} = select_one
 "SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'Aria';";
     }
-    if ( defined $mycalc{'total_myisam_indexes'}
-        and $mycalc{'total_myisam_indexes'} == 0 )
-    {
-        $mycalc{'total_myisam_indexes'} = "fail";
-    }
-    elsif ( defined $mycalc{'total_myisam_indexes'} ) {
+    if ( defined $mycalc{'total_myisam_indexes'} ) {
         chomp( $mycalc{'total_myisam_indexes'} );
     }
-    if ( defined $mycalc{'total_aria_indexes'}
-        and $mycalc{'total_aria_indexes'} == 0 )
-    {
-        $mycalc{'total_aria_indexes'} = 1;
-    }
-    elsif ( defined $mycalc{'total_aria_indexes'} ) {
+    if ( defined $mycalc{'total_aria_indexes'} ) {
         chomp( $mycalc{'total_aria_indexes'} );
     }
 
@@ -3390,18 +3384,10 @@ sub mysql_myisam {
     }
 
     # Key buffer
-    if ( !defined( $mycalc{'total_myisam_indexes'} ) and $doremote == 1 ) {
+    if ( !defined( $mycalc{'total_myisam_indexes'} ) ) {
         push( @generalrec,
-            "Unable to calculate MyISAM indexes on remote MySQL server < 5.0.0"
+            "Unable to calculate MyISAM index size on MySQL server < 5.0.0"
         );
-    }
-    elsif ( $mycalc{'total_myisam_indexes'} =~ /^fail$/ ) {
-        badprint
-          "Cannot calculate MyISAM index size - re-run script as root user";
-    }
-    elsif ( $mycalc{'total_myisam_indexes'} == "0" ) {
-        badprint
-          "None of your MyISAM tables are indexed - add indexes immediately";
     }
     else {
         if (   $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
@@ -5032,31 +5018,27 @@ sub mysqsl_pfs {
 
 }
 
-# Recommendations for Ariadb
-sub mariadb_ariadb {
-    subheaderprint "AriaDB Metrics";
+# Recommendations for Aria Engine
+sub mariadb_aria {
+    subheaderprint "Aria Metrics";
 
-    # AriaDB
-    unless ( defined $myvar{'have_aria'}
-        and $myvar{'have_aria'} eq "YES" )
+    # Aria
+    if ( ! defined $myvar{'have_aria'} )
     {
-        infoprint "AriaDB is disabled.";
+        infoprint "Aria Storage Engine not available.";
         return;
     }
-    infoprint "AriaDB is enabled.";
+    if ( $myvar{'have_aria'} ne "YES" )
+    {
+        infoprint "Aria Storage Engine is disabled.";
+        return;
+    }
+    infoprint "Aria Storage Engine is enabled.";
 
     # Aria pagecache
-    if ( !defined( $mycalc{'total_aria_indexes'} ) and $doremote == 1 ) {
+    if ( !defined( $mycalc{'total_aria_indexes'} ) ) {
         push( @generalrec,
-            "Unable to calculate Aria indexes on remote MySQL server < 5.0.0" );
-    }
-    elsif ( $mycalc{'total_aria_indexes'} =~ /^fail$/ ) {
-        badprint
-          "Cannot calculate Aria index size - re-run script as root user";
-    }
-    elsif ( $mycalc{'total_aria_indexes'} == "0" ) {
-        badprint
-          "None of your Aria tables are indexed - add indexes immediately";
+            "Unable to calculate Aria index size on MySQL server" );
     }
     else {
         if (
@@ -6389,7 +6371,7 @@ mysqsl_pfs;                  # Print Performance schema info
 mariadb_threadpool;          # Print MariaDB ThreadPool stats
 mysql_myisam;                # Print MyISAM stats
 mysql_innodb;                # Print InnoDB stats
-mariadb_ariadb;              # Print MariaDB AriaDB stats
+mariadb_aria;                # Print MariaDB Aria stats
 mariadb_tokudb;              # Print MariaDB Tokudb stats
 mariadb_xtradb;              # Print MariaDB XtraDB stats
 
