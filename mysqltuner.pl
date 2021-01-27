@@ -666,6 +666,9 @@ sub mysql_setup {
     }
     else {
         $mysqladmincmd = which( "mysqladmin", $ENV{'PATH'} );
+        if ( !-e $mysqladmincmd ) {
+            $mysqladmincmd = which( "mariadb-admin", $ENV{'PATH'} );
+	}
     }
     chomp($mysqladmincmd);
     if ( !-e $mysqladmincmd && $opt{mysqladmin} ) {
@@ -674,7 +677,7 @@ sub mysql_setup {
         exit 1;
     }
     elsif ( !-e $mysqladmincmd ) {
-        badprint "Couldn't find mysqladmin in your \$PATH. Is MySQL installed?";
+        badprint "Couldn't find mysqladmin/mariadb-admin in your \$PATH. Is MySQL installed?";
         exit 1;
     }
     if ( $opt{mysqlcmd} ) {
@@ -682,6 +685,9 @@ sub mysql_setup {
     }
     else {
         $mysqlcmd = which( "mysql", $ENV{'PATH'} );
+        if ( !-e $mysqlcmd ) {
+            $mysqlcmd = which( "mariadb", $ENV{'PATH'} );
+	}
     }
     chomp($mysqlcmd);
     if ( !-e $mysqlcmd && $opt{mysqlcmd} ) {
@@ -690,7 +696,7 @@ sub mysql_setup {
         exit 1;
     }
     elsif ( !-e $mysqlcmd ) {
-        badprint "Couldn't find mysql in your \$PATH. Is MySQL installed?";
+        badprint "Couldn't find mysql/mariadb in your \$PATH. Is MySQL installed?";
         exit 1;
     }
     $mysqlcmd =~ s/\n$//g;
