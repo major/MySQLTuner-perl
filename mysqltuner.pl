@@ -2994,7 +2994,7 @@ sub mysql_stats {
         #return;
     }
     elsif ( $myvar{'query_cache_size'} < 1
-        and $myvar{'query_cache_type'} eq "OFF" )
+        or $myvar{'query_cache_type'} eq "OFF" )
     {
         goodprint
 "Query cache is disabled by default due to mutex contention on multiprocessor machines.";
