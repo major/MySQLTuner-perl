@@ -1121,9 +1121,9 @@ sub get_all_vars {
     }
 
     # Support GTID MODE FOR MARIADB
-    # Issue MariaDB GTID mode #272
-    $myvar{'gtid_mode'} = $myvar{'gtid_strict_mode'}
-      if ( defined( $myvar{'gtid_strict_mode'} ) );
+    # Issue MariaDB GTID mode #513
+    $myvar{'gtid_mode'} = 'ON'
+      if ( defined( $myvar{'gtid_current_pos'} ) and $myvar{'gtid_current_pos'} ne '' );
 
     $myvar{'have_threadpool'} = "NO";
     if ( defined( $myvar{'thread_pool_size'} )
