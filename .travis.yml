@@ -24,6 +24,8 @@ matrix:
       mariadb: "10.5"
     name: "MariaDB 10.5/Perl 5.24"
     perl: "5.24"
+    sudo: true
+    env: VERSION=mariadb-10.5
 #  - addons:
 #      mysql: "5.5"
 #    name: "MySQL 5.5/Perl 5.24"
@@ -64,6 +66,8 @@ install:
   - cpanm --quiet --notest Text::Template
 
 before_script:
+  # MariaDB-10.4?+ has unix_plugin socket auth, but no password is set.
+  - if [ "$VERSION" == 'mariadb-10.5' ]; then sudo mysql -e 'SET PASSWORD = PASSWORD("")'; fi
   - echo -e "[client]\nuser=root\npassword=\"\"" > .my.cnf
   - chmod 600 .my.cnf
   - git clone https://github.com/datacharmer/test_db.git
