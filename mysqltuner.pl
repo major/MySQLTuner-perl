@@ -3254,6 +3254,7 @@ sub mysql_stats {
 
     # Table definition cache
     my $nbtables=select_one('SELECT COUNT(*) FROM information_schema.tables');
+    $mycalc{'total_tables'} = $nbtables;
     if ( defined $myvar{'table_definition_cache'} ) {
         if ( $myvar{'table_definition_cache'} == -1 ) {
             infoprint ("table_definition_cache(".$myvar{'table_definition_cache'} .") is in autosizing mode");
