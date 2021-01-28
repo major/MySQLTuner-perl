@@ -239,6 +239,9 @@ my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
 # Checks for supported or EOL'ed MySQL versions
 my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro );
 
+# Database
+my @dblist;
+
 # Super structure containing all information
 my %result;
 $result{'MySQLTuner'}{'version'} = $tunerversion;
@@ -5849,8 +5852,8 @@ sub mysql_databases {
         return;
     }
 
-    my @dblist = select_array(
-"SELECT DISTINCT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
+    @dblist = select_array(
+"SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
     );
     infoprint "There is " . scalar(@dblist) . " Database(s).";
     my @totaldbinfo = split /\s/,
@@ -6027,9 +6030,6 @@ sub mysql_tables {
     if (mysql_version_ge(8) and not mysql_version_eq(10)) {
         infoprint "MySQL and Percona version 8 and greater have remove PROCEDURE ANALYSE feature"
     }
-    my @dblist = select_array(
-"SELECT DISTINCT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
-    );
     foreach (@dblist) {
         my $dbname = $_;
         next unless defined $_;
