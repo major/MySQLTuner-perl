@@ -1490,7 +1490,7 @@ sub get_fs_info {
         $v;
     } @sinfo;
     foreach my $info (@sinfo) {
-        next if $info =~ m{(\d+)\t/(run|dev|sys|proc)($|/)};
+        next if $info =~ m{(\d+)\t/(run|dev|sys|proc|snap)($|/)};
         if ( $info =~ /(\d+)\t(.*)/ ) {
             if ( $1 > 85 ) {
                 badprint "mount point $2 is using $1 % total space";
