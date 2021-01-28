@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.20
+# mysqltuner.pl - Version 1.7.21
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2020 Major Hayden - major@mhtx.net
 #
@@ -30,8 +30,8 @@
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
-#   Joe Ashcraft           Jean-Marie Renouard  Christian Loos
-#   Julien Francoz
+#   Joe Ashcraft           JeSan-Marie Renouard  Christian Loos
+#   Julien Francoz         Daniel Black
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://www.day32.com/MySQL/
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.20";
+my $tunerversion = "1.7.21";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -6405,7 +6405,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.20 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.21 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
