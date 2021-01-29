@@ -88,6 +88,7 @@ my %opt = (
     "noprocess"      => 0,
     "dbstat"         => 0,
     "nodbstat"       => 0,
+    "server-log"     => '',
     "tbstat"         => 0,
     "notbstat"       => 0,
     "idxstat"        => 0,
@@ -133,6 +134,7 @@ GetOptions(
     'sysstat',         'nosysstat',
     'pfstat',          'nopfstat',
     'idxstat',         'noidxstat',
+    'server-log=s',
   )
   or pod2usage(
     -exitval  => 1,
@@ -1242,7 +1244,7 @@ sub get_log_file_real_path {
 }
 
 sub log_file_recommendations {
-    $myvar{'log_error'} =
+    $myvar{'log_error'} = $opt{'server-log'} ||
       get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
         $myvar{'datadir'} );
 
@@ -1273,7 +1275,9 @@ sub log_file_recommendations {
         goodprint "Log file $myvar{'log_error'} is not empty";
     }
     else {
-        badprint "Log file $myvar{'log_error'} is empty";
+        infoprint
+"Log file $myvar{'log_error'} is empty. Assuming log-rotation. Use --server-log={file} for explicit file";
+        return;
     }
 
     if ( ( stat $myvar{'log_error'} )[7] < 32 * 1024 * 1024 ) {
@@ -6428,6 +6432,7 @@ You must provide the remote server's total memory when connecting to other serve
  --mysqladmin <path>         Path to a custom mysqladmin executable
  --mysqlcmd <path>           Path to a custom mysql executable
  --defaults-file <path>      Path to a custom .my.cnf
+ --server-log <path>         Path to explict log file
 
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
