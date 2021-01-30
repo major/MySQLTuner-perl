@@ -238,6 +238,9 @@ my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]"  : "[DG]";
 my $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
 my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
 
+# Maximum lines of log output to read from end
+my $maxlines = 30000;
+
 # Checks for supported or EOL'ed MySQL versions
 my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro );
 
@@ -1244,6 +1247,7 @@ sub get_log_file_real_path {
 }
 
 sub log_file_recommendations {
+    my $fh;
     $myvar{'log_error'} = $opt{'server-log'} ||
       get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
         $myvar{'datadir'} );
@@ -1253,41 +1257,54 @@ sub log_file_recommendations {
         badprint "log_error is set to $myvar{'log_error'} MT can't read stderr";
         return
     }
-    if ( -f "$myvar{'log_error'}" ) {
+    elsif ( $myvar{'log_error'} =~ /^(docker|podman|kubectl):(.*)/ ) {
+        open( $fh, '-|', "$1 logs --tail=$maxlines '$2'" )
+            // die "Can't start $1 $!";
+        goodprint "Log from cloud` $myvar{'log_error'} exists";
+    }
+    elsif ($myvar{'log_error'} =~ /^systemd:(.*)/ ) {
+        open( $fh, '-|', "journalctl -n $maxlines -b  -u '$1'" )
+            // die "Can't start journalctl $!";
+        goodprint "Log journal` $myvar{'log_error'} exists";
+    }
+    elsif ( -f "$myvar{'log_error'}" ) {
         goodprint "Log file $myvar{'log_error'} exists";
+        my $size = ( stat $myvar{'log_error'} )[7];
+        infoprint "Log file: "
+          . $myvar{'log_error'} . "("
+          . hr_bytes_rnd( $size ) . ")";
+
+        if ( $size > 0 ) {
+            goodprint "Log file $myvar{'log_error'} is not empty";
+            if ( $size < 32 * 1024 * 1024 ) {
+                goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
+            }
+            else {
+                badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
+                push @generalrec,
+                  $myvar{'log_error'}
+                  . " is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!";
+            }
+        }
+        else {
+            infoprint
+"Log file $myvar{'log_error'} is empty. Assuming log-rotation. Use --server-log={file} for explicit file";
+            return;
+	}
+        if ( ! open( $fh, '<', $myvar{'log_error'} ) ) {
+            badprint "Log file $myvar{'log_error'} isn't readable.";
+            return;
+        }
+        goodprint "Log file $myvar{'log_error'} is readable.";
+
+	if ( $maxlines * 80 < $size ) {
+          seek( $fh, -$maxlines * 80, 2);
+	  <$fh> ; # discard line fragment
+	}
     }
     else {
         badprint "Log file $myvar{'log_error'} doesn't exist";
         return;
-    }
-    infoprint "Log file: "
-      . $myvar{'log_error'} . "("
-      . hr_bytes_rnd( ( stat $myvar{'log_error'} )[7] ) . ")";
-
-    if ( -r "$myvar{'log_error'}" ) {
-        goodprint "Log file $myvar{'log_error'} is readable.";
-    }
-    else {
-        badprint "Log file $myvar{'log_error'} isn't readable.";
-        return;
-    }
-    if ( ( stat $myvar{'log_error'} )[7] > 0 ) {
-        goodprint "Log file $myvar{'log_error'} is not empty";
-    }
-    else {
-        infoprint
-"Log file $myvar{'log_error'} is empty. Assuming log-rotation. Use --server-log={file} for explicit file";
-        return;
-    }
-
-    if ( ( stat $myvar{'log_error'} )[7] < 32 * 1024 * 1024 ) {
-        goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
-    }
-    else {
-        badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
-        push @generalrec,
-          $myvar{'log_error'}
-          . " is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!";
     }
 
     my $numLi     = 0;
@@ -1295,9 +1312,6 @@ sub log_file_recommendations {
     my $nbErrLog  = 0;
     my @lastShutdowns;
     my @lastStarts;
-
-    open( my $fh, '<', $myvar{'log_error'} )
-      or die "Can't open $myvar{'log_error'} for read: $!";
 
     while ( my $logLi = <$fh> ) {
         chomp $logLi;
