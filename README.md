@@ -34,7 +34,7 @@ MySQLTuner needs you:
 Compatibility
 ====
 Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.org/major/MySQLTuner-perl)
-* MySQL 8 (partial support, password checks don't work)
+* MySQL 8.0 (partial support, password checks don't work)
 * MySQL 5.7 (full support)
 * MySQL 5.6 (full support, no more MySQL support)
 * MySQL 5.5 (full support, no more MySQL support)
@@ -53,7 +53,7 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 * Mysql Replications (partial support, no test environment)
 * Galera replication (partial support, no test environment)
 
-* MySQL 3.23, 4.0, 4.1, 5.0, 5.1, 5.5 (partial support - deprecated version)
+* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (partial support - deprecated version)
 
 *** UNSUPPORTED ENVIRONMENTS - NEED HELP FOR THAT :) ***
 * Windows is not supported at this time (Help wanted !!!!!)
