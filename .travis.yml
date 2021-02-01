@@ -17,6 +17,9 @@ env:
   - DB=mysql:5.5
   - DB=mysql:5.7
   - DB=mysql:8.0
+  - DB=percona:5.6
+  - DB=percona:5.7
+  - DB=percona:8.0
 
 install:
   - cpanm --quiet --notest Data::Dumper
@@ -34,7 +37,7 @@ before_script:
   - cd test_db
   - count=10
   - while ! mysql -e 'select version()' && [ $count -gt 0 ]; do echo $count seconds to go; sleep 1; count=$(( $count - 1 )); done
-  - if [ $DB == 'mysql:8.0' ]; then
+  - if [[ $DB =~ .*:8.0 ]] ; then
       for file in public_key.pem ca.pem server-cert.pem client-key.pem client-cert.pem ; do
         docker cp mysqltestinstance:/var/lib/mysql/$file "${HOME}" ;
       done ;
