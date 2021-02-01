@@ -5557,21 +5557,28 @@ sub mysql_innodb {
 
     # InnoDB
     unless ( defined $myvar{'have_innodb'}
-        && $myvar{'have_innodb'} eq "YES"
-        && defined $enginestats{'InnoDB'} )
+        && $myvar{'have_innodb'} eq "YES")
     {
-       if ( $opt{skipsize} eq 1 ) {
-            infoprint "Skipped due to --skipsize option";
-            return;
-        }
         infoprint "InnoDB is disabled.";
         if ( mysql_version_ge( 5, 5 ) ) {
+            my $defengine = 'InnoDB';
+	    $defengine = $myvar{'default_storage_engine'} if defined($myvar{'default_storage_engine'});
             badprint
-"InnoDB Storage engine is disabled. InnoDB is the default storage engine";
+"InnoDB Storage engine is disabled. $defengine is the default storage engine" if $defengine eq 'InnoDB';
+            infoprint
+"InnoDB Storage engine is disabled. $defengine is the default storage engine" if $defengine ne 'InnoDB';
         }
         return;
     }
     infoprint "InnoDB is enabled.";
+    if (! defined $enginestats{'InnoDB'} ) {
+       if ( $opt{skipsize} eq 1 ) {
+            infoprint "Skipped due to --skipsize option";
+            return;
+        }
+	badprint "No tables are Innodb";
+        $enginestats{'InnoDB'} = 0;
+    }
 
     if ( $opt{buffers} ne 0 ) {
         infoprint "InnoDB Buffers";
