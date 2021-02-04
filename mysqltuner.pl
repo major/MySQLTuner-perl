@@ -1892,16 +1892,16 @@ q{SELECT CONCAT(user, '@', host) FROM mysql.global_priv WHERE
     }
 
     @mysqlstatlist = select_array
-      "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE HOST='%'";
+      "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             my $luser = (split /@/, $line)[0];
             badprint "User '" . $line. "' does not specify hostname restrictions.";
             push( @generalrec,
-            "Restrict Host for '$luser'\@% to $luser\@SpecificDNSorIp" );
+            "Restrict Host for $luser\@% to $luser\@LimitedIPRangeOrLocalhost" );
             push( @generalrec,
-            "UPDATE mysql.user SET host ='SpecificDNSorIp' WHERE user='" . $luser. "' AND host ='%'; FLUSH PRIVILEGES;" );
+            "RENAME USER $luser\@'%' TO " . $luser. "\@LimitedIPRangeOrLocalhost;" );
         }
     }
 
