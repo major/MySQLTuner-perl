@@ -1846,14 +1846,14 @@ sub security_recommendations {
     # Looking for Empty Password
     if ( mysql_version_ge(10, 4) ) {
         @mysqlstatlist = select_array
-q{SELECT CONCAT(user, '@', host) FROM mysql.global_priv WHERE
+q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     user != ''
     AND JSON_CONTAINS(Priv, '"mysql_native_password"', '$.plugin') AND JSON_CONTAINS(Priv, '""', '$.authentication_string')
     AND NOT JSON_CONTAINS(Priv, 'true', '$.account_locked')};
     }
     else {
         @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL)
+"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE ($PASS_COLUMN_NAME = '' OR $PASS_COLUMN_NAME IS NULL)
     AND user != ''
     /*!50501 AND plugin NOT IN ('auth_socket', 'unix_socket', 'win_socket', 'auth_pam_compat') */
     /*!80000 AND account_locked = 'N' AND password_expired = 'N' */";
@@ -1862,7 +1862,7 @@ q{SELECT CONCAT(user, '@', host) FROM mysql.global_priv WHERE
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             badprint "User '" . $line . "' has no password set.";
-           push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR '".(split /@/, $line)[0]."'\@'SpecificDNSorIp' = PASSWORD('secure_password');")
+           push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR $line = PASSWORD('secure_password');")
         }
     }
     else {
@@ -1882,26 +1882,26 @@ q{SELECT CONCAT(user, '@', host) FROM mysql.global_priv WHERE
 
     # Looking for User with user/ uppercase /capitalise user as password
     @mysqlstatlist = select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE user != '' AND (CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(CONCAT(UPPER(LEFT(User, 1)), SUBSTRING(User, 2, LENGTH(User)))))";
+"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE user != '' AND (CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(CONCAT(UPPER(LEFT(User, 1)), SUBSTRING(User, 2, LENGTH(User)))))";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
-            badprint "User '" . $line . "' has user name as password.";
-            push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR '".(split /@/, $line)[0]."'\@'SpecificDNSorIp' = PASSWORD('secure_password');");
+            badprint "User " . $line . " has user name as password.";
+            push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR $line = PASSWORD('secure_password');");
         }
     }
 
     @mysqlstatlist = select_array
-      "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE HOST='%'";
+      "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             my $luser = (split /@/, $line)[0];
             badprint "User '" . $line. "' does not specify hostname restrictions.";
             push( @generalrec,
-            "Restrict Host for '$luser'\@% to $luser\@SpecificDNSorIp" );
+            "Restrict Host for $luser\@% to $luser\@LimitedIPRangeOrLocalhost" );
             push( @generalrec,
-            "UPDATE mysql.user SET host ='SpecificDNSorIp' WHERE user='" . $luser. "' AND host ='%'; FLUSH PRIVILEGES;" );
+            "RENAME USER $luser\@'%' TO " . $luser. "\@LimitedIPRangeOrLocalhost;" );
         }
     }
 
