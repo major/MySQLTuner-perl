@@ -200,7 +200,7 @@ $opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
 $opt{noprocess} = 0
   if ( $opt{noprocess} == 1 );                # Don't Print process information
 $opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't Print sysstat information
-$opt{pfstat}  = 0
+$opt{pfstat} = 0
   if ( $opt{nopfstat} == 1 );    # Don't Print performance schema information
 $opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't Print index information
 
@@ -421,8 +421,8 @@ sub memerror {
 
 sub os_setup {
     my $os = `uname`;
-    $duflags = ( $os =~ /Linux/ ) ? '-b' : '';
-    $xargsflags = ( $os =~ /Darwin|SunOS/ ) ? '' : '-r';
+    $duflags    = ( $os =~ /Linux/ )        ? '-b' : '';
+    $xargsflags = ( $os =~ /Darwin|SunOS/ ) ? ''   : '-r';
     if ( $opt{'forcemem'} > 0 ) {
         $physical_memory = $opt{'forcemem'} * 1048576;
         infoprint "Assuming $opt{'forcemem'} MB of physical memory";
@@ -676,7 +676,7 @@ sub mysql_setup {
         $mysqladmincmd = which( "mysqladmin", $ENV{'PATH'} );
         if ( !-e $mysqladmincmd ) {
             $mysqladmincmd = which( "mariadb-admin", $ENV{'PATH'} );
-	}
+        }
     }
     chomp($mysqladmincmd);
     if ( !-e $mysqladmincmd && $opt{mysqladmin} ) {
@@ -685,7 +685,8 @@ sub mysql_setup {
         exit 1;
     }
     elsif ( !-e $mysqladmincmd ) {
-        badprint "Couldn't find mysqladmin/mariadb-admin in your \$PATH. Is MySQL installed?";
+        badprint
+"Couldn't find mysqladmin/mariadb-admin in your \$PATH. Is MySQL installed?";
         exit 1;
     }
     if ( $opt{mysqlcmd} ) {
@@ -695,7 +696,7 @@ sub mysql_setup {
         $mysqlcmd = which( "mysql", $ENV{'PATH'} );
         if ( !-e $mysqlcmd ) {
             $mysqlcmd = which( "mariadb", $ENV{'PATH'} );
-	}
+        }
     }
     chomp($mysqlcmd);
     if ( !-e $mysqlcmd && $opt{mysqlcmd} ) {
@@ -704,7 +705,8 @@ sub mysql_setup {
         exit 1;
     }
     elsif ( !-e $mysqlcmd ) {
-        badprint "Couldn't find mysql/mariadb in your \$PATH. Is MySQL installed?";
+        badprint
+          "Couldn't find mysql/mariadb in your \$PATH. Is MySQL installed?";
         exit 1;
     }
     $mysqlcmd =~ s/\n$//g;
@@ -1131,7 +1133,8 @@ sub get_all_vars {
     # Support GTID MODE FOR MARIADB
     # Issue MariaDB GTID mode #513
     $myvar{'gtid_mode'} = 'ON'
-      if ( defined( $myvar{'gtid_current_pos'} ) and $myvar{'gtid_current_pos'} ne '' );
+      if ( defined( $myvar{'gtid_current_pos'} )
+        and $myvar{'gtid_current_pos'} ne '' );
 
     $myvar{'have_threadpool'} = "NO";
     if ( defined( $myvar{'thread_pool_size'} )
@@ -1223,10 +1226,10 @@ sub get_log_file_real_path {
     elsif ( -f "$datadir$hostname.log" ) {
         return "$datadir$hostname.log";
     }
-    elsif ( -f "$datadir"."mysql_error.log" ) {
-        return "$datadir"."mysql_error.log";
+    elsif ( -f "$datadir" . "mysql_error.log" ) {
+        return "$datadir" . "mysql_error.log";
     }
-     elsif ( -f "/var/log/mysql.log" ) {
+    elsif ( -f "/var/log/mysql.log" ) {
         return "/var/log/mysql.log";
     }
     elsif ( -f "/var/log/mysqld.log" ) {
@@ -1238,8 +1241,8 @@ sub get_log_file_real_path {
     elsif ( -f "/var/log/mysql/$hostname.log" ) {
         return "/var/log/mysql/$hostname.log";
     }
-    elsif ( -f "/var/log/mysql/"."mysql_error.log" ) {
-        return "/var/log/mysql/"."mysql_error.log";
+    elsif ( -f "/var/log/mysql/" . "mysql_error.log" ) {
+        return "/var/log/mysql/" . "mysql_error.log";
     }
     else {
         return $file;
@@ -1248,23 +1251,23 @@ sub get_log_file_real_path {
 
 sub log_file_recommendations {
     my $fh;
-    $myvar{'log_error'} = $opt{'server-log'} ||
-      get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
+    $myvar{'log_error'} = $opt{'server-log'}
+      || get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
         $myvar{'datadir'} );
 
     subheaderprint "Log file Recommendations";
     if ( "$myvar{'log_error'}" eq "stderr" ) {
         badprint "log_error is set to $myvar{'log_error'} MT can't read stderr";
-        return
+        return;
     }
     elsif ( $myvar{'log_error'} =~ /^(docker|podman|kubectl):(.*)/ ) {
         open( $fh, '-|', "$1 logs --tail=$maxlines '$2'" )
-            // die "Can't start $1 $!";
+          // die "Can't start $1 $!";
         goodprint "Log from cloud` $myvar{'log_error'} exists";
     }
-    elsif ($myvar{'log_error'} =~ /^systemd:(.*)/ ) {
+    elsif ( $myvar{'log_error'} =~ /^systemd:(.*)/ ) {
         open( $fh, '-|', "journalctl -n $maxlines -b  -u '$1'" )
-            // die "Can't start journalctl $!";
+          // die "Can't start journalctl $!";
         goodprint "Log journal` $myvar{'log_error'} exists";
     }
     elsif ( -f "$myvar{'log_error'}" ) {
@@ -1272,7 +1275,7 @@ sub log_file_recommendations {
         my $size = ( stat $myvar{'log_error'} )[7];
         infoprint "Log file: "
           . $myvar{'log_error'} . "("
-          . hr_bytes_rnd( $size ) . ")";
+          . hr_bytes_rnd($size) . ")";
 
         if ( $size > 0 ) {
             goodprint "Log file $myvar{'log_error'} is not empty";
@@ -1290,17 +1293,17 @@ sub log_file_recommendations {
             infoprint
 "Log file $myvar{'log_error'} is empty. Assuming log-rotation. Use --server-log={file} for explicit file";
             return;
-	}
-        if ( ! open( $fh, '<', $myvar{'log_error'} ) ) {
+        }
+        if ( !open( $fh, '<', $myvar{'log_error'} ) ) {
             badprint "Log file $myvar{'log_error'} isn't readable.";
             return;
         }
         goodprint "Log file $myvar{'log_error'} is readable.";
 
-	if ( $maxlines * 80 < $size ) {
-          seek( $fh, -$maxlines * 80, 2);
-	  <$fh> ; # discard line fragment
-	}
+        if ( $maxlines * 80 < $size ) {
+            seek( $fh, -$maxlines * 80, 2 );
+            <$fh>;    # discard line fragment
+        }
     }
     else {
         badprint "Log file $myvar{'log_error'} doesn't exist";
@@ -1316,9 +1319,10 @@ sub log_file_recommendations {
     while ( my $logLi = <$fh> ) {
         chomp $logLi;
         $numLi++;
-        debugprint "$numLi: $logLi" if $logLi =~ /warning|error/i and $logLi !~ /Logging to/;
-        $nbErrLog++                 if $logLi =~ /error/i and $logLi !~ /Logging to/;
-        $nbWarnLog++                if $logLi =~ /warning/i;
+        debugprint "$numLi: $logLi"
+          if $logLi =~ /warning|error/i and $logLi !~ /Logging to/;
+        $nbErrLog++ if $logLi =~ /error/i and $logLi !~ /Logging to/;
+        $nbWarnLog++ if $logLi =~ /warning/i;
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
         push @lastStarts, $logLi if $logLi =~ /ready for connections/;
@@ -1797,6 +1801,7 @@ sub security_recommendations {
     }
 
     my $PASS_COLUMN_NAME = 'password';
+
     # New table schema available since mysql-5.7 and mariadb-10.2
     # But need to be checked
     if ( $myvar{'version'} =~ /5\.7|10\.[2-5]\..*MariaDB*/ ) {
@@ -1804,14 +1809,14 @@ sub security_recommendations {
 `$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'" 2>>/dev/null`;
         my $authstring_column_exists =
 `$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'authentication_string'" 2>>/dev/null`;
-        if ($password_column_exists && $authstring_column_exists) {
+        if ( $password_column_exists && $authstring_column_exists ) {
             $PASS_COLUMN_NAME =
 "IF(plugin='mysql_native_password', authentication_string, password)";
         }
         elsif ($authstring_column_exists) {
             $PASS_COLUMN_NAME = 'authentication_string';
         }
-        elsif (!$password_column_exists) {
+        elsif ( !$password_column_exists ) {
             infoprint "Skipped due to none of known auth columns exists";
             return;
         }
@@ -1831,7 +1836,10 @@ sub security_recommendations {
               . " anonymous accounts." );
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
-            badprint "User " . $line . " is an anonymous account. Remove with DROP USER " . $line . ";";
+            badprint "User "
+              . $line
+              . " is an anonymous account. Remove with DROP USER "
+              . $line . ";";
         }
     }
     else {
@@ -1844,7 +1852,7 @@ sub security_recommendations {
     }
 
     # Looking for Empty Password
-    if ( mysql_version_ge(10, 4) ) {
+    if ( mysql_version_ge( 10, 4 ) ) {
         @mysqlstatlist = select_array
 q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     user != ''
@@ -1862,7 +1870,9 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             badprint "User '" . $line . "' has no password set.";
-           push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR $line = PASSWORD('secure_password');")
+            push( @generalrec,
+"Set up a Secure Password for $line user: SET PASSWORD FOR $line = PASSWORD('secure_password');"
+            );
         }
     }
     else {
@@ -1887,7 +1897,9 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             badprint "User " . $line . " has user name as password.";
-            push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR $line = PASSWORD('secure_password');");
+            push( @generalrec,
+"Set up a Secure Password for $line user: SET PASSWORD FOR $line = PASSWORD('secure_password');"
+            );
         }
     }
 
@@ -1896,12 +1908,16 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     if (@mysqlstatlist) {
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
-            my $luser = (split /@/, $line)[0];
-            badprint "User '" . $line. "' does not specify hostname restrictions.";
+            my $luser = ( split /@/, $line )[0];
+            badprint "User '" . $line
+              . "' does not specify hostname restrictions.";
             push( @generalrec,
-            "Restrict Host for $luser\@% to $luser\@LimitedIPRangeOrLocalhost" );
+"Restrict Host for $luser\@% to $luser\@LimitedIPRangeOrLocalhost"
+            );
             push( @generalrec,
-            "RENAME USER $luser\@'%' TO " . $luser. "\@LimitedIPRangeOrLocalhost;" );
+                    "RENAME USER $luser\@'%' TO "
+                  . $luser
+                  . "\@LimitedIPRangeOrLocalhost;" );
         }
     }
 
@@ -1945,7 +1961,11 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                     badprint "User '" . $line
                       . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
 
-                    push (@generalrec, "Set up a Secure Password for $line user: SET PASSWORD FOR '" . (split /@/, $line)[0] . "'\@'".(split /@/, $line)[1]."' = PASSWORD('secure_password');");
+                    push( @generalrec,
+"Set up a Secure Password for $line user: SET PASSWORD FOR '"
+                          . ( split /@/, $line )[0] . "'\@'"
+                          . ( split /@/, $line )[1]
+                          . "' = PASSWORD('secure_password');" );
                     $nbins++;
                 }
             }
@@ -1954,7 +1974,9 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
         }
     }
     if ( $nbins > 0 ) {
-        push( @generalrec, $nbins . " user(s) used basic or weak password from basic dictionary." );
+        push( @generalrec,
+            $nbins
+              . " user(s) used basic or weak password from basic dictionary." );
     }
 }
 
@@ -2036,14 +2058,22 @@ sub validate_mysql_version {
     $mysqlverminor ||= 0;
     $mysqlvermicro ||= 0;
 
-    if ( mysql_version_eq(8) or mysql_version_eq(5, 6) or mysql_version_eq(5, 7)
-        or mysql_version_eq(10, 2)  or mysql_version_eq(10, 3) or mysql_version_eq(10, 4)
-         or mysql_version_eq(10, 5) )
+    if (   mysql_version_eq(8)
+        or mysql_version_eq( 5,  6 )
+        or mysql_version_eq( 5,  7 )
+        or mysql_version_eq( 10, 2 )
+        or mysql_version_eq( 10, 3 )
+        or mysql_version_eq( 10, 4 )
+        or mysql_version_eq( 10, 5 ) )
     {
-        goodprint "Currently running supported MySQL version " . $myvar{'version'} . "";
+        goodprint "Currently running supported MySQL version "
+          . $myvar{'version'} . "";
         return;
     }
-    if ( mysql_version_ge( 5 ) or mysql_version_ge( 4 ) or mysql_version_eq(10, 0) ) {
+    if (   mysql_version_ge(5)
+        or mysql_version_ge(4)
+        or mysql_version_eq( 10, 0 ) )
+    {
         badprint "Your MySQL version "
           . $myvar{'version'}
           . " is EOL software!  Upgrade soon!";
@@ -2239,11 +2269,11 @@ sub check_storage_engines {
             ( $engine, $size, $count, $dsize, $isize ) =
               $line =~ /([a-zA-Z_]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/;
             debugprint "Engine Found: $engine";
-            next       unless ( defined($engine) or trim($engine) eq '' );
-            $size  = 0 unless ( defined($size)   or trim($engine) eq '' );
-            $isize = 0 unless ( defined($isize)  or trim($engine) eq '' );
-            $dsize = 0 unless ( defined($dsize)  or trim($engine) eq '' );
-            $count = 0 unless ( defined($count)  or trim($engine) eq '' );
+            next unless ( defined($engine) or trim($engine) eq '' );
+            $size  = 0 unless ( defined($size)  or trim($engine) eq '' );
+            $isize = 0 unless ( defined($isize) or trim($engine) eq '' );
+            $dsize = 0 unless ( defined($dsize) or trim($engine) eq '' );
+            $count = 0 unless ( defined($count) or trim($engine) eq '' );
             $enginestats{$engine}                      = $size;
             $enginecount{$engine}                      = $count;
             $result{'Engine'}{$engine}{'Table Number'} = $count;
@@ -2297,7 +2327,7 @@ sub check_storage_engines {
             debugprint "Data dump " . Dumper(@$tbl);
             my ( $engine, $size, $datafree ) = @$tbl;
             next if $engine eq 'NULL' or not defined($engine);
-            $size     = 0 if $size eq 'NULL' or not defined($size);
+            $size     = 0 if $size eq 'NULL'     or not defined($size);
             $datafree = 0 if $datafree eq 'NULL' or not defined($datafree);
             if ( defined $enginestats{$engine} ) {
                 $enginestats{$engine} += $size;
@@ -2597,7 +2627,7 @@ sub calculations {
         $size = 0 + (split)[0]
           for
 `find "$myvar{'datadir'}" -name "*.MAI" -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1`;
-        $mycalc{'total_aria_indexes'}   = $size;
+        $mycalc{'total_aria_indexes'} = $size;
     }
     elsif ( mysql_version_ge(5) ) {
         $mycalc{'total_myisam_indexes'} = select_one
@@ -2739,10 +2769,11 @@ sub calculations {
               $myvar{'innodb_log_files_in_group'} * 100 /
               $myvar{'innodb_buffer_pool_size'} );
     }
-      if( !defined $myvar{'innodb_buffer_pool_size'}) {
-      $mycalc{'innodb_log_size_pct'} = 0;
-      $myvar{'innodb_buffer_pool_size'} = 0;
+    if ( !defined $myvar{'innodb_buffer_pool_size'} ) {
+        $mycalc{'innodb_log_size_pct'}    = 0;
+        $myvar{'innodb_buffer_pool_size'} = 0;
     }
+
     # InnoDB Buffer pool read cache efficiency
     (
         $mystat{'Innodb_buffer_pool_read_requests'},
@@ -3016,7 +3047,7 @@ sub mysql_stats {
 
         #return;
     }
-    elsif ( $myvar{'query_cache_size'} < 1
+    elsif ($myvar{'query_cache_size'} < 1
         or $myvar{'query_cache_type'} eq "OFF" )
     {
         goodprint
@@ -3113,10 +3144,12 @@ sub mysql_stats {
                 "join_buffer_size (> "
               . hr_bytes( $myvar{'join_buffer_size'} )
               . ", or always use indexes with JOINs)" );
-        push( @generalrec,
-            "We will suggest raising the 'join_buffer_size' until JOINs not using indexes are found.
+        push(
+            @generalrec,
+"We will suggest raising the 'join_buffer_size' until JOINs not using indexes are found.
              See https://dev.mysql.com/doc/internals/en/join-buffer-size.html
-             (specially the conclusions at the bottom of the page).");
+             (specially the conclusions at the bottom of the page)."
+        );
     }
     else {
         goodprint "No joins without indexes";
@@ -3274,20 +3307,31 @@ sub mysql_stats {
     }
 
     # Table definition cache
-    my $nbtables=select_one('SELECT COUNT(*) FROM information_schema.tables');
+    my $nbtables = select_one('SELECT COUNT(*) FROM information_schema.tables');
     $mycalc{'total_tables'} = $nbtables;
     if ( defined $myvar{'table_definition_cache'} ) {
         if ( $myvar{'table_definition_cache'} == -1 ) {
-            infoprint ("table_definition_cache(".$myvar{'table_definition_cache'} .") is in autosizing mode");
-        } elsif ($myvar{'table_definition_cache'} < $nbtables ) {
-            badprint "table_definition_cache(".$myvar{'table_definition_cache'} .") is lower than number of tables($nbtables) ";
+            infoprint( "table_definition_cache("
+                  . $myvar{'table_definition_cache'}
+                  . ") is in autosizing mode" );
+        }
+        elsif ( $myvar{'table_definition_cache'} < $nbtables ) {
+            badprint "table_definition_cache("
+              . $myvar{'table_definition_cache'}
+              . ") is lower than number of tables($nbtables) ";
             push( @adjvars,
-                "table_definition_cache(".$myvar{'table_definition_cache'} .") > " . $nbtables . " or -1 (autosizing if supported)" );
+                    "table_definition_cache("
+                  . $myvar{'table_definition_cache'} . ") > "
+                  . $nbtables
+                  . " or -1 (autosizing if supported)" );
         }
         else {
-            goodprint "table_definition_cache(".$myvar{'table_definition_cache'} .") is upper than number of tables($nbtables)";
+            goodprint "table_definition_cache("
+              . $myvar{'table_definition_cache'}
+              . ") is upper than number of tables($nbtables)";
         }
-    } else {
+    }
+    else {
         infoprint "No table_definition_cache variable found.";
     }
 
@@ -3375,10 +3419,11 @@ sub mysql_stats {
 # Recommendations for MyISAM
 sub mysql_myisam {
     subheaderprint "MyISAM Metrics";
-    if (mysql_version_ge(8) and mysql_version_le(10) ) {
+    if ( mysql_version_ge(8) and mysql_version_le(10) ) {
         infoprint "MyISAM Metrics are disabled on last MySQL versions.";
         return;
     }
+
     # Key buffer usage
     if ( defined( $mycalc{'pct_key_buffer_used'} ) ) {
         if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
@@ -3416,8 +3461,7 @@ sub mysql_myisam {
     # Key buffer
     if ( !defined( $mycalc{'total_myisam_indexes'} ) ) {
         push( @generalrec,
-            "Unable to calculate MyISAM index size on MySQL server < 5.0.0"
-        );
+            "Unable to calculate MyISAM index size on MySQL server < 5.0.0" );
     }
     else {
         if (   $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
@@ -4204,7 +4248,12 @@ sub mysqsl_pfs {
     # Unused Indexes
     subheaderprint "Performance schema: Unused indexes";
     $nbL = 1;
-    for my $lQuery ( select_array("select \* from sys.schema_unused_indexes where object_schema not in ('performance_schema')" )) {
+    for my $lQuery (
+        select_array(
+"select \* from sys.schema_unused_indexes where object_schema not in ('performance_schema')"
+        )
+      )
+    {
         infoprint " +-- $nbL: $lQuery";
         $nbL++;
     }
@@ -5053,13 +5102,11 @@ sub mariadb_aria {
     subheaderprint "Aria Metrics";
 
     # Aria
-    if ( ! defined $myvar{'have_aria'} )
-    {
+    if ( !defined $myvar{'have_aria'} ) {
         infoprint "Aria Storage Engine not available.";
         return;
     }
-    if ( $myvar{'have_aria'} ne "YES" )
-    {
+    if ( $myvar{'have_aria'} ne "YES" ) {
         infoprint "Aria Storage Engine is disabled.";
         return;
     }
@@ -5206,7 +5253,7 @@ sub trim {
 sub get_wsrep_options {
     return () unless defined $myvar{'wsrep_provider_options'};
 
-    my @galera_options      = split /;/, $myvar{'wsrep_provider_options'};
+    my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
     my $wsrep_slave_threads = $myvar{'wsrep_slave_threads'};
     push @galera_options, ' wsrep_slave_threads = ' . $wsrep_slave_threads;
     @galera_options = remove_cr @galera_options;
@@ -5228,7 +5275,7 @@ sub get_wsrep_option {
     my @galera_options = get_wsrep_options;
     return '' unless scalar(@galera_options) > 0;
     my @memValues = grep /\s*$key =/, @galera_options;
-    my $memValue  = $memValues[0];
+    my $memValue = $memValues[0];
     return 0 unless defined $memValue;
     $memValue =~ s/.*=\s*(.+)$/$1/g;
     return $memValue;
@@ -5404,7 +5451,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             goodprint "Galera Cluster address is defined: "
               . $myvar{'wsrep_cluster_address'};
             my @NodesTmp = split /,/, $myvar{'wsrep_cluster_address'};
-            my $nbNodes  = @NodesTmp;
+            my $nbNodes = @NodesTmp;
             infoprint "There are $nbNodes nodes in wsrep_cluster_address";
             my $nbNodesSize = trim( $mystat{'wsrep_cluster_size'} );
             if ( $nbNodesSize == 3 or $nbNodesSize == 5 ) {
@@ -5557,26 +5604,29 @@ sub mysql_innodb {
 
     # InnoDB
     unless ( defined $myvar{'have_innodb'}
-        && $myvar{'have_innodb'} eq "YES")
+        && $myvar{'have_innodb'} eq "YES" )
     {
         infoprint "InnoDB is disabled.";
         if ( mysql_version_ge( 5, 5 ) ) {
             my $defengine = 'InnoDB';
-	    $defengine = $myvar{'default_storage_engine'} if defined($myvar{'default_storage_engine'});
+            $defengine = $myvar{'default_storage_engine'}
+              if defined( $myvar{'default_storage_engine'} );
             badprint
-"InnoDB Storage engine is disabled. $defengine is the default storage engine" if $defengine eq 'InnoDB';
+"InnoDB Storage engine is disabled. $defengine is the default storage engine"
+              if $defengine eq 'InnoDB';
             infoprint
-"InnoDB Storage engine is disabled. $defengine is the default storage engine" if $defengine ne 'InnoDB';
+"InnoDB Storage engine is disabled. $defengine is the default storage engine"
+              if $defengine ne 'InnoDB';
         }
         return;
     }
     infoprint "InnoDB is enabled.";
-    if (! defined $enginestats{'InnoDB'} ) {
-       if ( $opt{skipsize} eq 1 ) {
+    if ( !defined $enginestats{'InnoDB'} ) {
+        if ( $opt{skipsize} eq 1 ) {
             infoprint "Skipped due to --skipsize option";
             return;
         }
-	badprint "No tables are Innodb";
+        badprint "No tables are Innodb";
         $enginestats{'InnoDB'} = 0;
     }
 
@@ -5675,10 +5725,10 @@ sub mysql_innodb {
               )
               . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
         );
-        if (mysql_version_le(5 ,6 , 2)) {
-            push(
-            @generalrec,
-            "For MySQL 5.6.2 and lower, Max combined innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB.");
+        if ( mysql_version_le( 5, 6, 2 ) ) {
+            push( @generalrec,
+"For MySQL 5.6.2 and lower, Max combined innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB."
+            );
         }
         push( @generalrec,
 "Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU"
@@ -5693,7 +5743,9 @@ sub mysql_innodb {
     }
 
     # InnoDB Buffer Pool Instances (MySQL 5.6.6+)
-    if ( not mysql_version_ge(10, 5) and defined( $myvar{'innodb_buffer_pool_instances'} ) ) {
+    if ( not mysql_version_ge( 10, 5 )
+        and defined( $myvar{'innodb_buffer_pool_instances'} ) )
+    {
 
         # Bad Value if > 64
         if ( $myvar{'innodb_buffer_pool_instances'} > 64 ) {
@@ -5727,6 +5779,7 @@ sub mysql_innodb {
                 goodprint "InnoDB buffer pool instances: "
                   . $myvar{'innodb_buffer_pool_instances'} . "";
             }
+
             # InnoDB Buffer Pool Size < 1Go
         }
         else {
@@ -6053,8 +6106,9 @@ sub mysql_tables {
 "Skip Database metrics from information schema missing in this version";
         return;
     }
-    if (mysql_version_ge(8) and not mysql_version_eq(10)) {
-        infoprint "MySQL and Percona version 8 and greater have remove PROCEDURE ANALYSE feature"
+    if ( mysql_version_ge(8) and not mysql_version_eq(10) ) {
+        infoprint
+"MySQL and Percona version 8 and greater have remove PROCEDURE ANALYSE feature";
     }
     foreach (@dblist) {
         my $dbname = $_;
@@ -6080,27 +6134,31 @@ sub mysql_tables {
                 infoprint "     +-- Column $tbname.$_:";
                 my $current_type =
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "" );
-                my $optimal_type='';
+                my $optimal_type = '';
                 $optimal_type = select_str_g( "Optimal_fieldtype",
 "SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
-                ) unless (mysql_version_ge(8) and not mysql_version_eq(10));
+                ) unless ( mysql_version_ge(8) and not mysql_version_eq(10) );
                 if ( $optimal_type eq '' ) {
                     infoprint "      Current Fieldtype: $current_type";
+
                     #infoprint "      Optimal Fieldtype: Not available";
                 }
-                elsif ( $current_type ne $optimal_type and $current_type !~ /.*DATETIME.*/ and $current_type !~ /.*TIMESTAMP.*/) {
+                elsif ( $current_type ne $optimal_type
+                    and $current_type !~ /.*DATETIME.*/
+                    and $current_type !~ /.*TIMESTAMP.*/ )
+                {
                     infoprint "      Current Fieldtype: $current_type";
-                    if ($optimal_type =~ /.*ENUM\(.*/ ) {
-                        $optimal_type ="ENUM( ... )";
+                    if ( $optimal_type =~ /.*ENUM\(.*/ ) {
+                        $optimal_type = "ENUM( ... )";
                     }
                     infoprint "      Optimal Fieldtype: $optimal_type ";
-                    if ($optimal_type !~ /.*ENUM\(.*/ ) {
+                    if ( $optimal_type !~ /.*ENUM\(.*/ ) {
                         badprint
 "Consider changing type for column $_ in table $dbname.$tbname";
-                    push( @generalrec,
+                        push( @generalrec,
 "ALTER TABLE \`$dbname\`.\`$tbname\` MODIFY \`$_\` $optimal_type;"
-                    );
-                }
+                        );
+                    }
 
                 }
                 else {
@@ -6382,19 +6440,19 @@ debugprint "MySQL FINAL Client : $mysqlcmd $mysqllogin";
 debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
 
 #exit(0);
-os_setup;                    # Set up some OS variables
-get_all_vars;                # Toss variables/status into hashes
-get_tuning_info;             # Get information about the tuning connexion
-validate_mysql_version;      # Check current MySQL version
+os_setup;                  # Set up some OS variables
+get_all_vars;              # Toss variables/status into hashes
+get_tuning_info;           # Get information about the tuning connexion
+validate_mysql_version;    # Check current MySQL version
 
-check_architecture;          # Suggest 64-bit upgrade
-system_recommendations;      # avoid to many service on the same host
-log_file_recommendations;    # check log file content
-check_storage_engines;       # Show enabled storage engines
+check_architecture;        # Suggest 64-bit upgrade
+system_recommendations;    # avoid to many service on the same host
+log_file_recommendations;  # check log file content
+check_storage_engines;     # Show enabled storage engines
 
-check_metadata_perf;         # Show parameter impacting performance during analysis
-mysql_databases;             # Show informations about databases
-mysql_tables;                # Show informations about table column
+check_metadata_perf;    # Show parameter impacting performance during analysis
+mysql_databases;        # Show informations about databases
+mysql_tables;           # Show informations about table column
 
 mysql_indexes;               # Show informations about indexes
 security_recommendations;    # Display some security recommendations
@@ -6412,11 +6470,11 @@ mariadb_xtradb;              # Print MariaDB XtraDB stats
 #mariadb_rockdb;             # Print MariaDB RockDB stats
 #mariadb_spider;             # Print MariaDB Spider stats
 #mariadb_connect;            # Print MariaDB Connect stats
-mariadb_galera;              # Print MariaDB Galera Cluster stats
-get_replication_status;      # Print replication info
-make_recommendations;        # Make recommendations based on stats
-dump_result;                 # Dump result if debug is on
-close_outputfile;            # Close reportfile if needed
+mariadb_galera;            # Print MariaDB Galera Cluster stats
+get_replication_status;    # Print replication info
+make_recommendations;      # Make recommendations based on stats
+dump_result;               # Dump result if debug is on
+close_outputfile;          # Close reportfile if needed
 
 # ---------------------------------------------------------------------------
 # END 'MAIN'
