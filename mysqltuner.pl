@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.22
+# mysqltuner.pl - Version 1.7.23
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2020 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.22";
+my $tunerversion = "1.7.23";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -5369,15 +5369,15 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
 
     if ( get_wsrep_option('gcs.fc_limit') != $myvar{'wsrep_slave_threads'} * 5 )
     {
-        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads";
-        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5";
+        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads (=".($myvar{'wsrep_slave_threads'} * 5). ")";
+        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5 (=".($myvar{'wsrep_slave_threads'} * 5). ")";
     }
     else {
-        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads";
+        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads ( =".get_wsrep_option('gcs.fc_limit') .")";
     }
 
     if ( get_wsrep_option('gcs.fc_factor') != 0.8 ) {
-        badprint "gcs.fc_factor should be equal to 0.8";
+        badprint "gcs.fc_factor should be equal to 0.8 (=".get_wsrep_option('gcs.fc_factor').")";
         push @adjvars, "gcs.fc_factor=0.8";
     }
     else {
@@ -6480,7 +6480,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.22 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.23 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
