@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.21
+# mysqltuner.pl - Version 1.7.22
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2020 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.21";
+my $tunerversion = "1.7.22";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -6480,7 +6480,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.21 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.22 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
