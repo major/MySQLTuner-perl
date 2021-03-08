@@ -5332,6 +5332,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
 
     infoprint "CPU core detected  : " . (cpu_cores);
     infoprint "wsrep_slave_threads: " . get_wsrep_option('wsrep_slave_threads');
+
     if (   get_wsrep_option('wsrep_slave_threads') > ( (cpu_cores) * 4 )
         or get_wsrep_option('wsrep_slave_threads') < ( (cpu_cores) * 2 ) )
     {
@@ -5342,16 +5343,6 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     else {
         goodprint
           "wsrep_slave_threads is equal to 2, 3 or 4 times number of CPU(s)";
-    }
-
-    if ( get_wsrep_option('gcs.fc_limit') !=
-        get_wsrep_option('wsrep_slave_threads') * 5 )
-    {
-        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads";
-        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5";
-    }
-    else {
-        goodprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads";
     }
 
     if ( get_wsrep_option('wsrep_slave_threads') > 1 ) {
