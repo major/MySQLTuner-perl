@@ -355,3 +355,19 @@ MySQLTuner needs you
 * Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
+
+Contributions welcome !
+--
+
+How to contribute using Pull Request ? Follow this guide : [Pull request creation](https://opensource.com/article/19/7/create-pull-request-github)
+
+Simple steps to create a pull request:
+-- 
+
+- Fork this Github project
+- Clone it to your local system
+- Make a new branch
+- Make your changes
+- Push it back to your repo
+- Click the Compare & pull request button
+- Click Create pull request to open a new pull request
