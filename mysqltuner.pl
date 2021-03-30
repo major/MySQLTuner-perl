@@ -91,6 +91,8 @@ my %opt = (
     "server-log"     => '',
     "tbstat"         => 0,
     "notbstat"       => 0,
+    "colstat" 		 => 0,
+	"nocolstat" 	 => 0,
     "idxstat"        => 0,
     "noidxstat"      => 0,
     "sysstat"        => 0,
@@ -131,6 +133,7 @@ GetOptions(
     'color',           'noprocess',
     'dbstat',          'nodbstat',
     'tbstat',          'notbstat',
+    'colstat',          'nocolstat',
     'sysstat',         'nosysstat',
     'pfstat',          'nopfstat',
     'idxstat',         'noidxstat',
@@ -196,6 +199,7 @@ if ( $opt{verbose} ) {
 }
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't Print table information
+$opt{colstat}  = 0 if ( $opt{nocolstat} == 1 );    # Don't Print column information
 $opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
 $opt{noprocess} = 0
   if ( $opt{noprocess} == 1 );                # Don't Print process information
@@ -6126,9 +6130,12 @@ sub mysql_tables {
                 my $current_type =
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "" );
                 my $optimal_type = '';
+
+                if ($opt{colstat} == 1) {
                 $optimal_type = select_str_g( "Optimal_fieldtype",
-"SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(1000)"
+"SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
                 ) unless ( mysql_version_ge(8) and not mysql_version_eq(10) );
+                }
                 if ( $optimal_type eq '' ) {
                     infoprint "      Current Fieldtype: $current_type";
 
@@ -6527,6 +6534,8 @@ You must provide the remote server's total memory when connecting to other serve
  --nodbstat                  Don't Print database information
  --tbstat                    Print table information
  --notbstat                  Don't Print table information
+ --colstat                   Print column information
+ --nocolstat                  Don't Print column information
  --idxstat                   Print index information
  --noidxstat                 Don't Print index information
  --sysstat                   Print system information
