@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.23
+# mysqltuner.pl - Version 1.7.24
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2020 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.23";
+my $tunerversion = "1.7.24";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -6127,7 +6127,7 @@ sub mysql_tables {
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "" );
                 my $optimal_type = '';
                 $optimal_type = select_str_g( "Optimal_fieldtype",
-"SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
+"SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(1000)"
                 ) unless ( mysql_version_ge(8) and not mysql_version_eq(10) );
                 if ( $optimal_type eq '' ) {
                     infoprint "      Current Fieldtype: $current_type";
@@ -6480,7 +6480,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.23 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.24 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
