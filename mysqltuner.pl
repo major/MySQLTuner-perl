@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # mysqltuner.pl - Version 1.7.24
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2020 Major Hayden - major@mhtx.net
+# Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.pl/
 # Git repository available at https://github.com/major/MySQLTuner-perl
@@ -91,8 +91,8 @@ my %opt = (
     "server-log"     => '',
     "tbstat"         => 0,
     "notbstat"       => 0,
-    "colstat" 		 => 0,
-	"nocolstat" 	 => 0,
+    "colstat"        => 0,
+    "nocolstat"      => 0,
     "idxstat"        => 0,
     "noidxstat"      => 0,
     "sysstat"        => 0,
@@ -6729,7 +6729,7 @@ L<https://github.com/major/MySQLTuner-perl>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2020 Major Hayden - major@mhtx.net
+Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 
 For the latest updates, please visit http://mysqltuner.pl/
 
