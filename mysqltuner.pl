@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.24
+# mysqltuner.pl - Version 1.7.25
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.24";
+my $tunerversion = "1.7.25";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3554,7 +3554,18 @@ sub mariadb_threadpool {
     infoprint "ThreadPool stat is enabled.";
     infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
 
-    if ( $myvar{'version'} =~ /mariadb|percona/i ) {
+    if ( $myvar{'version'} =~ /percona/i ) {
+        my $np=cpu_cores;
+        if ($myvar{'thread_pool_size'} >= $np and $myvar{'thread_pool_size'}< ($np *1.5)) {
+            goodprint "thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs (".$np. " and ".($np *1.5).")";
+        } else {
+            badprint "thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs (".$np. " and ".($np *1.5).")";
+            push( @adjvars, "thread_pool_size between ".$np . " and ".($np *1.5)." for InnoDB usage" );
+        }    
+        return;
+    }
+       
+    if ( $myvar{'version'} =~ /mariadb/i ) {
         infoprint "Using default value is good enough for your version ("
           . $myvar{'version'} . ")";
         return;
@@ -6487,7 +6498,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.24 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.25 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
