@@ -2739,7 +2739,9 @@ sub calculations {
     # Table cache
     if ( $mystat{'Opened_tables'} > 0 ) {
         $mycalc{'table_cache_hit_rate'} =
-          int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
+          #int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
+          int( $mystat{'Table_open_cache_hits'} * 100 / ( $mystat{'Table_open_cache_hits'} + $mystat{'Table_open_cache_misses'} ) );
+
     }
     else {
         $mycalc{'table_cache_hit_rate'} = 100;
@@ -3290,10 +3292,10 @@ sub mysql_stats {
     if ( $mystat{'Open_tables'} > 0 ) {
         if ( $mycalc{'table_cache_hit_rate'} < 20 ) {
             badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Open_tables'} )
-              . " open / "
-              . hr_num( $mystat{'Opened_tables'} )
-              . " opened)";
+              . hr_num( $mystat{'Table_open_cache_hits'}  )
+              . " hits / "
+              . hr_num( $mystat{'Table_open_cache_hits'} + $mystat{'Table_open_cache_misses'}  )
+              . " requests)";
             if ( mysql_version_ge( 5, 1 ) ) {
                 $table_cache_var = "table_open_cache";
             }
@@ -3335,10 +3337,10 @@ sub mysql_stats {
         }
         else {
             goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Open_tables'} )
-              . " open / "
-              . hr_num( $mystat{'Opened_tables'} )
-              . " opened)";
+              . hr_num( $mystat{'Table_open_cache_hits'}  )
+              . " hits / "
+              . hr_num( $mystat{'Table_open_cache_hits'} + $mystat{'Table_open_cache_misses'}  )
+              . " requests)";
         }
     }
 
