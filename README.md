@@ -238,6 +238,11 @@ To get information about stored credentials, use the following command:
 
         mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* TO 'mysqltuner'@'localhost' identified by pwd1234;
 
+**Question: What's minimum privileges needed by a specific mysqltuner user in database for MySQL 8 or MariaDB 10.5 ?**
+
+        mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICA MONITOR,SHOW DATABASES,SHOW VIEW ON *.* TO 'mysqltuner'@'localhost' identified by pwd1234;
+
+
 **Question: It's not working on my OS! What gives?!**
 
 These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:
