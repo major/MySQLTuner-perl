@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.26
+# mysqltuner.pl - Version 1.7.27
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.26";
+my $tunerversion = "1.7.27";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1167,10 +1167,23 @@ sub get_all_vars {
         }
     }
     debugprint Dumper(@mysqlenginelist);
-    my @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
+
+    my @mysqlslave;
+    if ($mysqlvermajor eq 8 or ($mysqlvermajor eq 10 and $mysqlverminor ge 5)) {
+    	@mysqlslave = select_array("SHOW SLAVE STATUS\\G");
+    } else {
+    	@mysqlslave = select_array("SHOW REPLICA STATUS\\G");
+    }
     arr2hash( \%myrepl, \@mysqlslave, ':' );
     $result{'Replication'}{'Status'} = \%myrepl;
-    my @mysqlslaves = select_array "SHOW SLAVE HOSTS";
+
+    my @mysqlslaves;
+    if ( $mysqlvermajor eq 8 or ($mysqlvermajor eq 10 and $mysqlverminor ge 5) ) {
+    	@mysqlslaves= select_array "SHOW SLAVE HOSTS";
+    } else {
+    	@mysqlslaves = select_array("SHOW SLAVE STATUS\\G");
+    }
+
     my @lineitems   = ();
     foreach my $line (@mysqlslaves) {
         debugprint "L: $line ";
@@ -6498,7 +6511,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.26 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.27 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
