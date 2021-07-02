@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.25
+# mysqltuner.pl - Version 1.7.26
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -30,7 +30,7 @@
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
-#   Joe Ashcraft           JeSan-Marie Renouard  Christian Loos
+#   Joe Ashcraft           Jean-Marie Renouard  Christian Loos
 #   Julien Francoz         Daniel Black
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.25";
+my $tunerversion = "1.7.26";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1913,10 +1913,10 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             my $luser = ( split /@/, $line )[0];
-            badprint "User '" . $line
-              . "' does not specify hostname restrictions.";
+            badprint "User " . $line
+              . " does not specify hostname restrictions.";
             push( @generalrec,
-"Restrict Host for $luser\@% to $luser\@LimitedIPRangeOrLocalhost"
+"Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
             );
             push( @generalrec,
                     "RENAME USER $luser\@'%' TO "
@@ -6498,7 +6498,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.25 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.26 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
