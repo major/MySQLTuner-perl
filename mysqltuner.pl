@@ -133,7 +133,7 @@ GetOptions(
     'color',           'noprocess',
     'dbstat',          'nodbstat',
     'tbstat',          'notbstat',
-    'colstat',          'nocolstat',
+    'colstat',         'nocolstat',
     'sysstat',         'nosysstat',
     'pfstat',          'nopfstat',
     'idxstat',         'noidxstat',
@@ -199,7 +199,7 @@ if ( $opt{verbose} ) {
 }
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't Print table information
-$opt{colstat}  = 0 if ( $opt{nocolstat} == 1 );    # Don't Print column information
+$opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't Print column information
 $opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
 $opt{noprocess} = 0
   if ( $opt{noprocess} == 1 );                # Don't Print process information
@@ -300,16 +300,16 @@ sub infoprinthcmd {
 
 # Calculates the number of physical cores considering HyperThreading
 sub cpu_cores {
-   if ($^O eq 'linux') {
-     my $cntCPU =
-     `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
-     return ( $cntCPU == 0 ? `nproc` : $cntCPU );
-   }
+    if ( $^O eq 'linux' ) {
+        my $cntCPU =
+`awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
+        return ( $cntCPU == 0 ? `nproc` : $cntCPU );
+    }
 
-	if ($^O eq 'freebsd') {
-     my $cntCPU = `sysctl -n kern.smp.cores`;
-     chomp $cntCPU;
-     return $cntCPU + 0;
+    if ( $^O eq 'freebsd' ) {
+        my $cntCPU = `sysctl -n kern.smp.cores`;
+        chomp $cntCPU;
+        return $cntCPU + 0;
     }
     return 0;
 }
@@ -1178,22 +1178,24 @@ sub get_all_vars {
     debugprint Dumper(@mysqlenginelist);
 
     my @mysqlslave;
-    if ( mysql_version_eq( 8 ) or mysql_version_ge( 10, 5 ) ) {
-    	@mysqlslave = select_array("SHOW SLAVE STATUS\\G");
-    } else {
-    	@mysqlslave = select_array("SHOW REPLICA STATUS\\G");
+    if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
+        @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
+    }
+    else {
+        @mysqlslave = select_array("SHOW REPLICA STATUS\\G");
     }
     arr2hash( \%myrepl, \@mysqlslave, ':' );
     $result{'Replication'}{'Status'} = \%myrepl;
 
     my @mysqlslaves;
-    if ( mysql_version_eq( 8 ) or mysql_version_ge( 10, 5 ) ) {
-    	@mysqlslaves= select_array "SHOW SLAVE HOSTS";
-    } else {
-    	@mysqlslaves = select_array("SHOW SLAVE STATUS\\G");
+    if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
+        @mysqlslaves = select_array "SHOW SLAVE HOSTS";
+    }
+    else {
+        @mysqlslaves = select_array("SHOW SLAVE STATUS\\G");
     }
 
-    my @lineitems   = ();
+    my @lineitems = ();
     foreach my $line (@mysqlslaves) {
         debugprint "L: $line ";
         @lineitems = split /\s+/, $line;
@@ -1587,19 +1589,19 @@ sub merge_hash {
 }
 
 sub is_virtual_machine {
-    if ($^O eq 'linux') {
-	    my $isVm = `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
-    	return ( $isVm == 0 ? 0 : 1 );
+    if ( $^O eq 'linux' ) {
+        my $isVm = `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
+        return ( $isVm == 0 ? 0 : 1 );
     }
 
-    if ($^O eq 'freebsd') {
-    	my $isVm = `sysctl -n kern.vm_guest`;
- 		chomp $isVm;
-		print "FARK DEBUG isVm=[$isVm]";
-		return ( $isVm eq 'none' ? 0 : 1);
-	}
-	return 0;
-  }
+    if ( $^O eq 'freebsd' ) {
+        my $isVm = `sysctl -n kern.vm_guest`;
+        chomp $isVm;
+        print "FARK DEBUG isVm=[$isVm]";
+        return ( $isVm eq 'none' ? 0 : 1 );
+    }
+    return 0;
+}
 
 sub infocmd {
     my $cmd = "@_";
@@ -2739,8 +2741,14 @@ sub calculations {
     # Table cache
     if ( $mystat{'Opened_tables'} > 0 ) {
         $mycalc{'table_cache_hit_rate'} =
+
           #int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
-          int( $mystat{'Table_open_cache_hits'} * 100 / ( $mystat{'Table_open_cache_hits'} + $mystat{'Table_open_cache_misses'} ) );
+          int(
+            $mystat{'Table_open_cache_hits'} * 100 / (
+                $mystat{'Table_open_cache_hits'} +
+                  $mystat{'Table_open_cache_misses'}
+            )
+          );
 
     }
     else {
@@ -3292,9 +3300,10 @@ sub mysql_stats {
     if ( $mystat{'Open_tables'} > 0 ) {
         if ( $mycalc{'table_cache_hit_rate'} < 20 ) {
             badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Table_open_cache_hits'}  )
+              . hr_num( $mystat{'Table_open_cache_hits'} )
               . " hits / "
-              . hr_num( $mystat{'Table_open_cache_hits'} + $mystat{'Table_open_cache_misses'}  )
+              . hr_num( $mystat{'Table_open_cache_hits'} +
+                  $mystat{'Table_open_cache_misses'} )
               . " requests)";
             if ( mysql_version_ge( 5, 1 ) ) {
                 $table_cache_var = "table_open_cache";
@@ -3337,9 +3346,10 @@ sub mysql_stats {
         }
         else {
             goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Table_open_cache_hits'}  )
+              . hr_num( $mystat{'Table_open_cache_hits'} )
               . " hits / "
-              . hr_num( $mystat{'Table_open_cache_hits'} + $mystat{'Table_open_cache_misses'}  )
+              . hr_num( $mystat{'Table_open_cache_hits'} +
+                  $mystat{'Table_open_cache_misses'} )
               . " requests)";
         }
     }
@@ -3589,16 +3599,29 @@ sub mariadb_threadpool {
     infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
 
     if ( $myvar{'version'} =~ /percona/i ) {
-        my $np=cpu_cores;
-        if ($myvar{'thread_pool_size'} >= $np and $myvar{'thread_pool_size'}< ($np *1.5)) {
-            goodprint "thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs (".$np. " and ".($np *1.5).")";
-        } else {
-            badprint "thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs (".$np. " and ".($np *1.5).")";
-            push( @adjvars, "thread_pool_size between ".$np . " and ".($np *1.5)." for InnoDB usage" );
-        }    
+        my $np = cpu_cores;
+        if (    $myvar{'thread_pool_size'} >= $np
+            and $myvar{'thread_pool_size'} < ( $np * 1.5 ) )
+        {
+            goodprint
+"thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs ("
+              . $np . " and "
+              . ( $np * 1.5 ) . ")";
+        }
+        else {
+            badprint
+"thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs ("
+              . $np . " and "
+              . ( $np * 1.5 ) . ")";
+            push( @adjvars,
+                    "thread_pool_size between "
+                  . $np . " and "
+                  . ( $np * 1.5 )
+                  . " for InnoDB usage" );
+        }
         return;
     }
-       
+
     if ( $myvar{'version'} =~ /mariadb/i ) {
         infoprint "Using default value is good enough for your version ("
           . $myvar{'version'} . ")";
@@ -5418,15 +5441,19 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
 
     if ( get_wsrep_option('gcs.fc_limit') != $myvar{'wsrep_slave_threads'} * 5 )
     {
-        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads (=".($myvar{'wsrep_slave_threads'} * 5). ")";
-        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5 (=".($myvar{'wsrep_slave_threads'} * 5). ")";
+        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads (="
+          . ( $myvar{'wsrep_slave_threads'} * 5 ) . ")";
+        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5 (="
+          . ( $myvar{'wsrep_slave_threads'} * 5 ) . ")";
     }
     else {
-        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads ( =".get_wsrep_option('gcs.fc_limit') .")";
+        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads ( ="
+          . get_wsrep_option('gcs.fc_limit') . ")";
     }
 
     if ( get_wsrep_option('gcs.fc_factor') != 0.8 ) {
-        badprint "gcs.fc_factor should be equal to 0.8 (=".get_wsrep_option('gcs.fc_factor').")";
+        badprint "gcs.fc_factor should be equal to 0.8 (="
+          . get_wsrep_option('gcs.fc_factor') . ")";
         push @adjvars, "gcs.fc_factor=0.8";
     }
     else {
@@ -6176,10 +6203,12 @@ sub mysql_tables {
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "" );
                 my $optimal_type = '';
 
-                if ($opt{colstat} == 1) {
-                $optimal_type = select_str_g( "Optimal_fieldtype",
+                if ( $opt{colstat} == 1 ) {
+                    $optimal_type = select_str_g( "Optimal_fieldtype",
 "SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
-                ) unless ( mysql_version_ge(8) and not mysql_version_eq(10) );
+                      )
+                      unless ( mysql_version_ge(8)
+                        and not mysql_version_eq(10) );
                 }
                 if ( $optimal_type eq '' ) {
                     infoprint "      Current Fieldtype: $current_type";
