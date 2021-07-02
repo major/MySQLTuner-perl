@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.27
+# mysqltuner.pl - Version 1.7.28
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.27";
+my $tunerversion = "1.7.28";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -300,9 +300,18 @@ sub infoprinthcmd {
 
 # Calculates the number of physical cores considering HyperThreading
 sub cpu_cores {
-    my $cntCPU =
-`awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
-    return ( $cntCPU == 0 ? `nproc` : $cntCPU );
+   if ($^O eq 'linux') {
+     my $cntCPU =
+     `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
+     return ( $cntCPU == 0 ? `nproc` : $cntCPU );
+   }
+
+	if ($^O eq 'freebsd') {
+     my $cntCPU = `sysctl -n kern.smp.cores`;
+     chomp $cntCPU;
+     return $cntCPU + 0;
+    }
+    return 0;
 }
 
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
@@ -1169,7 +1178,7 @@ sub get_all_vars {
     debugprint Dumper(@mysqlenginelist);
 
     my @mysqlslave;
-    if ($mysqlvermajor eq 8 or ($mysqlvermajor eq 10 and $mysqlverminor ge 5)) {
+    if ( mysql_version_eq( 8 ) or mysql_version_ge( 10, 5 ) ) {
     	@mysqlslave = select_array("SHOW SLAVE STATUS\\G");
     } else {
     	@mysqlslave = select_array("SHOW REPLICA STATUS\\G");
@@ -1178,7 +1187,7 @@ sub get_all_vars {
     $result{'Replication'}{'Status'} = \%myrepl;
 
     my @mysqlslaves;
-    if ( $mysqlvermajor eq 8 or ($mysqlvermajor eq 10 and $mysqlverminor ge 5) ) {
+    if ( mysql_version_eq( 8 ) or mysql_version_ge( 10, 5 ) ) {
     	@mysqlslaves= select_array "SHOW SLAVE HOSTS";
     } else {
     	@mysqlslaves = select_array("SHOW SLAVE STATUS\\G");
@@ -1578,9 +1587,19 @@ sub merge_hash {
 }
 
 sub is_virtual_machine {
-    my $isVm = `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
-    return ( $isVm == 0 ? 0 : 1 );
-}
+    if ($^O eq 'linux') {
+	    my $isVm = `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
+    	return ( $isVm == 0 ? 0 : 1 );
+    }
+
+    if ($^O eq 'freebsd') {
+    	my $isVm = `sysctl -n kern.vm_guest`;
+ 		chomp $isVm;
+		print "FARK DEBUG isVm=[$isVm]";
+		return ( $isVm eq 'none' ? 0 : 1);
+	}
+	return 0;
+  }
 
 sub infocmd {
     my $cmd = "@_";
@@ -6511,7 +6530,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.27 - MySQL High Performance Tuning Script
+ MySQLTuner 1.7.28 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
