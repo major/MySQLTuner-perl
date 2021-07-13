@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.29
+# mysqltuner.pl - Version 1.8.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.29";
+my $tunerversion = "1.8.0";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1669,17 +1669,18 @@ sub get_kernel_info {
         infoprint "TCP slot entries is > 100.";
     }
 
-    if ( `sysctl -n fs.aio-max-nr` < 1000000 ) {
-        badprint
-"Max running total of the number of events is < 1M, please consider having a value greater than 1M";
-        push @generalrec, "setup Max running number events greater than 1M";
-        push @adjvars,
-          'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
-    }
-    else {
-        infoprint "Max Number of AIO events is > 1M.";
-    }
-
+    if ( -f "/proc/sys/fs/aio-max-nr" )
+    {
+	    if ( `sysctl -n fs.aio-max-nr` < 1000000 ) {
+	        badprint
+	"Max running total of the number of events is < 1M, please consider having a value greater than 1M";
+	        push @generalrec, "setup Max running number events greater than 1M";
+	        push @adjvars,
+	          'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
+	    } else {
+	        infoprint "Max Number of AIO events is > 1M.";
+	    }
+	}
 }
 
 sub get_system_info {
@@ -2102,7 +2103,8 @@ sub validate_mysql_version {
         or mysql_version_eq( 10, 2 )
         or mysql_version_eq( 10, 3 )
         or mysql_version_eq( 10, 4 )
-        or mysql_version_eq( 10, 5 ) )
+        or mysql_version_eq( 10, 5 )
+        or mysql_version_eq( 10, 6 ) )
     {
         goodprint "Currently running supported MySQL version "
           . $myvar{'version'} . "";
@@ -2809,6 +2811,8 @@ sub calculations {
     }
 
     # InnoDB
+    $myvar{'innodb_log_files_in_group'} = 1 unless defined($myvar{'innodb_log_files_in_group'});
+    $myvar{"innodb_buffer_pool_instances"} = 1 unless defined($myvar{'innodb_buffer_pool_instances'});
     if ( $myvar{'have_innodb'} eq "YES" ) {
         $mycalc{'innodb_log_size_pct'} =
           ( $myvar{'innodb_log_file_size'} *
@@ -6561,7 +6565,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.29 - MySQL High Performance Tuning Script
+ MySQLTuner 1.8.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
