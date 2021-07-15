@@ -2742,18 +2742,18 @@ sub calculations {
 
     # Table cache
     if ( $mystat{'Opened_tables'} > 0 ) {
-        $mycalc{'table_cache_hit_rate'} =
+   		if (not defined($mystat{'Table_open_cache_hits'})) {
+    		$mycalc{'table_cache_hit_rate'} =
+          		int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
+    	} else {
+	        $mycalc{'table_cache_hit_rate'} =
+    		  int(
+            	$mystat{'Table_open_cache_hits'} * 100 / (
+                	$mystat{'Table_open_cache_hits'} +
+                  	$mystat{'Table_open_cache_misses'} ) );
+    	}
 
-          #int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
-          int(
-            $mystat{'Table_open_cache_hits'} * 100 / (
-                $mystat{'Table_open_cache_hits'} +
-                  $mystat{'Table_open_cache_misses'}
-            )
-          );
-
-    }
-    else {
+    } else {
         $mycalc{'table_cache_hit_rate'} = 100;
     }
 
@@ -3303,12 +3303,23 @@ sub mysql_stats {
     my $table_cache_var = "";
     if ( $mystat{'Open_tables'} > 0 ) {
         if ( $mycalc{'table_cache_hit_rate'} < 20 ) {
-            badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+
+            unless (defined($mystat{'Table_open_cache_hits'})) {
+    		 badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+              . hr_num( $mystat{'Open_tables'} )
+              . " hits / "
+              . hr_num( $mystat{'Opened_tables'} )
+              . " requests)";
+    		} else {
+	          badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
               . hr_num( $mystat{'Table_open_cache_hits'} )
               . " hits / "
               . hr_num( $mystat{'Table_open_cache_hits'} +
                   $mystat{'Table_open_cache_misses'} )
               . " requests)";
+    		}
+
+
             if ( mysql_version_ge( 5, 1 ) ) {
                 $table_cache_var = "table_open_cache";
             }
@@ -3349,12 +3360,21 @@ sub mysql_stats {
                   . ")" );
         }
         else {
-            goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+            unless (defined($mystat{'Table_open_cache_hits'})) {
+    		 goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+              . hr_num( $mystat{'Open_tables'} )
+              . " hits / "
+              . hr_num( $mystat{'Opened_tables'} )
+              . " requests)";
+    		} else {
+	          goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
               . hr_num( $mystat{'Table_open_cache_hits'} )
               . " hits / "
               . hr_num( $mystat{'Table_open_cache_hits'} +
                   $mystat{'Table_open_cache_misses'} )
               . " requests)";
+    		}
+
         }
     }
 
