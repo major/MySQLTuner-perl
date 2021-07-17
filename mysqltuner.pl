@@ -1360,14 +1360,14 @@ sub log_file_recommendations {
     if ( $nbWarnLog > 0 ) {
         badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
         push @generalrec,
-          "Control warning line(s) into $myvar{'log_error'} file";
+          "Check warning line(s) in $myvar{'log_error'} file";
     }
     else {
         goodprint "$myvar{'log_error'} doesn't contain any warning.";
     }
     if ( $nbErrLog > 0 ) {
         badprint "$myvar{'log_error'} contains $nbErrLog error(s).";
-        push @generalrec, "Control error line(s) into $myvar{'log_error'} file";
+        push @generalrec, "Check error line(s) in $myvar{'log_error'} file";
     }
     else {
         goodprint "$myvar{'log_error'} doesn't contain any error.";
