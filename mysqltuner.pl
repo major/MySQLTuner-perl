@@ -204,7 +204,7 @@ $opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
 $opt{noprocess} = 0
   if ( $opt{noprocess} == 1 );                # Don't Print process information
 $opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't Print sysstat information
-$opt{pfstat} = 0
+$opt{pfstat}  = 0
   if ( $opt{nopfstat} == 1 );    # Don't Print performance schema information
 $opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't Print index information
 
@@ -1669,18 +1669,18 @@ sub get_kernel_info {
         infoprint "TCP slot entries is > 100.";
     }
 
-    if ( -f "/proc/sys/fs/aio-max-nr" )
-    {
-	    if ( `sysctl -n fs.aio-max-nr` < 1000000 ) {
-	        badprint
-	"Max running total of the number of events is < 1M, please consider having a value greater than 1M";
-	        push @generalrec, "setup Max running number events greater than 1M";
-	        push @adjvars,
-	          'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
-	    } else {
-	        infoprint "Max Number of AIO events is > 1M.";
-	    }
-	}
+    if ( -f "/proc/sys/fs/aio-max-nr" ) {
+        if ( `sysctl -n fs.aio-max-nr` < 1000000 ) {
+            badprint
+"Max running total of the number of events is < 1M, please consider having a value greater than 1M";
+            push @generalrec, "setup Max running number events greater than 1M";
+            push @adjvars,
+              'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
+        }
+        else {
+            infoprint "Max Number of AIO events is > 1M.";
+        }
+    }
 }
 
 sub get_system_info {
@@ -2070,7 +2070,7 @@ sub get_replication_status {
           "This replication slave is not running but seems to be configured.";
     }
     if (   defined($io_running)
-        && $io_running =~ /yes/i
+        && $io_running  =~ /yes/i
         && $sql_running =~ /yes/i )
     {
         if ( $myvar{'read_only'} eq 'OFF' ) {
@@ -2742,18 +2742,21 @@ sub calculations {
 
     # Table cache
     if ( $mystat{'Opened_tables'} > 0 ) {
-   		if (not defined($mystat{'Table_open_cache_hits'})) {
-    		$mycalc{'table_cache_hit_rate'} =
-          		int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
-    	} else {
-	        $mycalc{'table_cache_hit_rate'} =
-    		  int(
-            	$mystat{'Table_open_cache_hits'} * 100 / (
-                	$mystat{'Table_open_cache_hits'} +
-                  	$mystat{'Table_open_cache_misses'} ) );
-    	}
+        if ( not defined( $mystat{'Table_open_cache_hits'} ) ) {
+            $mycalc{'table_cache_hit_rate'} =
+              int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
+        }
+        else {
+            $mycalc{'table_cache_hit_rate'} = int(
+                $mystat{'Table_open_cache_hits'} * 100 / (
+                    $mystat{'Table_open_cache_hits'} +
+                      $mystat{'Table_open_cache_misses'}
+                )
+            );
+        }
 
-    } else {
+    }
+    else {
         $mycalc{'table_cache_hit_rate'} = 100;
     }
 
@@ -2811,8 +2814,10 @@ sub calculations {
     }
 
     # InnoDB
-    $myvar{'innodb_log_files_in_group'} = 1 unless defined($myvar{'innodb_log_files_in_group'});
-    $myvar{"innodb_buffer_pool_instances"} = 1 unless defined($myvar{'innodb_buffer_pool_instances'});
+    $myvar{'innodb_log_files_in_group'} = 1
+      unless defined( $myvar{'innodb_log_files_in_group'} );
+    $myvar{"innodb_buffer_pool_instances"} = 1
+      unless defined( $myvar{'innodb_buffer_pool_instances'} );
     if ( $myvar{'have_innodb'} eq "YES" ) {
         $mycalc{'innodb_log_size_pct'} =
           ( $myvar{'innodb_log_file_size'} *
@@ -3304,21 +3309,23 @@ sub mysql_stats {
     if ( $mystat{'Open_tables'} > 0 ) {
         if ( $mycalc{'table_cache_hit_rate'} < 20 ) {
 
-            unless (defined($mystat{'Table_open_cache_hits'})) {
-    		 badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Open_tables'} )
-              . " hits / "
-              . hr_num( $mystat{'Opened_tables'} )
-              . " requests)";
-    		} else {
-	          badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Table_open_cache_hits'} )
-              . " hits / "
-              . hr_num( $mystat{'Table_open_cache_hits'} +
-                  $mystat{'Table_open_cache_misses'} )
-              . " requests)";
-    		}
-
+            unless ( defined( $mystat{'Table_open_cache_hits'} ) ) {
+                badprint
+                  "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+                  . hr_num( $mystat{'Open_tables'} )
+                  . " hits / "
+                  . hr_num( $mystat{'Opened_tables'} )
+                  . " requests)";
+            }
+            else {
+                badprint
+                  "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+                  . hr_num( $mystat{'Table_open_cache_hits'} )
+                  . " hits / "
+                  . hr_num( $mystat{'Table_open_cache_hits'} +
+                      $mystat{'Table_open_cache_misses'} )
+                  . " requests)";
+            }
 
             if ( mysql_version_ge( 5, 1 ) ) {
                 $table_cache_var = "table_open_cache";
@@ -3360,20 +3367,23 @@ sub mysql_stats {
                   . ")" );
         }
         else {
-            unless (defined($mystat{'Table_open_cache_hits'})) {
-    		 goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Open_tables'} )
-              . " hits / "
-              . hr_num( $mystat{'Opened_tables'} )
-              . " requests)";
-    		} else {
-	          goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Table_open_cache_hits'} )
-              . " hits / "
-              . hr_num( $mystat{'Table_open_cache_hits'} +
-                  $mystat{'Table_open_cache_misses'} )
-              . " requests)";
-    		}
+            unless ( defined( $mystat{'Table_open_cache_hits'} ) ) {
+                goodprint
+                  "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+                  . hr_num( $mystat{'Open_tables'} )
+                  . " hits / "
+                  . hr_num( $mystat{'Opened_tables'} )
+                  . " requests)";
+            }
+            else {
+                goodprint
+                  "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+                  . hr_num( $mystat{'Table_open_cache_hits'} )
+                  . " hits / "
+                  . hr_num( $mystat{'Table_open_cache_hits'} +
+                      $mystat{'Table_open_cache_misses'} )
+                  . " requests)";
+            }
 
         }
     }
@@ -5349,7 +5359,7 @@ sub trim {
 sub get_wsrep_options {
     return () unless defined $myvar{'wsrep_provider_options'};
 
-    my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
+    my @galera_options      = split /;/, $myvar{'wsrep_provider_options'};
     my $wsrep_slave_threads = $myvar{'wsrep_slave_threads'};
     push @galera_options, ' wsrep_slave_threads = ' . $wsrep_slave_threads;
     @galera_options = remove_cr @galera_options;
@@ -5371,7 +5381,7 @@ sub get_wsrep_option {
     my @galera_options = get_wsrep_options;
     return '' unless scalar(@galera_options) > 0;
     my @memValues = grep /\s*$key =/, @galera_options;
-    my $memValue = $memValues[0];
+    my $memValue  = $memValues[0];
     return 0 unless defined $memValue;
     $memValue =~ s/.*=\s*(.+)$/$1/g;
     return $memValue;
@@ -5542,7 +5552,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             goodprint "Galera Cluster address is defined: "
               . $myvar{'wsrep_cluster_address'};
             my @NodesTmp = split /,/, $myvar{'wsrep_cluster_address'};
-            my $nbNodes = @NodesTmp;
+            my $nbNodes  = @NodesTmp;
             infoprint "There are $nbNodes nodes in wsrep_cluster_address";
             my $nbNodesSize = trim( $mystat{'wsrep_cluster_size'} );
             if ( $nbNodesSize == 3 or $nbNodesSize == 5 ) {
