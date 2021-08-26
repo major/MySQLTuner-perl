@@ -1179,20 +1179,20 @@ sub get_all_vars {
 
     my @mysqlslave;
     if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
-        @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
+        @mysqlslave = select_array("SHOW REPLICA STATUS\\G");
     }
     else {
-        @mysqlslave = select_array("SHOW REPLICA STATUS\\G");
+        @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
     }
     arr2hash( \%myrepl, \@mysqlslave, ':' );
     $result{'Replication'}{'Status'} = \%myrepl;
 
     my @mysqlslaves;
     if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
-        @mysqlslaves = select_array "SHOW SLAVE HOSTS";
+        @mysqlslaves = select_array "SHOW SLAVE STATUS";
     }
     else {
-        @mysqlslaves = select_array("SHOW SLAVE STATUS\\G");
+        @mysqlslaves = select_array("SHOW SLAVE HOSTS\\G");
     }
 
     my @lineitems = ();
