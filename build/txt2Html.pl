@@ -14,14 +14,15 @@ my $i=1;
 while (my $row = <$fh>) {
     chomp $row;
     if ($row =~ /^$headerSep/) {
-                print "</pre>\n";
-                $row =~ s/$headerSep//g;
-                print "<H3 >$row</H3>\n";
-                print "<pre>";
-                $i++;
-                next;
-    }
+		print "</pre>\n";
+		$row =~ s/$headerSep//g;
+		print "<H3 >$row</H3>\n";
+		print "<pre>";
+		$i++;
+		next;
+    } 
     print "$row\n" unless $row =~ /^\s*$/;
 }
 print "</pre>\n";
 close $fh;
+

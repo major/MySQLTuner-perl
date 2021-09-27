@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.7.21 - MySQL High Performance Tuning Script
+    MySQLTuner 1.8.1 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -47,6 +47,8 @@ You must provide the remote server's total memory when connecting to other serve
     --nodbstat                  Don't Print database information
     --tbstat                    Print table information
     --notbstat                  Don't Print table information
+    --colstat                   Print column information
+    --nocolstat                  Don't Print column information
     --idxstat                   Print index information
     --noidxstat                 Don't Print index information
     --sysstat                   Print system information
@@ -133,7 +135,7 @@ Maintained by Major Hayden (major\\@mhtx.net) - Licensed under GPL
 
 # COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2020 Major Hayden - major@mhtx.net
+Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 
 For the latest updates, please visit http://mysqltuner.pl/
 

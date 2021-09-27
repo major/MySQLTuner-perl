@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.7.24
+# mysqltuner.pl - Version 1.8.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ $Data::Dumper::Pair = " : ";
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.7.24";
+my $tunerversion = "1.8.1";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -133,7 +133,7 @@ GetOptions(
     'color',           'noprocess',
     'dbstat',          'nodbstat',
     'tbstat',          'notbstat',
-    'colstat',          'nocolstat',
+    'colstat',         'nocolstat',
     'sysstat',         'nosysstat',
     'pfstat',          'nopfstat',
     'idxstat',         'noidxstat',
@@ -199,12 +199,12 @@ if ( $opt{verbose} ) {
 }
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't Print table information
-$opt{colstat}  = 0 if ( $opt{nocolstat} == 1 );    # Don't Print column information
+$opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't Print column information
 $opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
 $opt{noprocess} = 0
   if ( $opt{noprocess} == 1 );                # Don't Print process information
 $opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't Print sysstat information
-$opt{pfstat} = 0
+$opt{pfstat}  = 0
   if ( $opt{nopfstat} == 1 );    # Don't Print performance schema information
 $opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't Print index information
 
@@ -300,9 +300,18 @@ sub infoprinthcmd {
 
 # Calculates the number of physical cores considering HyperThreading
 sub cpu_cores {
-    my $cntCPU =
+    if ( $^O eq 'linux' ) {
+        my $cntCPU =
 `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
-    return ( $cntCPU == 0 ? `nproc` : $cntCPU );
+        return ( $cntCPU == 0 ? `nproc` : $cntCPU );
+    }
+
+    if ( $^O eq 'freebsd' ) {
+        my $cntCPU = `sysctl -n kern.smp.cores`;
+        chomp $cntCPU;
+        return $cntCPU + 0;
+    }
+    return 0;
 }
 
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
@@ -1167,11 +1176,26 @@ sub get_all_vars {
         }
     }
     debugprint Dumper(@mysqlenginelist);
-    my @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
+
+    my @mysqlslave;
+    if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
+        @mysqlslave = select_array("SHOW REPLICA STATUS\\G");
+    }
+    else {
+        @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
+    }
     arr2hash( \%myrepl, \@mysqlslave, ':' );
     $result{'Replication'}{'Status'} = \%myrepl;
-    my @mysqlslaves = select_array "SHOW SLAVE HOSTS";
-    my @lineitems   = ();
+
+    my @mysqlslaves;
+    if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
+        @mysqlslaves = select_array "SHOW SLAVE STATUS";
+    }
+    else {
+        @mysqlslaves = select_array("SHOW SLAVE HOSTS\\G");
+    }
+
+    my @lineitems = ();
     foreach my $line (@mysqlslaves) {
         debugprint "L: $line ";
         @lineitems = split /\s+/, $line;
@@ -1336,14 +1360,14 @@ sub log_file_recommendations {
     if ( $nbWarnLog > 0 ) {
         badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
         push @generalrec,
-          "Control warning line(s) into $myvar{'log_error'} file";
+          "Check warning line(s) in $myvar{'log_error'} file";
     }
     else {
         goodprint "$myvar{'log_error'} doesn't contain any warning.";
     }
     if ( $nbErrLog > 0 ) {
         badprint "$myvar{'log_error'} contains $nbErrLog error(s).";
-        push @generalrec, "Control error line(s) into $myvar{'log_error'} file";
+        push @generalrec, "Check error line(s) in $myvar{'log_error'} file";
     }
     else {
         goodprint "$myvar{'log_error'} doesn't contain any error.";
@@ -1565,8 +1589,18 @@ sub merge_hash {
 }
 
 sub is_virtual_machine {
-    my $isVm = `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
-    return ( $isVm == 0 ? 0 : 1 );
+    if ( $^O eq 'linux' ) {
+        my $isVm = `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
+        return ( $isVm == 0 ? 0 : 1 );
+    }
+
+    if ( $^O eq 'freebsd' ) {
+        my $isVm = `sysctl -n kern.vm_guest`;
+        chomp $isVm;
+        print "FARK DEBUG isVm=[$isVm]";
+        return ( $isVm eq 'none' ? 0 : 1 );
+    }
+    return 0;
 }
 
 sub infocmd {
@@ -1635,17 +1669,18 @@ sub get_kernel_info {
         infoprint "TCP slot entries is > 100.";
     }
 
-    if ( `sysctl -n fs.aio-max-nr` < 1000000 ) {
-        badprint
+    if ( -f "/proc/sys/fs/aio-max-nr" ) {
+        if ( `sysctl -n fs.aio-max-nr` < 1000000 ) {
+            badprint
 "Max running total of the number of events is < 1M, please consider having a value greater than 1M";
-        push @generalrec, "setup Max running number events greater than 1M";
-        push @adjvars,
-          'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
+            push @generalrec, "setup Max running number events greater than 1M";
+            push @adjvars,
+              'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
+        }
+        else {
+            infoprint "Max Number of AIO events is > 1M.";
+        }
     }
-    else {
-        infoprint "Max Number of AIO events is > 1M.";
-    }
-
 }
 
 sub get_system_info {
@@ -1913,10 +1948,10 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             my $luser = ( split /@/, $line )[0];
-            badprint "User '" . $line
-              . "' does not specify hostname restrictions.";
+            badprint "User " . $line
+              . " does not specify hostname restrictions.";
             push( @generalrec,
-"Restrict Host for $luser\@% to $luser\@LimitedIPRangeOrLocalhost"
+"Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
             );
             push( @generalrec,
                     "RENAME USER $luser\@'%' TO "
@@ -2035,7 +2070,7 @@ sub get_replication_status {
           "This replication slave is not running but seems to be configured.";
     }
     if (   defined($io_running)
-        && $io_running =~ /yes/i
+        && $io_running  =~ /yes/i
         && $sql_running =~ /yes/i )
     {
         if ( $myvar{'read_only'} eq 'OFF' ) {
@@ -2068,7 +2103,8 @@ sub validate_mysql_version {
         or mysql_version_eq( 10, 2 )
         or mysql_version_eq( 10, 3 )
         or mysql_version_eq( 10, 4 )
-        or mysql_version_eq( 10, 5 ) )
+        or mysql_version_eq( 10, 5 )
+        or mysql_version_eq( 10, 6 ) )
     {
         goodprint "Currently running supported MySQL version "
           . $myvar{'version'} . "";
@@ -2706,8 +2742,19 @@ sub calculations {
 
     # Table cache
     if ( $mystat{'Opened_tables'} > 0 ) {
-        $mycalc{'table_cache_hit_rate'} =
-          int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
+        if ( not defined( $mystat{'Table_open_cache_hits'} ) ) {
+            $mycalc{'table_cache_hit_rate'} =
+              int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
+        }
+        else {
+            $mycalc{'table_cache_hit_rate'} = int(
+                $mystat{'Table_open_cache_hits'} * 100 / (
+                    $mystat{'Table_open_cache_hits'} +
+                      $mystat{'Table_open_cache_misses'}
+                )
+            );
+        }
+
     }
     else {
         $mycalc{'table_cache_hit_rate'} = 100;
@@ -2767,6 +2814,10 @@ sub calculations {
     }
 
     # InnoDB
+    $myvar{'innodb_log_files_in_group'} = 1
+      unless defined( $myvar{'innodb_log_files_in_group'} );
+    $myvar{"innodb_buffer_pool_instances"} = 1
+      unless defined( $myvar{'innodb_buffer_pool_instances'} );
     if ( $myvar{'have_innodb'} eq "YES" ) {
         $mycalc{'innodb_log_size_pct'} =
           ( $myvar{'innodb_log_file_size'} *
@@ -3257,11 +3308,25 @@ sub mysql_stats {
     my $table_cache_var = "";
     if ( $mystat{'Open_tables'} > 0 ) {
         if ( $mycalc{'table_cache_hit_rate'} < 20 ) {
-            badprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Open_tables'} )
-              . " open / "
-              . hr_num( $mystat{'Opened_tables'} )
-              . " opened)";
+
+            unless ( defined( $mystat{'Table_open_cache_hits'} ) ) {
+                badprint
+                  "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+                  . hr_num( $mystat{'Open_tables'} )
+                  . " hits / "
+                  . hr_num( $mystat{'Opened_tables'} )
+                  . " requests)";
+            }
+            else {
+                badprint
+                  "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+                  . hr_num( $mystat{'Table_open_cache_hits'} )
+                  . " hits / "
+                  . hr_num( $mystat{'Table_open_cache_hits'} +
+                      $mystat{'Table_open_cache_misses'} )
+                  . " requests)";
+            }
+
             if ( mysql_version_ge( 5, 1 ) ) {
                 $table_cache_var = "table_open_cache";
             }
@@ -3302,11 +3367,24 @@ sub mysql_stats {
                   . ")" );
         }
         else {
-            goodprint "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
-              . hr_num( $mystat{'Open_tables'} )
-              . " open / "
-              . hr_num( $mystat{'Opened_tables'} )
-              . " opened)";
+            unless ( defined( $mystat{'Table_open_cache_hits'} ) ) {
+                goodprint
+                  "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+                  . hr_num( $mystat{'Open_tables'} )
+                  . " hits / "
+                  . hr_num( $mystat{'Opened_tables'} )
+                  . " requests)";
+            }
+            else {
+                goodprint
+                  "Table cache hit rate: $mycalc{'table_cache_hit_rate'}% ("
+                  . hr_num( $mystat{'Table_open_cache_hits'} )
+                  . " hits / "
+                  . hr_num( $mystat{'Table_open_cache_hits'} +
+                      $mystat{'Table_open_cache_misses'} )
+                  . " requests)";
+            }
+
         }
     }
 
@@ -3554,7 +3632,31 @@ sub mariadb_threadpool {
     infoprint "ThreadPool stat is enabled.";
     infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
 
-    if ( $myvar{'version'} =~ /mariadb|percona/i ) {
+    if ( $myvar{'version'} =~ /percona/i ) {
+        my $np = cpu_cores;
+        if (    $myvar{'thread_pool_size'} >= $np
+            and $myvar{'thread_pool_size'} < ( $np * 1.5 ) )
+        {
+            goodprint
+"thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs ("
+              . $np . " and "
+              . ( $np * 1.5 ) . ")";
+        }
+        else {
+            badprint
+"thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs ("
+              . $np . " and "
+              . ( $np * 1.5 ) . ")";
+            push( @adjvars,
+                    "thread_pool_size between "
+                  . $np . " and "
+                  . ( $np * 1.5 )
+                  . " for InnoDB usage" );
+        }
+        return;
+    }
+
+    if ( $myvar{'version'} =~ /mariadb/i ) {
         infoprint "Using default value is good enough for your version ("
           . $myvar{'version'} . ")";
         return;
@@ -5257,7 +5359,7 @@ sub trim {
 sub get_wsrep_options {
     return () unless defined $myvar{'wsrep_provider_options'};
 
-    my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
+    my @galera_options      = split /;/, $myvar{'wsrep_provider_options'};
     my $wsrep_slave_threads = $myvar{'wsrep_slave_threads'};
     push @galera_options, ' wsrep_slave_threads = ' . $wsrep_slave_threads;
     @galera_options = remove_cr @galera_options;
@@ -5279,7 +5381,7 @@ sub get_wsrep_option {
     my @galera_options = get_wsrep_options;
     return '' unless scalar(@galera_options) > 0;
     my @memValues = grep /\s*$key =/, @galera_options;
-    my $memValue = $memValues[0];
+    my $memValue  = $memValues[0];
     return 0 unless defined $memValue;
     $memValue =~ s/.*=\s*(.+)$/$1/g;
     return $memValue;
@@ -5373,15 +5475,19 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
 
     if ( get_wsrep_option('gcs.fc_limit') != $myvar{'wsrep_slave_threads'} * 5 )
     {
-        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads (=".($myvar{'wsrep_slave_threads'} * 5). ")";
-        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5 (=".($myvar{'wsrep_slave_threads'} * 5). ")";
+        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads (="
+          . ( $myvar{'wsrep_slave_threads'} * 5 ) . ")";
+        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5 (="
+          . ( $myvar{'wsrep_slave_threads'} * 5 ) . ")";
     }
     else {
-        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads ( =".get_wsrep_option('gcs.fc_limit') .")";
+        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads ( ="
+          . get_wsrep_option('gcs.fc_limit') . ")";
     }
 
     if ( get_wsrep_option('gcs.fc_factor') != 0.8 ) {
-        badprint "gcs.fc_factor should be equal to 0.8 (=".get_wsrep_option('gcs.fc_factor').")";
+        badprint "gcs.fc_factor should be equal to 0.8 (="
+          . get_wsrep_option('gcs.fc_factor') . ")";
         push @adjvars, "gcs.fc_factor=0.8";
     }
     else {
@@ -5446,7 +5552,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             goodprint "Galera Cluster address is defined: "
               . $myvar{'wsrep_cluster_address'};
             my @NodesTmp = split /,/, $myvar{'wsrep_cluster_address'};
-            my $nbNodes = @NodesTmp;
+            my $nbNodes  = @NodesTmp;
             infoprint "There are $nbNodes nodes in wsrep_cluster_address";
             my $nbNodesSize = trim( $mystat{'wsrep_cluster_size'} );
             if ( $nbNodesSize == 3 or $nbNodesSize == 5 ) {
@@ -6131,10 +6237,12 @@ sub mysql_tables {
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "" );
                 my $optimal_type = '';
 
-                if ($opt{colstat} == 1) {
-                $optimal_type = select_str_g( "Optimal_fieldtype",
+                if ( $opt{colstat} == 1 ) {
+                    $optimal_type = select_str_g( "Optimal_fieldtype",
 "SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
-                ) unless ( mysql_version_ge(8) and not mysql_version_eq(10) );
+                      )
+                      unless ( mysql_version_ge(8)
+                        and not mysql_version_eq(10) );
                 }
                 if ( $optimal_type eq '' ) {
                     infoprint "      Current Fieldtype: $current_type";
@@ -6487,7 +6595,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.7.24 - MySQL High Performance Tuning Script
+ MySQLTuner 1.8.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
