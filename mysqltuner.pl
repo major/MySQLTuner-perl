@@ -1349,7 +1349,7 @@ sub log_file_recommendations {
         $numLi++;
         debugprint "$numLi: $logLi"
           if $logLi =~ /warning|error/i and $logLi !~ /Logging to/;
-        $nbErrLog++ if $logLi =~ /error/i and $logLi !~ /Logging to/;
+        $nbErrLog++  if $logLi =~ /error/i and $logLi !~ /Logging to/;
         $nbWarnLog++ if $logLi =~ /warning/i;
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
@@ -1359,8 +1359,7 @@ sub log_file_recommendations {
 
     if ( $nbWarnLog > 0 ) {
         badprint "$myvar{'log_error'} contains $nbWarnLog warning(s).";
-        push @generalrec,
-          "Check warning line(s) in $myvar{'log_error'} file";
+        push @generalrec, "Check warning line(s) in $myvar{'log_error'} file";
     }
     else {
         goodprint "$myvar{'log_error'} doesn't contain any warning.";
@@ -2070,7 +2069,7 @@ sub get_replication_status {
           "This replication slave is not running but seems to be configured.";
     }
     if (   defined($io_running)
-        && $io_running  =~ /yes/i
+        && $io_running =~ /yes/i
         && $sql_running =~ /yes/i )
     {
         if ( $myvar{'read_only'} eq 'OFF' ) {
