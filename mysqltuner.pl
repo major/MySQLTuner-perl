@@ -30,7 +30,7 @@
 #   Everett Barnes         Tom Krouper          Gary Barrueto
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
-#   Joe Ashcraft           JeSan-Marie Renouard  Christian Loos
+#   Joe Ashcraft           Jean-Marie Renouard  Christian Loos
 #   Julien Francoz         Daniel Black
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
