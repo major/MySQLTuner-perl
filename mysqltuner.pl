@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.8.3
+# mysqltuner.pl - Version 1.8.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.8.3";
+my $tunerversion = "1.8.4";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -303,6 +303,7 @@ sub cpu_cores {
     if ( $^O eq 'linux' ) {
         my $cntCPU =
 `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
+        chmop $cntCPU;
         return ( $cntCPU == 0 ? `nproc` : $cntCPU );
     }
 
@@ -3635,19 +3636,19 @@ sub mariadb_threadpool {
     infoprint "ThreadPool stat is enabled.";
     infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
 
-    if ( $myvar{'version'} =~ /percona/i ) {
+    if ( $myvar{'version'} =~ /percona/i or  $myvar{'version_comment'} =~ /percona/i  ) {
         my $np = cpu_cores;
         if (    $myvar{'thread_pool_size'} >= $np
             and $myvar{'thread_pool_size'} < ( $np * 1.5 ) )
         {
             goodprint
-"thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs ("
+"thread_pool_size for Percona betwwen 1 and 1.5 times number of CPUs ("
               . $np . " and "
               . ( $np * 1.5 ) . ")";
         }
         else {
             badprint
-"thread_pool_size for Percona betwwen 1 and 1.5 times nimber of CPUs ("
+"thread_pool_size for Percona betwwen 1 and 1.5 times number of CPUs ("
               . $np . " and "
               . ( $np * 1.5 ) . ")";
             push( @adjvars,
@@ -6601,7 +6602,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.8.3 - MySQL High Performance Tuning Script
+ MySQLTuner 1.8.4 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
