@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.8.2
+# mysqltuner.pl - Version 1.8.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -49,14 +49,14 @@ use Pod::Usage;
 use File::Basename;
 use Cwd 'abs_path';
 
-use Data::Dumper;
-$Data::Dumper::Pair = " : ";
+#use Data::Dumper;
+#$Data::Dumper::Pair = " : ";
 
 # for which()
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.8.2";
+my $tunerversion = "1.8.3";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1175,7 +1175,7 @@ sub get_all_vars {
             $result{'Storage Engines'}{$engine} = $2;
         }
     }
-    debugprint Dumper(@mysqlenginelist);
+    #debugprint Dumper(@mysqlenginelist);
 
     my @mysqlslave;
     if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
@@ -1457,7 +1457,7 @@ sub get_opened_ports {
         $v;
     } @opened_ports;
     @opened_ports = sort { $a <=> $b } grep { !/^$/ } @opened_ports;
-    debugprint Dumper \@opened_ports;
+   #debugprint Dumper \@opened_ports;
     $result{'Network'}{'TCP Opened'} = \@opened_ports;
     return @opened_ports;
 }
@@ -1864,7 +1864,7 @@ sub security_recommendations {
     # Looking for Anonymous users
     my @mysqlstatlist = select_array
 "SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL";
-    debugprint Dumper \@mysqlstatlist;
+    #debugprint Dumper \@mysqlstatlist;
 
     #exit 0;
     if (@mysqlstatlist) {
@@ -2363,7 +2363,7 @@ sub check_storage_engines {
      # Parse through the table list to generate storage engine counts/statistics
         $fragtables = 0;
         foreach my $tbl (@tblist) {
-            debugprint "Data dump " . Dumper(@$tbl);
+            #debugprint "Data dump " . Dumper(@$tbl);
             my ( $engine, $size, $datafree ) = @$tbl;
             next if $engine eq 'NULL' or not defined($engine);
             $size     = 0 if $size eq 'NULL'     or not defined($size);
@@ -5363,7 +5363,7 @@ sub get_wsrep_options {
     push @galera_options, ' wsrep_slave_threads = ' . $wsrep_slave_threads;
     @galera_options = remove_cr @galera_options;
     @galera_options = remove_empty @galera_options;
-    debugprint Dumper( \@galera_options );
+    #debugprint Dumper( \@galera_options );
     return @galera_options;
 }
 
@@ -5695,7 +5695,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             debugprint "WSREP: $key = $mystat{$key}";
         }
     }
-    debugprint Dumper get_wsrep_options();
+    #debugprint Dumper get_wsrep_options();
 }
 
 # Recommendations for InnoDB
@@ -6464,7 +6464,7 @@ END_TEMPLATE
 }
 
 sub dump_result {
-    debugprint Dumper( \%result ) if ( $opt{'debug'} );
+    #debugprint Dumper( \%result ) if ( $opt{'debug'} );
     debugprint "HTML REPORT: $opt{'reportfile'}";
 
     if ( $opt{'reportfile'} ne 0 ) {
@@ -6594,7 +6594,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.8.2 - MySQL High Performance Tuning Script
+ MySQLTuner 1.8.3 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
