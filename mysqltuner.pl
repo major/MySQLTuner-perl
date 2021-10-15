@@ -5992,7 +5992,7 @@ sub mysql_innodb {
           . $mystat{'Innodb_log_writes'}
           . " writes)";
         push( @adjvars,
-                "innodb_log_buffer_size (>= "
+                "innodb_log_buffer_size (> "
               . hr_bytes_rnd( $myvar{'innodb_log_buffer_size'} )
               . ")" );
     }
