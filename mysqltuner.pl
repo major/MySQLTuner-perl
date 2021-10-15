@@ -1175,6 +1175,7 @@ sub get_all_vars {
             $result{'Storage Engines'}{$engine} = $2;
         }
     }
+
     #debugprint Dumper(@mysqlenginelist);
 
     my @mysqlslave;
@@ -1457,7 +1458,8 @@ sub get_opened_ports {
         $v;
     } @opened_ports;
     @opened_ports = sort { $a <=> $b } grep { !/^$/ } @opened_ports;
-   #debugprint Dumper \@opened_ports;
+
+    #debugprint Dumper \@opened_ports;
     $result{'Network'}{'TCP Opened'} = \@opened_ports;
     return @opened_ports;
 }
@@ -1864,6 +1866,7 @@ sub security_recommendations {
     # Looking for Anonymous users
     my @mysqlstatlist = select_array
 "SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL";
+
     #debugprint Dumper \@mysqlstatlist;
 
     #exit 0;
@@ -2363,6 +2366,7 @@ sub check_storage_engines {
      # Parse through the table list to generate storage engine counts/statistics
         $fragtables = 0;
         foreach my $tbl (@tblist) {
+
             #debugprint "Data dump " . Dumper(@$tbl);
             my ( $engine, $size, $datafree ) = @$tbl;
             next if $engine eq 'NULL' or not defined($engine);
@@ -5363,6 +5367,7 @@ sub get_wsrep_options {
     push @galera_options, ' wsrep_slave_threads = ' . $wsrep_slave_threads;
     @galera_options = remove_cr @galera_options;
     @galera_options = remove_empty @galera_options;
+
     #debugprint Dumper( \@galera_options );
     return @galera_options;
 }
@@ -5695,6 +5700,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             debugprint "WSREP: $key = $mystat{$key}";
         }
     }
+
     #debugprint Dumper get_wsrep_options();
 }
 
@@ -6464,6 +6470,7 @@ END_TEMPLATE
 }
 
 sub dump_result {
+
     #debugprint Dumper( \%result ) if ( $opt{'debug'} );
     debugprint "HTML REPORT: $opt{'reportfile'}";
 
