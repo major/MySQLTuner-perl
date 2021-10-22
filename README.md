@@ -27,6 +27,8 @@ MySQLTuner needs you:
 * Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
+* Paid support for Releem available here: [Releem App](https://app.releem.com/)
+
 ## Stargazers over time
 
 [![Stargazers over time](https://starcharts.herokuapp.com/major/MySQLTuner-perl.svg)](https://starcharts.herokuapp.com/major/MySQLTuner-perl)
