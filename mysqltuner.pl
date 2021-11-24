@@ -3514,22 +3514,22 @@ sub mysql_myisam {
     if ( defined( $mycalc{'pct_key_buffer_used'} ) ) {
         if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
             badprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
-              . hr_num( $myvar{'key_buffer_size'} *
-                  $mycalc{'pct_key_buffer_used'} /
-                  100 )
+              . hr_bytes( $myvar{'key_buffer_size'} -
+                  $mystat{'Key_blocks_unused'} *
+                  $myvar{'key_cache_block_size'} )
               . " used / "
-              . hr_num( $myvar{'key_buffer_size'} )
+              . hr_bytes( $myvar{'key_buffer_size'} )
               . " cache)";
 
 #push(@adjvars,"key_buffer_size (\~ ".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100).")");
         }
         else {
             goodprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
-              . hr_num( $myvar{'key_buffer_size'} *
-                  $mycalc{'pct_key_buffer_used'} /
-                  100 )
+              . hr_bytes( $myvar{'key_buffer_size'} -
+                  $mystat{'Key_blocks_unused'} *
+                  $myvar{'key_cache_block_size'} )
               . " used / "
-              . hr_num( $myvar{'key_buffer_size'} )
+              . hr_bytes( $myvar{'key_buffer_size'} )
               . " cache)";
         }
     }
@@ -3537,10 +3537,11 @@ sub mysql_myisam {
 
         # No queries have run that would use keys
         debugprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
-          . hr_num(
-            $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100 )
+          . hr_bytes( $myvar{'key_buffer_size'} -
+              $mystat{'Key_blocks_unused'} *
+              $myvar{'key_cache_block_size'} )
           . " used / "
-          . hr_num( $myvar{'key_buffer_size'} )
+          . hr_bytes( $myvar{'key_buffer_size'} )
           . " cache)";
     }
 
