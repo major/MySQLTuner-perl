@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.8.5
+# mysqltuner.pl - Version 1.8.7
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.8.5";
+my $tunerversion = "1.8.7";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1063,6 +1063,51 @@ sub select_str_g {
     shift @val;
     return trim(@val);
 }
+
+sub select_user_dbs {
+  return select_array("SELECT DISTINCT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema', 'percona', 'sys')")
+}
+
+sub select_tables_db()
+{
+  my $schema=shift;
+  return select_array("SELECT DISTINCT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$schema'")
+}
+sub select_indexes_db()
+{
+  my $schema=shift;
+  return select_array("SELECT DISTINCT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$schema'")
+}
+
+sub select_views_db
+{
+  my $schema=shift;
+  return select_array("SELECT DISTINCT TABLE_NAME FROM information_schema.VIEWS WHERE TABLE_SCHEMA='$schema'")
+}
+sub select_triggers_db
+{
+  my $schema=shift;
+  return select_array("SELECT DISTINCT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='$schema'")
+}
+
+sub select_routines_db
+{
+  my $schema=shift;
+  return select_array("SELECT DISTINCT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='$schema'")
+}
+
+sub select_table_indexes_db
+{
+  my $schema=shift;
+  my $tbname=shift;
+  return select_array("SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='$tbname'")
+}
+sub select_table_columns_db{
+  my $schema=shift;
+  my $table=shift;
+  return select_array("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='$table'")
+}
+
 
 sub get_tuning_info {
     my @infoconn = select_array "\\s";
@@ -3521,7 +3566,7 @@ sub mysql_myisam {
               . hr_bytes( $myvar{'key_buffer_size'} )
               . " cache)";
 
-#push(@adjvars,"key_buffer_size (\~ ".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100).")");
+            push(@adjvars,"key_buffer_size (\~ ".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100).")");
         }
         else {
             goodprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
@@ -6120,12 +6165,21 @@ sub mysql_databases {
 "SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_'"
             )
           ) . ")";
+        foreach my $eng(select_array(
+"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_'"
+            )) {
+                     infoprint " +-- ENGINE $eng : " . 
+                     select_one("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbinfo[0]' AND ENGINE='$eng'") .
+                     " TABLE(s)";
+            }
         badprint "Index size is larger than data size for $dbinfo[0] \n"
           if ( $dbinfo[2] ne 'NULL' )
           and ( $dbinfo[3] ne 'NULL' )
           and ( $dbinfo[2] < $dbinfo[3] );
-        badprint "There are " . $dbinfo[5] . " storage engines. Be careful. \n"
-          if $dbinfo[5] > 1;
+        unless ($dbinfo[5] == 1) {
+        badprint "There are " . $dbinfo[5] . " storage engines. Be careful. \n";
+        push @generalrec, "Select one storage engine (InnoDB is a good choice) for all tables in $dbinfo[0] database ($dbinfo[5] engines detected)";
+        }
         $result{'Databases'}{ $dbinfo[0] }{'Rows'}       = $dbinfo[1];
         $result{'Databases'}{ $dbinfo[0] }{'Tables'}     = $dbinfo[6];
         $result{'Databases'}{ $dbinfo[0] }{'Collations'} = $dbinfo[7];
@@ -6217,8 +6271,11 @@ sub mysql_tables {
     if ( mysql_version_ge(8) and not mysql_version_eq(10) ) {
         infoprint
 "MySQL and Percona version 8 and greater have remove PROCEDURE ANALYSE feature";
+        $opt{colstat} = 0;
+        infoprint "Disabling colstat parameter";
+
     }
-    foreach (@dblist) {
+    foreach (select_user_dbs()) {
         my $dbname = $_;
         next unless defined $_;
         infoprint "Database: " . $_ . "";
@@ -6228,6 +6285,28 @@ sub mysql_tables {
         foreach (@dbtable) {
             my $tbname = $_;
             infoprint " +-- TABLE: $tbname";
+            infoprint "     +-- TYPE: ".select_one("SELECT ENGINE FROM information_schema.tables where TABLE_schema='$dbname' AND TABLE_NAME='$tbname'");
+
+            my $selIdxReq = <<"ENDSQL";
+      SELECT  index_name AS idxname, 
+              GROUP_CONCAT(column_name ORDER BY seq_in_index) AS cols, 
+              INDEX_TYPE as type
+              FROM information_schema.statistics
+              WHERE INDEX_SCHEMA='$dbname'
+              AND TABLE_NAME='$tbname'
+ENDSQL
+            my @tbidx=select_array($selIdxReq);
+            my $found=0;
+            foreach my $idx(@tbidx) {
+              my @info = split /\s/, $idx;
+              next if $info[0] eq 'NULL';
+              infoprint "     +-- Index $info[0] - Cols: $info[1] - Type: $info[2]";
+              $found++;
+            }
+            if ($found == 0) {
+              badprint ("Table $dbname.$tbname has no index defined");
+              push @generalrec, "Add at least a primary key on table $dbname.$tbname";
+            }
             my @tbcol = select_array(
 "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname'"
             );
@@ -6239,11 +6318,10 @@ sub mysql_tables {
 "SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname' AND COLUMN_NAME='$_' "
                 );
 
-                infoprint "     +-- Column $tbname.$_:";
                 my $current_type =
-                  uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "" );
+                  uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "NULL" );
                 my $optimal_type = '';
-
+                infoprint "     +-- Column $tbname.$_: $current_type";
                 if ( $opt{colstat} == 1 ) {
                     $optimal_type = select_str_g( "Optimal_fieldtype",
 "SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
@@ -6252,7 +6330,7 @@ sub mysql_tables {
                         and not mysql_version_eq(10) );
                 }
                 if ( $optimal_type eq '' ) {
-                    infoprint "      Current Fieldtype: $current_type";
+                    #infoprint "     +-- Current Fieldtype: $current_type";
 
                     #infoprint "      Optimal Fieldtype: Not available";
                 }
@@ -6260,11 +6338,11 @@ sub mysql_tables {
                     and $current_type !~ /.*DATETIME.*/
                     and $current_type !~ /.*TIMESTAMP.*/ )
                 {
-                    infoprint "      Current Fieldtype: $current_type";
+                    infoprint "     +-- Current Fieldtype: $current_type";
                     if ( $optimal_type =~ /.*ENUM\(.*/ ) {
                         $optimal_type = "ENUM( ... )";
                     }
-                    infoprint "      Optimal Fieldtype: $optimal_type ";
+                    infoprint "     +-- Optimal Fieldtype: $optimal_type ";
                     if ( $optimal_type !~ /.*ENUM\(.*/ ) {
                         badprint
 "Consider changing type for column $_ in table $dbname.$tbname";
@@ -6360,7 +6438,34 @@ ENDSQL
             badprint "$info[1] has a low selectivity";
         }
     }
-
+    infoprint "Indexes per database:";
+    foreach my $dbname (select_user_dbs()) {
+      infoprint "Database: " . $dbname . "";
+      $selIdxReq = <<"ENDSQL";
+      SELECT  concat(concat(table_name,'.'), index_name) AS idxname, 
+              GROUP_CONCAT(column_name ORDER BY seq_in_index) AS cols, 
+              CARDINALITY as card, 
+              INDEX_TYPE as type, 
+              COMMENT as comment
+              FROM information_schema.statistics
+              WHERE INDEX_SCHEMA='$dbname'
+              AND index_name IS NOT NULL
+ENDSQL
+      my $found=0;
+      foreach my $idxinfo (select_array($selIdxReq))
+      {
+        my @info = split /\s/, $idxinfo;
+        next if $info[0]  eq 'NULL';
+        infoprint " +-- INDEX      : " . $info[0];
+        infoprint " +-- COLUMNS    : " . $info[1];
+        infoprint " +-- CARDINALITY: " . $info[2];
+        infoprint " +-- TYPE        : " . $info[4] if defined $info[4];
+        infoprint " +-- COMMENT     : " . $info[5] if defined $info[5];
+        $found++;
+      }
+      badprint "No index found for $dbname database" if $found == 0;
+      push @generalrec, "Add indexes on tables from $dbname database" if $found == 0;
+    }
     return
       unless ( defined( $myvar{'performance_schema'} )
         and $myvar{'performance_schema'} eq 'ON' );
@@ -6386,6 +6491,38 @@ ENDSQL
     }
 }
 
+sub mysql_views()
+{
+    subheaderprint "Views Metrics";
+    unless ( mysql_version_ge( 5, 5 ) ) {
+        infoprint
+          "Skip Index metrics from information schema missing in this version";
+        return;
+    }
+
+}
+
+sub mysql_routines()
+{
+    subheaderprint "Routines Metrics";
+    unless ( mysql_version_ge( 5, 5 ) ) {
+        infoprint
+          "Skip Index metrics from information schema missing in this version";
+        return;
+    }
+
+}
+
+sub mysql_triggers()
+{
+    subheaderprint "Triggers Metrics";
+    unless ( mysql_version_ge( 5, 5 ) ) {
+        infoprint
+          "Skip Index metrics from information schema missing in this version";
+        return;
+    }
+
+}
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
     $result{'Recommendations'}  = \@generalrec;
@@ -6569,6 +6706,9 @@ mysql_databases;        # Show informations about databases
 mysql_tables;           # Show informations about table column
 
 mysql_indexes;               # Show informations about indexes
+mysql_views;                 # Show informations about views
+mysql_triggers;              # Show informations about triggers
+mysql_routines;              # Show informations about routines
 security_recommendations;    # Display some security recommendations
 cve_recommendations;         # Display related CVE
 calculations;                # Calculate everything we need
@@ -6603,7 +6743,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.8.5 - MySQL High Performance Tuning Script
+ MySQLTuner 1.8.7 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
