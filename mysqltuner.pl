@@ -1195,9 +1195,13 @@ sub get_all_vars {
       if ( defined( $myvar{'gtid_current_pos'} )
         and $myvar{'gtid_current_pos'} ne '' );
 
+    # Whether the server uses a thread pool to handle client connections
+    # MariaDB: thread_handling = pool-of-threads
+    # MySQL: thread_handling = loaded-dynamically
     $myvar{'have_threadpool'} = "NO";
-    if ( defined( $myvar{'thread_pool_size'} )
-        and $myvar{'thread_pool_size'} > 0 )
+    if ( defined( $myvar{'thread_handling'} )
+        and ( $myvar{'thread_handling'} eq 'pool-of-threads'
+        || $myvar{'thread_handling'} eq 'loaded-dynamically' ) )
     {
         $myvar{'have_threadpool'} = "YES";
     }
@@ -3316,13 +3320,13 @@ sub mysql_stats {
     }
 
     # Thread cache
-    if ( defined( $myvar{'thread_handling'} )
-        and $myvar{'thread_handling'} eq 'pool-of-threads' )
+    if ( defined( $myvar{'have_threadpool'} )
+        and $myvar{'have_threadpool'} eq 'YES' )
     {
- # https://www.percona.com/doc/percona-server/LATEST/performance/threadpool.html
+ # https://www.percona.com/doc/percona-server/5.7/performance/threadpool.html#status-variables
  # When thread pool is enabled, the value of the thread_cache_size variable
  # is ignored. The Threads_cached status variable contains 0 in this case.
-        infoprint "Thread cache not used with thread_handling=pool-of-threads";
+        infoprint "Thread cache not used with thread pool enabled";
     }
     else {
         if ( $myvar{'thread_cache_size'} eq 0 ) {
