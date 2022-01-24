@@ -3556,7 +3556,7 @@ sub mysql_myisam {
     }
 
     # Key buffer usage
-    if ( defined( $mycalc{'pct_key_buffer_used'} ) ) {
+    if ( $mycalc{'pct_key_buffer_used'} > 0 ) {
         if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
             badprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
               . hr_bytes( $myvar{'key_buffer_size'} -
