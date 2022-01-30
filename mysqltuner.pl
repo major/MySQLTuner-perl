@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.8.7
+# mysqltuner.pl - Version 1.8.8
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.8.7";
+my $tunerversion = "1.8.8";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3774,8 +3774,20 @@ sub mysqsl_pfs {
     # Performance Schema
     $myvar{'performance_schema'} = 'OFF'
       unless defined( $myvar{'performance_schema'} );
-    unless ( $myvar{'performance_schema'} eq 'ON' ) {
+    if ($myvar{'performance_schema'} eq 'OFF') {
+        badprint "Performance_schema should be activated.";
+        push( @adjvars, "performance_schema=ON" );
+        push( @generalrec,
+                "Performance schema should be activated for better diagnostics"
+            );
+    } else {
+        infoprint "Performance_schema is activated.";
+    }
+    
+    # IF PFS is eanbled
+    unless ( $myvar{'performance_schema'} ne 'ON' ) {
         infoprint "Performance schema is disabled.";
+        # REc enable PFS for diagnostics only
         if ( mysql_version_ge( 5, 6 ) ) {
             push( @generalrec,
                 "Performance schema should be activated for better diagnostics"
@@ -3798,9 +3810,10 @@ sub mysqsl_pfs {
         push( @generalrec,
 "Performance schema shouldn't be activated for MariaDB 10.0 for performance issue"
         );
-        push( @adjvars, "performance_schema = OFF disable PFS" );
+        push( @adjvars, "performance_schema = OFF" );
         return;
     }
+
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
         infoprint "Sys schema isn't installed.";
         push( @generalrec,
@@ -3808,7 +3821,7 @@ sub mysqsl_pfs {
         ) unless ( mysql_version_le( 5, 6 ) );
         push( @generalrec,
 "Consider installing Sys schema from https://github.com/FromDual/mariadb-sys for MariaDB"
-        ) unless ( mysql_version_eq( 10, 0 ) or mysql_version_eq( 5, 5 ) );
+        ) unless ( mysql_version_ge( 10, 0 ) );
 
         return;
     }
@@ -6323,7 +6336,7 @@ ENDSQL
                 );
 
                 my $current_type =
-                  uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : "NULL" );
+                  uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : " NULL" );
                 my $optimal_type = '';
                 infoprint "     +-- Column $tbname.$_: $current_type";
                 if ( $opt{colstat} == 1 ) {
@@ -6747,7 +6760,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.8.7 - MySQL High Performance Tuning Script
+ MySQLTuner 1.8.8 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
