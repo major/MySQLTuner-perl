@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.8.8
+# mysqltuner.pl - Version 1.8.9
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.8.8";
+my $tunerversion = "1.8.9";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -6311,6 +6311,7 @@ sub mysql_tables {
               FROM information_schema.statistics
               WHERE INDEX_SCHEMA='$dbname'
               AND TABLE_NAME='$tbname'
+              GROUP BY idxname, type
 ENDSQL
             my @tbidx=select_array($selIdxReq);
             my $found=0;
@@ -6467,6 +6468,7 @@ ENDSQL
               FROM information_schema.statistics
               WHERE INDEX_SCHEMA='$dbname'
               AND index_name IS NOT NULL
+              GROUP BY idxname, type
 ENDSQL
       my $found=0;
       foreach my $idxinfo (select_array($selIdxReq))
@@ -6760,7 +6762,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.8.8 - MySQL High Performance Tuning Script
+ MySQLTuner 1.8.9 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
