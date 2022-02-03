@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.8.9
+# mysqltuner.pl - Version 1.9.0
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
+# Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 #
 # For the latest updates, please visit http://mysqltuner.pl/
 # Git repository available at https://github.com/major/MySQLTuner-perl
@@ -56,7 +56,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.8.9";
+my $tunerversion = "1.9.0";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1582,25 +1582,26 @@ sub get_os_release {
 }
 
 sub get_fs_info {
-    my @sinfo = `df -P | grep '%'`;
+    my @sinfo = `df -Ph | grep '%'`;
     my @iinfo = `df -Pi| grep '%'`;
     shift @iinfo;
     @sinfo = map {
         my $v = $_;
-        $v =~ s/.*\s(\d+)%\s+(.*)/$1\t$2/g;
+        $v =~ s/.*\s(\d+.)\s(\d+)%\s+(.*)/$2\t$3\t$1/g;
         $v;
     } @sinfo;
     foreach my $info (@sinfo) {
         next if $info =~ m{(\d+)\t/(run|dev|sys|proc|snap)($|/)};
         if ( $info =~ /(\d+)\t(.*)/ ) {
             if ( $1 > 85 ) {
-                badprint "mount point $2 is using $1 % total space";
+                badprint "mount point $2 is using $1 % total space (free: $3)";
                 push( @generalrec, "Add some space to $2 mountpoint." );
             }
             else {
-                infoprint "mount point $2 is using $1 % of total space";
+                infoprint "mount point $2 is using $1 % of total space (free: $3)";
             }
             $result{'Filesystem'}{'Space Pct'}{$2} = $1;
+            $result{'Filesystem'}{'Free Space'}{$2} = $3;
         }
     }
 
@@ -6237,7 +6238,7 @@ sub mysql_databases {
         }
 
         my @distinct_column_charset = select_array(
-"select DISTINCT(CHARACTER_SET_NAME) from information_schema.COLUMNS where CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA ='$_'"
+"select DISTINCT(CHARACTER_SET_NAME) from information_schema.COLUMNS where CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA ='$_' AND CHARACTER_SET_NAME IS NOT NULL"
         );
         infoprint "Charsets for $dbinfo[0] database table column: "
           . join( ', ', @distinct_column_charset );
@@ -6255,7 +6256,7 @@ sub mysql_databases {
         }
 
         my @distinct_column_collation = select_array(
-"select DISTINCT(COLLATION_NAME) from information_schema.COLUMNS where COLLATION_NAME IS NOT NULL AND TABLE_SCHEMA ='$_'"
+"select DISTINCT(COLLATION_NAME) from information_schema.COLUMNS where COLLATION_NAME IS NOT NULL AND TABLE_SCHEMA ='$_' AND COLLATION_NAME IS NOT NULL"
         );
         infoprint "Collations for $dbinfo[0] database table column: "
           . join( ', ', @distinct_column_collation );
@@ -6762,7 +6763,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.8.9 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -7004,7 +7005,7 @@ L<https://github.com/major/MySQLTuner-perl>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2021 Major Hayden - major@mhtx.net
+Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 
 For the latest updates, please visit http://mysqltuner.pl/
 
