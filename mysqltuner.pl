@@ -6500,15 +6500,14 @@ ENDSQL
     foreach my $dbname ( select_user_dbs() ) {
         infoprint "Database: " . $dbname . "";
         $selIdxReq = <<"ENDSQL";
-      SELECT  concat(concat(table_name,'.'), index_name) AS idxname, 
-              GROUP_CONCAT(column_name ORDER BY seq_in_index) AS cols, 
-              CARDINALITY as card, 
-              INDEX_TYPE as type, 
-              COMMENT as comment
-              FROM information_schema.statistics
-              WHERE INDEX_SCHEMA='$dbname'
-              AND index_name IS NOT NULL
-              GROUP BY idxname, type
+        SELECT  concat(table_name,'.', index_name) AS idxname,
+                GROUP_CONCAT(column_name ORDER BY seq_in_index) AS cols,
+                SUM(CARDINALITY) as card,
+                INDEX_TYPE as type
+        FROM information_schema.statistics
+        WHERE INDEX_SCHEMA='$dbname'
+        AND index_name IS NOT NULL
+        GROUP BY table_name, idxname, type
 ENDSQL
         my $found = 0;
         foreach my $idxinfo ( select_array($selIdxReq) ) {
@@ -6530,7 +6529,7 @@ ENDSQL
         and $myvar{'performance_schema'} eq 'ON' );
 
     $selIdxReq = <<'ENDSQL';
-SELECT CONCAT(CONCAT(object_schema,'.'),object_name) AS 'table', index_name
+SELECT CONCAT(object_schema,'.',object_name) AS 'table', index_name
 FROM performance_schema.table_io_waits_summary_by_index_usage
 WHERE index_name IS NOT NULL
 AND count_star =0
