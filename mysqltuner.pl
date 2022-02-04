@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.0
+# mysqltuner.pl - Version 1.9.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.0";
+my $tunerversion = "1.9.1";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1596,27 +1596,27 @@ sub get_os_release {
 }
 
 sub get_fs_info {
-    my @sinfo = `df -Ph | grep '%'`;
+    my @sinfo = `df -P | grep '%'`;
     my @iinfo = `df -Pi| grep '%'`;
+    shift @sinfo;
     shift @iinfo;
-    @sinfo = map {
-        my $v = $_;
-        $v =~ s/.*\s(\d+.)\s(\d+)%\s+(.*)/$2\t$3\t$1/g;
-        $v;
-    } @sinfo;
+    
     foreach my $info (@sinfo) {
-        next if $info =~ m{(\d+)\t/(run|dev|sys|proc|snap)($|/)};
-        if ( $info =~ /(\d+)\t(.*)/ ) {
-            if ( $1 > 85 ) {
-                badprint "mount point $2 is using $1 % total space (free: $3)";
-                push( @generalrec, "Add some space to $2 mountpoint." );
+        #exit(0);
+        if ( $info =~ /.*?(\d+)\s+(\d+)\s+(\d+)\s+(\d+)%\s+(.*)$/ ) {
+            next if $5 =~ m{(run|dev|sys|proc|snap|init)};
+            if ( $4 > 85 ) {
+                badprint "mount point $5 is using $4 % total space (".human_size($2*1024)." / ". human_size($1*1024). ")";
+                push( @generalrec, "Add some space to $4 mountpoint." );
             }
             else {
                 infoprint
-                  "mount point $2 is using $1 % of total space (free: $3)";
+                  "mount point $5 is using $4 % total space (".human_size($2*1024)." / ". human_size($1*1024). ")";
             }
-            $result{'Filesystem'}{'Space Pct'}{$2}  = $1;
-            $result{'Filesystem'}{'Free Space'}{$2} = $3;
+            $result{'Filesystem'}{'Space Pct'}{$5}  = $4;
+            $result{'Filesystem'}{'Used Space'}{$5} = $2;
+            $result{'Filesystem'}{'Free Space'}{$5} = $3;
+            $result{'Filesystem'}{'Total Space'}{$5} = $1;
         }
     }
 
@@ -1888,7 +1888,9 @@ sub system_recommendations {
         }
     }
 
+    subheaderprint "Filesystem Linux Recommendations";
     get_fs_info;
+    subheaderprint "Kernel Information Recommendations";
     get_kernel_info;
 }
 
@@ -6437,8 +6439,8 @@ sub mysql_indexes {
 #    }
     my $selIdxReq = <<'ENDSQL';
 SELECT
-  CONCAT(CONCAT(t.TABLE_SCHEMA, '.'),t.TABLE_NAME) AS 'table'
- , CONCAT(CONCAT(CONCAT(s.INDEX_NAME, '('),s.COLUMN_NAME), ')') AS 'index'
+  CONCAT(t.TABLE_SCHEMA, '.',t.TABLE_NAME) AS 'table', 
+  CONCAT(s.INDEX_NAME, '(',s.COLUMN_NAME, ')') AS 'index'
  , s.SEQ_IN_INDEX AS 'seq'
  , s2.max_columns AS 'maxcol'
  , s.CARDINALITY  AS 'card'
@@ -6799,7 +6801,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.0 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
