@@ -6139,7 +6139,29 @@ sub mysql_databases {
       );
     infoprint "All User Databases:";
     infoprint " +-- TABLE : "
-      . ( $totaldbinfo[4] eq 'NULL' ? 0 : $totaldbinfo[4] ) . "";
+      . select_one( "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )" )
+          . "";
+    infoprint " +-- VIEW  : "
+      . select_one( "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )" )
+          . "";
+    infoprint " +-- INDEX : "
+      . select_one( "SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )" )
+          . "";
+
+    infoprint " +-- CHARS : "
+      . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " ("
+      . (
+        join ", ",
+        select_array(
+            "select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );")
+      ) . ")";
+    infoprint " +-- COLLA : "
+      . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " ("
+      . (
+        join ", ",
+        select_array(
+            "SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_COLLATION IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );")
+      ) . ")";
     infoprint " +-- ROWS  : "
       . ( $totaldbinfo[0] eq 'NULL' ? 0 : $totaldbinfo[0] ) . "";
     infoprint " +-- DATA  : "
@@ -6149,18 +6171,11 @@ sub mysql_databases {
       . hr_bytes( $totaldbinfo[2] ) . "("
       . percentage( $totaldbinfo[2], $totaldbinfo[3] ) . "%)";
     infoprint " +-- SIZE  : " . hr_bytes( $totaldbinfo[3] ) . "";
-    infoprint " +-- COLLA : "
-      . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " ("
-      . (
-        join ", ",
-        select_array(
-            "SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES;")
-      ) . ")";
-    infoprint " +-- ENGIN : "
+    infoprint " +-- ENGINE: "
       . ( $totaldbinfo[6] eq 'NULL' ? 0 : $totaldbinfo[6] ) . " ("
       . (
         join ", ",
-        select_array("SELECT DISTINCT(ENGINE) FROM information_schema.TABLES;")
+        select_array("SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE ENGINE IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );")
       ) . ")";
 
     $result{'Databases'}{'All databases'}{'Rows'} =
@@ -6181,39 +6196,51 @@ sub mysql_databases {
           );
         next unless defined $dbinfo[0];
         infoprint "Database: " . $dbinfo[0] . "";
-        infoprint " +-- TABLE: "
-          . ( !defined( $dbinfo[6] ) or $dbinfo[6] eq 'NULL' ? 0 : $dbinfo[6] )
+        infoprint " +-- TABLE : "
+          . select_one( "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA='$_'" )
           . "";
-        infoprint " +-- COLL : "
+        infoprint " +-- VIEW  : "
+          . select_one( "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA='$_'" )
+          . "";
+        infoprint " +-- INDEX : "
+      . select_one( "SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA='$_'" )
+          . "";
+            infoprint " +-- CHARS : "
+      . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " ("
+      . (
+        join ", ",
+        select_array(
+            "select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA='$_';")
+      ) . ")";infoprint " +-- COLLA : "
           . ( $dbinfo[7] eq 'NULL' ? 0 : $dbinfo[7] ) . " ("
           . (
             join ", ",
             select_array(
-"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_';"
+"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' AND TABLE_COLLATION IS NOT NULL;"
             )
           ) . ")";
-        infoprint " +-- ROWS : "
+        infoprint " +-- ROWS  : "
           . ( !defined( $dbinfo[1] ) or $dbinfo[1] eq 'NULL' ? 0 : $dbinfo[1] )
           . "";
-        infoprint " +-- DATA : "
+        infoprint " +-- DATA  : "
           . hr_bytes( $dbinfo[2] ) . "("
           . percentage( $dbinfo[2], $dbinfo[4] ) . "%)";
-        infoprint " +-- INDEX: "
+        infoprint " +-- INDEX : "
           . hr_bytes( $dbinfo[3] ) . "("
           . percentage( $dbinfo[3], $dbinfo[4] ) . "%)";
-        infoprint " +-- TOTAL: " . hr_bytes( $dbinfo[4] ) . "";
-        infoprint " +-- ENGIN : "
+        infoprint " +-- TOTAL : " . hr_bytes( $dbinfo[4] ) . "";
+        infoprint " +-- ENGINE: "
           . ( $dbinfo[8] eq 'NULL' ? 0 : $dbinfo[8] ) . " ("
           . (
             join ", ",
             select_array(
-"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_'"
+"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' AND ENGINE IS NOT NULL"
             )
           ) . ")";
 
         foreach my $eng (
             select_array(
-"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_'"
+"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' AND ENGINE IS NOT NULL"
             )
           )
         {
