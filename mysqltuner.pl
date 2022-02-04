@@ -1065,49 +1065,61 @@ sub select_str_g {
 }
 
 sub select_user_dbs {
-  return select_array("SELECT DISTINCT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema', 'percona', 'sys')")
+    return select_array(
+"SELECT DISTINCT TABLE_SCHEMA FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema', 'percona', 'sys')"
+    );
 }
 
-sub select_tables_db()
-{
-  my $schema=shift;
-  return select_array("SELECT DISTINCT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$schema'")
-}
-sub select_indexes_db()
-{
-  my $schema=shift;
-  return select_array("SELECT DISTINCT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$schema'")
+sub select_tables_db() {
+    my $schema = shift;
+    return select_array(
+"SELECT DISTINCT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$schema'"
+    );
 }
 
-sub select_views_db
-{
-  my $schema=shift;
-  return select_array("SELECT DISTINCT TABLE_NAME FROM information_schema.VIEWS WHERE TABLE_SCHEMA='$schema'")
-}
-sub select_triggers_db
-{
-  my $schema=shift;
-  return select_array("SELECT DISTINCT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='$schema'")
+sub select_indexes_db() {
+    my $schema = shift;
+    return select_array(
+"SELECT DISTINCT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$schema'"
+    );
 }
 
-sub select_routines_db
-{
-  my $schema=shift;
-  return select_array("SELECT DISTINCT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='$schema'")
+sub select_views_db {
+    my $schema = shift;
+    return select_array(
+"SELECT DISTINCT TABLE_NAME FROM information_schema.VIEWS WHERE TABLE_SCHEMA='$schema'"
+    );
 }
 
-sub select_table_indexes_db
-{
-  my $schema=shift;
-  my $tbname=shift;
-  return select_array("SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='$tbname'")
-}
-sub select_table_columns_db{
-  my $schema=shift;
-  my $table=shift;
-  return select_array("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='$table'")
+sub select_triggers_db {
+    my $schema = shift;
+    return select_array(
+"SELECT DISTINCT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='$schema'"
+    );
 }
 
+sub select_routines_db {
+    my $schema = shift;
+    return select_array(
+"SELECT DISTINCT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='$schema'"
+    );
+}
+
+sub select_table_indexes_db {
+    my $schema = shift;
+    my $tbname = shift;
+    return select_array(
+"SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='$tbname'"
+    );
+}
+
+sub select_table_columns_db {
+    my $schema = shift;
+    my $table  = shift;
+    return select_array(
+"SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='$table'"
+    );
+}
 
 sub get_tuning_info {
     my @infoconn = select_array "\\s";
@@ -1199,9 +1211,11 @@ sub get_all_vars {
     # MariaDB: thread_handling = pool-of-threads
     # MySQL: thread_handling = loaded-dynamically
     $myvar{'have_threadpool'} = "NO";
-    if ( defined( $myvar{'thread_handling'} )
-        and ( $myvar{'thread_handling'} eq 'pool-of-threads'
-        || $myvar{'thread_handling'} eq 'loaded-dynamically' ) )
+    if (
+        defined( $myvar{'thread_handling'} )
+        and (  $myvar{'thread_handling'} eq 'pool-of-threads'
+            || $myvar{'thread_handling'} eq 'loaded-dynamically' )
+      )
     {
         $myvar{'have_threadpool'} = "YES";
     }
@@ -1400,7 +1414,7 @@ sub log_file_recommendations {
         $numLi++;
         debugprint "$numLi: $logLi"
           if $logLi =~ /warning|error/i and $logLi !~ /Logging to/;
-        $nbErrLog++  if $logLi =~ /error/i and $logLi !~ /Logging to/;
+        $nbErrLog++ if $logLi =~ /error/i and $logLi !~ /Logging to/;
         $nbWarnLog++ if $logLi =~ /warning/i;
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
@@ -1598,9 +1612,10 @@ sub get_fs_info {
                 push( @generalrec, "Add some space to $2 mountpoint." );
             }
             else {
-                infoprint "mount point $2 is using $1 % of total space (free: $3)";
+                infoprint
+                  "mount point $2 is using $1 % of total space (free: $3)";
             }
-            $result{'Filesystem'}{'Space Pct'}{$2} = $1;
+            $result{'Filesystem'}{'Space Pct'}{$2}  = $1;
             $result{'Filesystem'}{'Free Space'}{$2} = $3;
         }
     }
@@ -2123,7 +2138,7 @@ sub get_replication_status {
           "This replication slave is not running but seems to be configured.";
     }
     if (   defined($io_running)
-        && $io_running =~ /yes/i
+        && $io_running  =~ /yes/i
         && $sql_running =~ /yes/i )
     {
         if ( $myvar{'read_only'} eq 'OFF' ) {
@@ -3324,9 +3339,9 @@ sub mysql_stats {
     if ( defined( $myvar{'have_threadpool'} )
         and $myvar{'have_threadpool'} eq 'YES' )
     {
- # https://www.percona.com/doc/percona-server/5.7/performance/threadpool.html#status-variables
- # When thread pool is enabled, the value of the thread_cache_size variable
- # is ignored. The Threads_cached status variable contains 0 in this case.
+# https://www.percona.com/doc/percona-server/5.7/performance/threadpool.html#status-variables
+# When thread pool is enabled, the value of the thread_cache_size variable
+# is ignored. The Threads_cached status variable contains 0 in this case.
         infoprint "Thread cache not used with thread pool enabled";
     }
     else {
@@ -3571,7 +3586,15 @@ sub mysql_myisam {
               . hr_bytes( $myvar{'key_buffer_size'} )
               . " cache)";
 
-            push(@adjvars,"key_buffer_size (\~ ".hr_num( $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'} / 100).")");
+            push(
+                @adjvars,
+                "key_buffer_size (\~ "
+                  . hr_num(
+                    $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'}
+                      / 100
+                  )
+                  . ")"
+            );
         }
         else {
             goodprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
@@ -3588,8 +3611,7 @@ sub mysql_myisam {
         # No queries have run that would use keys
         debugprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
           . hr_bytes( $myvar{'key_buffer_size'} -
-              $mystat{'Key_blocks_unused'} *
-              $myvar{'key_cache_block_size'} )
+              $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'} )
           . " used / "
           . hr_bytes( $myvar{'key_buffer_size'} )
           . " cache)";
@@ -3687,7 +3709,9 @@ sub mariadb_threadpool {
     infoprint "ThreadPool stat is enabled.";
     infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
 
-    if ( $myvar{'version'} =~ /percona/i or  $myvar{'version_comment'} =~ /percona/i  ) {
+    if (   $myvar{'version'} =~ /percona/i
+        or $myvar{'version_comment'} =~ /percona/i )
+    {
         my $np = cpu_cores;
         if (    $myvar{'thread_pool_size'} >= $np
             and $myvar{'thread_pool_size'} < ( $np * 1.5 ) )
@@ -3775,19 +3799,20 @@ sub mysqsl_pfs {
     # Performance Schema
     $myvar{'performance_schema'} = 'OFF'
       unless defined( $myvar{'performance_schema'} );
-    if ($myvar{'performance_schema'} eq 'OFF') {
+    if ( $myvar{'performance_schema'} eq 'OFF' ) {
         badprint "Performance_schema should be activated.";
         push( @adjvars, "performance_schema=ON" );
         push( @generalrec,
-                "Performance schema should be activated for better diagnostics"
-            );
-    } else {
+            "Performance schema should be activated for better diagnostics" );
+    }
+    else {
         infoprint "Performance_schema is activated.";
     }
-    
+
     # IF PFS is eanbled
     unless ( $myvar{'performance_schema'} ne 'ON' ) {
         infoprint "Performance schema is disabled.";
+
         # REc enable PFS for diagnostics only
         if ( mysql_version_ge( 5, 6 ) ) {
             push( @generalrec,
@@ -6183,20 +6208,28 @@ sub mysql_databases {
 "SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_'"
             )
           ) . ")";
-        foreach my $eng(select_array(
+
+        foreach my $eng (
+            select_array(
 "SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_'"
-            )) {
-                     infoprint " +-- ENGINE $eng : " . 
-                     select_one("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbinfo[0]' AND ENGINE='$eng'") .
-                     " TABLE(s)";
-            }
+            )
+          )
+        {
+            infoprint " +-- ENGINE $eng : "
+              . select_one(
+"SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbinfo[0]' AND ENGINE='$eng'"
+              ) . " TABLE(s)";
+        }
         badprint "Index size is larger than data size for $dbinfo[0] \n"
           if ( $dbinfo[2] ne 'NULL' )
           and ( $dbinfo[3] ne 'NULL' )
           and ( $dbinfo[2] < $dbinfo[3] );
-        unless ($dbinfo[5] == 1) {
-        badprint "There are " . $dbinfo[5] . " storage engines. Be careful. \n";
-        push @generalrec, "Select one storage engine (InnoDB is a good choice) for all tables in $dbinfo[0] database ($dbinfo[5] engines detected)";
+        unless ( $dbinfo[5] == 1 ) {
+            badprint "There are "
+              . $dbinfo[5]
+              . " storage engines. Be careful. \n";
+            push @generalrec,
+"Select one storage engine (InnoDB is a good choice) for all tables in $dbinfo[0] database ($dbinfo[5] engines detected)";
         }
         $result{'Databases'}{ $dbinfo[0] }{'Rows'}       = $dbinfo[1];
         $result{'Databases'}{ $dbinfo[0] }{'Tables'}     = $dbinfo[6];
@@ -6293,7 +6326,7 @@ sub mysql_tables {
         infoprint "Disabling colstat parameter";
 
     }
-    foreach (select_user_dbs()) {
+    foreach ( select_user_dbs() ) {
         my $dbname = $_;
         next unless defined $_;
         infoprint "Database: " . $_ . "";
@@ -6303,7 +6336,10 @@ sub mysql_tables {
         foreach (@dbtable) {
             my $tbname = $_;
             infoprint " +-- TABLE: $tbname";
-            infoprint "     +-- TYPE: ".select_one("SELECT ENGINE FROM information_schema.tables where TABLE_schema='$dbname' AND TABLE_NAME='$tbname'");
+            infoprint "     +-- TYPE: "
+              . select_one(
+"SELECT ENGINE FROM information_schema.tables where TABLE_schema='$dbname' AND TABLE_NAME='$tbname'"
+              );
 
             my $selIdxReq = <<"ENDSQL";
       SELECT  index_name AS idxname, 
@@ -6314,17 +6350,19 @@ sub mysql_tables {
               AND TABLE_NAME='$tbname'
               GROUP BY idxname, type
 ENDSQL
-            my @tbidx=select_array($selIdxReq);
-            my $found=0;
-            foreach my $idx(@tbidx) {
-              my @info = split /\s/, $idx;
-              next if $info[0] eq 'NULL';
-              infoprint "     +-- Index $info[0] - Cols: $info[1] - Type: $info[2]";
-              $found++;
+            my @tbidx = select_array($selIdxReq);
+            my $found = 0;
+            foreach my $idx (@tbidx) {
+                my @info = split /\s/, $idx;
+                next if $info[0] eq 'NULL';
+                infoprint
+                  "     +-- Index $info[0] - Cols: $info[1] - Type: $info[2]";
+                $found++;
             }
-            if ($found == 0) {
-              badprint ("Table $dbname.$tbname has no index defined");
-              push @generalrec, "Add at least a primary key on table $dbname.$tbname";
+            if ( $found == 0 ) {
+                badprint("Table $dbname.$tbname has no index defined");
+                push @generalrec,
+                  "Add at least a primary key on table $dbname.$tbname";
             }
             my @tbcol = select_array(
 "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname'"
@@ -6349,6 +6387,7 @@ ENDSQL
                         and not mysql_version_eq(10) );
                 }
                 if ( $optimal_type eq '' ) {
+
                     #infoprint "     +-- Current Fieldtype: $current_type";
 
                     #infoprint "      Optimal Fieldtype: Not available";
@@ -6458,9 +6497,9 @@ ENDSQL
         }
     }
     infoprint "Indexes per database:";
-    foreach my $dbname (select_user_dbs()) {
-      infoprint "Database: " . $dbname . "";
-      $selIdxReq = <<"ENDSQL";
+    foreach my $dbname ( select_user_dbs() ) {
+        infoprint "Database: " . $dbname . "";
+        $selIdxReq = <<"ENDSQL";
       SELECT  concat(concat(table_name,'.'), index_name) AS idxname, 
               GROUP_CONCAT(column_name ORDER BY seq_in_index) AS cols, 
               CARDINALITY as card, 
@@ -6471,20 +6510,20 @@ ENDSQL
               AND index_name IS NOT NULL
               GROUP BY idxname, type
 ENDSQL
-      my $found=0;
-      foreach my $idxinfo (select_array($selIdxReq))
-      {
-        my @info = split /\s/, $idxinfo;
-        next if $info[0]  eq 'NULL';
-        infoprint " +-- INDEX      : " . $info[0];
-        infoprint " +-- COLUMNS    : " . $info[1];
-        infoprint " +-- CARDINALITY: " . $info[2];
-        infoprint " +-- TYPE        : " . $info[4] if defined $info[4];
-        infoprint " +-- COMMENT     : " . $info[5] if defined $info[5];
-        $found++;
-      }
-      badprint "No index found for $dbname database" if $found == 0;
-      push @generalrec, "Add indexes on tables from $dbname database" if $found == 0;
+        my $found = 0;
+        foreach my $idxinfo ( select_array($selIdxReq) ) {
+            my @info = split /\s/, $idxinfo;
+            next if $info[0] eq 'NULL';
+            infoprint " +-- INDEX      : " . $info[0];
+            infoprint " +-- COLUMNS    : " . $info[1];
+            infoprint " +-- CARDINALITY: " . $info[2];
+            infoprint " +-- TYPE        : " . $info[4] if defined $info[4];
+            infoprint " +-- COMMENT     : " . $info[5] if defined $info[5];
+            $found++;
+        }
+        badprint "No index found for $dbname database" if $found == 0;
+        push @generalrec, "Add indexes on tables from $dbname database"
+          if $found == 0;
     }
     return
       unless ( defined( $myvar{'performance_schema'} )
@@ -6511,8 +6550,7 @@ ENDSQL
     }
 }
 
-sub mysql_views()
-{
+sub mysql_views() {
     subheaderprint "Views Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
@@ -6522,8 +6560,7 @@ sub mysql_views()
 
 }
 
-sub mysql_routines()
-{
+sub mysql_routines() {
     subheaderprint "Routines Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
@@ -6533,8 +6570,7 @@ sub mysql_routines()
 
 }
 
-sub mysql_triggers()
-{
+sub mysql_triggers() {
     subheaderprint "Triggers Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
@@ -6543,6 +6579,7 @@ sub mysql_triggers()
     }
 
 }
+
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
     $result{'Recommendations'}  = \@generalrec;
