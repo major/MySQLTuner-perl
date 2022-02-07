@@ -6069,7 +6069,7 @@ sub mysql_innodb {
     }
 
     # InnoDB Log Waits
-    my $mystat{'Innodb_log_waits_computed'} = 0;
+    $mystat{'Innodb_log_waits_computed'} = 0;
 
     if (    defined( $mystat{'Innodb_log_waits'} )
         and defined( $mystat{'Innodb_log_writes'} ) )
