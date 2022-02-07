@@ -57,8 +57,12 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 * MariaDB 10.0 (no support, deprecated version)
 * MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (no support - deprecated version)
 
+*** Windows Support is partial ***
+* Windows is now supported at this time 
+* Successfully run MySQLtuner across WSL2 (Windows Subsystem Linux )
+* [https://docs.microsoft.com/en-us/windows/wsl/](https://docs.microsoft.com/en-us/windows/wsl/)
+
 *** UNSUPPORTED ENVIRONMENTS - NEED HELP FOR THAT :) ***
-* Windows is not supported at this time (Help wanted !!!!!)
 * Cloud based is not supported at this time (Help wanted !!!!! GCP, AWS, Azure support asked)
 
 * CVE vulnerabilities detection support from [https://cve.mitre.org](https://cve.mitre.org)
