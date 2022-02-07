@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.9.3 - MySQL High Performance Tuning Script
+    MySQLTuner 1.9.4 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -14,6 +14,7 @@ You must provide the remote server's total memory when connecting to other serve
     --host <hostname>           Connect to a remote host to perform tests (default: localhost)
     --socket <socket>           Use a different socket for a local connection
     --port <port>               Port to use for connection (default: 3306)
+    --protocol tcp              Force TCP connection instead of socket
     --user <username>           Username to use for authentication
     --userenv <envvar>          Name of env variable which contains username to use for authentication
     --pass <password>           Password to use for authentication
