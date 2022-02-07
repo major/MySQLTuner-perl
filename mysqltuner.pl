@@ -6808,29 +6808,29 @@ system_recommendations;    # avoid to many service on the same host
 log_file_recommendations;  # check log file content
 check_storage_engines;     # Show enabled storage engines
 
-check_metadata_perf;    # Show parameter impacting performance during analysis
-mysql_databases;        # Show informations about databases
-mysql_tables;           # Show informations about table column
+check_metadata_perf;       # Show parameter impacting performance during analysis
+mysql_databases;           # Show informations about databases
+mysql_tables;              # Show informations about table column
 
-mysql_indexes;               # Show informations about indexes
-mysql_views;                 # Show informations about views
-mysql_triggers;              # Show informations about triggers
-mysql_routines;              # Show informations about routines
-security_recommendations;    # Display some security recommendations
-cve_recommendations;         # Display related CVE
-calculations;                # Calculate everything we need
-mysql_stats;                 # Print the server stats
-mysqsl_pfs;                  # Print Performance schema info
-mariadb_threadpool;          # Print MariaDB ThreadPool stats
-mysql_myisam;                # Print MyISAM stats
-mysql_innodb;                # Print InnoDB stats
-mariadb_aria;                # Print MariaDB Aria stats
-mariadb_tokudb;              # Print MariaDB Tokudb stats
-mariadb_xtradb;              # Print MariaDB XtraDB stats
+mysql_indexes;             # Show informations about indexes
+mysql_views;               # Show informations about views
+mysql_triggers;            # Show informations about triggers
+mysql_routines;            # Show informations about routines
+security_recommendations;  # Display some security recommendations
+cve_recommendations;       # Display related CVE
+calculations;              # Calculate everything we need
+mysql_stats;               # Print the server stats
+mysqsl_pfs;                # Print Performance schema info
+mariadb_threadpool;        # Print MariaDB ThreadPool stats
+mysql_myisam;              # Print MyISAM stats
+mysql_innodb;              # Print InnoDB stats
+mariadb_aria;              # Print MariaDB Aria stats
+mariadb_tokudb;            # Print MariaDB Tokudb stats
+mariadb_xtradb;            # Print MariaDB XtraDB stats
 
-#mariadb_rockdb;             # Print MariaDB RockDB stats
-#mariadb_spider;             # Print MariaDB Spider stats
-#mariadb_connect;            # Print MariaDB Connect stats
+#mariadb_rockdb;           # Print MariaDB RockDB stats
+#mariadb_spider;           # Print MariaDB Spider stats
+#mariadb_connect;          # Print MariaDB Connect stats
 mariadb_galera;            # Print MariaDB Galera Cluster stats
 get_replication_status;    # Print replication info
 make_recommendations;      # Make recommendations based on stats

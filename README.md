@@ -65,6 +65,17 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 *** UNSUPPORTED ENVIRONMENTS - NEED HELP FOR THAT :) ***
 * Cloud based is not supported at this time (Help wanted !!!!! GCP, AWS, Azure support asked)
 
+*** Unsupported storage engines: PRs welcome ***
+* NDB is not supported feel free to Pull Request code :)
+* MyISAM is to old is no longer active
+* RockDB
+* Archive
+* Spider
+* ColummStore
+* TokuDB
+* XtraDB
+* Connect
+
 * CVE vulnerabilities detection support from [https://cve.mitre.org](https://cve.mitre.org)
 
 *** MINIMAL REQUIREMENTS ***
