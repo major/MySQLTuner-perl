@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.1
+# mysqltuner.pl - Version 1.9.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.1";
+my $tunerversion = "1.9.2";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3799,47 +3799,40 @@ sub mysqsl_pfs {
     subheaderprint "Performance schema";
 
     # Performance Schema
-    $myvar{'performance_schema'} = 'OFF'
-      unless defined( $myvar{'performance_schema'} );
+    $myvar{'performance_schema'} = 'OFF' unless defined( $myvar{'performance_schema'} );
     if ( $myvar{'performance_schema'} eq 'OFF' ) {
-        badprint "Performance_schema should be activated.";
-        push( @adjvars, "performance_schema=ON" );
-        push( @generalrec,
-            "Performance schema should be activated for better diagnostics" );
+        
     }
     else {
-        infoprint "Performance_schema is activated.";
     }
 
     # IF PFS is eanbled
-    unless ( $myvar{'performance_schema'} ne 'ON' ) {
+    if ( $myvar{'performance_schema'} eq 'OFF' ) {
         infoprint "Performance schema is disabled.";
-
-        # REc enable PFS for diagnostics only
-        if ( mysql_version_ge( 5, 6 ) ) {
-            push( @generalrec,
-                "Performance schema should be activated for better diagnostics"
-            );
-            push( @adjvars, "performance_schema = ON enable PFS" );
-        }
+        badprint "Performance_schema should be activated.";
+        push( @adjvars, "performance_schema=ON" );
+        push(   @generalrec,
+                "Performance schema should be activated for better diagnostics" );
     }
-    else {
+
+    if ( $myvar{'performance_schema'} eq 'ON' ) {
+        infoprint "Performance_schema is activated.";
+        debugprint "Performance schema is " . $myvar{'performance_schema'};
+        infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
         if ( mysql_version_le( 5, 5 ) ) {
-            push( @generalrec,
-"Performance schema shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
-            );
+            push(   @generalrec,
+                    "Performance schema shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
+                );
             push( @adjvars, "performance_schema = OFF disable PFS" );
         }
-    }
-    debugprint "Performance schema is " . $myvar{'performance_schema'};
-    infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
 
-    if ( mysql_version_eq( 10, 0 ) ) {
-        push( @generalrec,
-"Performance schema shouldn't be activated for MariaDB 10.0 for performance issue"
-        );
-        push( @adjvars, "performance_schema = OFF" );
-        return;
+        if ( mysql_version_eq( 10, 0 ) ) {
+            push(   @generalrec,
+                    "Performance schema shouldn't be activated for MariaDB 10.0 for performance issue"
+                );
+            push( @adjvars, "performance_schema = OFF" );
+            return;
+        }
     }
 
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
@@ -6828,7 +6821,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.1 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.2 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
