@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.3
+# mysqltuner.pl - Version 1.9.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.3";
+my $tunerversion = "1.9.4";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -107,6 +107,7 @@ my %opt = (
     "reportfile"     => 0,
     "verbose"        => 0,
     "defaults-file"  => '',
+    "protocol"       => '',
 );
 
 # Gather the options from the command line
@@ -137,7 +138,7 @@ GetOptions(
     'sysstat',         'nosysstat',
     'pfstat',          'nopfstat',
     'idxstat',         'noidxstat',
-    'server-log=s',
+    'server-log=s',    'protocol=s',
   )
   or pod2usage(
     -exitval  => 1,
@@ -739,6 +740,10 @@ sub mysql_setup {
     # Are we being asked to connect via a socket?
     if ( $opt{socket} ne 0 ) {
         $remotestring = " -S $opt{socket} -P $opt{port}";
+    }
+
+    if ( $opt{protocol} ne '' ){
+        $remotestring = " --protocol=$opt{protocol}";
     }
 
     # Are we being asked to connect to a remote server?
@@ -2188,8 +2193,8 @@ sub validate_mysql_version {
         badprint "Your MySQL version "
           . $myvar{'version'}
           . " is EOL software!  Upgrade soon!";
-        push ( @recommendations, "You are using n unsupported version for production environments");
-        push ( @recommendations, "Upgrade as soon as possible to a supported version !");
+        push ( @generalrec, "You are using n unsupported version for production environments");
+        push ( @generalrec, "Upgrade as soon as possible to a supported version !");
            
     }
 }
@@ -6850,7 +6855,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.3 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.4 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -6864,6 +6869,7 @@ You must provide the remote server's total memory when connecting to other serve
  --host <hostname>           Connect to a remote host to perform tests (default: localhost)
  --socket <socket>           Use a different socket for a local connection
  --port <port>               Port to use for connection (default: 3306)
+ --protocol tcp              Force TCP connection instead of socket
  --user <username>           Username to use for authentication
  --userenv <envvar>          Name of env variable which contains username to use for authentication
  --pass <password>           Password to use for authentication
