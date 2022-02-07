@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 1.9.0 - MySQL High Performance Tuning Script
+    MySQLTuner 1.9.3 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -22,49 +22,51 @@ You must provide the remote server's total memory when connecting to other serve
     --mysqladmin <path>         Path to a custom mysqladmin executable
     --mysqlcmd <path>           Path to a custom mysql executable
     --defaults-file <path>      Path to a custom .my.cnf
-    --server-log <path>         Path to explict log file
+    --server-log <path>         Path to explict log file (error_log)
 
 # PERFORMANCE AND REPORTING OPTIONS
 
     --skipsize                  Don't enumerate tables and their types/sizes (default: on)
                                 (Recommended for servers with many tables)
+    --json                      Print result as JSON string
+    --prettyjson                Print result as JSON formatted string
     --skippassword              Don't perform checks on user passwords(default: off)
     --checkversion              Check for updates to MySQLTuner (default: don't check)
     --updateversion             Check for updates to MySQLTuner and update when newer version is available (default: don't check)
     --forcemem <size>           Amount of RAM installed in megabytes
     --forceswap <size>          Amount of swap memory configured in megabytes
     --passwordfile <path>       Path to a password file list(one password by line)
+    --cvefile <path>            CVE File for vulnerability checks
+    --outputfile <path>         Path to a output txt file
+    --reportfile <path>         Path to a report txt file
+    --template   <path>         Path to a template file
 
 # OUTPUT OPTIONS
 
     --silent                    Don't output anything on screen
+    --verbose                   Prints out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
+    --nocolor                   Don't print output in color
     --nogood                    Remove OK responses
     --nobad                     Remove negative/suggestion responses
     --noinfo                    Remove informational responses
     --debug                     Print debug information
-    --noprocess                Consider no other process is running
+    --noprocess                 Consider no other process is running
     --dbstat                    Print database information
     --nodbstat                  Don't Print database information
     --tbstat                    Print table information
     --notbstat                  Don't Print table information
     --colstat                   Print column information
-    --nocolstat                  Don't Print column information
+    --nocolstat                 Don't Print column information
     --idxstat                   Print index information
     --noidxstat                 Don't Print index information
     --sysstat                   Print system information
     --nosysstat                 Don't Print system information
     --pfstat                    Print Performance schema
     --nopfstat                  Don't Print Performance schema
-    --verbose                   Prints out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
     --bannedports               Ports banned separated by comma(,)
+    --server-log                Define specifi error_log to analyze
     --maxportallowed            Number of ports opened allowed on this hosts
-    --cvefile <path>            CVE File for vulnerability checks
-    --nocolor                   Don't print output in color
-    --json                      Print result as JSON string
     --buffers                   Print global and per-thread buffer values
-    --outputfile <path>         Path to a output txt file
-    --reportfile <path>         Path to a report txt file
-    --template   <path>         Path to a template file
 
 # PERLDOC
 

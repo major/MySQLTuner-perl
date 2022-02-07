@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.2
+# mysqltuner.pl - Version 1.9.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 #
@@ -56,7 +56,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.2";
+my $tunerversion = "1.9.3";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1600,22 +1600,26 @@ sub get_fs_info {
     my @iinfo = `df -Pi| grep '%'`;
     shift @sinfo;
     shift @iinfo;
-    
+
     foreach my $info (@sinfo) {
+
         #exit(0);
         if ( $info =~ /.*?(\d+)\s+(\d+)\s+(\d+)\s+(\d+)%\s+(.*)$/ ) {
             next if $5 =~ m{(run|dev|sys|proc|snap|init)};
             if ( $4 > 85 ) {
-                badprint "mount point $5 is using $4 % total space (".human_size($2*1024)." / ". human_size($1*1024). ")";
+                badprint "mount point $5 is using $4 % total space ("
+                  . human_size( $2 * 1024 ) . " / "
+                  . human_size( $1 * 1024 ) . ")";
                 push( @generalrec, "Add some space to $4 mountpoint." );
             }
             else {
-                infoprint
-                  "mount point $5 is using $4 % total space (".human_size($2*1024)." / ". human_size($1*1024). ")";
+                infoprint "mount point $5 is using $4 % total space ("
+                  . human_size( $2 * 1024 ) . " / "
+                  . human_size( $1 * 1024 ) . ")";
             }
-            $result{'Filesystem'}{'Space Pct'}{$5}  = $4;
-            $result{'Filesystem'}{'Used Space'}{$5} = $2;
-            $result{'Filesystem'}{'Free Space'}{$5} = $3;
+            $result{'Filesystem'}{'Space Pct'}{$5}   = $4;
+            $result{'Filesystem'}{'Used Space'}{$5}  = $2;
+            $result{'Filesystem'}{'Free Space'}{$5}  = $3;
             $result{'Filesystem'}{'Total Space'}{$5} = $1;
         }
     }
@@ -3799,9 +3803,10 @@ sub mysqsl_pfs {
     subheaderprint "Performance schema";
 
     # Performance Schema
-    $myvar{'performance_schema'} = 'OFF' unless defined( $myvar{'performance_schema'} );
+    $myvar{'performance_schema'} = 'OFF'
+      unless defined( $myvar{'performance_schema'} );
     if ( $myvar{'performance_schema'} eq 'OFF' ) {
-        
+
     }
     else {
     }
@@ -3811,8 +3816,8 @@ sub mysqsl_pfs {
         infoprint "Performance schema is disabled.";
         badprint "Performance_schema should be activated.";
         push( @adjvars, "performance_schema=ON" );
-        push(   @generalrec,
-                "Performance schema should be activated for better diagnostics" );
+        push( @generalrec,
+            "Performance schema should be activated for better diagnostics" );
     }
 
     if ( $myvar{'performance_schema'} eq 'ON' ) {
@@ -3820,16 +3825,16 @@ sub mysqsl_pfs {
         debugprint "Performance schema is " . $myvar{'performance_schema'};
         infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
         if ( mysql_version_le( 5, 5 ) ) {
-            push(   @generalrec,
-                    "Performance schema shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
-                );
+            push( @generalrec,
+"Performance schema shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
+            );
             push( @adjvars, "performance_schema = OFF disable PFS" );
         }
 
         if ( mysql_version_eq( 10, 0 ) ) {
-            push(   @generalrec,
-                    "Performance schema shouldn't be activated for MariaDB 10.0 for performance issue"
-                );
+            push( @generalrec,
+"Performance schema shouldn't be activated for MariaDB 10.0 for performance issue"
+            );
             push( @adjvars, "performance_schema = OFF" );
             return;
         }
@@ -6064,8 +6069,20 @@ sub mysql_innodb {
     }
 
     # InnoDB Log Waits
-    if ( defined $mystat{'Innodb_log_waits'}
-        && $mystat{'Innodb_log_waits'} > 0 )
+    my $mystat{'Innodb_log_waits_computed'} = 0;
+
+    if (    defined( $mystat{'Innodb_log_waits'} )
+        and defined( $mystat{'Innodb_log_writes'} ) )
+    {
+        $mystat{'Innodb_log_waits_computed'} =
+          $mystat{'Innodb_log_waits'} / $mystat{'Innodb_log_writes'};
+    }
+    else {
+        undef $mystat{'Innodb_log_waits_computed'};
+    }
+
+    if ( defined $mystat{'Innodb_log_waits_computed'}
+        && $mystat{'Innodb_log_waits_computed'} > 0.000001 )
     {
         badprint "InnoDB log waits: "
           . percentage( $mystat{'Innodb_log_waits'},
@@ -6132,28 +6149,33 @@ sub mysql_databases {
       );
     infoprint "All User Databases:";
     infoprint " +-- TABLE : "
-      . select_one( "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )" )
-          . "";
+      . select_one(
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )"
+      ) . "";
     infoprint " +-- VIEW  : "
-      . select_one( "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )" )
-          . "";
+      . select_one(
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )"
+      ) . "";
     infoprint " +-- INDEX : "
-      . select_one( "SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )" )
-          . "";
+      . select_one(
+"SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )"
+      ) . "";
 
     infoprint " +-- CHARS : "
       . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " ("
       . (
         join ", ",
         select_array(
-            "select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );")
+"select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
+        )
       ) . ")";
     infoprint " +-- COLLA : "
       . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " ("
       . (
         join ", ",
         select_array(
-            "SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_COLLATION IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );")
+"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_COLLATION IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
+        )
       ) . ")";
     infoprint " +-- ROWS  : "
       . ( $totaldbinfo[0] eq 'NULL' ? 0 : $totaldbinfo[0] ) . "";
@@ -6168,7 +6190,9 @@ sub mysql_databases {
       . ( $totaldbinfo[6] eq 'NULL' ? 0 : $totaldbinfo[6] ) . " ("
       . (
         join ", ",
-        select_array("SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE ENGINE IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );")
+        select_array(
+"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE ENGINE IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
+        )
       ) . ")";
 
     $result{'Databases'}{'All databases'}{'Rows'} =
@@ -6190,21 +6214,26 @@ sub mysql_databases {
         next unless defined $dbinfo[0];
         infoprint "Database: " . $dbinfo[0] . "";
         infoprint " +-- TABLE : "
-          . select_one( "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA='$_'" )
-          . "";
+          . select_one(
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA='$_'"
+          ) . "";
         infoprint " +-- VIEW  : "
-          . select_one( "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA='$_'" )
-          . "";
+          . select_one(
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA='$_'"
+          ) . "";
         infoprint " +-- INDEX : "
-      . select_one( "SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA='$_'" )
-          . "";
-            infoprint " +-- CHARS : "
-      . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " ("
-      . (
-        join ", ",
-        select_array(
-            "select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA='$_';")
-      ) . ")";infoprint " +-- COLLA : "
+          . select_one(
+"SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA='$_'"
+          ) . "";
+        infoprint " +-- CHARS : "
+          . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " ("
+          . (
+            join ", ",
+            select_array(
+"select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA='$_';"
+            )
+          ) . ")";
+        infoprint " +-- COLLA : "
           . ( $dbinfo[7] eq 'NULL' ? 0 : $dbinfo[7] ) . " ("
           . (
             join ", ",
@@ -6821,7 +6850,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.2 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.3 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -6843,49 +6872,51 @@ You must provide the remote server's total memory when connecting to other serve
  --mysqladmin <path>         Path to a custom mysqladmin executable
  --mysqlcmd <path>           Path to a custom mysql executable
  --defaults-file <path>      Path to a custom .my.cnf
- --server-log <path>         Path to explict log file
+ --server-log <path>         Path to explict log file (error_log)
 
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
  --skipsize                  Don't enumerate tables and their types/sizes (default: on)
                              (Recommended for servers with many tables)
+ --json                      Print result as JSON string
+ --prettyjson                Print result as JSON formatted string
  --skippassword              Don't perform checks on user passwords(default: off)
  --checkversion              Check for updates to MySQLTuner (default: don't check)
  --updateversion             Check for updates to MySQLTuner and update when newer version is available (default: don't check)
  --forcemem <size>           Amount of RAM installed in megabytes
  --forceswap <size>          Amount of swap memory configured in megabytes
  --passwordfile <path>       Path to a password file list(one password by line)
+ --cvefile <path>            CVE File for vulnerability checks
+ --outputfile <path>         Path to a output txt file
+ --reportfile <path>         Path to a report txt file
+ --template   <path>         Path to a template file
 
 =head1 OUTPUT OPTIONS
 
  --silent                    Don't output anything on screen
+ --verbose                   Prints out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
+ --nocolor                   Don't print output in color
  --nogood                    Remove OK responses
  --nobad                     Remove negative/suggestion responses
  --noinfo                    Remove informational responses
  --debug                     Print debug information
- --noprocess                Consider no other process is running
+ --noprocess                 Consider no other process is running
  --dbstat                    Print database information
  --nodbstat                  Don't Print database information
  --tbstat                    Print table information
  --notbstat                  Don't Print table information
  --colstat                   Print column information
- --nocolstat                  Don't Print column information
+ --nocolstat                 Don't Print column information
  --idxstat                   Print index information
  --noidxstat                 Don't Print index information
  --sysstat                   Print system information
  --nosysstat                 Don't Print system information
  --pfstat                    Print Performance schema
  --nopfstat                  Don't Print Performance schema
- --verbose                   Prints out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
  --bannedports               Ports banned separated by comma(,)
+ --server-log                Define specifi error_log to analyze
  --maxportallowed            Number of ports opened allowed on this hosts
- --cvefile <path>            CVE File for vulnerability checks
- --nocolor                   Don't print output in color
- --json                      Print result as JSON string
  --buffers                   Print global and per-thread buffer values
- --outputfile <path>         Path to a output txt file
- --reportfile <path>         Path to a report txt file
- --template   <path>         Path to a template file
 
 
 =head1 PERLDOC
