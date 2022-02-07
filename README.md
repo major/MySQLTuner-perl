@@ -37,29 +37,29 @@ Compatibility
 ====
 Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.org/major/MySQLTuner-perl)
 * MySQL 8.0 (partial support, password checks don't work)
+* Percona Server 8.0 (partial support, password checks don't work)
 * MySQL 5.7 (full support)
-* MySQL 5.6 (full support, no more MySQL support)
-* MySQL 5.5 (full support, no more MySQL support)
+* Percona Server 5.7 (full support)
+* MariaDB 10.6 (full support)
 * MariaDB 10.5 (full support)
 * MariaDB 10.4 (full support)
 * MariaDB 10.3 (full support)
-* MariaDB 10.2 (full support)
-* MariaDB 10.1 (full support, no more MariaDB support)
-* MariaDB 10.0 (full support, no more MariaDB support)
-* MariaDB 5.5 (full support, no more MariaDB support)
-* Percona Server 8.0 (partial support, password checks don't work)
-* Percona Server 5.7 (full support)
-* Percona Server 5.6 (full support)
-
-* Percona XtraDB cluster (partial support, no test environment)
+* Galera replication (full support)
+* Percona XtraDB cluster (full support)
 * Mysql Replications (partial support, no test environment)
-* Galera replication (partial support, no test environment)
 
-* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (partial support - deprecated version)
+* MySQL 5.6 (no support, deprecated version)
+* Percona Server 5.6 (no support, deprecated version)
+* MySQL 5.5 (no support, deprecated version)
+* MariaDB 5.5 (no support, deprecated version)
+* MariaDB 10.2 (no support, deprecated version)
+* MariaDB 10.1 (no support, deprecated version)
+* MariaDB 10.0 (no support, deprecated version)
+* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (no support - deprecated version)
 
 *** UNSUPPORTED ENVIRONMENTS - NEED HELP FOR THAT :) ***
 * Windows is not supported at this time (Help wanted !!!!!)
-* Cloud based is not supported at this time (Help wanted !!!!!)
+* Cloud based is not supported at this time (Help wanted !!!!! GCP, AWS, Azure support asked)
 
 * CVE vulnerabilities detection support from [https://cve.mitre.org](https://cve.mitre.org)
 
@@ -116,7 +116,7 @@ Optional Sysschema installation for MySQL 5.6
 
 Sysschema is installed by default under MySQL 5.7 and MySQL 8 from Oracle.
 By default, on MySQL 5.6/5.7/8, performance schema is enabled by default.
-For previous 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
+For previous MySQL 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
 
 	curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
 	# check zip file
@@ -128,7 +128,7 @@ For previous 5.6 version, you can follow this command to create a new database s
 Optional Performance schema and Sysschema installation for MariaDB 10.x
 --
 
-Sysschema is not installed by default under MariaDB 10.x.
+Sysschema is not installed by default under MariaDB prior to 10.6
 By default, on MariaDB, performance schema is disabled by default. consider activating performance schema across your my.cnf configuration file:
 
 	[mysqld]

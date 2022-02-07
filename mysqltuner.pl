@@ -2165,6 +2165,8 @@ sub get_replication_status {
     }
 }
 
+# https://endoflife.software/applications/databases/mysql
+# https://endoflife.date/mariadb
 sub validate_mysql_version {
     ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
       $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
@@ -2172,25 +2174,23 @@ sub validate_mysql_version {
     $mysqlvermicro ||= 0;
 
     if (   mysql_version_eq(8)
-        or mysql_version_eq( 5,  6 )
         or mysql_version_eq( 5,  7 )
-        or mysql_version_eq( 10, 2 )
         or mysql_version_eq( 10, 3 )
         or mysql_version_eq( 10, 4 )
         or mysql_version_eq( 10, 5 )
-        or mysql_version_eq( 10, 6 ) )
+        or mysql_version_eq( 10, 6 )
+    )
     {
         goodprint "Currently running supported MySQL version "
           . $myvar{'version'} . "";
         return;
-    }
-    if (   mysql_version_ge(5)
-        or mysql_version_ge(4)
-        or mysql_version_eq( 10, 0 ) )
-    {
+    } else {
         badprint "Your MySQL version "
           . $myvar{'version'}
           . " is EOL software!  Upgrade soon!";
+        push ( @recommendations, "You are using n unsupported version for production environments");
+        push ( @recommendations, "Upgrade as soon as possible to a supported version !");
+           
     }
 }
 
