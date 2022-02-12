@@ -2,7 +2,8 @@
 # mysqltuner.pl - Version 1.9.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
-#
+# Copyright (C) 2006-2022 Jean-Marie Renouard - jmrenouard@gmail.com
+
 # For the latest updates, please visit http://mysqltuner.pl/
 # Git repository available at https://github.com/major/MySQLTuner-perl
 #
