@@ -256,6 +256,7 @@ my @dblist;
 # Super structure containing all information
 my %result;
 $result{'MySQLTuner'}{'version'} = $tunerversion;
+$result{'MySQLTuner'}{'datetime'} =`date '+%d-%m-%Y %H:%M:%S'`;
 $result{'MySQLTuner'}{'options'} = \%opt;
 
 # Functions that handle the print styles
@@ -6639,7 +6640,7 @@ sub mysql_triggers() {
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
     $result{'Recommendations'}  = \@generalrec;
-    $result{'Adjust variables'} = \@adjvars;
+    $result{'AdjustVariables'} = \@adjvars;
     subheaderprint "Recommendations";
     if ( @generalrec > 0 ) {
         prettyprint "General recommendations:";
@@ -6665,7 +6666,9 @@ sub close_outputfile {
 
 sub headerprint {
     prettyprint
-      " >>  MySQLTuner $tunerversion - Major Hayden <major\@mhtx.net>\n"
+      " >>  MySQLTuner $tunerversion\n" 
+      . "\t * Jean-Marie Renouard <jmrenouard\@gmail.com>\n".
+      . "\t * Major Hayden <major\@mhtx.net>\n"
       . " >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/\n"
       . " >>  Run with '--help' for additional options and output filtering";
 }
