@@ -20,9 +20,10 @@
     <h1>MySQL Tuner {{ MySQLTuner.version }} - {{ MySQLTuner.datetime | default(' ??? ') }}</h1>
 
 <div class="d-flex align-items-start">
-  <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-    {% for etab in [ "Recommendations", "Variables", "Status", "Calculations" ] %}
-      <button class="nav-link{% if loop.index == 1 %} active{% endif %}" id="v-pills-{{ etab }}-tab" data-bs-toggle="pill" data-bs-target="#v-pills-{{ etab }}" type="button" role="tab" aria-controls="v-pills-{{ etab }}" aria-selected="true">{{ etab }}</button>
+  <div class="nav flex-column nav-pills me-3 justify-content-rigth" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+    {% set sections = { "Recommendations": "bi bi-list-check", "Variables": "bi bi-list-check", "Status": "bi bi-list-check", "Calculations": "bi bi-list-check" } %}
+    {% for etab in sections %}
+      <button class="nav-link{% if loop.index == 1 %} active{% endif %}" id="v-pills-{{ etab }}-tab" data-bs-toggle="pill" data-bs-target="#v-pills-{{ etab }}" type="button" role="tab" aria-controls="v-pills-{{ etab }}" aria-selected="true"><i class="{{ sections[etab] }}"></i>{{ etab }}</button>
     {% endfor %}
   </div>
   <div class="tab-content" id="v-pills-tabContent">
