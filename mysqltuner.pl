@@ -6667,7 +6667,7 @@ sub close_outputfile {
 sub headerprint {
     prettyprint
       " >>  MySQLTuner $tunerversion\n" 
-      . "\t * Jean-Marie Renouard <jmrenouard\@gmail.com>\n".
+      . "\t * Jean-Marie Renouard <jmrenouard\@gmail.com>\n"
       . "\t * Major Hayden <major\@mhtx.net>\n"
       . " >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/\n"
       . " >>  Run with '--help' for additional options and output filtering";
