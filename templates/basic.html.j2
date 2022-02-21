@@ -29,14 +29,34 @@
   <div class="tab-content" id="v-pills-tabContent">
     <div class="tab-pane fade show active" id="v-pills-Recommendations" role="tabpanel" aria-labelledby="v-pills-Recommendations-tab">
       <h3><i class="bi bi-list-check"></i>Recommendations</h3>
-      <table class="table">
+      <script>
+        function recFunction() {
+          var input, filter, table, tr, td, i, txtValue;
+          input = document.getElementById("recInput");
+          filter = input.value.toUpperCase();
+          table = document.getElementById("recTable");
+          tr = table.getElementsByTagName("tr");
+          for (i = 0; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[1];
+            if (td) {
+              txtValue = td.textContent || td.innerText;
+              if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+              } else {
+                tr[i].style.display = "none";
+              }
+            }
+          }
+        }
+      </script>
+      <table class="table" id="recTable">
         <thead>
           <tr>
             <th scope="col">#</th>
-            <th scope="col">Recommandations</th>
+            <th scope="col">Recommandations <input type="text" id="recInput" onkeyup="recFunction()" placeholder="Search for names.." title="Type in a name"\></th>
           </tr>
         </thead>
-        <tbody>{% for result in Recommendations %}
+        <tbody class="results">{% for result in Recommendations %}
           <tr>
               <td> {{ loop.index }}</td>
               <td> {{ result }}</td>
@@ -46,12 +66,32 @@
     </div>
     
     <div class="tab-pane fade" id="v-pills-Variables" role="tabpanel" aria-labelledby="v-pills-Variables-tab">
-      <h3><i class="bi bi-list-check"></i>System variables</h3>
-      <table class="table">
+      <h3><i class="bi bi-list-check"></i>System variables </h3>
+      <script>
+        function sysFunction() {
+          var input, filter, table, tr, td, i, txtValue;
+          input = document.getElementById("sysInput");
+          filter = input.value.toUpperCase();
+          table = document.getElementById("sysTable");
+          tr = table.getElementsByTagName("tr");
+          for (i = 0; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[1];
+            if (td) {
+              txtValue = td.textContent || td.innerText;
+              if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+              } else {
+                tr[i].style.display = "none";
+              }
+            }
+          }
+        }
+      </script>
+      <table class="table" id="sysTable">
         <thead>
           <tr>
             <th scope="col">#</th>
-            <th scope="col">Variable</th>
+            <th scope="col">Variable <input type="text" id="sysInput" onkeyup="sysFunction()" placeholder="Search for names.." title="Type in a name"\></th>
             <th scope="col">Value</th>
           </tr>
         </thead>
@@ -66,11 +106,31 @@
     </div>
     <div class="tab-pane fade" id="v-pills-Status" role="tabpanel" aria-labelledby="v-pills-Status-tab">
       <h3><i class="bi bi-list-check"></i>Status Variables</h3>
-      <table class="table">
+      <script>
+        function statFunction() {
+          var input, filter, table, tr, td, i, txtValue;
+          input = document.getElementById("statInput");
+          filter = input.value.toUpperCase();
+          table = document.getElementById("statTable");
+          tr = table.getElementsByTagName("tr");
+          for (i = 0; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[1];
+            if (td) {
+              txtValue = td.textContent || td.innerText;
+              if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+              } else {
+                tr[i].style.display = "none";
+              }
+            }
+          }
+        }
+      </script>
+      <table class="table" id="statTable">
         <thead>
           <tr>
             <th scope="col">#</th>
-            <th scope="col">Variable de status</th>
+            <th scope="col">Variable de status <input type="text" id="statInput" onkeyup="statFunction()" placeholder="Search for names.." title="Type in a name"\></th>
             <th scope="col">Value</th>
           </tr>
         </thead>
@@ -85,11 +145,31 @@
     </div>
     <div class="tab-pane fade" id="v-pills-Calculations" role="tabpanel" aria-labelledby="v-pills-Calculations-tab">
       <h3><i class="bi bi-list-check"></i>Calculated variables</h3>
-      <table class="table">
+      <script>
+        function calcFunction() {
+          var input, filter, table, tr, td, i, txtValue;
+          input = document.getElementById("calcInput");
+          filter = input.value.toUpperCase();
+          table = document.getElementById("calcTable");
+          tr = table.getElementsByTagName("tr");
+          for (i = 0; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[1];
+            if (td) {
+              txtValue = td.textContent || td.innerText;
+              if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+              } else {
+                tr[i].style.display = "none";
+              }
+            }
+          }
+        }
+      </script>
+      <table class="table" id="calcTable">
         <thead>
           <tr>
             <th scope="col">#</th>
-            <th scope="col">Calculated variables</th>
+            <th scope="col">Calculated variables <input type="text" id="calcInput" onkeyup="calcFunction()" placeholder="Search for names.." title="Type in a name"\></th>
             <th scope="col">Value</th>
           </tr>
         </thead>
