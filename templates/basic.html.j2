@@ -66,7 +66,12 @@
     </div>
     
     <div class="tab-pane fade" id="v-pills-Variables" role="tabpanel" aria-labelledby="v-pills-Variables-tab">
-      <h3><i class="bi bi-list-check"></i>System variables </h3>
+      <h3><i class="bi bi-list-check"></i>System variables</h3>
+      <ul>
+        <li><a href="https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html" target="_blank">MySQL 5.7 system variables</a></li>
+        <li><a href="https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html" target="_blank">MySQL 8.0 system variables</a></li>
+        <li><a href="https://mariadb.com/kb/en/server-system-variables" target="_blank">MariaDB system variables</a></li>
+      </ul>
       <script>
         function sysFunction() {
           var input, filter, table, tr, td, i, txtValue;
@@ -99,13 +104,28 @@
           <tr>
               <td> {{ loop.index }}</td>
               <td> {{ vari }}</td>
-              <td> {{ Variables[vari] }}</td>
+              <td>
+                <ul>
+                {% if Variables[vari] is string %}
+                  {% for v in Variables[vari].split(',') %}
+                    <li>{% if v == '' %}NOT DEFINED{% else %}{{ v }}{% endif %}</li>
+                  {% endfor %}
+                {% else %}
+                  <li>{{ Variables[vari] }}</li>
+                {% endif %}
+                </ul>
+              </td>
           </tr>{% endfor %}
         </tbody>
-      </table>  
+      </table>
     </div>
     <div class="tab-pane fade" id="v-pills-Status" role="tabpanel" aria-labelledby="v-pills-Status-tab">
       <h3><i class="bi bi-list-check"></i>Status Variables</h3>
+      <ul>
+        <li><a href="https://dev.mysql.com/doc/refman/5.7/en/server-status-variables.html" target="_blank">MySQL 5.7 Server status</a></li>
+        <li><a href="https://dev.mysql.com/doc/refman/8.0/en/server-status-variables.html" target="_blank">MySQL 8.0 Server status</a></li>
+        <li><a href="https://mariadb.com/kb/en/server-status-variables/" target="_blank">MariaDB Server status</a></li>
+      </ul>
       <script>
         function statFunction() {
           var input, filter, table, tr, td, i, txtValue;
@@ -138,10 +158,21 @@
           <tr>
               <td> {{ loop.index }}</td>
               <td> {{ vari }}</td>
-              <td> {{ Status[vari] }}</td>
+              <td>
+                <ul>
+                {% if Status[vari] is string %}
+                  {% for v in Status[vari].split(',') %}
+                    <li>{% if v == '' %}NOT DEFINED{% else %}{{ v }}{% endif %}</li>
+                  {% endfor %}
+                {% else %}
+                  <li>{{ Status[vari] }}</li>
+                {% endif %}
+                </ul>
+              </td>
+
           </tr>{% endfor %}
         </tbody>
-      </table>  
+      </table>
     </div>
     <div class="tab-pane fade" id="v-pills-Calculations" role="tabpanel" aria-labelledby="v-pills-Calculations-tab">
       <h3><i class="bi bi-list-check"></i>Calculated variables</h3>
