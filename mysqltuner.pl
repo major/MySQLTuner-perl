@@ -3866,6 +3866,20 @@ sub mysqsl_pfs {
     infoprint "Sys schema Version: "
       . select_one("select sys_version from sys.version");
 
+    # Store all sys schema
+#    for my $pfs_view(select_array('use sys;show tables;')){
+        #infoprint "$pfs_view"
+#        @$result{'sys'}{$pfs_view}{'headers'}=[];
+#        for my $h (select_array("select column_name FROM INFORMATION_SCHEMA.COLUMNS c
+# WHERE c.table_name = '$pfs_view'  ORDER BY c.ORDINAL_POSITION")) {
+#            push @$result{'sys'}{$pfs_view}{'headers'}, $h;
+#        }
+#        exit 1;
+#        $result{'sys'}{$pfs_view}{'values'}=();
+#        for my $lQuery (select_array("select * from sys.$pfs_view")) {
+#            push $result{'sys'}{$pfs_view}{'values'}, $lQuery;
+#        }
+#    }
     # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
     my $nbL = 1;
