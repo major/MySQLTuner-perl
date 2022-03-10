@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.4
+# mysqltuner.pl - Version 1.9.5
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2006-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.4";
+my $tunerversion = "1.9.5";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3812,39 +3812,17 @@ sub mysqsl_pfs {
     # Performance Schema
     $myvar{'performance_schema'} = 'OFF'
       unless defined( $myvar{'performance_schema'} );
-    if ( $myvar{'performance_schema'} eq 'OFF' ) {
-
-    }
-    else {
-    }
-
-    # IF PFS is eanbled
-    if ( $myvar{'performance_schema'} eq 'OFF' ) {
-        infoprint "Performance schema is disabled.";
+    if ($myvar{'performance_schema'} eq 'OFF') {
         badprint "Performance_schema should be activated.";
         push( @adjvars, "performance_schema=ON" );
         push( @generalrec,
-            "Performance schema should be activated for better diagnostics" );
-    }
-
+                "Performance schema should be activated for better diagnostics"
+            );
+    } 
     if ( $myvar{'performance_schema'} eq 'ON' ) {
         infoprint "Performance_schema is activated.";
         debugprint "Performance schema is " . $myvar{'performance_schema'};
         infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
-        if ( mysql_version_le( 5, 5 ) ) {
-            push( @generalrec,
-"Performance schema shouldn't be activated for MySQL and MariaDB 5.5 and lower version"
-            );
-            push( @adjvars, "performance_schema = OFF disable PFS" );
-        }
-
-        if ( mysql_version_eq( 10, 0 ) ) {
-            push( @generalrec,
-"Performance schema shouldn't be activated for MariaDB 10.0 for performance issue"
-            );
-            push( @adjvars, "performance_schema = OFF" );
-            return;
-        }
     }
 
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
@@ -3858,9 +3836,7 @@ sub mysqsl_pfs {
 
         return;
     }
-    else {
-        infoprint "Sys schema is installed.";
-    }
+    infoprint "Sys schema is installed.";
     return if ( $opt{pfstat} == 0 or $myvar{'performance_schema'} ne 'ON' );
 
     infoprint "Sys schema Version: "
@@ -6873,7 +6849,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.4 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.5 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
