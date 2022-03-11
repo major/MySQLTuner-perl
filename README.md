@@ -239,6 +239,7 @@ A basic example is called basic.html.j2
 	cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
 
 or
+
 	perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
 
 
