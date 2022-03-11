@@ -213,7 +213,7 @@ __Usage:__ Update MySQLTuner and data files (password and cve) if needed
 
     perl mysqltuner.pl --checkversion --updateversion
 
-HTML reports
+HTML reports based on  Python Jinja2
 --
 
 HTML generation is based on Python/Jinja2
@@ -237,6 +237,36 @@ A basic example is called basic.html.j2
 
 	perl mysqltuner.pl --verbose --json > reports.json
 	cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
+
+or
+	perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
+
+
+HTML reports based on AHA
+--
+
+HTML generation is based on AHA
+
+**HTML generation Procedure**
+
+ - Generate mysqltuner.pl report using standard text reports
+ - Generate HTML report using aha 
+
+**Installation Aha**
+
+Follow instructions from Github repo
+
+[GitHub AHA main repository](https://github.com/theZiz/aha)
+
+
+**Using AHA Html report generation**
+
+	perl mysqltuner.pl --verbose --color > reports.txt
+	aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
+
+or
+
+	perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
 
 
 FAQ
