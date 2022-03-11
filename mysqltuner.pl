@@ -3587,6 +3587,13 @@ sub mysql_myisam {
         infoprint "MyISAM Metrics are disabled on last MySQL versions.";
         return;
     }
+    my $nb_myisam_tables=select_one(
+"SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM'"
+              );
+    if ( $nb_myisam_tables == 0 ) {
+        infoprint "No MyISAM table(s) detected ....";
+        return;
+    }
 
     # Key buffer usage
     if ( $mycalc{'pct_key_buffer_used'} > 0 ) {
