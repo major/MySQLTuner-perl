@@ -213,6 +213,32 @@ __Usage:__ Update MySQLTuner and data files (password and cve) if needed
 
     perl mysqltuner.pl --checkversion --updateversion
 
+HTML reports
+--
+
+HTML generation is based on Python/Jinja2
+
+** HTML generation Procedure **
+
+ - Generate mysqltuner.pl report using JSON format (--json)
+ - Generate HTML report using j2 python tools
+
+** Jinja2 Templates are located under templates sub directory **
+
+A basic example is called basic.html.j2
+
+** Installation Python j2 **
+
+    python -mvenv j2
+    source ./j2/bin/activate
+    (j2) pip install j2
+
+** Using Html report generation **
+
+	perl mysqltuner.pl --verbose --json > reports.json
+	cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
+
+
 FAQ
 --
 
