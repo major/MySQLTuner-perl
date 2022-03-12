@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.5
+# mysqltuner.pl - Version 1.9.6
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2006-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.5";
+my $tunerversion = "1.9.6";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3164,12 +3164,18 @@ sub mysql_stats {
         infoprint
 "Skipped name resolution test due to missing skip_name_resolve in system variables.";
     }
+    elsif ( -r "/etc/psa/.psa.shadow" and $result{'Variables'}{'skip_name_resolve'} eq 'OFF') {
+        infoprint "CPanel and Flex system skip-name-resolve should be on";
+        push (@generalrec, "cPanal and skip-name-resolve: https://support.cpanel.net/hc/en-us/articles/360052752094");
+        push (@adjvars, "skip-name-resolve=0");
+    }
     elsif ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF' ) {
         badprint
 "name resolution is active : a reverse name resolution is made for each new connection and can reduce performance";
         push( @generalrec,
 "Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=1"
         );
+        push (@adjvars, "skip-name-resolve=1");
     }
 
     # Query cache
@@ -6860,7 +6866,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.5 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.6 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
