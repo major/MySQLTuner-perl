@@ -3585,6 +3585,10 @@ sub mysql_myisam {
     subheaderprint "MyISAM Metrics";
     if ( mysql_version_ge(8) and mysql_version_le(10) ) {
         infoprint "MyISAM Metrics are disabled on last MySQL versions.";
+        if ( $myvar{'key_buffer_size'} > 0) {
+            push( @adjvars, "key_buffer_size=0" );
+            push( @generalrec, "Buffer Key MyISAM set to 0, no MyISAM table detected" );
+        }
         return;
     }
     my $nb_myisam_tables=select_one(
