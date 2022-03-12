@@ -3166,12 +3166,13 @@ sub mysql_stats {
     }
     #Cpanel and Skip name resolve
     elsif ( -r "/usr/local/cpanel/cpanel" ){
+        if  ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF') {
+            infoprint "CPanel and Flex system skip-name-resolve should be on";
+        }
         if  ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF') {
             badprint "CPanel and Flex system skip-name-resolve should be on";
             push (@generalrec, "name resolution is enabled due to cPanel doesn't support this disabled.");
             push (@adjvars, "skip-name-resolve=0");
-        else {
-            infoprint "CPanel and Flex system skip-name-resolve should be on";
         }
     }
     elsif ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF' ) {
