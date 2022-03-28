@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.7
+# mysqltuner.pl - Version 1.9.8
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2006-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.7";
+my $tunerversion = "1.9.8";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -594,6 +594,7 @@ sub update_tuner_version {
     }
 
     my $update;
+    my $fullpath="";
     my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/";
     my @scripts =
       ( "mysqltuner.pl", "basic_passwords.txt", "vulnerabilities.csv" );
@@ -606,10 +607,12 @@ sub update_tuner_version {
         if ( $httpcli =~ /curl$/ ) {
             debugprint "$httpcli is available.";
 
+            $fullpath=dirname(__FILE__)."/".$script;
+            debugprint "FullPath: $fullpath"
             debugprint
-              "$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $script";
+              "$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath";
             $update =
-              `$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $script`;
+              `$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath`;
             chomp($update);
             debugprint "$script updated: $update";
 
@@ -6872,7 +6875,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.7 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.8 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
