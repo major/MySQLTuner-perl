@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.6
+# mysqltuner.pl - Version 1.9.7
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2006-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.6";
+my $tunerversion = "1.9.7";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -5959,7 +5959,7 @@ sub mysql_innodb {
     }
 
     # InnoDB Buffer Pool Instances (MySQL 5.6.6+)
-    if ( not mysql_version_ge( 10, 5 )
+    if ( not mysql_version_ge( 10, 4 )
         and defined( $myvar{'innodb_buffer_pool_instances'} ) )
     {
 
@@ -6872,7 +6872,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.6 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.7 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
