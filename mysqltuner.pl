@@ -608,7 +608,7 @@ sub update_tuner_version {
             debugprint "$httpcli is available.";
 
             $fullpath=dirname(__FILE__)."/".$script;
-            debugprint "FullPath: $fullpath"
+            debugprint "FullPath: $fullpath";
             debugprint
               "$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath";
             $update =
