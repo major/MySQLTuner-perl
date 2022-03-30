@@ -199,7 +199,7 @@ if ( $opt{verbose} ) {
     $opt{pfstat}       = 1;    #Print performance schema info.
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
-$opt{nocolor} = 1 if defined( $opt{outputfile} );
+$opt{nocolor} = 1 if $opt{outputfile};
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't Print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't Print column information
 $opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
