@@ -2120,13 +2120,13 @@ sub get_replication_status {
     infoprint "Semi synchronous replication Master: "
       . (
         ( defined( $myvar{'rpl_semi_sync_master_enabled'} ) or defined( $myvar{'rpl_semi_sync_source_enabled'} ) )
-        ? ( $myvar{'rpl_semi_sync_master_enabled'} || $myvar{'rpl_semi_sync_source_enabled'} )
+        ? ( $myvar{'rpl_semi_sync_master_enabled'} // $myvar{'rpl_semi_sync_source_enabled'} )
         : 'Not Activated'
       );
     infoprint "Semi synchronous replication Slave: "
       . (
         ( defined( $myvar{'rpl_semi_sync_slave_enabled'} ) or defined( $myvar{'rpl_semi_sync_replica_enabled'} ) )
-        ? ( $myvar{'rpl_semi_sync_slave_enabled'} || $myvar{'rpl_semi_sync_replica_enabled'} )
+        ? ( $myvar{'rpl_semi_sync_slave_enabled'} // $myvar{'rpl_semi_sync_replica_enabled'} )
         : 'Not Activated'
       );
     if ( scalar( keys %myrepl ) == 0 and scalar( keys %myslaves ) == 0 ) {
@@ -2140,11 +2140,11 @@ sub get_replication_status {
     }
 
     $result{'Replication'}{'status'} = \%myrepl;
-    my ($io_running) = $myrepl{'Slave_IO_Running'} || $myrepl{'Replica_IO_Running'};
+    my ($io_running) = $myrepl{'Slave_IO_Running'} // $myrepl{'Replica_IO_Running'};
     debugprint "IO RUNNING: $io_running ";
-    my ($sql_running) = $myrepl{'Slave_SQL_Running'} || $myrepl{'Replica_SQL_Running'};
+    my ($sql_running) = $myrepl{'Slave_SQL_Running'} // $myrepl{'Replica_SQL_Running'};
     debugprint "SQL RUNNING: $sql_running ";
-    my ($seconds_behind_master) = $myrepl{'Seconds_Behind_Master'} || $myrepl{'Seconds_Behind_Source'} ;
+    my ($seconds_behind_master) = $myrepl{'Seconds_Behind_Master'} // $myrepl{'Seconds_Behind_Source'} ;
     debugprint "SECONDS : $seconds_behind_master ";
 
     if ( defined($io_running)
