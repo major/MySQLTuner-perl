@@ -1944,9 +1944,25 @@ sub security_recommendations {
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
 
+    # IS THERE A ROLE COLUMN
+    my $is_role_column = select_one "select count(*) from information_schema.columns where TABLE_NAME='user' AND TABLE_SCHEMA='mysql' and COLUMN_NAME='IS_ROLE'";
+    
+    my $extra_user_condition="1 = 1 OR ";
+    $extra_user_condition="IS_ROLE = 'N' AND" if $is_role_column > 0;
+    my @mysqlstatlist;
+    if ($is_role_column > 0) {
+        @mysqlstatlist= select_array "SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE IS_ROLE='Y'";
+        foreach my $line ( sort @mysqlstatlist ) {
+            chomp($line);
+            infoprint "User $line is User Role";
+        }
+    } else {
+      debugprint "No Role user detected";
+      goodprint "No Role user detected";
+    }
     # Looking for Anonymous users
-    my @mysqlstatlist = select_array
-"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE TRIM(USER) = '' OR USER IS NULL";
+    @mysqlstatlist = select_array
+"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE $extra_user_condition (TRIM(USER) = '' OR USER IS NULL)";
 
     #debugprint Dumper \@mysqlstatlist;
 
@@ -1977,9 +1993,10 @@ sub security_recommendations {
     if ( mysql_version_ge( 10, 4 ) ) {
         @mysqlstatlist = select_array
 q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
-    user != ''
+    ( user != ''
     AND JSON_CONTAINS(Priv, '"mysql_native_password"', '$.plugin') AND JSON_CONTAINS(Priv, '""', '$.authentication_string')
-    AND NOT JSON_CONTAINS(Priv, 'true', '$.account_locked')};
+    AND NOT JSON_CONTAINS(Priv, 'true', '$.account_locked')
+    )};
     }
     else {
         @mysqlstatlist = select_array
