@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.8
+# mysqltuner.pl - Version 1.9.9
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2006-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.8";
+my $tunerversion = "1.9.9";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -190,13 +190,13 @@ $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
 
 # check if we need to enable verbose mode
 if ( $opt{verbose} ) {
-    $opt{checkversion} = 1;    #Check for updates to MySQLTuner
-    $opt{dbstat}       = 1;    #Print database information
-    $opt{tbstat}       = 1;    #Print database information
-    $opt{idxstat}      = 1;    #Print index information
-    $opt{sysstat}      = 1;    #Print index information
-    $opt{buffers}      = 1;    #Print global and per-thread buffer values
-    $opt{pfstat}       = 1;    #Print performance schema info.
+    $opt{checkversion} = 1;    # Check for updates to MySQLTuner
+    $opt{dbstat}       = 1;    # Print database information
+    $opt{tbstat}       = 1;    # Print database information
+    $opt{idxstat}      = 1;    # Print index information
+    $opt{sysstat}      = 1;    # Print index information
+    $opt{buffers}      = 1;    # Print global and per-thread buffer values
+    $opt{pfstat}       = 1;    # Print performance schema info.
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
@@ -204,10 +204,10 @@ $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't Print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't Print column information
 $opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
 $opt{noprocess} = 0
-  if ( $opt{noprocess} == 1 );                # Don't Print process information
+  if ( $opt{noprocess} == 1 );                 # Don't Print process information
 $opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't Print sysstat information
 $opt{pfstat}  = 0
-  if ( $opt{nopfstat} == 1 );    # Don't Print performance schema information
+  if ( $opt{nopfstat} == 1 );       # Don't Print performance schema information
 $opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't Print index information
 
 # for RPM distributions
@@ -995,7 +995,6 @@ sub mysql_setup {
             exit 1;
         }
     }
-
 }
 
 # MySQL Request Array
@@ -1004,7 +1003,7 @@ sub select_array {
     debugprint "PERFORM: $req ";
     my @result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>/dev/null`;
     if ( $? != 0 ) {
-        badprint "failed to execute: $req";
+        badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         debugprint "CMD    : $mysqlcmd";
         debugprint "OPTIONS: $mysqllogin";
@@ -1029,7 +1028,7 @@ sub select_one {
     debugprint "PERFORM: $req ";
     my $result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>/dev/null`;
     if ( $? != 0 ) {
-        badprint "failed to execute: $req";
+        badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         debugprint "CMD    : $mysqlcmd";
         debugprint "OPTIONS: $mysqllogin";
@@ -1050,7 +1049,7 @@ sub select_one_g {
     debugprint "PERFORM: $req ";
     my @result = `$mysqlcmd $mysqllogin -re "\\w$req\\G" 2>>/dev/null`;
     if ( $? != 0 ) {
-        badprint "failed to execute: $req";
+        badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         debugprint "CMD    : $mysqlcmd";
         debugprint "OPTIONS: $mysqllogin";
@@ -1377,7 +1376,7 @@ sub log_file_recommendations {
         goodprint "Log file $myvar{'log_error'} exists";
         my $size = ( stat $myvar{'log_error'} )[7];
         infoprint "Log file: "
-          . $myvar{'log_error'} . "("
+          . $myvar{'log_error'} . " ("
           . hr_bytes_rnd($size) . ")";
 
         if ( $size > 0 ) {
@@ -2414,7 +2413,7 @@ sub check_storage_engines {
         }
         $result{'Tables'}{'Fragmented tables'} =
           [ select_array
-"SELECT CONCAT(CONCAT(TABLE_SCHEMA, '.'), TABLE_NAME),cast(DATA_FREE as signed) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema','performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
+"SELECT CONCAT(CONCAT(TABLE_SCHEMA, '.'), TABLE_NAME),cast(DATA_FREE as signed) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
           ];
         $fragtables = scalar @{ $result{'Tables'}{'Fragmented tables'} };
 
@@ -3180,7 +3179,7 @@ sub mysql_stats {
     }
     elsif ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF' ) {
         badprint
-"name resolution is active : a reverse name resolution is made for each new connection and can reduce performance";
+"Name resolution is active: a reverse name resolution is made for each new connection and can reduce performance";
         push( @generalrec,
 "Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=1"
         );
@@ -3481,7 +3480,6 @@ sub mysql_stats {
                       $mystat{'Table_open_cache_misses'} )
                   . " requests)";
             }
-
         }
     }
 
@@ -3495,9 +3493,9 @@ sub mysql_stats {
                   . ") is in autosizing mode" );
         }
         elsif ( $myvar{'table_definition_cache'} < $nbtables ) {
-            badprint "table_definition_cache("
+            badprint "table_definition_cache ("
               . $myvar{'table_definition_cache'}
-              . ") is lower than number of tables($nbtables) ";
+              . ") is less than number of tables ($nbtables) ";
             push( @adjvars,
                     "table_definition_cache("
                   . $myvar{'table_definition_cache'} . ") > "
@@ -3505,9 +3503,9 @@ sub mysql_stats {
                   . " or -1 (autosizing if supported)" );
         }
         else {
-            goodprint "table_definition_cache("
+            goodprint "table_definition_cache ("
               . $myvar{'table_definition_cache'}
-              . ") is upper than number of tables($nbtables)";
+              . ") is greater than number of tables ($nbtables)";
         }
     }
     else {
@@ -3738,7 +3736,7 @@ sub mysql_myisam {
 sub mariadb_threadpool {
     subheaderprint "ThreadPool Metrics";
 
-    # AriaDB
+    # MariaDB
     unless ( defined $myvar{'have_threadpool'}
         && $myvar{'have_threadpool'} eq "YES" )
     {
@@ -3988,7 +3986,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Top user per io
-    subheaderprint "Performance schema: Top 5 user per io";
+    subheaderprint "Performance schema: Top 5 user per IO";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4003,7 +4001,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Top user per io latency
-    subheaderprint "Performance schema: Top 5 user per io latency";
+    subheaderprint "Performance schema: Top 5 user per IO latency";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4498,7 +4496,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # Latest file IO by latency
-    subheaderprint "Performance schema: Latest FILE IO by latency";
+    subheaderprint "Performance schema: Latest File IO by latency";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4513,7 +4511,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # FILE by IO read bytes
-    subheaderprint "Performance schema: FILE by IO read bytes";
+    subheaderprint "Performance schema: File by IO read bytes";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4528,7 +4526,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # FILE by IO written bytes
-    subheaderprint "Performance schema: FILE by IO written bytes";
+    subheaderprint "Performance schema: File by IO written bytes";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4543,7 +4541,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # file per IO total latency
-    subheaderprint "Performance schema: file per IO total latency";
+    subheaderprint "Performance schema: File per IO total latency";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4679,7 +4677,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 most used index
-    subheaderprint "Performance schema: TOP 15 most modified indexes";
+    subheaderprint "Performance schema: Top 15 most modified indexes";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4694,7 +4692,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 high read latency index
-    subheaderprint "Performance schema: TOP 15 high read latency index";
+    subheaderprint "Performance schema: Top 15 high read latency index";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4709,7 +4707,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 high insert latency index
-    subheaderprint "Performance schema: TOP 15 most modified indexes";
+    subheaderprint "Performance schema: Top 15 most modified indexes";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4724,7 +4722,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 high update latency index
-    subheaderprint "Performance schema: TOP 15 high update latency index";
+    subheaderprint "Performance schema: Top 15 high update latency index";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4739,7 +4737,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 high delete latency index
-    subheaderprint "Performance schema: TOP 15 high delete latency index";
+    subheaderprint "Performance schema: Top 15 high delete latency index";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4769,7 +4767,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 most used tables
-    subheaderprint "Performance schema: TOP 15 most modified tables";
+    subheaderprint "Performance schema: Top 15 most modified tables";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4784,7 +4782,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 high read latency tables
-    subheaderprint "Performance schema: TOP 15 high read latency tables";
+    subheaderprint "Performance schema: Top 15 high read latency tables";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4799,7 +4797,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 high insert latency tables
-    subheaderprint "Performance schema: TOP 15 high insert latency tables";
+    subheaderprint "Performance schema: Top 15 high insert latency tables";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4814,7 +4812,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 high update latency tables
-    subheaderprint "Performance schema: TOP 15 high update latency tables";
+    subheaderprint "Performance schema: Top 15 high update latency tables";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4829,7 +4827,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 high delete latency tables
-    subheaderprint "Performance schema: TOP 15 high delete latency tables";
+    subheaderprint "Performance schema: Top 15 high delete latency tables";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5930,7 +5928,7 @@ sub mysql_innodb {
         or $mycalc{'innodb_log_size_pct'} > 30 )
     {
         badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
-          . $mycalc{'innodb_log_size_pct'} . " %): "
+          . $mycalc{'innodb_log_size_pct'} . "%): "
           . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
           . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
@@ -5942,7 +5940,7 @@ sub mysql_innodb {
                 $myvar{'innodb_buffer_pool_size'} /
                   $myvar{'innodb_log_files_in_group'} / 4
               )
-              . ") if possible, so InnoDB total log files size equals to 25% of buffer pool size."
+              . ") if possible, so InnoDB total log files size equals 25% of buffer pool size."
         );
         if ( mysql_version_le( 5, 6, 2 ) ) {
             push( @generalrec,
@@ -6020,7 +6018,7 @@ sub mysql_innodb {
           "InnoDB Buffer Pool Chunk Size not used or defined in your version";
     }
     else {
-        infoprint "Number of InnoDB Buffer Pool Chunk : "
+        infoprint "Number of InnoDB Buffer Pool Chunk: "
           . int( $myvar{'innodb_buffer_pool_size'} ) /
           int( $myvar{'innodb_buffer_pool_chunk_size'} ) . " for "
           . $myvar{'innodb_buffer_pool_instances'}
@@ -6380,7 +6378,6 @@ sub mysql_databases {
               . " table column(s) has same collation defined for all text like column(s).";
         }
     }
-
 }
 
 # Recommendations for database columns
@@ -6482,14 +6479,12 @@ ENDSQL
 "ALTER TABLE \`$dbname\`.\`$tbname\` MODIFY \`$_\` $optimal_type;"
                         );
                     }
-
                 }
                 else {
                     goodprint "$dbname.$tbname ($_) type: $current_type";
                 }
             }
         }
-
     }
 }
 
@@ -6630,7 +6625,6 @@ sub mysql_views() {
           "Skip Index metrics from information schema missing in this version";
         return;
     }
-
 }
 
 sub mysql_routines() {
@@ -6640,7 +6634,6 @@ sub mysql_routines() {
           "Skip Index metrics from information schema missing in this version";
         return;
     }
-
 }
 
 sub mysql_triggers() {
@@ -6650,7 +6643,6 @@ sub mysql_triggers() {
           "Skip Index metrics from information schema missing in this version";
         return;
     }
-
 }
 
 # Take the two recommendation arrays and display them at the end of the output
@@ -6875,7 +6867,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.8 - MySQL High Performance Tuning Script
+ MySQLTuner 1.9.9 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
