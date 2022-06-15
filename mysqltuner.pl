@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.0.0
+# mysqltuner.pl - Version 2.0.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.0.0";
+my $tunerversion = "2.0.1";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2143,7 +2143,10 @@ sub get_replication_status {
     debugprint "IO RUNNING: $io_running ";
     my ($sql_running) = $myrepl{'Slave_SQL_Running'} // $myrepl{'Replica_SQL_Running'};
     debugprint "SQL RUNNING: $sql_running ";
+
+
     my ($seconds_behind_master) = $myrepl{'Seconds_Behind_Master'} // $myrepl{'Seconds_Behind_Source'} ;
+    $seconds_behind_master = 1000000 unless defined($seconds_behind_master);
     debugprint "SECONDS : $seconds_behind_master ";
 
     if ( defined($io_running)
@@ -6868,7 +6871,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.0.0 - MySQL High Performance Tuning Script
+ MySQLTuner 2.0.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
