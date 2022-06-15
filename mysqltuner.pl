@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 1.9.9
+# mysqltuner.pl - Version 2.0.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
-# Copyright (C) 2006-2022 Jean-Marie Renouard - jmrenouard@gmail.com
+# Copyright (C) 2015-2022 Jean-Marie Renouard - jmrenouard@gmail.com
 
 # For the latest updates, please visit http://mysqltuner.pl/
 # Git repository available at https://github.com/major/MySQLTuner-perl
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "1.9.9";
+my $tunerversion = "2.0.0";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2188,6 +2188,7 @@ sub validate_mysql_version {
         or mysql_version_eq( 10, 4 )
         or mysql_version_eq( 10, 5 )
         or mysql_version_eq( 10, 6 )
+        or mysql_version_eq( 10, 7 )
     )
     {
         goodprint "Currently running supported MySQL version "
@@ -6867,7 +6868,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 1.9.9 - MySQL High Performance Tuning Script
+ MySQLTuner 2.0.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
