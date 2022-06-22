@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.0.3
+# mysqltuner.pl - Version 2.0.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.0.3";
+my $tunerversion = "2.0.4";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1359,7 +1359,7 @@ sub log_file_recommendations {
 
     subheaderprint "Log file Recommendations";
     if ( "$myvar{'log_error'}" eq "stderr" ) {
-        badprint "log_error is set to $myvar{'log_error'} MT can't read stderr";
+        badprint "log_error is set to $myvar{'log_error'}, but this script can't read stderr";
         return;
     }
     elsif ( $myvar{'log_error'} =~ /^(docker|podman|kubectl):(.*)/ ) {
@@ -1947,7 +1947,7 @@ sub security_recommendations {
     # IS THERE A ROLE COLUMN
     my $is_role_column = select_one "select count(*) from information_schema.columns where TABLE_NAME='user' AND TABLE_SCHEMA='mysql' and COLUMN_NAME='IS_ROLE'";
     
-    my $extra_user_condition="1 = 1 OR ";
+    my $extra_user_condition="";
     $extra_user_condition="IS_ROLE = 'N' AND" if $is_role_column > 0;
     my @mysqlstatlist;
     if ($is_role_column > 0) {
@@ -6889,7 +6889,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.0.3 - MySQL High Performance Tuning Script
+ MySQLTuner 2.0.4 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
