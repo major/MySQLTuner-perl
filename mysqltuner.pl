@@ -204,10 +204,10 @@ $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't Print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't Print column information
 $opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
 $opt{noprocess} = 0
-  if ( $opt{noprocess} == 1 );                 # Don't Print process information
+  if ( $opt{noprocess} == 1 );                # Don't Print process information
 $opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't Print sysstat information
 $opt{pfstat}  = 0
-  if ( $opt{nopfstat} == 1 );       # Don't Print performance schema information
+  if ( $opt{nopfstat} == 1 );    # Don't Print performance schema information
 $opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't Print index information
 
 # for RPM distributions
@@ -255,9 +255,9 @@ my @dblist;
 
 # Super structure containing all information
 my %result;
-$result{'MySQLTuner'}{'version'} = $tunerversion;
-$result{'MySQLTuner'}{'datetime'} =`date '+%d-%m-%Y %H:%M:%S'`;
-$result{'MySQLTuner'}{'options'} = \%opt;
+$result{'MySQLTuner'}{'version'}  = $tunerversion;
+$result{'MySQLTuner'}{'datetime'} = `date '+%d-%m-%Y %H:%M:%S'`;
+$result{'MySQLTuner'}{'options'}  = \%opt;
 
 # Functions that handle the print styles
 sub prettyprint {
@@ -594,7 +594,7 @@ sub update_tuner_version {
     }
 
     my $update;
-    my $fullpath="";
+    my $fullpath = "";
     my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/";
     my @scripts =
       ( "mysqltuner.pl", "basic_passwords.txt", "vulnerabilities.csv" );
@@ -607,12 +607,12 @@ sub update_tuner_version {
         if ( $httpcli =~ /curl$/ ) {
             debugprint "$httpcli is available.";
 
-            $fullpath=dirname(__FILE__)."/".$script;
+            $fullpath = dirname(__FILE__) . "/" . $script;
             debugprint "FullPath: $fullpath";
             debugprint
-              "$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath";
+"$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath";
             $update =
-              `$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath`;
+`$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath`;
             chomp($update);
             debugprint "$script updated: $update";
 
@@ -747,7 +747,7 @@ sub mysql_setup {
         $remotestring = " -S $opt{socket} -P $opt{port}";
     }
 
-    if ( $opt{protocol} ne '' ){
+    if ( $opt{protocol} ne '' ) {
         $remotestring = " --protocol=$opt{protocol}";
     }
 
@@ -1359,7 +1359,8 @@ sub log_file_recommendations {
 
     subheaderprint "Log file Recommendations";
     if ( "$myvar{'log_error'}" eq "stderr" ) {
-        badprint "log_error is set to $myvar{'log_error'}, but this script can't read stderr";
+        badprint
+"log_error is set to $myvar{'log_error'}, but this script can't read stderr";
         return;
     }
     elsif ( $myvar{'log_error'} =~ /^(docker|podman|kubectl):(.*)/ ) {
@@ -1423,7 +1424,7 @@ sub log_file_recommendations {
         $numLi++;
         debugprint "$numLi: $logLi"
           if $logLi =~ /warning|error/i and $logLi !~ /Logging to/;
-        $nbErrLog++ if $logLi =~ /error/i and $logLi !~ /Logging to/;
+        $nbErrLog++  if $logLi =~ /error/i and $logLi !~ /Logging to/;
         $nbWarnLog++ if $logLi =~ /warning/i;
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
@@ -1945,21 +1946,25 @@ sub security_recommendations {
     debugprint "Password column = $PASS_COLUMN_NAME";
 
     # IS THERE A ROLE COLUMN
-    my $is_role_column = select_one "select count(*) from information_schema.columns where TABLE_NAME='user' AND TABLE_SCHEMA='mysql' and COLUMN_NAME='IS_ROLE'";
-    
-    my $extra_user_condition="";
-    $extra_user_condition="IS_ROLE = 'N' AND" if $is_role_column > 0;
+    my $is_role_column = select_one
+"select count(*) from information_schema.columns where TABLE_NAME='user' AND TABLE_SCHEMA='mysql' and COLUMN_NAME='IS_ROLE'";
+
+    my $extra_user_condition = "";
+    $extra_user_condition = "IS_ROLE = 'N' AND" if $is_role_column > 0;
     my @mysqlstatlist;
-    if ($is_role_column > 0) {
-        @mysqlstatlist= select_array "SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE IS_ROLE='Y'";
+    if ( $is_role_column > 0 ) {
+        @mysqlstatlist = select_array
+"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE IS_ROLE='Y'";
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             infoprint "User $line is User Role";
         }
-    } else {
-      debugprint "No Role user detected";
-      goodprint "No Role user detected";
     }
+    else {
+        debugprint "No Role user detected";
+        goodprint "No Role user detected";
+    }
+
     # Looking for Anonymous users
     @mysqlstatlist = select_array
 "SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE $extra_user_condition (TRIM(USER) = '' OR USER IS NULL)";
@@ -2135,14 +2140,22 @@ sub get_replication_status {
 
     infoprint "Semi synchronous replication Master: "
       . (
-        ( defined( $myvar{'rpl_semi_sync_master_enabled'} ) or defined( $myvar{'rpl_semi_sync_source_enabled'} ) )
-        ? ( $myvar{'rpl_semi_sync_master_enabled'} // $myvar{'rpl_semi_sync_source_enabled'} )
+        (
+                 defined( $myvar{'rpl_semi_sync_master_enabled'} )
+              or defined( $myvar{'rpl_semi_sync_source_enabled'} )
+        )
+        ? ( $myvar{'rpl_semi_sync_master_enabled'}
+              // $myvar{'rpl_semi_sync_source_enabled'} )
         : 'Not Activated'
       );
     infoprint "Semi synchronous replication Slave: "
       . (
-        ( defined( $myvar{'rpl_semi_sync_slave_enabled'} ) or defined( $myvar{'rpl_semi_sync_replica_enabled'} ) )
-        ? ( $myvar{'rpl_semi_sync_slave_enabled'} // $myvar{'rpl_semi_sync_replica_enabled'} )
+        (
+                 defined( $myvar{'rpl_semi_sync_slave_enabled'} )
+              or defined( $myvar{'rpl_semi_sync_replica_enabled'} )
+        )
+        ? ( $myvar{'rpl_semi_sync_slave_enabled'}
+              // $myvar{'rpl_semi_sync_replica_enabled'} )
         : 'Not Activated'
       );
     if ( scalar( keys %myrepl ) == 0 and scalar( keys %myslaves ) == 0 ) {
@@ -2156,13 +2169,15 @@ sub get_replication_status {
     }
 
     $result{'Replication'}{'status'} = \%myrepl;
-    my ($io_running) = $myrepl{'Slave_IO_Running'} // $myrepl{'Replica_IO_Running'};
+    my ($io_running) = $myrepl{'Slave_IO_Running'}
+      // $myrepl{'Replica_IO_Running'};
     debugprint "IO RUNNING: $io_running ";
-    my ($sql_running) = $myrepl{'Slave_SQL_Running'} // $myrepl{'Replica_SQL_Running'};
+    my ($sql_running) = $myrepl{'Slave_SQL_Running'}
+      // $myrepl{'Replica_SQL_Running'};
     debugprint "SQL RUNNING: $sql_running ";
 
-
-    my ($seconds_behind_master) = $myrepl{'Seconds_Behind_Master'} // $myrepl{'Seconds_Behind_Source'} ;
+    my ($seconds_behind_master) = $myrepl{'Seconds_Behind_Master'}
+      // $myrepl{'Seconds_Behind_Source'};
     $seconds_behind_master = 1000000 unless defined($seconds_behind_master);
     debugprint "SECONDS : $seconds_behind_master ";
 
@@ -2173,7 +2188,7 @@ sub get_replication_status {
           "This replication slave is not running but seems to be configured.";
     }
     if (   defined($io_running)
-        && $io_running  =~ /yes/i
+        && $io_running =~ /yes/i
         && $sql_running =~ /yes/i )
     {
         if ( $myvar{'read_only'} eq 'OFF' ) {
@@ -2209,19 +2224,21 @@ sub validate_mysql_version {
         or mysql_version_eq( 10, 5 )
         or mysql_version_eq( 10, 6 )
         or mysql_version_eq( 10, 7 )
-        or mysql_version_eq( 10, 8 )
-    )
+        or mysql_version_eq( 10, 8 ) )
     {
         goodprint "Currently running supported MySQL version "
           . $myvar{'version'} . "";
         return;
-    } else {
+    }
+    else {
         badprint "Your MySQL version "
           . $myvar{'version'}
           . " is EOL software!  Upgrade soon!";
-        push ( @generalrec, "You are using n unsupported version for production environments");
-        push ( @generalrec, "Upgrade as soon as possible to a supported version !");
-           
+        push( @generalrec,
+            "You are using n unsupported version for production environments" );
+        push( @generalrec,
+            "Upgrade as soon as possible to a supported version !" );
+
     }
 }
 
@@ -3188,15 +3205,18 @@ sub mysql_stats {
         infoprint
 "Skipped name resolution test due to missing skip_name_resolve in system variables.";
     }
+
     #Cpanel and Skip name resolve
-    elsif ( -r "/usr/local/cpanel/cpanel" ){
-        if  ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF') {
+    elsif ( -r "/usr/local/cpanel/cpanel" ) {
+        if ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF' ) {
             infoprint "CPanel and Flex system skip-name-resolve should be on";
         }
-        if  ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF') {
+        if ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF' ) {
             badprint "CPanel and Flex system skip-name-resolve should be on";
-            push (@generalrec, "name resolution is enabled due to cPanel doesn't support this disabled.");
-            push (@adjvars, "skip-name-resolve=0");
+            push( @generalrec,
+"name resolution is enabled due to cPanel doesn't support this disabled."
+            );
+            push( @adjvars, "skip-name-resolve=0" );
         }
     }
     elsif ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF' ) {
@@ -3205,7 +3225,7 @@ sub mysql_stats {
         push( @generalrec,
 "Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=1"
         );
-        push (@adjvars, "skip-name-resolve=1");
+        push( @adjvars, "skip-name-resolve=1" );
     }
 
     # Query cache
@@ -3620,15 +3640,15 @@ sub mysql_myisam {
     subheaderprint "MyISAM Metrics";
     if ( mysql_version_ge(8) and mysql_version_le(10) ) {
         infoprint "MyISAM Metrics are disabled on last MySQL versions.";
-        if ( $myvar{'key_buffer_size'} > 0) {
+        if ( $myvar{'key_buffer_size'} > 0 ) {
             push( @adjvars, "key_buffer_size=0" );
-            push( @generalrec, "Buffer Key MyISAM set to 0, no MyISAM table detected" );
+            push( @generalrec,
+                "Buffer Key MyISAM set to 0, no MyISAM table detected" );
         }
         return;
     }
-    my $nb_myisam_tables=select_one(
-"SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM'"
-              );
+    my $nb_myisam_tables = select_one(
+        "SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM'");
     if ( $nb_myisam_tables == 0 ) {
         infoprint "No MyISAM table(s) detected ....";
         return;
@@ -3858,13 +3878,12 @@ sub mysqsl_pfs {
     # Performance Schema
     $myvar{'performance_schema'} = 'OFF'
       unless defined( $myvar{'performance_schema'} );
-    if ($myvar{'performance_schema'} eq 'OFF') {
+    if ( $myvar{'performance_schema'} eq 'OFF' ) {
         badprint "Performance_schema should be activated.";
         push( @adjvars, "performance_schema=ON" );
         push( @generalrec,
-                "Performance schema should be activated for better diagnostics"
-            );
-    } 
+            "Performance schema should be activated for better diagnostics" );
+    }
     if ( $myvar{'performance_schema'} eq 'ON' ) {
         infoprint "Performance_schema is activated.";
         debugprint "Performance schema is " . $myvar{'performance_schema'};
@@ -3888,9 +3907,9 @@ sub mysqsl_pfs {
     infoprint "Sys schema Version: "
       . select_one("select sys_version from sys.version");
 
-    # Store all sys schema
+# Store all sys schema
 #    for my $pfs_view(select_array('use sys;show tables;')){
-        #infoprint "$pfs_view"
+#infoprint "$pfs_view"
 #        @$result{'sys'}{$pfs_view}{'headers'}=[];
 #        for my $h (select_array("select column_name FROM INFORMATION_SCHEMA.COLUMNS c
 # WHERE c.table_name = '$pfs_view'  ORDER BY c.ORDINAL_POSITION")) {
@@ -3902,7 +3921,7 @@ sub mysqsl_pfs {
 #            push $result{'sys'}{$pfs_view}{'values'}, $lQuery;
 #        }
 #    }
-    # Top user per connection
+# Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
     my $nbL = 1;
     for my $lQuery (
@@ -6669,7 +6688,7 @@ sub mysql_triggers() {
 
 # Take the two recommendation arrays and display them at the end of the output
 sub make_recommendations {
-    $result{'Recommendations'}  = \@generalrec;
+    $result{'Recommendations'} = \@generalrec;
     $result{'AdjustVariables'} = \@adjvars;
     subheaderprint "Recommendations";
     if ( @generalrec > 0 ) {
@@ -6695,8 +6714,7 @@ sub close_outputfile {
 }
 
 sub headerprint {
-    prettyprint
-      " >>  MySQLTuner $tunerversion\n" 
+    prettyprint " >>  MySQLTuner $tunerversion\n"
       . "\t * Jean-Marie Renouard <jmrenouard\@gmail.com>\n"
       . "\t * Major Hayden <major\@mhtx.net>\n"
       . " >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/\n"
@@ -6847,25 +6865,25 @@ system_recommendations;    # avoid to many service on the same host
 log_file_recommendations;  # check log file content
 check_storage_engines;     # Show enabled storage engines
 
-check_metadata_perf;       # Show parameter impacting performance during analysis
-mysql_databases;           # Show informations about databases
-mysql_tables;              # Show informations about table column
+check_metadata_perf;    # Show parameter impacting performance during analysis
+mysql_databases;        # Show informations about databases
+mysql_tables;           # Show informations about table column
 
-mysql_indexes;             # Show informations about indexes
-mysql_views;               # Show informations about views
-mysql_triggers;            # Show informations about triggers
-mysql_routines;            # Show informations about routines
-security_recommendations;  # Display some security recommendations
-cve_recommendations;       # Display related CVE
-calculations;              # Calculate everything we need
-mysql_stats;               # Print the server stats
-mysqsl_pfs;                # Print Performance schema info
-mariadb_threadpool;        # Print MariaDB ThreadPool stats
-mysql_myisam;              # Print MyISAM stats
-mysql_innodb;              # Print InnoDB stats
-mariadb_aria;              # Print MariaDB Aria stats
-mariadb_tokudb;            # Print MariaDB Tokudb stats
-mariadb_xtradb;            # Print MariaDB XtraDB stats
+mysql_indexes;               # Show informations about indexes
+mysql_views;                 # Show informations about views
+mysql_triggers;              # Show informations about triggers
+mysql_routines;              # Show informations about routines
+security_recommendations;    # Display some security recommendations
+cve_recommendations;         # Display related CVE
+calculations;                # Calculate everything we need
+mysql_stats;                 # Print the server stats
+mysqsl_pfs;                  # Print Performance schema info
+mariadb_threadpool;          # Print MariaDB ThreadPool stats
+mysql_myisam;                # Print MyISAM stats
+mysql_innodb;                # Print InnoDB stats
+mariadb_aria;                # Print MariaDB Aria stats
+mariadb_tokudb;              # Print MariaDB Tokudb stats
+mariadb_xtradb;              # Print MariaDB XtraDB stats
 
 #mariadb_rockdb;           # Print MariaDB RockDB stats
 #mariadb_spider;           # Print MariaDB Spider stats
