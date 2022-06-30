@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.0.4 - MySQL High Performance Tuning Script
+    MySQLTuner2.0.5 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -31,7 +31,7 @@ You must provide the remote server's total memory when connecting to other serve
                                 (Recommended for servers with many tables)
     --json                      Print result as JSON string
     --prettyjson                Print result as JSON formatted string
-    --skippassword              Don't perform checks on user passwords(default: off)
+    --skippassword              Don't perform checks on user passwords (default: off)
     --checkversion              Check for updates to MySQLTuner (default: don't check)
     --updateversion             Check for updates to MySQLTuner and update when newer version is available (default: don't check)
     --forcemem <size>           Amount of RAM installed in megabytes
@@ -64,9 +64,9 @@ You must provide the remote server's total memory when connecting to other serve
     --nosysstat                 Don't Print system information
     --pfstat                    Print Performance schema
     --nopfstat                  Don't Print Performance schema
-    --bannedports               Ports banned separated by comma(,)
-    --server-log                Define specifi error_log to analyze
-    --maxportallowed            Number of ports opened allowed on this hosts
+    --bannedports               Ports banned separated by comma (,)
+    --server-log                Define specific error_log to analyze
+    --maxportallowed            Number of ports opened allowed on this host
     --buffers                   Print global and per-thread buffer values
 
 # PERLDOC

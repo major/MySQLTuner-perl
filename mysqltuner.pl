@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.0.4
+# mysqltuner.pl - Version2.0.5
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -655,7 +655,7 @@ sub update_tuner_version {
     else {
         badprint "Couldn't update MySQLTuner script";
     }
-    infoprint "Stopping program: MySQLTuner has be updated.";
+    infoprint "Stopping program: MySQLTuner script must be updated first.";
     exit 0;
 }
 
@@ -666,11 +666,11 @@ sub compare_tuner_version {
     #exit 0;
     if ( $remoteversion ne $tunerversion ) {
         badprint
-          "There is a new version of MySQLTuner available($remoteversion)";
+          "There is a new version of MySQLTuner available ($remoteversion)";
         update_tuner_version();
         return;
     }
-    goodprint "You have the latest version of MySQLTuner($tunerversion)";
+    goodprint "You have the latest version of MySQLTuner ($tunerversion)";
     return;
 }
 
@@ -681,7 +681,7 @@ my $osname = $^O;
 if ( $osname eq 'MSWin32' ) {
     eval { require Win32; } or last;
     $osname = Win32::GetOSName();
-    infoprint "* Windows OS($osname) is not fully supported.\n";
+    infoprint "* Windows OS ($osname) is not fully supported.\n";
 
     #exit 1;
 }
@@ -1174,7 +1174,7 @@ sub get_all_vars {
     $dummyselect = select_one "SELECT VERSION()";
     if ( not defined($dummyselect) or $dummyselect eq "" ) {
         badprint
-"You probably did not get enough privileges for running MySQLTuner ...";
+"You probably do not have enough privileges to run MySQLTuner ...";
         exit(256);
     }
     $dummyselect =~ s/(.*?)\-.*/$1/;
@@ -1514,7 +1514,7 @@ sub cve_recommendations {
     if ( $mysqlvermajor eq 5 and $mysqlverminor eq 5 ) {
         infoprint
           "False positive CVE(s) for MySQL and MariaDB 5.5.x can be found.";
-        infoprint "Check careful each CVE for those particular versions";
+        infoprint "Check carefully each CVE for those particular versions";
     }
     badprint $cvefound . " CVE(s) found for your MySQL release.";
     push( @generalrec,
@@ -1874,7 +1874,7 @@ sub system_recommendations {
           . scalar @opened_ports
           . " listening port(s) on this server.";
         if ( scalar(@opened_ports) > $opt{'maxportallowed'} ) {
-            badprint "There is too many listening ports: "
+            badprint "There are too many listening ports: "
               . scalar(@opened_ports)
               . " opened > "
               . $opt{'maxportallowed'}
@@ -1884,7 +1884,7 @@ sub system_recommendations {
             );
         }
         else {
-            goodprint "There is less than "
+            goodprint "There are less than "
               . $opt{'maxportallowed'}
               . " opened ports on this server.";
         }
@@ -1990,7 +1990,7 @@ sub security_recommendations {
     }
     if ( mysql_version_le( 5, 1 ) ) {
         badprint "No more password checks for MySQL version <=5.1";
-        badprint "MySQL version <=5.1 are deprecated and end of support.";
+        badprint "MySQL version <=5.1 is deprecated and end of support.";
         return;
     }
 
@@ -2098,7 +2098,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
               . $pass
               . "', 2, LENGTH('"
               . $pass . "'))))";
-            debugprint "There is " . scalar(@mysqlstatlist) . " items.";
+            debugprint "There are " . scalar(@mysqlstatlist) . " items.";
             if (@mysqlstatlist) {
                 foreach my $line (@mysqlstatlist) {
                     chomp($line);
@@ -2233,9 +2233,9 @@ sub validate_mysql_version {
     else {
         badprint "Your MySQL version "
           . $myvar{'version'}
-          . " is EOL software!  Upgrade soon!";
+          . " is EOL software. Upgrade soon!";
         push( @generalrec,
-            "You are using n unsupported version for production environments" );
+            "You are using an unsupported version for production environments" );
         push( @generalrec,
             "Upgrade as soon as possible to a supported version !" );
 
@@ -2424,7 +2424,7 @@ sub check_storage_engines {
 
 # MySQL 5 servers can have table sizes calculated quickly from information schema
         my @templist = select_array
-"SELECT ENGINE,SUM(DATA_LENGTH+INDEX_LENGTH),COUNT(ENGINE),SUM(DATA_LENGTH),SUM(INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
+"SELECT ENGINE, SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(ENGINE), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
 
         my ( $engine, $size, $count, $dsize, $isize );
         foreach my $line (@templist) {
@@ -2533,9 +2533,9 @@ sub check_storage_engines {
         && defined $myvar{'have_isam'}
         && $myvar{'have_isam'} eq "YES" )
     {
-        badprint "MYISAM is enabled but isn't being used";
+        badprint "MyISAM is enabled but isn't being used";
         push( @generalrec,
-"Add skip-isam to MySQL configuration to disable ISAM (MySQL > 4.1.0)"
+            "Add skip-isam to MySQL configuration to disable MyISAM (MySQL > 4.1.0)"
         );
     }
 
@@ -2607,7 +2607,6 @@ sub check_storage_engines {
             }
         }
     }
-
 }
 
 my %mycalc;
@@ -2794,9 +2793,9 @@ sub calculations {
     }
     elsif ( mysql_version_ge(5) ) {
         $mycalc{'total_myisam_indexes'} = select_one
-"SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';";
+"SELECT IFNULL(SUM(INDEX_LENGTH), 0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM';";
         $mycalc{'total_aria_indexes'} = select_one
-"SELECT IFNULL(SUM(INDEX_LENGTH),0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'Aria';";
+"SELECT IFNULL(SUM(INDEX_LENGTH), 0) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'Aria';";
     }
     if ( defined $mycalc{'total_myisam_indexes'} ) {
         chomp( $mycalc{'total_myisam_indexes'} );
@@ -2877,7 +2876,6 @@ sub calculations {
                 )
             );
         }
-
     }
     else {
         $mycalc{'table_cache_hit_rate'} = 100;
@@ -3221,7 +3219,7 @@ sub mysql_stats {
     }
     elsif ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF' ) {
         badprint
-"Name resolution is active: a reverse name resolution is made for each new connection and can reduce performance";
+"Name resolution is active: a reverse name resolution is made for each new connection which can reduce performance";
         push( @generalrec,
 "Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=1"
         );
@@ -3490,7 +3488,7 @@ sub mysql_stats {
 "This is MyISAM only table_cache scalability problem, InnoDB not affected."
             );
             push( @generalrec,
-                "See more details here: https://bugs.mysql.com/bug.php?id=49177"
+                "For more details see: https://bugs.mysql.com/bug.php?id=49177"
             );
             push( @generalrec,
 "This bug already fixed in MySQL 5.7.9 and newer MySQL versions."
@@ -3530,7 +3528,7 @@ sub mysql_stats {
     $mycalc{'total_tables'} = $nbtables;
     if ( defined $myvar{'table_definition_cache'} ) {
         if ( $myvar{'table_definition_cache'} == -1 ) {
-            infoprint( "table_definition_cache("
+            infoprint( "table_definition_cache ("
                   . $myvar{'table_definition_cache'}
                   . ") is in autosizing mode" );
         }
@@ -3539,7 +3537,7 @@ sub mysql_stats {
               . $myvar{'table_definition_cache'}
               . ") is less than number of tables ($nbtables) ";
             push( @adjvars,
-                    "table_definition_cache("
+                    "table_definition_cache ("
                   . $myvar{'table_definition_cache'} . ") > "
                   . $nbtables
                   . " or -1 (autosizing if supported)" );
@@ -3639,7 +3637,7 @@ sub mysql_stats {
 sub mysql_myisam {
     subheaderprint "MyISAM Metrics";
     if ( mysql_version_ge(8) and mysql_version_le(10) ) {
-        infoprint "MyISAM Metrics are disabled on last MySQL versions.";
+        infoprint "MyISAM Metrics are disabled since MySQL 8.0.";
         if ( $myvar{'key_buffer_size'} > 0 ) {
             push( @adjvars, "key_buffer_size=0" );
             push( @generalrec,
@@ -3843,13 +3841,13 @@ sub mariadb_threadpool {
         if ( $myvar{'thread_pool_size'} < 4 or $myvar{'thread_pool_size'} > 8 )
         {
             badprint
-"thread_pool_size between 4 and 8 when using MyIsam storage engine.";
+"thread_pool_size between 4 and 8 when using MyISAM storage engine.";
             push( @generalrec,
-                    "Thread pool size for MyIsam usage ("
+                    "Thread pool size for MyISAM usage ("
                   . $myvar{'thread_pool_size'}
                   . ")" );
             push( @adjvars,
-                "thread_pool_size between 4 and 8 for MyIsam usage" );
+                "thread_pool_size between 4 and 8 for MyISAM usage" );
         }
         else {
             goodprint
@@ -3891,12 +3889,12 @@ sub mysqsl_pfs {
     }
 
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
-        infoprint "Sys schema isn't installed.";
+        infoprint "Sys schema is not installed.";
         push( @generalrec,
-"Consider installing Sys schema from https://github.com/mysql/mysql-sys for MySQL"
+            "Consider installing Sys schema from https://github.com/mysql/mysql-sys for MySQL"
         ) unless ( mysql_version_le( 5, 6 ) );
         push( @generalrec,
-"Consider installing Sys schema from https://github.com/FromDual/mariadb-sys for MariaDB"
+            "Consider installing Sys schema from https://github.com/FromDual/mariadb-sys for MariaDB"
         ) unless ( mysql_version_ge( 10, 0 ) );
 
         return;
@@ -4703,7 +4701,7 @@ sub mysqsl_pfs {
 
     #schema_index_statistics
     # TOP 15 most read index
-    subheaderprint "Performance schema: TOP 15 most read indexes";
+    subheaderprint "Performance schema: Top 15 most read indexes";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4793,7 +4791,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     # TOP 15 most read tables
-    subheaderprint "Performance schema: TOP 15 most read tables";
+    subheaderprint "Performance schema: Top 15 most read tables";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -4993,7 +4991,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 15 reader queries (95% percentile)";
+    subheaderprint "Performance schema: Top 15 reader queries (95% percentile)";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5008,7 +5006,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     subheaderprint
-      "Performance schema: TOP 15 most row look queries (95% percentile)";
+      "Performance schema: Top 15 most row look queries (95% percentile)";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5023,7 +5021,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     subheaderprint
-      "Performance schema: TOP 15 total latency queries (95% percentile)";
+      "Performance schema: Top 15 total latency queries (95% percentile)";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5038,7 +5036,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     subheaderprint
-      "Performance schema: TOP 15 max latency queries (95% percentile)";
+      "Performance schema: Top 15 max latency queries (95% percentile)";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5053,7 +5051,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     subheaderprint
-      "Performance schema: TOP 15 average latency queries (95% percentile)";
+      "Performance schema: Top 15 average latency queries (95% percentile)";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5095,7 +5093,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 15 row sorting queries with sort";
+    subheaderprint "Performance schema: Top 15 row sorting queries with sort";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5109,7 +5107,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 15 total latency queries with sort";
+    subheaderprint "Performance schema: Top 15 total latency queries with sort";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5123,7 +5121,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 15 merge queries with sort";
+    subheaderprint "Performance schema: Top 15 merge queries with sort";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5138,7 +5136,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     subheaderprint
-      "Performance schema: TOP 15 average sort merges queries with sort";
+      "Performance schema: Top 15 average sort merges queries with sort";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5152,7 +5150,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 15 scans queries with sort";
+    subheaderprint "Performance schema: Top 15 scans queries with sort";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5166,7 +5164,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 15 range queries with sort";
+    subheaderprint "Performance schema: Top 15 range queries with sort";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5231,7 +5229,7 @@ sub mysqsl_pfs {
       if ( $nbL == 1 );
 
     subheaderprint
-      "Performance schema: TOP 15 total latency queries with temp table";
+      "Performance schema: Top 15 total latency queries with temp table";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5245,7 +5243,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 15 queries with temp table to disk";
+    subheaderprint "Performance schema: Top 15 queries with temp table to disk";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5262,7 +5260,7 @@ sub mysqsl_pfs {
 ##################################################################################
     #wait_classes_global_by_latency
 
-#ysql> select * from wait_classes_global_by_latency;
+#mysql> select * from wait_classes_global_by_latency;
 #-----------------+-------+---------------+-------------+-------------+-------------+
 # event_class     | total | total_latency | min_latency | avg_latency | max_latency |
 #-----------------+-------+---------------+-------------+-------------+-------------+
@@ -5272,7 +5270,7 @@ sub mysqsl_pfs {
 #-----------------+-------+---------------+-------------+-------------+-------------+
 # rows in set (0,00 sec)
 
-    subheaderprint "Performance schema: TOP 15 class events by number";
+    subheaderprint "Performance schema: Top 15 class events by number";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5286,7 +5284,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 30 events by number";
+    subheaderprint "Performance schema: Top 30 events by number";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5300,7 +5298,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 15 class events by total latency";
+    subheaderprint "Performance schema: Top 15 class events by total latency";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5314,7 +5312,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 30 events by total latency";
+    subheaderprint "Performance schema: Top 30 events by total latency";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5328,7 +5326,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 15 class events by max latency";
+    subheaderprint "Performance schema: Top 15 class events by max latency";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5342,7 +5340,7 @@ sub mysqsl_pfs {
     infoprint "No information found or indicators deactivated."
       if ( $nbL == 1 );
 
-    subheaderprint "Performance schema: TOP 30 events by max latency";
+    subheaderprint "Performance schema: Top 30 events by max latency";
     $nbL = 1;
     for my $lQuery (
         select_array(
@@ -5592,26 +5590,26 @@ group by c.table_schema,c.table_name
 having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     );
 
-    infoprint "CPU core detected  : " . (cpu_cores);
+    infoprint "CPU cores detected : " . (cpu_cores);
     infoprint "wsrep_slave_threads: " . get_wsrep_option('wsrep_slave_threads');
 
     if (   get_wsrep_option('wsrep_slave_threads') > ( (cpu_cores) * 4 )
         or get_wsrep_option('wsrep_slave_threads') < ( (cpu_cores) * 2 ) )
     {
         badprint
-"wsrep_slave_threads is not equal to 2, 3 or 4 times number of CPU(s)";
+            "wsrep_slave_threads is not equal to 2, 3 or 4 times the number of CPU(s)";
         push @adjvars, "wsrep_slave_threads = " . ( (cpu_cores) * 4 );
     }
     else {
         goodprint
-          "wsrep_slave_threads is equal to 2, 3 or 4 times number of CPU(s)";
+          "wsrep_slave_threads is equal to 2, 3 or 4 times the number of CPU(s)";
     }
 
     if ( get_wsrep_option('wsrep_slave_threads') > 1 ) {
         infoprint
           "wsrep parallel slave can cause frequent inconsistency crash.";
         push @adjvars,
-"Set wsrep_slave_threads to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
+            "Set wsrep_slave_threads to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
 
         # check options for parallel slave
         if ( get_wsrep_option('wsrep_slave_FK_checks') eq "OFF" ) {
@@ -5654,7 +5652,7 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
     }
     else {
         goodprint
-"Flow control fraction seems to be OK (wsrep_flow_control_paused<=0.02)";
+            "Flow control fraction seems to be OK (wsrep_flow_control_paused <= 0.02)";
     }
 
     if ( scalar(@primaryKeysNbTables) > 0 ) {
@@ -5716,14 +5714,14 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
             }
             else {
                 badprint
-"There are $nbNodesSize nodes in wsrep_cluster_size. Prefer 3 or 5 nodes architecture.";
+            "There are $nbNodesSize nodes in wsrep_cluster_size. Prefer 3 or 5 nodes architecture.";
                 push @generalrec, "Prefer 3 or 5 nodes architecture.";
             }
 
             # wsrep_cluster_address doesn't include garbd nodes
             if ( $nbNodes > $nbNodesSize ) {
                 badprint
-"All cluster nodes are not detected. wsrep_cluster_size less then node count in wsrep_cluster_address";
+            "All cluster nodes are not detected. wsrep_cluster_size less than node count in wsrep_cluster_address";
             }
             else {
                 goodprint "All cluster nodes detected.";
@@ -5761,14 +5759,14 @@ having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
         }
         else {
             badprint "Galera Notify command is not defined.";
-            push( @adjvars, "set up parameter wsrep_notify_cmd to be notify" );
+            push( @adjvars, "set up parameter wsrep_notify_cmd to be notified" );
         }
         if (    trim( $myvar{'wsrep_sst_method'} ) !~ "^xtrabackup.*"
             and trim( $myvar{'wsrep_sst_method'} ) !~ "^mariabackup" )
         {
             badprint "Galera SST method is not xtrabackup based.";
             push( @adjvars,
-"set up parameter wsrep_sst_method to xtrabackup based parameter"
+            "set up parameter wsrep_sst_method to xtrabackup based parameter"
             );
         }
         else {
@@ -5870,10 +5868,10 @@ sub mysql_innodb {
             $defengine = $myvar{'default_storage_engine'}
               if defined( $myvar{'default_storage_engine'} );
             badprint
-"InnoDB Storage engine is disabled. $defengine is the default storage engine"
+            "InnoDB Storage engine is disabled. $defengine is the default storage engine"
               if $defengine eq 'InnoDB';
             infoprint
-"InnoDB Storage engine is disabled. $defengine is the default storage engine"
+            "InnoDB Storage engine is disabled. $defengine is the default storage engine"
               if $defengine ne 'InnoDB';
         }
         return;
@@ -5953,12 +5951,12 @@ sub mysql_innodb {
     # InnoDB Buffer Pool Size
     if ( $myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'} ) {
         goodprint "InnoDB buffer pool / data size: "
-          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . "/"
+          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " / "
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
     }
     else {
         badprint "InnoDB buffer pool / data size: "
-          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . "/"
+          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " / "
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
         push( @adjvars,
                 "innodb_buffer_pool_size (>= "
@@ -5971,7 +5969,7 @@ sub mysql_innodb {
         badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
           . $mycalc{'innodb_log_size_pct'} . "%): "
           . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
-          . $myvar{'innodb_log_files_in_group'} . "/"
+          . $myvar{'innodb_log_files_in_group'} . " / "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal to 25%";
         push(
@@ -5985,7 +5983,7 @@ sub mysql_innodb {
         );
         if ( mysql_version_le( 5, 6, 2 ) ) {
             push( @generalrec,
-"For MySQL 5.6.2 and lower, Max combined innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB."
+"For MySQL 5.6.2 and lower, total innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB."
             );
         }
         push( @generalrec,
@@ -6197,7 +6195,7 @@ sub mysql_databases {
     subheaderprint "Database Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-"Skip Database metrics from information schema missing in this version";
+"Skip Database metrics from information schema are missing in this version";
         return;
     }
 
@@ -6207,20 +6205,20 @@ sub mysql_databases {
     infoprint "There is " . scalar(@dblist) . " Database(s).";
     my @totaldbinfo = split /\s/,
       select_one(
-"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)),COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
+"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH), SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME), COUNT(DISTINCT(TABLE_COLLATION)), COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys');"
       );
     infoprint "All User Databases:";
     infoprint " +-- TABLE : "
       . select_one(
-"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )"
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')"
       ) . "";
     infoprint " +-- VIEW  : "
       . select_one(
-"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )"
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')"
       ) . "";
     infoprint " +-- INDEX : "
       . select_one(
-"SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' )"
+"SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')"
       ) . "";
 
     infoprint " +-- CHARS : "
@@ -6228,7 +6226,7 @@ sub mysql_databases {
       . (
         join ", ",
         select_array(
-"select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
+"select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys');"
         )
       ) . ")";
     infoprint " +-- COLLA : "
@@ -6236,7 +6234,7 @@ sub mysql_databases {
       . (
         join ", ",
         select_array(
-"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_COLLATION IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
+"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_COLLATION IS NOT NULL AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys');"
         )
       ) . ")";
     infoprint " +-- ROWS  : "
@@ -6253,7 +6251,7 @@ sub mysql_databases {
       . (
         join ", ",
         select_array(
-"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE ENGINE IS NOT NULL AND TABLE_SCHEMA NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
+"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE ENGINE IS NOT NULL AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys');"
         )
       ) . ")";
 
@@ -6271,7 +6269,7 @@ sub mysql_databases {
     foreach (@dblist) {
         my @dbinfo = split /\s/,
           select_one(
-"SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) , SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE),COUNT(TABLE_NAME),COUNT(DISTINCT(TABLE_COLLATION)),COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
+"SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH), SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE), COUNT(TABLE_NAME), COUNT(DISTINCT(TABLE_COLLATION)), COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
           );
         next unless defined $dbinfo[0];
         infoprint "Database: " . $dbinfo[0] . "";
@@ -6428,12 +6426,12 @@ sub mysql_tables {
     subheaderprint "Table Column Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-"Skip Database metrics from information schema missing in this version";
+"Skip Database metrics from information schema are missing in this version";
         return;
     }
     if ( mysql_version_ge(8) and not mysql_version_eq(10) ) {
         infoprint
-"MySQL and Percona version 8 and greater have remove PROCEDURE ANALYSE feature";
+"MySQL and Percona version 8.0 and greater have removed PROCEDURE ANALYSE feature";
         $opt{colstat} = 0;
         infoprint "Disabling colstat parameter";
 
@@ -6536,7 +6534,7 @@ sub mysql_indexes {
     subheaderprint "Indexes Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-          "Skip Index metrics from information schema missing in this version";
+          "Skip Index metrics from information schema are missing in this version";
         return;
     }
 
@@ -6547,8 +6545,8 @@ sub mysql_indexes {
 #    }
     my $selIdxReq = <<'ENDSQL';
 SELECT
-  CONCAT(t.TABLE_SCHEMA, '.',t.TABLE_NAME) AS 'table', 
-  CONCAT(s.INDEX_NAME, '(',s.COLUMN_NAME, ')') AS 'index'
+  CONCAT(t.TABLE_SCHEMA, '.', t.TABLE_NAME) AS 'table', 
+  CONCAT(s.INDEX_NAME, '(', s.COLUMN_NAME, ')') AS 'index'
  , s.SEQ_IN_INDEX AS 'seq'
  , s2.max_columns AS 'maxcol'
  , s.CARDINALITY  AS 'card'
@@ -6610,7 +6608,7 @@ ENDSQL
     foreach my $dbname ( select_user_dbs() ) {
         infoprint "Database: " . $dbname . "";
         $selIdxReq = <<"ENDSQL";
-        SELECT  concat(table_name,'.', index_name) AS idxname,
+        SELECT  concat(table_name, '.', index_name) AS idxname,
                 GROUP_CONCAT(column_name ORDER BY seq_in_index) AS cols,
                 SUM(CARDINALITY) as card,
                 INDEX_TYPE as type
@@ -6639,12 +6637,12 @@ ENDSQL
         and $myvar{'performance_schema'} eq 'ON' );
 
     $selIdxReq = <<'ENDSQL';
-SELECT CONCAT(object_schema,'.',object_name) AS 'table', index_name
+SELECT CONCAT(object_schema, '.', object_name) AS 'table', index_name
 FROM performance_schema.table_io_waits_summary_by_index_usage
 WHERE index_name IS NOT NULL
 AND count_star =0
 AND index_name <> 'PRIMARY'
-AND object_schema NOT IN ( 'mysql', 'performance_schema', 'information_schema' )
+AND object_schema NOT IN ('mysql', 'performance_schema', 'information_schema')
 ORDER BY count_star, object_schema, object_name;
 ENDSQL
     @idxinfo = select_array($selIdxReq);
@@ -6663,7 +6661,7 @@ sub mysql_views() {
     subheaderprint "Views Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-          "Skip Index metrics from information schema missing in this version";
+          "Skip Index metrics from information schema are missing in this version";
         return;
     }
 }
@@ -6672,7 +6670,7 @@ sub mysql_routines() {
     subheaderprint "Routines Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-          "Skip Index metrics from information schema missing in this version";
+          "Skip Index metrics from information schema are missing in this version";
         return;
     }
 }
@@ -6681,7 +6679,7 @@ sub mysql_triggers() {
     subheaderprint "Triggers Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-          "Skip Index metrics from information schema missing in this version";
+          "Skip Index metrics from information schema are missing in this version";
         return;
     }
 }
@@ -6907,7 +6905,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.0.4 - MySQL High Performance Tuning Script
+ MySQLTuner2.0.5 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -6938,7 +6936,7 @@ You must provide the remote server's total memory when connecting to other serve
                              (Recommended for servers with many tables)
  --json                      Print result as JSON string
  --prettyjson                Print result as JSON formatted string
- --skippassword              Don't perform checks on user passwords(default: off)
+ --skippassword              Don't perform checks on user passwords (default: off)
  --checkversion              Check for updates to MySQLTuner (default: don't check)
  --updateversion             Check for updates to MySQLTuner and update when newer version is available (default: don't check)
  --forcemem <size>           Amount of RAM installed in megabytes
@@ -6971,11 +6969,10 @@ You must provide the remote server's total memory when connecting to other serve
  --nosysstat                 Don't Print system information
  --pfstat                    Print Performance schema
  --nopfstat                  Don't Print Performance schema
- --bannedports               Ports banned separated by comma(,)
- --server-log                Define specifi error_log to analyze
- --maxportallowed            Number of ports opened allowed on this hosts
+ --bannedports               Ports banned separated by comma (,)
+ --server-log                Define specific error_log to analyze
+ --maxportallowed            Number of ports opened allowed on this host
  --buffers                   Print global and per-thread buffer values
-
 
 =head1 PERLDOC
 
