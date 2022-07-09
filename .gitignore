@@ -9,3 +9,7 @@ Vagrant/data
 Vagrant/.vagrant
 contents
 contents/*
+result_*
+result.html
+result.txt
+reports_*
