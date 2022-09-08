@@ -1019,7 +1019,7 @@ sub select_array {
 sub human_size {
     my ( $size, $n ) = ( shift, 0 );
     ++$n and $size /= 1024 until $size < 1024;
-    return sprintf "%.2f %s", $size, (qw[ bytes KB MB GB ])[$n];
+    return sprintf "%.2f %s", $size, (qw[ bytes KB MB GB TB ])[$n];
 }
 
 # MySQL Request one
