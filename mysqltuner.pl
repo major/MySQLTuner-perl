@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.0.5
+# mysqltuner.pl - Version 2.0.6
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.0.5";
+my $tunerversion = "2.0.6";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -200,15 +200,15 @@ if ( $opt{verbose} ) {
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
-$opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't Print table information
-$opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't Print column information
-$opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't Print database information
+$opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't print table information
+$opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
+$opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't print database information
 $opt{noprocess} = 0
-  if ( $opt{noprocess} == 1 );                # Don't Print process information
-$opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't Print sysstat information
+  if ( $opt{noprocess} == 1 );                # Don't print process information
+$opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't print sysstat information
 $opt{pfstat}  = 0
-  if ( $opt{nopfstat} == 1 );    # Don't Print performance schema information
-$opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't Print index information
+  if ( $opt{nopfstat} == 1 );    # Don't print performance schema information
+$opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't print index information
 
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
@@ -324,13 +324,13 @@ sub hr_bytes {
     return "0B" unless defined($num);
     return "0B" if $num eq "NULL";
 
-    if ( $num >= ( 1024**3 ) ) {    #GB
+    if ( $num >= ( 1024**3 ) ) {       # GB
         return sprintf( "%.1f", ( $num / ( 1024**3 ) ) ) . "G";
     }
-    elsif ( $num >= ( 1024**2 ) ) {    #MB
+    elsif ( $num >= ( 1024**2 ) ) {    # MB
         return sprintf( "%.1f", ( $num / ( 1024**2 ) ) ) . "M";
     }
-    elsif ( $num >= 1024 ) {           #KB
+    elsif ( $num >= 1024 ) {           # KB
         return sprintf( "%.1f", ( $num / 1024 ) ) . "K";
     }
     else {
@@ -363,13 +363,13 @@ sub hr_bytes_rnd {
     return "0B" unless defined($num);
     return "0B" if $num eq "NULL";
 
-    if ( $num >= ( 1024**3 ) ) {    #GB
+    if ( $num >= ( 1024**3 ) ) {       # GB
         return int( ( $num / ( 1024**3 ) ) ) . "G";
     }
-    elsif ( $num >= ( 1024**2 ) ) {    #MB
+    elsif ( $num >= ( 1024**2 ) ) {    # MB
         return int( ( $num / ( 1024**2 ) ) ) . "M";
     }
-    elsif ( $num >= 1024 ) {           #KB
+    elsif ( $num >= 1024 ) {           # KB
         return int( ( $num / 1024 ) ) . "K";
     }
     else {
@@ -404,7 +404,7 @@ sub percentage {
     return sprintf( "%.2f", ( $value * 100 / $total ) );
 }
 
-# Calculates uptime to display in a more attractive form
+# Calculates uptime to display in a human-readable form
 sub pretty_uptime {
     my $uptime  = shift;
     my $seconds = $uptime % 60;
@@ -581,7 +581,7 @@ sub validate_tuner_version {
     debugprint "curl and wget are not available.";
     infoprint "Unable to check for the latest MySQLTuner version";
     infoprint
-"Using --pass and --password option is insecure during MySQLTuner execution(Password disclosure)"
+"Using --pass and --password option is insecure during MySQLTuner execution (password disclosure)"
       if ( defined( $opt{'pass'} ) );
 }
 
@@ -2422,7 +2422,7 @@ sub check_storage_engines {
     infoprint "Status: $engines";
     if ( mysql_version_ge( 5, 1, 5 ) ) {
 
-# MySQL 5 servers can have table sizes calculated quickly from information schema
+# MySQL 5+ servers can have table sizes calculated quickly from information schema
         my @templist = select_array
 "SELECT ENGINE, SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(ENGINE), SUM(DATA_LENGTH), SUM(INDEX_LENGTH) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND ENGINE IS NOT NULL GROUP BY ENGINE ORDER BY ENGINE ASC;";
 
@@ -2614,7 +2614,7 @@ my %mycalc;
 sub calculations {
     if ( $mystat{'Questions'} < 1 ) {
         badprint
-          "Your server has not answered any queries - cannot continue...";
+          "Your server has not answered any queries: cannot continue...";
         exit 2;
     }
 
@@ -3007,7 +3007,7 @@ sub mysql_stats {
         $qps = sprintf( "%.3f", $mystat{'Questions'} / $mystat{'Uptime'} );
     }
     push( @generalrec,
-"MySQL was started within the last 24 hours - recommendations may be inaccurate"
+"MySQL was started within the last 24 hours: recommendations may be inaccurate"
     ) if ( $mystat{'Uptime'} < 86400 );
     infoprint "Up for: "
       . pretty_uptime( $mystat{'Uptime'} ) . " ("
@@ -3043,9 +3043,9 @@ sub mysql_stats {
       . " global + "
       . hr_bytes( $mycalc{'per_thread_buffers'} )
       . " per thread ($myvar{'max_connections'} max threads)";
-    infoprint "P_S Max memory usage: " . hr_bytes_rnd( get_pf_memory() );
-    $result{'P_S'}{'memory'} = get_pf_memory();
-    $result{'P_S'}{'pretty_memory'} =
+    infoprint "Performance_schema Max memory usage: " . hr_bytes_rnd( get_pf_memory() );
+    $result{'Performance_schema'}{'memory'} = get_pf_memory();
+    $result{'Performance_schema'}{'pretty_memory'} =
       hr_bytes_rnd( get_pf_memory() );
     infoprint "Galera GCache Max memory usage: "
       . hr_bytes_rnd( get_gcache_memory() );
@@ -3165,7 +3165,7 @@ sub mysql_stats {
     # Connections
     if ( $mycalc{'pct_connections_used'} > 85 ) {
         badprint
-"Highest connection usage: $mycalc{'pct_connections_used'}%  ($mystat{'Max_used_connections'}/$myvar{'max_connections'})";
+"Highest connection usage: $mycalc{'pct_connections_used'}% ($mystat{'Max_used_connections'}/$myvar{'max_connections'})";
         push( @adjvars,
             "max_connections (> " . $myvar{'max_connections'} . ")" );
         push( @adjvars,
@@ -3183,13 +3183,13 @@ sub mysql_stats {
     # Aborted Connections
     if ( $mycalc{'pct_connections_aborted'} > 3 ) {
         badprint
-"Aborted connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})";
+"Aborted connections: $mycalc{'pct_connections_aborted'}% ($mystat{'Aborted_connects'}/$mystat{'Connections'})";
         push( @generalrec,
             "Reduce or eliminate unclosed connections and network issues" );
     }
     else {
         goodprint
-"Aborted connections: $mycalc{'pct_connections_aborted'}%  ($mystat{'Aborted_connects'}/$mystat{'Connections'})";
+"Aborted connections: $mycalc{'pct_connections_aborted'}% ($mystat{'Aborted_connects'}/$mystat{'Connections'})";
     }
 
     # name resolution
@@ -3384,7 +3384,7 @@ sub mysql_stats {
               . hr_num( $mystat{'Created_tmp_tables'} )
               . " total)";
             push( @generalrec,
-                "Temporary table size is already large - reduce result set size"
+                "Temporary table size is already large: reduce result set size"
             );
             push( @generalrec,
                 "Reduce your SELECT DISTINCT queries without LIMIT clauses" );
@@ -3885,7 +3885,7 @@ sub mysqsl_pfs {
     if ( $myvar{'performance_schema'} eq 'ON' ) {
         infoprint "Performance_schema is activated.";
         debugprint "Performance schema is " . $myvar{'performance_schema'};
-        infoprint "Memory used by P_S: " . hr_bytes( get_pf_memory() );
+        infoprint "Memory used by Performance_schema: " . hr_bytes( get_pf_memory() );
     }
 
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
@@ -6847,7 +6847,7 @@ sub which {
 # ---------------------------------------------------------------------------
 headerprint;    # Header Print
 
-validate_tuner_version;    # Check last version
+validate_tuner_version;    # Check latest version
 mysql_setup;               # Gotta login first
 debugprint "MySQL FINAL Client : $mysqlcmd $mysqllogin";
 debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
@@ -6855,22 +6855,22 @@ debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
 #exit(0);
 os_setup;                  # Set up some OS variables
 get_all_vars;              # Toss variables/status into hashes
-get_tuning_info;           # Get information about the tuning connexion
+get_tuning_info;           # Get information about the tuning connection
 validate_mysql_version;    # Check current MySQL version
 
 check_architecture;        # Suggest 64-bit upgrade
-system_recommendations;    # avoid to many service on the same host
+system_recommendations;    # Avoid too many services on the same host
 log_file_recommendations;  # check log file content
 check_storage_engines;     # Show enabled storage engines
 
 check_metadata_perf;    # Show parameter impacting performance during analysis
-mysql_databases;        # Show informations about databases
-mysql_tables;           # Show informations about table column
+mysql_databases;        # Show information about databases
+mysql_tables;           # Show information about table column
 
-mysql_indexes;               # Show informations about indexes
-mysql_views;                 # Show informations about views
-mysql_triggers;              # Show informations about triggers
-mysql_routines;              # Show informations about routines
+mysql_indexes;               # Show information about indexes
+mysql_views;                 # Show information about views
+mysql_triggers;              # Show information about triggers
+mysql_routines;              # Show information about routines
 security_recommendations;    # Display some security recommendations
 cve_recommendations;         # Display related CVE
 calculations;                # Calculate everything we need
@@ -6905,7 +6905,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.0.5 - MySQL High Performance Tuning Script
+ MySQLTuner 2.0.6 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -6928,7 +6928,7 @@ You must provide the remote server's total memory when connecting to other serve
  --mysqladmin <path>         Path to a custom mysqladmin executable
  --mysqlcmd <path>           Path to a custom mysql executable
  --defaults-file <path>      Path to a custom .my.cnf
- --server-log <path>         Path to explict log file (error_log)
+ --server-log <path>         Path to explicit log file (error_log)
 
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
@@ -6941,7 +6941,7 @@ You must provide the remote server's total memory when connecting to other serve
  --updateversion             Check for updates to MySQLTuner and update when newer version is available (default: don't check)
  --forcemem <size>           Amount of RAM installed in megabytes
  --forceswap <size>          Amount of swap memory configured in megabytes
- --passwordfile <path>       Path to a password file list(one password by line)
+ --passwordfile <path>       Path to a password file list (one password by line)
  --cvefile <path>            CVE File for vulnerability checks
  --outputfile <path>         Path to a output txt file
  --reportfile <path>         Path to a report txt file
@@ -6950,7 +6950,7 @@ You must provide the remote server's total memory when connecting to other serve
 =head1 OUTPUT OPTIONS
 
  --silent                    Don't output anything on screen
- --verbose                   Prints out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
+ --verbose                   Print out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
  --nocolor                   Don't print output in color
  --nogood                    Remove OK responses
  --nobad                     Remove negative/suggestion responses
@@ -6958,20 +6958,20 @@ You must provide the remote server's total memory when connecting to other serve
  --debug                     Print debug information
  --noprocess                 Consider no other process is running
  --dbstat                    Print database information
- --nodbstat                  Don't Print database information
+ --nodbstat                  Don't print database information
  --tbstat                    Print table information
- --notbstat                  Don't Print table information
+ --notbstat                  Don't print table information
  --colstat                   Print column information
- --nocolstat                 Don't Print column information
+ --nocolstat                 Don't print column information
  --idxstat                   Print index information
- --noidxstat                 Don't Print index information
+ --noidxstat                 Don't print index information
  --sysstat                   Print system information
- --nosysstat                 Don't Print system information
+ --nosysstat                 Don't print system information
  --pfstat                    Print Performance schema
- --nopfstat                  Don't Print Performance schema
+ --nopfstat                  Don't print Performance schema
  --bannedports               Ports banned separated by comma (,)
  --server-log                Define specific error_log to analyze
- --maxportallowed            Number of ports opened allowed on this host
+ --maxportallowed            Number of open ports allowable on this host
  --buffers                   Print global and per-thread buffer values
 
 =head1 PERLDOC
