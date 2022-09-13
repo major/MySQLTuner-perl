@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.0.6
+# mysqltuner.pl - Version 2.0.7
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.0.6";
+my $tunerversion = "2.0.7";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -108,6 +108,7 @@ my %opt = (
     "reportfile"     => 0,
     "verbose"        => 0,
     "defaults-file"  => '',
+    "defaults-extra-file"  => '',
     "protocol"       => '',
 );
 
@@ -140,6 +141,7 @@ GetOptions(
     'pfstat',          'nopfstat',
     'idxstat',         'noidxstat',
     'server-log=s',    'protocol=s',
+    'defaults-extra-file=s',
   )
   or pod2usage(
     -exitval  => 1,
@@ -912,6 +914,20 @@ sub mysql_setup {
         my $loginstatus = `$mysqladmincmd $mysqllogin ping 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint "Logged in using credentials from defaults file account.";
+            return 1;
+        }
+    }
+    elsif ( $opt{'defaults-extra-file'} ne '' and -r "$opt{'defaults-extra-file'}" ) {
+
+        # defaults-extra-file
+        debugprint "defaults extra file detected: $opt{'defaults-extra-file'}";
+        my $mysqlclidefaults = `$mysqlcmd --print-defaults`;
+        debugprint "MySQL Client Extra Default File: $opt{'defaults-extra-file'}";
+
+        $mysqllogin = "--defaults-extra-file=" . $opt{'defaults-extra-file'};
+        my $loginstatus = `$mysqladmincmd $mysqllogin ping 2>&1`;
+        if ( $loginstatus =~ /mysqld is alive/ ) {
+            goodprint "Logged in using credentials from extra defaults file account.";
             return 1;
         }
     }
@@ -6905,7 +6921,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.0.6 - MySQL High Performance Tuning Script
+ MySQLTuner 2.0.7 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -6928,6 +6944,7 @@ You must provide the remote server's total memory when connecting to other serve
  --mysqladmin <path>         Path to a custom mysqladmin executable
  --mysqlcmd <path>           Path to a custom mysql executable
  --defaults-file <path>      Path to a custom .my.cnf
+ --defaults-extra-file <path>      Path to a extra custom config file
  --server-log <path>         Path to explicit log file (error_log)
 
 =head1 PERFORMANCE AND REPORTING OPTIONS
