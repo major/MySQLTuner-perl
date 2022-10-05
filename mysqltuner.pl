@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.0.8
+# mysqltuner.pl - Version 2.0.9
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2022 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.0.8";
+my $tunerversion = "2.0.9";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3265,7 +3265,7 @@ sub mysql_stats {
     }
     elsif ( $mystat{'Com_select'} == 0 ) {
         badprint
-          "Query cache cannot be analyzed - no SELECT statements executed";
+          "Query cache cannot be analyzed: no SELECT statements executed";
     }
     else {
         badprint
@@ -5451,7 +5451,7 @@ sub mariadb_tokudb {
     }
     infoprint "TokuDB is enabled.";
 
-    # All is to done here
+    # Not implemented
 }
 
 # Recommendations for XtraDB
@@ -5468,7 +5468,7 @@ sub mariadb_xtradb {
     infoprint "XtraDB is enabled.";
     infoprint "Note that MariaDB 10.2 makes use of InnoDB, not XtraDB."
 
-      # All is to done here
+      # Not implemented
 }
 
 # Recommendations for RocksDB
@@ -5484,7 +5484,7 @@ sub mariadb_rockdb {
     }
     infoprint "RocksDB is enabled.";
 
-    # All is to do here
+    # Not implemented
 }
 
 # Recommendations for Spider
@@ -5500,7 +5500,7 @@ sub mariadb_spider {
     }
     infoprint "Spider is enabled.";
 
-    # All is to do here
+    # Not implemented
 }
 
 # Recommendations for Connect
@@ -5516,7 +5516,7 @@ sub mariadb_connect {
     }
     infoprint "Connect is enabled.";
 
-    # All is to do here
+    # Not implemented
 }
 
 # Perl trim function to remove whitespace from the start and end of the string
@@ -6111,7 +6111,7 @@ sub mysql_innodb {
           . $mycalc{'pct_read_efficiency'} . "% ("
           . ( $mystat{'Innodb_buffer_pool_read_requests'} -
               $mystat{'Innodb_buffer_pool_reads'} )
-          . " hits/ "
+          . " hits / "
           . $mystat{'Innodb_buffer_pool_read_requests'}
           . " total)";
     }
@@ -6120,7 +6120,7 @@ sub mysql_innodb {
           . $mycalc{'pct_read_efficiency'} . "% ("
           . ( $mystat{'Innodb_buffer_pool_read_requests'} -
               $mystat{'Innodb_buffer_pool_reads'} )
-          . " hits/ "
+          . " hits / "
           . $mystat{'Innodb_buffer_pool_read_requests'}
           . " total)";
     }
@@ -6133,7 +6133,7 @@ sub mysql_innodb {
           . abs( $mycalc{'pct_write_efficiency'} ) . "% ("
           . abs( $mystat{'Innodb_log_write_requests'} -
               $mystat{'Innodb_log_writes'} )
-          . " hits/ "
+          . " hits / "
           . $mystat{'Innodb_log_write_requests'}
           . " total)";
     }
@@ -6142,7 +6142,7 @@ sub mysql_innodb {
           . $mycalc{'pct_write_efficiency'} . "% ("
           . ( $mystat{'Innodb_log_write_requests'} -
               $mystat{'Innodb_log_writes'} )
-          . " hits/ "
+          . " hits / "
           . $mystat{'Innodb_log_write_requests'}
           . " total)";
     }
@@ -6924,7 +6924,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.0.8 - MySQL High Performance Tuning Script
+ MySQLTuner 2.0.9 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
