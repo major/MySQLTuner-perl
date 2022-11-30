@@ -143,7 +143,9 @@ For previous MySQL 5.6 version, you can follow this command to create a new data
 Optional Performance schema and Sysschema installation for MariaDB 10.x
 --
 
-Sysschema is not installed by default under MariaDB prior to 10.6
+Sysschema is not installed by default under MariaDB prior to 10.6 [MariaDB sys](https://mariadb.com/kb/en/sys-schema/) 
+
+
 By default, on MariaDB, performance schema is disabled by default. consider activating performance schema across your my.cnf configuration file:
 
 	[mysqld]
@@ -445,4 +447,3 @@ Simple steps to create a pull request:
 - Push it back to your repo
 - Click the Compare & pull request button
 - Click Create pull request to open a new pull request
-
