@@ -5921,6 +5921,10 @@ sub mysql_innodb {
             infoprint " +-- InnoDB Additional Mem Pool: "
               . hr_bytes( $myvar{'innodb_additional_mem_pool_size'} ) . "";
         }
+        if ( defined $myvar{'innodb_redo_log_capacity'} ) {
+            infoprint " +-- InnoDB Redo Log Capacity: "
+              . hr_bytes( $myvar{'innodb_redo_log_capacity'} );
+        }
         if ( defined $myvar{'innodb_log_file_size'} ) {
             infoprint " +-- InnoDB Log File Size: "
               . hr_bytes( $myvar{'innodb_log_file_size'} );
