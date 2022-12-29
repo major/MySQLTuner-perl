@@ -13,3 +13,5 @@ result_*
 result.html
 result.txt
 reports_*
+golang/prog-*
+.vscode

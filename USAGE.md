@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner2.0.5 - MySQL High Performance Tuning Script
+    MySQLTuner 2.0.10 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -23,7 +23,8 @@ You must provide the remote server's total memory when connecting to other serve
     --mysqladmin <path>         Path to a custom mysqladmin executable
     --mysqlcmd <path>           Path to a custom mysql executable
     --defaults-file <path>      Path to a custom .my.cnf
-    --server-log <path>         Path to explict log file (error_log)
+    --defaults-extra-file <path>      Path to a extra custom config file
+    --server-log <path>         Path to explicit log file (error_log)
 
 # PERFORMANCE AND REPORTING OPTIONS
 
@@ -36,7 +37,7 @@ You must provide the remote server's total memory when connecting to other serve
     --updateversion             Check for updates to MySQLTuner and update when newer version is available (default: don't check)
     --forcemem <size>           Amount of RAM installed in megabytes
     --forceswap <size>          Amount of swap memory configured in megabytes
-    --passwordfile <path>       Path to a password file list(one password by line)
+    --passwordfile <path>       Path to a password file list (one password by line)
     --cvefile <path>            CVE File for vulnerability checks
     --outputfile <path>         Path to a output txt file
     --reportfile <path>         Path to a report txt file
@@ -45,7 +46,7 @@ You must provide the remote server's total memory when connecting to other serve
 # OUTPUT OPTIONS
 
     --silent                    Don't output anything on screen
-    --verbose                   Prints out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
+    --verbose                   Print out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
     --nocolor                   Don't print output in color
     --nogood                    Remove OK responses
     --nobad                     Remove negative/suggestion responses
@@ -53,20 +54,20 @@ You must provide the remote server's total memory when connecting to other serve
     --debug                     Print debug information
     --noprocess                 Consider no other process is running
     --dbstat                    Print database information
-    --nodbstat                  Don't Print database information
+    --nodbstat                  Don't print database information
     --tbstat                    Print table information
-    --notbstat                  Don't Print table information
+    --notbstat                  Don't print table information
     --colstat                   Print column information
-    --nocolstat                 Don't Print column information
+    --nocolstat                 Don't print column information
     --idxstat                   Print index information
-    --noidxstat                 Don't Print index information
+    --noidxstat                 Don't print index information
     --sysstat                   Print system information
-    --nosysstat                 Don't Print system information
+    --nosysstat                 Don't print system information
     --pfstat                    Print Performance schema
-    --nopfstat                  Don't Print Performance schema
+    --nopfstat                  Don't print Performance schema
     --bannedports               Ports banned separated by comma (,)
     --server-log                Define specific error_log to analyze
-    --maxportallowed            Number of ports opened allowed on this host
+    --maxportallowed            Number of open ports allowable on this host
     --buffers                   Print global and per-thread buffer values
 
 # PERLDOC
