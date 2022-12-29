@@ -2471,7 +2471,7 @@ sub check_storage_engines {
         }
         $result{'Tables'}{'Fragmented tables'} =
           [ select_array
-"SELECT CONCAT(CONCAT(TABLE_SCHEMA, '.'), TABLE_NAME),cast(DATA_FREE as signed) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
+"SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
           ];
         $fragtables = scalar @{ $result{'Tables'}{'Fragmented tables'} };
 
@@ -2561,21 +2561,25 @@ sub check_storage_engines {
     # Fragmented tables
     if ( $fragtables > 0 ) {
         badprint "Total fragmented tables: $fragtables";
-        push( @generalrec,
-            "Run OPTIMIZE TABLE to defragment tables for better performance" );
+        push @generalrec,
+            'Run ALTER TABLE ... FORCE or OPTIMIZE TABLE to defragment tables for better performance';
         my $total_free = 0;
         foreach my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } ) {
-            my ( $full_table_name, $data_free ) = split( /\s+/, $table_line );
-            $data_free = 0 if ( !defined($data_free) or $data_free eq '' );
+            my ( $table_schema, $table_name, $engine, $data_free ) =
+                split /\t/msx, $table_line;
             $data_free = $data_free / 1024 / 1024;
             $total_free += $data_free;
-            my ( $table_schema, $table_name ) = split( /\./, $full_table_name );
-            push( @generalrec,
-"  OPTIMIZE TABLE `$table_schema`.`$table_name`; -- can free $data_free MB"
-            );
+            my $generalrec;
+            if ( $engine eq 'InnoDB' ) {
+                $generalrec = "  ALTER TABLE `$table_schema`.`$table_name` FORCE;";
+            } else {
+                $generalrec = "  OPTIMIZE TABLE `$table_schema`.`$table_name`;";
+            }
+            $generalrec .= " -- can free $data_free MiB";
+            push @generalrec, $generalrec;
         }
-        push( @generalrec,
-            "Total freed space after theses OPTIMIZE TABLE : $total_free Mb" );
+        push @generalrec,
+            "Total freed space after defragmentation : $total_free MiB";
     }
     else {
         goodprint "Total fragmented tables: $fragtables";
