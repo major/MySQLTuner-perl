@@ -2312,17 +2312,6 @@ sub mysql_version_le {
         && int($mysqlvermicro) <= int($mic) );
 }
 
-# Checks if MySQL micro version is lower than equal to (major, minor, micro)
-sub mysql_micro_version_le {
-    my ( $maj, $min, $mic ) = @_;
-    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
-
-    return $mysqlvermajor == $maj
-      && ( $mysqlverminor == $min
-        && $mysqlvermicro <= $mic );
-}
-
 # Checks for 32-bit boxes with more than 2GB of RAM
 my ($arch);
 
