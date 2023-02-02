@@ -1001,6 +1001,7 @@ sub mysql_setup {
                     my $userpath = `printenv HOME`;
                     chomp($userpath);
                     unless ( -e "$userpath/.my.cnf" ) {
+                        print STDERR "";
                         badprint
 "Successfully authenticated with no password - SECURITY RISK!";
                     }
@@ -1008,6 +1009,7 @@ sub mysql_setup {
                 return 1;
             }
             else {
+                print STDERR "";
                 badprint
                   "Attempted to use login credentials, but they were invalid.";
                 exit 1;
