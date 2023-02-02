@@ -1,11 +1,13 @@
-MySQLTuner-perl
-====
+![MySQLTuner-perl](https://github.com/major/MySQLTuner-perl/blob/master/mtlogo.png)
+
+[!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
+
 [![Build Status - Master](https://travis-ci.org/major/MySQLTuner-perl.svg?branch=master)](https://travis-ci.org/major/MySQLTuner-perl)
 [![Project Status](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
 [![Project Status](http://opensource.box.com/badges/maintenance.svg)](http://opensource.box.com/badges)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
-[![GPL Licence](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
+[![Percentage of open issues](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
+[![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** est un script écrit en Perl qui permet d'effectuer une revue de configuration pour MySQL/MAriaDB/PerconaDB rapidement et propose des ajustements pour améliorer la performance et la stabilité du serveur. L'état des variables et statuts est analysé et présenté de manière synthétique et structurée ainsi que plusieurs suggestions basiques concernant  la performance.
 
@@ -233,4 +235,3 @@ MySQLTuner a besoin de vous
 * Rejoignez-nous sur le suivi de ticket à [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues)</a>.
 * Le guide de contribution en anglais est disponible ici [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Ajouter une étoile à **MySQLTuner project** ici [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
-

@@ -1,11 +1,13 @@
-MySQLTuner-perl
-====
-[![Stato della build - Master](https://travis-ci.org/major/MySQLTuner-perl.svg?branch=master)](https://travis-ci.org/major/MySQLTuner-perl)
-[![Stato del progetto](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
-[![Stato del progetto](http://opensource.box.com/badges/maintenance.svg)](http://opensource.box.com/badges)
-[![Tempo medio per la soluzione di problemi](http://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
-[![Percentuale di problemi non risolti](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
-[![Licenza GPL](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
+![MySQLTuner-perl](https://github.com/major/MySQLTuner-perl/blob/master/mtlogo.png)
+
+[!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
+
+[![Build Status - Master](https://travis-ci.org/major/MySQLTuner-perl.svg?branch=master)](https://travis-ci.org/major/MySQLTuner-perl)
+[![Project Status](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
+[![Project Status](http://opensource.box.com/badges/maintenance.svg)](http://opensource.box.com/badges)
+[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
+[![Percentage of open issues](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
+[![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** è uno script Perl che permette di analizzare velocemente una installazione di MySQL, nonché di apportare modifiche per migliorare le prestazioni e la stabilità.  In modo coinciso sono riportati lo stato attuale delle variabili di configurazione e i dati sullo stato del sistema, corredati da suggerimenti di base per il miglioramento delle prestazioni.
 
@@ -235,4 +237,3 @@ MySQLTuner ha bisogno di te:
 * Problemi e suggerimenti possono essere riportati su [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * La guida per contribuire è disponibile in inglese: [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Dai un Stella a **MySQLTuner project** su [GitHub](https://github.com/major/MySQLTuner-perl)
-
