@@ -142,7 +142,7 @@ For previous MySQL 5.6 version, you can follow this command to create a new data
 	cd mysql-sys-master
 	mysql -uroot -p < sys_56.sql
 
-Optional Performance schema and Sysschema installation for MariaDB 10.x
+Optional Performance schema and Sysschema installation for MariaDB < 10.6
 --
 
 Sysschema is not installed by default under MariaDB prior to 10.6 [MariaDB sys](https://mariadb.com/kb/en/sys-schema/) 
