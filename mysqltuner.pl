@@ -988,7 +988,7 @@ sub mysql_setup {
             chomp($password);
             chomp($name);
             $mysqllogin = "-u $name";
-<
+
             if ( length($password) > 0 ) {
                 $mysqllogin .= " -p'$password'";
             }
