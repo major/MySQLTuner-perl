@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.0.11
+# mysqltuner.pl - Version 2.0.12
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
-# Copyright (C) 2015-2022 Jean-Marie Renouard - jmrenouard@gmail.com
+# Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
+# Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 
 # For the latest updates, please visit http://mysqltuner.pl/
 # Git repository available at https://github.com/major/MySQLTuner-perl
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.0.11";
+my $tunerversion = "2.0.12";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -325,6 +325,7 @@ sub hr_bytes {
     my $num = shift;
     return "0B" unless defined($num);
     return "0B" if $num eq "NULL";
+    return "0B" if $num eq "";
 
     if ( $num >= ( 1024**3 ) ) {    # GB
         return sprintf( "%.1f", ( $num / ( 1024**3 ) ) ) . "G";
@@ -987,14 +988,14 @@ sub mysql_setup {
             chomp($password);
             chomp($name);
             $mysqllogin = "-u $name";
-
+<
             if ( length($password) > 0 ) {
                 $mysqllogin .= " -p'$password'";
             }
             $mysqllogin .= $remotestring;
             my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
             if ( $loginstatus =~ /mysqld is alive/ ) {
-                print STDERR "";
+                #print STDERR "";
                 if ( !length($password) ) {
 
        # Did this go well because of a .my.cnf file or is there no password set?
@@ -1009,7 +1010,7 @@ sub mysql_setup {
                 return 1;
             }
             else {
-                print STDERR "";
+                #print STDERR "";
                 badprint
                   "Attempted to use login credentials, but they were invalid.";
                 exit 1;
@@ -6931,7 +6932,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.0.11 - MySQL High Performance Tuning Script
+ MySQLTuner 2.0.12 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -7016,6 +7017,7 @@ L<https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md>
 =head1 AUTHORS
 
 Major Hayden - major@mhtx.net
+Jean-Marie Renouard - jmrenouard@gmail.com
 
 =head1 CONTRIBUTORS
 
@@ -7166,7 +7168,7 @@ Bug reports, feature requests, and downloads at http://mysqltuner.pl/
 
 Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
 
-Maintained by Major Hayden (major\@mhtx.net) - Licensed under GPL
+Maintained by Jean-Marie Renouard (jmrenouard\@gmail.com) - Licensed under GPL
 
 =head1 SOURCE CODE
 
@@ -7176,7 +7178,8 @@ L<https://github.com/major/MySQLTuner-perl>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
+Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
+# Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 
 For the latest updates, please visit http://mysqltuner.pl/
 
