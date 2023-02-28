@@ -3622,7 +3622,7 @@ sub mysql_stats {
               . $mystat{'Binlog_cache_use'}
               . " Total)";
             push( @generalrec,
-                    "Increase binlog_cache_size (Actual value: "
+                    "Increase binlog_cache_size (current value: "
                   . $myvar{'binlog_cache_size'}
                   . ")" );
             push( @adjvars,
@@ -5609,7 +5609,7 @@ join information_schema.tables t using (TABLE_SCHEMA, TABLE_NAME)
 where c.table_schema not in ('mysql', 'information_schema', 'performance_schema')
   and t.table_type != 'VIEW'
 group by c.table_schema,c.table_name
-having sum(if(c.column_key in ('PRI','UNI'), 1,0)) = 0"
+having sum(if(c.column_key in ('PRI', 'UNI'), 1, 0)) = 0"
     );
 
     infoprint "CPU cores detected : " . (cpu_cores);
@@ -6006,7 +6006,7 @@ sub mysql_innodb {
                 $myvar{'innodb_buffer_pool_size'} /
                   $myvar{'innodb_log_files_in_group'} / 4
               )
-              . ") if possible, so InnoDB total log files size equals 25% of buffer pool size."
+              . ") if possible, so InnoDB total log file size equals 25% of buffer pool size."
         );
         if ( mysql_version_le( 5, 6, 2 ) ) {
             push( @generalrec,
@@ -6146,7 +6146,7 @@ sub mysql_innodb {
           . " total)";
     }
     else {
-        goodprint "InnoDB Write log efficiency: "
+        goodprint "InnoDB Write Log efficiency: "
           . $mycalc{'pct_write_efficiency'} . "% ("
           . ( $mystat{'Innodb_log_write_requests'} -
               $mystat{'Innodb_log_writes'} )
@@ -6222,7 +6222,7 @@ sub mysql_databases {
     subheaderprint "Database Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-"Skip Database metrics from information schema are missing in this version";
+"Database metrics from information schema are missing in this version. Skipping...";
         return;
     }
 
@@ -6453,7 +6453,7 @@ sub mysql_tables {
     subheaderprint "Table Column Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-"Skip Database metrics from information schema are missing in this version";
+"Table column metrics from information schema are missing in this version. Skipping...";
         return;
     }
     if ( mysql_version_ge(8) and not mysql_version_eq(10) ) {
@@ -6561,7 +6561,7 @@ sub mysql_indexes {
     subheaderprint "Indexes Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-"Skip Index metrics from information schema are missing in this version";
+"Index metrics from information schema are missing in this version. Skipping...";
         return;
     }
 
@@ -6667,7 +6667,7 @@ ENDSQL
 SELECT CONCAT(object_schema, '.', object_name) AS 'table', index_name
 FROM performance_schema.table_io_waits_summary_by_index_usage
 WHERE index_name IS NOT NULL
-AND count_star =0
+AND count_star = 0
 AND index_name <> 'PRIMARY'
 AND object_schema NOT IN ('mysql', 'performance_schema', 'information_schema')
 ORDER BY count_star, object_schema, object_name;
@@ -6688,7 +6688,7 @@ sub mysql_views() {
     subheaderprint "Views Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-"Skip Index metrics from information schema are missing in this version";
+"Views metrics from information schema are missing in this version. Skipping...";
         return;
     }
 }
@@ -6697,7 +6697,7 @@ sub mysql_routines() {
     subheaderprint "Routines Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-"Skip Index metrics from information schema are missing in this version";
+"Routines metrics from information schema are missing in this version. Skipping...";
         return;
     }
 }
@@ -6706,7 +6706,7 @@ sub mysql_triggers() {
     subheaderprint "Triggers Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
-"Skip Index metrics from information schema are missing in this version";
+"Trigger metrics from information schema are missing in this version. Skipping...";
         return;
     }
 }
@@ -6955,7 +6955,7 @@ You must provide the remote server's total memory when connecting to other serve
  --mysqladmin <path>         Path to a custom mysqladmin executable
  --mysqlcmd <path>           Path to a custom mysql executable
  --defaults-file <path>      Path to a custom .my.cnf
- --defaults-extra-file <path>      Path to a extra custom config file
+ --defaults-extra-file <path>      Path to an extra custom config file
  --server-log <path>         Path to explicit log file (error_log)
 
 =head1 PERFORMANCE AND REPORTING OPTIONS
