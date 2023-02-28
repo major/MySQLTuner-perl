@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.0.12
+# mysqltuner.pl - Version 2.1.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -32,7 +32,7 @@
 #   Simon Greenaway        Adam Stein           Isart Montane
 #   Baptiste M.            Cole Turner          Major Hayden
 #   Joe Ashcraft           Jean-Marie Renouard  Christian Loos
-#   Julien Francoz         Daniel Black
+#   Julien Francoz         Daniel Black         Long Radix
 #
 # Inspired by Matthew Montgomery's tuning-primer.sh script:
 # http://www.day32.com/MySQL/
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.0.12";
+my $tunerversion = "2.1.0";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -110,6 +110,7 @@ my %opt = (
     "defaults-file"       => '',
     "defaults-extra-file" => '',
     "protocol"            => '',
+    "dumpsysdir"          => '',
 );
 
 # Gather the options from the command line
@@ -141,7 +142,7 @@ GetOptions(
     'pfstat',          'nopfstat',
     'idxstat',         'noidxstat',
     'server-log=s',    'protocol=s',
-    'defaults-extra-file=s',
+    'defaults-extra-file=s', 'dumpsysdir=s',
   )
   or pod2usage(
     -exitval  => 1,
@@ -6903,6 +6904,7 @@ cve_recommendations;         # Display related CVE
 calculations;                # Calculate everything we need
 mysql_stats;                 # Print the server stats
 mysqsl_pfs;                  # Print Performance schema info
+
 mariadb_threadpool;          # Print MariaDB ThreadPool stats
 mysql_myisam;                # Print MyISAM stats
 mysql_innodb;                # Print InnoDB stats
@@ -6932,7 +6934,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.0.12 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -6974,6 +6976,7 @@ You must provide the remote server's total memory when connecting to other serve
  --outputfile <path>         Path to a output txt file
  --reportfile <path>         Path to a report txt file
  --template   <path>         Path to a template file
+ --dumpsysdir <path>         Path to a directory where to dump system information information
 
 =head1 OUTPUT OPTIONS
 
@@ -7158,6 +7161,10 @@ Stephan GroBberndt
 =item *
 
 Christian Loos
+
+=item *
+
+Long Radix
 
 =back
 
