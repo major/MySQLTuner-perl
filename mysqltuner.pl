@@ -190,12 +190,13 @@ $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
 if ($opt{dumpdir}  ne '') {
     $opt{dumpdir} = abs_path( $opt{dumpdir} );
     if ( ! -d $opt{dumpdir} ) {
-        infoprint("Directory $opt{dumpdir} does not exist");
-        infoprint("Creating directory $opt{dumpdir} ...");
+        #infoprint "Directory $opt{dumpdir} does not exist";
+        #infoprint "Creating directory $opt{dumpdir} ...";
         mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
-    } else {
-      infoprint "Directory $opt{dumpdir} already exists";
-    }
+    } 
+    #else {
+    #  infoprint "Directory $opt{dumpdir} already exists";
+    #}
 }
 # for RPM distributions
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
