@@ -194,7 +194,7 @@ if ($opt{dumpdir}  ne '') {
         infoprint("Creating directory $opt{dumpdir} ...");
         mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
     } else {
-      info "Directory $opt{dumpdir} already exists";
+      infoprint "Directory $opt{dumpdir} already exists";
     }
 }
 # for RPM distributions
