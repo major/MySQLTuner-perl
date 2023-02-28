@@ -187,11 +187,11 @@ if ( exists $opt{passenv} && exists $ENV{ $opt{passenv} } ) {
 }
 $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
 
-if ($opt{dumpdir}  ne "") {
+if ($opt{dumpdir}  ne '') {
     $opt{dumpdir} = abs_path( $opt{dumpdir} );
-    if ( !-d $opt{dumpdir} ) {
-        infoprint "Directory $opt{dumpdir} does not exist";
-        infoprint "Creating directory $opt{dumpdir} ...";
+    if ( ! -d $opt{dumpdir} ) {
+        infoprint("Directory $opt{dumpdir} does not exist");
+        infoprint("Creating directory $opt{dumpdir} ...");
         mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
     } else {
       info "Directory $opt{dumpdir} already exists";
