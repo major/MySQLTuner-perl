@@ -110,7 +110,7 @@ my %opt = (
     "defaults-file"       => '',
     "defaults-extra-file" => '',
     "protocol"            => '',
-    "dumpsysdir"          => '',
+    "dumpdir"             => '',
 );
 
 # Gather the options from the command line
@@ -142,7 +142,7 @@ GetOptions(
     'pfstat',          'nopfstat',
     'idxstat',         'noidxstat',
     'server-log=s',    'protocol=s',
-    'defaults-extra-file=s', 'dumpsysdir=s',
+    'defaults-extra-file=s', 'dumpdir=s',
   )
   or pod2usage(
     -exitval  => 1,
@@ -187,6 +187,16 @@ if ( exists $opt{passenv} && exists $ENV{ $opt{passenv} } ) {
 }
 $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
 
+if ($opt{dumpdir}  ne "") {
+    $opt{dumpdir} = abs_path( $opt{dumpdir} );
+    if ( !-d $opt{dumpdir} ) {
+        infoprint "Directory $opt{dumpdir} does not exist";
+        infoprint "Creating directory $opt{dumpdir} ...";
+        mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
+    } else {
+      info "Directory $opt{dumpdir} already exists";
+    }
+}
 # for RPM distributions
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
@@ -6976,7 +6986,7 @@ You must provide the remote server's total memory when connecting to other serve
  --outputfile <path>         Path to a output txt file
  --reportfile <path>         Path to a report txt file
  --template   <path>         Path to a template file
- --dumpsysdir <path>         Path to a directory where to dump system information information
+ --dumpdir <path>            Path to a directory where to dump information files
 
 =head1 OUTPUT OPTIONS
 
