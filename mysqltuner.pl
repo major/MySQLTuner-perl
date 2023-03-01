@@ -190,13 +190,8 @@ $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
 if ($opt{dumpdir}  ne '') {
     $opt{dumpdir} = abs_path( $opt{dumpdir} );
     if ( ! -d $opt{dumpdir} ) {
-        #infoprint "Directory $opt{dumpdir} does not exist";
-        #infoprint "Creating directory $opt{dumpdir} ...";
         mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
-    } 
-    #else {
-    #  infoprint "Directory $opt{dumpdir} already exists";
-    #}
+    }
 }
 # for RPM distributions
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
@@ -1050,7 +1045,22 @@ sub select_array {
     chomp(@result);
     return @result;
 }
+# MySQL Request Array
+sub select_csv_file {
+    my $tfile= shift;
+    my $req = shift;
+    debugprint "PERFORM: $req CSV into $tfile";
+    `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>/dev/null| sed "s/'/\'/;s/\t/\",\"/g;s/^/\"/;s/$/\"/;s/\n//g" > $tfile`;
+    if ( $? != 0 ) {
+        badprint "Failed to execute: $req";
+        badprint "FAIL Execute SQL / return code: $?";
+        debugprint "CMD    : $mysqlcmd";
+        debugprint "OPTIONS: $mysqllogin";
+        debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
 
+        #exit $?;
+    }
+}
 sub human_size {
     my ( $size, $n ) = ( shift, 0 );
     ++$n and $size /= 1024 until $size < 1024;
@@ -3939,20 +3949,13 @@ sub mysqsl_pfs {
     infoprint "Sys schema Version: "
       . select_one("select sys_version from sys.version");
 
-# Store all sys schema
-#    for my $pfs_view(select_array('use sys;show tables;')){
-#infoprint "$pfs_view"
-#        @$result{'sys'}{$pfs_view}{'headers'}=[];
-#        for my $h (select_array("select column_name FROM INFORMATION_SCHEMA.COLUMNS c
-# WHERE c.table_name = '$pfs_view'  ORDER BY c.ORDINAL_POSITION")) {
-#            push @$result{'sys'}{$pfs_view}{'headers'}, $h;
-#        }
-#        exit 1;
-#        $result{'sys'}{$pfs_view}{'values'}=();
-#        for my $lQuery (select_array("select * from sys.$pfs_view")) {
-#            push $result{'sys'}{$pfs_view}{'values'}, $lQuery;
-#        }
-#    }
+# Store all sys schema in dumpdir if defined
+if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
+    for my $pfs_view(select_array('use sys;show tables;')){
+      infoprint "Dumping $pfs_view into $opt{dumpdir}";
+      select_csv_file("$opt{dumpdir}/$pfs_view.csv", "select * from sys.$pfs_view");
+    }
+}
 # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
     my $nbL = 1;
