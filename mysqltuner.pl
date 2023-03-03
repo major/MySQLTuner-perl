@@ -1050,16 +1050,12 @@ sub select_csv_file {
     my $tfile= shift;
     my $req = shift;
     debugprint "PERFORM: $req CSV into $tfile";
-    `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>/dev/null| sed "s/'/\'/;s/\t/\",\"/g;s/^/\"/;s/$/\"/;s/\n//g" > $tfile`;
-    if ( $? != 0 ) {
-        badprint "Failed to execute: $req";
-        badprint "FAIL Execute SQL / return code: $?";
-        debugprint "CMD    : $mysqlcmd";
-        debugprint "OPTIONS: $mysqllogin";
-        debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
-
-        #exit $?;
+    my @result =select_array($req);
+    open( my $fh, '>', $tfile ) or die "Could not open file '$tfile' $!";
+    for my $l (@result) {
+      print $fh $l;
     }
+    close $fh;
 }
 sub human_size {
     my ( $size, $n ) = ( shift, 0 );
