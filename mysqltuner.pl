@@ -1053,6 +1053,9 @@ sub select_csv_file {
     my @result =select_array($req);
     open( my $fh, '>', $tfile ) or die "Could not open file '$tfile' $!";
     for my $l (@result) {
+      $l=~s/\t/","/g;
+      $l=~s/^/"/;
+      $l=~s/$/"/;
       print $fh $l;
     }
     close $fh;
