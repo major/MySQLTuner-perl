@@ -797,9 +797,9 @@ sub mysql_setup {
         }
     }
 
-    # Did we already get a username without password on the command line?
-    if ( $opt{user} ne 0 and $opt{pass} eq 0 ) {
-        $mysqllogin = "-u $opt{user} " . $remotestring;
+    # Did we already get a username with or without password on the command line?
+    if ( $opt{user} ne 0 ) {
+        $mysqllogin = "-u $opt{user} " . (($opt{pass} ne 0) ? "-p'$opt{pass}' " : " ") . $remotestring;
         my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint "Logged in using credentials passed on the command line";
@@ -812,20 +812,6 @@ sub mysql_setup {
         }
     }
 
-    # Did we already get a username and password passed on the command line?
-    if ( $opt{user} ne 0 and $opt{pass} ne 0 ) {
-        $mysqllogin = "-u $opt{user} -p'$opt{pass}'" . $remotestring;
-        my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
-        if ( $loginstatus =~ /mysqld is alive/ ) {
-            goodprint "Logged in using credentials passed on the command line";
-            return 1;
-        }
-        else {
-            badprint
-              "Attempted to use login credentials, but they were invalid";
-            exit 1;
-        }
-    }
     my $svcprop = which( "svcprop", $ENV{'PATH'} );
     if ( substr( $svcprop, 0, 1 ) =~ "/" ) {
 
