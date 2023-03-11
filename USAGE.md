@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.0.10 - MySQL High Performance Tuning Script
+    MySQLTuner 2.1.1 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -23,7 +23,7 @@ You must provide the remote server's total memory when connecting to other serve
     --mysqladmin <path>         Path to a custom mysqladmin executable
     --mysqlcmd <path>           Path to a custom mysql executable
     --defaults-file <path>      Path to a custom .my.cnf
-    --defaults-extra-file <path>      Path to a extra custom config file
+    --defaults-extra-file <path>      Path to an extra custom config file
     --server-log <path>         Path to explicit log file (error_log)
 
 # PERFORMANCE AND REPORTING OPTIONS
@@ -42,6 +42,7 @@ You must provide the remote server's total memory when connecting to other serve
     --outputfile <path>         Path to a output txt file
     --reportfile <path>         Path to a report txt file
     --template   <path>         Path to a template file
+    --dumpdir <path>            Path to a directory where to dump information files
 
 # OUTPUT OPTIONS
 
@@ -85,6 +86,7 @@ You can find documentation for this module with the perldoc command.
 # AUTHORS
 
 Major Hayden - major@mhtx.net
+Jean-Marie Renouard - jmrenouard@gmail.com
 
 # CONTRIBUTORS
 
@@ -122,6 +124,7 @@ Major Hayden - major@mhtx.net
 - Jean-Marie Renouard
 - Stephan GroBberndt
 - Christian Loos
+- Long Radix
 
 # SUPPORT
 
@@ -129,7 +132,7 @@ Bug reports, feature requests, and downloads at http://mysqltuner.pl/
 
 Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
 
-Maintained by Major Hayden (major\\@mhtx.net) - Licensed under GPL
+Maintained by Jean-Marie Renouard (jmrenouard\\@gmail.com) - Licensed under GPL
 
 # SOURCE CODE
 
@@ -139,7 +142,8 @@ Maintained by Major Hayden (major\\@mhtx.net) - Licensed under GPL
 
 # COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2022 Major Hayden - major@mhtx.net
+Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
+\# Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 
 For the latest updates, please visit http://mysqltuner.pl/
 

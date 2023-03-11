@@ -115,33 +115,33 @@ my %opt = (
 
 # Gather the options from the command line
 GetOptions(
-    \%opt,             'nobad',
-    'nogood',          'noinfo',
-    'debug',           'nocolor',
-    'forcemem=i',      'forceswap=i',
-    'host=s',          'socket=s',
-    'port=i',          'user=s',
-    'pass=s',          'skipsize',
-    'checkversion',    'mysqladmin=s',
-    'mysqlcmd=s',      'help',
-    'buffers',         'skippassword',
-    'passwordfile=s',  'outputfile=s',
-    'silent',          'noask',
-    'json',            'prettyjson',
-    'template=s',      'reportfile=s',
-    'cvefile=s',       'bannedports=s',
-    'updateversion',   'maxportallowed=s',
-    'verbose',         'password=s',
-    'passenv=s',       'userenv=s',
-    'defaults-file=s', 'ssl-ca=s',
-    'color',           'noprocess',
-    'dbstat',          'nodbstat',
-    'tbstat',          'notbstat',
-    'colstat',         'nocolstat',
-    'sysstat',         'nosysstat',
-    'pfstat',          'nopfstat',
-    'idxstat',         'noidxstat',
-    'server-log=s',    'protocol=s',
+    \%opt,                   'nobad',
+    'nogood',                'noinfo',
+    'debug',                 'nocolor',
+    'forcemem=i',            'forceswap=i',
+    'host=s',                'socket=s',
+    'port=i',                'user=s',
+    'pass=s',                'skipsize',
+    'checkversion',          'mysqladmin=s',
+    'mysqlcmd=s',            'help',
+    'buffers',               'skippassword',
+    'passwordfile=s',        'outputfile=s',
+    'silent',                'noask',
+    'json',                  'prettyjson',
+    'template=s',            'reportfile=s',
+    'cvefile=s',             'bannedports=s',
+    'updateversion',         'maxportallowed=s',
+    'verbose',               'password=s',
+    'passenv=s',             'userenv=s',
+    'defaults-file=s',       'ssl-ca=s',
+    'color',                 'noprocess',
+    'dbstat',                'nodbstat',
+    'tbstat',                'notbstat',
+    'colstat',               'nocolstat',
+    'sysstat',               'nosysstat',
+    'pfstat',                'nopfstat',
+    'idxstat',               'noidxstat',
+    'server-log=s',          'protocol=s',
     'defaults-extra-file=s', 'dumpdir=s',
   )
   or pod2usage(
@@ -187,12 +187,13 @@ if ( exists $opt{passenv} && exists $ENV{ $opt{passenv} } ) {
 }
 $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
 
-if ($opt{dumpdir}  ne '') {
+if ( $opt{dumpdir} ne '' ) {
     $opt{dumpdir} = abs_path( $opt{dumpdir} );
-    if ( ! -d $opt{dumpdir} ) {
+    if ( !-d $opt{dumpdir} ) {
         mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
     }
 }
+
 # for RPM distributions
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
@@ -797,9 +798,12 @@ sub mysql_setup {
         }
     }
 
-    # Did we already get a username with or without password on the command line?
+   # Did we already get a username with or without password on the command line?
     if ( $opt{user} ne 0 ) {
-        $mysqllogin = "-u $opt{user} " . (($opt{pass} ne 0) ? "-p'$opt{pass}' " : " ") . $remotestring;
+        $mysqllogin =
+            "-u $opt{user} "
+          . ( ( $opt{pass} ne 0 ) ? "-p'$opt{pass}' " : " " )
+          . $remotestring;
         my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint "Logged in using credentials passed on the command line";
@@ -988,6 +992,7 @@ sub mysql_setup {
             $mysqllogin .= $remotestring;
             my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
             if ( $loginstatus =~ /mysqld is alive/ ) {
+
                 #print STDERR "";
                 if ( !length($password) ) {
 
@@ -1031,21 +1036,23 @@ sub select_array {
     chomp(@result);
     return @result;
 }
+
 # MySQL Request Array
 sub select_csv_file {
-    my $tfile= shift;
-    my $req = shift;
+    my $tfile = shift;
+    my $req   = shift;
     debugprint "PERFORM: $req CSV into $tfile";
-    my @result =select_array($req);
+    my @result = select_array($req);
     open( my $fh, '>', $tfile ) or die "Could not open file '$tfile' $!";
     for my $l (@result) {
-      $l=~s/\t/","/g;
-      $l=~s/^/"/;
-      $l=~s/$/"/;
-      print $fh $l;
+        $l =~ s/\t/","/g;
+        $l =~ s/^/"/;
+        $l =~ s/$/"/;
+        print $fh $l;
     }
     close $fh;
 }
+
 sub human_size {
     my ( $size, $n ) = ( shift, 0 );
     ++$n and $size /= 1024 until $size < 1024;
@@ -3921,9 +3928,9 @@ sub mysqsl_pfs {
     unless ( grep /^sys$/, select_array("SHOW DATABASES") ) {
         infoprint "Sys schema is not installed.";
         push( @generalrec,
-          mysql_version_ge( 10, 0 ) ?
-"Consider installing Sys schema from https://github.com/FromDual/mariadb-sys for MariaDB" :
-"Consider installing Sys schema from https://github.com/mysql/mysql-sys for MySQL"
+            mysql_version_ge( 10, 0 )
+            ? "Consider installing Sys schema from https://github.com/FromDual/mariadb-sys for MariaDB"
+            : "Consider installing Sys schema from https://github.com/mysql/mysql-sys for MySQL"
         ) unless ( mysql_version_le( 5, 6 ) );
 
         return;
@@ -3934,14 +3941,18 @@ sub mysqsl_pfs {
     infoprint "Sys schema Version: "
       . select_one("select sys_version from sys.version");
 
-# Store all sys schema in dumpdir if defined
-if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
-    for my $pfs_view(select_array('use sys;show tables;')){
-      infoprint "Dumping $pfs_view into $opt{dumpdir}";
-      select_csv_file("$opt{dumpdir}/pfs_$pfs_view.csv", "select * from sys.$pfs_view");
+    # Store all sys schema in dumpdir if defined
+    if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
+        for my $pfs_view ( select_array('use sys;show tables;') ) {
+            infoprint "Dumping $pfs_view into $opt{dumpdir}";
+            select_csv_file(
+                "$opt{dumpdir}/pfs_$pfs_view.csv",
+                "select * from sys.$pfs_view"
+            );
+        }
     }
-}
-# Top user per connection
+
+    # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
     my $nbL = 1;
     for my $lQuery (
@@ -6463,11 +6474,17 @@ sub mysql_tables {
         infoprint "Disabling colstat parameter";
 
     }
+
     # Store all information schema in dumpdir if defined
     if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
-        for my $info_s_table(select_array('use information_schema;show tables;')){
-          infoprint "Dumping $info_s_table into $opt{dumpdir}";
-          select_csv_file("$opt{dumpdir}/ifs_${info_s_table}.csv", "select * from information_schema.$info_s_table");
+        for my $info_s_table (
+            select_array('use information_schema;show tables;') )
+        {
+            infoprint "Dumping $info_s_table into $opt{dumpdir}";
+            select_csv_file(
+                "$opt{dumpdir}/ifs_${info_s_table}.csv",
+                "select * from information_schema.$info_s_table"
+            );
         }
     }
     foreach ( select_user_dbs() ) {
