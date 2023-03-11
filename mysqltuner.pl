@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.0
+# mysqltuner.pl - Version 2.1.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.0";
+my $tunerversion = "2.1.1";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3938,7 +3938,7 @@ sub mysqsl_pfs {
 if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
     for my $pfs_view(select_array('use sys;show tables;')){
       infoprint "Dumping $pfs_view into $opt{dumpdir}";
-      select_csv_file("$opt{dumpdir}/$pfs_view.csv", "select * from sys.$pfs_view");
+      select_csv_file("$opt{dumpdir}/pfs_$pfs_view.csv", "select * from sys.$pfs_view");
     }
 }
 # Top user per connection
@@ -6463,6 +6463,13 @@ sub mysql_tables {
         infoprint "Disabling colstat parameter";
 
     }
+    # Store all information schema in dumpdir if defined
+    if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
+        for my $info_s_table(select_array('use information_schema;show tables;')){
+          infoprint "Dumping $info_s_table into $opt{dumpdir}";
+          select_csv_file("$opt{dumpdir}/ifs_${info_s_table}.csv", "select * from information_schema.$info_s_table");
+        }
+    }
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
         next unless defined $_;
@@ -6933,7 +6940,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.0 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
