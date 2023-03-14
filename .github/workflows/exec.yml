@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: CI for MySQL Tuner
 
 # Controls when the workflow will run
 on:
@@ -23,14 +23,40 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - name: Setup MySQL Tuner repository
+        uses: actions/checkout@v3
 
+      - name: Set up MySQL
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql root password: "root"
+          mysql version: "8.0"
+      - name: Injecting credentials
+        run: |
+          echo -e "[client]\nuser=root\npassword=root\nhost=127.0.0.1\nprotocol=TCP" > $HOME/.my.cnf
+      
+      - name: Cloning test_db dataset
+        run: |
+          git clone https://github.com/datacharmer/test_db.git
+
+      - name: Injecting test_db dataset
+        run: |
+          sleep 5s
+          cd test_db
+          netstat -ltpn
+          mysql -e 'select version();'
+          mysql -e 'CREATE DATABASE data;'
+          mysql data< ./employees.sql
+          cd -
+          rm -rf test_db
       # Runs a single command using the runners shell
-      - name: Run a one-line script
+      - name: Run help mode
         run: perl ./mysqltuner.pl --help
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+      # Runs a single command using the runners shell
+      - name: Run verbose mode
+        run: sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose
+
+      # Runs a single command using the runners shell
+      - name: Run verbose mode with dumpdir result
+        run: sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose --dumpdir=result
