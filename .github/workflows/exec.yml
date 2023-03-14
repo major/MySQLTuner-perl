@@ -24,6 +24,9 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
+      # Runs a single command using the runners shell
+      - name: Install MySQL
+        run: sudo apt update && sudo apt install -y mysql-server-8.0 mysql-client-8.0
 
       # Runs a single command using the runners shell
       - name: Run a one-line script
