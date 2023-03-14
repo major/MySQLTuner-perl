@@ -23,16 +23,19 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      - uses: mirromutth/mysql-action@v1.1
+      - name: Setup MySQL Tuner repository
+        uses: actions/checkout@v3
+
+      - name: Set up MySQL
+        uses: mirromutth/mysql-action@v1.1
         with:
-        mysql root password: root
-      
+          mysql root password: root
+
       - name: Cloning test_db dataset
         run: |
           git clone https://github.com/datacharmer/test_db.git
           cd test_db
-          mysql < ./employees.sql
+          mysql -uroot -proot < ./employees.sql
           cd -
           rm -rf test_db
       # Runs a single command using the runners shell
