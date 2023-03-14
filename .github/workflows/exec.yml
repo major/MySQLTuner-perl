@@ -31,8 +31,8 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
-          sudo service start mysql
-          sudo service status mysql
+          sudo service mysql start
+          sudo service mysql status
 
           git clone https://github.com/datacharmer/test_db.git
           cd test_db
