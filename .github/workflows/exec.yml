@@ -35,7 +35,7 @@ jobs:
         run: |
           git clone https://github.com/datacharmer/test_db.git
           cd test_db
-          mysql -P3306 -uroot -proot < ./employees.sql
+          mysql -h 127.0.0.1 -P3306 -uroot -proot test< ./employees.sql
           cd -
           rm -rf test_db
       # Runs a single command using the runners shell
