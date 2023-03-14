@@ -29,8 +29,12 @@ jobs:
       - name: Set up MySQL
         uses: mirromutth/mysql-action@v1.1
         with:
-          mysql root password: root
-
+          mysql root password: "root"
+          mysql version: "8.0"
+      - name: Injecting credentials
+        run: |
+          echo -e "[client]\nuser=root\npassword=root\nhost=127.0.0.1\nprotocol=TCP" > $HOME/.my.cnf
+      
       - name: Cloning test_db dataset
         run: |
           git clone https://github.com/datacharmer/test_db.git
@@ -39,8 +43,8 @@ jobs:
         run: |
           cd test_db
           netstat -ltpn
-          #sudo mysql -e 'select version();'
-          mysql --protocol=TCP -uroot -proot test< ./employees.sql
+          mysql -e 'select version();'
+          mysql test< ./employees.sql
           cd -
           rm -rf test_db
       # Runs a single command using the runners shell
