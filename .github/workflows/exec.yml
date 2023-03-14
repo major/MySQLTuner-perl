@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: CI for MySQL Tuner
 
 # Controls when the workflow will run
 on:
@@ -34,10 +34,15 @@ jobs:
       - name: Cloning test_db dataset
         run: |
           git clone https://github.com/datacharmer/test_db.git
+
+      - name: Injecting test_db dataset
+        run: |
           cd test_db
+          netstat -ltpn
+          sudo mysql -e 'select version();'
           mysql -h 127.0.0.1 -P3306 -uroot -proot test< ./employees.sql
           cd -
-          rm -rf test_db
+          rm -rf test_db      
       # Runs a single command using the runners shell
       - name: Run help mode
         run: perl ./mysqltuner.pl --help
