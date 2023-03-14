@@ -55,8 +55,8 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run verbose mode
-        run: sudo perl ./mysqltuner.pl --verbose
+        run: sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose
 
       # Runs a single command using the runners shell
       - name: Run verbose mode with dumpdir result
-        run: sudo perl ./mysqltuner.pl --verbose --dumpdir=result
+        run: sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose --dumpdir=result
