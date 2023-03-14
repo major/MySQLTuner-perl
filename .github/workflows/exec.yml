@@ -41,6 +41,7 @@ jobs:
 
       - name: Injecting test_db dataset
         run: |
+          sleep 5s
           cd test_db
           netstat -ltpn
           mysql -e 'select version();'
