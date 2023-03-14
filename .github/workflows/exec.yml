@@ -36,7 +36,7 @@ jobs:
 
           git clone https://github.com/datacharmer/test_db.git
           cd test_db
-          sudo mysql  < ./employees.sql
+          mysql  < ./employees.sql
           cd -
           rm -rf test_db
       # Runs a single command using the runners shell
