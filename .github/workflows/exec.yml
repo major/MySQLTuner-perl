@@ -44,7 +44,8 @@ jobs:
           cd test_db
           netstat -ltpn
           mysql -e 'select version();'
-          mysql test< ./employees.sql
+          mysql -e 'CREATE DATABASE data;'
+          mysql data< ./employees.sql
           cd -
           rm -rf test_db
       # Runs a single command using the runners shell
