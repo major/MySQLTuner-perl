@@ -36,10 +36,9 @@ jobs:
 
           git clone https://github.com/datacharmer/test_db.git
           cd test_db
-          sudo mysql -u root < employees.sql
+          sudo mysql  < ./employees.sql
           cd -
           rm -rf test_db
-
       # Runs a single command using the runners shell
       - name: Run help mode
         run: perl ./mysqltuner.pl --help
