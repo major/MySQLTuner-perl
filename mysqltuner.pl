@@ -2406,7 +2406,7 @@ sub check_storage_engines {
     }
     elsif ( mysql_version_ge( 5, 1, 5 ) ) {
         my @engineresults = select_array
-"SELECT ENGINE,SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('performance_schema','MyISAM','MERGE','MEMORY') ORDER BY ENGINE ASC";
+"SELECT ENGINE, SUPPORT FROM information_schema.ENGINES WHERE ENGINE NOT IN ('MyISAM', 'MERGE', 'MEMORY') ORDER BY ENGINE";
         foreach my $line (@engineresults) {
             my ( $engine, $engineenabled );
             ( $engine, $engineenabled ) = $line =~ /([a-zA-Z_]*)\s+([a-zA-Z]+)/;
