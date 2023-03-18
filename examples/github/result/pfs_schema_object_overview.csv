@@ -1,0 +1,1 @@
+"employees","BASE TABLE","6""employees","INDEX (BTREE)","14""employees","VIEW","2""information_schema","SYSTEM VIEW","79""mysql","BASE TABLE","38""mysql","INDEX (BTREE)","92""performance_schema","BASE TABLE","111""performance_schema","INDEX (HASH)","227""sys","BASE TABLE","1""sys","FUNCTION","22""sys","INDEX (BTREE)","1""sys","PROCEDURE","26""sys","TRIGGER","2""sys","VIEW","100"

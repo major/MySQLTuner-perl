@@ -1,0 +1,1 @@
+"'mysql.sys'@'localhost'","def","sys","TRIGGER","NO""'mysql.session'@'localhost'","def","performance_schema","SELECT","NO"
