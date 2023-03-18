@@ -1,10 +1,10 @@
 #!/bin/sh
 
-BUILD_DIR=`dirname $(readlink -f $0)`
+BUILD_DIR="$(dirname $(readlink -f "$0"))"
 
 VERSION=$(grep -Ei 'my \$tunerversion' $BUILD_DIR/../mysqltuner.pl | grep = | cut -d\" -f2)
 cd $BUILD_DIR
-sh ./clean.sh 
+sh ./clean.sh
 
 perl -pe "s/%VERSION%/$VERSION/g" mysqltuner.spec.tpl > mysqltuner.spec
 mkdir -p $BUILD_DIR/mysqltuner-$VERSION
