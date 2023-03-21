@@ -276,8 +276,53 @@ or
 
 FAQ
 --
+**Question: What are the prerequisites for running MySQL tuner ?**
+Before running MySQL tuner, you should have the following:
 
-**Question: Will MySQLTuner fix my slow MySQL server?**
+ - A MySQL server installation
+ - Perl installed on your system
+ - Administrative access to your MySQL server
+
+**Question: Can MySQL tuner make changes to my configuration automatically ?**
+
+**No.**, MySQL tuner only provides recommendations. It does not make any changes to your configuration files automatically. It is up to the user to review the suggestions and implement them as needed.
+
+**Question: How often should I run MySQL tuner ?**
+
+It is recommended to run MySQL tuner periodically, especially after significant changes to your MySQL server or its workload.
+
+For optimal results, run the script after your server has been running for at least 24 hours to gather sufficient performance data.
+
+**Question: How do I interpret the results from MySQL tuner ?**
+
+MySQL tuner provides output in the form of suggestions and warnings. 
+
+Review each recommendation and consider implementing the changes in your MySQL configuration file (usually 'my.cnf' or 'my.ini'). 
+
+Be cautious when making changes and always backup your configuration file before making any modifications.
+
+**Question: Can MySQL tuner cause harm to my database or server ?**
+
+While MySQL tuner itself will not make any changes to your server, blindly implementing its recommendations without understanding the impact can cause issues.
+
+Always ensure you understand the implications of each suggestion before applying it to your server.
+
+**Question: Can I use MySQL tuner for optimizing other database systems like PostgreSQL or SQL Server ?**
+
+MySQL tuner is specifically designed for MySQL servers.
+To optimize other database systems, you would need to use tools designed for those systems, such as pgTune for PostgreSQL or SQL Server's built-in performance tools.
+
+**Question: Does MySQL tuner support MariaDB and Percona Server ?**
+
+Yes, MySQL tuner supports MariaDB and Percona Server since they are forks of MySQL and share a similar architecture. The script can analyze and provide recommendations for these systems as well.
+
+**Question: What should I do if I need help with MySQL tuner or have questions about the recommendations ?**
+
+If you need help with MySQL tuner or have questions about the recommendations provided by the script, you can consult the MySQL tuner documentation, seek advice from online forums, or consult a MySQL expert. 
+
+Be cautious when implementing changes to ensure the stability and performance of your server.
+
+**Question: Will MySQLTuner fix my slow MySQL server ?**
 
 **No.**  MySQLTuner is a read only script.  It won't write to any configuration files, change the status of any daemons, or call your mother to wish her a happy birthday.  It will give you an overview of your server's performance and make some basic recommendations for improvements that you can make after it completes.  *Make sure you read the warning above prior to following any recommendations.*
 
