@@ -277,6 +277,7 @@ or
 FAQ
 --
 **Question: What are the prerequisites for running MySQL tuner ?**
+
 Before running MySQL tuner, you should have the following:
 
  - A MySQL server installation
@@ -328,7 +329,9 @@ Be cautious when implementing changes to ensure the stability and performance of
 
 **Question: Can I fire my DBA now?**
 
-**MySQLTuner will not replace your DBA in any form or fashion.**  If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
+**MySQLTuner will not replace your DBA in any form or fashion.**  
+
+If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
 
 **Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?**
 
