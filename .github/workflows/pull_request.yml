@@ -33,7 +33,9 @@ jobs:
           mysql version: "8.0"
 
       - name: Run help mode
-        run: perl ./mysqltuner.pl --help
+        run: |
+          sleep 20s
+          sudo perl ./mysqltuner.pl --help
 
       # Runs a single command using the runners shell
       - name: Run verbose mode
