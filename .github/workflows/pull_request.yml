@@ -56,18 +56,3 @@ jobs:
       # Runs a single command using the runners shell
       - name: Run verbose mode
         run: sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose
-
-      # Runs a single command using the runners shell
-      - name: Run verbose mode with dumpdir result
-        run: |
-          mkdir -p ./examples/github/result
-          sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose --dumpdir=./examples/github/result --json | tee -a ./examples/github/result/result.json
-
-      # Runs a single command using the runners shell
-      - name: Commit example result to repo
-        run: |
-          git config --global user.name "Jean-Marie Renouard"
-          git config --global user.email "jmrenouard@gmail.com"
-          git add .
-          git commit -m "Commit example result"
-          git push
