@@ -329,7 +329,7 @@ Be cautious when implementing changes to ensure the stability and performance of
 
 **Question: Can I fire my DBA now?**
 
-**MySQLTuner will not replace your DBA in any form or fashion.**  
+**MySQLTuner will not replace your DBA in any form or fashion.**
 
 If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
 
