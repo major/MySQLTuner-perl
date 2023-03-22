@@ -55,5 +55,5 @@ jobs:
           git config --global user.name "Jean-Marie Renouard"
           git config --global user.email "jmrenouard@gmail.com"
           git add .
-          git commit -m "Commit example result for Actions"
+          git commit -m "Commit example result for employees database for Actions"
           git push
