@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Update CVE informations and general docs
+name: CVE and Docs update
 
 # Controls when the workflow will run
 on:
@@ -22,14 +22,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          bash ./build/installStaff.sh
+          sudo bash ./build/installStaff.sh
 
       - name: Update CVE and docs
         run: |
-          bash ./build/updateStaff.sh
+          sudo bash ./build/updateStaff.sh
 
       # Runs a single command using the runners shell
-      - name: Commit example result to repo
+      - name: Commit CVE result to repo
         run: |
           git config --global user.name "Jean-Marie Renouard"
           git config --global user.email "jmrenouard@gmail.com"
