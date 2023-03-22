@@ -30,6 +30,8 @@ jobs:
       - name: Update CVE and docs
         run: |
           pwd
+          cd ..
+          pwd
           sudo bash ./build/updateStaff.sh
 
       # Runs a single command using the runners shell
