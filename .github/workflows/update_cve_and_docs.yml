@@ -27,7 +27,6 @@ jobs:
 
       - name: Update CVE and docs
         run: |
-          cd build
           sudo bash ./build/updateStaff.sh
 
       # Runs a single command using the runners shell
