@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Adding examples for MySQL Tuner execution
+name: Update CVE informations and general docs
 
 # Controls when the workflow will run
 on:
@@ -22,12 +22,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
           bash ./build/installStaff.sh
 
       - name: Update CVE and docs
         run: |
-          sudo apt-get update
           bash ./build/updateStaff.sh
 
       # Runs a single command using the runners shell
