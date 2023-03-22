@@ -212,7 +212,7 @@ if ( $opt{verbose} ) {
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
-$opt{dbstat} = 0 if ( $opt{nodbstat} == 1 );  # Don't print database information
+$opt{dbstat}  = 0 if ( $opt{nodbstat} == 1 ); # Don't print database information
 $opt{noprocess} = 0
   if ( $opt{noprocess} == 1 );                # Don't print process information
 $opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't print sysstat information
@@ -1309,8 +1309,8 @@ sub get_all_vars {
     my @lineitems = ();
     foreach my $line (@mysqlslaves) {
         debugprint "L: $line ";
-        @lineitems = split /\s+/, $line;
-        $myslaves{ $lineitems[0] } = $line;
+        @lineitems                                        = split /\s+/, $line;
+        $myslaves{ $lineitems[0] }                        = $line;
         $result{'Replication'}{'Slaves'}{ $lineitems[0] } = $lineitems[4];
     }
 }
@@ -1461,7 +1461,7 @@ sub log_file_recommendations {
         $numLi++;
         debugprint "$numLi: $logLi"
           if $logLi =~ /warning|error/i and $logLi !~ /Logging to/;
-        $nbErrLog++  if $logLi =~ /error/i and $logLi !~ /Logging to/;
+        $nbErrLog++ if $logLi =~ /error/i and $logLi !~ /Logging to/;
         $nbWarnLog++ if $logLi =~ /warning/i;
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
@@ -2225,7 +2225,7 @@ sub get_replication_status {
           "This replication slave is not running but seems to be configured.";
     }
     if (   defined($io_running)
-        && $io_running =~ /yes/i
+        && $io_running  =~ /yes/i
         && $sql_running =~ /yes/i )
     {
         if ( $myvar{'read_only'} eq 'OFF' ) {

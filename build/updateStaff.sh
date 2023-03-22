@@ -10,6 +10,6 @@ echo "* Update CVE list"
 perl updateCVElist.pl
 dos2unix ../mysqltuner.pl
 git add ../vulnerabilities.csv ../mysqltuner.pl ../USAGE.md
-git commit -m 'Update Vulnerabilities list
-Indenting mysqltuner
-Update Usage information'
+#git commit -m 'Update Vulnerabilities list
+#Indenting mysqltuner
+#Update Usage information'
