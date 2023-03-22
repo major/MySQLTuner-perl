@@ -22,10 +22,12 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd build
           sudo bash ./build/installStaff.sh
 
       - name: Update CVE and docs
         run: |
+          cd build
           sudo bash ./build/updateStaff.sh
 
       # Runs a single command using the runners shell
