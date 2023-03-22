@@ -1,0 +1,1 @@
+"503","465","root@172.17.0.1","NULL","Query","executing","0","select * from sys.session","PRIMARY","1.18 ms","NULL","5.00 us","  0 ps","0","0","0","2","0","YES","NULL","NULL","4.94 MiB","NULL","NULL","NULL","262.10 us","ACTIVE","YES","3702","mysql"
