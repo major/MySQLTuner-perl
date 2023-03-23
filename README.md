@@ -18,10 +18,9 @@
 You can find more details on these indicators here:
 [Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
-
 ![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
 
-MySQLTuner needs you:
+MySQLTuner needs you
 ===
 
 **MySQLTuner** needs contributors for documentation, code and feedback..
@@ -37,11 +36,18 @@ MySQLTuner needs you:
 
 Compatibility
 ====
+
 Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.org/major/MySQLTuner-perl)
+
 * MySQL 8.0 (partial support, password checks don't work)
 * Percona Server 8.0 (partial support, password checks don't work)
 * MySQL 5.7 (full support)
 * Percona Server 5.7 (full support)
+* MariaDB 10.11 (full support)
+* MariaDB 10.10 (full support)
+* MariaDB 10.9 (full support)
+* MariaDB 10.8 (full support)
+* MariaDB 10.7 (full support)
 * MariaDB 10.6 (full support)
 * MariaDB 10.5 (full support)
 * MariaDB 10.4 (full support)
@@ -59,15 +65,17 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 * MariaDB 10.0 (no support, deprecated version)
 * MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (no support - deprecated version)
 
-*** Windows Support is partial ***
-* Windows is now supported at this time 
+***Windows Support is partial***
+
+* Windows is now supported at this time
 * Successfully run MySQLtuner across WSL2 (Windows Subsystem Linux )
 * [https://docs.microsoft.com/en-us/windows/wsl/](https://docs.microsoft.com/en-us/windows/wsl/)
 
-*** UNSUPPORTED ENVIRONMENTS - NEED HELP FOR THAT :) ***
+***UNSUPPORTED ENVIRONMENTS - NEED HELP FOR THAT :)***
 * Cloud based is not supported at this time (Help wanted !!!!! GCP, AWS, Azure support asked)
 
-*** Unsupported storage engines: PRs welcome ***
+***Unsupported storage engines: PRs welcome***
+
 * NDB is not supported feel free to Pull Request code :)
 * MyISAM is to old is no longer active
 * RockDB
@@ -80,7 +88,7 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 
 * CVE vulnerabilities detection support from [https://cve.mitre.org](https://cve.mitre.org)
 
-*** MINIMAL REQUIREMENTS ***
+***MINIMAL REQUIREMENTS***
 
 * Perl 5.6 or later (with [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod) package)
 * Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
@@ -88,6 +96,7 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 
 ***WARNING***
 --
+
 It is **extremely important** for you to fully understand each change
 you make to a MySQL database server.  If you don't understand portions
 of the script's output, or if you don't understand the recommendations,
@@ -101,7 +110,6 @@ It's **also important** to wait at least a day of uptime to get accurate results
 
 **Seriously - please review the FAQ section below.**
 
-
 Security recommendations
 --
 
@@ -111,6 +119,7 @@ Read link for more details [Issue #289](https://github.com/major/MySQLTuner-perl
 
 What MySQLTuner is checking exactly ?
 --
+
 All checks done by **MySQLTuner** are documented in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) documentation.
 
 Download/Installation
@@ -120,7 +129,7 @@ Choose one of these methods:
 
 1) Script direct download (the simplest and shortest method):
 
-```
+```bash
 wget http://mysqltuner.pl/ -O mysqltuner.pl
 wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
 wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
@@ -135,75 +144,83 @@ Sysschema is installed by default under MySQL 5.7 and MySQL 8 from Oracle.
 By default, on MySQL 5.6/5.7/8, performance schema is enabled by default.
 For previous MySQL 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
 
-	curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
-	# check zip file
-	unzip -l sysschema.zip
-	unzip sysschema.zip
-	cd mysql-sys-master
-	mysql -uroot -p < sys_56.sql
+```bash
+curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
+# check zip file
+unzip -l sysschema.zip
+unzip sysschema.zip
+cd mysql-sys-master
+mysql -uroot -p < sys_56.sql
+```
 
 Optional Performance schema and Sysschema installation for MariaDB < 10.6
 --
 
-Sysschema is not installed by default under MariaDB prior to 10.6 [MariaDB sys](https://mariadb.com/kb/en/sys-schema/) 
-
+Sysschema is not installed by default under MariaDB prior to 10.6 [MariaDB sys](https://mariadb.com/kb/en/sys-schema/)
 
 By default, on MariaDB, performance schema is disabled by default. consider activating performance schema across your my.cnf configuration file:
 
-	[mysqld]
-	performance_schema = on
+```ini
+[mysqld]
+performance_schema = on
+```
 
 You can follow this command to create a new database sys containing very useful view on Performance schema:
 
-	curl "https://codeload.github.com/FromDual/mariadb-sys/zip/master" > mariadb-sys.zip
-	# check zip file
-	unzip -l mariadb-sys.zip
-	unzip mariadb-sys.zip
-	cd mariadb-sys-master/
-	mysql -u root -p < ./sys_10.sql
+```bash
+curl "https://codeload.github.com/FromDual/mariadb-sys/zip/master" > mariadb-sys.zip
+# check zip file
+unzip -l mariadb-sys.zip
+unzip mariadb-sys.zip
+cd mariadb-sys-master/
+mysql -u root -p < ./sys_10.sql
+```
 
 Errors & solutions for performance schema installation
 
-     ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
-     Have a look at #452 solution given by @ericx
+ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
+Have a look at #452 solution given by @ericx
 
 Performance tips
 --
+
 Metadata statistic updates can impact strongly performance of database servers and MySQLTuner.
 Be sure that innodb_stats_on_metadata is disabled.
 
-	set global innodb_stats_on_metadata = 0;
+```bash
+set global innodb_stats_on_metadata = 0;
+```
 
 Specific usage
 --
 
 __Usage:__ Minimal usage locally
 
-	perl mysqltuner.pl --host 127.0.0.1
+  perl mysqltuner.pl --host 127.0.0.1
 
 Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
 
 __Usage:__ Minimal usage remotely
 
-	perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
+  perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
 
 __Usage:__ Enable maximum output information around MySQL/MariaDb without debugging
 
-	perl mysqltuner.pl --verbose
-	perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat --tbstat
+  perl mysqltuner.pl --verbose
+  perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat --tbstat
 
 
 __Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
 
-	perl mysqltuner.pl --cvefile=vulnerabilities.csv
+  perl mysqltuner.pl --cvefile=vulnerabilities.csv
 
 __Usage:__ Write your result in a file with information displayed
 
-	perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
+  perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 
 __Usage:__ Write your result in a file **without outputting information**
 
-	perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
+  perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 
 __Usage:__ Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
 

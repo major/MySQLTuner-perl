@@ -4,6 +4,10 @@ name: CVE and Docs update
 
 # Controls when the workflow will run
 on:
+  # Scheudle every sunday at 00:00
+  schedule:
+    - cron: '0 0 * * 0'
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -16,7 +20,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Setup MySQL Tuner repository
         uses: actions/checkout@v3
 
@@ -42,4 +45,4 @@ jobs:
           commit_prefix: "[AUTO]"
           commit_message: "Updates CVE and docs (via Actions)"
           force: false
-          target_branch: update/version
+          target_branch: "cve-docs"
