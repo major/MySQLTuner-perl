@@ -39,12 +39,12 @@ jobs:
       - name: Test database is Up and Running
         run: |
           sleep 5s
-          cd test_db
-          netstat -ltpn
+          sudo netstat -ltpn
           mysql -e 'select version();'
 
       - name: Injecting test_db dataset
         run: |
+          cd test_db
           mysql -e 'CREATE DATABASE data;'
           mysql data< ./employees.sql
           cd -
