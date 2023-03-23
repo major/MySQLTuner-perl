@@ -16,7 +16,6 @@ jobs:
           MYSQL_VERSION: [5.7, 8.0]
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Setup MySQL Tuner repository
@@ -58,8 +57,8 @@ jobs:
       - name: Adding examples to Git
         run: |
           git add ./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }}/*
+          sleep $[ ( $RANDOM % 10 )  + 1 ]s
 
-      # Runs a single command using the runners shell
       - name: Run the Action
         uses: devops-infra/action-commit-push@master
         with:
