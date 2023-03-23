@@ -15,3 +15,4 @@ result.txt
 reports_*
 golang/prog-*
 .vscode
+test_db/**
