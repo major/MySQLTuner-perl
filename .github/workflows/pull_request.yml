@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI for MySQL Tuner
+name: CI for MySQL Tuner for MySQL 5.7 and 8.0
 
 # Controls when the workflow will run
 on:
@@ -16,7 +16,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  test_help:
     strategy:
       matrix:
         MYSQL_VERSION: [5.7, 8.0]
@@ -38,10 +38,39 @@ jobs:
         run: |
           echo -e "[client]\nuser=root\npassword=root\nhost=127.0.0.1\nprotocol=TCP" > $HOME/.my.cnf
 
-      - name: Run help mode
+      - name: waiting database
         run: |
           sleep 20s
+
+      - name: Run help mode
+        run: |
           sudo perl ./mysqltuner.pl --help
+
+  test_with_empty_db:
+    needs: test_help
+    strategy:
+      matrix:
+        MYSQL_VERSION: [5.7, 8.0]
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Setup MySQL Tuner repository
+        uses: actions/checkout@v3
+
+      - name: Set up MySQL
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql root password: "root"
+          mysql version: "${{ matrix.MYSQL_VERSION }}"
+
+      - name: Injecting credentials
+        run: |
+          echo -e "[client]\nuser=root\npassword=root\nhost=127.0.0.1\nprotocol=TCP" > $HOME/.my.cnf
+
+      - name: waiting database
+        run: |
+          sleep 20s
 
       # Runs a single command using the runners shell
       - name: Run verbose mode
