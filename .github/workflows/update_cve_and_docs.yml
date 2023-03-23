@@ -4,6 +4,10 @@ name: CVE and Docs update
 
 # Controls when the workflow will run
 on:
+  # Scheudle every sunday at 00:00
+  schedule:
+    - cron: '0 0 * * 0'
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
