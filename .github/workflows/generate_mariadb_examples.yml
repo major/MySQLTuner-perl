@@ -71,4 +71,4 @@ jobs:
           commit_prefix: "[AUTO]"
           commit_message: "Updates MariaDb result examples (via Actions)"
           force: false
-          target_branch: examples-mysql-${{ matrix.MARIADB_VERSION }}
+          target_branch: examples-mariadb-${{ matrix.MARIADB_VERSION }}
