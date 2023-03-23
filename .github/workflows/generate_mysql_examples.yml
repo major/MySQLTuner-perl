@@ -13,7 +13,7 @@ jobs:
     # This workflow contains a single job called "build"
     strategy:
         matrix:
-          MYSQL_VERSION: [5.7, 8.0]
+          MYSQL_VERSION: [5.6, 5.7, 8.0]
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -22,10 +22,11 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up MySQL
-        uses: mirromutth/mysql-action@v1.1
+        uses: shogo82148/actions-setup-mysql@v1
         with:
-          mysql root password: "root"
-          mysql version: "${{ matrix.MYSQL_VERSION }}"
+          distribution: 'mysql'
+          root-password: "root"
+          mysql-version: "${{ matrix.MYSQL_VERSION }}"
 
       - name: Injecting credentials
         run: |
