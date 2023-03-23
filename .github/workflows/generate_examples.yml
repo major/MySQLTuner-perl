@@ -57,13 +57,14 @@ jobs:
       - name: Adding examples to Git
         run: |
           git add ./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }}/*
+          
           sleep $[ ( $RANDOM % 10 )  + 1 ]s
 
       - name: Run the Action
         uses: devops-infra/action-commit-push@master
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
-          add_timestamp: true
+          add_timestamp: false
           commit_prefix: "[AUTO]"
           commit_message: "Updates result examples (via Actions)"
           force: false
