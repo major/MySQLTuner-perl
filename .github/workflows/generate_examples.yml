@@ -67,8 +67,8 @@ jobs:
         uses: devops-infra/action-commit-push@master
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
-          add_timestamp: false
+          add_timestamp: true
           commit_prefix: "[AUTO]"
           commit_message: "Updates result examples (via Actions)"
           force: false
-          target_branch: master
+          target_branch: examples
