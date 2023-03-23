@@ -1,0 +1,1683 @@
+ >>  MySQLTuner 2.1.1
+	 * Jean-Marie Renouard <jmrenouard@gmail.com>
+	 * Major Hayden <major@mhtx.net>
+ >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/
+ >>  Run with '--help' for additional options and output filtering
+[OK] You have the latest version of MySQLTuner (2.1.1)
+[OK] Logged in using credentials passed on the command line
+[OK] Currently running supported MySQL version 5.7.41
+[OK] Operating on 64-bit architecture
+ 
+-------- System Linux Recommendations --------------------------------------------------------------
+Look for related Linux system recommendations
+[--] Ubuntu 22.04.2 LTS
+[--] Machine type          : Virtual machine
+[--] Internet              : Connected
+[--] Number of Core CPU : 2
+[--] Operating System Type : GNU/Linux
+[--] Kernel Release        : 5.15.0-1034-azure
+[--] Hostname              : fv-az417-681
+[--] Network Cards         : 
+[--] 	docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+[--] 	        inet 172.17.0.1  netmask 255.255.0.0  broadcast 172.17.255.255
+[--] 	--
+[--] 	eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+[--] 	        inet 10.1.0.16  netmask 255.255.0.0  broadcast 10.1.255.255
+[--] 	--
+[--] 	lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+[--] 	        inet 127.0.0.1  netmask 255.0.0.0
+[--] Internal IP           : 10.1.0.16 172.17.0.1 
+[--] HTTP client found: /usr/bin/curl
+[--] External IP           :   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current,                                  Dload  Upload   Total   Spent    Left  Speed,   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    13  100    13    0     0    188      0 --:--:-- --:--:-- --:--:--   188100    13  100    13    0     0    188      0 --:--:-- --:--:-- --:--:--   188, 40.122.243.85
+[--] Name Servers          : 127.0.0.53
+[--] Logged In users       : 
+[--] Ram Usages in Mb      : 
+[--] 	               total        used        free      shared  buff/cache   available
+[--] 	Mem:            6943         966         345           7        5632        5665
+[--] 	Swap:           4095           0        4095
+[--] Load Average          : 
+[--] 	top - 16:39:28 up 3 min,  0 users,  load average: 0.82, 0.55, 0.24
+[--] System Uptime         : 
+[--] 	 16:39:28 up 3 min,  0 users,  load average: 0.82, 0.55, 0.24
+[--] User process except mysqld used 125M RAM.
+[--] Other user process except mysqld used less than 15% of total physical memory 1.80% (125M / 6G)
+ 
+-------- Filesystem Linux Recommendations ----------------------------------------------------------
+[--] mount point /boot/efi is using 6 % total space (6.04 MB / 104.35 MB)
+[--] mount point /mnt is using 31 % total space (4.00 GB / 13.68 GB)
+[--] mount point / is using 10 % of max allowed inodes
+[--] mount point /mnt is using 1 % of max allowed inodes
+ 
+-------- Kernel Information Recommendations --------------------------------------------------------
+[--] Information about kernel tuning:
+[--] 	fs.aio-max-nr = 65536
+[--] 	fs.aio-nr = 0
+[--] 	fs.file-max = 9223372036854775807
+[--] 	vm.swappiness = 60
+[!!] Swappiness is > 10, please consider having a value lower than 10
+[--] TCP slot entries is > 100.
+[!!] Max running total of the number of events is < 1M, please consider having a value greater than 1M
+ 
+-------- Log file Recommendations ------------------------------------------------------------------
+[!!] log_error is set to stderr, but this script can't read stderr
+ 
+-------- Storage Engine Statistics -----------------------------------------------------------------
+[--] Status: +ARCHIVE +BLACKHOLE +CSV -FEDERATED +InnoDB +MEMORY +MRG_MYISAM +MyISAM +PERFORMANCE_SCHEMA 
+[--] Data in InnoDB tables: 146.8M (Tables: 7)
+[OK] Total fragmented tables: 0
+ 
+-------- Analysis Performance Metrics --------------------------------------------------------------
+[--] innodb_stats_on_metadata: OFF
+[OK] No stat updates during querying INFORMATION_SCHEMA.
+ 
+-------- Database Metrics --------------------------------------------------------------------------
+[--] There is 2 Database(s).
+[--] All User Databases:
+[--]  +-- TABLE : 6
+[--]  +-- VIEW  : 2
+[--]  +-- INDEX : 9
+[--]  +-- CHARS : 1 (latin1)
+[--]  +-- COLLA : 1 (latin1_swedish_ci)
+[--]  +-- ROWS  : 3912399
+[--]  +-- DATA  : 141.2M(96.22%)
+[--]  +-- INDEX : 5.5M(3.78%)
+[--]  +-- SIZE  : 146.8M
+[--]  +-- ENGINE: 1 (InnoDB)
+
+[--] Database: employees
+[--]  +-- TABLE : 6
+[--]  +-- VIEW  : 2
+[--]  +-- INDEX : 9
+[--]  +-- CHARS : 1 (latin1)
+[--]  +-- COLLA : 1 (latin1_swedish_ci)
+[--]  +-- ROWS  : 3912399
+[--]  +-- DATA  : 141.2M(96.22%)
+[--]  +-- INDEX : 5.5M(3.78%)
+[--]  +-- TOTAL : 146.8M
+[--]  +-- ENGINE: 1 (InnoDB)
+[--]  +-- ENGINE InnoDB : 6 TABLE(s)
+[OK] 1 collation for employees database.
+[OK] 1 engine for employees database.
+[--] Charsets for employees database table column: latin1
+[OK] employees table column(s) has same charset defined for all text like column(s).
+[--] Collations for employees database table column: latin1_swedish_ci
+[OK] employees table column(s) has same collation defined for all text like column(s).
+ 
+-------- Table Column Metrics ----------------------------------------------------------------------
+[--] Database: employees
+[--]  +-- TABLE: departments
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index dept_name - Cols: dept_name - Type: BTREE
+[--]      +-- Index PRIMARY - Cols: dept_no - Type: BTREE
+[--]      +-- Column departments.dept_no: CHAR(4) NOT NULL
+[--]      +-- Column departments.dept_name: VARCHAR(40) NOT NULL
+[--]  +-- TABLE: dept_emp
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index dept_no - Cols: dept_no - Type: BTREE
+[--]      +-- Index PRIMARY - Cols: emp_no,dept_no - Type: BTREE
+[--]      +-- Column dept_emp.emp_no: INT(11) NOT NULL
+[--]      +-- Column dept_emp.dept_no: CHAR(4) NOT NULL
+[--]      +-- Column dept_emp.from_date: DATE NOT NULL
+[--]      +-- Column dept_emp.to_date: DATE NOT NULL
+[--]  +-- TABLE: dept_manager
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index dept_no - Cols: dept_no - Type: BTREE
+[--]      +-- Index PRIMARY - Cols: emp_no,dept_no - Type: BTREE
+[--]      +-- Column dept_manager.emp_no: INT(11) NOT NULL
+[--]      +-- Column dept_manager.dept_no: CHAR(4) NOT NULL
+[--]      +-- Column dept_manager.from_date: DATE NOT NULL
+[--]      +-- Column dept_manager.to_date: DATE NOT NULL
+[--]  +-- TABLE: employees
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index PRIMARY - Cols: emp_no - Type: BTREE
+[--]      +-- Column employees.emp_no: INT(11) NOT NULL
+[--]      +-- Column employees.birth_date: DATE NOT NULL
+[--]      +-- Column employees.first_name: VARCHAR(14) NOT NULL
+[--]      +-- Column employees.last_name: VARCHAR(16) NOT NULL
+[--]      +-- Column employees.gender: ENUM('M','F') NOT NULL
+[--]      +-- Column employees.hire_date: DATE NOT NULL
+[--]  +-- TABLE: salaries
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index PRIMARY - Cols: emp_no,from_date - Type: BTREE
+[--]      +-- Column salaries.emp_no: INT(11) NOT NULL
+[--]      +-- Column salaries.salary: INT(11) NOT NULL
+[--]      +-- Column salaries.from_date: DATE NOT NULL
+[--]      +-- Column salaries.to_date: DATE NOT NULL
+[--]  +-- TABLE: titles
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index PRIMARY - Cols: emp_no,title,from_date - Type: BTREE
+[--]      +-- Column titles.emp_no: INT(11) NOT NULL
+[--]      +-- Column titles.title: VARCHAR(50) NOT NULL
+[--]      +-- Column titles.from_date: DATE NOT NULL
+[--]      +-- Column titles.to_date: DATE NULL
+ 
+-------- Indexes Metrics ---------------------------------------------------------------------------
+[--] Worst selectivity indexes:
+[--] Index: dept_no(dept_no)
+[--]  +-- COLUMN      : employees.dept_emp
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 1 column(s)
+[--]  +-- CARDINALITY : 8 distinct values
+[--]  +-- NB ROWS     : 331570 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 0.00%
+[!!] dept_no(dept_no) has a low selectivity
+[--] Index: PRIMARY(emp_no)
+[--]  +-- COLUMN      : employees.salaries
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 2 column(s)
+[--]  +-- CARDINALITY : 301164 distinct values
+[--]  +-- NB ROWS     : 2838426 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 10.61%
+[!!] PRIMARY(emp_no) has a low selectivity
+[--] Index: dept_no(dept_no)
+[--]  +-- COLUMN      : employees.dept_manager
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 1 column(s)
+[--]  +-- CARDINALITY : 9 distinct values
+[--]  +-- NB ROWS     : 24 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 37.50%
+[--] Index: PRIMARY(emp_no)
+[--]  +-- COLUMN      : employees.titles
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 3 column(s)
+[--]  +-- CARDINALITY : 297666 distinct values
+[--]  +-- NB ROWS     : 442902 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 67.21%
+[--] Index: PRIMARY(emp_no)
+[--]  +-- COLUMN      : employees.dept_emp
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 2 column(s)
+[--]  +-- CARDINALITY : 300010 distinct values
+[--]  +-- NB ROWS     : 331570 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 90.48%
+[--] Index: PRIMARY(title)
+[--]  +-- COLUMN      : employees.titles
+[--]  +-- NB SEQS     : 2 sequence(s)
+[--]  +-- NB COLS     : 3 column(s)
+[--]  +-- CARDINALITY : 441297 distinct values
+[--]  +-- NB ROWS     : 442902 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 99.64%
+[--] Index: PRIMARY(dept_no)
+[--]  +-- COLUMN      : employees.dept_manager
+[--]  +-- NB SEQS     : 2 sequence(s)
+[--]  +-- NB COLS     : 2 column(s)
+[--]  +-- CARDINALITY : 24 distinct values
+[--]  +-- NB ROWS     : 24 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: PRIMARY(from_date)
+[--]  +-- COLUMN      : employees.titles
+[--]  +-- NB SEQS     : 3 sequence(s)
+[--]  +-- NB COLS     : 3 column(s)
+[--]  +-- CARDINALITY : 442902 distinct values
+[--]  +-- NB ROWS     : 442902 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: PRIMARY(emp_no)
+[--]  +-- COLUMN      : employees.dept_manager
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 2 column(s)
+[--]  +-- CARDINALITY : 24 distinct values
+[--]  +-- NB ROWS     : 24 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: PRIMARY(dept_no)
+[--]  +-- COLUMN      : employees.dept_emp
+[--]  +-- NB SEQS     : 2 sequence(s)
+[--]  +-- NB COLS     : 2 column(s)
+[--]  +-- CARDINALITY : 331570 distinct values
+[--]  +-- NB ROWS     : 331570 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Indexes per database:
+[--] Database: employees
+[--]  +-- INDEX      : departments.dept_name
+[--]  +-- COLUMNS    : dept_name
+[--]  +-- CARDINALITY: 9
+[--]  +-- INDEX      : departments.PRIMARY
+[--]  +-- COLUMNS    : dept_no
+[--]  +-- CARDINALITY: 9
+[--]  +-- INDEX      : dept_emp.dept_no
+[--]  +-- COLUMNS    : dept_no
+[--]  +-- CARDINALITY: 8
+[--]  +-- INDEX      : dept_emp.PRIMARY
+[--]  +-- COLUMNS    : emp_no,dept_no
+[--]  +-- CARDINALITY: 631580
+[--]  +-- INDEX      : dept_manager.dept_no
+[--]  +-- COLUMNS    : dept_no
+[--]  +-- CARDINALITY: 9
+[--]  +-- INDEX      : dept_manager.PRIMARY
+[--]  +-- COLUMNS    : emp_no,dept_no
+[--]  +-- CARDINALITY: 48
+[--]  +-- INDEX      : employees.PRIMARY
+[--]  +-- COLUMNS    : emp_no
+[--]  +-- CARDINALITY: 299468
+[--]  +-- INDEX      : salaries.PRIMARY
+[--]  +-- COLUMNS    : emp_no,from_date
+[--]  +-- CARDINALITY: 3139590
+[--]  +-- INDEX      : titles.PRIMARY
+[--]  +-- COLUMNS    : emp_no,title,from_date
+[--]  +-- CARDINALITY: 1181865
+[--] Unused indexes:
+[!!] Index: dept_name on employees.departments is not used.
+[!!] Index: dept_no on employees.dept_emp is not used.
+[!!] Index: dept_no on employees.dept_manager is not used.
+ 
+-------- Views Metrics -----------------------------------------------------------------------------
+ 
+-------- Triggers Metrics --------------------------------------------------------------------------
+ 
+-------- Routines Metrics --------------------------------------------------------------------------
+ 
+-------- Security Recommendations ------------------------------------------------------------------
+[OK] No Role user detected
+[OK] There are no anonymous accounts for any database users
+[OK] All database users have passwords assigned
+[!!] User 'root'@'localhost' has user name as password.
+[--] There are 620 basic passwords in the list.
+[!!] User 'root@localhost' is using weak password: root in a lower, upper or capitalize derivative version.
+ 
+-------- CVE Security Recommendations --------------------------------------------------------------
+[OK] NO SECURITY CVE FOUND FOR YOUR VERSION
+ 
+-------- Performance Metrics -----------------------------------------------------------------------
+[--] Up for: 1m 2s (3K q [56.516 qps], 1K conn, TX: 3M, RX: 164M)
+[--] Reads / Writes: 92% / 8%
+[--] Binary logging is disabled
+[--] Physical Memory     : 6.8G
+[--] Max MySQL memory    : 1.1G
+[--] Other process memory: 125.3M
+[--] Total buffers: 169.0M global + 5.1M per thread (151 max threads)
+[--] Performance_schema Max memory usage: 142M
+[--] Galera GCache Max memory usage: 0B
+[--] Global Buffers
+[--]  +-- Key Buffer: 8.0M
+[--]  +-- Max Tmp Table: 16.0M
+[--] Query Cache Buffers
+[--]  +-- Query Cache: OFF - DISABLED
+[--]  +-- Query Cache Size: 1.0M
+[--] Per Thread Buffers
+[--]  +-- Read Buffer: 128.0K
+[--]  +-- Read RND Buffer: 256.0K
+[--]  +-- Sort Buffer: 256.0K
+[--]  +-- Thread stack: 256.0K
+[--]  +-- Join Buffer: 256.0K
+[OK] Maximum reached memory usage: 316.2M (4.55% of installed RAM)
+[OK] Maximum possible memory usage: 1.1G (15.62% of installed RAM)
+[OK] Overall possible memory usage with other process is compatible with memory available
+[OK] Slow queries: 0% (0/3K)
+[OK] Highest usage of available connections: 0% (1/151)
+[OK] Aborted connections: 0.00% (0/1075)
+[!!] Name resolution is active: a reverse name resolution is made for each new connection which can reduce performance
+[OK] Query cache is disabled by default due to mutex contention on multiprocessor machines.
+[!!] Sorts requiring temporary tables: 16% (47 temp sorts / 289 sorts)
+[!!] Joins performed without indexes: 60
+[OK] Temporary tables created on disk: 11% (392 on disk / 3K total)
+[OK] Thread cache hit rate: 99% (1 created / 1K connections)
+[OK] Table cache hit rate: 57% (2K hits / 5K requests)
+[OK] table_definition_cache (1400) is greater than number of tables (289)
+[OK] Open file limit used: 0% (122/65K)
+[OK] Table locks acquired immediately: 100% (1K immediate / 1K locks)
+ 
+-------- Performance schema ------------------------------------------------------------------------
+[--] Performance_schema is activated.
+[--] Memory used by Performance_schema: 142.1M
+[--] Sys schema is installed.
+[--] Sys schema Version: 1.5.2
+ 
+-------- Performance schema: Top 5 user per connection ---------------------------------------------
+[--]  +-- 1: root	1819 conn(s)
+[--]  +-- 2: background	27 conn(s)
+ 
+-------- Performance schema: Top 5 user per statement ----------------------------------------------
+[--]  +-- 1: root	70631 stmt(s)
+[--]  +-- 2: background	0 stmt(s)
+ 
+-------- Performance schema: Top 5 user per statement latency --------------------------------------
+[--]  +-- 1: root	306522778.4000
+[--]  +-- 2: background	0.0000
+ 
+-------- Performance schema: Top 5 user per lock latency -------------------------------------------
+[--]  +-- 1: root	6500885000000
+[--]  +-- 2: background	0
+ 
+-------- Performance schema: Top 5 user per nb full scans ------------------------------------------
+[--]  +-- 1: root	2276
+[--]  +-- 2: background	0
+ 
+-------- Performance schema: Top 5 user per rows sent ----------------------------------------------
+[--]  +-- 1: root	29836
+[--]  +-- 2: background	0
+ 
+-------- Performance schema: Top 5 user per rows modified ------------------------------------------
+[--]  +-- 1: root	3919017
+[--]  +-- 2: background	0
+ 
+-------- Performance schema: Top 5 user per IO -----------------------------------------------------
+[--]  +-- 1: root	13890
+[--]  +-- 2: background	13170
+ 
+-------- Performance schema: Top 5 user per IO latency ---------------------------------------------
+[--]  +-- 1: root	1087672764998
+[--]  +-- 2: background	681017892886
+ 
+-------- Performance schema: Top 5 host per connection ---------------------------------------------
+[--]  +-- 1: localhost	1828 conn(s)
+ 
+-------- Performance schema: Top 5 host per statement ----------------------------------------------
+[--]  +-- 1: localhost	70737 stmt(s)
+ 
+-------- Performance schema: Top 5 host per statement latency --------------------------------------
+[--]  +-- 1: localhost	306728473.7631
+ 
+-------- Performance schema: Top 5 host per lock latency -------------------------------------------
+[--]  +-- 1: localhost	6503416000000
+[--]  +-- 2: background	0
+ 
+-------- Performance schema: Top 5 host per nb full scans ------------------------------------------
+[--]  +-- 1: localhost	2285
+[--]  +-- 2: background	0
+ 
+-------- Performance schema: Top 5 host per rows sent ----------------------------------------------
+[--]  +-- 1: localhost	29860
+[--]  +-- 2: background	0
+ 
+-------- Performance schema: Top 5 host per rows modified ------------------------------------------
+[--]  +-- 1: localhost	3919017
+[--]  +-- 2: background	0
+ 
+-------- Performance schema: Top 5 host per io -----------------------------------------------------
+[--]  +-- 1: localhost	13890
+ 
+-------- Performance schema: Top 5 host per io latency ---------------------------------------------
+[--]  +-- 1: localhost	1087672764998
+ 
+-------- Performance schema: Top IO type order by total io -----------------------------------------
+[--]  +-- 1: innodb/innodb_data_file	12191 i/o
+[--]  +-- 2: myisam/dfile	6578 i/o
+[--]  +-- 3: sql/io_cache	4475 i/o
+[--]  +-- 4: sql/FRM	2575 i/o
+[--]  +-- 5: innodb/innodb_log_file	582 i/o
+[--]  +-- 6: sql/file_parser	334 i/o
+[--]  +-- 7: archive/data	156 i/o
+[--]  +-- 8: csv/data	60 i/o
+[--]  +-- 9: myisam/kfile	47 i/o
+[--]  +-- 10: sql/dbopt	24 i/o
+[--]  +-- 11: sql/casetest	10 i/o
+[--]  +-- 12: csv/metadata	8 i/o
+[--]  +-- 13: mysys/cnf	5 i/o
+[--]  +-- 14: sql/ERRMSG	5 i/o
+[--]  +-- 15: sql/pid	3 i/o
+[--]  +-- 16: mysys/charset	3 i/o
+[--]  +-- 17: sql/global_ddl_log	2 i/o
+[--]  +-- 18: sql/misc	2 i/o
+ 
+-------- Performance schema: Top IO type order by total latency ------------------------------------
+[--]  +-- 1: innodb/innodb_data_file	1027417723422.0
+[--]  +-- 2: innodb/innodb_log_file	579489168782.0
+[--]  +-- 3: sql/io_cache	117344134496.0
+[--]  +-- 4: myisam/dfile	30358528164.0
+[--]  +-- 5: sql/FRM	9511756416.0
+[--]  +-- 6: sql/file_parser	2518908764.0
+[--]  +-- 7: sql/ERRMSG	943168184.0
+[--]  +-- 8: archive/data	302950340.0
+[--]  +-- 9: csv/data	291831576.0
+[--]  +-- 10: myisam/kfile	166328232.0
+[--]  +-- 11: sql/dbopt	134527092.0
+[--]  +-- 12: sql/casetest	84730008.0
+[--]  +-- 13: csv/metadata	32807120.0
+[--]  +-- 14: sql/pid	30948384.0
+[--]  +-- 15: mysys/charset	26201304.0
+[--]  +-- 16: mysys/cnf	20637984.0
+[--]  +-- 17: sql/misc	11796100.0
+[--]  +-- 18: sql/global_ddl_log	4511516.0
+ 
+-------- Performance schema: Top IO type order by max latency --------------------------------------
+[--]  +-- 1: myisam/dfile	19683386308
+[--]  +-- 2: innodb/innodb_data_file	17370293892
+[--]  +-- 3: innodb/innodb_log_file	7355531008
+[--]  +-- 4: sql/FRM	1413409060
+[--]  +-- 5: sql/io_cache	1360199520
+[--]  +-- 6: sql/ERRMSG	913510032
+[--]  +-- 7: sql/file_parser	758448060
+[--]  +-- 8: sql/casetest	37922224
+[--]  +-- 9: sql/dbopt	31984436
+[--]  +-- 10: sql/pid	19625560
+[--]  +-- 11: mysys/charset	14938624
+[--]  +-- 12: myisam/kfile	13446480
+[--]  +-- 13: sql/misc	9763376
+[--]  +-- 14: csv/metadata	8934964
+[--]  +-- 15: mysys/cnf	8496056
+[--]  +-- 16: csv/data	8155956
+[--]  +-- 17: archive/data	4384068
+[--]  +-- 18: sql/global_ddl_log	2549676
+ 
+-------- Performance schema: Top Stages order by total io ------------------------------------------
+[--]  +-- 1: innodb/buffer pool load	1 i/o
+ 
+-------- Performance schema: Top Stages order by total latency -------------------------------------
+[--]  +-- 1: innodb/buffer pool load	633503000.0
+ 
+-------- Performance schema: Top Stages order by avg latency ---------------------------------------
+[--]  +-- 1: innodb/buffer pool load	633503000
+ 
+-------- Performance schema: Top 5 host per table scans --------------------------------------------
+[--]  +-- 1: localhost	2296
+ 
+-------- Performance schema: InnoDB Buffer Pool by schema ------------------------------------------
+[--]  +-- 1: employees	107790336	98455504	6579 page(s)
+[--]  +-- 2: InnoDB System	3932160	3387277	240 page(s)
+[--]  +-- 3: mysql	196608	4462	12 page(s)
+[--]  +-- 4: sys	16384	338	1 page(s)
+ 
+-------- Performance schema: 40 InnoDB Buffer Pool by table ----------------------------------------
+[--]  +-- 1: employees	salaries	99713024	91106864	6086 page(s)
+[--]  +-- 2: employees	employees	6275072	5752554	383 page(s)
+[--]  +-- 3: InnoDB System	SYS_TABLES	3768320	3373442	230 page(s)
+[--]  +-- 4: employees	titles	1769472	1595591	108 page(s)
+[--]  +-- 5: InnoDB System	SYS_FOREIGN	49152	1202	3 page(s)
+[--]  +-- 6: employees	departments	32768	495	2 page(s)
+[--]  +-- 7: mysql	help_category	32768	0	2 page(s)
+[--]  +-- 8: mysql	help_keyword	32768	0	2 page(s)
+[--]  +-- 9: mysql	help_topic	32768	0	2 page(s)
+[--]  +-- 10: InnoDB System	SYS_COLUMNS	16384	10381	1 page(s)
+[--]  +-- 11: InnoDB System	SYS_DATAFILES	16384	1375	1 page(s)
+[--]  +-- 12: InnoDB System	SYS_FIELDS	16384	2600	1 page(s)
+[--]  +-- 13: InnoDB System	SYS_FOREIGN_COLS	16384	406	1 page(s)
+[--]  +-- 14: InnoDB System	SYS_INDEXES	16384	2826	1 page(s)
+[--]  +-- 15: InnoDB System	SYS_TABLESPACES	16384	1349	1 page(s)
+[--]  +-- 16: InnoDB System	SYS_VIRTUAL	16384	0	1 page(s)
+[--]  +-- 17: mysql	help_relation	16384	0	1 page(s)
+[--]  +-- 18: mysql	innodb_index_stats	16384	3939	1 page(s)
+[--]  +-- 19: mysql	innodb_table_stats	16384	523	1 page(s)
+[--]  +-- 20: mysql	slave_master_info	16384	0	1 page(s)
+[--]  +-- 21: mysql	slave_relay_log_info	16384	0	1 page(s)
+[--]  +-- 22: mysql	slave_worker_info	16384	0	1 page(s)
+[--]  +-- 23: sys	sys_config	16384	338	1 page(s)
+ 
+-------- Performance schema: Process per time ------------------------------------------------------
+[--]  +-- 1: sql/main	NULL	83
+[--]  +-- 2: sql/compress_gtid_table	Daemon	83
+[--]  +-- 3: root@localhost	Query	0
+[--]  +-- 4: sql/thread_timer_notifier	NULL	NULL
+[--]  +-- 5: innodb/io_ibuf_thread	NULL	NULL
+[--]  +-- 6: innodb/io_read_thread	NULL	NULL
+[--]  +-- 7: innodb/io_read_thread	NULL	NULL
+[--]  +-- 8: innodb/io_read_thread	NULL	NULL
+[--]  +-- 9: innodb/io_read_thread	NULL	NULL
+[--]  +-- 10: innodb/io_write_thread	NULL	NULL
+[--]  +-- 11: innodb/io_log_thread	NULL	NULL
+[--]  +-- 12: innodb/io_write_thread	NULL	NULL
+[--]  +-- 13: innodb/io_write_thread	NULL	NULL
+[--]  +-- 14: innodb/io_write_thread	NULL	NULL
+[--]  +-- 15: innodb/page_cleaner_thread	NULL	NULL
+[--]  +-- 16: innodb/srv_lock_timeout_thread	NULL	NULL
+[--]  +-- 17: innodb/srv_error_monitor_thread	NULL	NULL
+[--]  +-- 18: innodb/srv_monitor_thread	NULL	NULL
+[--]  +-- 19: innodb/srv_master_thread	NULL	NULL
+[--]  +-- 20: innodb/srv_purge_thread	NULL	NULL
+[--]  +-- 21: innodb/srv_worker_thread	NULL	NULL
+[--]  +-- 22: innodb/srv_worker_thread	NULL	NULL
+[--]  +-- 23: innodb/srv_worker_thread	NULL	NULL
+[--]  +-- 24: innodb/dict_stats_thread	NULL	NULL
+[--]  +-- 25: innodb/buf_dump_thread	NULL	NULL
+[--]  +-- 26: sql/signal_handler	NULL	NULL
+ 
+-------- Performance schema: InnoDB Lock Waits -----------------------------------------------------
+[--] No information found or indicators deactivated.
+ 
+-------- Performance schema: Thread IO Latency -----------------------------------------------------
+[--]  +-- 1: page_cleaner_thread	374662424430	7355531008
+[--]  +-- 2: io_write_thread	59130072758	2810589980
+[--]  +-- 3: io_write_thread	58302904450	3595620256
+[--]  +-- 4: io_write_thread	55149172544	2773056544
+[--]  +-- 5: io_write_thread	54596258012	3040051512
+[--]  +-- 6: srv_master_thread	34395178644	2377522392
+[--]  +-- 7: main	27250681476	13434827100
+[--]  +-- 8: io_log_thread	9976968108	1079451624
+[--]  +-- 9: dict_stats_thread	7171013512	1505378544
+[--]  +-- 10: buf_dump_thread	383218952	12082500
+ 
+-------- Performance schema: Top 15 Most latency statements ----------------------------------------
+[--]  +-- 1: INSERT INTO `dept_emp` VALUES (...) /* , ... */ 	167016728000
+[--]  +-- 2: INSERT INTO `titles` VALUES (...) /* , ... */ 	114438944000
+[--]  +-- 3: INSERT INTO `salaries` VALUES (...) /* , ... */ 	113252620000
+[--]  +-- 4: SELECT * FROM `sys` . `io_global_by_file_by_bytes` 	110831155000
+[--]  +-- 5: SELECT * FROM `sys` . `io_global_by_file_by_latency` 	108386643000
+[--]  +-- 6: INSERT INTO `employees` VALUES (...) /* , ... */ 	98038597000
+[--]  +-- 7: SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	73596768000
+[--]  +-- 8: SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	71415357000
+[--]  +-- 9: SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	71355057000
+[--]  +-- 10: SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	71215756000
+[--]  +-- 11: SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	64586958000
+[--]  +-- 12: SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	64146921000
+[--]  +-- 13: SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	51663696000
+[--]  +-- 14: SELECT * FROM `sys` . `innodb_buffer_stats_by_schema` 	51048255000
+[--]  +-- 15: SELECT * FROM `sys` . `memory_by_thread_by_current_bytes` 	30605353000
+ 
+-------- Performance schema: Top 15 slower queries -------------------------------------------------
+[--]  +-- 1: INSERT INTO `salaries` VALUES (...) /* , ... */ 	114 s
+[--]  +-- 2: INSERT INTO `titles` VALUES (...) /* , ... */ 	21 s
+[--]  +-- 3: INSERT INTO `employees` VALUES (...) /* , ... */ 	17 s
+[--]  +-- 4: INSERT INTO `dept_emp` VALUES (...) /* , ... */ 	14 s
+[--]  +-- 5: SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	2 s
+[--]  +-- 6: SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	2 s
+[--]  +-- 7: SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	1 s
+[--]  +-- 8: SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	1 s
+[--]  +-- 9: SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	1 s
+[--]  +-- 10: SELECT * FROM `sys` . `innodb_buffer_stats_by_schema` 	1 s
+[--]  +-- 11: SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	1 s
+[--]  +-- 12: SELECT * FROM `sys` . `io_global_by_file_by_bytes` 	1 s
+[--]  +-- 13: SELECT * FROM `sys` . `io_global_by_file_by_latency` 	1 s
+[--]  +-- 14: SELECT * FROM `sys` . `memory_by_thread_by_current_bytes` 	1 s
+[--]  +-- 15: SELECT * FROM `sys` . `processlist` 	1 s
+ 
+-------- Performance schema: Top 15 nb statement type ----------------------------------------------
+[--]  +-- 1: jump_if_not	42349
+[--]  +-- 2: freturn	18504
+[--]  +-- 3: select	3718
+[--]  +-- 4: set	3520
+[--]  +-- 5: Quit	1850
+[--]  +-- 6: jump	580
+[--]  +-- 7: insert	168
+[--]  +-- 8: Init DB	55
+[--]  +-- 9: show_engine_status	12
+[--]  +-- 10: show_table_status	10
+[--]  +-- 11: stmt	8
+[--]  +-- 12: create_table	6
+[--]  +-- 13: show_status	4
+[--]  +-- 14: show_databases	4
+[--]  +-- 15: show_variables	4
+ 
+-------- Performance schema: Top 15 statement by total latency -------------------------------------
+[--]  +-- 1: insert	19320399854000
+[--]  +-- 2: select	2278893997000
+[--]  +-- 3: set	168921453000
+[--]  +-- 4: jump_if_not	35956880000
+[--]  +-- 5: freturn	31535446000
+[--]  +-- 6: show_table_status	30727752000
+[--]  +-- 7: create_table	25759326000
+[--]  +-- 8: create_view	5040624000
+[--]  +-- 9: show_variables	3766318000
+[--]  +-- 10: Quit	3208217000
+[--]  +-- 11: show_status	2532813000
+[--]  +-- 12: Init DB	1315308000
+[--]  +-- 13: show_engine_status	1063103000
+[--]  +-- 14: show_databases	738303000
+[--]  +-- 15: stmt	693406000
+ 
+-------- Performance schema: Top 15 statement by lock latency --------------------------------------
+[--]  +-- 1: insert	6176009000000
+[--]  +-- 2: select	320857000000
+[--]  +-- 3: show_table_status	10550000000
+[--]  +-- 4: show_status	253000000
+[--]  +-- 5: show_variables	245000000
+[--]  +-- 6: show_databases	150000000
+[--]  +-- 7: alter_user	134000000
+[--]  +-- 8: show_storage_engines	76000000
+[--]  +-- 9: show_tables	71000000
+[--]  +-- 10: show_engine_status	0
+[--]  +-- 11: drop_table	0
+[--]  +-- 12: Init DB	0
+[--]  +-- 13: set	0
+[--]  +-- 14: show_slave_hosts	0
+[--]  +-- 15: Ping	0
+ 
+-------- Performance schema: Top 15 statement by full scans ----------------------------------------
+[--]  +-- 1: select	1697
+[--]  +-- 2: set	584
+[--]  +-- 3: show_table_status	10
+[--]  +-- 4: show_variables	4
+[--]  +-- 5: show_status	4
+[--]  +-- 6: show_databases	4
+[--]  +-- 7: show_storage_engines	2
+[--]  +-- 8: show_tables	2
+[--]  +-- 9: flush	0
+[--]  +-- 10: jump_if_not	0
+[--]  +-- 11: set_option	0
+[--]  +-- 12: stmt	0
+[--]  +-- 13: Ping	0
+[--]  +-- 14: drop_table	0
+[--]  +-- 15: show_engine_status	0
+ 
+-------- Performance schema: Top 15 statement by rows sent -----------------------------------------
+[--]  +-- 1: select	25983
+[--]  +-- 2: show_variables	2044
+[--]  +-- 3: show_status	1422
+[--]  +-- 4: show_table_status	456
+[--]  +-- 5: show_tables	162
+[--]  +-- 6: show_databases	24
+[--]  +-- 7: show_storage_engines	18
+[--]  +-- 8: show_engine_status	0
+[--]  +-- 9: drop_table	0
+[--]  +-- 10: Init DB	0
+[--]  +-- 11: set	0
+[--]  +-- 12: show_slave_hosts	0
+[--]  +-- 13: Ping	0
+[--]  +-- 14: jump_if_not	0
+[--]  +-- 15: create_view	0
+ 
+-------- Performance schema: Top 15 statement by rows modified -------------------------------------
+[--]  +-- 1: insert	3919015
+[--]  +-- 2: create_db	2
+[--]  +-- 3: show_engine_status	0
+[--]  +-- 4: drop_table	0
+[--]  +-- 5: Init DB	0
+[--]  +-- 6: set	0
+[--]  +-- 7: show_slave_hosts	0
+[--]  +-- 8: show_table_status	0
+[--]  +-- 9: show_tables	0
+[--]  +-- 10: select	0
+[--]  +-- 11: Ping	0
+[--]  +-- 12: jump_if_not	0
+[--]  +-- 13: create_view	0
+[--]  +-- 14: show_status	0
+[--]  +-- 15: Quit	0
+ 
+-------- Performance schema: 15 sample queries using temp table ------------------------------------
+[--]  +-- 1: SELECT `COLUMN_TYPE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =
+[--]  +-- 2: SELECT `IS_NULLABLE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =
+[--]  +-- 3: SELECT `CONCAT` ( `t` . `TABLE_SCHEMA` , ? , `t` . `TABLE_NAME` ) AS ? , `CONCAT` ( `s` . `INDEX_NAME` , ? , `s` . `COLU
+[--]  +-- 4: SELECT * FROM `sys` . `schema_object_overview` 
+[--]  +-- 5: SELECT `IFNULL` ( SUM ( `INDEX_LENGTH` ) , ? ) FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` NOT IN (?) AND 
+[--]  +-- 6: SELECT `concat` ( TABLE_NAME , ? , `index_name` ) AS `idxname` , GROUP_CONCAT ( COLUMN_NAME ORDER BY `seq_in_index` ) AS
+[--]  +-- 7: SELECT * FROM `sys` . `schema_auto_increment_columns` 
+[--]  +-- 8: SELECT * FROM `information_schema` . `COLUMNS` 
+[--]  +-- 9: SELECT * FROM `information_schema` . `VIEWS` 
+[--]  +-- 10: SELECT * FROM `information_schema` . `TABLES` 
+[--]  +-- 11: SELECT ENGINE , SUM ( `DATA_LENGTH` + `INDEX_LENGTH` ) , COUNT ( ENGINE ) , SUM ( `DATA_LENGTH` ) , SUM ( `INDEX_LENGTH`
+[--]  +-- 12: SELECT `TABLE_SCHEMA` , TABLE_NAME , ENGINE , CAST ( `DATA_FREE` AS SIGNED ) FROM `information_schema` . `TABLES` WHERE 
+[--]  +-- 13: SHOW TABLE STATUS FROM `sys` 
+[--]  +-- 14: SELECT COLUMN_NAME FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? 
+[--]  +-- 15: SELECT * FROM `information_schema` . `PARTITIONS` 
+ 
+-------- Performance schema: Unused indexes --------------------------------------------------------
+[--]  +-- 1: employees	dept_emp	dept_no
+[--]  +-- 2: employees	dept_manager	dept_no
+ 
+-------- Performance schema: Tables with full table scans ------------------------------------------
+[--]  +-- 1: sys	sys_config	6	29130460
+ 
+-------- Performance schema: Latest File IO by latency ---------------------------------------------
+[--] No information found or indicators deactivated.
+ 
+-------- Performance schema: File by IO read bytes -------------------------------------------------
+[--]  +-- 1: /tmp/actions-setup-mysql-KQMXc8/var/ibdata1	5636096
+[--]  +-- 2: /tmp/actions-setup-mysql-KQMXc8/var/employees/employees.ibd	4063232
+[--]  +-- 3: /tmp/actions-setup-mysql-KQMXc8/var/mysql/proc.MYD	1481563
+[--]  +-- 4: /tmp/actions-setup-mysql-KQMXc8/var/employees/titles.ibd	770048
+[--]  +-- 5: /tmp/actions-setup-mysql-KQMXc8/var/mysql/user.MYD	493084
+[--]  +-- 6: /tmp/actions-setup-mysql-KQMXc8/var/mysql/innodb_index_stats.ibd	131072
+[--]  +-- 7: /tmp/actions-setup-mysql-KQMXc8/var/mysql/innodb_table_stats.ibd	131072
+[--]  +-- 8: /tmp/actions-setup-mysql-KQMXc8/var/mysql/slave_master_info.ibd	131072
+[--]  +-- 9: /tmp/actions-setup-mysql-KQMXc8/var/mysql/slave_relay_log_info.ibd	131072
+[--]  +-- 10: /tmp/actions-setup-mysql-KQMXc8/var/mysql/slave_worker_info.ibd	131072
+[--]  +-- 11: /tmp/actions-setup-mysql-KQMXc8/var/sys/sys_config.ibd	114688
+[--]  +-- 12: /tmp/actions-setup-mysql-KQMXc8/var/mysql/engine_cost.ibd	81920
+[--]  +-- 13: /tmp/actions-setup-mysql-KQMXc8/var/mysql/gtid_executed.ibd	81920
+[--]  +-- 14: /tmp/actions-setup-mysql-KQMXc8/var/mysql/help_category.ibd	81920
+[--]  +-- 15: /tmp/actions-setup-mysql-KQMXc8/var/mysql/help_keyword.ibd	81920
+ 
+-------- Performance schema: File by IO written bytes ----------------------------------------------
+[--]  +-- 1: /tmp/actions-setup-mysql-KQMXc8/var/ibdata1	169492480
+[--]  +-- 2: /tmp/actions-setup-mysql-KQMXc8/var/ib_logfile0	150265856
+[--]  +-- 3: /tmp/actions-setup-mysql-KQMXc8/var/ib_logfile1	141614592
+[--]  +-- 4: /tmp/actions-setup-mysql-KQMXc8/var/employees/salaries.ibd	100139008
+[--]  +-- 5: /tmp/actions-setup-mysql-KQMXc8/var/ibtmp1	27508736
+[--]  +-- 6: /tmp/actions-setup-mysql-KQMXc8/var/employees/titles.ibd	19791872
+[--]  +-- 7: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_emp.ibd	16564224
+[--]  +-- 8: /tmp/actions-setup-mysql-KQMXc8/var/employees/employees.ibd	14712832
+[--]  +-- 9: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_manager.ibd	196608
+[--]  +-- 10: /tmp/actions-setup-mysql-KQMXc8/var/employees/departments.ibd	163840
+[--]  +-- 11: /tmp/actions-setup-mysql-KQMXc8/var/mysql/innodb_index_stats.ibd	98304
+[--]  +-- 12: /tmp/actions-setup-mysql-KQMXc8/var/mysql/innodb_table_stats.ibd	98304
+[--]  +-- 13: /tmp/actions-setup-mysql-KQMXc8/var/employees/employees.frm	4854
+[--]  +-- 14: /tmp/actions-setup-mysql-KQMXc8/var/employees/titles.frm	4793
+[--]  +-- 15: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_manager.frm	4766
+ 
+-------- Performance schema: File per IO total latency ---------------------------------------------
+[--]  +-- 1: /tmp/actions-setup-mysql-KQMXc8/var/employees/salaries.ibd	376082323314
+[--]  +-- 2: /tmp/actions-setup-mysql-KQMXc8/var/ib_logfile0	297587467780
+[--]  +-- 3: /tmp/actions-setup-mysql-KQMXc8/var/ibdata1	290324991712
+[--]  +-- 4: /tmp/actions-setup-mysql-KQMXc8/var/ib_logfile1	281901701002
+[--]  +-- 5: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_emp.ibd	129338339524
+[--]  +-- 6: /tmp/actions-setup-mysql-KQMXc8/var/employees/titles.ibd	112847643756
+[--]  +-- 7: /tmp/actions-setup-mysql-KQMXc8/var/employees/employees.ibd	86714100564
+[--]  +-- 8: /tmp/actions-setup-mysql-KQMXc8/var/ibtmp1	21652584640
+[--]  +-- 9: /tmp/actions-setup-mysql-KQMXc8/var/mysql/proxies_priv.MYD	19832104520
+[--]  +-- 10: /tmp/actions-setup-mysql-KQMXc8/var/mysql/user.MYD	7336272756
+[--]  +-- 11: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_manager.ibd	3719368684
+[--]  +-- 12: /tmp/actions-setup-mysql-KQMXc8/var/employees/departments.ibd	2590145036
+[--]  +-- 13: /tmp/actions-setup-mysql-KQMXc8/var/mysql/innodb_index_stats.ibd	2462737848
+[--]  +-- 14: /tmp/actions-setup-mysql-KQMXc8/var/mysql/proc.MYD	1894312608
+[--]  +-- 15: /tmp/actions-setup-mysql-KQMXc8/var/employees/employees.frm	1590342684
+[--]  +-- 16: /opt/hostedtoolcache/mysql/5.7.41/x64/share/english/errmsg.sys	943168184
+[--]  +-- 17: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_emp_latest_date.frm	834589648
+[--]  +-- 18: /tmp/actions-setup-mysql-KQMXc8/var/mysql/innodb_table_stats.ibd	823571124
+[--]  +-- 19: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_emp.frm	805239376
+[--]  +-- 20: /tmp/actions-setup-mysql-KQMXc8/var/employees/titles.frm	652702736
+ 
+-------- Performance schema: file per IO read latency ----------------------------------------------
+[--]  +-- 1: /tmp/actions-setup-mysql-KQMXc8/var/mysql/user.MYD	3112315244
+[--]  +-- 2: /tmp/actions-setup-mysql-KQMXc8/var/ibdata1	3075290884
+[--]  +-- 3: /tmp/actions-setup-mysql-KQMXc8/var/mysql/proc.MYD	1338160324
+[--]  +-- 4: /tmp/actions-setup-mysql-KQMXc8/var/employees/employees.ibd	566296572
+[--]  +-- 5: /tmp/actions-setup-mysql-KQMXc8/var/employees/titles.ibd	222227784
+[--]  +-- 6: /tmp/actions-setup-mysql-KQMXc8/var/sys/sys_config.TRG	58384072
+[--]  +-- 7: /tmp/actions-setup-mysql-KQMXc8/var/ib_logfile0	46560048
+[--]  +-- 8: /tmp/actions-setup-mysql-KQMXc8/var/mysql/innodb_index_stats.ibd	46183432
+[--]  +-- 9: /tmp/actions-setup-mysql-KQMXc8/var/mysql/innodb_table_stats.ibd	44077676
+[--]  +-- 10: /tmp/actions-setup-mysql-KQMXc8/var/sys/sys_config.ibd	39837524
+[--]  +-- 11: /tmp/actions-setup-mysql-KQMXc8/var/mysql/slave_worker_info.ibd	37904324
+[--]  +-- 12: /tmp/actions-setup-mysql-KQMXc8/var/mysql/slave_master_info.ibd	36991424
+[--]  +-- 13: /tmp/actions-setup-mysql-KQMXc8/var/mysql/slave_relay_log_info.ibd	35101900
+[--]  +-- 14: /tmp/actions-setup-mysql-KQMXc8/var/employees/salaries.frm	33066312
+[--]  +-- 15: /tmp/actions-setup-mysql-KQMXc8/var/employees/employees.frm	32680388
+[--]  +-- 16: /tmp/actions-setup-mysql-KQMXc8/var/employees/titles.frm	30982752
+[--]  +-- 17: /tmp/actions-setup-mysql-KQMXc8/var/employees/departments.ibd	30095628
+[--]  +-- 18: /opt/hostedtoolcache/mysql/5.7.41/x64/share/english/errmsg.sys	26244980
+[--]  +-- 19: /tmp/actions-setup-mysql-KQMXc8/var/mysql/time_zone_transition_type.ibd	24906776
+[--]  +-- 20: /tmp/actions-setup-mysql-KQMXc8/var/mysql/help_category.ibd	24510112
+ 
+-------- Performance schema: file per IO write latency ---------------------------------------------
+[--]  +-- 1: /tmp/actions-setup-mysql-KQMXc8/var/employees/salaries.ibd	54419006484
+[--]  +-- 2: /tmp/actions-setup-mysql-KQMXc8/var/ibdata1	43530773720
+[--]  +-- 3: /tmp/actions-setup-mysql-KQMXc8/var/ib_logfile0	40375850032
+[--]  +-- 4: /tmp/actions-setup-mysql-KQMXc8/var/ib_logfile1	39273474952
+[--]  +-- 5: /tmp/actions-setup-mysql-KQMXc8/var/employees/titles.ibd	14472629004
+[--]  +-- 6: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_emp.ibd	9096004572
+[--]  +-- 7: /tmp/actions-setup-mysql-KQMXc8/var/ibtmp1	8153894636
+[--]  +-- 8: /tmp/actions-setup-mysql-KQMXc8/var/employees/employees.ibd	4720074628
+[--]  +-- 9: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_manager.ibd	61865264
+[--]  +-- 10: /tmp/actions-setup-mysql-KQMXc8/var/employees/departments.ibd	57855664
+[--]  +-- 11: /tmp/actions-setup-mysql-KQMXc8/var/employees/employees.frm	55362552
+[--]  +-- 12: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_emp.frm	46076748
+[--]  +-- 13: /tmp/actions-setup-mysql-KQMXc8/var/employees/titles.frm	45458840
+[--]  +-- 14: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_manager.frm	44543792
+[--]  +-- 15: /tmp/actions-setup-mysql-KQMXc8/var/employees/salaries.frm	43944500
+[--]  +-- 16: /tmp/actions-setup-mysql-KQMXc8/var/employees/departments.frm	39281192
+[--]  +-- 17: /tmp/actions-setup-mysql-KQMXc8/var/employees/dept_emp_latest_date.frm	12971056
+[--]  +-- 18: /tmp/actions-setup-mysql-KQMXc8/var/mysql/user.MYI	12456252
+[--]  +-- 19: /tmp/actions-setup-mysql-KQMXc8/var/employees/db.opt	11368648
+[--]  +-- 20: /tmp/actions-setup-mysql-KQMXc8/var/data/db.opt	9823520
+ 
+-------- Performance schema: Event Wait by read bytes ----------------------------------------------
+[--]  +-- 1: sql/io_cache	160604882
+[--]  +-- 2: innodb/innodb_data_file	12369920
+[--]  +-- 3: myisam/dfile	1978354
+[--]  +-- 4: sql/FRM	661602
+[--]  +-- 5: sql/ERRMSG	80201
+[--]  +-- 6: innodb/innodb_log_file	70144
+[--]  +-- 7: sql/file_parser	21477
+[--]  +-- 8: mysys/charset	19427
+[--]  +-- 9: myisam/kfile	5789
+[--]  +-- 10: sql/dbopt	187
+[--]  +-- 11: csv/metadata	70
+[--]  +-- 12: mysys/cnf	56
+[--]  +-- 13: sql/casetest	0
+[--]  +-- 14: sql/global_ddl_log	0
+[--]  +-- 15: archive/data	0
+ 
+-------- Performance schema: Event Wait written bytes ----------------------------------------------
+[--]  +-- 1: innodb/innodb_data_file	348766208
+[--]  +-- 2: innodb/innodb_log_file	291880448
+[--]  +-- 3: sql/io_cache	160604882
+[--]  +-- 4: sql/FRM	28635
+[--]  +-- 5: sql/file_parser	1909
+[--]  +-- 6: myisam/kfile	151
+[--]  +-- 7: myisam/dfile	136
+[--]  +-- 8: sql/dbopt	130
+[--]  +-- 9: sql/pid	5
+[--]  +-- 10: sql/casetest	0
+[--]  +-- 11: sql/ERRMSG	0
+[--]  +-- 12: sql/global_ddl_log	0
+[--]  +-- 13: sql/misc	0
+[--]  +-- 14: archive/data	0
+[--]  +-- 15: mysys/cnf	0
+ 
+-------- Performance schema: event per wait total latency ------------------------------------------
+[--]  +-- 1: innodb/innodb_data_file	1027417723422
+[--]  +-- 2: innodb/innodb_log_file	579489168782
+[--]  +-- 3: sql/io_cache	143882730344
+[--]  +-- 4: myisam/dfile	30358528164
+[--]  +-- 5: sql/FRM	10043803128
+[--]  +-- 6: sql/file_parser	1986862052
+[--]  +-- 7: sql/ERRMSG	943168184
+[--]  +-- 8: archive/data	302950340
+[--]  +-- 9: csv/data	291831576
+[--]  +-- 10: myisam/kfile	166328232
+[--]  +-- 11: sql/dbopt	134527092
+[--]  +-- 12: sql/casetest	84730008
+[--]  +-- 13: csv/metadata	32807120
+[--]  +-- 14: sql/pid	30948384
+[--]  +-- 15: mysys/charset	26201304
+[--]  +-- 16: mysys/cnf	20637984
+[--]  +-- 17: sql/misc	11796100
+[--]  +-- 18: sql/global_ddl_log	4511516
+ 
+-------- Performance schema: event per wait read latency -------------------------------------------
+[--]  +-- 1: sql/io_cache	21005619212
+[--]  +-- 2: myisam/dfile	4458687372
+[--]  +-- 3: innodb/innodb_data_file	4435488972
+[--]  +-- 4: sql/FRM	1670078592
+[--]  +-- 5: sql/file_parser	71207632
+[--]  +-- 6: innodb/innodb_log_file	46560048
+[--]  +-- 7: myisam/kfile	41751392
+[--]  +-- 8: sql/ERRMSG	26244980
+[--]  +-- 9: sql/dbopt	11917820
+[--]  +-- 10: mysys/charset	10000372
+[--]  +-- 11: mysys/cnf	8753816
+[--]  +-- 12: csv/metadata	5038492
+[--]  +-- 13: archive/data	0
+[--]  +-- 14: csv/data	0
+[--]  +-- 15: sql/pid	0
+[--]  +-- 16: sql/misc	0
+[--]  +-- 17: sql/global_ddl_log	0
+[--]  +-- 18: sql/casetest	0
+ 
+-------- Performance schema: event per wait write latency ------------------------------------------
+[--]  +-- 1: innodb/innodb_data_file	134517256308
+[--]  +-- 2: sql/io_cache	97981688028
+[--]  +-- 3: innodb/innodb_log_file	79649324984
+[--]  +-- 4: sql/FRM	274667624
+[--]  +-- 5: sql/file_parser	22374284
+[--]  +-- 6: sql/dbopt	21192168
+[--]  +-- 7: myisam/kfile	12456252
+[--]  +-- 8: sql/pid	9407524
+[--]  +-- 9: myisam/dfile	4289556
+[--]  +-- 10: mysys/charset	0
+[--]  +-- 11: archive/data	0
+[--]  +-- 12: csv/data	0
+[--]  +-- 13: csv/metadata	0
+[--]  +-- 14: mysys/cnf	0
+[--]  +-- 15: sql/misc	0
+[--]  +-- 16: sql/global_ddl_log	0
+[--]  +-- 17: sql/ERRMSG	0
+[--]  +-- 18: sql/casetest	0
+ 
+-------- Performance schema: Top 15 most read indexes ----------------------------------------------
+[--]  +-- 1: sys	sys_config	PRIMARY	8
+[--]  +-- 2: employees	employees	PRIMARY	0
+[--]  +-- 3: employees	departments	PRIMARY	0
+[--]  +-- 4: employees	departments	dept_name	0
+[--]  +-- 5: employees	dept_manager	PRIMARY	0
+[--]  +-- 6: employees	dept_manager	dept_no	0
+[--]  +-- 7: employees	dept_emp	PRIMARY	0
+[--]  +-- 8: employees	dept_emp	dept_no	0
+[--]  +-- 9: employees	titles	PRIMARY	0
+[--]  +-- 10: employees	salaries	PRIMARY	0
+ 
+-------- Performance schema: Top 15 most modified indexes ------------------------------------------
+[--]  +-- 1: employees	employees	PRIMARY	0
+[--]  +-- 2: employees	departments	PRIMARY	0
+[--]  +-- 3: employees	departments	dept_name	0
+[--]  +-- 4: employees	dept_manager	PRIMARY	0
+[--]  +-- 5: employees	dept_manager	dept_no	0
+[--]  +-- 6: employees	dept_emp	PRIMARY	0
+[--]  +-- 7: employees	dept_emp	dept_no	0
+[--]  +-- 8: employees	titles	PRIMARY	0
+[--]  +-- 9: employees	salaries	PRIMARY	0
+[--]  +-- 10: sys	sys_config	PRIMARY	0
+ 
+-------- Performance schema: Top 15 high read latency index ----------------------------------------
+[--]  +-- 1: sys	sys_config	PRIMARY	197332464
+[--]  +-- 2: employees	employees	PRIMARY	0
+[--]  +-- 3: employees	departments	PRIMARY	0
+[--]  +-- 4: employees	departments	dept_name	0
+[--]  +-- 5: employees	dept_manager	PRIMARY	0
+[--]  +-- 6: employees	dept_manager	dept_no	0
+[--]  +-- 7: employees	dept_emp	PRIMARY	0
+[--]  +-- 8: employees	dept_emp	dept_no	0
+[--]  +-- 9: employees	titles	PRIMARY	0
+[--]  +-- 10: employees	salaries	PRIMARY	0
+ 
+-------- Performance schema: Top 15 most modified indexes ------------------------------------------
+[--]  +-- 1: employees	employees	PRIMARY	0
+[--]  +-- 2: employees	departments	PRIMARY	0
+[--]  +-- 3: employees	departments	dept_name	0
+[--]  +-- 4: employees	dept_manager	PRIMARY	0
+[--]  +-- 5: employees	dept_manager	dept_no	0
+[--]  +-- 6: employees	dept_emp	PRIMARY	0
+[--]  +-- 7: employees	dept_emp	dept_no	0
+[--]  +-- 8: employees	titles	PRIMARY	0
+[--]  +-- 9: employees	salaries	PRIMARY	0
+[--]  +-- 10: sys	sys_config	PRIMARY	0
+ 
+-------- Performance schema: Top 15 high update latency index --------------------------------------
+[--]  +-- 1: employees	employees	PRIMARY	0
+[--]  +-- 2: employees	departments	PRIMARY	0
+[--]  +-- 3: employees	departments	dept_name	0
+[--]  +-- 4: employees	dept_manager	PRIMARY	0
+[--]  +-- 5: employees	dept_manager	dept_no	0
+[--]  +-- 6: employees	dept_emp	PRIMARY	0
+[--]  +-- 7: employees	dept_emp	dept_no	0
+[--]  +-- 8: employees	titles	PRIMARY	0
+[--]  +-- 9: employees	salaries	PRIMARY	0
+[--]  +-- 10: sys	sys_config	PRIMARY	0
+ 
+-------- Performance schema: Top 15 high delete latency index --------------------------------------
+[--]  +-- 1: employees	employees	PRIMARY	0
+[--]  +-- 2: employees	departments	PRIMARY	0
+[--]  +-- 3: employees	departments	dept_name	0
+[--]  +-- 4: employees	dept_manager	PRIMARY	0
+[--]  +-- 5: employees	dept_manager	dept_no	0
+[--]  +-- 6: employees	dept_emp	PRIMARY	0
+[--]  +-- 7: employees	dept_emp	dept_no	0
+[--]  +-- 8: employees	titles	PRIMARY	0
+[--]  +-- 9: employees	salaries	PRIMARY	0
+[--]  +-- 10: sys	sys_config	PRIMARY	0
+ 
+-------- Performance schema: Top 15 most read tables -----------------------------------------------
+[--]  +-- 1: sys	sys_config	14
+[--]  +-- 2: employees	dept_emp	0
+[--]  +-- 3: employees	departments	0
+[--]  +-- 4: employees	titles	0
+[--]  +-- 5: employees	salaries	0
+[--]  +-- 6: employees	dept_manager	0
+[--]  +-- 7: employees	employees	0
+ 
+-------- Performance schema: Top 15 most modified tables -------------------------------------------
+[--]  +-- 1: employees	salaries	2844047
+[--]  +-- 2: employees	titles	443308
+[--]  +-- 3: employees	dept_emp	331603
+[--]  +-- 4: employees	employees	300024
+[--]  +-- 5: employees	dept_manager	24
+[--]  +-- 6: employees	departments	9
+[--]  +-- 7: sys	sys_config	0
+ 
+-------- Performance schema: Top 15 high read latency tables ---------------------------------------
+[--]  +-- 1: sys	sys_config	226462924
+[--]  +-- 2: employees	dept_emp	0
+[--]  +-- 3: employees	departments	0
+[--]  +-- 4: employees	titles	0
+[--]  +-- 5: employees	salaries	0
+[--]  +-- 6: employees	dept_manager	0
+[--]  +-- 7: employees	employees	0
+ 
+-------- Performance schema: Top 15 high insert latency tables -------------------------------------
+[--]  +-- 1: employees	salaries	6392923888684
+[--]  +-- 2: employees	dept_emp	1522954005544
+[--]  +-- 3: employees	titles	1250930875992
+[--]  +-- 4: employees	employees	581345379808
+[--]  +-- 5: employees	dept_manager	154668888
+[--]  +-- 6: employees	departments	57680960
+[--]  +-- 7: sys	sys_config	0
+ 
+-------- Performance schema: Top 15 high update latency tables -------------------------------------
+[--]  +-- 1: employees	dept_emp	0
+[--]  +-- 2: employees	departments	0
+[--]  +-- 3: sys	sys_config	0
+[--]  +-- 4: employees	titles	0
+[--]  +-- 5: employees	salaries	0
+[--]  +-- 6: employees	dept_manager	0
+[--]  +-- 7: employees	employees	0
+ 
+-------- Performance schema: Top 15 high delete latency tables -------------------------------------
+[--]  +-- 1: employees	dept_emp	0
+[--]  +-- 2: employees	departments	0
+[--]  +-- 3: sys	sys_config	0
+[--]  +-- 4: employees	titles	0
+[--]  +-- 5: employees	salaries	0
+[--]  +-- 6: employees	dept_manager	0
+[--]  +-- 7: employees	employees	0
+ 
+-------- Performance schema: Redundant indexes -----------------------------------------------------
+[--] No information found or indicators deactivated.
+ 
+-------- Performance schema: Table not using InnoDB buffer -----------------------------------------
+[--]  +-- 1: employees	dept_emp
+[--]  +-- 2: employees	dept_manager
+ 
+-------- Performance schema: Top 15 Tables using InnoDB buffer -------------------------------------
+[--]  +-- 1: employees	salaries	99713024
+[--]  +-- 2: employees	employees	6275072
+[--]  +-- 3: employees	titles	1769472
+[--]  +-- 4: employees	departments	32768
+[--]  +-- 5: sys	sys_config	16384
+ 
+-------- Performance schema: Top 15 Tables with InnoDB buffer free ---------------------------------
+[--]  +-- 1: employees	salaries	8606160
+[--]  +-- 2: employees	employees	522518
+[--]  +-- 3: employees	titles	173881
+[--]  +-- 4: employees	departments	32273
+[--]  +-- 5: sys	sys_config	16046
+ 
+-------- Performance schema: Top 15 Most executed queries ------------------------------------------
+[--]  +-- 1: NULL	SELECT @@`version_comment` LIMIT ? 	1883
+[--]  +-- 2: NULL	SELECT `CONCAT` ( SYSTEM_USER , ? , HOST ) FROM `mysql` . `user` WHERE `authentication_string` = PASSWORD (?) OR `authen	1240
+[--]  +-- 3: employees	INSERT INTO `salaries` VALUES (...) /* , ... */ 	114
+[--]  +-- 4: NULL	SELECT * FROM `sys` . `x` 	96
+[--]  +-- 5: NULL	SELECT SCHEMA ( ) 	79
+[--]  +-- 6: NULL	SELECT `COLUMN_TYPE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =	48
+[--]  +-- 7: NULL	SELECT `IS_NULLABLE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =	48
+[--]  +-- 8: employees	INSERT INTO `titles` VALUES (...) /* , ... */ 	21
+[--]  +-- 9: employees	INSERT INTO `employees` VALUES (...) /* , ... */ 	17
+[--]  +-- 10: employees	INSERT INTO `dept_emp` VALUES (...) /* , ... */ 	14
+[--]  +-- 11: NULL	SELECT ENGINE FROM `information_schema` . `tables` WHERE `TABLE_schema` = ? AND TABLE_NAME = ? 	12
+[--]  +-- 12: NULL	SELECT `index_name` AS `idxname` , GROUP_CONCAT ( COLUMN_NAME ORDER BY `seq_in_index` ) AS `cols` , `INDEX_TYPE` AS TYPE	12
+[--]  +-- 13: NULL	SELECT COLUMN_NAME FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? 	12
+[--]  +-- 14: NULL	SHOW ENGINE `PERFORMANCE_SCHEMA` STATUS 	12
+[--]  +-- 15: employees	SELECT ? AS ? 	7
+ 
+-------- Performance schema: Latest SQL queries in errors or warnings ------------------------------
+[--]  +-- 1: DROP SCHEMA IF EXISTS `employees` 	2023-03-23 16:38:29
+[--]  +-- 2: DROP TABLE IF EXISTS `dept_emp` , `dept_manager` , `titles` , `salaries` , `employees` , `departments` 	2023-03-23 16:38:29
+[--]  +-- 3: SELECT * FROM `information_schema` . `GLOBAL_STATUS` 	2023-03-23 16:39:02
+[--]  +-- 4: SELECT * FROM `information_schema` . `GLOBAL_VARIABLES` 	2023-03-23 16:39:02
+[--]  +-- 5: SELECT * FROM `information_schema` . `PROFILING` 	2023-03-23 16:39:02
+[--]  +-- 6: SELECT * FROM `information_schema` . `SESSION_STATUS` 	2023-03-23 16:39:03
+[--]  +-- 7: SELECT * FROM `information_schema` . `SESSION_VARIABLES` 	2023-03-23 16:39:03
+[--]  +-- 8: SELECT * FROM `information_schema` . `INNODB_LOCKS` 	2023-03-23 16:39:03
+[--]  +-- 9: SELECT * FROM `information_schema` . `INNODB_LOCK_WAITS` 	2023-03-23 16:39:03
+[--]  +-- 10: SELECT * FROM `sys` . `innodb_lock_waits` 	2023-03-23 16:39:13
+[--]  +-- 11: SELECT * FROM `sys` . `x` 	2023-03-23 16:39:16
+[--]  +-- 12: SELECT `CONCAT` ( `QUOTE` ( SYSTEM_USER ) , ? , `QUOTE` ( HOST ) ) FROM `mysql` . `user` WHERE SYSTEM_USER != ? AND ( CA	2023-03-23 16:39:30
+[--]  +-- 13: SELECT `CONCAT` ( SYSTEM_USER , ? , HOST ) FROM `mysql` . `user` WHERE `authentication_string` = PASSWORD (?) OR `authen	2023-03-23 16:39:39
+[--]  +-- 14: SELECT `wait_age_secs` , `locked_table` , `locked_type` , `waiting_query` FROM `sys` . `x$innodb_lock_waits` ORDER BY `w	2023-03-23 16:39:40
+ 
+-------- Performance schema: Top 20 queries with full table scans ----------------------------------
+[--]  +-- 1: NULL	SELECT `CONCAT` ( SYSTEM_USER , ? , HOST ) FROM `mysql` . `user` WHERE `authentication_string` = PASSWORD (?) OR `authen	1240
+[--]  +-- 2: NULL	SELECT `COLUMN_TYPE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =	48
+[--]  +-- 3: NULL	SELECT `IS_NULLABLE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =	48
+[--]  +-- 4: NULL	SELECT ENGINE FROM `information_schema` . `tables` WHERE `TABLE_schema` = ? AND TABLE_NAME = ? 	12
+[--]  +-- 5: NULL	SELECT `index_name` AS `idxname` , GROUP_CONCAT ( COLUMN_NAME ORDER BY `seq_in_index` ) AS `cols` , `INDEX_TYPE` AS TYPE	12
+[--]  +-- 6: NULL	SELECT COLUMN_NAME FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? 	12
+[--]  +-- 7: NULL	SELECT COUNT ( * ) FROM `information_schema` . `TABLES` WHERE `TABLE_TYPE` = ? AND `TABLE_SCHEMA` NOT IN (...) 	4
+[--]  +-- 8: NULL	SELECT `TABLE_SCHEMA` , SUM ( `TABLE_ROWS` ) , SUM ( `DATA_LENGTH` ) , SUM ( `INDEX_LENGTH` ) , SUM ( `DATA_LENGTH` + `I	4
+[--]  +-- 9: NULL	SELECT COUNT ( * ) FROM `information_schema` . `TABLES` WHERE `TABLE_TYPE` = ? AND `TABLE_SCHEMA` = ? 	4
+[--]  +-- 10: NULL	SELECT DISTINCTROW ( ENGINE ) FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` = ? AND ENGINE IS NOT NULL 	4
+[--]  +-- 11: NULL	SELECT DISTINCTROW `TABLE_SCHEMA` FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` NOT IN (...) 	4
+[--]  +-- 12: NULL	SELECT ? FROM `information_schema` . `columns` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? 	4
+[--]  +-- 13: NULL	SELECT `IFNULL` ( SUM ( `INDEX_LENGTH` ) , ? ) FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` NOT IN (?) AND 	4
+[--]  +-- 14: sys	SELECT `event_name` , `read_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `read_latency` DESC LIMIT ? 	2
+[--]  +-- 15: sys	SELECT `event_name` , `write_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `write_latency` DESC LIMIT 	2
+[--]  +-- 16: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_selected` FROM `sys` . `x$schema_index_statistics` ORDER BY `R	2
+[--]  +-- 17: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM 	2
+[--]  +-- 18: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `select_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2
+[--]  +-- 19: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `insert_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2
+[--]  +-- 20: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `update_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2
+ 
+-------- Performance schema: Last 50 queries with full table scans ---------------------------------
+[--]  +-- 1: sys	SELECT `event_name` , `read_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `read_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 2: sys	SELECT `event_name` , `write_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `write_latency` DESC LIMIT 	2023-03-23 16:39:40
+[--]  +-- 3: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_selected` FROM `sys` . `x$schema_index_statistics` ORDER BY `R	2023-03-23 16:39:40
+[--]  +-- 4: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM 	2023-03-23 16:39:40
+[--]  +-- 5: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `select_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2023-03-23 16:39:40
+[--]  +-- 6: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `insert_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2023-03-23 16:39:40
+[--]  +-- 7: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `update_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2023-03-23 16:39:40
+[--]  +-- 8: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `delete_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2023-03-23 16:39:40
+[--]  +-- 9: sys	SELECT `table_schema` , TABLE_NAME , `rows_fetched` FROM `sys` . `x$schema_table_statistics` ORDER BY `ROWs_fetched` DES	2023-03-23 16:39:40
+[--]  +-- 10: sys	SELECT `table_schema` , TABLE_NAME , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM `sys` . `x$sche	2023-03-23 16:39:40
+[--]  +-- 11: sys	SELECT `table_schema` , TABLE_NAME , `fetch_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `fetch_latency` D	2023-03-23 16:39:40
+[--]  +-- 12: sys	SELECT `table_schema` , TABLE_NAME , `insert_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `insert_latency`	2023-03-23 16:39:40
+[--]  +-- 13: sys	SELECT `table_schema` , TABLE_NAME , `update_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `update_latency`	2023-03-23 16:39:40
+[--]  +-- 14: sys	SELECT `table_schema` , TABLE_NAME , `delete_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `delete_latency`	2023-03-23 16:39:40
+[--]  +-- 15: sys	SELECT * FROM `schema_redundant_indexes` 	2023-03-23 16:39:40
+[--]  +-- 16: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	2023-03-23 16:39:40
+[--]  +-- 17: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	2023-03-23 16:39:40
+[--]  +-- 18: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	2023-03-23 16:39:40
+[--]  +-- 19: NULL	SELECT `db` , LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statement_analysis` ORDER BY `exec_count` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 20: NULL	SELECT LEFT ( QUERY , ? ) , `last_seen` FROM `sys` . `x$statements_with_errors_or_warnings` ORDER BY `last_seen` LIMIT ?	2023-03-23 16:39:40
+[--]  +-- 21: NULL	SELECT `db` , LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statements_with_full_table_scans` ORDER BY `exec_count` 	2023-03-23 16:39:40
+[--]  +-- 22: NULL	SELECT SYSTEM_USER , `Command` AS `PROC` , TIME FROM `sys` . `x$processlist` ORDER BY TIME DESC 	2023-03-23 16:39:40
+[--]  +-- 23: NULL	SELECT `wait_age_secs` , `locked_table` , `locked_type` , `waiting_query` FROM `sys` . `x$innodb_lock_waits` ORDER BY `w	2023-03-23 16:39:40
+[--]  +-- 24: NULL	SELECT SYSTEM_USER , `total_latency` , `max_latency` FROM `sys` . `x$io_by_thread_by_latency` ORDER BY `total_latency` D	2023-03-23 16:39:40
+[--]  +-- 25: NULL	SELECT LEFT ( QUERY , ? ) , `avg_latency` FROM `sys` . `x$statement_analysis` ORDER BY `avg_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 26: NULL	SELECT LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `exec_cou	2023-03-23 16:39:40
+[--]  +-- 27: sys	SELECT `statement` , SUM ( `total` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statement` ORD	2023-03-23 16:39:40
+[--]  +-- 28: sys	SELECT `statement` , SUM ( `total_latency` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statem	2023-03-23 16:39:40
+[--]  +-- 29: sys	SELECT `statement` , SUM ( `lock_latency` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `stateme	2023-03-23 16:39:40
+[--]  +-- 30: sys	SELECT `statement` , SUM ( `full_scans` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statement	2023-03-23 16:39:40
+[--]  +-- 31: sys	SELECT `statement` , SUM ( `rows_sent` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statement`	2023-03-23 16:39:40
+[--]  +-- 32: sys	SELECT `statement` , SUM ( `rows_affected` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statem	2023-03-23 16:39:40
+[--]  +-- 33: sys	SELECT LEFT ( QUERY , ? ) FROM `sys` . `x$statements_with_temp_tables` LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 34: NULL	SELECT * FROM `sys` . `schema_unused_indexes` WHERE `object_schema` NOT IN (?) 	2023-03-23 16:39:40
+[--]  +-- 35: NULL	SELECT * FROM `sys` . `x$schema_tables_with_full_table_scans` ORDER BY `rows_full_scanned` DESC 	2023-03-23 16:39:40
+[--]  +-- 36: sys	SELECT `thread` , FILE , `latency` , `operation` FROM `sys` . `x$latest_file_io` ORDER BY `latency` LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 37: NULL	SELECT FILE , `total_read` FROM `sys` . `x$io_global_by_file_by_bytes` ORDER BY `total_read` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 38: NULL	SELECT FILE , `total_written` FROM `sys` . `x$io_global_by_file_by_bytes` ORDER BY `total_written` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 39: NULL	SELECT FILE , `total_latency` FROM `sys` . `x$io_global_by_file_by_latency` ORDER BY `total_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 40: sys	SELECT FILE , `read_latency` FROM `sys` . `x$io_global_by_file_by_latency` ORDER BY `read_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 41: sys	SELECT FILE , `write_latency` FROM `sys` . `x$io_global_by_file_by_latency` ORDER BY `write_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 42: NULL	SELECT `event_name` , `total_read` FROM `sys` . `x$io_global_by_wait_by_bytes` ORDER BY `total_read` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 43: NULL	SELECT `event_name` , `total_written` FROM `sys` . `x$io_global_by_wait_by_bytes` ORDER BY `total_written` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 44: sys	SELECT `event_name` , `total_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `total_latency` DESC LIMIT 	2023-03-23 16:39:40
+[--]  +-- 45: NULL	SELECT `CONCAT` ( SYSTEM_USER , ? , HOST ) FROM `mysql` . `user` WHERE `authentication_string` = PASSWORD (?) OR `authen	2023-03-23 16:39:39
+[--]  +-- 46: NULL	SELECT `IFNULL` ( SUM ( `INDEX_LENGTH` ) , ? ) FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` NOT IN (?) AND 	2023-03-23 16:39:39
+[--]  +-- 47: NULL	SELECT COUNT ( * ) FROM `information_schema` . `tables` 	2023-03-23 16:39:39
+[--]  +-- 48: NULL	SELECT SYSTEM_USER , `total_connections` FROM `sys` . `user_summary` ORDER BY `total_connections` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 49: NULL	SELECT SYSTEM_USER , `statements` FROM `sys` . `user_summary` ORDER BY `statements` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 50: NULL	SELECT SYSTEM_USER , `statement_avg_latency` FROM `sys` . `x$user_summary` ORDER BY `statement_avg_latency` DESC LIMIT ?	2023-03-23 16:39:39
+ 
+-------- Performance schema: Top 15 reader queries (95% percentile) --------------------------------
+[--]  +-- 1: NULL	SELECT * FROM `sys` . `io_global_by_file_by_bytes` 	292
+[--]  +-- 2: NULL	SELECT * FROM `sys` . `io_global_by_file_by_latency` 	292
+[--]  +-- 3: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	46
+[--]  +-- 4: NULL	SELECT * FROM `sys` . `memory_by_thread_by_current_bytes` 	26
+[--]  +-- 5: NULL	SELECT * FROM `sys` . `processlist` 	26
+[--]  +-- 6: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	22
+[--]  +-- 7: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	10
+[--]  +-- 8: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	10
+[--]  +-- 9: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	8
+[--]  +-- 10: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	7
+[--]  +-- 11: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	4
+[--]  +-- 12: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_schema` 	3
+[--]  +-- 13: employees	INSERT INTO `employees` VALUES (...) /* , ... */ 	0
+[--]  +-- 14: employees	INSERT INTO `dept_emp` VALUES (...) /* , ... */ 	0
+[--]  +-- 15: employees	INSERT INTO `titles` VALUES (...) /* , ... */ 	0
+ 
+-------- Performance schema: Top 15 most row look queries (95% percentile) -------------------------
+[--]  +-- 1: NULL	SELECT * FROM `sys` . `io_global_by_file_by_bytes` 	147752
+[--]  +-- 2: NULL	SELECT * FROM `sys` . `io_global_by_file_by_latency` 	147752
+[--]  +-- 3: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	31810
+[--]  +-- 4: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	31810
+[--]  +-- 5: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	31790
+[--]  +-- 6: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	30232
+[--]  +-- 7: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	30080
+[--]  +-- 8: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	15893
+[--]  +-- 9: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	15152
+[--]  +-- 10: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_schema` 	15033
+[--]  +-- 11: NULL	SELECT * FROM `sys` . `memory_by_thread_by_current_bytes` 	7644
+[--]  +-- 12: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_sent` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `RO	6680
+[--]  +-- 13: employees	INSERT INTO `employees` VALUES (...) /* , ... */ 	0
+[--]  +-- 14: employees	INSERT INTO `dept_emp` VALUES (...) /* , ... */ 	0
+[--]  +-- 15: employees	INSERT INTO `titles` VALUES (...) /* , ... */ 	0
+ 
+-------- Performance schema: Top 15 total latency queries (95% percentile) -------------------------
+[--]  +-- 1: employees	INSERT INTO `salaries` VALUES (...) /* , ... */ 	12910798754000
+[--]  +-- 2: employees	INSERT INTO `titles` VALUES (...) /* , ... */ 	2403217825000
+[--]  +-- 3: employees	INSERT INTO `dept_emp` VALUES (...) /* , ... */ 	2338234205000
+[--]  +-- 4: employees	INSERT INTO `employees` VALUES (...) /* , ... */ 	1666656163000
+[--]  +-- 5: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	146631199000
+[--]  +-- 6: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	146547298000
+[--]  +-- 7: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	142860382000
+[--]  +-- 8: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	129173916000
+[--]  +-- 9: NULL	SELECT * FROM `sys` . `io_global_by_file_by_bytes` 	110831155000
+[--]  +-- 10: NULL	SELECT * FROM `sys` . `io_global_by_file_by_latency` 	108386643000
+[--]  +-- 11: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	103327392000
+[--]  +-- 12: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	73596768000
+[--]  +-- 13: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_examined` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	64153405000
+[--]  +-- 14: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	64146921000
+[--]  +-- 15: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_sent` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `RO	64134806000
+ 
+-------- Performance schema: Top 15 max latency queries (95% percentile) ---------------------------
+[--]  +-- 1: employees	INSERT INTO `dept_emp` VALUES (...) /* , ... */ 	222435785000
+[--]  +-- 2: employees	INSERT INTO `salaries` VALUES (...) /* , ... */ 	161616088000
+[--]  +-- 3: employees	INSERT INTO `employees` VALUES (...) /* , ... */ 	145520714000
+[--]  +-- 4: employees	INSERT INTO `titles` VALUES (...) /* , ... */ 	140211084000
+[--]  +-- 5: NULL	SELECT * FROM `sys` . `io_global_by_file_by_bytes` 	110831155000
+[--]  +-- 6: NULL	SELECT * FROM `sys` . `io_global_by_file_by_latency` 	108386643000
+[--]  +-- 7: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	75331542000
+[--]  +-- 8: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	75276142000
+[--]  +-- 9: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	73596768000
+[--]  +-- 10: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	71445025000
+[--]  +-- 11: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	66809204000
+[--]  +-- 12: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	64146921000
+[--]  +-- 13: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	53899245000
+[--]  +-- 14: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_schema` 	51048255000
+[--]  +-- 15: sys	SELECT `db` , LEFT ( QUERY , ? ) , `total_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	35546662000
+ 
+-------- Performance schema: Top 15 average latency queries (95% percentile) -----------------------
+[--]  +-- 1: employees	INSERT INTO `dept_emp` VALUES (...) /* , ... */ 	167016728000
+[--]  +-- 2: employees	INSERT INTO `titles` VALUES (...) /* , ... */ 	114438944000
+[--]  +-- 3: employees	INSERT INTO `salaries` VALUES (...) /* , ... */ 	113252620000
+[--]  +-- 4: NULL	SELECT * FROM `sys` . `io_global_by_file_by_bytes` 	110831155000
+[--]  +-- 5: NULL	SELECT * FROM `sys` . `io_global_by_file_by_latency` 	108386643000
+[--]  +-- 6: employees	INSERT INTO `employees` VALUES (...) /* , ... */ 	98038597000
+[--]  +-- 7: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	73596768000
+[--]  +-- 8: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	73315599000
+[--]  +-- 9: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	73273649000
+[--]  +-- 10: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	71430191000
+[--]  +-- 11: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	64586958000
+[--]  +-- 12: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	64146921000
+[--]  +-- 13: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	51663696000
+[--]  +-- 14: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_schema` 	51048255000
+[--]  +-- 15: sys	SELECT `db` , LEFT ( QUERY , ? ) , `max_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	32276103000
+ 
+-------- Performance schema: Top 20 queries with sort ----------------------------------------------
+[--]  +-- 1: NULL	SELECT `index_name` AS `idxname` , GROUP_CONCAT ( COLUMN_NAME ORDER BY `seq_in_index` ) AS `cols` , `INDEX_TYPE` AS TYPE	12
+[--]  +-- 2: sys	SELECT `event_name` , `read_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `read_latency` DESC LIMIT ? 	2
+[--]  +-- 3: sys	SELECT `event_name` , `write_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `write_latency` DESC LIMIT 	2
+[--]  +-- 4: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_selected` FROM `sys` . `x$schema_index_statistics` ORDER BY `R	2
+[--]  +-- 5: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM 	2
+[--]  +-- 6: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `select_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2
+[--]  +-- 7: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `insert_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2
+[--]  +-- 8: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `update_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2
+[--]  +-- 9: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `delete_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2
+[--]  +-- 10: sys	SELECT `table_schema` , TABLE_NAME , `rows_fetched` FROM `sys` . `x$schema_table_statistics` ORDER BY `ROWs_fetched` DES	2
+[--]  +-- 11: sys	SELECT `table_schema` , TABLE_NAME , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM `sys` . `x$sche	2
+[--]  +-- 12: sys	SELECT `table_schema` , TABLE_NAME , `fetch_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `fetch_latency` D	2
+[--]  +-- 13: sys	SELECT `table_schema` , TABLE_NAME , `insert_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `insert_latency`	2
+[--]  +-- 14: sys	SELECT `table_schema` , TABLE_NAME , `update_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `update_latency`	2
+[--]  +-- 15: sys	SELECT `table_schema` , TABLE_NAME , `delete_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `delete_latency`	2
+[--]  +-- 16: sys	SELECT * FROM `schema_redundant_indexes` 	2
+[--]  +-- 17: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	2
+[--]  +-- 18: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	2
+[--]  +-- 19: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	2
+[--]  +-- 20: NULL	SELECT `db` , LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statement_analysis` ORDER BY `exec_count` DESC LIMIT ? 	2
+ 
+-------- Performance schema: Last 50 queries with sort ---------------------------------------------
+[--]  +-- 1: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_sent` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `RO	2023-03-23 16:39:41
+[--]  +-- 2: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_examined` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	2023-03-23 16:39:41
+[--]  +-- 3: sys	SELECT `db` , LEFT ( QUERY , ? ) , `total_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	2023-03-23 16:39:41
+[--]  +-- 4: sys	SELECT `db` , LEFT ( QUERY , ? ) , `max_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	2023-03-23 16:39:41
+[--]  +-- 5: sys	SELECT `db` , LEFT ( QUERY , ? ) , `avg_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	2023-03-23 16:39:41
+[--]  +-- 6: NULL	SELECT `db` , LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statements_with_sorting` ORDER BY `exec_count` DESC LIMI	2023-03-23 16:39:41
+[--]  +-- 7: sys	SELECT `event_name` , `read_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `read_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 8: sys	SELECT `event_name` , `write_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `write_latency` DESC LIMIT 	2023-03-23 16:39:40
+[--]  +-- 9: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_selected` FROM `sys` . `x$schema_index_statistics` ORDER BY `R	2023-03-23 16:39:40
+[--]  +-- 10: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM 	2023-03-23 16:39:40
+[--]  +-- 11: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `select_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2023-03-23 16:39:40
+[--]  +-- 12: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `insert_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2023-03-23 16:39:40
+[--]  +-- 13: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `update_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2023-03-23 16:39:40
+[--]  +-- 14: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `delete_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	2023-03-23 16:39:40
+[--]  +-- 15: sys	SELECT `table_schema` , TABLE_NAME , `rows_fetched` FROM `sys` . `x$schema_table_statistics` ORDER BY `ROWs_fetched` DES	2023-03-23 16:39:40
+[--]  +-- 16: sys	SELECT `table_schema` , TABLE_NAME , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM `sys` . `x$sche	2023-03-23 16:39:40
+[--]  +-- 17: sys	SELECT `table_schema` , TABLE_NAME , `fetch_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `fetch_latency` D	2023-03-23 16:39:40
+[--]  +-- 18: sys	SELECT `table_schema` , TABLE_NAME , `insert_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `insert_latency`	2023-03-23 16:39:40
+[--]  +-- 19: sys	SELECT `table_schema` , TABLE_NAME , `update_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `update_latency`	2023-03-23 16:39:40
+[--]  +-- 20: sys	SELECT `table_schema` , TABLE_NAME , `delete_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `delete_latency`	2023-03-23 16:39:40
+[--]  +-- 21: sys	SELECT * FROM `schema_redundant_indexes` 	2023-03-23 16:39:40
+[--]  +-- 22: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	2023-03-23 16:39:40
+[--]  +-- 23: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	2023-03-23 16:39:40
+[--]  +-- 24: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	2023-03-23 16:39:40
+[--]  +-- 25: NULL	SELECT `db` , LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statement_analysis` ORDER BY `exec_count` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 26: NULL	SELECT LEFT ( QUERY , ? ) , `last_seen` FROM `sys` . `x$statements_with_errors_or_warnings` ORDER BY `last_seen` LIMIT ?	2023-03-23 16:39:40
+[--]  +-- 27: NULL	SELECT `db` , LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statements_with_full_table_scans` ORDER BY `exec_count` 	2023-03-23 16:39:40
+[--]  +-- 28: NULL	SELECT `db` , LEFT ( QUERY , ? ) , `last_seen` FROM `sys` . `x$statements_with_full_table_scans` ORDER BY `last_seen` DE	2023-03-23 16:39:40
+[--]  +-- 29: NULL	SELECT SYSTEM_USER , `Command` AS `PROC` , TIME FROM `sys` . `x$processlist` ORDER BY TIME DESC 	2023-03-23 16:39:40
+[--]  +-- 30: NULL	SELECT SYSTEM_USER , `total_latency` , `max_latency` FROM `sys` . `x$io_by_thread_by_latency` ORDER BY `total_latency` D	2023-03-23 16:39:40
+[--]  +-- 31: NULL	SELECT LEFT ( QUERY , ? ) , `avg_latency` FROM `sys` . `x$statement_analysis` ORDER BY `avg_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 32: NULL	SELECT LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `exec_cou	2023-03-23 16:39:40
+[--]  +-- 33: sys	SELECT `statement` , SUM ( `total` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statement` ORD	2023-03-23 16:39:40
+[--]  +-- 34: sys	SELECT `statement` , SUM ( `total_latency` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statem	2023-03-23 16:39:40
+[--]  +-- 35: sys	SELECT `statement` , SUM ( `lock_latency` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `stateme	2023-03-23 16:39:40
+[--]  +-- 36: sys	SELECT `statement` , SUM ( `full_scans` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statement	2023-03-23 16:39:40
+[--]  +-- 37: sys	SELECT `statement` , SUM ( `rows_sent` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statement`	2023-03-23 16:39:40
+[--]  +-- 38: sys	SELECT `statement` , SUM ( `rows_affected` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statem	2023-03-23 16:39:40
+[--]  +-- 39: sys	SELECT LEFT ( QUERY , ? ) FROM `sys` . `x$statements_with_temp_tables` LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 40: NULL	SELECT * FROM `sys` . `schema_unused_indexes` WHERE `object_schema` NOT IN (?) 	2023-03-23 16:39:40
+[--]  +-- 41: NULL	SELECT * FROM `sys` . `x$schema_tables_with_full_table_scans` ORDER BY `rows_full_scanned` DESC 	2023-03-23 16:39:40
+[--]  +-- 42: NULL	SELECT FILE , `total_read` FROM `sys` . `x$io_global_by_file_by_bytes` ORDER BY `total_read` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 43: NULL	SELECT FILE , `total_written` FROM `sys` . `x$io_global_by_file_by_bytes` ORDER BY `total_written` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 44: NULL	SELECT FILE , `total_latency` FROM `sys` . `x$io_global_by_file_by_latency` ORDER BY `total_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 45: sys	SELECT FILE , `read_latency` FROM `sys` . `x$io_global_by_file_by_latency` ORDER BY `read_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 46: sys	SELECT FILE , `write_latency` FROM `sys` . `x$io_global_by_file_by_latency` ORDER BY `write_latency` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 47: NULL	SELECT `event_name` , `total_read` FROM `sys` . `x$io_global_by_wait_by_bytes` ORDER BY `total_read` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 48: NULL	SELECT `event_name` , `total_written` FROM `sys` . `x$io_global_by_wait_by_bytes` ORDER BY `total_written` DESC LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 49: sys	SELECT `event_name` , `total_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `total_latency` DESC LIMIT 	2023-03-23 16:39:40
+[--]  +-- 50: NULL	SELECT SYSTEM_USER , `total_connections` FROM `sys` . `user_summary` ORDER BY `total_connections` DESC LIMIT ? 	2023-03-23 16:39:39
+ 
+-------- Performance schema: Top 15 row sorting queries with sort ----------------------------------
+[--]  +-- 1: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	14214
+[--]  +-- 2: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	14214
+[--]  +-- 3: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	14204
+[--]  +-- 4: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	13756
+[--]  +-- 5: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	13680
+[--]  +-- 6: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	7095
+[--]  +-- 7: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	6916
+[--]  +-- 8: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_schema` 	6835
+[--]  +-- 9: sys	SELECT `db` , LEFT ( QUERY , ? ) , `avg_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	1143
+[--]  +-- 10: sys	SELECT `db` , LEFT ( QUERY , ? ) , `max_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	1139
+[--]  +-- 11: sys	SELECT `db` , LEFT ( QUERY , ? ) , `total_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	1137
+[--]  +-- 12: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_examined` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	1135
+[--]  +-- 13: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_sent` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `RO	1133
+[--]  +-- 14: NULL	SELECT LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `exec_cou	1057
+[--]  +-- 15: sys	SELECT `table_schema` , TABLE_NAME , `rows_fetched` FROM `sys` . `x$schema_table_statistics` ORDER BY `ROWs_fetched` DES	508
+ 
+-------- Performance schema: Top 15 total latency queries with sort --------------------------------
+[--]  +-- 1: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	146631199000
+[--]  +-- 2: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	146547298000
+[--]  +-- 3: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	142860382000
+[--]  +-- 4: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	129173916000
+[--]  +-- 5: NULL	SELECT * FROM `sys` . `io_global_by_file_by_bytes` 	110831155000
+[--]  +-- 6: NULL	SELECT * FROM `sys` . `io_global_by_file_by_latency` 	108386643000
+[--]  +-- 7: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	103327392000
+[--]  +-- 8: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	73596768000
+[--]  +-- 9: sys	SELECT `db` , LEFT ( QUERY , ? ) , `avg_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	64675707000
+[--]  +-- 10: sys	SELECT `db` , LEFT ( QUERY , ? ) , `max_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	64552206000
+[--]  +-- 11: sys	SELECT `db` , LEFT ( QUERY , ? ) , `total_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	64533808000
+[--]  +-- 12: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_examined` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	64153405000
+[--]  +-- 13: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	64146921000
+[--]  +-- 14: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_sent` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `RO	64134806000
+[--]  +-- 15: NULL	SELECT SYSTEM_USER , `Command` AS `PROC` , TIME FROM `sys` . `x$processlist` ORDER BY TIME DESC 	58962981000
+ 
+-------- Performance schema: Top 15 merge queries with sort ----------------------------------------
+[--]  +-- 1: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	12
+[--]  +-- 2: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	12
+[--]  +-- 3: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	12
+[--]  +-- 4: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	12
+[--]  +-- 5: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	10
+[--]  +-- 6: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	6
+[--]  +-- 7: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	6
+[--]  +-- 8: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_schema` 	5
+[--]  +-- 9: NULL	SELECT * FROM `sys` . `metrics` 	1
+[--]  +-- 10: sys	SELECT `event_name` , `read_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `read_latency` DESC LIMIT ? 	0
+[--]  +-- 11: sys	SELECT `event_name` , `write_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `write_latency` DESC LIMIT 	0
+[--]  +-- 12: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_selected` FROM `sys` . `x$schema_index_statistics` ORDER BY `R	0
+[--]  +-- 13: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM 	0
+[--]  +-- 14: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `select_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	0
+[--]  +-- 15: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `insert_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	0
+ 
+-------- Performance schema: Top 15 average sort merges queries with sort --------------------------
+[--]  +-- 1: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	6
+[--]  +-- 2: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	6
+[--]  +-- 3: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	6
+[--]  +-- 4: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	6
+[--]  +-- 5: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	6
+[--]  +-- 6: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	6
+[--]  +-- 7: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_schema` 	5
+[--]  +-- 8: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	5
+[--]  +-- 9: NULL	SELECT * FROM `sys` . `metrics` 	1
+[--]  +-- 10: sys	SELECT `event_name` , `read_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `read_latency` DESC LIMIT ? 	0
+[--]  +-- 11: sys	SELECT `event_name` , `write_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `write_latency` DESC LIMIT 	0
+[--]  +-- 12: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_selected` FROM `sys` . `x$schema_index_statistics` ORDER BY `R	0
+[--]  +-- 13: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM 	0
+[--]  +-- 14: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `select_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	0
+[--]  +-- 15: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `insert_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	0
+ 
+-------- Performance schema: Top 15 scans queries with sort ----------------------------------------
+[--]  +-- 1: NULL	SELECT `index_name` AS `idxname` , GROUP_CONCAT ( COLUMN_NAME ORDER BY `seq_in_index` ) AS `cols` , `INDEX_TYPE` AS TYPE	12
+[--]  +-- 2: NULL	SELECT SYSTEM_USER , `total_connections` FROM `sys` . `user_summary` ORDER BY `total_connections` DESC LIMIT ? 	12
+[--]  +-- 3: NULL	SELECT SYSTEM_USER , `statements` FROM `sys` . `user_summary` ORDER BY `statements` DESC LIMIT ? 	12
+[--]  +-- 4: NULL	SELECT SYSTEM_USER , `statement_avg_latency` FROM `sys` . `x$user_summary` ORDER BY `statement_avg_latency` DESC LIMIT ?	12
+[--]  +-- 5: NULL	SELECT SYSTEM_USER , `file_ios` FROM `sys` . `x$user_summary` ORDER BY `file_ios` DESC LIMIT ? 	12
+[--]  +-- 6: NULL	SELECT SYSTEM_USER , `file_io_latency` FROM `sys` . `x$user_summary` ORDER BY `file_io_latency` DESC LIMIT ? 	12
+[--]  +-- 7: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	10
+[--]  +-- 8: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	10
+[--]  +-- 9: NULL	SELECT HOST , `total_connections` FROM `sys` . `x$host_summary` ORDER BY `total_connections` DESC LIMIT ? 	10
+[--]  +-- 10: NULL	SELECT HOST , `statements` FROM `sys` . `x$host_summary` ORDER BY `statements` DESC LIMIT ? 	10
+[--]  +-- 11: NULL	SELECT HOST , `statement_avg_latency` FROM `sys` . `x$host_summary` ORDER BY `statement_avg_latency` DESC LIMIT ? 	10
+[--]  +-- 12: NULL	SELECT HOST , `file_ios` FROM `sys` . `x$host_summary` ORDER BY `file_ios` DESC LIMIT ? 	10
+[--]  +-- 13: NULL	SELECT HOST , `file_io_latency` FROM `sys` . `x$host_summary` ORDER BY `file_io_latency` DESC LIMIT ? 	10
+[--]  +-- 14: NULL	SELECT HOST , `table_scans` FROM `sys` . `x$host_summary` ORDER BY `table_scans` DESC LIMIT ? 	10
+[--]  +-- 15: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	8
+ 
+-------- Performance schema: Top 15 range queries with sort ----------------------------------------
+[--]  +-- 1: sys	SELECT `event_name` , `read_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `read_latency` DESC LIMIT ? 	0
+[--]  +-- 2: sys	SELECT `event_name` , `write_latency` FROM `sys` . `x$io_global_by_wait_by_latency` ORDER BY `write_latency` DESC LIMIT 	0
+[--]  +-- 3: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_selected` FROM `sys` . `x$schema_index_statistics` ORDER BY `R	0
+[--]  +-- 4: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM 	0
+[--]  +-- 5: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `select_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	0
+[--]  +-- 6: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `insert_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	0
+[--]  +-- 7: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `update_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	0
+[--]  +-- 8: sys	SELECT `table_schema` , TABLE_NAME , `index_name` , `delete_latency` FROM `sys` . `x$schema_index_statistics` ORDER BY `	0
+[--]  +-- 9: sys	SELECT `table_schema` , TABLE_NAME , `rows_fetched` FROM `sys` . `x$schema_table_statistics` ORDER BY `ROWs_fetched` DES	0
+[--]  +-- 10: sys	SELECT `table_schema` , TABLE_NAME , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM `sys` . `x$sche	0
+[--]  +-- 11: sys	SELECT `table_schema` , TABLE_NAME , `fetch_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `fetch_latency` D	0
+[--]  +-- 12: sys	SELECT `table_schema` , TABLE_NAME , `insert_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `insert_latency`	0
+[--]  +-- 13: sys	SELECT `table_schema` , TABLE_NAME , `update_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `update_latency`	0
+[--]  +-- 14: sys	SELECT `table_schema` , TABLE_NAME , `delete_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `delete_latency`	0
+[--]  +-- 15: sys	SELECT * FROM `schema_redundant_indexes` 	0
+ 
+-------- Performance schema: Top 20 queries with temp table ----------------------------------------
+[--]  +-- 1: NULL	SELECT `COLUMN_TYPE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =	48
+[--]  +-- 2: NULL	SELECT `IS_NULLABLE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =	48
+[--]  +-- 3: NULL	SELECT ENGINE FROM `information_schema` . `tables` WHERE `TABLE_schema` = ? AND TABLE_NAME = ? 	12
+[--]  +-- 4: NULL	SELECT `index_name` AS `idxname` , GROUP_CONCAT ( COLUMN_NAME ORDER BY `seq_in_index` ) AS `cols` , `INDEX_TYPE` AS TYPE	12
+[--]  +-- 5: NULL	SELECT COLUMN_NAME FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? 	12
+[--]  +-- 6: NULL	SHOW SCHEMAS 	4
+[--]  +-- 7: NULL	SELECT COUNT ( * ) FROM `information_schema` . `TABLES` WHERE `TABLE_TYPE` = ? AND `TABLE_SCHEMA` NOT IN (...) 	4
+[--]  +-- 8: NULL	SELECT `TABLE_SCHEMA` , SUM ( `TABLE_ROWS` ) , SUM ( `DATA_LENGTH` ) , SUM ( `INDEX_LENGTH` ) , SUM ( `DATA_LENGTH` + `I	4
+[--]  +-- 9: NULL	SELECT COUNT ( * ) FROM `information_schema` . `TABLES` WHERE `TABLE_TYPE` = ? AND `TABLE_SCHEMA` = ? 	4
+[--]  +-- 10: NULL	SELECT DISTINCTROW ( ENGINE ) FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` = ? AND ENGINE IS NOT NULL 	4
+[--]  +-- 11: NULL	SELECT DISTINCTROW `TABLE_SCHEMA` FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` NOT IN (...) 	4
+[--]  +-- 12: NULL	SELECT ? FROM `information_schema` . `columns` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? 	4
+[--]  +-- 13: NULL	SELECT `IFNULL` ( SUM ( `INDEX_LENGTH` ) , ? ) FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` NOT IN (?) AND 	4
+[--]  +-- 14: sys	SELECT `table_schema` , TABLE_NAME , `rows_fetched` FROM `sys` . `x$schema_table_statistics` ORDER BY `ROWs_fetched` DES	2
+[--]  +-- 15: sys	SELECT `table_schema` , TABLE_NAME , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM `sys` . `x$sche	2
+[--]  +-- 16: sys	SELECT `table_schema` , TABLE_NAME , `fetch_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `fetch_latency` D	2
+[--]  +-- 17: sys	SELECT `table_schema` , TABLE_NAME , `insert_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `insert_latency`	2
+[--]  +-- 18: sys	SELECT `table_schema` , TABLE_NAME , `update_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `update_latency`	2
+[--]  +-- 19: sys	SELECT `table_schema` , TABLE_NAME , `delete_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `delete_latency`	2
+[--]  +-- 20: sys	SELECT * FROM `schema_redundant_indexes` 	2
+ 
+-------- Performance schema: Last 50 queries with temp table ---------------------------------------
+[--]  +-- 1: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_sent` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `RO	2023-03-23 16:39:41
+[--]  +-- 2: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_examined` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	2023-03-23 16:39:41
+[--]  +-- 3: sys	SELECT `db` , LEFT ( QUERY , ? ) , `total_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	2023-03-23 16:39:41
+[--]  +-- 4: sys	SELECT `db` , LEFT ( QUERY , ? ) , `max_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	2023-03-23 16:39:41
+[--]  +-- 5: sys	SELECT `db` , LEFT ( QUERY , ? ) , `avg_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	2023-03-23 16:39:41
+[--]  +-- 6: sys	SELECT `table_schema` , TABLE_NAME , `rows_fetched` FROM `sys` . `x$schema_table_statistics` ORDER BY `ROWs_fetched` DES	2023-03-23 16:39:40
+[--]  +-- 7: sys	SELECT `table_schema` , TABLE_NAME , `rows_inserted` + `rows_updated` + `rows_deleted` AS `changes` FROM `sys` . `x$sche	2023-03-23 16:39:40
+[--]  +-- 8: sys	SELECT `table_schema` , TABLE_NAME , `fetch_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `fetch_latency` D	2023-03-23 16:39:40
+[--]  +-- 9: sys	SELECT `table_schema` , TABLE_NAME , `insert_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `insert_latency`	2023-03-23 16:39:40
+[--]  +-- 10: sys	SELECT `table_schema` , TABLE_NAME , `update_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `update_latency`	2023-03-23 16:39:40
+[--]  +-- 11: sys	SELECT `table_schema` , TABLE_NAME , `delete_latency` FROM `sys` . `x$schema_table_statistics` ORDER BY `delete_latency`	2023-03-23 16:39:40
+[--]  +-- 12: sys	SELECT * FROM `schema_redundant_indexes` 	2023-03-23 16:39:40
+[--]  +-- 13: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	2023-03-23 16:39:40
+[--]  +-- 14: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	2023-03-23 16:39:40
+[--]  +-- 15: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	2023-03-23 16:39:40
+[--]  +-- 16: NULL	SELECT SYSTEM_USER , `Command` AS `PROC` , TIME FROM `sys` . `x$processlist` ORDER BY TIME DESC 	2023-03-23 16:39:40
+[--]  +-- 17: NULL	SELECT `wait_age_secs` , `locked_table` , `locked_type` , `waiting_query` FROM `sys` . `x$innodb_lock_waits` ORDER BY `w	2023-03-23 16:39:40
+[--]  +-- 18: NULL	SELECT SYSTEM_USER , `total_latency` , `max_latency` FROM `sys` . `x$io_by_thread_by_latency` ORDER BY `total_latency` D	2023-03-23 16:39:40
+[--]  +-- 19: NULL	SELECT LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `exec_cou	2023-03-23 16:39:40
+[--]  +-- 20: sys	SELECT `statement` , SUM ( `total` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statement` ORD	2023-03-23 16:39:40
+[--]  +-- 21: sys	SELECT `statement` , SUM ( `total_latency` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statem	2023-03-23 16:39:40
+[--]  +-- 22: sys	SELECT `statement` , SUM ( `lock_latency` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `stateme	2023-03-23 16:39:40
+[--]  +-- 23: sys	SELECT `statement` , SUM ( `full_scans` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statement	2023-03-23 16:39:40
+[--]  +-- 24: sys	SELECT `statement` , SUM ( `rows_sent` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statement`	2023-03-23 16:39:40
+[--]  +-- 25: sys	SELECT `statement` , SUM ( `rows_affected` ) AS `total` FROM `sys` . `x$host_summary_by_statement_type` GROUP BY `statem	2023-03-23 16:39:40
+[--]  +-- 26: NULL	SELECT * FROM `sys` . `schema_unused_indexes` WHERE `object_schema` NOT IN (?) 	2023-03-23 16:39:40
+[--]  +-- 27: sys	SELECT `thread` , FILE , `latency` , `operation` FROM `sys` . `x$latest_file_io` ORDER BY `latency` LIMIT ? 	2023-03-23 16:39:40
+[--]  +-- 28: NULL	SHOW SCHEMAS 	2023-03-23 16:39:39
+[--]  +-- 29: NULL	SELECT `IFNULL` ( SUM ( `INDEX_LENGTH` ) , ? ) FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` NOT IN (?) AND 	2023-03-23 16:39:39
+[--]  +-- 30: NULL	SELECT COUNT ( * ) FROM `information_schema` . `tables` 	2023-03-23 16:39:39
+[--]  +-- 31: NULL	SELECT `sys_version` FROM `sys` . `version` 	2023-03-23 16:39:39
+[--]  +-- 32: NULL	SELECT SYSTEM_USER , `total_connections` FROM `sys` . `user_summary` ORDER BY `total_connections` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 33: NULL	SELECT SYSTEM_USER , `statements` FROM `sys` . `user_summary` ORDER BY `statements` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 34: NULL	SELECT SYSTEM_USER , `statement_avg_latency` FROM `sys` . `x$user_summary` ORDER BY `statement_avg_latency` DESC LIMIT ?	2023-03-23 16:39:39
+[--]  +-- 35: NULL	SELECT SYSTEM_USER , `lock_latency` FROM `sys` . `x$user_summary_by_statement_latency` ORDER BY `lock_latency` DESC LIMI	2023-03-23 16:39:39
+[--]  +-- 36: NULL	SELECT SYSTEM_USER , `full_scans` FROM `sys` . `x$user_summary_by_statement_latency` ORDER BY `full_scans` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 37: NULL	SELECT SYSTEM_USER , `rows_sent` FROM `sys` . `x$user_summary_by_statement_latency` ORDER BY `rows_sent` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 38: NULL	SELECT SYSTEM_USER , `rows_affected` FROM `sys` . `x$user_summary_by_statement_latency` ORDER BY `rows_affected` DESC LI	2023-03-23 16:39:39
+[--]  +-- 39: NULL	SELECT SYSTEM_USER , `file_ios` FROM `sys` . `x$user_summary` ORDER BY `file_ios` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 40: NULL	SELECT SYSTEM_USER , `file_io_latency` FROM `sys` . `x$user_summary` ORDER BY `file_io_latency` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 41: NULL	SELECT HOST , `total_connections` FROM `sys` . `x$host_summary` ORDER BY `total_connections` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 42: NULL	SELECT HOST , `statements` FROM `sys` . `x$host_summary` ORDER BY `statements` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 43: NULL	SELECT HOST , `statement_avg_latency` FROM `sys` . `x$host_summary` ORDER BY `statement_avg_latency` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 44: NULL	SELECT HOST , `lock_latency` FROM `sys` . `x$host_summary_by_statement_latency` ORDER BY `lock_latency` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 45: NULL	SELECT HOST , `full_scans` FROM `sys` . `x$host_summary_by_statement_latency` ORDER BY `full_scans` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 46: NULL	SELECT HOST , `rows_sent` FROM `sys` . `x$host_summary_by_statement_latency` ORDER BY `rows_sent` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 47: NULL	SELECT HOST , `rows_affected` FROM `sys` . `x$host_summary_by_statement_latency` ORDER BY `rows_affected` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 48: NULL	SELECT HOST , `file_ios` FROM `sys` . `x$host_summary` ORDER BY `file_ios` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 49: NULL	SELECT HOST , `file_io_latency` FROM `sys` . `x$host_summary` ORDER BY `file_io_latency` DESC LIMIT ? 	2023-03-23 16:39:39
+[--]  +-- 50: sys	SELECT SUBSTRING ( `event_name` , ? ) , SUM ( `total` ) AS `total` FROM `sys` . `x$host_summary_by_file_io_type` GROUP B	2023-03-23 16:39:39
+ 
+-------- Performance schema: Top 15 total latency queries with temp table --------------------------
+[--]  +-- 1: NULL	SELECT `table_schema` , TABLE_NAME FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `innodb_buffer_allocated` 	146631199000
+[--]  +-- 2: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_free` FROM `sys` . `x$schema_table_statistics_with_buffer` WHERE `in	146547298000
+[--]  +-- 3: NULL	SELECT `table_schema` , TABLE_NAME , `innodb_buffer_allocated` FROM `sys` . `x$schema_table_statistics_with_buffer` WHER	142860382000
+[--]  +-- 4: NULL	SELECT `object_schema` , `object_name` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_table` ORDE	129173916000
+[--]  +-- 5: NULL	SELECT `object_schema` , `allocated` , DATA , `pages` FROM `sys` . `x$innodb_buffer_stats_by_schema` ORDER BY `pages` DE	103327392000
+[--]  +-- 6: NULL	SELECT * FROM `sys` . `schema_table_statistics_with_buffer` 	73596768000
+[--]  +-- 7: sys	SELECT `db` , LEFT ( QUERY , ? ) , `avg_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	64675707000
+[--]  +-- 8: sys	SELECT `db` , LEFT ( QUERY , ? ) , `max_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile	64552206000
+[--]  +-- 9: sys	SELECT `db` , LEFT ( QUERY , ? ) , `total_latency` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	64533808000
+[--]  +-- 10: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_examined` AS `search` FROM `sys` . `x$statements_with_runtimes_in_95th_percenti	64153405000
+[--]  +-- 11: NULL	SELECT * FROM `sys` . `innodb_buffer_stats_by_table` 	64146921000
+[--]  +-- 12: sys	SELECT `db` , LEFT ( QUERY , ? ) , `rows_sent` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `RO	64134806000
+[--]  +-- 13: NULL	SELECT SYSTEM_USER , `Command` AS `PROC` , TIME FROM `sys` . `x$processlist` ORDER BY TIME DESC 	58962981000
+[--]  +-- 14: NULL	SELECT `IFNULL` ( SUM ( `INDEX_LENGTH` ) , ? ) FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` NOT IN (?) AND 	57333275000
+[--]  +-- 15: NULL	SELECT LEFT ( QUERY , ? ) , `exec_count` FROM `sys` . `x$statements_with_runtimes_in_95th_percentile` ORDER BY `exec_cou	54494958000
+ 
+-------- Performance schema: Top 15 queries with temp table to disk --------------------------------
+[--]  +-- 1: NULL	SELECT `COLUMN_TYPE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =	48
+[--]  +-- 2: NULL	SELECT `IS_NULLABLE` FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? AND COLUMN_NAME =	48
+[--]  +-- 3: NULL	SELECT `CONCAT` ( `t` . `TABLE_SCHEMA` , ? , `t` . `TABLE_NAME` ) AS ? , `CONCAT` ( `s` . `INDEX_NAME` , ? , `s` . `COLU	34
+[--]  +-- 4: NULL	SELECT * FROM `sys` . `schema_object_overview` 	33
+[--]  +-- 5: NULL	SELECT `IFNULL` ( SUM ( `INDEX_LENGTH` ) , ? ) FROM `information_schema` . `TABLES` WHERE `TABLE_SCHEMA` NOT IN (?) AND 	28
+[--]  +-- 6: NULL	SELECT `concat` ( TABLE_NAME , ? , `index_name` ) AS `idxname` , GROUP_CONCAT ( COLUMN_NAME ORDER BY `seq_in_index` ) AS	20
+[--]  +-- 7: NULL	SELECT * FROM `sys` . `schema_unused_indexes` WHERE `object_schema` NOT IN (?) 	20
+[--]  +-- 8: NULL	SELECT * FROM `sys` . `schema_auto_increment_columns` 	19
+[--]  +-- 9: NULL	SELECT * FROM `information_schema` . `COLUMNS` 	18
+[--]  +-- 10: NULL	SELECT * FROM `information_schema` . `VIEWS` 	18
+[--]  +-- 11: NULL	SELECT * FROM `information_schema` . `TABLES` 	17
+[--]  +-- 12: NULL	SELECT ENGINE , SUM ( `DATA_LENGTH` + `INDEX_LENGTH` ) , COUNT ( ENGINE ) , SUM ( `DATA_LENGTH` ) , SUM ( `INDEX_LENGTH`	14
+[--]  +-- 13: NULL	SELECT `TABLE_SCHEMA` , TABLE_NAME , ENGINE , CAST ( `DATA_FREE` AS SIGNED ) FROM `information_schema` . `TABLES` WHERE 	14
+[--]  +-- 14: NULL	SHOW TABLE STATUS FROM `sys` 	14
+[--]  +-- 15: NULL	SELECT COLUMN_NAME FROM `information_schema` . `COLUMNS` WHERE `TABLE_SCHEMA` = ? AND TABLE_NAME = ? 	12
+ 
+-------- Performance schema: Top 15 class events by number -----------------------------------------
+[--]  +-- 1: wait/io/table	3919029
+[--]  +-- 2: wait/io/file	29967
+[--]  +-- 3: wait/lock/table	179
+ 
+-------- Performance schema: Top 30 events by number -----------------------------------------------
+[--]  +-- 1: wait/io/table/sql/handler	3919029
+[--]  +-- 2: wait/io/file/innodb/innodb_data_file	12191
+[--]  +-- 3: wait/io/file/sql/io_cache	7328
+[--]  +-- 4: wait/io/file/myisam/dfile	6632
+[--]  +-- 5: wait/io/file/sql/FRM	2673
+[--]  +-- 6: wait/io/file/innodb/innodb_log_file	582
+[--]  +-- 7: wait/io/file/sql/file_parser	236
+[--]  +-- 8: wait/lock/table/sql/handler	179
+[--]  +-- 9: wait/io/file/archive/data	156
+[--]  +-- 10: wait/io/file/csv/data	60
+[--]  +-- 11: wait/io/file/myisam/kfile	47
+[--]  +-- 12: wait/io/file/sql/dbopt	24
+[--]  +-- 13: wait/io/file/sql/casetest	10
+[--]  +-- 14: wait/io/file/csv/metadata	8
+[--]  +-- 15: wait/io/file/mysys/cnf	5
+[--]  +-- 16: wait/io/file/sql/ERRMSG	5
+[--]  +-- 17: wait/io/file/mysys/charset	3
+[--]  +-- 18: wait/io/file/sql/pid	3
+[--]  +-- 19: wait/io/file/sql/misc	2
+[--]  +-- 20: wait/io/file/sql/global_ddl_log	2
+ 
+-------- Performance schema: Top 15 class events by total latency ----------------------------------
+[--]  +-- 1: wait/io/table	9748592962800
+[--]  +-- 2: wait/io/file	1847203291340
+[--]  +-- 3: wait/lock/table	321877084
+ 
+-------- Performance schema: Top 30 events by total latency ----------------------------------------
+[--]  +-- 1: wait/io/table/sql/handler	9748592962800
+[--]  +-- 2: wait/io/file/innodb/innodb_data_file	1027417723422
+[--]  +-- 3: wait/io/file/innodb/innodb_log_file	579489168782
+[--]  +-- 4: wait/io/file/sql/io_cache	195774253964
+[--]  +-- 5: wait/io/file/myisam/dfile	30441042152
+[--]  +-- 6: wait/io/file/sql/FRM	10043803128
+[--]  +-- 7: wait/io/file/sql/file_parser	1986862052
+[--]  +-- 8: wait/io/file/sql/ERRMSG	943168184
+[--]  +-- 9: wait/lock/table/sql/handler	321877084
+[--]  +-- 10: wait/io/file/archive/data	302950340
+[--]  +-- 11: wait/io/file/csv/data	291831576
+[--]  +-- 12: wait/io/file/myisam/kfile	166328232
+[--]  +-- 13: wait/io/file/sql/dbopt	134527092
+[--]  +-- 14: wait/io/file/sql/casetest	84730008
+[--]  +-- 15: wait/io/file/csv/metadata	32807120
+[--]  +-- 16: wait/io/file/sql/pid	30948384
+[--]  +-- 17: wait/io/file/mysys/charset	26201304
+[--]  +-- 18: wait/io/file/mysys/cnf	20637984
+[--]  +-- 19: wait/io/file/sql/misc	11796100
+[--]  +-- 20: wait/io/file/sql/global_ddl_log	4511516
+ 
+-------- Performance schema: Top 15 class events by max latency ------------------------------------
+[--]  +-- 1: wait/io/file	19683386308
+[--]  +-- 2: wait/io/table	18050080044
+[--]  +-- 3: wait/lock/table	3291452
+ 
+-------- Performance schema: Top 30 events by max latency ------------------------------------------
+[--]  +-- 1: wait/io/file/myisam/dfile	19683386308
+[--]  +-- 2: wait/io/table/sql/handler	18050080044
+[--]  +-- 3: wait/io/file/innodb/innodb_data_file	17370293892
+[--]  +-- 4: wait/io/file/innodb/innodb_log_file	7355531008
+[--]  +-- 5: wait/io/file/sql/io_cache	1508579064
+[--]  +-- 6: wait/io/file/sql/FRM	1413409060
+[--]  +-- 7: wait/io/file/sql/ERRMSG	913510032
+[--]  +-- 8: wait/io/file/sql/file_parser	758448060
+[--]  +-- 9: wait/io/file/sql/casetest	37922224
+[--]  +-- 10: wait/io/file/sql/dbopt	31984436
+[--]  +-- 11: wait/io/file/sql/pid	19625560
+[--]  +-- 12: wait/io/file/mysys/charset	14938624
+[--]  +-- 13: wait/io/file/myisam/kfile	13446480
+[--]  +-- 14: wait/io/file/sql/misc	9763376
+[--]  +-- 15: wait/io/file/csv/metadata	8934964
+[--]  +-- 16: wait/io/file/mysys/cnf	8496056
+[--]  +-- 17: wait/io/file/csv/data	8155956
+[--]  +-- 18: wait/io/file/archive/data	4384068
+[--]  +-- 19: wait/lock/table/sql/handler	3291452
+[--]  +-- 20: wait/io/file/sql/global_ddl_log	2549676
+ 
+-------- ThreadPool Metrics ------------------------------------------------------------------------
+[--] ThreadPool stat is disabled.
+ 
+-------- MyISAM Metrics ----------------------------------------------------------------------------
+[!!] Key buffer used: 18.3% (1.5M used / 8.0M cache)
+[OK] Key buffer size / total MyISAM indexes: 8.0M/43.0K
+[OK] Read Key buffer hit rate: 98.2% (390 cached / 7 reads)
+ 
+-------- InnoDB Metrics ----------------------------------------------------------------------------
+[--] InnoDB is enabled.
+[--] InnoDB Buffers
+[--]  +-- InnoDB Buffer Pool: 128.0M
+[--]  +-- InnoDB Buffer Pool Instances: 1
+[--]  +-- InnoDB Buffer Pool Chunk Size: 128.0M
+[--]  +-- InnoDB Log File Size: 48.0M
+[--]  +-- InnoDB Log File In Group: 2
+[--]  +-- InnoDB Total Log File Size: 96.0M(75 % of buffer pool)
+[--]  +-- InnoDB Log Buffer: 16.0M
+[--]  +-- InnoDB Log Buffer Free: 1.0K
+[--]  +-- InnoDB Log Buffer Used: 8.0K
+[--] InnoDB Thread Concurrency: 0
+[OK] InnoDB File per table is activated
+[!!] InnoDB buffer pool / data size: 128.0M / 146.8M
+[!!] Ratio InnoDB log file size / InnoDB Buffer pool size (75%): 48.0M * 2 / 128.0M should be equal to 25%
+[OK] InnoDB buffer pool instances: 1
+[--] Number of InnoDB Buffer Pool Chunk: 1 for 1 Buffer Pool Instance(s)
+[OK] Innodb_buffer_pool_size aligned with Innodb_buffer_pool_chunk_size & Innodb_buffer_pool_instances
+[OK] InnoDB Read buffer efficiency: 100.00% (20657704 hits / 20658114 total)
+[OK] InnoDB Write Log efficiency: 99.95% (568557 hits / 568824 total)
+[OK] InnoDB log waits: 0.00% (0 waits / 267 writes)
+ 
+-------- Aria Metrics ------------------------------------------------------------------------------
+[--] Aria Storage Engine not available.
+ 
+-------- TokuDB Metrics ----------------------------------------------------------------------------
+[--] TokuDB is disabled.
+ 
+-------- XtraDB Metrics ----------------------------------------------------------------------------
+[--] XtraDB is disabled.
+ 
+-------- Galera Metrics ----------------------------------------------------------------------------
+[--] Galera is disabled.
+ 
+-------- Replication Metrics -----------------------------------------------------------------------
+[--] Galera Synchronous replication: NO
+[--] No replication slave(s) for this server.
+[--] Binlog format: ROW
+[--] XA support enabled: ON
+[--] Semi synchronous replication Master: Not Activated
+[--] Semi synchronous replication Slave: Not Activated
+[--] This is a standalone server
+ 
+-------- Recommendations ---------------------------------------------------------------------------
+General recommendations:
+    setup swappiness lower or equals to 10
+    setup Max running number events greater than 1M
+    Remove unused indexes.
+    Set up a Secure Password for 'root'@'localhost' user: SET PASSWORD FOR 'root'@'localhost' = PASSWORD('secure_password');
+    Set up a Secure Password for root@localhost user: SET PASSWORD FOR 'root'@'localhost' = PASSWORD('secure_password');
+    1 user(s) used basic or weak password from basic dictionary.
+    MySQL was started within the last 24 hours: recommendations may be inaccurate
+    Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=1
+    We will suggest raising the 'join_buffer_size' until JOINs not using indexes are found.
+             See https://dev.mysql.com/doc/internals/en/join-buffer-size.html
+             (specially the conclusions at the bottom of the page).
+    Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU
+Variables to adjust:
+    vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness)
+    fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)
+    skip-name-resolve=1
+    sort_buffer_size (> 256K)
+    read_rnd_buffer_size (> 256K)
+    join_buffer_size (> 256.0K, or always use indexes with JOINs)
+    key_buffer_size (~ 1M)
+    innodb_buffer_pool_size (>= 146.8M) if possible.
+    innodb_log_file_size should be (=16M) if possible, so InnoDB total log file size equals 25% of buffer pool size.
