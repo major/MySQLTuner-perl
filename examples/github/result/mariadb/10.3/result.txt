@@ -1,0 +1,410 @@
+ >>  MySQLTuner 2.1.1
+	 * Jean-Marie Renouard <jmrenouard@gmail.com>
+	 * Major Hayden <major@mhtx.net>
+ >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/
+ >>  Run with '--help' for additional options and output filtering
+[OK] You have the latest version of MySQLTuner (2.1.1)
+[OK] Logged in using credentials passed on the command line
+[OK] Currently running supported MySQL version 10.3.38-MariaDB
+[OK] Operating on 64-bit architecture
+ 
+-------- System Linux Recommendations --------------------------------------------------------------
+Look for related Linux system recommendations
+[--] Ubuntu 22.04.2 LTS
+[--] Machine type          : Virtual machine
+[--] Internet              : Connected
+[--] Number of Core CPU : 2
+[--] Operating System Type : GNU/Linux
+[--] Kernel Release        : 5.15.0-1034-azure
+[--] Hostname              : fv-az485-937
+[--] Network Cards         : 
+[--] 	docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+[--] 	        inet 172.17.0.1  netmask 255.255.0.0  broadcast 172.17.255.255
+[--] 	--
+[--] 	eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+[--] 	        inet 10.1.1.24  netmask 255.255.0.0  broadcast 10.1.255.255
+[--] 	--
+[--] 	lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+[--] 	        inet 127.0.0.1  netmask 255.0.0.0
+[--] Internal IP           : 10.1.1.24 172.17.0.1 
+[--] HTTP client found: /usr/bin/curl
+[--] External IP           :   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current,                                  Dload  Upload   Total   Spent    Left  Speed,   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    13  100    13    0     0    185      0 --:--:-- --:--:-- --:--:--   188, 20.172.45.228
+[--] Name Servers          : 127.0.0.53
+[--] Logged In users       : 
+[--] Ram Usages in Mb      : 
+[--] 	               total        used        free      shared  buff/cache   available
+[--] 	Mem:            6943         856        1998           7        4089        5777
+[--] 	Swap:           4095           0        4095
+[--] Load Average          : 
+[--] 	top - 16:39:27 up 19 min,  0 users,  load average: 1.03, 0.46, 0.19
+[--] System Uptime         : 
+[--] 	 16:39:27 up 19 min,  0 users,  load average: 1.03, 0.46, 0.19
+[--] User process except mysqld used 125M RAM.
+[--] Other user process except mysqld used less than 15% of total physical memory 1.81% (125M / 6G)
+ 
+-------- Filesystem Linux Recommendations ----------------------------------------------------------
+[--] mount point /boot/efi is using 6 % total space (6.04 MB / 104.35 MB)
+[--] mount point /mnt is using 31 % total space (4.00 GB / 13.68 GB)
+[--] mount point / is using 10 % of max allowed inodes
+[--] mount point /mnt is using 1 % of max allowed inodes
+ 
+-------- Kernel Information Recommendations --------------------------------------------------------
+[--] Information about kernel tuning:
+[--] 	fs.aio-max-nr = 65536
+[--] 	fs.aio-nr = 0
+[--] 	fs.file-max = 9223372036854775807
+[--] 	vm.swappiness = 60
+[!!] Swappiness is > 10, please consider having a value lower than 10
+[--] TCP slot entries is > 100.
+[!!] Max running total of the number of events is < 1M, please consider having a value greater than 1M
+ 
+-------- Log file Recommendations ------------------------------------------------------------------
+[!!] Log file  doesn't exist
+ 
+-------- Storage Engine Statistics -----------------------------------------------------------------
+[--] Status: +Aria +CSV +InnoDB +MEMORY +MRG_MyISAM +MyISAM +PERFORMANCE_SCHEMA +SEQUENCE 
+[--] Data in InnoDB tables: 142.8M (Tables: 6)
+[OK] Total fragmented tables: 0
+ 
+-------- Analysis Performance Metrics --------------------------------------------------------------
+[--] innodb_stats_on_metadata: OFF
+[OK] No stat updates during querying INFORMATION_SCHEMA.
+ 
+-------- Database Metrics --------------------------------------------------------------------------
+[--] There is 3 Database(s).
+[--] All User Databases:
+[--]  +-- TABLE : 6
+[--]  +-- VIEW  : 2
+[--]  +-- INDEX : 9
+[--]  +-- CHARS : 1 (latin1)
+[--]  +-- COLLA : 1 (latin1_swedish_ci)
+[--]  +-- ROWS  : 3911979
+[--]  +-- DATA  : 137.2M(96.12%)
+[--]  +-- INDEX : 5.5M(3.88%)
+[--]  +-- SIZE  : 142.8M
+[--]  +-- ENGINE: 1 (InnoDB)
+
+[--] Database: employees
+[--]  +-- TABLE : 6
+[--]  +-- VIEW  : 2
+[--]  +-- INDEX : 9
+[--]  +-- CHARS : 1 (latin1)
+[--]  +-- COLLA : 1 (latin1_swedish_ci)
+[--]  +-- ROWS  : 3911979
+[--]  +-- DATA  : 137.2M(96.12%)
+[--]  +-- INDEX : 5.5M(3.88%)
+[--]  +-- TOTAL : 142.8M
+[--]  +-- ENGINE: 1 (InnoDB)
+[--]  +-- ENGINE InnoDB : 6 TABLE(s)
+[OK] 1 collation for employees database.
+[OK] 1 engine for employees database.
+[--] Charsets for employees database table column: latin1
+[OK] employees table column(s) has same charset defined for all text like column(s).
+[--] Collations for employees database table column: latin1_swedish_ci
+[OK] employees table column(s) has same collation defined for all text like column(s).
+ 
+-------- Table Column Metrics ----------------------------------------------------------------------
+[--] Database: employees
+[--]  +-- TABLE: departments
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index dept_name - Cols: dept_name - Type: BTREE
+[--]      +-- Index PRIMARY - Cols: dept_no - Type: BTREE
+[--]      +-- Column departments.dept_no: CHAR(4) NOT NULL
+[--]      +-- Column departments.dept_name: VARCHAR(40) NOT NULL
+[--]  +-- TABLE: dept_emp
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index dept_no - Cols: dept_no - Type: BTREE
+[--]      +-- Index PRIMARY - Cols: emp_no,dept_no - Type: BTREE
+[--]      +-- Column dept_emp.emp_no: INT(11) NOT NULL
+[--]      +-- Column dept_emp.dept_no: CHAR(4) NOT NULL
+[--]      +-- Column dept_emp.from_date: DATE NOT NULL
+[--]      +-- Column dept_emp.to_date: DATE NOT NULL
+[--]  +-- TABLE: dept_manager
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index dept_no - Cols: dept_no - Type: BTREE
+[--]      +-- Index PRIMARY - Cols: emp_no,dept_no - Type: BTREE
+[--]      +-- Column dept_manager.emp_no: INT(11) NOT NULL
+[--]      +-- Column dept_manager.dept_no: CHAR(4) NOT NULL
+[--]      +-- Column dept_manager.from_date: DATE NOT NULL
+[--]      +-- Column dept_manager.to_date: DATE NOT NULL
+[--]  +-- TABLE: employees
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index PRIMARY - Cols: emp_no - Type: BTREE
+[--]      +-- Column employees.emp_no: INT(11) NOT NULL
+[--]      +-- Column employees.birth_date: DATE NOT NULL
+[--]      +-- Column employees.first_name: VARCHAR(14) NOT NULL
+[--]      +-- Column employees.last_name: VARCHAR(16) NOT NULL
+[--]      +-- Column employees.gender: ENUM('M','F') NOT NULL
+[--]      +-- Column employees.hire_date: DATE NOT NULL
+[--]  +-- TABLE: salaries
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index PRIMARY - Cols: emp_no,from_date - Type: BTREE
+[--]      +-- Column salaries.emp_no: INT(11) NOT NULL
+[--]      +-- Column salaries.salary: INT(11) NOT NULL
+[--]      +-- Column salaries.from_date: DATE NOT NULL
+[--]      +-- Column salaries.to_date: DATE NOT NULL
+[--]  +-- TABLE: titles
+[--]      +-- TYPE: InnoDB
+[--]      +-- Index PRIMARY - Cols: emp_no,title,from_date - Type: BTREE
+[--]      +-- Column titles.emp_no: INT(11) NOT NULL
+[--]      +-- Column titles.title: VARCHAR(50) NOT NULL
+[--]      +-- Column titles.from_date: DATE NOT NULL
+[--]      +-- Column titles.to_date: DATE NULL
+ 
+-------- Indexes Metrics ---------------------------------------------------------------------------
+[--] Worst selectivity indexes:
+[--] Index: dept_no(dept_no)
+[--]  +-- COLUMN      : employees.dept_emp
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 1 column(s)
+[--]  +-- CARDINALITY : 16 distinct values
+[--]  +-- NB ROWS     : 331570 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 0.00%
+[!!] dept_no(dept_no) has a low selectivity
+[--] Index: PRIMARY(emp_no)
+[--]  +-- COLUMN      : employees.salaries
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 2 column(s)
+[--]  +-- CARDINALITY : 709708 distinct values
+[--]  +-- NB ROWS     : 2838835 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 25.00%
+[--] Index: PRIMARY(emp_no)
+[--]  +-- COLUMN      : employees.employees
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 1 column(s)
+[--]  +-- CARDINALITY : 298936 distinct values
+[--]  +-- NB ROWS     : 298936 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: PRIMARY(emp_no)
+[--]  +-- COLUMN      : employees.dept_manager
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 2 column(s)
+[--]  +-- CARDINALITY : 24 distinct values
+[--]  +-- NB ROWS     : 24 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: PRIMARY(from_date)
+[--]  +-- COLUMN      : employees.titles
+[--]  +-- NB SEQS     : 3 sequence(s)
+[--]  +-- NB COLS     : 3 column(s)
+[--]  +-- CARDINALITY : 442605 distinct values
+[--]  +-- NB ROWS     : 442605 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: PRIMARY(dept_no)
+[--]  +-- COLUMN      : employees.dept_emp
+[--]  +-- NB SEQS     : 2 sequence(s)
+[--]  +-- NB COLS     : 2 column(s)
+[--]  +-- CARDINALITY : 331570 distinct values
+[--]  +-- NB ROWS     : 331570 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: PRIMARY(emp_no)
+[--]  +-- COLUMN      : employees.titles
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 3 column(s)
+[--]  +-- CARDINALITY : 442605 distinct values
+[--]  +-- NB ROWS     : 442605 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: PRIMARY(dept_no)
+[--]  +-- COLUMN      : employees.dept_manager
+[--]  +-- NB SEQS     : 2 sequence(s)
+[--]  +-- NB COLS     : 2 column(s)
+[--]  +-- CARDINALITY : 24 distinct values
+[--]  +-- NB ROWS     : 24 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: dept_no(dept_no)
+[--]  +-- COLUMN      : employees.dept_manager
+[--]  +-- NB SEQS     : 1 sequence(s)
+[--]  +-- NB COLS     : 1 column(s)
+[--]  +-- CARDINALITY : 24 distinct values
+[--]  +-- NB ROWS     : 24 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Index: PRIMARY(title)
+[--]  +-- COLUMN      : employees.titles
+[--]  +-- NB SEQS     : 2 sequence(s)
+[--]  +-- NB COLS     : 3 column(s)
+[--]  +-- CARDINALITY : 442605 distinct values
+[--]  +-- NB ROWS     : 442605 rows
+[--]  +-- TYPE        : BTREE
+[--]  +-- SELECTIVITY : 100.00%
+[--] Indexes per database:
+[--] Database: employees
+[--]  +-- INDEX      : departments.dept_name
+[--]  +-- COLUMNS    : dept_name
+[--]  +-- CARDINALITY: 9
+[--]  +-- INDEX      : departments.PRIMARY
+[--]  +-- COLUMNS    : dept_no
+[--]  +-- CARDINALITY: 9
+[--]  +-- INDEX      : dept_emp.dept_no
+[--]  +-- COLUMNS    : dept_no
+[--]  +-- CARDINALITY: 16
+[--]  +-- INDEX      : dept_emp.PRIMARY
+[--]  +-- COLUMNS    : emp_no,dept_no
+[--]  +-- CARDINALITY: 663140
+[--]  +-- INDEX      : dept_manager.dept_no
+[--]  +-- COLUMNS    : dept_no
+[--]  +-- CARDINALITY: 24
+[--]  +-- INDEX      : dept_manager.PRIMARY
+[--]  +-- COLUMNS    : emp_no,dept_no
+[--]  +-- CARDINALITY: 48
+[--]  +-- INDEX      : employees.PRIMARY
+[--]  +-- COLUMNS    : emp_no
+[--]  +-- CARDINALITY: 298936
+[--]  +-- INDEX      : salaries.PRIMARY
+[--]  +-- COLUMNS    : emp_no,from_date
+[--]  +-- CARDINALITY: 3548543
+[--]  +-- INDEX      : titles.PRIMARY
+[--]  +-- COLUMNS    : emp_no,title,from_date
+[--]  +-- CARDINALITY: 1327815
+ 
+-------- Views Metrics -----------------------------------------------------------------------------
+ 
+-------- Triggers Metrics --------------------------------------------------------------------------
+ 
+-------- Routines Metrics --------------------------------------------------------------------------
+ 
+-------- Security Recommendations ------------------------------------------------------------------
+[!!] User ''@'fv-az485-937' is an anonymous account. Remove with DROP USER ''@'fv-az485-937';
+[!!] User ''@'localhost' is an anonymous account. Remove with DROP USER ''@'localhost';
+[!!] User ''root'@'127.0.0.1'' has no password set.
+[!!] User ''root'@'::1'' has no password set.
+[!!] User ''root'@'fv-az485-937'' has no password set.
+[!!] User 'root'@'localhost' has user name as password.
+[--] There are 620 basic passwords in the list.
+[!!] User 'root@localhost' is using weak password: root in a lower, upper or capitalize derivative version.
+ 
+-------- CVE Security Recommendations --------------------------------------------------------------
+[OK] NO SECURITY CVE FOUND FOR YOUR VERSION
+ 
+-------- Performance Metrics -----------------------------------------------------------------------
+[--] Up for: 1m 14s (2K q [36.378 qps], 842 conn, TX: 2M, RX: 164M)
+[--] Reads / Writes: 90% / 10%
+[--] Binary logging is disabled
+[--] Physical Memory     : 6.8G
+[--] Max MySQL memory    : 3.2G
+[--] Other process memory: 125.8M
+[--] Total buffers: 417.0M global + 18.9M per thread (151 max threads)
+[--] Performance_schema Max memory usage: 0B
+[--] Galera GCache Max memory usage: 0B
+[--] Global Buffers
+[--]  +-- Key Buffer: 128.0M
+[--]  +-- Max Tmp Table: 16.0M
+[--] Query Cache Buffers
+[--]  +-- Query Cache: OFF - DISABLED
+[--]  +-- Query Cache Size: 1.0M
+[--] Per Thread Buffers
+[--]  +-- Read Buffer: 128.0K
+[--]  +-- Read RND Buffer: 256.0K
+[--]  +-- Sort Buffer: 2.0M
+[--]  +-- Thread stack: 292.0K
+[--]  +-- Join Buffer: 256.0K
+[OK] Maximum reached memory usage: 435.9M (6.28% of installed RAM)
+[OK] Maximum possible memory usage: 3.2G (47.13% of installed RAM)
+[OK] Overall possible memory usage with other process is compatible with memory available
+[OK] Slow queries: 0% (0/2K)
+[OK] Highest usage of available connections: 0% (1/151)
+[OK] Aborted connections: 0.00% (0/842)
+[!!] Name resolution is active: a reverse name resolution is made for each new connection which can reduce performance
+[OK] Query cache is disabled by default due to mutex contention on multiprocessor machines.
+[OK] Sorts requiring temporary tables: 0% (0 temp sorts / 12 sorts)
+[!!] Joins performed without indexes: 2
+[OK] Temporary tables created on disk: 18% (232 on disk / 1K total)
+[OK] Thread cache hit rate: 99% (1 created / 842 connections)
+[OK] Table cache hit rate: 92% (1K hits / 2K requests)
+[OK] table_definition_cache (400) is greater than number of tables (169)
+[OK] Open file limit used: 0% (59/32K)
+[OK] Table locks acquired immediately: 100% (665 immediate / 665 locks)
+ 
+-------- Performance schema ------------------------------------------------------------------------
+[!!] Performance_schema should be activated.
+[--] Sys schema is not installed.
+ 
+-------- ThreadPool Metrics ------------------------------------------------------------------------
+[--] ThreadPool stat is disabled.
+ 
+-------- MyISAM Metrics ----------------------------------------------------------------------------
+[!!] Key buffer used: 18.2% (23.4M used / 128.0M cache)
+[OK] Key buffer size / total MyISAM indexes: 128.0M/114.0K
+[!!] Read Key buffer hit rate: 75.0% (16 cached / 4 reads)
+ 
+-------- InnoDB Metrics ----------------------------------------------------------------------------
+[--] InnoDB is enabled.
+[--] InnoDB Buffers
+[--]  +-- InnoDB Buffer Pool: 128.0M
+[--]  +-- InnoDB Buffer Pool Instances: 1
+[--]  +-- InnoDB Buffer Pool Chunk Size: 128.0M
+[--]  +-- InnoDB Log File Size: 48.0M
+[--]  +-- InnoDB Log File In Group: 2
+[--]  +-- InnoDB Total Log File Size: 96.0M(75 % of buffer pool)
+[--]  +-- InnoDB Log Buffer: 16.0M
+[--]  +-- InnoDB Log Buffer Free: 1004B
+[--]  +-- InnoDB Log Buffer Used: 8.0K
+[--] InnoDB Thread Concurrency: 0
+[OK] InnoDB File per table is activated
+[!!] InnoDB buffer pool / data size: 128.0M / 142.8M
+[!!] Ratio InnoDB log file size / InnoDB Buffer pool size (75%): 48.0M * 2 / 128.0M should be equal to 25%
+[OK] InnoDB buffer pool instances: 1
+[--] Number of InnoDB Buffer Pool Chunk: 1 for 1 Buffer Pool Instance(s)
+[OK] Innodb_buffer_pool_size aligned with Innodb_buffer_pool_chunk_size & Innodb_buffer_pool_instances
+[OK] InnoDB Read buffer efficiency: 100.00% (33522512 hits / 33523274 total)
+[OK] InnoDB Write Log efficiency: 99.96% (734136 hits / 734444 total)
+[OK] InnoDB log waits: 0.00% (0 waits / 308 writes)
+ 
+-------- Aria Metrics ------------------------------------------------------------------------------
+[--] Aria Storage Engine is enabled.
+[OK] Aria pagecache size / total Aria indexes: 128.0M/0B
+[OK] Aria pagecache hit rate: 99.5% (16K cached / 76 reads)
+ 
+-------- TokuDB Metrics ----------------------------------------------------------------------------
+[--] TokuDB is disabled.
+ 
+-------- XtraDB Metrics ----------------------------------------------------------------------------
+[--] XtraDB is disabled.
+ 
+-------- Galera Metrics ----------------------------------------------------------------------------
+[--] Galera is disabled.
+ 
+-------- Replication Metrics -----------------------------------------------------------------------
+[--] Galera Synchronous replication: NO
+[--] No replication slave(s) for this server.
+[--] Binlog format: MIXED
+[--] XA support enabled: ON
+[--] Semi synchronous replication Master: OFF
+[--] Semi synchronous replication Slave: OFF
+[--] This is a standalone server
+ 
+-------- Recommendations ---------------------------------------------------------------------------
+General recommendations:
+    setup swappiness lower or equals to 10
+    setup Max running number events greater than 1M
+    Remove Anonymous User accounts - there are 2 anonymous accounts.
+    Set up a Secure Password for 'root'@'127.0.0.1' user: SET PASSWORD FOR 'root'@'127.0.0.1' = PASSWORD('secure_password');
+    Set up a Secure Password for 'root'@'::1' user: SET PASSWORD FOR 'root'@'::1' = PASSWORD('secure_password');
+    Set up a Secure Password for 'root'@'fv-az485-937' user: SET PASSWORD FOR 'root'@'fv-az485-937' = PASSWORD('secure_password');
+    Set up a Secure Password for 'root'@'localhost' user: SET PASSWORD FOR 'root'@'localhost' = PASSWORD('secure_password');
+    Set up a Secure Password for root@localhost user: SET PASSWORD FOR 'root'@'localhost' = PASSWORD('secure_password');
+    1 user(s) used basic or weak password from basic dictionary.
+    MySQL was started within the last 24 hours: recommendations may be inaccurate
+    Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=1
+    We will suggest raising the 'join_buffer_size' until JOINs not using indexes are found.
+             See https://dev.mysql.com/doc/internals/en/join-buffer-size.html
+             (specially the conclusions at the bottom of the page).
+    Performance schema should be activated for better diagnostics
+    Consider installing Sys schema from https://github.com/FromDual/mariadb-sys for MariaDB
+    Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU
+Variables to adjust:
+    vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness)
+    fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)
+    skip-name-resolve=1
+    join_buffer_size (> 256.0K, or always use indexes with JOINs)
+    performance_schema=ON
+    key_buffer_size (~ 24M)
+    innodb_buffer_pool_size (>= 142.8M) if possible.
+    innodb_log_file_size should be (=16M) if possible, so InnoDB total log file size equals 25% of buffer pool size.
