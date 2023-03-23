@@ -10,7 +10,10 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  run_mt_with_db:
+    strategy:
+      matrix:
+        MYSQL_VERSION: [5.7, 8.0]
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -23,7 +26,7 @@ jobs:
         uses: mirromutth/mysql-action@v1.1
         with:
           mysql root password: "root"
-          mysql version: "${{ inputs.MYSQL_VERSION }}"
+          mysql version: "${{ matrix.MYSQL_VERSION }}"
 
       - name: Injecting credentials
         run: |

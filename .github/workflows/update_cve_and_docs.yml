@@ -45,4 +45,4 @@ jobs:
           commit_prefix: "[AUTO]"
           commit_message: "Updates CVE and docs (via Actions)"
           force: false
-          target_branch: update/version
+          target_branch: master
