@@ -53,18 +53,17 @@ jobs:
         run: |
           mkdir -p ./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }}
           sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose --dumpdir=./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }} --json | tee -a ./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }}/result.json
-      
-      - name: Standard Run verbose mode with dumpdir result
+
+      - name: Standard Run verbose mode without dumpdir result
         run: |
           sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose | tee -a ./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }}/result.txt
 
       - name: Adding examples to Git
         run: |
-          git add ./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }}/*
-          
+          git add ./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }}/* || true
           sleep $[ ( $RANDOM % 10 )  + 1 ]s
 
-      - name: Run the Action
+      - name: Run the Action Commit
         uses: devops-infra/action-commit-push@master
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
