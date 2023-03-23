@@ -41,7 +41,7 @@ jobs:
         uses: devops-infra/action-commit-push@master
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
-          add_timestamp: true
+          add_timestamp: false
           commit_prefix: "[AUTO]"
           commit_message: "Updates CVE and docs (via Actions)"
           force: false
