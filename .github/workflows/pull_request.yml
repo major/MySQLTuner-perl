@@ -22,10 +22,18 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: .github/actions/pull_and_mysql
+      - name: Setup MySQL Tuner repository
+        uses: actions/checkout@v3
+
+      - name: Set up MySQL
+        uses: mirromutth/mysql-action@v1.1
         with:
-          MYSQL_VERSION: "8.0"
+          mysql root password: "root"
+          mysql version: "${{ inputs.MYSQL_VERSION }}"
+
+      - name: Injecting credentials
+        run: |
+          echo -e "[client]\nuser=root\npassword=root\nhost=127.0.0.1\nprotocol=TCP" > $HOME/.my.cnf
 
       - name: Run help mode
         run: |

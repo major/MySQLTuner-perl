@@ -16,10 +16,33 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: .github/actions/install_db
-        with:
-          MYSQL_VERSION: "8.0"
+      - name: Setup MySQL Tuner repository
+        uses: actions/checkout@v3
 
+      - name: Set up MySQL
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql root password: "root"
+          mysql version: "8.0"
+
+      - name: Injecting credentials
+        run: |
+          echo -e "[client]\nuser=root\npassword=root\nhost=127.0.0.1\nprotocol=TCP" > $HOME/.my.cnf
+
+      - name: Cloning test_db dataset
+        run: |
+          git clone https://github.com/datacharmer/test_db.git
+
+      - name: Injecting test_db dataset
+        run: |
+          sleep 5s
+          cd test_db
+          netstat -ltpn
+          mysql -e 'select version();'
+          mysql -e 'CREATE DATABASE data;'
+          mysql data< ./employees.sql
+          cd -
+          rm -rf test_db
       # Runs a single command using the runners shell
       - name: Run verbose mode with dumpdir result
         run: |
