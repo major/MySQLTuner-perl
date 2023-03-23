@@ -34,12 +34,12 @@ jobs:
           pwd
           sudo bash ./updateStaff.sh
 
-      # Runs a single command using the runners shell
-      - name: Commit CVE result to repo
-        run: |
-          pwd
-          sudo git config --global user.name "Jean-Marie Renouard"
-          sudo git config --global user.email "jmrenouard@gmail.com"
-          sudo git add ./vulnerabilities.csv ./mysqltuner.pl ./USAGE.md
-          sudo git commit -m "Updates CVE and docs (via Actions) - $(date +'%Y-%m-%d')"
-          sudo git push
+      - name: Run the Action
+        uses: devops-infra/action-commit-push@master
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          add_timestamp: true
+          commit_prefix: "[AUTO]"
+          commit_message: "Updates CVE and docs (via Actions)"
+          force: false
+          target_branch: update/version
