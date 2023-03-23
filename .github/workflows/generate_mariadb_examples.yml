@@ -24,6 +24,7 @@ jobs:
       - name: Set up MySQL
         uses: shogo82148/actions-setup-mysql@v1
         with:
+          distribution: 'mariadb'
           root-password: "root"
           mysql-version: "${{ matrix.MARIADB_VERSION }}"
 
