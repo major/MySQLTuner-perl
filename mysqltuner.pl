@@ -2254,6 +2254,8 @@ sub validate_mysql_version {
     $mysqlverminor ||= 0;
     $mysqlvermicro ||= 0;
 
+    prettyprint " ";
+
     if (   mysql_version_eq(8)
         or mysql_version_eq( 5,  7 )
         or mysql_version_eq( 10, 3 )
