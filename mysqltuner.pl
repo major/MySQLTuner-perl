@@ -1915,7 +1915,7 @@ sub system_recommendations {
               . $opt{'maxportallowed'}
               . "allowed.";
             push( @generalrec,
-"Consider dedicating a server for your database installation with less services running on !"
+"Consider dedicating a server for your database installation with fewer services running on it!"
             );
         }
         else {
@@ -1929,7 +1929,7 @@ sub system_recommendations {
         if ( is_open_port($banport) ) {
             badprint "Banned port: $banport is opened..";
             push( @generalrec,
-"Port $banport is opened. Consider stopping program handling this port."
+"Port $banport is opened. Consider stopping program handling over this port."
             );
         }
         else {
@@ -1947,7 +1947,7 @@ sub security_recommendations {
     subheaderprint "Security Recommendations";
 
     if ( mysql_version_eq(8) ) {
-        infoprint "Skipped due to unsupported feature for MySQL 8";
+        infoprint "Skipped due to unsupported feature for MySQL 8.0+";
         return;
     }
 
