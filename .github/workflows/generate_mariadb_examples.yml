@@ -67,8 +67,8 @@ jobs:
         uses: devops-infra/action-commit-push@master
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
-          add_timestamp: true
+          add_timestamp: false
           commit_prefix: "[AUTO]"
           commit_message: "Updates MariaDb result examples (via Actions)"
-          force: false
-          target_branch: examples-mariadb-${{ matrix.MARIADB_VERSION }}
+          force: true
+          target_branch: examples
