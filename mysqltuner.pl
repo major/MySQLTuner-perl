@@ -1929,7 +1929,7 @@ sub system_recommendations {
         if ( is_open_port($banport) ) {
             badprint "Banned port: $banport is opened..";
             push( @generalrec,
-"Port $banport is opened. Consider stopping program handling over this port."
+"Port $banport is opened. Consider stopping the program over this port."
             );
         }
         else {
