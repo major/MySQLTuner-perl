@@ -245,8 +245,6 @@ $opt{nocolor} = 0 if ( $opt{color} == 1 );
 # Setting up the colors for the print styles
 my $me = `whoami`;
 $me =~ s/\n//g;
-
-# Setting up the colors for the print styles
 my $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]"  : "[OK]";
 my $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]"  : "[!!]";
 my $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]"  : "[--]";
@@ -1420,13 +1418,13 @@ sub log_file_recommendations {
         if ( $size > 0 ) {
             goodprint "Log file $myvar{'log_error'} is not empty";
             if ( $size < 32 * 1024 * 1024 ) {
-                goodprint "Log file $myvar{'log_error'} is smaller than 32 Mb";
+                goodprint "Log file $myvar{'log_error'} is smaller than 32 MB";
             }
             else {
-                badprint "Log file $myvar{'log_error'} is bigger than 32 Mb";
+                badprint "Log file $myvar{'log_error'} is bigger than 32 MB";
                 push @generalrec,
                   $myvar{'log_error'}
-                  . " is > 32Mb, you should analyze why or implement a rotation log strategy such as logrotate!";
+                  . " is > 32MB, you should analyze why or implement a rotation log strategy such as logrotate!";
             }
         }
         else {
@@ -1850,14 +1848,14 @@ sub get_system_info {
     infoprint "External IP           : " . $ext_ip;
     $result{'Network'}{'External Ip'} = $ext_ip;
     badprint
-      "External IP           : Can't check because of Internet connectivity"
+      "External IP           : Can't check, no Internet connectivity"
       unless defined($httpcli);
     infoprint "Name Servers          : "
       . infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
     infoprint "Logged In users       : ";
     infocmd_tab "who";
     $result{'OS'}{'Logged users'} = `who`;
-    infoprint "Ram Usages in Mb      : ";
+    infoprint "Ram Usages in MB      : ";
     infocmd_tab "free -m | grep -v +";
     $result{'OS'}{'Free Memory RAM'} = `free -m | grep -v +`;
     infoprint "Load Average          : ";
@@ -1917,7 +1915,7 @@ sub system_recommendations {
               . $opt{'maxportallowed'}
               . "allowed.";
             push( @generalrec,
-"Consider dedicating a server for your database installation with less services running on !"
+"Consider dedicating a server for your database installation with fewer services running on it!"
             );
         }
         else {
@@ -1931,7 +1929,7 @@ sub system_recommendations {
         if ( is_open_port($banport) ) {
             badprint "Banned port: $banport is opened..";
             push( @generalrec,
-"Port $banport is opened. Consider stopping program handling this port."
+"Port $banport is opened. Consider stopping the program over this port."
             );
         }
         else {
@@ -1949,7 +1947,7 @@ sub security_recommendations {
     subheaderprint "Security Recommendations";
 
     if ( mysql_version_eq(8) ) {
-        infoprint "Skipped due to unsupported feature for MySQL 8";
+        infoprint "Skipped due to unsupported feature for MySQL 8.0+";
         return;
     }
 
@@ -2011,7 +2009,7 @@ sub security_recommendations {
     #exit 0;
     if (@mysqlstatlist) {
         push( @generalrec,
-                "Remove Anonymous User accounts - there are "
+                "Remove Anonymous User accounts: there are "
               . scalar(@mysqlstatlist)
               . " anonymous accounts." );
         foreach my $line ( sort @mysqlstatlist ) {
@@ -2253,6 +2251,8 @@ sub validate_mysql_version {
       $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
     $mysqlverminor ||= 0;
     $mysqlvermicro ||= 0;
+
+    prettyprint " ";
 
     if (   mysql_version_eq(8)
         or mysql_version_eq( 5,  7 )
@@ -2547,7 +2547,7 @@ sub check_storage_engines {
         && defined $myvar{'have_innodb'}
         && $myvar{'have_innodb'} eq "YES" )
     {
-        badprint "InnoDB is enabled but isn't being used";
+        badprint "InnoDB is enabled, but isn't being used";
         push( @generalrec,
             "Add skip-innodb to MySQL configuration to disable InnoDB" );
     }
@@ -2555,7 +2555,7 @@ sub check_storage_engines {
         && defined $myvar{'have_bdb'}
         && $myvar{'have_bdb'} eq "YES" )
     {
-        badprint "BDB is enabled but isn't being used";
+        badprint "BDB is enabled, but isn't being used";
         push( @generalrec,
             "Add skip-bdb to MySQL configuration to disable BDB" );
     }
@@ -2563,7 +2563,7 @@ sub check_storage_engines {
         && defined $myvar{'have_isam'}
         && $myvar{'have_isam'} eq "YES" )
     {
-        badprint "MyISAM is enabled but isn't being used";
+        badprint "MyISAM is enabled, but isn't being used";
         push( @generalrec,
 "Add skip-isam to MySQL configuration to disable MyISAM (MySQL > 4.1.0)"
         );
@@ -2592,7 +2592,7 @@ sub check_storage_engines {
             push @generalrec, $generalrec;
         }
         push @generalrec,
-          "Total freed space after defragmentation : $total_free MiB";
+          "Total freed space after defragmentation: $total_free MiB";
     }
     else {
         goodprint "Total fragmented tables: $fragtables";
