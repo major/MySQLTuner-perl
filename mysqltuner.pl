@@ -111,7 +111,7 @@ my %opt = (
     "defaults-extra-file" => '',
     "protocol"            => '',
     "dumpdir"             => '',
-    "stop-after-dumping"  => 0,
+    "stop"  => 0,
 );
 
 # Gather the options from the command line
@@ -144,7 +144,7 @@ GetOptions(
     'idxstat',               'noidxstat',
     'server-log=s',          'protocol=s',
     'defaults-extra-file=s', 'dumpdir=s',
-    'stop-after-dumping'
+    'stop'
   )
   or pod2usage(
     -exitval  => 1,
@@ -3972,7 +3972,7 @@ sub mysqsl_pfs {
             );
         }
     }
-    exit 0 if ( $opt{stop-after-dumping} == 1 );
+    exit 0 if ( $opt{stop} == 1 );
 
     # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
@@ -6508,6 +6508,7 @@ sub mysql_tables {
                 "select * from information_schema.$info_s_table"
             );
         }
+        exit 0 if ( $opt{stop} == 1 );
     }
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
