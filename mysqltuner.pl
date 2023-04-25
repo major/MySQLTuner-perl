@@ -1041,18 +1041,17 @@ sub select_array {
 sub select_array_with_headers {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = `$mysqlcmd $mysqllogin -Bs --column-name -e "\\w$req" 2>>/dev/null`;
+    my @result = `$mysqlcmd $mysqllogin -Bre "\\w$req" 2>>/dev/null`;
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         debugprint "CMD    : $mysqlcmd";
-        debugprint "COMMAND: $mysqlcmd";
         debugprint "OPTIONS: $mysqllogin";
         debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
 
         #exit $?;
     }
-    debugprint "select_array: return code : $?";
+    debugprint "select_array_with_headers: return code : $?";
     chomp(@result);
     return @result;
 }
