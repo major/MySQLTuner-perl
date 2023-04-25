@@ -6192,7 +6192,7 @@ sub mysql_innodb {
     $mystat{'Innodb_log_waits_computed'} = 0;
 
     if (    defined( $mystat{'Innodb_log_waits'} )
-        and defined( $mystat{'Innodb_log_writes'} ) )
+        and defined( $mystat{'Innodb_log_writes'} ) and $mystat{'Innodb_log_writes'} > 0.000001 )
     {
         $mystat{'Innodb_log_waits_computed'} =
           $mystat{'Innodb_log_waits'} / $mystat{'Innodb_log_writes'};
