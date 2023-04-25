@@ -6497,6 +6497,7 @@ sub mysql_tables {
 
     }
 
+    infoprint("Dumpdir: $opt{dumpdir}");
     # Store all information schema in dumpdir if defined
     if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
         for my $info_s_table (
