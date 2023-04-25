@@ -111,6 +111,7 @@ my %opt = (
     "defaults-extra-file" => '',
     "protocol"            => '',
     "dumpdir"             => '',
+    "stop"  => 0,
 );
 
 # Gather the options from the command line
@@ -143,6 +144,7 @@ GetOptions(
     'idxstat',               'noidxstat',
     'server-log=s',          'protocol=s',
     'defaults-extra-file=s', 'dumpdir=s',
+    'stop'
   )
   or pod2usage(
     -exitval  => 1,
@@ -1036,17 +1038,36 @@ sub select_array {
 }
 
 # MySQL Request Array
+sub select_array_with_headers {
+    my $req = shift;
+    debugprint "PERFORM: $req ";
+    my @result = `$mysqlcmd $mysqllogin -Bre "\\w$req" 2>>/dev/null`;
+    if ( $? != 0 ) {
+        badprint "Failed to execute: $req";
+        badprint "FAIL Execute SQL / return code: $?";
+        debugprint "CMD    : $mysqlcmd";
+        debugprint "OPTIONS: $mysqllogin";
+        debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+
+        #exit $?;
+    }
+    debugprint "select_array_with_headers: return code : $?";
+    chomp(@result);
+    return @result;
+}
+# MySQL Request Array
 sub select_csv_file {
     my $tfile = shift;
     my $req   = shift;
     debugprint "PERFORM: $req CSV into $tfile";
-    my @result = select_array($req);
+    my @result = select_array_with_headers($req);
     open( my $fh, '>', $tfile ) or die "Could not open file '$tfile' $!";
     for my $l (@result) {
         $l =~ s/\t/","/g;
         $l =~ s/^/"/;
-        $l =~ s/$/"/;
+        $l =~ s/$/"\n/;
         print $fh $l;
+        print $l if $opt{debug};
     }
     close $fh;
 }
@@ -2654,6 +2675,7 @@ sub calculations {
     }
 
     # Per-thread memory
+    # Per-thread memory
     if ( mysql_version_ge(4) ) {
         $mycalc{'per_thread_buffers'} =
           $myvar{'read_buffer_size'} +
@@ -3951,6 +3973,7 @@ sub mysqsl_pfs {
             );
         }
     }
+    exit 0 if ( $opt{stop} == 1 );
 
     # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
@@ -6475,6 +6498,7 @@ sub mysql_tables {
 
     }
 
+    infoprint("Dumpdir: $opt{dumpdir}");
     # Store all information schema in dumpdir if defined
     if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
         for my $info_s_table (
@@ -6486,7 +6510,9 @@ sub mysql_tables {
                 "select * from information_schema.$info_s_table"
             );
         }
+        exit 0 if ( $opt{stop} == 1 );
     }
+    exit 0 if ( $opt{stop} == 1 );
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
         next unless defined $_;
