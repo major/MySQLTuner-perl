@@ -13,3 +13,5 @@ reports_*
 golang/prog-*
 .vscode
 test_db/**
+result*
+result_*
