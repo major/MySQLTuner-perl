@@ -1067,6 +1067,7 @@ sub select_csv_file {
         $l =~ s/^/"/;
         $l =~ s/$/"\n/;
         print $fh $l;
+        print $l if $opt{debug};
     }
     close $fh;
 }
