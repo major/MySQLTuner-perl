@@ -6510,6 +6510,7 @@ sub mysql_tables {
         }
         exit 0 if ( $opt{stop} == 1 );
     }
+    exit 0 if ( $opt{stop} == 1 );
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
         next unless defined $_;
