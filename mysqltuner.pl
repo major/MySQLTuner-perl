@@ -1046,6 +1046,7 @@ sub select_array_with_headers {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         debugprint "CMD    : $mysqlcmd";
+        debugprint "COMMAND: $mysqlcmd";
         debugprint "OPTIONS: $mysqllogin";
         debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
 
