@@ -3972,8 +3972,8 @@ sub mysqsl_pfs {
                 "select * from sys.$pfs_view"
             );
         }
+      exit 0 if ( $opt{stop} == 1 );
     }
-    exit 0 if ( $opt{stop} == 1 );
 
     # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
@@ -6512,7 +6512,6 @@ sub mysql_tables {
         }
         exit 0 if ( $opt{stop} == 1 );
     }
-    exit 0 if ( $opt{stop} == 1 );
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
         next unless defined $_;
