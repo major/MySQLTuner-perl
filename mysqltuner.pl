@@ -3275,7 +3275,7 @@ sub mysql_stats {
             push( @adjvars, "skip-name-resolve=0" );
         }
     }
-    elsif ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF' ) {
+    elsif ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF' ) {
         badprint
 "Name resolution is active: a reverse name resolution is made for each new connection which can reduce performance";
         push( @generalrec,
