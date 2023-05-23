@@ -3279,9 +3279,9 @@ sub mysql_stats {
         badprint
 "Name resolution is active: a reverse name resolution is made for each new connection which can reduce performance";
         push( @generalrec,
-"Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=1"
+"Configure your accounts with ip or subnets only, then update your configuration with skip_name_resolve=1"
         );
-        push( @adjvars, "skip-name-resolve=1" );
+        push( @adjvars, "skip_name_resolve=1" );
     }
 
     # Query cache
