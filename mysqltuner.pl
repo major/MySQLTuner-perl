@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.1
+# mysqltuner.pl - Version 2.1.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.1";
+my $tunerversion = "2.1.2";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3972,8 +3972,8 @@ sub mysqsl_pfs {
                 "select * from sys.$pfs_view"
             );
         }
+      exit 0 if ( $opt{stop} == 1 );
     }
-    exit 0 if ( $opt{stop} == 1 );
 
     # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
@@ -6512,7 +6512,6 @@ sub mysql_tables {
         }
         exit 0 if ( $opt{stop} == 1 );
     }
-    exit 0 if ( $opt{stop} == 1 );
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
         next unless defined $_;
@@ -6983,7 +6982,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.1 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.2 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
