@@ -226,6 +226,8 @@ __Usage:__ Using template model to customize your reporting file based on [Text:
 
  	perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
 
+__Important__: [Text::Template](https://metacpan.org/pod/Text::Template) module is mandatory for --reportfile and/or --template options because this module is needed to generate appropriated output based on a text template.
+
 __Usage:__ Enable debugging information
 
 	perl mysqltuner.pl --debug
