@@ -111,6 +111,7 @@ my %opt = (
     "defaults-extra-file" => '',
     "protocol"            => '',
     "dumpdir"             => '',
+    "feature"             => '',
     "stop"  => 0,
 );
 
@@ -144,7 +145,7 @@ GetOptions(
     'idxstat',               'noidxstat',
     'server-log=s',          'protocol=s',
     'defaults-extra-file=s', 'dumpdir=s',
-    'stop'
+    'feature=s',             'stop'
   )
   or pod2usage(
     -exitval  => 1,
@@ -3928,7 +3929,7 @@ sub get_pf_memory {
 }
 
 # Recommendations for Performance Schema
-sub mysqsl_pfs {
+sub mysql_pfs {
     subheaderprint "Performance schema";
 
     # Performance Schema
@@ -6932,6 +6933,15 @@ debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
 os_setup;                  # Set up some OS variables
 get_all_vars;              # Toss variables/status into hashes
 get_tuning_info;           # Get information about the tuning connection
+calculations;              # Calculate everything we need
+
+if ($opt{'feature'} ne '') {
+  subheaderprint "Running feature: $opt{'feature'}";
+  no strict 'refs';
+  my $feature=$opt{'feature'};
+  $feature->();
+  exit(0)
+}
 validate_mysql_version;    # Check current MySQL version
 
 check_architecture;        # Suggest 64-bit upgrade
@@ -6949,9 +6959,9 @@ mysql_triggers;              # Show information about triggers
 mysql_routines;              # Show information about routines
 security_recommendations;    # Display some security recommendations
 cve_recommendations;         # Display related CVE
-calculations;                # Calculate everything we need
+
 mysql_stats;                 # Print the server stats
-mysqsl_pfs;                  # Print Performance schema info
+mysql_pfs;                  # Print Performance schema info
 
 mariadb_threadpool;          # Print MariaDB ThreadPool stats
 mysql_myisam;                # Print MyISAM stats
