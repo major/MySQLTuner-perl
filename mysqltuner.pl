@@ -1788,7 +1788,7 @@ sub infocmd_one {
 
 sub get_kernel_info {
     my @params = (
-        'fs.aio-max-nr',                     'fs.aio-nr', 'fs.nr_open'
+        'fs.aio-max-nr',                     'fs.aio-nr', 'fs.nr_open',
         'fs.file-max',                       'sunrpc.tcp_fin_timeout',
         'sunrpc.tcp_max_slot_table_entries', 'sunrpc.tcp_slot_table_entries',
         'vm.swappiness'
@@ -1837,7 +1837,6 @@ sub get_kernel_info {
             infoprint "Max Number of AIO events is > 1M.";
         }
     }
-    fs.nr_open=1048576
     if ( -f "/proc/sys/fs/nr_open" ) {
         if ( `sysctl -n fs.nr_open` < 1000000 ) {
             badprint
