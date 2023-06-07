@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.1.1 - MySQL High Performance Tuning Script
+    MySQLTuner 2.1.5 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -43,8 +43,8 @@ You must provide the remote server's total memory when connecting to other serve
     --reportfile <path>         Path to a report txt file
     --template   <path>         Path to a template file
     --dumpdir <path>            Path to a directory where to dump information files
-
-# OUTPUT OPTIONS
+    --feature <feature>         Run a specific feature (see FEATURES section)
+   =head1 OUTPUT OPTIONS
 
     --silent                    Don't output anything on screen
     --verbose                   Print out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
