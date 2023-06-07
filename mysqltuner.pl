@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.3
+# mysqltuner.pl - Version 2.1.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.3";
+my $tunerversion = "2.1.4";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -111,8 +111,7 @@ my %opt = (
     "defaults-extra-file" => '',
     "protocol"            => '',
     "dumpdir"             => '',
-    "feature"             => '',
-    "stop"  => 0,
+    "feature"             => ''
 );
 
 # Gather the options from the command line
@@ -145,7 +144,7 @@ GetOptions(
     'idxstat',               'noidxstat',
     'server-log=s',          'protocol=s',
     'defaults-extra-file=s', 'dumpdir=s',
-    'feature=s',             'stop'
+    'feature=s'
   )
   or pod2usage(
     -exitval  => 1,
@@ -202,6 +201,7 @@ $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
 
 # check if we need to enable verbose mode
+if ( $opt{feature} ne '' ) { $opt{verbose} = 1; }
 if ( $opt{verbose} ) {
     $opt{checkversion} = 1;    # Check for updates to MySQLTuner
     $opt{dbstat}       = 1;    # Print database information
@@ -275,10 +275,18 @@ sub prettyprint {
     print $_[0] . "\n" unless ( $opt{'silent'} or $opt{'json'} );
     print $fh $_[0] . "\n" if defined($fh);
 }
-sub goodprint  { prettyprint $good. " " . $_[0] unless ( $opt{nogood} == 1 ); }
-sub infoprint  { prettyprint $info. " " . $_[0] unless ( $opt{noinfo} == 1 ); }
-sub badprint   { prettyprint $bad. " " . $_[0]  unless ( $opt{nobad} == 1 ); }
-sub debugprint { prettyprint $deb. " " . $_[0]  unless ( $opt{debug} == 0 ); }
+sub goodprint  {
+  prettyprint $good. " " . $_[0] unless ( $opt{nogood} == 1 );
+}
+sub infoprint  {
+  prettyprint $info. " " . $_[0] unless ( $opt{noinfo} == 1 );
+}
+sub badprint   {
+  prettyprint $bad. " " . $_[0]  unless ( $opt{nobad} == 1 );
+}
+sub debugprint {
+  prettyprint $deb. " " . $_[0]  unless ( $opt{debug} == 0 );
+}
 
 sub redwrap {
     return ( $opt{nocolor} == 0 ) ? "\e[0;31m" . $_[0] . "\e[0m" : $_[0];
@@ -287,10 +295,12 @@ sub redwrap {
 sub greenwrap {
     return ( $opt{nocolor} == 0 ) ? "\e[0;32m" . $_[0] . "\e[0m" : $_[0];
 }
-sub cmdprint { prettyprint $cmd. " " . $_[0] . $end; }
+sub cmdprint {
+  prettyprint $cmd. " " . $_[0] . $end;
+}
 
 sub infoprintml {
-    for my $ln (@_) { $ln =~ s/\n//g; infoprint "\t$ln"; }
+  for my $ln (@_) { $ln =~ s/\n//g; infoprint "\t$ln"; }
 }
 
 sub infoprintcmd {
@@ -312,6 +322,13 @@ sub infoprinthcmd {
     infoprintcmd "$_[1]";
 }
 
+sub is_remote() {
+    my $host = $opt{'host'};
+    return 0 if ( $host eq '' );
+    return 0 if ( $host eq 'localhost' );
+    return 0 if ( $host eq '127.0.0.1' );
+    return 1;
+}
 # Calculates the number of physical cores considering HyperThreading
 sub cpu_cores {
     if ( $^O eq 'linux' ) {
@@ -768,18 +785,15 @@ sub mysql_setup {
         chomp( $opt{host} );
 
 # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
-        if (   $opt{'forcemem'} eq 0
-            && ( $opt{host} ne "127.0.0.1" )
-            && ( $opt{host} ne "localhost" ) )
+        if (   $opt{'forcemem'} eq 0 && is_remote eq 1 )
         {
             badprint "The --forcemem option is required for remote connections";
             exit 1;
         }
         infoprint "Performing tests on $opt{host}:$opt{port}";
         $remotestring = " -h $opt{host} -P $opt{port}";
-        if ( ( $opt{host} ne "127.0.0.1" ) && ( $opt{host} ne "localhost" ) ) {
-            $doremote = 1;
-        }
+        $doremote = is_remote();
+        
     }
     else {
         $opt{host} = '127.0.0.1';
@@ -1136,14 +1150,14 @@ sub select_user_dbs {
     );
 }
 
-sub select_tables_db() {
+sub select_tables_db {
     my $schema = shift;
     return select_array(
 "SELECT DISTINCT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$schema'"
     );
 }
 
-sub select_indexes_db() {
+sub select_indexes_db {
     my $schema = shift;
     return select_array(
 "SELECT DISTINCT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$schema'"
@@ -1409,6 +1423,10 @@ sub get_log_file_real_path {
 }
 
 sub log_file_recommendations {
+    if ( is_remote eq 1 ) 
+    { 
+      infoprint "Skipping error log files checks on remote host";
+    }
     my $fh;
     $myvar{'log_error'} = $opt{'server-log'}
       || get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
@@ -1890,6 +1908,11 @@ sub get_system_info {
 }
 
 sub system_recommendations {
+    if ( is_remote eq 1 ) 
+    { 
+      infoprint "Skipping system checks on remote host";
+      return;
+    }
     return if ( $opt{sysstat} == 0 );
     subheaderprint "System Linux Recommendations";
     my $os = `uname`;
@@ -2355,7 +2378,11 @@ sub mysql_version_le {
 my ($arch);
 
 sub check_architecture {
-    if ( $doremote eq 1 ) { return; }
+    if ( is_remote eq 1 ) 
+    { 
+      infoprint "Skipping architecture check on remote host";
+      return;
+    }
     if ( `uname` =~ /SunOS/ && `isainfo -b` =~ /64/ ) {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
@@ -3973,7 +4000,7 @@ sub mysql_pfs {
                 "select * from sys.\`$sys_view\`"
             );
         }
-      exit 0 if ( $opt{stop} == 1 );
+      #exit 0 if ( $opt{stop} == 1 );
     }
 
     # Top user per connection
@@ -6511,7 +6538,7 @@ sub mysql_tables {
                 "select * from information_schema.$info_s_table"
             );
         }
-        exit 0 if ( $opt{stop} == 1 );
+        #exit 0 if ( $opt{stop} == 1 );
     }
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
@@ -6734,7 +6761,7 @@ ENDSQL
     }
 }
 
-sub mysql_views() {
+sub mysql_views {
     subheaderprint "Views Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
@@ -6743,7 +6770,7 @@ sub mysql_views() {
     }
 }
 
-sub mysql_routines() {
+sub mysql_routines {
     subheaderprint "Routines Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
@@ -6752,7 +6779,7 @@ sub mysql_routines() {
     }
 }
 
-sub mysql_triggers() {
+sub mysql_triggers {
     subheaderprint "Triggers Metrics";
     unless ( mysql_version_ge( 5, 5 ) ) {
         infoprint
@@ -6936,11 +6963,13 @@ get_tuning_info;           # Get information about the tuning connection
 calculations;              # Calculate everything we need
 
 if ($opt{'feature'} ne '') {
-  subheaderprint "Running feature: $opt{'feature'}";
+  subheaderprint "See FEATURES.md for more information";
   no strict 'refs';
-  my $feature=$opt{'feature'};
-  $feature->();
-  exit(0)
+  for my $feature (split /,/, $opt{'feature'}) {
+    subheaderprint "Running feature: $opt{'feature'}";
+    $feature->();
+  }
+    exit(0);
 }
 validate_mysql_version;    # Check current MySQL version
 
@@ -6992,7 +7021,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.3 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.4 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -7035,7 +7064,7 @@ You must provide the remote server's total memory when connecting to other serve
  --reportfile <path>         Path to a report txt file
  --template   <path>         Path to a template file
  --dumpdir <path>            Path to a directory where to dump information files
-
+ --feature <feature>         Run a specific feature (see FEATURES section)
 =head1 OUTPUT OPTIONS
 
  --silent                    Don't output anything on screen
