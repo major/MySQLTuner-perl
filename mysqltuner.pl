@@ -1788,7 +1788,7 @@ sub infocmd_one {
 
 sub get_kernel_info {
     my @params = (
-        'fs.aio-max-nr',                     'fs.aio-nr',
+        'fs.aio-max-nr',                     'fs.aio-nr', 'fs.nr_open'
         'fs.file-max',                       'sunrpc.tcp_fin_timeout',
         'sunrpc.tcp_max_slot_table_entries', 'sunrpc.tcp_slot_table_entries',
         'vm.swappiness'
@@ -1803,7 +1803,7 @@ sub get_kernel_info {
           "Swappiness is > 10, please consider having a value lower than 10";
         push @generalrec, "setup swappiness lower or equal to 10";
         push @adjvars,
-          'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness)';
+          'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness) or vm.swappiness=10 in /etc/sysctl.conf';
     }
     else {
         infoprint "Swappiness is < 10.";
@@ -1819,7 +1819,7 @@ sub get_kernel_info {
 "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
         push @generalrec, "setup Initial TCP slot entries greater than 100";
         push @adjvars,
-'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)';
+'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)  or sunrpc.tcp_slot_table_entries=128 in /etc/sysctl.conf';
     }
     else {
         infoprint "TCP slot entries is > 100.";
@@ -1828,13 +1828,26 @@ sub get_kernel_info {
     if ( -f "/proc/sys/fs/aio-max-nr" ) {
         if ( `sysctl -n fs.aio-max-nr` < 1000000 ) {
             badprint
-"Max running total of the number of events is < 1M, please consider having a value greater than 1M";
+"Max running total of the number of max. events is < 1M, please consider having a value greater than 1M";
             push @generalrec, "setup Max running number events greater than 1M";
             push @adjvars,
-              'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr)';
+              'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr) or fs.aio-max-nr=1048576 in /etc/sysctl.conf';
         }
         else {
             infoprint "Max Number of AIO events is > 1M.";
+        }
+    }
+    fs.nr_open=1048576
+    if ( -f "/proc/sys/fs/nr_open" ) {
+        if ( `sysctl -n fs.nr_open` < 1000000 ) {
+            badprint
+"Max running total of the number of file open request is < 1M, please consider having a value greater than 1M";
+            push @generalrec, "setup running number of open request greater than 1M";
+            push @adjvars,
+              'fs.aio-nr > 1M (echo 1048576 > /proc/sys/fs/nr_open) or fs.nr_open=1048576 in /etc/sysctl.conf';
+        }
+        else {
+            infoprint "Max Number of open file requests is > 1M.";
         }
     }
 }
@@ -7018,7 +7031,6 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.5 - MySQL High Performance Tuning Script
  MySQLTuner 2.1.5 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
