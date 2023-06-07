@@ -950,7 +950,7 @@ sub mysql_setup {
             unless ( -e "${userpath}/.my.cnf" or -e "${userpath}/.mylogin.cnf" )
             {
                 badprint
-"Successfully authenticated with no password - SECURITY RISK!";
+"SECURITY RISK: Successfully authenticated without password";
             }
             return 1;
         }
@@ -1002,7 +1002,7 @@ sub mysql_setup {
                     unless ( -e "$userpath/.my.cnf" ) {
                         print STDERR "";
                         badprint
-"Successfully authenticated with no password - SECURITY RISK!";
+"SECURITY RISK: Successfully authenticated without password";
                     }
                 }
                 return 1;
@@ -1782,7 +1782,7 @@ sub get_kernel_info {
     if ( `sysctl -n vm.swappiness` > 10 ) {
         badprint
           "Swappiness is > 10, please consider having a value lower than 10";
-        push @generalrec, "setup swappiness lower or equals to 10";
+        push @generalrec, "setup swappiness lower or equal to 10";
         push @adjvars,
           'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness)';
     }

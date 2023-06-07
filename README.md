@@ -23,7 +23,7 @@ You can find more details on these indicators here:
 MySQLTuner needs you
 ===
 
-**MySQLTuner** needs contributors for documentation, code and feedback..
+**MySQLTuner** needs contributors for documentation, code and feedback:
 
 * Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
@@ -226,7 +226,7 @@ __Usage:__ Using template model to customize your reporting file based on [Text:
 
  	perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
 
-__Important__: [Text::Template](https://metacpan.org/pod/Text::Template) module is mandatory for --reportfile and/or --template options because this module is needed to generate appropriated output based on a text template.
+__Important__: [Text::Template](https://metacpan.org/pod/Text::Template) module is mandatory for `--reportfile` and/or `--template` options, because this module is needed to generate appropriate output based on a text template.
 
 __Usage:__ Enable debugging information
 
@@ -385,7 +385,7 @@ To get information about stored credentials, use the following command:
 
 **Question: It's not working on my OS! What gives?!**
 
-These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:
+These kinds of things are bound to happen. Here are the details I need from you to investigate the issue:
 
 * OS and OS version
 * Architecture (x86, x86_64, IA64, Commodore 64)
@@ -492,14 +492,6 @@ MySQLTuner and Vagrant
     a49783249a11        mysql:5.7                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:3307->3306/tcp   mysql57
     d985820667c2        mysql:8.0                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3306->3306/tcp, 33060/tcp   mysql 8    0
 
-
-MySQLTuner needs you
---
-**MySQLTuner** needs contributors for documentation, code and feedback..
-
-* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
-* Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
 
 Contributions welcome !
 --
