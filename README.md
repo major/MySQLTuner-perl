@@ -191,6 +191,31 @@ Be sure that innodb_stats_on_metadata is disabled.
 set global innodb_stats_on_metadata = 0;
 ```
 
+Fixing sysctl configuration (/etc/sysctl.conf)
+--
+
+It is a system wide setting: [Linux FS Kernel settings](https://www.kernel.org/doc/html/latest/admin-guide/sysctl/fs.html#id1)
+
+You can check its values via:
+
+```bash
+$ cat /proc/sys/fs/aio-*
+65536
+2305
+```
+
+For example, to set the aio-max-nr value, add the following line to the /etc/sysctl.conf file:
+
+```bash
+fs.aio-max-nr = 1048576
+```
+
+To activate the new setting:
+
+```bash
+$ sysctl -p /etc/sysctl.conf
+```
+
 Specific usage
 --
 
