@@ -275,17 +275,21 @@ sub prettyprint {
     print $_[0] . "\n" unless ( $opt{'silent'} or $opt{'json'} );
     print $fh $_[0] . "\n" if defined($fh);
 }
-sub goodprint  {
-  prettyprint $good. " " . $_[0] unless ( $opt{nogood} == 1 );
+
+sub goodprint {
+    prettyprint $good. " " . $_[0] unless ( $opt{nogood} == 1 );
 }
-sub infoprint  {
-  prettyprint $info. " " . $_[0] unless ( $opt{noinfo} == 1 );
+
+sub infoprint {
+    prettyprint $info. " " . $_[0] unless ( $opt{noinfo} == 1 );
 }
-sub badprint   {
-  prettyprint $bad. " " . $_[0]  unless ( $opt{nobad} == 1 );
+
+sub badprint {
+    prettyprint $bad. " " . $_[0] unless ( $opt{nobad} == 1 );
 }
+
 sub debugprint {
-  prettyprint $deb. " " . $_[0]  unless ( $opt{debug} == 0 );
+    prettyprint $deb. " " . $_[0] unless ( $opt{debug} == 0 );
 }
 
 sub redwrap {
@@ -295,12 +299,13 @@ sub redwrap {
 sub greenwrap {
     return ( $opt{nocolor} == 0 ) ? "\e[0;32m" . $_[0] . "\e[0m" : $_[0];
 }
+
 sub cmdprint {
-  prettyprint $cmd. " " . $_[0] . $end;
+    prettyprint $cmd. " " . $_[0] . $end;
 }
 
 sub infoprintml {
-  for my $ln (@_) { $ln =~ s/\n//g; infoprint "\t$ln"; }
+    for my $ln (@_) { $ln =~ s/\n//g; infoprint "\t$ln"; }
 }
 
 sub infoprintcmd {
@@ -329,6 +334,7 @@ sub is_remote() {
     return 0 if ( $host eq '127.0.0.1' );
     return 1;
 }
+
 # Calculates the number of physical cores considering HyperThreading
 sub cpu_cores {
     if ( $^O eq 'linux' ) {
@@ -785,15 +791,14 @@ sub mysql_setup {
         chomp( $opt{host} );
 
 # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
-        if (   $opt{'forcemem'} eq 0 && is_remote eq 1 )
-        {
+        if ( $opt{'forcemem'} eq 0 && is_remote eq 1 ) {
             badprint "The --forcemem option is required for remote connections";
             exit 1;
         }
         infoprint "Performing tests on $opt{host}:$opt{port}";
         $remotestring = " -h $opt{host} -P $opt{port}";
-        $doremote = is_remote();
-        
+        $doremote     = is_remote();
+
     }
     else {
         $opt{host} = '127.0.0.1';
@@ -965,7 +970,7 @@ sub mysql_setup {
             unless ( -e "${userpath}/.my.cnf" or -e "${userpath}/.mylogin.cnf" )
             {
                 badprint
-"SECURITY RISK: Successfully authenticated without password";
+                  "SECURITY RISK: Successfully authenticated without password";
             }
             return 1;
         }
@@ -1070,6 +1075,7 @@ sub select_array_with_headers {
     chomp(@result);
     return @result;
 }
+
 # MySQL Request Array
 sub select_csv_file {
     my $tfile = shift;
@@ -1423,9 +1429,8 @@ sub get_log_file_real_path {
 }
 
 sub log_file_recommendations {
-    if ( is_remote eq 1 ) 
-    { 
-      infoprint "Skipping error log files checks on remote host";
+    if ( is_remote eq 1 ) {
+        infoprint "Skipping error log files checks on remote host";
     }
     my $fh;
     $myvar{'log_error'} = $opt{'server-log'}
@@ -1788,10 +1793,10 @@ sub infocmd_one {
 
 sub get_kernel_info {
     my @params = (
-        'fs.aio-max-nr',                     'fs.aio-nr', 'fs.nr_open',
-        'fs.file-max',                       'sunrpc.tcp_fin_timeout',
-        'sunrpc.tcp_max_slot_table_entries', 'sunrpc.tcp_slot_table_entries',
-        'vm.swappiness'
+        'fs.aio-max-nr',                 'fs.aio-nr',
+        'fs.nr_open',                    'fs.file-max',
+        'sunrpc.tcp_fin_timeout',        'sunrpc.tcp_max_slot_table_entries',
+        'sunrpc.tcp_slot_table_entries', 'vm.swappiness'
     );
     infoprint "Information about kernel tuning:";
     foreach my $param (@params) {
@@ -1803,7 +1808,7 @@ sub get_kernel_info {
           "Swappiness is > 10, please consider having a value lower than 10";
         push @generalrec, "setup swappiness lower or equal to 10";
         push @adjvars,
-          'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness) or vm.swappiness=10 in /etc/sysctl.conf';
+'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness) or vm.swappiness=10 in /etc/sysctl.conf';
     }
     else {
         infoprint "Swappiness is < 10.";
@@ -1831,7 +1836,7 @@ sub get_kernel_info {
 "Max running total of the number of max. events is < 1M, please consider having a value greater than 1M";
             push @generalrec, "setup Max running number events greater than 1M";
             push @adjvars,
-              'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr) or fs.aio-max-nr=1048576 in /etc/sysctl.conf';
+'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr) or fs.aio-max-nr=1048576 in /etc/sysctl.conf';
         }
         else {
             infoprint "Max Number of AIO events is > 1M.";
@@ -1841,9 +1846,10 @@ sub get_kernel_info {
         if ( `sysctl -n fs.nr_open` < 1000000 ) {
             badprint
 "Max running total of the number of file open request is < 1M, please consider having a value greater than 1M";
-            push @generalrec, "setup running number of open request greater than 1M";
+            push @generalrec,
+              "setup running number of open request greater than 1M";
             push @adjvars,
-              'fs.aio-nr > 1M (echo 1048576 > /proc/sys/fs/nr_open) or fs.nr_open=1048576 in /etc/sysctl.conf';
+'fs.aio-nr > 1M (echo 1048576 > /proc/sys/fs/nr_open) or fs.nr_open=1048576 in /etc/sysctl.conf';
         }
         else {
             infoprint "Max Number of open file requests is > 1M.";
@@ -1899,8 +1905,7 @@ sub get_system_info {
     }
     infoprint "External IP           : " . $ext_ip;
     $result{'Network'}{'External Ip'} = $ext_ip;
-    badprint
-      "External IP           : Can't check, no Internet connectivity"
+    badprint "External IP           : Can't check, no Internet connectivity"
       unless defined($httpcli);
     infoprint "Name Servers          : "
       . infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
@@ -1920,10 +1925,9 @@ sub get_system_info {
 }
 
 sub system_recommendations {
-    if ( is_remote eq 1 ) 
-    { 
-      infoprint "Skipping system checks on remote host";
-      return;
+    if ( is_remote eq 1 ) {
+        infoprint "Skipping system checks on remote host";
+        return;
     }
     return if ( $opt{sysstat} == 0 );
     subheaderprint "System Linux Recommendations";
@@ -2390,10 +2394,9 @@ sub mysql_version_le {
 my ($arch);
 
 sub check_architecture {
-    if ( is_remote eq 1 ) 
-    { 
-      infoprint "Skipping architecture check on remote host";
-      return;
+    if ( is_remote eq 1 ) {
+        infoprint "Skipping architecture check on remote host";
+        return;
     }
     if ( `uname` =~ /SunOS/ && `isainfo -b` =~ /64/ ) {
         $arch = 64;
@@ -3315,7 +3318,9 @@ sub mysql_stats {
             push( @adjvars, "skip-name-resolve=0" );
         }
     }
-    elsif ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF' and $result{'Variables'}{'skip_name_resolve'} ne '0' ) {
+    elsif ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF'
+        and $result{'Variables'}{'skip_name_resolve'} ne '0' )
+    {
         badprint
 "Name resolution is active: a reverse name resolution is made for each new connection which can reduce performance";
         push( @generalrec,
@@ -3358,38 +3363,42 @@ sub mysql_stats {
                     "query_cache_limit (> "
                   . hr_bytes_rnd( $myvar{'query_cache_limit'} )
                   . ", or use smaller result sets)" );
-            badprint  "Query cache may be disabled by default due to mutex contention.";
+            badprint
+              "Query cache may be disabled by default due to mutex contention.";
             push( @adjvars, "query_cache_size (=0)" );
             push( @adjvars, "query_cache_type (=0)" );
-        } else {
-          goodprint
-            "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
-            . hr_num( $mystat{'Qcache_hits'} )
-            . " cached / "
-            . hr_num( $mystat{'Qcache_hits'} + $mystat{'Com_select'} )
-            . " selects)";
-          if ( $mycalc{'query_cache_prunes_per_day'} > 98 ) {
-              badprint
-  "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}";
-              if ( $myvar{'query_cache_size'} >= 128 * 1024 * 1024 ) {
-                  push( @generalrec,
-  "Increasing the query_cache size over 128M may reduce performance"
-                  );
-                  push( @adjvars,
-                          "query_cache_size (> "
-                        . hr_bytes_rnd( $myvar{'query_cache_size'} )
-                        . ") [see warning above]" );
-              }
-              else {
-                  push( @adjvars,
-                          "query_cache_size (> "
-                        . hr_bytes_rnd( $myvar{'query_cache_size'} )
-                        . ")" );
-              }
-          } else {
-            goodprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}";
         }
-  }
+        else {
+            goodprint
+              "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
+              . hr_num( $mystat{'Qcache_hits'} )
+              . " cached / "
+              . hr_num( $mystat{'Qcache_hits'} + $mystat{'Com_select'} )
+              . " selects)";
+            if ( $mycalc{'query_cache_prunes_per_day'} > 98 ) {
+                badprint
+"Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}";
+                if ( $myvar{'query_cache_size'} >= 128 * 1024 * 1024 ) {
+                    push( @generalrec,
+"Increasing the query_cache size over 128M may reduce performance"
+                    );
+                    push( @adjvars,
+                            "query_cache_size (> "
+                          . hr_bytes_rnd( $myvar{'query_cache_size'} )
+                          . ") [see warning above]" );
+                }
+                else {
+                    push( @adjvars,
+                            "query_cache_size (> "
+                          . hr_bytes_rnd( $myvar{'query_cache_size'} )
+                          . ")" );
+                }
+            }
+            else {
+                goodprint
+"Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}";
+            }
+        }
 
     }
 
@@ -4009,7 +4018,8 @@ sub mysql_pfs {
                 "select * from sys.\`$sys_view\`"
             );
         }
-      #exit 0 if ( $opt{stop} == 1 );
+
+        #exit 0 if ( $opt{stop} == 1 );
     }
 
     # Top user per connection
@@ -6230,7 +6240,8 @@ sub mysql_innodb {
     $mystat{'Innodb_log_waits_computed'} = 0;
 
     if (    defined( $mystat{'Innodb_log_waits'} )
-        and defined( $mystat{'Innodb_log_writes'} ) and $mystat{'Innodb_log_writes'} > 0.000001 )
+        and defined( $mystat{'Innodb_log_writes'} )
+        and $mystat{'Innodb_log_writes'} > 0.000001 )
     {
         $mystat{'Innodb_log_waits_computed'} =
           $mystat{'Innodb_log_waits'} / $mystat{'Innodb_log_writes'};
@@ -6536,6 +6547,7 @@ sub mysql_tables {
     }
 
     infoprint("Dumpdir: $opt{dumpdir}");
+
     # Store all information schema in dumpdir if defined
     if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
         for my $info_s_table (
@@ -6547,6 +6559,7 @@ sub mysql_tables {
                 "select * from information_schema.$info_s_table"
             );
         }
+
         #exit 0 if ( $opt{stop} == 1 );
     }
     foreach ( select_user_dbs() ) {
@@ -6971,13 +6984,13 @@ get_all_vars;              # Toss variables/status into hashes
 get_tuning_info;           # Get information about the tuning connection
 calculations;              # Calculate everything we need
 
-if ($opt{'feature'} ne '') {
-  subheaderprint "See FEATURES.md for more information";
-  no strict 'refs';
-  for my $feature (split /,/, $opt{'feature'}) {
-    subheaderprint "Running feature: $opt{'feature'}";
-    $feature->();
-  }
+if ( $opt{'feature'} ne '' ) {
+    subheaderprint "See FEATURES.md for more information";
+    no strict 'refs';
+    for my $feature ( split /,/, $opt{'feature'} ) {
+        subheaderprint "Running feature: $opt{'feature'}";
+        $feature->();
+    }
     exit(0);
 }
 validate_mysql_version;    # Check current MySQL version
@@ -6999,7 +7012,7 @@ security_recommendations;    # Display some security recommendations
 cve_recommendations;         # Display related CVE
 
 mysql_stats;                 # Print the server stats
-mysql_pfs;                  # Print Performance schema info
+mysql_pfs;                   # Print Performance schema info
 
 mariadb_threadpool;          # Print MariaDB ThreadPool stats
 mysql_myisam;                # Print MyISAM stats

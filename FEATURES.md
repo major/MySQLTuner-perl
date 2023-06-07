@@ -52,6 +52,7 @@ Features list for option: --feature (dev only)
 * infoprinthcmd
 * infoprintml
 * is_open_port
+* is_remote()
 * is_virtual_machine
 * log_file_recommendations
 * make_recommendations
