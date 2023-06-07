@@ -191,50 +191,92 @@ Be sure that innodb_stats_on_metadata is disabled.
 set global innodb_stats_on_metadata = 0;
 ```
 
+Fixing sysctl configuration (/etc/sysctl.conf)
+--
+
+It is a system wide setting: [Linux FS Kernel settings](https://www.kernel.org/doc/html/latest/admin-guide/sysctl/fs.html#id1)
+
+You can check its values via:
+
+```bash
+$ cat /proc/sys/fs/aio-*
+65536
+2305
+```
+
+For example, to set the aio-max-nr value, add the following line to the /etc/sysctl.conf file:
+
+```bash
+fs.aio-max-nr = 1048576
+```
+
+To activate the new setting:
+
+```bash
+$ sysctl -p /etc/sysctl.conf
+```
+
 Specific usage
 --
 
 __Usage:__ Minimal usage locally
 
-  perl mysqltuner.pl --host 127.0.0.1
+```bash
+perl mysqltuner.pl --host 127.0.0.1
+```
 
 Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
 
 __Usage:__ Minimal usage remotely
 
-  perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
+```bash
+perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
+```
 
 __Usage:__ Enable maximum output information around MySQL/MariaDb without debugging
 
-  perl mysqltuner.pl --verbose
-  perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat --tbstat
-
+```bash
+perl mysqltuner.pl --verbose
+perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat --tbstat
+```
 
 __Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
 
-  perl mysqltuner.pl --cvefile=vulnerabilities.csv
+```bash
+perl mysqltuner.pl --cvefile=vulnerabilities.csv
+```
 
 __Usage:__ Write your result in a file with information displayed
 
-  perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
+```bash
+perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
+```
 
 __Usage:__ Write your result in a file **without outputting information**
 
-  perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
+```bash
+perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
+```
 
 __Usage:__ Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
 
- 	perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
+```bash
+perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
+```
 
 __Important__: [Text::Template](https://metacpan.org/pod/Text::Template) module is mandatory for `--reportfile` and/or `--template` options, because this module is needed to generate appropriate output based on a text template.
 
 __Usage:__ Enable debugging information
 
-	perl mysqltuner.pl --debug
+```bash
+perl mysqltuner.pl --debug
+```
 
 __Usage:__ Update MySQLTuner and data files (password and cve) if needed
 
-    perl mysqltuner.pl --checkversion --updateversion
+```bash
+perl mysqltuner.pl --checkversion --updateversion
+```
 
 HTML reports based on  Python Jinja2
 --
@@ -252,19 +294,24 @@ A basic example is called basic.html.j2
 
 **Installation Python j2**
 
-    python -mvenv j2
-    source ./j2/bin/activate
-    (j2) pip install j2
+```bash
+python -mvenv j2
+source ./j2/bin/activate
+(j2) pip install j2
+```
 
 **Using Html report generation**
 
-	perl mysqltuner.pl --verbose --json > reports.json
-	cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
+```bash
+perl mysqltuner.pl --verbose --json > reports.json
+cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
+```
 
 or
 
-	perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
-
+```bash
+perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
+```
 
 HTML reports based on AHA
 --
