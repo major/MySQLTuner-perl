@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.4
+# mysqltuner.pl - Version 2.1.5
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.4";
+my $tunerversion = "2.1.5";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3335,10 +3335,6 @@ sub mysql_stats {
           "Query cache cannot be analyzed: no SELECT statements executed";
     }
     else {
-        badprint
-          "Query cache may be disabled by default due to mutex contention.";
-        push( @adjvars, "query_cache_size (=0)" );
-        push( @adjvars, "query_cache_type (=0)" );
         if ( $mycalc{'query_cache_efficiency'} < 20 ) {
             badprint
               "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
@@ -3350,38 +3346,39 @@ sub mysql_stats {
                     "query_cache_limit (> "
                   . hr_bytes_rnd( $myvar{'query_cache_limit'} )
                   . ", or use smaller result sets)" );
+            badprint  "Query cache may be disabled by default due to mutex contention.";
+            push( @adjvars, "query_cache_size (=0)" );
+            push( @adjvars, "query_cache_type (=0)" );
+        } else {
+          goodprint
+            "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
+            . hr_num( $mystat{'Qcache_hits'} )
+            . " cached / "
+            . hr_num( $mystat{'Qcache_hits'} + $mystat{'Com_select'} )
+            . " selects)";
+          if ( $mycalc{'query_cache_prunes_per_day'} > 98 ) {
+              badprint
+  "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}";
+              if ( $myvar{'query_cache_size'} >= 128 * 1024 * 1024 ) {
+                  push( @generalrec,
+  "Increasing the query_cache size over 128M may reduce performance"
+                  );
+                  push( @adjvars,
+                          "query_cache_size (> "
+                        . hr_bytes_rnd( $myvar{'query_cache_size'} )
+                        . ") [see warning above]" );
+              }
+              else {
+                  push( @adjvars,
+                          "query_cache_size (> "
+                        . hr_bytes_rnd( $myvar{'query_cache_size'} )
+                        . ")" );
+              }
+          } else {
+            goodprint "Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}";
         }
-        else {
-            goodprint
-              "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
-              . hr_num( $mystat{'Qcache_hits'} )
-              . " cached / "
-              . hr_num( $mystat{'Qcache_hits'} + $mystat{'Com_select'} )
-              . " selects)";
-        }
-        if ( $mycalc{'query_cache_prunes_per_day'} > 98 ) {
-            badprint
-"Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}";
-            if ( $myvar{'query_cache_size'} >= 128 * 1024 * 1024 ) {
-                push( @generalrec,
-"Increasing the query_cache size over 128M may reduce performance"
-                );
-                push( @adjvars,
-                        "query_cache_size (> "
-                      . hr_bytes_rnd( $myvar{'query_cache_size'} )
-                      . ") [see warning above]" );
-            }
-            else {
-                push( @adjvars,
-                        "query_cache_size (> "
-                      . hr_bytes_rnd( $myvar{'query_cache_size'} )
-                      . ")" );
-            }
-        }
-        else {
-            goodprint
-"Query cache prunes per day: $mycalc{'query_cache_prunes_per_day'}";
-        }
+  }
+
     }
 
     # Sorting
@@ -7021,7 +7018,8 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.4 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.5 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.5 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
