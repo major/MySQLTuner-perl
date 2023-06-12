@@ -1431,6 +1431,7 @@ sub get_log_file_real_path {
 sub log_file_recommendations {
     if ( is_remote eq 1 ) {
         infoprint "Skipping error log files checks on remote host";
+        return;
     }
     my $fh;
     $myvar{'log_error'} = $opt{'server-log'}
