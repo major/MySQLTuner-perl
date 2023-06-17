@@ -742,7 +742,7 @@ sub mysql_setup {
     elsif ( !-e $mysqladmincmd ) {
         badprint
 "Couldn't find mysqladmin/mariadb-admin in your \$PATH. Is MySQL installed?";
-        exit 1;
+        #exit 1;
     }
     if ( $opt{mysqlcmd} ) {
         $mysqlcmd = $opt{mysqlcmd};
@@ -824,7 +824,7 @@ sub mysql_setup {
             "-u $opt{user} "
           . ( ( $opt{pass} ne 0 ) ? "-p'$opt{pass}' " : " " )
           . $remotestring;
-        my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
+        my $loginstatus = `$mysqlcmd -Nrs -e 'select "mysqld is alive";' $mysqllogin 2>&1`;
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint "Logged in using credentials passed on the command line";
             return 1;
@@ -956,7 +956,17 @@ sub mysql_setup {
     else {
         # It's not Plesk or Debian, we should try a login
         debugprint "$mysqladmincmd $remotestring ping 2>&1";
-        my $loginstatus = `$mysqladmincmd $remotestring ping 2>&1`;
+        
+        #my $loginstatus = "";
+        debugprint "Using mysqlcmd: $mysqlcmd";
+        #if (defined($mysqladmincmd)) {
+        #  infoprint "Using mysqladmin to check login";
+        #  $loginstatus=`$mysqladmincmd $remotestring ping 2>&1`;
+        #} else {
+        infoprint "Using mysql to check login";
+        my $loginstatus=`$mysqlcmd $remotestring -Nrs -e 'select "mysqld is alive"' --connect-timeout=3 2>&1`;
+        #}
+        
         if ( $loginstatus =~ /mysqld is alive/ ) {
 
             # Login went just fine
