@@ -3305,6 +3305,7 @@ sub mysql_stats {
     }
 
     # name resolution
+    debugprint "skip name resolve: $result{'Variables'}{'skip_name_resolve'}" if ( defined( $result{'Variables'}{'skip_name_resolve'} ) );
     if ( defined( $result{'Variables'}{'skip_networking'} )
         && $result{'Variables'}{'skip_networking'} eq 'ON' )
     {
@@ -3329,8 +3330,8 @@ sub mysql_stats {
             push( @adjvars, "skip-name-resolve=0" );
         }
     }
-    elsif ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF'
-        and $result{'Variables'}{'skip_name_resolve'} ne '0' )
+    elsif ( $result{'Variables'}{'skip_name_resolve'} ne 'ON'
+        and $result{'Variables'}{'skip_name_resolve'} ne '1' )
     {
         badprint
 "Name resolution is active: a reverse name resolution is made for each new connection which can reduce performance";
