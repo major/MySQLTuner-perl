@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.5
+# mysqltuner.pl - Version 2.1.6
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.5";
+my $tunerversion = "2.1.6";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1091,6 +1091,7 @@ sub select_csv_file {
     my $tfile = shift;
     my $req   = shift;
     debugprint "PERFORM: $req CSV into $tfile";
+    #return;
     my @result = select_array_with_headers($req);
     open( my $fh, '>', $tfile ) or die "Could not open file '$tfile' $!";
     for my $l (@result) {
@@ -3990,6 +3991,7 @@ sub mysql_pfs {
     subheaderprint "Performance schema";
 
     # Performance Schema
+    debugprint "Performance schema is " . $myvar{'performance_schema'};
     $myvar{'performance_schema'} = 'OFF'
       unless defined( $myvar{'performance_schema'} );
     if ( $myvar{'performance_schema'} eq 'OFF' ) {
@@ -4025,12 +4027,14 @@ sub mysql_pfs {
     if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
         for my $sys_view ( select_array('use sys;show tables;') ) {
             infoprint "Dumping $sys_view into $opt{dumpdir}";
+            my $sys_view_table=$sys_view;
+            $sys_view_table =~ s/\$/\\\$/g;
             select_csv_file(
                 "$opt{dumpdir}/sys_$sys_view.csv",
-                "select * from sys.\`$sys_view\`"
+                'select * from sys.\`' . $sys_view_table. '\`'
             );
         }
-
+        return;
         #exit 0 if ( $opt{stop} == 1 );
     }
 
@@ -7055,7 +7059,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.5 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.6 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
