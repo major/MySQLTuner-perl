@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.6
+# mysqltuner.pl - Version 2.1.7
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.6";
+my $tunerversion = "2.1.7";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2755,7 +2755,7 @@ sub calculations {
     
     # Error max_allowed_packet is not included in thread buffers size
     #$mycalc{'per_thread_buffers'} += $myvar{'max_allowed_packet'} if is_int($myvar{'max_allowed_packet'});
-    
+
     # Total per-thread memory
     $mycalc{'total_per_thread_buffers'} =
       $mycalc{'per_thread_buffers'} * $myvar{'max_connections'};
@@ -7070,7 +7070,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.6 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.7 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
