@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.6
+# mysqltuner.pl - Version 2.1.7
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.6";
+my $tunerversion = "2.1.7";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -334,7 +334,21 @@ sub is_remote() {
     return 0 if ( $host eq '127.0.0.1' );
     return 1;
 }
+sub is_int { 
+    return 0 unless defined $_[0];
+    my $str = $_[0]; 
+    #trim whitespace both sides
+    $str =~ s/^\s+|\s+$//g;
 
+    #Alternatively, to match any float-like numeric, use:
+    # m/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/
+
+    #flatten to string and match dash or plus and one or more digits
+    if ($str =~ /^(\-|\+)?\d+?$/) {
+        return 1;
+    }
+    return 0;
+}
 # Calculates the number of physical cores considering HyperThreading
 sub cpu_cores {
     if ( $^O eq 'linux' ) {
@@ -2730,26 +2744,23 @@ sub calculations {
     }
 
     # Per-thread memory
-    # Per-thread memory
-    if ( mysql_version_ge(4) ) {
-        $mycalc{'per_thread_buffers'} =
-          $myvar{'read_buffer_size'} +
-          $myvar{'read_rnd_buffer_size'} +
-          $myvar{'sort_buffer_size'} +
-          $myvar{'thread_stack'} +
-          $myvar{'max_allowed_packet'} +
-          $myvar{'join_buffer_size'};
-    }
-    else {
-        $mycalc{'per_thread_buffers'} =
-          $myvar{'record_buffer'} +
-          $myvar{'record_rnd_buffer'} +
-          $myvar{'sort_buffer'} +
-          $myvar{'thread_stack'} +
-          $myvar{'join_buffer_size'};
-    }
+    $mycalc{'per_thread_buffers'} = 0;
+    $mycalc{'per_thread_buffers'} += $myvar{'read_buffer_size'} if is_int($myvar{'read_buffer_size'});
+    $mycalc{'per_thread_buffers'} += $myvar{'read_rnd_buffer_size'} if is_int($myvar{'read_rnd_buffer_size'});
+    $mycalc{'per_thread_buffers'} += $myvar{'sort_buffer_size'} if is_int($myvar{'sort_buffer_size'});
+    $mycalc{'per_thread_buffers'} += $myvar{'thread_stack'} if is_int($myvar{'thread_stack'});
+    $mycalc{'per_thread_buffers'} += $myvar{'join_buffer_size'} if is_int($myvar{'join_buffer_size'});
+    $mycalc{'per_thread_buffers'} += $myvar{'binlog_cache_size'} if is_int($myvar{'binlog_cache_size'});
+    debugprint "per_thread_buffers: $mycalc{'per_thread_buffers'} (" .human_size($mycalc{'per_thread_buffers'} ) ." )";
+    
+    # Error max_allowed_packet is not included in thread buffers size
+    #$mycalc{'per_thread_buffers'} += $myvar{'max_allowed_packet'} if is_int($myvar{'max_allowed_packet'});
+
+    # Total per-thread memory
     $mycalc{'total_per_thread_buffers'} =
       $mycalc{'per_thread_buffers'} * $myvar{'max_connections'};
+    
+    # Max total per-thread memory reached
     $mycalc{'max_total_per_thread_buffers'} =
       $mycalc{'per_thread_buffers'} * $mystat{'Max_used_connections'};
 
@@ -7059,7 +7070,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.6 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.7 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
