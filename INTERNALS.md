@@ -41,7 +41,7 @@
 * Get login information
 * Set up some OS variables
 * Toss variables/status into hashes
-* Get information about the tuning connexion
+* Get information about the tuning connection
 * Check current MySQL version
 * Suggest 64-bit upgrade
 * Analyze mysqld error log file
@@ -76,11 +76,11 @@
     * Prompt for creds on the console
 
 ## MySQLTuner system checks
-* 32-bit w/>2GB RAM check
-* Check number of opened ports (warning if more than 9 ports opened)
-* Check 80, 8080, 443 and 8443 ports if warning are raised if there are opened
+* Check whether more than 2GB RAM present if on 32-bit OS
+* Check number of opened ports (warn when more than 9 ports opened)
+* Check 80, 8080, 443 and 8443 ports if warning is raised if they are opened
 * Check if some banned ports are not opened (option --bannedports separated by comma)
-* Check if non kernel and user process except mysqld are not using more than 15% of total physical memory)
+* Check if non kernel and user process except mysqld are not using more than 15% of total physical memory
 * Check vm.swapiness
 * Check /etc/security/limit.conf
 * Check sysctl entries: sunrpc.tcp_slot_entries, vm.swappiness, fs.aio-fs-nr
@@ -90,8 +90,8 @@
 
 ## MySQLTuner Server version checks
 * EOL MySQL version check
-* Currently MySQL < 5.1 are EOF considered.
-* Using 5.5+ version of MySQL for performance issue (asynchronous IO).
+* Currently MySQL < 5.1 are considered EOL
+* Using 5.5+ version of MySQL for performance issue (asynchronous IO)
 
 ## Mysql error log file analysis
 * Look for potential current error log file name
@@ -106,14 +106,14 @@
     * Check for DB engines that are enabled but unused
     * Look for fragmented tables
     * Look for auto-increments near capacity
-    	* Look for table with autoincrement with value near max capacity
+    	* Look for tables with auto-increment with value near max capacity
 
 ## MySQLTuner security checks
 
 * Is anonymous user present?
 * Users without passwords
-* Users w/username as password
-* Users w/o host restriction
+* Users with username as password
+* Users without host restriction
 * Weak password check (possibly using cracklib later?)
 * Using basic_passwords.txt as password database
 * Password list checks can be avoid (option: --skippassword)
@@ -121,7 +121,7 @@
 ## MySQLTuner CVE vulnerabilities detection
 
 * option: --cvefile
-* Check if your MariaDB or MySQL version contains CVE bulletins.
+* Check if your MariaDB or MySQL version contains CVE entries.
 
 ## MySQLTuner database information
 * Performance analysis parameter checks
@@ -134,8 +134,8 @@
 	* Index size
 	* Percentage of index size
         * Collation number
-        * Check that there is only one collation for all table in a database
-        * Check that there is only one collation for ll table columns in a database
+        * Check that there is only one collation for all tables in database
+        * Check that there is only one collation for all table columns in database
         * Check that there is only one storage engine per user database
 
 
@@ -156,23 +156,24 @@
 
 ## MySQLTuner server information
 
-* Uptime: If MySQL started within last 24 hours
+* Uptime: whether MySQL started within last 24 hours
 * Bytes received and sent
 * Number of connections
 * Percentage between reads and writes
-* Is binary log activated ?
-   * Is GTID mode activated ?
+* Is binary log activated?
+   * Is GTID mode activated?
 
 ## MySQLTuner sort, join and temp table information
+
 * Max memory temporary table size allowed.
 * Percentage of sort using temporary table (<10%)
 * Number of join performed without using indexes (<250)
-* Percentage of temporary table written on disk(<25%)
+* Percentage of temporary table written on disk (<25%)
 * Thread cache (=4)
 * Thread cache hit ratio (>50%) if thread_handling is different of pools-of-threads
-* Table cache hit ratio(>2°%)
+* Table cache hit ratio (>2°%)
 * Table cache definition should be upper that total number of tables or in autoresizing mode
-* Percentage of open file and open file limit(<85%)
+* Percentage of open file and open file limit (<85%)
 * Percentage of table locks (<95%)
 * Percentage of binlog cache lock (<90%)
 
@@ -190,7 +191,7 @@
 
 ## MySQLTuner query cache checks
 
-* Is Query cache activated ?
+* Is Query cache activated?
    * Query Cache Buffers
    * Query Cache DISABLED, ALL REQUEST or ON DEMAND
    * Query Cache Size
@@ -199,41 +200,41 @@
 ## MySQLTuner memory checks
 
 * Get total RAM/swap
-* Is there enough memory for max connections reached by MySQL ?
-* Is there enough memory for max connections allowed by MySQL ?
-* Max percentage of memory used(<85%)
+* Is there enough memory for max connections reached by MySQL?
+* Is there enough memory for max connections allowed by MySQL?
+* Max percentage of memory used (<85%)
 
 ## MySQLTuner slow queries checks
 
-* Percentage of Slow queries  (<5%)
+* Percentage of Slow queries (<5%)
 
 ## MySQLTuner replication checks
 
-* Is server replication configured as slave ?
-* SQL replication thread running ?
-* IO replication thread running ?
+* Is server replication configured as slave?
+* SQL replication thread running?
+* IO replication thread running?
 * Replication lag in seconds (Seconds_behind_master)
-* Is Slave configured in read only ?
-* replication type ROW, MIX, STMT
-* replication Semisync master
-* replication Semisync slave
+* Is Slave configured in read only?
+* Replication type ROW, MIX, STMT
+* Replication Semisync master
+* Replication Semisync slave
 * XA support activated
-* replication started ?
+* Replication started?
 
 ## MySQLTuner InnoDB information
 
 * InnoDB Buffer Pool Size
-   * If possible, innodb_buffer_pool_size should be greater data and index size for Innodb Table
-   * Innodb_buffer_pool_size should around 75 to 80 % of the available system memory.
+   * If possible, innodb_buffer_pool_size should be greater than data and index size for Innodb Table
+   * Innodb_buffer_pool_size should be around 75% to 80% of the available system memory.
 * InnoDB Buffer Pool Instances
    * MySQL needs 1 instance per 1Go of Buffer Pool
    * innodb_buffer_pool instances = round(innodb_buffer_pool_size / 1Go)
-   * innodb_buffer_pool instances must be equals or lower than 64
+   * innodb_buffer_pool instances must be equal to or lower than 64
 
    - A bug in MySQL 5.6 causes SHOW VARIABLES to report an innodb_buffer_pool_instances value of 8 when innodb_buffer_pool_size is less than 1GB and only one buffer pool instance is present (Bug #18343670).
 
 * InnoDB Buffer Pool Usage
-   * If more than 20% of InnoDB buffer pool is not used, MySQLTuner raise an alert.
+   * If more than 20% of InnoDB buffer pool is not used, raise an alert.
 * InnoDB Buffer Pool Log Size
    * InnoDB total log file size should be 25% of innodb_buffer_pool_size
 * InnoDB Read efficiency
@@ -245,14 +246,14 @@
 * InnoDB Chunk Size
    * Check InnoDB Buffer Pool size is a multiple of InnoDB Buffer Pool chunk size * InnoDB Buffer Pool instances
 
-## MySQLTuner ARIADB information
+## MySQLTuner AriaDB information
 
-* Is Aria indexes size is greater than page cache size ?
+* Is Aria indexes size greater than page cache size?
 * Page cache read hit ratio (>95%)
 * Page cache write hit ratio (>95%)
 
 
-## MySQLTuner MYISAM information
+## MySQLTuner MyISAM information
 
 * Key buffer usage (>90%)
 * Is MyISAM indexes size is greater than key buffer size ?
@@ -260,6 +261,7 @@
 * Key buffer write hit ratio (>95%)
 
 ## MySQLTuner Galera information
+
 * wsrep_ready cluster is ready
 * wsrep_connected node is connected to other nodes
 * wsrep_cluster_name is defined.
@@ -270,8 +272,8 @@
 	* NO PRIMARY : cluster gets several states
 * wsrep_ local_state_comment: Node state
 	* SYNCED (uptodate),
-	* DONOR(sending information to another node)
-	* Joiner(Try to reach cluster group)
+	* DONOR (sending information to another node)
+	* Joiner (try to reach cluster group)
 	* SYNCED state able to read/write
 * wsrep_cluster_conf_id configuration level must be identical in all nodes
 * wsrep_slave_thread is between 3 or 4 times number of CPU core.
@@ -282,7 +284,7 @@
 * Look for tables without primary keys
 * Look for non InnoDB tables for Galera
 * Variable innodb_flush_log_at_trx_commit should be set to 0.
-* Check that there is 3 or 5 members in Galera cluster.
+* Check that there are 3 or 5 members in Galera cluster.
 * Check that xtrabackup is used for SST method with wsrep_sst_method variable.
 * Check variables wsrep_OSU_method is defined to TOI for updates.
 * Check that there is no certification failures controlling wsrep_local_cert_failures status.
@@ -301,30 +303,31 @@
 
 ## MySQLTuner XtraDB information
 
-*  Nothing for the moment
+*  Not implemented
 
 ## MySQLTuner Connect information
 
-*  Nothing for the moment
+*  Not implemented
 
 ## MySQLTuner Spider information
 
-*  Nothing for the moment
+*  Not implemented
 
 ## MySQLTuner RocksDb information
 
-*  Nothing for the moment
+*  Not implemented
 
 ## MySQLTuner Thread pool information
 
 * thread_pool_size between 16 to 36 for Innodb usage
-* thread_pool_size between 4 to 8 for MyIsam usage
+* thread_pool_size between 4 to 8 for MyISAM usage
 
 ## MySQLTuner performance schema and sysschema information
+
 * Check that Performance schema is activated for 5.6+ version
 * Check that Performance schema is deactivated for 5.5- version
 * Check that Sys schema is installed
-* sys Schema version
+* Sys Schema version
 * Top user per connection
 * Top user per statement
 * Top user per statement latency
@@ -377,18 +380,18 @@
 * Event per wait total latency
 * Event per wait read latency
 * Event per wait write latency
-* TOP 15 most read indexes
-* TOP 15 most modified indexes
-* TOP 15 high select latency index
-* TOP 15 high insert latency index
-* TOP 15 high update latency index
-* TOP 15 high delete latency index
-* TOP 15 most read tables
-* TOP 15 most modified tables
-* TOP 15 high select latency tables
-* TOP 15 high insert latency tables
-* TOP 15 high update latency tables
-* TOP 15 high delete latency tables
+* Top 15 most read indexes
+* Top 15 most modified indexes
+* Top 15 high select latency index
+* Top 15 high insert latency index
+* Top 15 high update latency index
+* Top 15 high delete latency index
+* Top 15 most read tables
+* Top 15 most modified tables
+* Top 15 high select latency tables
+* Top 15 high insert latency tables
+* Top 15 high update latency tables
+* Top 15 high delete latency tables
 * Redundant indexes
 * Tables not using InnoDb buffer
 * Top 15 Tables using InnoDb buffer
@@ -396,26 +399,26 @@
 * Top 15 Most executed queries
 * Latest SQL queries in errors or warnings
 * Top 20 queries with full table scans
-* TOP 15 reader queries (95% percentile)
-* TOP 15 row look queries (95% percentile)
-* TOP 15 total latency queries (95% percentile)
-* TOP 15 max latency queries (95% percentile)
-* TOP 15 average latency queries (95% percentile)
+* Top 15 reader queries (95% percentile)
+* Top 15 row look queries (95% percentile)
+* Top 15 total latency queries (95% percentile)
+* Top 15 max latency queries (95% percentile)
+* Top 15 average latency queries (95% percentile)
 * Top 20 queries with sort
 * Last 50 queries with sort
-* TOP 15 row sorting queries with sort
-* TOP 15 total latency queries with sort
-* TOP 15 merge queries with sort
-* TOP 15 average sort merges queries with sort
-* TOP 15 scans queries with sort
-* TOP 15 range queries with sort
+* Top 15 row sorting queries with sort
+* Top 15 total latency queries with sort
+* Top 15 merge queries with sort
+* Top 15 average sort merges queries with sort
+* Top 15 scans queries with sort
+* Top 15 range queries with sort
 * Top 20 queries with temp table
 * Last 50 queries with temp table
-* TOP 15 total latency queries with temp table
-* TOP 15 queries with temp table to disk
-* TOP 15 class events by number
-* TOP 30 events by number
-* TOP 15 class events by total latency
-* TOP 30 events by total latency
-* TOP 15 class events by max latency
-* TOP 30 events by max latency
+* Top 15 total latency queries with temp table
+* Top 15 queries with temp table to disk
+* Top 15 class events by number
+* Top 30 events by number
+* Top 15 class events by total latency
+* Top 30 events by total latency
+* Top 15 class events by max latency
+* Top 30 events by max latency
