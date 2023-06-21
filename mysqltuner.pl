@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.7
+# mysqltuner.pl - Version 2.1.8
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.7";
+my $tunerversion = "2.1.8";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -6039,22 +6039,27 @@ sub mysql_innodb {
         if ( defined $myvar{'innodb_redo_log_capacity'} ) {
             infoprint " +-- InnoDB Redo Log Capacity: "
               . hr_bytes( $myvar{'innodb_redo_log_capacity'} );
-        }
-        if ( defined $myvar{'innodb_log_file_size'} ) {
-            infoprint " +-- InnoDB Log File Size: "
-              . hr_bytes( $myvar{'innodb_log_file_size'} );
-        }
-        if ( defined $myvar{'innodb_log_files_in_group'} ) {
-            infoprint " +-- InnoDB Log File In Group: "
-              . $myvar{'innodb_log_files_in_group'};
-        }
-        if ( defined $myvar{'innodb_log_files_in_group'} ) {
+        } else {
+          if ( defined $myvar{'innodb_log_file_size'} ) {
+              infoprint " +-- InnoDB Log File Size: "
+                . hr_bytes( $myvar{'innodb_log_file_size'} );
+          }
+          if ( defined $myvar{'innodb_log_files_in_group'} ) {
+              infoprint " +-- InnoDB Log File In Group: "
+                . $myvar{'innodb_log_files_in_group'};
+              infoprint " +-- InnoDB Total Log File Size: "
+                . hr_bytes( $myvar{'innodb_log_files_in_group'} *
+                    $myvar{'innodb_log_file_size'} )
+                . "("
+                . $mycalc{'innodb_log_size_pct'}
+                . " % of buffer pool)";
+          } else {
             infoprint " +-- InnoDB Total Log File Size: "
-              . hr_bytes( $myvar{'innodb_log_files_in_group'} *
-                  $myvar{'innodb_log_file_size'} )
-              . "("
-              . $mycalc{'innodb_log_size_pct'}
-              . " % of buffer pool)";
+                . hr_bytes( $myvar{'innodb_log_file_size'} )
+                . "("
+                . $mycalc{'innodb_log_size_pct'}
+                . " % of buffer pool)";
+          }
         }
         if ( defined $myvar{'innodb_log_buffer_size'} ) {
             infoprint " +-- InnoDB Log Buffer: "
@@ -6069,6 +6074,7 @@ sub mysql_innodb {
               . hr_bytes( $mystat{'Innodb_buffer_pool_pages_total'} ) . "";
         }
     }
+
     if ( defined $myvar{'innodb_thread_concurrency'} ) {
         infoprint "InnoDB Thread Concurrency: "
           . $myvar{'innodb_thread_concurrency'};
@@ -6077,8 +6083,7 @@ sub mysql_innodb {
     # InnoDB Buffer Pool Size
     if ( $myvar{'innodb_file_per_table'} eq "ON" ) {
         goodprint "InnoDB File per table is activated";
-    }
-    else {
+    } else {
         badprint "InnoDB File per table is not activated";
         push( @adjvars, "innodb_file_per_table=ON" );
     }
@@ -6088,8 +6093,7 @@ sub mysql_innodb {
         goodprint "InnoDB buffer pool / data size: "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " / "
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
-    }
-    else {
+    } else {
         badprint "InnoDB buffer pool / data size: "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " / "
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
@@ -6100,14 +6104,29 @@ sub mysql_innodb {
     }
     if (   $mycalc{'innodb_log_size_pct'} < 20
         or $mycalc{'innodb_log_size_pct'} > 30 )
-    {
-        badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
+      {
+        if ( defined $myvar{'innodb_redo_log_capacity'} ) {
+          badprint "Ratio InnoDB redo log capacity / InnoDB Buffer pool size ("
+          . $mycalc{'innodb_log_size_pct'} . "%): "
+          . hr_bytes( $myvar{'innodb_redo_log_capacity'} ) . " / "
+          . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+          . " should be equal to 25%";
+          push(
+            @adjvars,
+            "innodb_redo_log_capacity should be (="
+              . hr_bytes_rnd(
+                $myvar{'innodb_buffer_pool_size'} / 4
+              )
+              . ") if possible, so InnoDB Redo log Capacity equals 25% of buffer pool size."
+          );
+        } else {
+          badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
           . $mycalc{'innodb_log_size_pct'} . "%): "
           . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
           . $myvar{'innodb_log_files_in_group'} . " / "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal to 25%";
-        push(
+          push(
             @adjvars,
             "innodb_log_file_size should be (="
               . hr_bytes_rnd(
@@ -6115,22 +6134,30 @@ sub mysql_innodb {
                   $myvar{'innodb_log_files_in_group'} / 4
               )
               . ") if possible, so InnoDB total log file size equals 25% of buffer pool size."
-        );
-        if ( mysql_version_le( 5, 6, 2 ) ) {
+          );
+      }
+      if ( mysql_version_le( 5, 6, 2 ) ) {
             push( @generalrec,
 "For MySQL 5.6.2 and lower, total innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB."
             );
         }
-        push( @generalrec,
-"Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU"
-        );
-    }
-    else {
-        goodprint "Ratio InnoDB log file size / InnoDB Buffer pool size: "
+
+    } else {
+        if ( defined $myvar{'innodb_redo_log_capacity'} ) {
+          goodprint "Ratio InnoDB Redo Log Capacity / InnoDB Buffer pool size: "
+          . hr_bytes( $myvar{'innodb_redo_log_capacity'} ) . "/"
+          . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+          . " should be equal to 25%";
+        } else {
+            push( @generalrec,
+            "Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU"
+            );
+          goodprint "Ratio InnoDB log file size / InnoDB Buffer pool size: "
           . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
           . $myvar{'innodb_log_files_in_group'} . "/"
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " should be equal to 25%";
+        }
     }
 
     # InnoDB Buffer Pool Instances (MySQL 5.6.6+)
@@ -7070,7 +7097,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.7 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.8 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
