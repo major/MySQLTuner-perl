@@ -3779,6 +3779,32 @@ sub mysql_stats {
 # Recommendations for MyISAM
 sub mysql_myisam {
     subheaderprint "MyISAM Metrics";
+    my $nb_myisam_tables = select_one(
+        "SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM'");    
+    
+    infoprint("General MyIsam metrics:");
+    infoprint " +-- Total MyISAM Tables  : $nb_myisam_tables";
+    infoprint " +-- Total MyISAM indexes : "
+      . hr_bytes( $mycalc{'total_myisam_indexes'} ) if defined($mycalc{'total_myisam_indexes'});
+    infoprint " +-- KB Size :" . hr_bytes($myvar{'key_buffer_size'});
+    infoprint " +-- KB Used Size :" .hr_bytes( $myvar{'key_buffer_size'} -
+              $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'} );
+    infoprint " +-- KB used :" . $mycalc{'pct_key_buffer_used'} . "%";
+    infoprint " +-- Read KB hit rate: $mycalc{'pct_keys_from_mem'}% ("
+              . hr_num( $mystat{'Key_read_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_reads'} )
+              . " reads)";
+    infoprint " +-- Write KB hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
+              . hr_num( $mystat{'Key_write_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_writes'} )
+              . " writes)";
+
+    if ( $nb_myisam_tables == 0 ) {
+        infoprint "No MyISAM table(s) detected ....";
+        return;
+    }
     if ( mysql_version_ge(8) and mysql_version_le(10) ) {
         infoprint "MyISAM Metrics are disabled since MySQL 8.0.";
         if ( $myvar{'key_buffer_size'} > 0 ) {
@@ -3788,130 +3814,119 @@ sub mysql_myisam {
         }
         return;
     }
-    my $nb_myisam_tables = select_one(
-        "SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM'");
-    if ( $nb_myisam_tables == 0 ) {
-        infoprint "No MyISAM table(s) detected ....";
+    
+    if ( !defined( $mycalc{'total_myisam_indexes'} ) ) {
+        badprint "Unable to calculate MyISAM index size on MySQL server < 5.0.0";
+        push( @generalrec,
+            "Unable to calculate MyISAM index size on MySQL server < 5.0.0" );
         return;
     }
-
-    # Key buffer usage
-    if ( $mycalc{'pct_key_buffer_used'} > 0 ) {
-        if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
-            badprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
-              . hr_bytes( $myvar{'key_buffer_size'} -
-                  $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}
-              )
-              . " used / "
-              . hr_bytes( $myvar{'key_buffer_size'} )
-              . " cache)";
-
-            push(
-                @adjvars,
-                "key_buffer_size (\~ "
-                  . hr_num(
-                    $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'}
-                      / 100
-                  )
-                  . ")"
-            );
-        }
-        else {
-            goodprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
-              . hr_bytes( $myvar{'key_buffer_size'} -
-                  $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}
-              )
-              . " used / "
-              . hr_bytes( $myvar{'key_buffer_size'} )
-              . " cache)";
-        }
-    }
-    else {
-
+    if ( $mycalc{'pct_key_buffer_used'} == 0 ) {
         # No queries have run that would use keys
-        debugprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
+        infoprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
           . hr_bytes( $myvar{'key_buffer_size'} -
               $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'} )
           . " used / "
           . hr_bytes( $myvar{'key_buffer_size'} )
           . " cache)";
+        infoprint "No SQL statement based on MyISAM table(s) detected ....";
+        return
     }
 
-    # Key buffer
-    if ( !defined( $mycalc{'total_myisam_indexes'} ) ) {
-        push( @generalrec,
-            "Unable to calculate MyISAM index size on MySQL server < 5.0.0" );
+    # Key buffer usage
+    if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
+        badprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
+          . hr_bytes( $myvar{'key_buffer_size'} -
+              $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}
+          )
+          . " used / "
+          . hr_bytes( $myvar{'key_buffer_size'} )
+          . " cache)";
+
+        push(
+            @adjvars,
+            "key_buffer_size (\~ "
+              . hr_num(
+                $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'}
+                  / 100
+              )
+              . ")"
+        );
+    } else {
+      goodprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
+          . hr_bytes( $myvar{'key_buffer_size'} -
+          $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}
+        )
+        . " used / "
+        . hr_bytes( $myvar{'key_buffer_size'} )
+        . " cache)";
+    }
+
+    # Key buffer size / total MyISAM indexes
+    if (   $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
+        && $mycalc{'pct_keys_from_mem'} < 95 )
+    {
+        badprint "Key buffer size / total MyISAM indexes: "
+          . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
+          . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
+        push( @adjvars,
+                "key_buffer_size (> "
+              . hr_bytes( $mycalc{'total_myisam_indexes'} )
+              . ")" );
     }
     else {
-        if (   $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
-            && $mycalc{'pct_keys_from_mem'} < 95 )
-        {
-            badprint "Key buffer size / total MyISAM indexes: "
-              . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
-              . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
-            push( @adjvars,
-                    "key_buffer_size (> "
-                  . hr_bytes( $mycalc{'total_myisam_indexes'} )
-                  . ")" );
+        goodprint "Key buffer size / total MyISAM indexes: "
+          . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
+          . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
+    }
+    if ( $mystat{'Key_read_requests'} > 0 ) {
+        if ( $mycalc{'pct_keys_from_mem'} < 95 ) {
+            badprint
+              "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% ("
+              . hr_num( $mystat{'Key_read_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_reads'} )
+              . " reads)";
         }
         else {
-            goodprint "Key buffer size / total MyISAM indexes: "
-              . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
-              . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
+            goodprint
+              "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% ("
+              . hr_num( $mystat{'Key_read_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_reads'} )
+              . " reads)";
         }
-        if ( $mystat{'Key_read_requests'} > 0 ) {
-            if ( $mycalc{'pct_keys_from_mem'} < 95 ) {
-                badprint
-                  "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% ("
-                  . hr_num( $mystat{'Key_read_requests'} )
-                  . " cached / "
-                  . hr_num( $mystat{'Key_reads'} )
-                  . " reads)";
-            }
-            else {
-                goodprint
-                  "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% ("
-                  . hr_num( $mystat{'Key_read_requests'} )
-                  . " cached / "
-                  . hr_num( $mystat{'Key_reads'} )
-                  . " reads)";
-            }
-        }
-        else {
+    }
 
-            # No queries have run that would use keys
-            debugprint "Key buffer size / total MyISAM indexes: "
-              . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
-              . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
-        }
-        if ( $mystat{'Key_write_requests'} > 0 ) {
-            if ( $mycalc{'pct_wkeys_from_mem'} < 95 ) {
-                badprint
-                  "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
-                  . hr_num( $mystat{'Key_write_requests'} )
-                  . " cached / "
-                  . hr_num( $mystat{'Key_writes'} )
-                  . " writes)";
-            }
-            else {
-                goodprint
-                  "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
-                  . hr_num( $mystat{'Key_write_requests'} )
-                  . " cached / "
-                  . hr_num( $mystat{'Key_writes'} )
-                  . " writes)";
-            }
-        }
-        else {
-
-            # No queries have run that would use keys
-            debugprint
+    # No queries have run that would use keys
+    debugprint "Key buffer size / total MyISAM indexes: "
+      . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
+      . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
+    if ( $mystat{'Key_write_requests'} > 0 ) {
+        if ( $mycalc{'pct_wkeys_from_mem'} < 95 ) {
+            badprint
               "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
               . hr_num( $mystat{'Key_write_requests'} )
               . " cached / "
               . hr_num( $mystat{'Key_writes'} )
               . " writes)";
         }
+        else {
+            goodprint
+              "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
+              . hr_num( $mystat{'Key_write_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_writes'} )
+              . " writes)";
+        }
+    } else {
+      # No queries have run that would use keys
+      debugprint
+        "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
+        . hr_num( $mystat{'Key_write_requests'} )
+        . " cached / "
+        . hr_num( $mystat{'Key_writes'} )
+        . " writes)";
     }
 }
 
