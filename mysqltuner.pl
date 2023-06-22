@@ -1293,7 +1293,7 @@ sub get_all_vars {
     debugprint "VERSION: " . $dummyselect . "";
     $result{'MySQL Client'}{'Version'} = $dummyselect;
 
-    my @mysqlvarlist = select_array("SHOW GLOBAL VARIABLES");
+    my @mysqlvarlist = select_array("SHOW VARIABLES");
     push( @mysqlvarlist, select_array("SHOW GLOBAL VARIABLES") );
     arr2hash( \%myvar, \@mysqlvarlist );
     $result{'Variables'} = \%myvar;
