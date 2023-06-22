@@ -3780,8 +3780,15 @@ sub mysql_stats {
 sub mysql_myisam {
     subheaderprint "MyISAM Metrics";
     my $nb_myisam_tables = select_one(
-        "SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM'");    
+        "SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')");    
+    push (@generalrec, "MyISAM engine is deprecated, consider migrating to InnoDB") if $nb_myisam_tables > 0;
     
+    if ($nb_myisam_tables > 0) {
+        badprint "Consider migrating $nb_myisam_tables followning tables to InnoDB:";
+        for my $myisam_table ( select_array("SELECT CONCAT(TABLE_SCHEMA, '.', TABLE_NAME) FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')" )) {
+          infoprint "* SQL migration for $myisam_table: ALTER TABLE $myisam_table ENGINE=InnoDB;";
+        }
+    }     
     infoprint("General MyIsam metrics:");
     infoprint " +-- Total MyISAM Tables  : $nb_myisam_tables";
     infoprint " +-- Total MyISAM indexes : "
