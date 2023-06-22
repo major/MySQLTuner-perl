@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.9
+# mysqltuner.pl - Version 2.1.11
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.9";
+my $tunerversion = "2.1.11";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -69,8 +69,8 @@ my %opt = (
     "debug"               => 0,
     "nocolor"             => ( !-t STDOUT ),
     "color"               => 0,
-    "forcemem"            => 0,
-    "forceswap"           => 0,
+    "forcemem"            => 1024,
+    "forceswap"           => 1024,
     "host"                => 0,
     "socket"              => 0,
     "port"                => 0,
@@ -111,7 +111,9 @@ my %opt = (
     "defaults-extra-file" => '',
     "protocol"            => '',
     "dumpdir"             => '',
-    "feature"             => ''
+    "feature"             => '',
+    "dbgpattern"          => '',
+    "defaultarch"         => 64
 );
 
 # Gather the options from the command line
@@ -144,7 +146,8 @@ GetOptions(
     'idxstat',               'noidxstat',
     'server-log=s',          'protocol=s',
     'defaults-extra-file=s', 'dumpdir=s',
-    'feature=s'
+    'feature=s',             'dbgpattern=s',
+    'defaultarch=i'
   )
   or pod2usage(
     -exitval  => 1,
@@ -200,6 +203,7 @@ if ( $opt{dumpdir} ne '' ) {
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
 
+$opt{dbgpattern}='.*' if ($opt{dbgpattern} eq '' );
 # check if we need to enable verbose mode
 if ( $opt{feature} ne '' ) { $opt{verbose} = 1; }
 if ( $opt{verbose} ) {
@@ -1261,12 +1265,18 @@ sub arr2hash {
     my $href = shift;
     my $harr = shift;
     my $sep  = shift;
+    my $key='';
+    my $val='';
+
     $sep = '\s' unless defined($sep);
     foreach my $line (@$harr) {
         next if ( $line =~ m/^\*\*\*\*\*\*\*/ );
         $line =~ /([a-zA-Z_]*)\s*$sep\s*(.*)/;
-        $$href{$1} = $2;
-        debugprint "V: $1 = $2";
+        $key = $1;
+        $val = $2;
+        $$href{$key} = $val;
+       
+        debugprint " * $key = $val" if $key =~ /$opt{dbgpattern}/i;
     }
 }
 
@@ -2422,6 +2432,8 @@ my ($arch);
 sub check_architecture {
     if ( is_remote eq 1 ) {
         infoprint "Skipping architecture check on remote host";
+        infoprint "Using default $opt{defaultarch} bits as target architecture";
+        $arch = $opt{defaultarch};
         return;
     }
     if ( `uname` =~ /SunOS/ && `isainfo -b` =~ /64/ ) {
@@ -2563,6 +2575,7 @@ sub check_storage_engines {
             $result{'Engine'}{$engine}{'Data Size'}    = $dsize;
             $result{'Engine'}{$engine}{'Index Size'}   = $isize;
         }
+        #print Dumper( \%enginestats ) if $opt{debug};
         my $not_innodb = '';
         if ( not defined $result{'Variables'}{'innodb_file_per_table'} ) {
             $not_innodb = "AND NOT ENGINE='InnoDB'";
@@ -2607,7 +2620,7 @@ sub check_storage_engines {
         $fragtables = 0;
         foreach my $tbl (@tblist) {
 
-            #debugprint "Data dump " . Dumper(@$tbl);
+            #debugprint "Data dump " . Dumper(@$tbl) if $opt{debug};
             my ( $engine, $size, $datafree ) = @$tbl;
             next if $engine eq 'NULL' or not defined($engine);
             $size     = 0 if $size eq 'NULL'     or not defined($size);
@@ -3766,6 +3779,48 @@ sub mysql_stats {
 # Recommendations for MyISAM
 sub mysql_myisam {
     subheaderprint "MyISAM Metrics";
+    my $nb_myisam_tables = select_one(
+        "SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')");    
+    push (@generalrec, "MyISAM engine is deprecated, consider migrating to InnoDB") if $nb_myisam_tables > 0;
+    
+    if ($nb_myisam_tables > 0) {
+      badprint "Consider migrating $nb_myisam_tables followning tables to InnoDB:";
+      my $sql_mig="";
+      for my $myisam_table ( select_array("SELECT CONCAT(TABLE_SCHEMA, '.', TABLE_NAME) FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')" )) {
+        $sql_mig="${sql_mig}-- InnoDB migration for $myisam_table\nALTER TABLE $myisam_table ENGINE=InnoDB;\n\n";
+        infoprint "* InnoDB migration request for $myisam_table Table: ALTER TABLE $myisam_table ENGINE=InnoDB;";
+      }
+      if ( -d "$opt{dumpdir}" ) {
+        my $file_mig="$opt{dumpdir}/migrate_myisam_to_innodb.sql";
+        open (FILE, ">$file_mig") or die "Can't open $file_mig: $!";
+        print FILE $sql_mig;
+        close FILE;
+        infoprint "Migration script saved to $file_mig";
+      }
+    }  
+    infoprint("General MyIsam metrics:");
+    infoprint " +-- Total MyISAM Tables  : $nb_myisam_tables";
+    infoprint " +-- Total MyISAM indexes : "
+      . hr_bytes( $mycalc{'total_myisam_indexes'} ) if defined($mycalc{'total_myisam_indexes'});
+    infoprint " +-- KB Size :" . hr_bytes($myvar{'key_buffer_size'});
+    infoprint " +-- KB Used Size :" .hr_bytes( $myvar{'key_buffer_size'} -
+              $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'} );
+    infoprint " +-- KB used :" . $mycalc{'pct_key_buffer_used'} . "%";
+    infoprint " +-- Read KB hit rate: $mycalc{'pct_keys_from_mem'}% ("
+              . hr_num( $mystat{'Key_read_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_reads'} )
+              . " reads)";
+    infoprint " +-- Write KB hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
+              . hr_num( $mystat{'Key_write_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_writes'} )
+              . " writes)";
+
+    if ( $nb_myisam_tables == 0 ) {
+        infoprint "No MyISAM table(s) detected ....";
+        return;
+    }
     if ( mysql_version_ge(8) and mysql_version_le(10) ) {
         infoprint "MyISAM Metrics are disabled since MySQL 8.0.";
         if ( $myvar{'key_buffer_size'} > 0 ) {
@@ -3775,130 +3830,119 @@ sub mysql_myisam {
         }
         return;
     }
-    my $nb_myisam_tables = select_one(
-        "SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM'");
-    if ( $nb_myisam_tables == 0 ) {
-        infoprint "No MyISAM table(s) detected ....";
+    
+    if ( !defined( $mycalc{'total_myisam_indexes'} ) ) {
+        badprint "Unable to calculate MyISAM index size on MySQL server < 5.0.0";
+        push( @generalrec,
+            "Unable to calculate MyISAM index size on MySQL server < 5.0.0" );
         return;
     }
-
-    # Key buffer usage
-    if ( $mycalc{'pct_key_buffer_used'} > 0 ) {
-        if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
-            badprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
-              . hr_bytes( $myvar{'key_buffer_size'} -
-                  $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}
-              )
-              . " used / "
-              . hr_bytes( $myvar{'key_buffer_size'} )
-              . " cache)";
-
-            push(
-                @adjvars,
-                "key_buffer_size (\~ "
-                  . hr_num(
-                    $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'}
-                      / 100
-                  )
-                  . ")"
-            );
-        }
-        else {
-            goodprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
-              . hr_bytes( $myvar{'key_buffer_size'} -
-                  $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}
-              )
-              . " used / "
-              . hr_bytes( $myvar{'key_buffer_size'} )
-              . " cache)";
-        }
-    }
-    else {
-
+    if ( $mycalc{'pct_key_buffer_used'} == 0 ) {
         # No queries have run that would use keys
-        debugprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
+        infoprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
           . hr_bytes( $myvar{'key_buffer_size'} -
               $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'} )
           . " used / "
           . hr_bytes( $myvar{'key_buffer_size'} )
           . " cache)";
+        infoprint "No SQL statement based on MyISAM table(s) detected ....";
+        return
     }
 
-    # Key buffer
-    if ( !defined( $mycalc{'total_myisam_indexes'} ) ) {
-        push( @generalrec,
-            "Unable to calculate MyISAM index size on MySQL server < 5.0.0" );
+    # Key buffer usage
+    if ( $mycalc{'pct_key_buffer_used'} < 90 ) {
+        badprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
+          . hr_bytes( $myvar{'key_buffer_size'} -
+              $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}
+          )
+          . " used / "
+          . hr_bytes( $myvar{'key_buffer_size'} )
+          . " cache)";
+
+        push(
+            @adjvars,
+            "key_buffer_size (\~ "
+              . hr_num(
+                $myvar{'key_buffer_size'} * $mycalc{'pct_key_buffer_used'}
+                  / 100
+              )
+              . ")"
+        );
+    } else {
+      goodprint "Key buffer used: $mycalc{'pct_key_buffer_used'}% ("
+          . hr_bytes( $myvar{'key_buffer_size'} -
+          $mystat{'Key_blocks_unused'} * $myvar{'key_cache_block_size'}
+        )
+        . " used / "
+        . hr_bytes( $myvar{'key_buffer_size'} )
+        . " cache)";
+    }
+
+    # Key buffer size / total MyISAM indexes
+    if (   $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
+        && $mycalc{'pct_keys_from_mem'} < 95 )
+    {
+        badprint "Key buffer size / total MyISAM indexes: "
+          . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
+          . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
+        push( @adjvars,
+                "key_buffer_size (> "
+              . hr_bytes( $mycalc{'total_myisam_indexes'} )
+              . ")" );
     }
     else {
-        if (   $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
-            && $mycalc{'pct_keys_from_mem'} < 95 )
-        {
-            badprint "Key buffer size / total MyISAM indexes: "
-              . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
-              . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
-            push( @adjvars,
-                    "key_buffer_size (> "
-                  . hr_bytes( $mycalc{'total_myisam_indexes'} )
-                  . ")" );
+        goodprint "Key buffer size / total MyISAM indexes: "
+          . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
+          . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
+    }
+    if ( $mystat{'Key_read_requests'} > 0 ) {
+        if ( $mycalc{'pct_keys_from_mem'} < 95 ) {
+            badprint
+              "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% ("
+              . hr_num( $mystat{'Key_read_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_reads'} )
+              . " reads)";
         }
         else {
-            goodprint "Key buffer size / total MyISAM indexes: "
-              . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
-              . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
+            goodprint
+              "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% ("
+              . hr_num( $mystat{'Key_read_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_reads'} )
+              . " reads)";
         }
-        if ( $mystat{'Key_read_requests'} > 0 ) {
-            if ( $mycalc{'pct_keys_from_mem'} < 95 ) {
-                badprint
-                  "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% ("
-                  . hr_num( $mystat{'Key_read_requests'} )
-                  . " cached / "
-                  . hr_num( $mystat{'Key_reads'} )
-                  . " reads)";
-            }
-            else {
-                goodprint
-                  "Read Key buffer hit rate: $mycalc{'pct_keys_from_mem'}% ("
-                  . hr_num( $mystat{'Key_read_requests'} )
-                  . " cached / "
-                  . hr_num( $mystat{'Key_reads'} )
-                  . " reads)";
-            }
-        }
-        else {
+    }
 
-            # No queries have run that would use keys
-            debugprint "Key buffer size / total MyISAM indexes: "
-              . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
-              . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
-        }
-        if ( $mystat{'Key_write_requests'} > 0 ) {
-            if ( $mycalc{'pct_wkeys_from_mem'} < 95 ) {
-                badprint
-                  "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
-                  . hr_num( $mystat{'Key_write_requests'} )
-                  . " cached / "
-                  . hr_num( $mystat{'Key_writes'} )
-                  . " writes)";
-            }
-            else {
-                goodprint
-                  "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
-                  . hr_num( $mystat{'Key_write_requests'} )
-                  . " cached / "
-                  . hr_num( $mystat{'Key_writes'} )
-                  . " writes)";
-            }
-        }
-        else {
-
-            # No queries have run that would use keys
-            debugprint
+    # No queries have run that would use keys
+    debugprint "Key buffer size / total MyISAM indexes: "
+      . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
+      . hr_bytes( $mycalc{'total_myisam_indexes'} ) . "";
+    if ( $mystat{'Key_write_requests'} > 0 ) {
+        if ( $mycalc{'pct_wkeys_from_mem'} < 95 ) {
+            badprint
               "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
               . hr_num( $mystat{'Key_write_requests'} )
               . " cached / "
               . hr_num( $mystat{'Key_writes'} )
               . " writes)";
         }
+        else {
+            goodprint
+              "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
+              . hr_num( $mystat{'Key_write_requests'} )
+              . " cached / "
+              . hr_num( $mystat{'Key_writes'} )
+              . " writes)";
+        }
+    } else {
+      # No queries have run that would use keys
+      debugprint
+        "Write Key buffer hit rate: $mycalc{'pct_wkeys_from_mem'}% ("
+        . hr_num( $mystat{'Key_write_requests'} )
+        . " cached / "
+        . hr_num( $mystat{'Key_writes'} )
+        . " writes)";
     }
 }
 
@@ -5650,7 +5694,7 @@ sub get_wsrep_options {
     @galera_options = remove_cr @galera_options;
     @galera_options = remove_empty @galera_options;
 
-    #debugprint Dumper( \@galera_options );
+    #debugprint Dumper( \@galera_options ) if $opt{debug};
     return @galera_options;
 }
 
@@ -5984,7 +6028,7 @@ having sum(if(c.column_key in ('PRI', 'UNI'), 1, 0)) = 0"
         }
     }
 
-    #debugprint Dumper get_wsrep_options();
+    #debugprint Dumper get_wsrep_options() if $opt{debug};
 }
 
 # Recommendations for InnoDB
@@ -6091,9 +6135,25 @@ sub mysql_innodb {
     }
 
     # InnoDB Buffer Pool Size
+    if ($arch == 32 && $myvar{'innodb_buffer_pool_size'} > 4294967295) {
+      badprint "InnoDb Buffer Pool size limit reached for 32 bits architecture: (". hr_bytes(4294967295)." )";
+      push( @adjvars, "limit innodb_buffer_pool_size under ".hr_bytes(4294967295)." for 32 bits architecture");
+    }
+    if ($arch == 32 && $myvar{'innodb_buffer_pool_size'} < 4294967295) {
+      goodprint "InnoDb Buffer Pool size ( " . hr_bytes($myvar{'innodb_buffer_pool_size'}). " ) under limit for 32 bits architecture: (". hr_bytes(4294967295 ).")";
+    }
+    if ($arch == 64 && $myvar{'innodb_buffer_pool_size'} > 18446744073709551615 ) {
+      badprint "InnoDb Buffer Pool size limit(". hr_bytes(18446744073709551615 ).") reached for 64 bits architecture";
+      push( @adjvars, "limit innodb_buffer_pool_size under ".hr_bytes(18446744073709551615)." for 64 bits architecture");
+    } 
+
+    if ($arch == 64 && $myvar{'innodb_buffer_pool_size'} < 18446744073709551615 ) {
+      goodprint "InnoDb Buffer Pool size ( " . hr_bytes($myvar{'innodb_buffer_pool_size'}). " ) under limit for 64 bits architecture: (". hr_bytes(18446744073709551615 )." )";
+    } 
     if ( $myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'} ) {
         goodprint "InnoDB buffer pool / data size: "
-          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " / "
+          . hr_bytes( $myvar{'
+          '} ) . " / "
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
     } else {
         badprint "InnoDB buffer pool / data size: "
@@ -7041,7 +7101,8 @@ os_setup;                  # Set up some OS variables
 get_all_vars;              # Toss variables/status into hashes
 get_tuning_info;           # Get information about the tuning connection
 calculations;              # Calculate everything we need
-
+check_architecture;        # Suggest 64-bit upgrade
+check_storage_engines;     # Show enabled storage engines
 if ( $opt{'feature'} ne '' ) {
     subheaderprint "See FEATURES.md for more information";
     no strict 'refs';
@@ -7049,14 +7110,13 @@ if ( $opt{'feature'} ne '' ) {
         subheaderprint "Running feature: $opt{'feature'}";
         $feature->();
     }
+    make_recommendations;
     exit(0);
 }
 validate_mysql_version;    # Check current MySQL version
 
-check_architecture;        # Suggest 64-bit upgrade
 system_recommendations;    # Avoid too many services on the same host
 log_file_recommendations;  # check log file content
-check_storage_engines;     # Show enabled storage engines
 
 check_metadata_perf;    # Show parameter impacting performance during analysis
 mysql_databases;        # Show information about databases
@@ -7101,7 +7161,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.9 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.11 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 

@@ -229,6 +229,12 @@ Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can exe
 
 __Usage:__ Minimal usage remotely
 
+In previous version, --forcemem shoud be set manually, in order to be able to run an MT analysis
+
+Since 2.1.10, memory and swap are defined to 1Gb by default.
+
+If you want a more accurate value according to your remote server, feel free to setup --forcemem and --forceswap to real RAM value
+
 ```bash
 perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
 ```
