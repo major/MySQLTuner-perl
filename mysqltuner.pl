@@ -6121,6 +6121,7 @@ sub mysql_innodb {
               )
               . ") if possible, so InnoDB Redo log Capacity equals 25% of buffer pool size."
           );
+          push ( @generalrec, "Be careful, increasing innodb_redo_log_capacity means higher crash recovery mean time");
         } else {
           badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
           . $mycalc{'innodb_log_size_pct'} . "%): "
@@ -6137,6 +6138,7 @@ sub mysql_innodb {
               )
               . ") if possible, so InnoDB total log file size equals 25% of buffer pool size."
           );
+          push ( @generalrec, "Be careful, increasing innodb_log_file_size / innodb_log_files_in_group means higher crash recovery mean time");
       }
       if ( mysql_version_le( 5, 6, 2 ) ) {
             push( @generalrec,
