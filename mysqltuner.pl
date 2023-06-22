@@ -1120,6 +1120,7 @@ sub select_csv_file {
         print $l if $opt{debug};
     }
     close $fh;
+    infoprint "CSV file $tfile created";
 }
 
 sub human_size {
@@ -5722,6 +5723,97 @@ sub get_wsrep_option {
     return $memValue;
 }
 
+# REcommendations for Tables
+sub mysql_table_structures {
+    subheaderprint "Table structures analysis";
+
+    my @primaryKeysNbTables = select_array(
+        "Select CONCAT(c.table_schema, ',' , c.table_name)
+from information_schema.columns c
+join information_schema.tables t using (TABLE_SCHEMA, TABLE_NAME)
+where c.table_schema not in ('sys', 'mysql', 'information_schema', 'performance_schema')
+  and t.table_type = 'BASE TABLE'
+group by c.table_schema,c.table_name
+having sum(if(c.column_key in ('PRI', 'UNI'), 1, 0)) = 0"
+    );
+    
+    my $tmpContent='Schema,Table';
+    if ( scalar(@primaryKeysNbTables) > 0 ) {
+        badprint "Following table(s) don't have primary key:";
+        foreach my $badtable (@primaryKeysNbTables) {
+            badprint "\t$badtable";
+            push @{ $result{'Tables without PK'} }, $badtable;
+            $tmpContent.="\n$badtable";
+        }
+        push @generalrec,
+          "Ensure that all table(s) get an explicit primary keys for performance, maintenance and also for replication";
+        
+    }
+    else {
+        goodprint "All tables get a primary key";
+    }
+    dump_into_file( "tables_without_primary_keys.csv", $tmpContent );
+
+    my @nonInnoDBTables = select_array(
+"select CONCAT(table_schema, ',', table_name, ',', ENGINE) 
+FROM information_schema.tables t
+WHERE ENGINE <> 'InnoDB' 
+and t.table_type = 'BASE TABLE'
+and table_schema not in 
+('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    $tmpContent='Schema,Table,Engine';
+    if ( scalar(@nonInnoDBTables) > 0 ) {
+        badprint "Following table(s) are not InnoDB table:";
+        push @generalrec,
+          "Ensure that all table(s) are InnoDB tables for performance and also for replication";
+        foreach my $badtable (@nonInnoDBTables) {
+            badprint "\t$badtable";
+            $tmpContent.="\n$badtable";
+        }
+    }
+    else {
+        goodprint "All tables are InnoDB tables";
+    }
+    dump_into_file( "tables_non_innodb.csv", $tmpContent );
+
+    my @nonutf8columns = select_array(
+"SELECT CONCAT(table_schema, ',', table_name, ',', column_name, ',', CHARacter_set_name, ',', COLLATION_name, ',', data_type, ',', CHARACTER_MAXIMUM_LENGTH)
+from information_schema.columns
+WHERE table_schema not in ('sys', 'mysql', 'performance_schema', 'information_schema')
+and (CHARacter_set_name  NOT LIKE 'utf8%'
+or COLLATION_name NOT LIKE 'utf8%');"
+    );
+    $tmpContent='Schema,Table,Column, Charset, Collation, Data Type, Max Length';
+    if ( scalar(@nonutf8columns) > 0 ) {
+        badprint "Following character columns(s) are not utf8 compliant:";
+        push @generalrec,
+          "Ensure that all text colums(s) are UTF-8 compliant for encoding support and performance";
+        foreach my $badtable (@nonutf8columns) {
+            badprint "\t$badtable";
+            $tmpContent.="\n$badtable";
+        }
+    }
+    else {
+        goodprint "All columns are UTF-8 compliant";
+    }
+    dump_into_file( "columns_non_utf8.csv", $tmpContent );
+
+my @utf8columns = select_array(
+"SELECT CONCAT(table_schema, ',', table_name, ',', column_name, ',', CHARacter_set_name, ',', COLLATION_name, ',', data_type, ',', CHARACTER_MAXIMUM_LENGTH)
+from information_schema.columns
+WHERE table_schema not in ('sys', 'mysql', 'performance_schema', 'information_schema')
+and (CHARacter_set_name  LIKE 'utf8%'
+or COLLATION_name LIKE 'utf8%');"
+    );
+    $tmpContent='Schema,Table,Column, Charset, Collation, Data Type, Max Length';
+    foreach my $badtable (@utf8columns) {
+            badprint "\t$badtable";
+            $tmpContent.="\n$badtable";
+        }
+    dump_into_file( "columns_utf8.csv", $tmpContent );
+
+}
 # Recommendations for Galera
 sub mariadb_galera {
     subheaderprint "Galera Metrics";
@@ -5760,16 +5852,6 @@ sub mariadb_galera {
     infoprint "GCache is using "
       . hr_bytes_rnd( get_wsrep_option('gcache.mem_size') );
 
-    #my @primaryKeysNbTables=();
-    my @primaryKeysNbTables = select_array(
-        "Select CONCAT(c.table_schema,CONCAT('.', c.table_name))
-from information_schema.columns c
-join information_schema.tables t using (TABLE_SCHEMA, TABLE_NAME)
-where c.table_schema not in ('mysql', 'information_schema', 'performance_schema')
-  and t.table_type != 'VIEW'
-group by c.table_schema,c.table_name
-having sum(if(c.column_key in ('PRI', 'UNI'), 1, 0)) = 0"
-    );
 
     infoprint "CPU cores detected : " . (cpu_cores);
     infoprint "wsrep_slave_threads: " . get_wsrep_option('wsrep_slave_threads');
@@ -5836,30 +5918,6 @@ having sum(if(c.column_key in ('PRI', 'UNI'), 1, 0)) = 0"
 "Flow control fraction seems to be OK (wsrep_flow_control_paused <= 0.02)";
     }
 
-    if ( scalar(@primaryKeysNbTables) > 0 ) {
-        badprint "Following table(s) don't have primary key:";
-        foreach my $badtable (@primaryKeysNbTables) {
-            badprint "\t$badtable";
-            push @{ $result{'Tables without PK'} }, $badtable;
-        }
-    }
-    else {
-        goodprint "All tables get a primary key";
-    }
-    my @nonInnoDBTables = select_array(
-"select CONCAT(table_schema,CONCAT('.', table_name)) from information_schema.tables where ENGINE <> 'InnoDB' and table_schema not in ('mysql', 'performance_schema', 'information_schema')"
-    );
-    if ( scalar(@nonInnoDBTables) > 0 ) {
-        badprint "Following table(s) are not InnoDB table:";
-        push @generalrec,
-          "Ensure that all table(s) are InnoDB tables for Galera replication";
-        foreach my $badtable (@nonInnoDBTables) {
-            badprint "\t$badtable";
-        }
-    }
-    else {
-        goodprint "All tables are InnoDB tables";
-    }
     if ( $myvar{'binlog_format'} ne 'ROW' ) {
         badprint "Binlog format should be in ROW mode.";
         push @adjvars, "binlog_format = ROW";
@@ -7126,6 +7184,7 @@ log_file_recommendations;  # check log file content
 check_metadata_perf;    # Show parameter impacting performance during analysis
 mysql_databases;        # Show information about databases
 mysql_tables;           # Show information about table column
+mysql_table_structures; # Show information about table structures
 
 mysql_indexes;               # Show information about indexes
 mysql_views;                 # Show information about views
