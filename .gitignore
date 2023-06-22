@@ -16,3 +16,4 @@ test_db/**
 result*
 result_*
 sql/*.sql
+sql/*.csv
