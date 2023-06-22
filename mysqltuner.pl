@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.1.10
+# mysqltuner.pl - Version 2.1.11
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.1.10";
+my $tunerversion = "2.1.11";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3784,11 +3784,20 @@ sub mysql_myisam {
     push (@generalrec, "MyISAM engine is deprecated, consider migrating to InnoDB") if $nb_myisam_tables > 0;
     
     if ($nb_myisam_tables > 0) {
-        badprint "Consider migrating $nb_myisam_tables followning tables to InnoDB:";
-        for my $myisam_table ( select_array("SELECT CONCAT(TABLE_SCHEMA, '.', TABLE_NAME) FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')" )) {
-          infoprint "* SQL migration for $myisam_table: ALTER TABLE $myisam_table ENGINE=InnoDB;";
-        }
-    }     
+      badprint "Consider migrating $nb_myisam_tables followning tables to InnoDB:";
+      my $sql_mig="";
+      for my $myisam_table ( select_array("SELECT CONCAT(TABLE_SCHEMA, '.', TABLE_NAME) FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')" )) {
+        $sql_mig="${sql_mig}-- InnoDB migration for $myisam_table\nALTER TABLE $myisam_table ENGINE=InnoDB;\n\n";
+        infoprint "* InnoDB migration request for $myisam_table Table: ALTER TABLE $myisam_table ENGINE=InnoDB;";
+      }
+      if ( -d "$opt{dumpdir}" ) {
+        my $file_mig="$opt{dumpdir}/migrate_myisam_to_innodb.sql";
+        open (FILE, ">$file_mig") or die "Can't open $file_mig: $!";
+        print FILE $sql_mig;
+        close FILE;
+        infoprint "Migration script saved to $file_mig";
+      }
+    }  
     infoprint("General MyIsam metrics:");
     infoprint " +-- Total MyISAM Tables  : $nb_myisam_tables";
     infoprint " +-- Total MyISAM indexes : "
@@ -7152,7 +7161,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.1.10 - MySQL High Performance Tuning Script
+ MySQLTuner 2.1.11 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
