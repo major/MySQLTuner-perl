@@ -2750,6 +2750,17 @@ sub check_storage_engines {
 
 my %mycalc;
 
+sub dump_into_file {
+  my $file=shift;
+  my $content=shift;
+  if ( -d "$opt{dumpdir}" ) {
+        $file="$opt{dumpdir}/$file";
+        open (FILE, ">$file") or die "Can't open $file: $!";
+        print FILE $content;
+        close FILE;
+        infoprint "Data saved to $file";
+      }
+}
 sub calculations {
     if ( $mystat{'Questions'} < 1 ) {
         badprint "Your server has not answered any queries: cannot continue...";
@@ -3790,13 +3801,7 @@ sub mysql_myisam {
         $sql_mig="${sql_mig}-- InnoDB migration for $myisam_table\nALTER TABLE $myisam_table ENGINE=InnoDB;\n\n";
         infoprint "* InnoDB migration request for $myisam_table Table: ALTER TABLE $myisam_table ENGINE=InnoDB;";
       }
-      if ( -d "$opt{dumpdir}" ) {
-        my $file_mig="$opt{dumpdir}/migrate_myisam_to_innodb.sql";
-        open (FILE, ">$file_mig") or die "Can't open $file_mig: $!";
-        print FILE $sql_mig;
-        close FILE;
-        infoprint "Migration script saved to $file_mig";
-      }
+      dump_into_file("migrate_myisam_to_innodb.sql", $sql_mig );
     }  
     infoprint("General MyIsam metrics:");
     infoprint " +-- Total MyISAM Tables  : $nb_myisam_tables";
