@@ -69,8 +69,8 @@ my %opt = (
     "debug"               => 0,
     "nocolor"             => ( !-t STDOUT ),
     "color"               => 0,
-    "forcemem"            => 1024,
-    "forceswap"           => 1024,
+    "forcemem"            => 0,
+    "forceswap"           => 0,
     "host"                => 0,
     "socket"              => 0,
     "port"                => 0,
@@ -811,7 +811,15 @@ sub mysql_setup {
 # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
         if ( $opt{'forcemem'} eq 0 && is_remote eq 1 ) {
             badprint "The --forcemem option is required for remote connections";
-            exit 1;
+            badprint "Assuming RAM memory is 1Gb for simplify remote connection usage";
+            $opt{'forcemem'} = 1024;
+            #exit 1;
+        }
+        if ( $opt{'forceswap'} eq 0 && is_remote eq 1 ) {
+            badprint "The --forceswap option is required for remote connections";
+            badprint "Assuming Swap size is 1Gb for simplify remote connection usage";
+            $opt{'forceswap'} = 1024;
+            #exit 1;
         }
         infoprint "Performing tests on $opt{host}:$opt{port}";
         $remotestring = " -h $opt{host} -P $opt{port}";
@@ -1974,9 +1982,26 @@ sub system_recommendations {
         return;
     }
     prettyprint "Look for related Linux system recommendations";
-
+    
     #prettyprint '-'x78;
     get_system_info();
+    
+    
+    my $nb_cpus = cpu_cores;
+    if ($nb_cpus > 1) {
+        goodprint "There is at least one CPU dedicated to database server.";
+    } else {
+        badprint "There is only one CPU, consider dedicated one CPU for your database server";
+        push @generalrec, "Consider increasing number of CPU for your database server";
+    }
+    
+    if ($physical_memory < 1600) {
+        goodprint "There is at least 1 Gb of RAM dedicated to Linux server.";
+    } else {
+        badprint "There is less than 1,5 Gb of RAM, consider dedicated 1 Gb for your Linux server";
+        push @generalrec, "Consider increasing 1,5 / 2 Gb of RAM for your Linux server";
+    }
+    
     my $omem = get_other_process_memory;
     infoprint "User process except mysqld used "
       . hr_bytes_rnd($omem) . " RAM.";
@@ -5808,7 +5833,6 @@ or COLLATION_name LIKE 'utf8%');"
     );
     $tmpContent='Schema,Table,Column, Charset, Collation, Data Type, Max Length';
     foreach my $badtable (@utf8columns) {
-            badprint "\t$badtable";
             $tmpContent.="\n$badtable";
         }
     dump_into_file( "columns_utf8.csv", $tmpContent );
