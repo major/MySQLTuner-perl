@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.2.1
+# mysqltuner.pl - Version 2.2.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.2.1";
+my $tunerversion = "2.2.2";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -5793,11 +5793,14 @@ and table_schema not in
         push @generalrec,
           "Ensure that all table(s) are InnoDB tables for performance and also for replication";
         foreach my $badtable (@nonInnoDBTables) {
-            badprint "\t$badtable";
+            if ( $badtable =~ /Memory/i ) {
+              badprint "Table $badtable is a MEMORY table. It's suggested to use only InnoDB tables in production";
+            } else {
+              badprint "\t$badtable";
+            }
             $tmpContent.="\n$badtable";
         }
-    }
-    else {
+    } else {
         goodprint "All tables are InnoDB tables";
     }
     dump_into_file( "tables_non_innodb.csv", $tmpContent );
@@ -5836,6 +5839,18 @@ or COLLATION_name LIKE 'utf8%');"
             $tmpContent.="\n$badtable";
         }
     dump_into_file( "columns_utf8.csv", $tmpContent );
+
+my @ftcolumns = select_array(
+"SELECT CONCAT(table_schema, ',', table_name, ',', column_name, ',', data_type)
+from information_schema.columns
+WHERE table_schema not in ('sys', 'mysql', 'performance_schema', 'information_schema')
+AND data_type='FULLTEXT';"
+    );
+    $tmpContent='Schema,Table,Column, Data Type';
+    foreach my $ctable (@ftcolumns) {
+            $tmpContent.="\n$ctable";
+      }
+    dump_into_file( "fulltext_columns.csv", $tmpContent );
 
 }
 # Recommendations for Galera
@@ -7249,7 +7264,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.2.1 - MySQL High Performance Tuning Script
+ MySQLTuner 2.2.2 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
