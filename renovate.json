@@ -1,5 +1,9 @@
 {
   "extends": [
     "config:base"
-  ]
+  ],
+  "git-submodules": {
+    "enabled": true
+  },
+  "dependencyDashboard": true
 }
