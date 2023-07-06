@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.2.3
+# mysqltuner.pl - Version 2.2.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.2.3";
+my $tunerversion = "2.2.4";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -96,6 +96,8 @@ my %opt = (
     "nocolstat"           => 0,
     "idxstat"             => 0,
     "noidxstat"           => 0,
+    "nomyisamstat"        => 0,
+    "nostructstat"        => 0,
     "sysstat"             => 0,
     "nosysstat"           => 0,
     "pfstat"              => 0,
@@ -144,6 +146,8 @@ GetOptions(
     'sysstat',               'nosysstat',
     'pfstat',                'nopfstat',
     'idxstat',               'noidxstat',
+    'structstat',            'nostructstat',
+    'myisamstat',            'nomyisamstat',
     'server-log=s',          'protocol=s',
     'defaults-extra-file=s', 'dumpdir=s',
     'feature=s',             'dbgpattern=s',
@@ -214,6 +218,9 @@ if ( $opt{verbose} ) {
     $opt{sysstat}      = 1;    # Print index information
     $opt{buffers}      = 1;    # Print global and per-thread buffer values
     $opt{pfstat}       = 1;    # Print performance schema info.
+    $opt{structstat}   = 1;   # Print table structure information
+    $opt{myisamstat}   = 1;   # Print MyISAM table information
+
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
@@ -226,6 +233,8 @@ $opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't print sysstat information
 $opt{pfstat}  = 0
   if ( $opt{nopfstat} == 1 );    # Don't print performance schema information
 $opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't print index information
+$opt{structstat} = 0 if ( $opt{nostructstat} == 1 );   # Don't print table struct information
+$opt{myisamstat} = 0 if ( $opt{nomyisamstat} == 1 );   # Don't print MyISAM table information
 
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
@@ -3815,6 +3824,7 @@ sub mysql_stats {
 
 # Recommendations for MyISAM
 sub mysql_myisam {
+    return 0 unless $opt{'myisamstat'} == 1;
     subheaderprint "MyISAM Metrics";
     my $nb_myisam_tables = select_one(
         "SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')");    
@@ -5750,6 +5760,7 @@ sub get_wsrep_option {
 
 # REcommendations for Tables
 sub mysql_table_structures {
+    return 0 unless $opt{structstat}==1;
     subheaderprint "Table structures analysis";
 
     my @primaryKeysNbTables = select_array(
@@ -7264,7 +7275,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.2.3 - MySQL High Performance Tuning Script
+ MySQLTuner 2.2.4 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
