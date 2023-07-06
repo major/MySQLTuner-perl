@@ -6265,8 +6265,7 @@ sub mysql_innodb {
     } 
     if ( $myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'} ) {
         goodprint "InnoDB buffer pool / data size: "
-          . hr_bytes( $myvar{'
-          '} ) . " / "
+          . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " / "
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
     } else {
         badprint "InnoDB buffer pool / data size: "
