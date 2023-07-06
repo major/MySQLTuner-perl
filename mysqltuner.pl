@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.2.2
+# mysqltuner.pl - Version 2.2.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.2.2";
+my $tunerversion = "2.2.3";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3400,9 +3400,9 @@ sub mysql_stats {
         badprint
 "Name resolution is active: a reverse name resolution is made for each new connection which can reduce performance";
         push( @generalrec,
-"Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=OFF"
+"Configure your accounts with ip or subnets only, then update your configuration with skip-name-resolve=ON"
         );
-        push( @adjvars, "skip-name-resolve=OFF" );
+        push( @adjvars, "skip-name-resolve=ON" );
     }
 
     # Query cache
@@ -7264,7 +7264,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.2.2 - MySQL High Performance Tuning Script
+ MySQLTuner 2.2.3 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
