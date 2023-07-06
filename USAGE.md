@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.1.5 - MySQL High Performance Tuning Script
+    MySQLTuner 2.2.5 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -62,8 +62,10 @@ You must provide the remote server's total memory when connecting to other serve
     --nocolstat                 Don't print column information
     --idxstat                   Print index information
     --noidxstat                 Don't print index information
+    --nomyisamstat              Don't print MyIsam information
     --sysstat                   Print system information
     --nosysstat                 Don't print system information
+    --nostructstat              Don't print table structures information
     --pfstat                    Print Performance schema
     --nopfstat                  Don't print Performance schema
     --bannedports               Ports banned separated by comma (,)

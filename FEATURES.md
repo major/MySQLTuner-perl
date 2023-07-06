@@ -26,6 +26,7 @@ Features list for option: --feature (dev only)
 * mysql_routines
 * mysql_setup
 * mysql_stats
+* mysql_table_structures
 * mysql_tables
 * mysql_triggers
 * mysql_version_eq
