@@ -8,11 +8,11 @@
 [![Percentage of open issues](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
 [![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
-**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
+**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
 
-**MySQLTuner** supports ~300 indicators for MySQL/MariaDB/Percona Server in this last version.
+**MySQLTuner** supports ~300 indicators for MySQL/MariaDB/Percona Server in this latest version.
 
-**MySQLTuner** is maintained and indicator collect is increasing week after week supporting a lot of configuration such as [Galera Cluster](http://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, [InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/kb/en/mariadb/aria/), ...
+**MySQLTuner** is actively maintained supporting many configurations such as [Galera Cluster](http://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, [InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/kb/en/mariadb/aria/), ...
 
 You can find more details on these indicators here:
 [Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
@@ -24,7 +24,7 @@ MySQLTuner needs you
 
 **MySQLTuner** needs contributors for documentation, code and feedback:
 
-* Please join us on issue track at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
+* Please join us on our issue tracker at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
 * Paid support for LightPath here: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
@@ -45,41 +45,29 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 * Percona Server 8.0 (partial support, password checks don't work)
 * MySQL 5.7 (full support)
 * Percona Server 5.7 (full support)
-* MariaDB 10.11 (full support)
-* MariaDB 10.10 (full support)
-* MariaDB 10.9 (full support)
-* MariaDB 10.8 (full support)
-* MariaDB 10.7 (full support)
-* MariaDB 10.6 (full support)
-* MariaDB 10.5 (full support)
-* MariaDB 10.4 (full support)
-* MariaDB 10.3 (full support)
+* MariaDB 10.3 - 10.11 (full support)
 * Galera replication (full support)
 * Percona XtraDB cluster (full support)
 * Mysql Replications (partial support, no test environment)
 
-* MySQL 5.6 (no support, deprecated version)
-* Percona Server 5.6 (no support, deprecated version)
-* MySQL 5.5 (no support, deprecated version)
-* MariaDB 5.5 (no support, deprecated version)
-* MariaDB 10.2 (no support, deprecated version)
-* MariaDB 10.1 (no support, deprecated version)
-* MariaDB 10.0 (no support, deprecated version)
-* MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (no support - deprecated version)
+* MySQL 5.6 and earlier (not supported, deprecated version)
+* Percona Server 5.6 (not supported, deprecated version)
+* MariaDB 5.5 (not supported, deprecated version)
+* MariaDB 10.2 and earlier (not supported, deprecated version)
 
 ***Windows Support is partial***
 
 * Windows is now supported at this time
-* Successfully run MySQLtuner across WSL2 (Windows Subsystem Linux )
+* Successfully run MySQLtuner across WSL2 (Windows Subsystem Linux)
 * [https://docs.microsoft.com/en-us/windows/wsl/](https://docs.microsoft.com/en-us/windows/wsl/)
 
-***UNSUPPORTED ENVIRONMENTS - NEED HELP FOR THAT :)***
-* Cloud based is not supported at this time (Help wanted !!!!! GCP, AWS, Azure support asked)
+***UNSUPPORTED ENVIRONMENTS - NEED HELP WITH THAT***
+* Cloud based is not supported at this time (Help wanted! GCP, AWS, Azure support requested)
 
 ***Unsupported storage engines: PRs welcome***
 
-* NDB is not supported feel free to Pull Request code :)
-* MyISAM is to old is no longer active
+* NDB is not supported feel free to create a Pull Request
+* MyISAM is too old and no longer active
 * RockDB
 * Archive
 * Spider
@@ -99,18 +87,18 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 ***WARNING***
 --
 
-It is **extremely important** for you to fully understand each change
+It is **important** for you to fully understand each change
 you make to a MySQL database server.  If you don't understand portions
 of the script's output, or if you don't understand the recommendations,
 **you should consult** a knowledgeable DBA or system administrator
 that you trust.  **Always** test your changes on staging environments, and
-always keep in mind that improvements in one area can **negatively affect**
+always keep in mind that improvements in one area can **adversely affect**
 MySQL in other areas.
 
-It's **also important** to wait at least a day of uptime to get accurate results. In fact, running
+It's **also important** to wait at least 24 hours of uptime to get accurate results. In fact, running
 **mysqltuner** on a fresh restarted server is completely useless.
 
-**Seriously - please review the FAQ section below.**
+**Also review the FAQ section below.**
 
 Security recommendations
 --
@@ -119,7 +107,7 @@ Hi directadmin user!
 We detected that you run mysqltuner with da_admin's credentials taken from `/usr/local/directadmin/conf/my.cnf`, which might bring to a password discovery!
 Read link for more details [Issue #289](https://github.com/major/MySQLTuner-perl/issues/289).
 
-What MySQLTuner is checking exactly ?
+What is MySQLTuner checking exactly ?
 --
 
 All checks done by **MySQLTuner** are documented in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) documentation.
@@ -167,7 +155,7 @@ By default, on MariaDB, performance schema is disabled by default. consider acti
 performance_schema = on
 ```
 
-You can follow this command to create a new database sys containing very useful view on Performance schema:
+You can follow this command to create a new database sys containing a useful view on Performance schema:
 
 ```bash
 curl "https://codeload.github.com/FromDual/mariadb-sys/zip/master" > mariadb-sys.zip
@@ -186,7 +174,7 @@ Have a look at #452 solution given by @ericx
 Performance tips
 --
 
-Metadata statistic updates can impact strongly performance of database servers and MySQLTuner.
+Metadata statistic updates can strongly impact performance of database servers.
 Be sure that innodb_stats_on_metadata is disabled.
 
 ```bash
@@ -196,7 +184,7 @@ set global innodb_stats_on_metadata = 0;
 Fixing sysctl configuration (/etc/sysctl.conf)
 --
 
-It is a system wide setting: [Linux FS Kernel settings](https://www.kernel.org/doc/html/latest/admin-guide/sysctl/fs.html#id1)
+It is a system wide setting and not a database setting: [Linux FS Kernel settings](https://www.kernel.org/doc/html/latest/admin-guide/sysctl/fs.html#id1)
 
 You can check its values via:
 
@@ -227,11 +215,11 @@ __Usage:__ Minimal usage locally
 perl mysqltuner.pl --host 127.0.0.1
 ```
 
-Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling perl directly.
+Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling Perl directly.
 
 __Usage:__ Minimal usage remotely
 
-In previous version, --forcemem shoud be set manually, in order to be able to run an MT analysis
+In previous version, --forcemem shoud be set manually, in order to be able to run an MySQLTuner analysis
 
 Since 2.1.10, memory and swap are defined to 1Gb by default.
 
@@ -389,7 +377,7 @@ To optimize other database systems, you would need to use tools designed for tho
 
 **Question: Does MySQL tuner support MariaDB and Percona Server ?**
 
-Yes, MySQL tuner supports MariaDB and Percona Server since they are forks of MySQL and share a similar architecture. The script can analyze and provide recommendations for these systems as well.
+Yes, MySQL tuner supports MariaDB and Percona Server since they are derivatives of MySQL and share a similar architecture. The script can analyze and provide recommendations for these systems as well.
 
 **Question: What should I do if I need help with MySQL tuner or have questions about the recommendations ?**
 
@@ -399,7 +387,7 @@ Be cautious when implementing changes to ensure the stability and performance of
 
 **Question: Will MySQLTuner fix my slow MySQL server ?**
 
-**No.**  MySQLTuner is a read only script.  It won't write to any configuration files, change the status of any daemons, or call your mother to wish her a happy birthday.  It will give you an overview of your server's performance and make some basic recommendations for improvements that you can make after it completes.  *Make sure you read the warning above prior to following any recommendations.*
+**No.**  MySQLTuner is a read only script.  It won't write to any configuration files, change the status of any daemons.  It will give you an overview of your server's performance and make some basic recommendations for improvements that you can make after it completes.
 
 **Question: Can I fire my DBA now?**
 
@@ -415,7 +403,7 @@ The script will try its best to log in via any means possible.  It will check fo
 	user=someusername
 	password=thatuserspassword
 
-Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.  If a [T-1000 shows up in a LAPD uniform](https://en.wikipedia.org/wiki/T-1000) and demands your database credentials, you won't have much of an option.
+Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.
 
 **Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
 
