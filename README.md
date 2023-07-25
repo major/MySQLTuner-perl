@@ -174,7 +174,7 @@ Have a look at #452 solution given by @ericx
 Performance tips
 --
 
-Metadata statistic updates can strongly impact performance of database servers.
+Metadata statistic updates in MySQL 5.6 and lower can strongly impact performance of database servers.
 Be sure that innodb_stats_on_metadata is disabled.
 
 ```bash
