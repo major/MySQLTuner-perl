@@ -6303,7 +6303,7 @@ sub mysql_innodb {
     # InnoDB Buffer Pool Size
     if ( $arch == 32 && $myvar{'innodb_buffer_pool_size'} > 4294967295 ) {
         badprint
-          "InnoDb Buffer Pool size limit reached for 32 bits architecture: ("
+          "InnoDB Buffer Pool size limit reached for 32 bits architecture: ("
           . hr_bytes(4294967295) . " )";
         push( @adjvars,
                 "limit innodb_buffer_pool_size under "
@@ -6311,7 +6311,7 @@ sub mysql_innodb {
               . " for 32 bits architecture" );
     }
     if ( $arch == 32 && $myvar{'innodb_buffer_pool_size'} < 4294967295 ) {
-        goodprint "InnoDb Buffer Pool size ( "
+        goodprint "InnoDB Buffer Pool size ( "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " ) under limit for 32 bits architecture: ("
           . hr_bytes(4294967295) . ")";
@@ -6319,7 +6319,7 @@ sub mysql_innodb {
     if (   $arch == 64
         && $myvar{'innodb_buffer_pool_size'} > 18446744073709551615 )
     {
-        badprint "InnoDb Buffer Pool size limit("
+        badprint "InnoDB Buffer Pool size limit("
           . hr_bytes(18446744073709551615)
           . ") reached for 64 bits architecture";
         push( @adjvars,
@@ -6331,7 +6331,7 @@ sub mysql_innodb {
     if (   $arch == 64
         && $myvar{'innodb_buffer_pool_size'} < 18446744073709551615 )
     {
-        goodprint "InnoDb Buffer Pool size ( "
+        goodprint "InnoDB Buffer Pool size ( "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " ) under limit for 64 bits architecture: ("
           . hr_bytes(18446744073709551615) . " )";
