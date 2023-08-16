@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.2.7
+# mysqltuner.pl - Version 2.2.8
 # High Performance MySQL Tuning Script
-# Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
+# Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 
 # For the latest updates, please visit http://mysqltuner.pl/
 # Git repository available at https://github.com/major/MySQLTuner-perl
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.2.7";
+my $tunerversion = "2.2.8";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -235,9 +235,12 @@ $opt{pfstat}  = 0
   if ( $opt{nopfstat} == 1 );    # Don't print performance schema information
 $opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't print index information
 $opt{structstat} = 0
-  if ( not defined($opt{structstat}) or $opt{nostructstat} == 1 );    # Don't print table struct information
+  if ( not defined( $opt{structstat} ) or $opt{nostructstat} == 1 )
+  ;    # Don't print table struct information
 $opt{myisamstat} = 1
-  if ( not defined($opt{myisamstat}) or $opt{nomyisamstat} == 0 );    # Don't print MyISAM table information
+  if ( not defined( $opt{myisamstat} ) or $opt{nomyisamstat} == 0 )
+  ;    # Don't print MyISAM table information
+
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
   unless ( defined $opt{cvefile} and -f "$opt{cvefile}" );
@@ -3856,7 +3859,7 @@ sub mysql_stats {
 
 # Recommendations for MyISAM
 sub mysql_myisam {
-    return 0 unless ($opt{'myisamstat'} > 0);
+    return 0 unless ( $opt{'myisamstat'} > 0 );
     subheaderprint "MyISAM Metrics";
     my $nb_myisam_tables = select_one(
 "SELECT COUNT(*) FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')"
@@ -5806,7 +5809,7 @@ sub get_wsrep_option {
 
 # REcommendations for Tables
 sub mysql_table_structures {
-    return 0 unless ($opt{structstat} > 0);
+    return 0 unless ( $opt{structstat} > 0 );
     subheaderprint "Table structures analysis";
 
     my @primaryKeysNbTables = select_array(
@@ -7354,7 +7357,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.2.7 - MySQL High Performance Tuning Script
+ MySQLTuner 2.2.8 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
