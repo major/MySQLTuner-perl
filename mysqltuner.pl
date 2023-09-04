@@ -1798,7 +1798,7 @@ sub get_fs_info {
             if ( $1 > 85 ) {
                 badprint "mount point $2 is using $1 % of max allowed inodes";
                 push( @generalrec,
-"Cleanup files from $2 mountpoint or reformat you filesystem."
+"Cleanup files from $2 mountpoint or reformat your filesystem."
                 );
             }
             else {
