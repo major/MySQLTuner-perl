@@ -116,7 +116,7 @@
 * Users without host restriction
 * Weak password check (possibly using cracklib later?)
 * Using basic_passwords.txt as password database
-* Password list checks can be avoid (option: --skippassword)
+* Password list checks can be avoided (option: --skippassword)
 
 ## MySQLTuner CVE vulnerabilities detection
 
