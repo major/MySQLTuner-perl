@@ -7405,6 +7405,7 @@ You must provide the remote server's total memory when connecting to other serve
 
  --silent                    Don't output anything on screen
  --verbose                   Print out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
+ --color                     Print output in color
  --nocolor                   Don't print output in color
  --nogood                    Remove OK responses
  --nobad                     Remove negative/suggestion responses
