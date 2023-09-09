@@ -49,7 +49,7 @@ File::Util->flock_rules( qw/ IGNORE/ );
 
 my @versions;
 my $temp;
-unlink '../vulnerabilities.csv' if -f '../vulnerabilities.csv';
+unlink './vulnerabilities.csv' if -f './vulnerabilities.csv';
 open(CVE, 'cve.csv') or die("Could not open  file.");
 foreach my $line (<CVE>) {
 	if ($line =~ /(mysql|mariadb|percona)/i 
@@ -69,7 +69,7 @@ foreach my $line (<CVE>) {
             #print $vers."\n".Dumper @nb;
             #print "$line";
             #exit 0 if ($line =~/before/i) ;
-            $f->write_file('file' => '../vulnerabilities.csv', 'content' => "$nb[0].$nb[1].$nb[2];$nb[0];$nb[1];$nb[2];$line", 'mode' => 'append');
+            $f->write_file('file' => './vulnerabilities.csv', 'content' => "$nb[0].$nb[1].$nb[2];$nb[0];$nb[1];$nb[2];$line", 'mode' => 'append');
         }
 	}
 }
