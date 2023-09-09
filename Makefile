@@ -49,18 +49,24 @@ increment_sub_version:
 	sed -i "s/$(VERSION)/$(UPDATE_SUB_VERSION)/" mysqltuner.pl *.md .github/workflows/*.yml
 	git add ./*.md ./mysqltuner.pl
 	git commit -m "Generate $(UPDATE_SUB_VERSION) sub version at $(shell date --iso=seconds)"
+	git tag -a v$(UPDATE_SUB_VERSION) -m "Generate $(UPDATE_SUB_VERSION) sub version at $(shell date --iso=seconds)"
+	git push --tags
 
 increment_minor_version:
 	@echo "Incrementing minor version from $(VERSION) to $(UPDATE_MINOR_VERSION)"
 	sed -i "s/$(VERSION)/$(UPDATE_MINOR_VERSION)/" mysqltuner.pl *.md .github/workflows/*.yml
 	git add ./*.md ./mysqltuner.pl
-	git commit -m "Generate $(UPDATE_SUB_VERSION) minor version at $(shell date --iso=seconds)"
+	git commit -m "Generate $(UPDATE_MINOR_VERSION) minor version at $(shell date --iso=seconds)"
+	git tag -a v$(UPDATE_MINOR_VERSION) -m "Generate $(UPDATE_MINOR_VERSION) minor version at $(shell date --iso=seconds)"
+	git push --tags
 
 increment_major_version:
 	@echo "Incrementing major version from $(VERSION) to $(UPDATE_MAJOR_VERSION)"
 	sed -i "s/$(VERSION)/$(UPDATE_MAJOR_VERSION)/" mysqltuner.pl *.md .github/workflows/*.yml
 	git add ./*.md ./mysqltuner.pl
 	git commit -m "Generate $(UPDATE_SUB_VERSION) major version at $(shell date --iso=seconds)"
+	git tag -a v$(UPDATE_MINOR_VERSION) -m "Generate $(UPDATE_MAJOR_VERSION) major version at $(shell date --iso=seconds)"
+	git push --tags
 
 push:
 	git push
