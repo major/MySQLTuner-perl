@@ -3562,8 +3562,7 @@ sub mysql_stats {
         push(
             @generalrec,
 "We will suggest raising the 'join_buffer_size' until JOINs not using indexes are found.
-             See https://dev.mysql.com/doc/internals/en/join-buffer-size.html
-             (specially the conclusions at the bottom of the page)."
+             See https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_join_buffer_size"
         );
     }
     else {
