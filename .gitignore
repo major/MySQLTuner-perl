@@ -17,3 +17,4 @@ result*
 result_*
 sql/*.sql
 sql/*.csv
+cve.csv

@@ -26,35 +26,41 @@ installdep_debian:
 tidy:
 	dos2unix ./mysqltuner.pl
 	perltidy -b ./mysqltuner.pl
-#	git add ./mysqltuner.pl
-#	git commit -m "Indenting mysqltuner at $(shell date --iso=seconds)"
+	git add ./mysqltuner.pl
+	git commit -m "Indenting mysqltuner at $(shell date --iso=seconds)"
 
 generate_usage:
 	pod2markdown mysqltuner.pl >USAGE.md
-#	git add ./USAGE.md
-#	git commit -m "Generate USAGE.md at $(shell date --iso=seconds)"
+	git add ./USAGE.md
+	git commit -m "Generate USAGE.md at $(shell date --iso=seconds)"
 
 generate_cve:
 	perl ./build/updateCVElist.pl
-#	git add ./vulnerabilities.csv
-#	git commit -m "Generate CVE list at $(shell date --iso=seconds)"
+	git add ./vulnerabilities.csv
+	git commit -m "Generate CVE list at $(shell date --iso=seconds)"
 
 generate_features:
 	perl ./build/genFeatures.sh
-#	git add ./FEATURES.md
-#	git commit -m "Generate FEATURES.md at $(shell date --iso=seconds)"
+	git add ./FEATURES.md
+	git commit -m "Generate FEATURES.md at $(shell date --iso=seconds)"
 
 increment_sub_version:
 	@echo "Incrementing sub version from $(VERSION) to $(UPDATE_SUB_VERSION)"
 	sed -i "s/$(VERSION)/$(UPDATE_SUB_VERSION)/" mysqltuner.pl *.md
+	git add ./*.md ./mysqltuner.pl
+	git commit -m "Generate $(UPDATE_SUB_VERSION) sub version at $(shell date --iso=seconds)"
 
 increment_minor_version:
 	@echo "Incrementing minor version from $(VERSION) to $(UPDATE_MINOR_VERSION)"
 	sed -i "s/$(VERSION)/$(UPDATE_MINOR_VERSION)/" mysqltuner.pl *.md
+	git add ./*.md ./mysqltuner.pl
+	git commit -m "Generate $(UPDATE_SUB_VERSION) minor version at $(shell date --iso=seconds)"
 
 increment_major_version:
 	@echo "Incrementing major version from $(VERSION) to $(UPDATE_MAJOR_VERSION)"
 	sed -i "s/$(VERSION)/$(UPDATE_MAJOR_VERSION)/" mysqltuner.pl *.md
+	git add ./*.md ./mysqltuner.pl
+	git commit -m "Generate $(UPDATE_SUB_VERSION) major version at $(shell date --iso=seconds)"
 
 push:
 	git push
