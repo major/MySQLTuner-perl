@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.2.9
+# mysqltuner.pl - Version 2.2.12
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.2.9";
+my $tunerversion = "2.2.12";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -3562,8 +3562,7 @@ sub mysql_stats {
         push(
             @generalrec,
 "We will suggest raising the 'join_buffer_size' until JOINs not using indexes are found.
-             See https://dev.mysql.com/doc/internals/en/join-buffer-size.html
-             (specially the conclusions at the bottom of the page)."
+             See https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_join_buffer_size"
         );
     }
     else {
@@ -7357,7 +7356,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.2.9 - MySQL High Performance Tuning Script
+ MySQLTuner 2.2.12 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
