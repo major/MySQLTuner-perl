@@ -811,11 +811,13 @@ sub mysql_setup {
 
     debugprint "MySQL Client: $mysqlcmd";
 
-    $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
-
     # Are we being asked to connect via a socket?
     if ( $opt{socket} ne 0 ) {
-        $remotestring = " -S $opt{socket} -P $opt{port}";
+        if ( $opt{port} ne 0 ) {
+            $remotestring = " -S $opt{socket} -P $opt{port}";
+        } else {
+            $remotestring = " -S $opt{socket}";
+        }
     }
 
     if ( $opt{protocol} ne '' ) {
@@ -825,6 +827,7 @@ sub mysql_setup {
     # Are we being asked to connect to a remote server?
     if ( $opt{host} ne 0 ) {
         chomp( $opt{host} );
+        $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
 
 # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
         if ( $opt{'forcemem'} eq 0 && is_remote eq 1 ) {
