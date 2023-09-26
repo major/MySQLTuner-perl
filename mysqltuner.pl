@@ -7076,9 +7076,12 @@ ENDSQL
             infoprint " +-- COMMENT     : " . $info[5] if defined $info[5];
             $found++;
         }
-        badprint "No index found for $dbname database" if $found == 0;
+        my $nbTables=select_one(
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA='$dbname'"
+          );
+				badprint "No index found for $dbname database" if $found == 0 and $nbTables>1;
         push @generalrec, "Add indexes on tables from $dbname database"
-          if $found == 0;
+          if $found == 0 and $nbTables>1;
     }
     return
       unless ( defined( $myvar{'performance_schema'} )
