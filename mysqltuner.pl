@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.3.0
+# mysqltuner.pl - Version 2.3.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.3.0";
+my $tunerversion = "2.3.1";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2526,7 +2526,7 @@ sub check_architecture {
     }
     elsif ( `uname` =~ /Darwin/ && `uname -m` =~ /x86_64/ ) {
 
-# Darwin gibas.local 12.3.0 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
+# Darwin gibas.local 12.3.1 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
@@ -6689,18 +6689,20 @@ sub mysql_databases {
       percentage( $totaldbinfo[2], $totaldbinfo[3] ) . "%";
     $result{'Databases'}{'All databases'}{'Total Size'} = $totaldbinfo[3];
     print "\n" unless ( $opt{'silent'} or $opt{'json'} );
-
+		my $nbViews=0;
+		my $nbTables=0;
     foreach (@dblist) {
         my @dbinfo = split /\s/,
           select_one(
 "SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH), SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE), COUNT(TABLE_NAME), COUNT(DISTINCT(TABLE_COLLATION)), COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
           );
         next unless defined $dbinfo[0];
-        infoprint "Database: " . $dbinfo[0] . "";
-        infoprint " +-- TABLE : "
-          . select_one(
+        
+				infoprint "Database: " . $dbinfo[0] . "";
+      $nbTables=select_one(
 "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA='$_'"
-          ) . "";
+          );
+				infoprint " +-- TABLE : $nbTables";
         infoprint " +-- VIEW  : "
           . select_one(
 "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA='$_'"
@@ -6755,17 +6757,22 @@ sub mysql_databases {
 "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbinfo[0]' AND ENGINE='$eng'"
               ) . " TABLE(s)";
         }
+
+				if ( $nbTables == 0 ) {
+					badprint " No table in $dbinfo[0] database";
+					next;
+				}
         badprint "Index size is larger than data size for $dbinfo[0] \n"
           if ( $dbinfo[2] ne 'NULL' )
           and ( $dbinfo[3] ne 'NULL' )
           and ( $dbinfo[2] < $dbinfo[3] );
-        unless ( $dbinfo[5] == 1 ) {
+        if ( $dbinfo[5] > 1 and $nbTables > 0 ) {
             badprint "There are "
               . $dbinfo[5]
               . " storage engines. Be careful. \n";
             push @generalrec,
 "Select one storage engine (InnoDB is a good choice) for all tables in $dbinfo[0] database ($dbinfo[5] engines detected)";
-        }
+        }				
         $result{'Databases'}{ $dbinfo[0] }{'Rows'}       = $dbinfo[1];
         $result{'Databases'}{ $dbinfo[0] }{'Tables'}     = $dbinfo[6];
         $result{'Databases'}{ $dbinfo[0] }{'Collations'} = $dbinfo[7];
@@ -7359,7 +7366,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.3.0 - MySQL High Performance Tuning Script
+ MySQLTuner 2.3.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
