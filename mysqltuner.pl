@@ -2028,7 +2028,7 @@ sub system_recommendations {
           "Consider increasing number of CPU for your database server";
     }
 
-    if ( $physical_memory < 1600 ) {
+    if ( $physical_memory >= 1.5 * 1024 ) {
         goodprint "There is at least 1 Gb of RAM dedicated to Linux server.";
     }
     else {
