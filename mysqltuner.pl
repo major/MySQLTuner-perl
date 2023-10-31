@@ -3872,7 +3872,7 @@ sub mysql_myisam {
 
     if ( $nb_myisam_tables > 0 ) {
         badprint
-          "Consider migrating $nb_myisam_tables followning tables to InnoDB:";
+          "Consider migrating $nb_myisam_tables following tables to InnoDB:";
         my $sql_mig = "";
         for my $myisam_table (
             select_array(
