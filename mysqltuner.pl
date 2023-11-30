@@ -6538,6 +6538,10 @@ sub mysql_innodb {
           . " hits / "
           . $mystat{'Innodb_log_write_requests'}
           . " total)";
+        push( @adjvars,
+              "innodb_log_buffer_size (> "
+              . hr_bytes_rnd( $myvar{'innodb_log_buffer_size'} )
+              . ")" );
     }
     else {
         goodprint "InnoDB Write Log efficiency: "
