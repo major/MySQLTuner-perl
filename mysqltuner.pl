@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.4.0
+# mysqltuner.pl - Version 2.5.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.4.0";
+my $tunerversion = "2.5.0";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2526,7 +2526,7 @@ sub check_architecture {
     }
     elsif ( `uname` =~ /Darwin/ && `uname -m` =~ /x86_64/ ) {
 
-# Darwin gibas.local 12.4.0 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
+# Darwin gibas.local 12.5.0 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
@@ -7371,7 +7371,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.4.0 - MySQL High Performance Tuning Script
+ MySQLTuner 2.5.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
