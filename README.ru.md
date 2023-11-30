@@ -154,13 +154,6 @@ Sysschema не установлена по умолчанию на MariaDB 10.x.
      ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
      Посмотрите на #452 решение, данное @ericx
 
-Советы по производительности
---
-Обновление статистики метадаты в версии MySQL 5.6 и ниже могут очень сильно влиять на производительность сервера баз данных и MySQLTuner.
-Убедитесь, что innodb_stats_on_metadata отключен.
-
-    set global innodb_stats_on_metadata = 0;
-
 Примеры использования
 --
 
