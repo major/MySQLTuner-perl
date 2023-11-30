@@ -171,16 +171,6 @@ Errors & solutions for performance schema installation
 ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
 Have a look at #452 solution given by @ericx
 
-Performance tips
---
-
-Metadata statistic updates in MySQL 5.6 and lower can strongly impact performance of database servers.
-Be sure that innodb_stats_on_metadata is disabled.
-
-```bash
-set global innodb_stats_on_metadata = 0;
-```
-
 Fixing sysctl configuration (/etc/sysctl.conf)
 --
 
