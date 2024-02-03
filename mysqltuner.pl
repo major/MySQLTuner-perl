@@ -6282,11 +6282,11 @@ sub mysql_innodb {
               . hr_bytes( $myvar{'innodb_log_buffer_size'} );
         }
         if ( defined $mystat{'Innodb_buffer_pool_pages_free'} ) {
-            infoprint " +-- InnoDB Log Buffer Free: "
+            infoprint " +-- InnoDB Buffer Free: "
               . hr_bytes( $mystat{'Innodb_buffer_pool_pages_free'} ) . "";
         }
         if ( defined $mystat{'Innodb_buffer_pool_pages_total'} ) {
-            infoprint " +-- InnoDB Log Buffer Used: "
+            infoprint " +-- InnoDB Buffer Used: "
               . hr_bytes( $mystat{'Innodb_buffer_pool_pages_total'} ) . "";
         }
     }
