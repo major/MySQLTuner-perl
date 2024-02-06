@@ -1,0 +1,81 @@
+commit 4fdd80139269691828c0a27ff583b2ee49987451
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Tue Feb 6 18:00:04 2024 +0100
+
+    Generate CVE list at 2024-02-06T17:59:02+01:00
+
+commit dd2ed7264295a6d328c59c7c395eeb9be933fdde
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Tue Feb 6 17:58:57 2024 +0100
+
+    Indenting mysqltuner at 2024-02-06T17:58:52+01:00
+
+commit 30d1d9ecc61393ec807d2596ef8b5e178a4b52cd
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Tue Feb 6 17:58:35 2024 +0100
+
+    Generate 2.5.2 sub version at 2024-02-06T17:58:35+01:00
+
+commit b3a776576e7e568143797d62b754d9f992ffd1db
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Sun Feb 4 00:34:49 2024 +0100
+
+    Two separate garb install script with or without SSL
+
+commit 27525ca922a74d1df5c53c4d3ed1a1f07029919c
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Sun Feb 4 00:31:54 2024 +0100
+
+    Fix issue in Buffer Pool instead of Log Buffer Pool
+
+commit 65b1c138a56157774d8d98f93741a42054b3f4c6
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Thu Jan 18 05:38:00 2024 +0100
+
+    #741 false positive in log error detection
+
+commit 56d16e168efe85ba4a93b93800c50b42cdd32aee
+Merge: 3fd633b b608da0
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Wed Jan 17 18:35:27 2024 +0100
+
+    Merge pull request #745 from FabioPedretti/master
+    
+    Enable color by default when running on a terminal
+
+commit b608da0fb1a8ad3200b5857a4ef6e6706934ab46
+Author: Fabio Pedretti <pedretti.fabio@gmail.com>
+Date:   Thu Jan 11 11:27:25 2024 +0100
+
+    Enable color by default when running on a terminal
+
+commit 3fd633b507d48e7505c28aab8dc48d73f028f8da
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Fri Dec 1 00:46:15 2023 +0100
+
+    Generate 2.5.0 minor version at 2023-12-01T00:45:45+01:00
+
+commit 77699b72ae2e12f948aff622dd8194c9dbec9e09
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Fri Dec 1 00:45:34 2023 +0100
+
+    Suggest incrementing log_buffer_size to improve InnoDB Write Log efficiency.
+    #462
+
+commit c20bcbf8f0c00f9e900a880559ac95688ec9b1dc
+Merge: b10cdb7 01a1e53
+Author: Jean-Marie Renouard <jmrenouard@gmail.com>
+Date:   Thu Nov 30 21:51:53 2023 +0100
+
+    Merge pull request #744 from paskal/remove_innodb_stats_on_metadata
+    
+    Remove innodb_stats_on_metadata mentions in Readme
+
+commit 01a1e5336487e8464d655a4a8a1d51af0ebd38ee
+Author: Dmitry Verkhoturov <paskal.07@gmail.com>
+Date:   Thu Nov 30 15:59:51 2023 +0100
+
+    remove innodb_stats_on_metadata mentions in Readme
+    
+    That flag is off by default, starting with MySQL 5.7, and the tool
+    itself reports it in the "Performance Metrics" section.
