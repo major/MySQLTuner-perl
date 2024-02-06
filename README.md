@@ -141,6 +141,9 @@ Sysschema is installed by default under MySQL 5.7 and MySQL 8 from Oracle.
 By default, on MySQL 5.6/5.7/8, performance schema is enabled by default.
 For previous MySQL 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
 
+Sysschema for MySQL old version
+--
+
 ```bash
 curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
 # check zip file
@@ -149,6 +152,19 @@ unzip sysschema.zip
 cd mysql-sys-master
 mysql -uroot -p < sys_56.sql
 ```
+
+Sysschema for MariaDB old version
+--
+
+```bash
+curl "https://github.com/FromDual/mariadb-sys/archive/refs/heads/master.zip" > sysschema.zip
+# check zip file
+unzip -l sysschema.zip
+unzip sysschema.zip
+cd mariadb-sys-master
+mysql -u root -p < ./sys_10.sql
+```
+
 
 Performance schema setup
 --
