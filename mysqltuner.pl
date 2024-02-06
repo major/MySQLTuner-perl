@@ -196,7 +196,7 @@ if ( exists $opt{passenv} && exists $ENV{ $opt{passenv} } ) {
 $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
 
 if ( $opt{dumpdir} ne '' ) {
-    $opt{dumpdir}= abs_path($opt{dumpdir});
+    $opt{dumpdir} = abs_path( $opt{dumpdir} );
     if ( !-d $opt{dumpdir} ) {
         mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
     }
@@ -237,8 +237,9 @@ $opt{structstat} = 0
   if ( not defined( $opt{structstat} ) or $opt{nostructstat} == 1 )
   ;    # Don't print table struct information
 $opt{myisamstat} = 1
-  if ( not defined( $opt{myisamstat} ));
-$opt{myisamstat} = 0 if ($opt{nomyisamstat} == 1 );    # Don't print MyISAM table information
+  if ( not defined( $opt{myisamstat} ) );
+$opt{myisamstat} = 0
+  if ( $opt{nomyisamstat} == 1 );    # Don't print MyISAM table information
 
 # for RPM distributions
 $opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
@@ -814,7 +815,8 @@ sub mysql_setup {
     if ( $opt{socket} ne 0 ) {
         if ( $opt{port} ne 0 ) {
             $remotestring = " -S $opt{socket} -P $opt{port}";
-        } else {
+        }
+        else {
             $remotestring = " -S $opt{socket}";
         }
     }
@@ -1579,7 +1581,9 @@ sub log_file_recommendations {
         $numLi++;
         debugprint "$numLi: $logLi"
           if $logLi =~ /warning|error/i and $logLi !~ /Logging to/;
-        $nbErrLog++ if $logLi =~ /error/i and $logLi !~ /(Logging to|\[Warning\].*ERROR_FOR_DIVISION_BY_ZERO)/;
+        $nbErrLog++
+          if $logLi  =~ /error/i
+          and $logLi !~ /(Logging to|\[Warning\].*ERROR_FOR_DIVISION_BY_ZERO)/;
         $nbWarnLog++ if $logLi =~ /warning/i;
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
@@ -3179,7 +3183,7 @@ sub calculations {
       unless defined $mystat{'Innodb_buffer_pool_reads'};
     $mycalc{'pct_read_efficiency'} = percentage(
         $mystat{'Innodb_buffer_pool_read_requests'},
-				(
+        (
             $mystat{'Innodb_buffer_pool_read_requests'} +
               $mystat{'Innodb_buffer_pool_reads'}
         )
@@ -3210,11 +3214,12 @@ sub calculations {
         $mystat{'Innodb_buffer_pool_pages_total'}
     ) if defined $mystat{'Innodb_buffer_pool_pages_total'};
 
-    $mycalc{'innodb_buffer_alloc_pct'}=select_one(
-       "select  round( 100* sum(allocated)/( select VARIABLE_VALUE ".
-     "FROM performance_schema.global_variables " .
-           "WHERE VARIABLE_NAME='innodb_buffer_pool_size' ) ,2)".
-          'FROM sys.x\$innodb_buffer_stats_by_table;');
+    $mycalc{'innodb_buffer_alloc_pct'} = select_one(
+            "select  round( 100* sum(allocated)/( select VARIABLE_VALUE "
+          . "FROM performance_schema.global_variables "
+          . "WHERE VARIABLE_NAME='innodb_buffer_pool_size' ) ,2)"
+          . 'FROM sys.x\$innodb_buffer_stats_by_table;' );
+
     # Binlog Cache
     if ( $myvar{'log_bin'} ne 'OFF' ) {
         $mycalc{'pct_binlog_cache'} = percentage(
@@ -6360,59 +6365,60 @@ sub mysql_innodb {
               . ") if possible." );
     }
 
-    # select  round( 100* sum(allocated)/( select VARIABLE_VALUE 
-    #                                  FROM performance_schema.global_variables 
-    #                              where VARIABLE_NAME='innodb_buffer_pool_size' )
-    # ,2) as "PCT ALLOC/BUFFER POOL" 
-    #from sys.x$innodb_buffer_stats_by_table;
+  # select  round( 100* sum(allocated)/( select VARIABLE_VALUE
+  #                                  FROM performance_schema.global_variables
+  #                              where VARIABLE_NAME='innodb_buffer_pool_size' )
+  # ,2) as "PCT ALLOC/BUFFER POOL"
+  #from sys.x$innodb_buffer_stats_by_table;
 
-    if ($mycalc{innodb_buffer_alloc_pct} < 80) {
-      badprint "Ratio Buffer Pool allocated / Buffer Pool Size: ".
-      $mycalc{'innodb_buffer_alloc_pct'} . '%';
-    } else {
-      goodprint "Ratio Buffer Pool allocated / Buffer Pool Size: ".
-      $mycalc{'innodb_buffer_alloc_pct'} . '%';
+    if ( $mycalc{innodb_buffer_alloc_pct} < 80 ) {
+        badprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
+          . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+    }
+    else {
+        goodprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
+          . $mycalc{'innodb_buffer_alloc_pct'} . '%';
     }
     if (   $mycalc{'innodb_log_size_pct'} < 20
         or $mycalc{'innodb_log_size_pct'} > 30 )
     {
-      if ( defined $myvar{'innodb_redo_log_capacity'} ) {
-        badprint
-        "Ratio InnoDB redo log capacity / InnoDB Buffer pool size ("
-          . $mycalc{'innodb_log_size_pct'} . "%): "
-        . hr_bytes( $myvar{'innodb_redo_log_capacity'} ) . " / "
-        . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
-        . " should be equal to 25%";
-        push( @adjvars,
-          "innodb_redo_log_capacity should be (="
-            . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'} / 4 )
-            . ") if possible, so InnoDB Redo log Capacity equals 25% of buffer pool size."
-        );
-        push( @generalrec,
-          "Be careful, increasing innodb_redo_log_capacity means higher crash recovery mean time"
-        );
-      }
-      else {
-        badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
-          . $mycalc{'innodb_log_size_pct'} . "%): "
-        . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
-        . $myvar{'innodb_log_files_in_group'} . " / "
-        . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
-        . " should be equal to 25%";
-        push(
-          @adjvars,
-          "innodb_log_file_size should be (="
-            . hr_bytes_rnd(
-              $myvar{'innodb_buffer_pool_size'} /
-              $myvar{'innodb_log_files_in_group'} / 4
-            )
-            . ") if possible, so InnoDB total log file size equals 25% of buffer pool size."
-        );
-        push( @generalrec,
-          "Be careful, increasing innodb_log_file_size / innodb_log_files_in_group means higher crash recovery mean time"
-        );
-      }
-    if ( mysql_version_le( 5, 6, 2 ) ) {
+        if ( defined $myvar{'innodb_redo_log_capacity'} ) {
+            badprint
+              "Ratio InnoDB redo log capacity / InnoDB Buffer pool size ("
+              . $mycalc{'innodb_log_size_pct'} . "%): "
+              . hr_bytes( $myvar{'innodb_redo_log_capacity'} ) . " / "
+              . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+              . " should be equal to 25%";
+            push( @adjvars,
+                    "innodb_redo_log_capacity should be (="
+                  . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'} / 4 )
+                  . ") if possible, so InnoDB Redo log Capacity equals 25% of buffer pool size."
+            );
+            push( @generalrec,
+"Be careful, increasing innodb_redo_log_capacity means higher crash recovery mean time"
+            );
+        }
+        else {
+            badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
+              . $mycalc{'innodb_log_size_pct'} . "%): "
+              . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
+              . $myvar{'innodb_log_files_in_group'} . " / "
+              . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+              . " should be equal to 25%";
+            push(
+                @adjvars,
+                "innodb_log_file_size should be (="
+                  . hr_bytes_rnd(
+                    $myvar{'innodb_buffer_pool_size'} /
+                      $myvar{'innodb_log_files_in_group'} / 4
+                  )
+                  . ") if possible, so InnoDB total log file size equals 25% of buffer pool size."
+            );
+            push( @generalrec,
+"Be careful, increasing innodb_log_file_size / innodb_log_files_in_group means higher crash recovery mean time"
+            );
+        }
+        if ( mysql_version_le( 5, 6, 2 ) ) {
             push( @generalrec,
 "For MySQL 5.6.2 and lower, total innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB."
             );
@@ -6533,7 +6539,8 @@ sub mysql_innodb {
           . $mycalc{'pct_read_efficiency'} . "% ("
           . $mystat{'Innodb_buffer_pool_read_requests'}
           . " hits / "
-          . ( $mystat{'Innodb_buffer_pool_reads'} + $mystat{'Innodb_buffer_pool_read_requests'} )
+          . ( $mystat{'Innodb_buffer_pool_reads'} +
+              $mystat{'Innodb_buffer_pool_read_requests'} )
           . " total)";
     }
     else {
@@ -6541,7 +6548,8 @@ sub mysql_innodb {
           . $mycalc{'pct_read_efficiency'} . "% ("
           . $mystat{'Innodb_buffer_pool_read_requests'}
           . " hits / "
-          . ( $mystat{'Innodb_buffer_pool_reads'} + $mystat{'Innodb_buffer_pool_read_requests'} )
+          . ( $mystat{'Innodb_buffer_pool_reads'} +
+              $mystat{'Innodb_buffer_pool_read_requests'} )
           . " total)";
     }
 
@@ -6557,7 +6565,7 @@ sub mysql_innodb {
           . $mystat{'Innodb_log_write_requests'}
           . " total)";
         push( @adjvars,
-              "innodb_log_buffer_size (> "
+                "innodb_log_buffer_size (> "
               . hr_bytes_rnd( $myvar{'innodb_log_buffer_size'} )
               . ")" );
     }
@@ -6709,20 +6717,21 @@ sub mysql_databases {
       percentage( $totaldbinfo[2], $totaldbinfo[3] ) . "%";
     $result{'Databases'}{'All databases'}{'Total Size'} = $totaldbinfo[3];
     print "\n" unless ( $opt{'silent'} or $opt{'json'} );
-		my $nbViews=0;
-		my $nbTables=0;
+    my $nbViews  = 0;
+    my $nbTables = 0;
+
     foreach (@dblist) {
         my @dbinfo = split /\s/,
           select_one(
 "SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH), SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE), COUNT(TABLE_NAME), COUNT(DISTINCT(TABLE_COLLATION)), COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
           );
         next unless defined $dbinfo[0];
-        
-				infoprint "Database: " . $dbinfo[0] . "";
-      $nbTables=select_one(
+
+        infoprint "Database: " . $dbinfo[0] . "";
+        $nbTables = select_one(
 "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA='$_'"
-          );
-				infoprint " +-- TABLE : $nbTables";
+        );
+        infoprint " +-- TABLE : $nbTables";
         infoprint " +-- VIEW  : "
           . select_one(
 "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA='$_'"
@@ -6778,10 +6787,10 @@ sub mysql_databases {
               ) . " TABLE(s)";
         }
 
-				if ( $nbTables == 0 ) {
-					badprint " No table in $dbinfo[0] database";
-					next;
-				}
+        if ( $nbTables == 0 ) {
+            badprint " No table in $dbinfo[0] database";
+            next;
+        }
         badprint "Index size is larger than data size for $dbinfo[0] \n"
           if ( $dbinfo[2] ne 'NULL' )
           and ( $dbinfo[3] ne 'NULL' )
@@ -6792,7 +6801,7 @@ sub mysql_databases {
               . " storage engines. Be careful. \n";
             push @generalrec,
 "Select one storage engine (InnoDB is a good choice) for all tables in $dbinfo[0] database ($dbinfo[5] engines detected)";
-        }				
+        }
         $result{'Databases'}{ $dbinfo[0] }{'Rows'}       = $dbinfo[1];
         $result{'Databases'}{ $dbinfo[0] }{'Tables'}     = $dbinfo[6];
         $result{'Databases'}{ $dbinfo[0] }{'Collations'} = $dbinfo[7];
@@ -7096,12 +7105,13 @@ ENDSQL
             infoprint " +-- COMMENT     : " . $info[5] if defined $info[5];
             $found++;
         }
-        my $nbTables=select_one(
+        my $nbTables = select_one(
 "SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA='$dbname'"
-          );
-				badprint "No index found for $dbname database" if $found == 0 and $nbTables>1;
+        );
+        badprint "No index found for $dbname database"
+          if $found == 0 and $nbTables > 1;
         push @generalrec, "Add indexes on tables from $dbname database"
-          if $found == 0 and $nbTables>1;
+          if $found == 0 and $nbTables > 1;
     }
     return
       unless ( defined( $myvar{'performance_schema'} )
