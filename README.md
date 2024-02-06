@@ -153,28 +153,30 @@ mysql -uroot -p < sys_56.sql
 Performance schema setup
 --
 
+By default, performance_schema is enabled and sysschema is installed on latest version.
 
 By default, on MariaDB, performance schema is disabled by default (MariaDB<10.6). 
+
 Consider activating performance schema across your my.cnf configuration file:
 
 ```ini
- [mysqld]
- performance_schema = on
- performance-schema-consumer-events-statements-history-long = ON
- performance-schema-consumer-events-statements-history = ON
- performance-schema-consumer-events-statements-current = ON
- performance-schema-consumer-events-stages-current=ON
- performance-schema-consumer-events-stages-history=ON
- performance-schema-consumer-events-stages-history-long=ON
- performance-schema-consumer-events-transactions-current=ON
- performance-schema-consumer-events-transactions-history=ON
- performance-schema-consumer-events-transactions-history-long=ON
- performance-schema-consumer-events-waits-current=ON
- performance-schema-consumer-events-waits-history=ON
- performance-schema-consumer-events-waits-history-long=ON
- performance-schema-instrument='%=ON'
- max-digest-length=2048
- performance-schema-max-digest-length=2018
+[mysqld]
+performance_schema = on
+performance-schema-consumer-events-statements-history-long = ON
+performance-schema-consumer-events-statements-history = ON
+performance-schema-consumer-events-statements-current = ON
+performance-schema-consumer-events-stages-current=ON
+performance-schema-consumer-events-stages-history=ON
+performance-schema-consumer-events-stages-history-long=ON
+performance-schema-consumer-events-transactions-current=ON
+performance-schema-consumer-events-transactions-history=ON
+performance-schema-consumer-events-transactions-history-long=ON
+performance-schema-consumer-events-waits-current=ON
+performance-schema-consumer-events-waits-history=ON
+performance-schema-consumer-events-waits-history-long=ON
+performance-schema-instrument='%=ON'
+max-digest-length=2048
+performance-schema-max-digest-length=2018
 ```
 
 Sysschema installation for MariaDB < 10.6
@@ -196,17 +198,21 @@ mysql -u root -p < ./sys_10.sql
 Errors & solutions for performance schema installation
 --
 
+
 ERROR 1054 (42S22) at line 78 in file: './views/p_s/metrics_56.sql': Unknown column 'STATUS' in 'field list'
+--
+
 
 This error can be safely ignored
 Consider using a recent MySQL/MariaDB version to avoid this kind of issue during sysschema installation
 
 In recent versions, sysschema is installed and integrated by default as sys schema (SHOW DATABASES)
 
---
+
 
 ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
 Have a look at #452 solution given by @ericx
+--
 
 Fixing sysctl configuration (/etc/sysctl.conf)
 
