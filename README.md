@@ -295,6 +295,14 @@ perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/
 
 __Important__: [Text::Template](https://metacpan.org/pod/Text::Template) module is mandatory for `--reportfile` and/or `--template` options, because this module is needed to generate appropriate output based on a text template.
 
+
+__Usage:__ Dumping all information_schema and sysschema views as csv file into results subdirectory
+
+```bash
+perl mysqltuner.pl --verbose --dumpdir=./result
+```
+
+
 __Usage:__ Enable debugging information
 
 ```bash
