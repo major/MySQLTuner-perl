@@ -6372,13 +6372,15 @@ sub mysql_innodb {
   # ,2) as "PCT ALLOC/BUFFER POOL"
   #from sys.x$innodb_buffer_stats_by_table;
 
-    if ( $mycalc{innodb_buffer_alloc_pct} < 80 ) {
-        badprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
-          . $mycalc{'innodb_buffer_alloc_pct'} . '%';
-    }
-    else {
-        goodprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
-          . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+    if (defined $mycalc{innodb_buffer_alloc_pct}) {
+      if ( $mycalc{innodb_buffer_alloc_pct} < 80 ) {
+          badprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
+            . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+      }
+      else {
+          goodprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
+            . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+      }
     }
     if (   $mycalc{'innodb_log_size_pct'} < 20
         or $mycalc{'innodb_log_size_pct'} > 30 )
