@@ -382,7 +382,6 @@ Follow instructions from Github repo
 
 [GitHub AHA main repository](https://github.com/theZiz/aha)
 
-
 **Using AHA Html report generation**
 
 	perl mysqltuner.pl --verbose --color > reports.txt
