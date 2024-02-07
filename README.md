@@ -89,7 +89,8 @@ Unmaintenained staff from MySQL or MariaDB:
 
 * Perl 5.6 or later (with [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod) package)
 * Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
-* Unrestricted read access to the MySQL server (OS root access recommended for MySQL < 5.1)
+* Unrestricted read access to the MySQL server
+OS root access recommended for MySQL < 5.1
 
 ***WARNING***
 --
@@ -165,13 +166,12 @@ cd mariadb-sys-master
 mysql -u root -p < ./sys_10.sql
 ```
 
-
 Performance schema setup
 --
 
 By default, performance_schema is enabled and sysschema is installed on latest version.
 
-By default, on MariaDB, performance schema is disabled by default (MariaDB<10.6). 
+By default, on MariaDB, performance schema is disabled by default (MariaDB<10.6).
 
 Consider activating performance schema across your my.cnf configuration file:
 
@@ -473,15 +473,22 @@ After which, `~/.mylogin.cnf` will be created with the appropriate access.
 
 To get information about stored credentials, use the following command:
 
-	$mysql_config_editor print
-	[client]
-	user = someusername
-	password = *****
-	host = localhost
+```bash
+$mysql_config_editor print
+[client]
+user = someusername
+password = *****
+host = localhost
+```
 
 **Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
 
-        mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* TO 'mysqltuner'@'localhost' identified by pwd1234;
+```bash
+ mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
+ SHOW DATABASES,SHOW VIEW 
+ ON *.* 
+ TO 'mysqltuner'@'localhost' identified by pwd1234;
+```
 
 **Question: It's not working on my OS! What gives?!**
 
