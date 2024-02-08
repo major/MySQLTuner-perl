@@ -110,6 +110,7 @@ my %opt = (
     "reportfile"          => 0,
     "verbose"             => 0,
     "experimental"        => 0,
+    "nondedicated"        => 0,
     "defaults-file"       => '',
     "defaults-extra-file" => '',
     "protocol"            => '',
@@ -152,7 +153,8 @@ GetOptions(
     'server-log=s',          'protocol=s',
     'defaults-extra-file=s', 'dumpdir=s',
     'feature=s',             'dbgpattern=s',
-    'defaultarch=i',         'experimental'
+    'defaultarch=i',         'experimental',
+    'nondedicated'
   )
   or pod2usage(
     -exitval  => 1,
@@ -593,6 +595,7 @@ sub os_setup {
     chomp($physical_memory);
     chomp($swap_memory);
     chomp($os);
+    $physical_memory=$opt{forcemem} if (defined($opt{forcemem}) and $opt{forcemem} gt 0);
     $result{'OS'}{'OS Type'}                   = $os;
     $result{'OS'}{'Physical Memory'}{'bytes'}  = $physical_memory;
     $result{'OS'}{'Physical Memory'}{'pretty'} = hr_bytes($physical_memory);
@@ -2052,6 +2055,15 @@ sub system_recommendations {
     infoprint "User process except mysqld used "
       . hr_bytes_rnd($omem) . " RAM.";
     if ( ( 0.15 * $physical_memory ) < $omem ) {
+        if ( $opt{nondedicated}) {
+        infoprint "No warning with --nondedicated option";
+        infoprint
+"Other user process except mysqld used more than 15% of total physical memory "
+          . percentage( $omem, $physical_memory ) . "% ("
+          . hr_bytes_rnd($omem) . " / "
+          . hr_bytes_rnd($physical_memory) . ")";
+        } else {
+
         badprint
 "Other user process except mysqld used more than 15% of total physical memory "
           . percentage( $omem, $physical_memory ) . "% ("
@@ -2063,6 +2075,7 @@ sub system_recommendations {
         push( @adjvars,
 "DON'T APPLY SETTINGS BECAUSE THERE ARE TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCUR!"
         );
+      }
     }
     else {
         infoprint
@@ -3371,9 +3384,8 @@ sub mysql_stats {
       ( $mycalc{'max_peak_memory'} + get_other_process_memory() ) )
     {
       if ( $opt{nondedicated}) { 
-        infoprint ("No warning with --nondedicated option")
-        infoprint
-        "Overall possible memory usage with other process exceeded memory";
+        infoprint "No warning with --nondedicated option";
+        infoprint "Overall possible memory usage with other process exceeded memory";
       } else {
         badprint
         "Overall possible memory usage with other process exceeded memory";
@@ -7464,6 +7476,8 @@ You must provide the remote server's total memory when connecting to other serve
  --template   <path>         Path to a template file
  --dumpdir <path>            Path to a directory where to dump information files
  --feature <feature>         Run a specific feature (see FEATURES section)
+ --dumpdir <path>            information_schema tables and sys views are dumped in CSV in this path
+
 =head1 OUTPUT OPTIONS
 
  --silent                    Don't output anything on screen
@@ -7474,6 +7488,8 @@ You must provide the remote server's total memory when connecting to other serve
  --nobad                     Remove negative/suggestion responses
  --noinfo                    Remove informational responses
  --debug                     Print debug information
+ --experimental              Print experimental analysis (may failed)
+ --nondedicated              Consider server is not dedicated to Db server usage only
  --noprocess                 Consider no other process is running
  --dbstat                    Print database information
  --nodbstat                  Don't print database information
