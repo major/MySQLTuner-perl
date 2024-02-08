@@ -1,5 +1,5 @@
 #!/bin/env perl
-# mysqltuner.pl - Version 2.5.2
+# mysqltuner.pl - Version 2.5.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.5.2";
+my $tunerversion = "2.5.3";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -109,6 +109,7 @@ my %opt = (
     "prettyjson"          => 0,
     "reportfile"          => 0,
     "verbose"             => 0,
+    "experimental"        => 0,
     "defaults-file"       => '',
     "defaults-extra-file" => '',
     "protocol"            => '',
@@ -151,7 +152,7 @@ GetOptions(
     'server-log=s',          'protocol=s',
     'defaults-extra-file=s', 'dumpdir=s',
     'feature=s',             'dbgpattern=s',
-    'defaultarch=i'
+    'defaultarch=i',         'experimental'
   )
   or pod2usage(
     -exitval  => 1,
@@ -208,6 +209,9 @@ $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
 
 $opt{dbgpattern} = '.*' if ( $opt{dbgpattern} eq '' );
+
+# Activate experimental calculations and analysis
+if ( $opt{experimental} ne '' ) { $opt{experimental} = 1; }
 
 # check if we need to enable verbose mode
 if ( $opt{feature} ne '' ) { $opt{verbose} = 1; }
@@ -2530,7 +2534,7 @@ sub check_architecture {
     }
     elsif ( `uname` =~ /Darwin/ && `uname -m` =~ /x86_64/ ) {
 
-# Darwin gibas.local 12.5.2 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
+# Darwin gibas.local 12.5.3 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
@@ -3219,8 +3223,8 @@ sub calculations {
             "select  round( 100* sum(allocated)/( select VARIABLE_VALUE "
           . "FROM performance_schema.global_variables "
           . "WHERE VARIABLE_NAME='innodb_buffer_pool_size' ) ,2)"
-          . 'FROM sys.x\$innodb_buffer_stats_by_table;' );
-
+          . 'FROM sys.x\$innodb_buffer_stats_by_table;' )
+    if ($opt{experimental});
     # Binlog Cache
     if ( $myvar{'log_bin'} ne 'OFF' ) {
         $mycalc{'pct_binlog_cache'} = percentage(
@@ -6372,14 +6376,16 @@ sub mysql_innodb {
   # ,2) as "PCT ALLOC/BUFFER POOL"
   #from sys.x$innodb_buffer_stats_by_table;
 
-    if (defined $mycalc{innodb_buffer_alloc_pct}) {
-      if ( $mycalc{innodb_buffer_alloc_pct} < 80 ) {
-          badprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
-            . $mycalc{'innodb_buffer_alloc_pct'} . '%';
-      }
-      else {
-          goodprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
-            . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+    if ( $opt{experimental}) {
+      if (defined $mycalc{innodb_buffer_alloc_pct}) {
+        if ( $mycalc{innodb_buffer_alloc_pct} < 80 ) {
+            badprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
+              . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+        }
+        else {
+            goodprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
+              . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+        }
       }
     }
     if (   $mycalc{'innodb_log_size_pct'} < 20
@@ -7402,7 +7408,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.5.2 - MySQL High Performance Tuning Script
+ MySQLTuner 2.5.3 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
