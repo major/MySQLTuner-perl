@@ -3221,11 +3221,11 @@ sub calculations {
         $mystat{'Innodb_buffer_pool_pages_total'}
     ) if defined $mystat{'Innodb_buffer_pool_pages_total'};
 
-    $mycalc{'innodb_buffer_alloc_pct'} = select_one(
-            "select  round( 100* sum(allocated)/( select VARIABLE_VALUE "
-          . "FROM performance_schema.global_variables "
-          . "WHERE VARIABLE_NAME='innodb_buffer_pool_size' ) ,2)"
-          . 'FROM sys.x\$innodb_buffer_stats_by_table;' )
+    my $lreq=      "select  ROUND( 100* sum(allocated)/ ".
+      $myvar{'innodb_buffer_pool_size'} .
+      ',1) FROM sys.x\$innodb_buffer_stats_by_table;'; 
+      debugprint("lreq: $lreq");
+      $mycalc{'innodb_buffer_alloc_pct'} = select_one( $lreq )
     if ($opt{experimental});
     # Binlog Cache
     if ( $myvar{'log_bin'} ne 'OFF' ) {
@@ -6379,7 +6379,9 @@ sub mysql_innodb {
   #from sys.x$innodb_buffer_stats_by_table;
 
     if ( $opt{experimental} ) {
-      if (defined $mycalc{innodb_buffer_alloc_pct}) {
+      debugprint ('innodb_buffer_alloc_pct: "'.$mycalc{innodb_buffer_alloc_pct}.'"');
+      if (defined $mycalc{innodb_buffer_alloc_pct} and
+        $mycalc{innodb_buffer_alloc_pct} ne '' ) {
         if ( $mycalc{innodb_buffer_alloc_pct} < 80 ) {
             badprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
               . $mycalc{'innodb_buffer_alloc_pct'} . '%';
