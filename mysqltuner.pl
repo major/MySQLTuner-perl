@@ -3366,17 +3366,23 @@ sub mysql_stats {
           . " ($mycalc{'pct_max_physical_memory'}% of installed RAM)";
     }
 
+    
     if ( $physical_memory <
-        ( $mycalc{'max_peak_memory'} + get_other_process_memory() ) )
+      ( $mycalc{'max_peak_memory'} + get_other_process_memory() ) )
     {
+      if ( $opt{nondedicated}) { 
+        infoprint ("No warning with --nondedicated option")
+        infoprint
+        "Overall possible memory usage with other process exceeded memory";
+      } else {
         badprint
-          "Overall possible memory usage with other process exceeded memory";
+        "Overall possible memory usage with other process exceeded memory";
         push( @generalrec,
-            "Dedicate this server to your database for highest performance." );
-    }
-    else {
-        goodprint
-"Overall possible memory usage with other process is compatible with memory available";
+          "Dedicate this server to your database for highest performance." );
+      }
+    } else {
+      goodprint
+      "Overall possible memory usage with other process is compatible with memory available";
     }
 
     # Slow queries
