@@ -218,7 +218,7 @@ $opt{dbgpattern} = '.*' if ( $opt{dbgpattern} eq '' );
 # check if we need to enable verbose mode
 if ( $opt{feature} ne '' ) { $opt{verbose} = 1; }
 if ( $opt{verbose} ) {
-    $opt{checkversion} = 1;    # Check for updates to MySQLTuner
+    $opt{checkversion} = 0;    # Check for updates to MySQLTuner
     $opt{dbstat}       = 1;    # Print database information
     $opt{tbstat}       = 1;    # Print database information
     $opt{idxstat}      = 1;    # Print index information
