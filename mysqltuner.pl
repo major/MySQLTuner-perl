@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!env perl
 # mysqltuner.pl - Version 2.5.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
@@ -210,8 +210,10 @@ $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
 
 $opt{dbgpattern} = '.*' if ( $opt{dbgpattern} eq '' );
 
+# Activate debug variables
+#if ( $opt{debug} ne '' ) { $opt{debug} = 2; }
 # Activate experimental calculations and analysis
-if ( $opt{experimental} ne '' ) { $opt{experimental} = 1; }
+ #if ( $opt{experimental} ne '' ) { $opt{experimental} = 1; }
 
 # check if we need to enable verbose mode
 if ( $opt{feature} ne '' ) { $opt{verbose} = 1; }
@@ -6376,7 +6378,7 @@ sub mysql_innodb {
   # ,2) as "PCT ALLOC/BUFFER POOL"
   #from sys.x$innodb_buffer_stats_by_table;
 
-    if ( $opt{experimental}) {
+    if ( $opt{experimental} ) {
       if (defined $mycalc{innodb_buffer_alloc_pct}) {
         if ( $mycalc{innodb_buffer_alloc_pct} < 80 ) {
             badprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
@@ -6414,7 +6416,7 @@ sub mysql_innodb {
               . $myvar{'innodb_log_files_in_group'} . " / "
               . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
               . " should be equal to 25%";
-            push(
+           push(
                 @adjvars,
                 "innodb_log_file_size should be (="
                   . hr_bytes_rnd(
@@ -7207,6 +7209,8 @@ sub headerprint {
       . "\t * Major Hayden <major\@mhtx.net>\n"
       . " >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/\n"
       . " >>  Run with '--help' for additional options and output filtering";
+    debugprint("Debug: ".$opt{debug});
+    debugprint("Experimental: ".$opt{experimental});
 }
 
 sub string2file {
@@ -7217,12 +7221,12 @@ sub string2file {
 "Unable to open $filename in write mode. Please check permissions for this file or directory";
     print $fh $content if defined($content);
     close $fh;
-    debugprint $content if ( $opt{'debug'} );
+    debugprint $content;
 }
 
 sub file2array {
     my $filename = shift;
-    debugprint "* reading $filename" if ( $opt{'debug'} );
+    debugprint "* reading $filename";
     my $fh;
     open( $fh, q(<), "$filename" )
       or die "Couldn't open $filename for reading: $!\n";
