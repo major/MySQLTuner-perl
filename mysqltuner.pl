@@ -1,4 +1,4 @@
-#!env perl
+#!/usr/bin/env perl
 # mysqltuner.pl - Version 2.5.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
