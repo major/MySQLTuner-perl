@@ -2,7 +2,6 @@
 
 [!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
-[![Build Status - Master](https://travis-ci.org/major/MySQLTuner-perl.svg?branch=master)](https://travis-ci.org/major/MySQLTuner-perl)
 [![Project Status](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
 [![Project Status](http://opensource.box.com/badges/maintenance.svg)](http://opensource.box.com/badges)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
@@ -40,7 +39,7 @@ MySQLTuner нуждается в вас:
 
 Совместимость
 ====
-Результаты тестов: [Travis CI/MySQLTuner-perl](https://travis-ci.org/major/MySQLTuner-perl)
+Результаты тестов:
 * MySQL 8   (полная поддержка, проверка пароля не работает)
 * MySQL 5.7 (полная поддержка)
 * MySQL 5.6 (полная поддержка)
