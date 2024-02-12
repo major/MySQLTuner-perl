@@ -40,7 +40,7 @@ MySQLTuner needs you
 Compatibility
 ====
 
-Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.org/major/MySQLTuner-perl)
+Test result are available here:
 
 * MySQL 8.0, 8.2, 8.3 (full support)
 * Percona Server 8.0, 8.2, 8.3 (full support)
