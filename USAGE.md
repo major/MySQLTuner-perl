@@ -56,7 +56,7 @@ You must provide the remote server's total memory when connecting to other serve
     --nobad                     Remove negative/suggestion responses
     --noinfo                    Remove informational responses
     --debug                     Print debug information
-    --experimental              Print experimental analysis (may failed)
+    --experimental              Print experimental analysis (may fail)
     --nondedicated              Consider server is not dedicated to Db server usage only
     --noprocess                 Consider no other process is running
     --dbstat                    Print database information
