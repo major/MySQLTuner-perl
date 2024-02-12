@@ -34,7 +34,8 @@ MySQLTuner needs you
 
 ## Stargazers over time
 
-[![Stargazers over time](https://starcharts.herokuapp.com/major/MySQLTuner-perl.svg)](https://starcharts.herokuapp.com/major/MySQLTuner-perl)
+[![Stargazers over time](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
+
 
 Compatibility
 ====
@@ -81,7 +82,7 @@ Unmaintenained staff from MySQL or MariaDB:
 * MyISAM is too old and no longer active
 * RockDB is not maintained anymore
 * TokuDB is not maintained anymore
-* XtraDB is not maintained anymore 
+* XtraDB is not maintained anymore
 
 * CVE vulnerabilities detection support from [https://cve.mitre.org](https://cve.mitre.org)
 
@@ -374,7 +375,7 @@ HTML generation is based on AHA
 **HTML generation Procedure**
 
  - Generate mysqltuner.pl report using standard text reports
- - Generate HTML report using aha 
+ - Generate HTML report using aha
 
 **Installation Aha**
 
@@ -414,9 +415,9 @@ For optimal results, run the script after your server has been running for at le
 
 **Question: How do I interpret the results from MySQL tuner ?**
 
-MySQL tuner provides output in the form of suggestions and warnings. 
+MySQL tuner provides output in the form of suggestions and warnings.
 
-Review each recommendation and consider implementing the changes in your MySQL configuration file (usually 'my.cnf' or 'my.ini'). 
+Review each recommendation and consider implementing the changes in your MySQL configuration file (usually 'my.cnf' or 'my.ini').
 
 Be cautious when making changes and always backup your configuration file before making any modifications.
 
@@ -437,7 +438,7 @@ Yes, MySQL tuner supports MariaDB and Percona Server since they are derivatives 
 
 **Question: What should I do if I need help with MySQL tuner or have questions about the recommendations ?**
 
-If you need help with MySQL tuner or have questions about the recommendations provided by the script, you can consult the MySQL tuner documentation, seek advice from online forums, or consult a MySQL expert. 
+If you need help with MySQL tuner or have questions about the recommendations provided by the script, you can consult the MySQL tuner documentation, seek advice from online forums, or consult a MySQL expert.
 
 Be cautious when implementing changes to ensure the stability and performance of your server.
 
@@ -484,8 +485,8 @@ host = localhost
 
 ```bash
  mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
- SHOW DATABASES,SHOW VIEW 
- ON *.* 
+ SHOW DATABASES,SHOW VIEW
+ ON *.*
  TO 'mysqltuner'@'localhost' identified by pwd1234;
 ```
 
@@ -605,7 +606,7 @@ Contributions welcome !
 How to contribute using Pull Request ? Follow this guide : [Pull request creation](https://opensource.com/article/19/7/create-pull-request-github)
 
 Simple steps to create a pull request:
--- 
+--
 
 - Fork this Github project
 - Clone it to your local system
