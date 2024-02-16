@@ -39,6 +39,9 @@ generate_cve:
 	git add ./vulnerabilities.csv
 	git commit -m "Generate CVE list at $(shell date --iso=seconds)"
 
+generate_version_file:
+	grep "# mysqltuner.pl - Version" ./mysqltuner.pl | awk '{ print $NF}' > CURRENT_VERSION.txt
+	
 generate_features:
 	perl ./build/genFeatures.sh
 	git add ./FEATURES.md
@@ -68,5 +71,10 @@ increment_major_version:
 	git tag -a v$(UPDATE_MINOR_VERSION) -m "Generate $(UPDATE_MAJOR_VERSION) major version at $(shell date --iso=seconds)"
 	git push --tags
 
+docker_build:
+	docker build .
 push:
 	git push
+
+pull:
+	git pull

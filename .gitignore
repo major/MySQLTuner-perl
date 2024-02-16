@@ -18,3 +18,4 @@ result_*
 sql/*.sql
 sql/*.csv
 cve.csv
+default*.cnf
