@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use warnings;
 use strict;
 use WWW::Mechanize::GZip;
@@ -74,6 +74,7 @@ foreach my $line (<CVE>) {
 	}
 }
 close(CVE);
+chmod 0644, "./cve.csv", "../vulnerabilities.csv";
 #unlink ('cve.csv') if (-f 'cve.csv');
 
 exit(0);
