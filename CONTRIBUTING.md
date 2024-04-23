@@ -127,7 +127,7 @@ these guidelines is the best way to get your work included in MySQLTuner.
 <a name="git-flow"></a>
 #### Git Flow for pull requests
 
-1. [Fork](http://help.github.com/fork-a-repo/) the project, clone your fork,
+1. [Fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) the project, clone your fork,
    and configure the remotes:
 
    ```bash
