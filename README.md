@@ -140,7 +140,7 @@ Optional Sysschema installation for MySQL 5.6
 --
 
 Sysschema is installed by default under MySQL 5.7 and MySQL 8 from Oracle.
-By default, on MySQL 5.6/5.7/8, performance schema is enabled by default.
+By default, on MySQL 5.6/5.7/8, performance schema is enabled.
 For previous MySQL 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
 
 Sysschema for MySQL old version
@@ -172,7 +172,7 @@ Performance schema setup
 
 By default, performance_schema is enabled and sysschema is installed on latest version.
 
-By default, on MariaDB, performance schema is disabled by default (MariaDB<10.6).
+By default, on MariaDB, performance schema is disabled (MariaDB<10.6).
 
 Consider activating performance schema across your my.cnf configuration file:
 
