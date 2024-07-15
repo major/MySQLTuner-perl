@@ -774,9 +774,9 @@ sub mysql_setup {
         $mysqladmincmd = $opt{mysqladmin};
     }
     else {
-        $mysqladmincmd = which( "mysqladmin", $ENV{'PATH'} );
+        $mysqladmincmd = which( "mariadb-admin", $ENV{'PATH'} );
         if ( !-e $mysqladmincmd ) {
-            $mysqladmincmd = which( "mariadb-admin", $ENV{'PATH'} );
+            $mysqladmincmd = which( "mysqladmin", $ENV{'PATH'} );
         }
     }
     chomp($mysqladmincmd);
@@ -795,9 +795,9 @@ sub mysql_setup {
         $mysqlcmd = $opt{mysqlcmd};
     }
     else {
-        $mysqlcmd = which( "mysql", $ENV{'PATH'} );
+        $mysqlcmd = which( "mariadb", $ENV{'PATH'} );
         if ( !-e $mysqlcmd ) {
-            $mysqlcmd = which( "mariadb", $ENV{'PATH'} );
+            $mysqlcmd = which( "mysql", $ENV{'PATH'} );
         }
     }
     chomp($mysqlcmd);
@@ -2440,15 +2440,12 @@ sub validate_mysql_version {
 
     if (   mysql_version_eq(8)
         or mysql_version_eq( 5,  7 )
-        or mysql_version_eq( 10, 3 )
-        or mysql_version_eq( 10, 4 )
         or mysql_version_eq( 10, 5 )
         or mysql_version_eq( 10, 6 )
-        or mysql_version_eq( 10, 7 )
-        or mysql_version_eq( 10, 8 )
-        or mysql_version_eq( 10, 9 )
-        or mysql_version_eq( 10, 10 )
-        or mysql_version_eq( 10, 11 ) )
+        or mysql_version_eq( 10, 11 )
+        or mysql_version_eq( 11, 1 )
+        or mysql_version_eq( 11, 2 )
+        or mysql_version_eq( 11, 4 ) )
     {
         goodprint "Currently running supported MySQL version "
           . $myvar{'version'} . "";
