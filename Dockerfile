@@ -16,7 +16,7 @@ RUN apt-get update && apt upgrade -y && apt-get install -yq --no-install-recomme
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /results
-
+RUN apt clean all
 WORKDIR /
 COPY ./mysqltuner.pl /mysqltuner.pl 
 COPY ./vulnerabilities.csv /vulnerabilities.txt

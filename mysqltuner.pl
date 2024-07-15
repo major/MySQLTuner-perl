@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.5.3
+# mysqltuner.pl - Version 2.5.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.5.3";
+my $tunerversion = "2.5.4";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -215,7 +215,7 @@ $opt{dbgpattern} = '.*' if ( $opt{dbgpattern} eq '' );
 # Activate debug variables
 #if ( $opt{debug} ne '' ) { $opt{debug} = 2; }
 # Activate experimental calculations and analysis
- #if ( $opt{experimental} ne '' ) { $opt{experimental} = 1; }
+#if ( $opt{experimental} ne '' ) { $opt{experimental} = 1; }
 
 # check if we need to enable verbose mode
 if ( $opt{feature} ne '' ) { $opt{verbose} = 1; }
@@ -595,6 +595,8 @@ sub os_setup {
     chomp($physical_memory);
     chomp($swap_memory);
     chomp($os);
+    $physical_memory = $opt{forcemem}
+      if ( defined( $opt{forcemem} ) and $opt{forcemem} gt 0 );
     $result{'OS'}{'OS Type'}                   = $os;
     $result{'OS'}{'Physical Memory'}{'bytes'}  = $physical_memory;
     $result{'OS'}{'Physical Memory'}{'pretty'} = hr_bytes($physical_memory);
@@ -2054,27 +2056,28 @@ sub system_recommendations {
     infoprint "User process except mysqld used "
       . hr_bytes_rnd($omem) . " RAM.";
     if ( ( 0.15 * $physical_memory ) < $omem ) {
-        if ( $opt{nondedicated}) {
-        infoprint "No warning with --nondedicated option";
-        infoprint
+        if ( $opt{nondedicated} ) {
+            infoprint "No warning with --nondedicated option";
+            infoprint
 "Other user process except mysqld used more than 15% of total physical memory "
-          . percentage( $omem, $physical_memory ) . "% ("
-          . hr_bytes_rnd($omem) . " / "
-          . hr_bytes_rnd($physical_memory) . ")";
-        } else {
+              . percentage( $omem, $physical_memory ) . "% ("
+              . hr_bytes_rnd($omem) . " / "
+              . hr_bytes_rnd($physical_memory) . ")";
+        }
+        else {
 
-        badprint
+            badprint
 "Other user process except mysqld used more than 15% of total physical memory "
-          . percentage( $omem, $physical_memory ) . "% ("
-          . hr_bytes_rnd($omem) . " / "
-          . hr_bytes_rnd($physical_memory) . ")";
-        push( @generalrec,
+              . percentage( $omem, $physical_memory ) . "% ("
+              . hr_bytes_rnd($omem) . " / "
+              . hr_bytes_rnd($physical_memory) . ")";
+            push( @generalrec,
 "Consider stopping or dedicate server for additional process other than mysqld."
-        );
-        push( @adjvars,
+            );
+            push( @adjvars,
 "DON'T APPLY SETTINGS BECAUSE THERE ARE TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCUR!"
-        );
-      }
+            );
+        }
     }
     else {
         infoprint
@@ -2548,7 +2551,7 @@ sub check_architecture {
     }
     elsif ( `uname` =~ /Darwin/ && `uname -m` =~ /x86_64/ ) {
 
-# Darwin gibas.local 12.5.3 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
+# Darwin gibas.local 12.5.4 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
@@ -3233,12 +3236,14 @@ sub calculations {
         $mystat{'Innodb_buffer_pool_pages_total'}
     ) if defined $mystat{'Innodb_buffer_pool_pages_total'};
 
-    my $lreq=      "select  ROUND( 100* sum(allocated)/ ".
-      $myvar{'innodb_buffer_pool_size'} .
-      ',1) FROM sys.x\$innodb_buffer_stats_by_table;'; 
-      debugprint("lreq: $lreq");
-      $mycalc{'innodb_buffer_alloc_pct'} = select_one( $lreq )
-    if ($opt{experimental});
+    my $lreq =
+        "select  ROUND( 100* sum(allocated)/ "
+      . $myvar{'innodb_buffer_pool_size'}
+      . ',1) FROM sys.x\$innodb_buffer_stats_by_table;';
+    debugprint("lreq: $lreq");
+    $mycalc{'innodb_buffer_alloc_pct'} = select_one($lreq)
+      if ( $opt{experimental} );
+
     # Binlog Cache
     if ( $myvar{'log_bin'} ne 'OFF' ) {
         $mycalc{'pct_binlog_cache'} = percentage(
@@ -3378,22 +3383,25 @@ sub mysql_stats {
           . " ($mycalc{'pct_max_physical_memory'}% of installed RAM)";
     }
 
-    
     if ( $physical_memory <
-      ( $mycalc{'max_peak_memory'} + get_other_process_memory() ) )
+        ( $mycalc{'max_peak_memory'} + get_other_process_memory() ) )
     {
-      if ( $opt{nondedicated}) { 
-        infoprint "No warning with --nondedicated option";
-        infoprint "Overall possible memory usage with other process exceeded memory";
-      } else {
-        badprint
-        "Overall possible memory usage with other process exceeded memory";
-        push( @generalrec,
-          "Dedicate this server to your database for highest performance." );
-      }
-    } else {
-      goodprint
-      "Overall possible memory usage with other process is compatible with memory available";
+        if ( $opt{nondedicated} ) {
+            infoprint "No warning with --nondedicated option";
+            infoprint
+"Overall possible memory usage with other process exceeded memory";
+        }
+        else {
+            badprint
+"Overall possible memory usage with other process exceeded memory";
+            push( @generalrec,
+                "Dedicate this server to your database for highest performance."
+            );
+        }
+    }
+    else {
+        goodprint
+"Overall possible memory usage with other process is compatible with memory available";
     }
 
     # Slow queries
@@ -6390,24 +6398,27 @@ sub mysql_innodb {
     }
 
   # select  round( 100* sum(allocated)/( select VARIABLE_VALUE
-  #                                  FROM performance_schema.global_variables
+  #                                  FROM information_schema.global_variables
   #                              where VARIABLE_NAME='innodb_buffer_pool_size' )
   # ,2) as "PCT ALLOC/BUFFER POOL"
   #from sys.x$innodb_buffer_stats_by_table;
 
     if ( $opt{experimental} ) {
-      debugprint ('innodb_buffer_alloc_pct: "'.$mycalc{innodb_buffer_alloc_pct}.'"');
-      if (defined $mycalc{innodb_buffer_alloc_pct} and
-        $mycalc{innodb_buffer_alloc_pct} ne '' ) {
-        if ( $mycalc{innodb_buffer_alloc_pct} < 80 ) {
-            badprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
-              . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+        debugprint( 'innodb_buffer_alloc_pct: "'
+              . $mycalc{innodb_buffer_alloc_pct}
+              . '"' );
+        if ( defined $mycalc{innodb_buffer_alloc_pct}
+            and $mycalc{innodb_buffer_alloc_pct} ne '' )
+        {
+            if ( $mycalc{innodb_buffer_alloc_pct} < 80 ) {
+                badprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
+                  . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+            }
+            else {
+                goodprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
+                  . $mycalc{'innodb_buffer_alloc_pct'} . '%';
+            }
         }
-        else {
-            goodprint "Ratio Buffer Pool allocated / Buffer Pool Size: "
-              . $mycalc{'innodb_buffer_alloc_pct'} . '%';
-        }
-      }
     }
     if (   $mycalc{'innodb_log_size_pct'} < 20
         or $mycalc{'innodb_log_size_pct'} > 30 )
@@ -6435,7 +6446,7 @@ sub mysql_innodb {
               . $myvar{'innodb_log_files_in_group'} . " / "
               . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
               . " should be equal to 25%";
-           push(
+            push(
                 @adjvars,
                 "innodb_log_file_size should be (="
                   . hr_bytes_rnd(
@@ -7228,8 +7239,8 @@ sub headerprint {
       . "\t * Major Hayden <major\@mhtx.net>\n"
       . " >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/\n"
       . " >>  Run with '--help' for additional options and output filtering";
-    debugprint("Debug: ".$opt{debug});
-    debugprint("Experimental: ".$opt{experimental});
+    debugprint( "Debug: " . $opt{debug} );
+    debugprint( "Experimental: " . $opt{experimental} );
 }
 
 sub string2file {
@@ -7431,7 +7442,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.5.3 - MySQL High Performance Tuning Script
+ MySQLTuner 2.5.4 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 

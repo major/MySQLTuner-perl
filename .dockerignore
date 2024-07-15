@@ -1,0 +1,7 @@
+*.md
+*.md
+build/**
+Makefile
+.perltidy
+*.json
+*.png
