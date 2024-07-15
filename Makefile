@@ -41,7 +41,8 @@ generate_cve:
 	git commit -m "Generate CVE list at $(shell date --iso=seconds)"
 
 generate_version_file:
-	grep "# mysqltuner.pl - Version" ./mysqltuner.pl | awk '{ print $NF}' > CURRENT_VERSION.txt
+	rm -f CURRENT_VERSION.txt
+	grep "# mysqltuner.pl - Version" ./mysqltuner.pl | awk '{ print $$NF}' > CURRENT_VERSION.txt
 	
 generate_features:
 	perl ./build/genFeatures.sh
