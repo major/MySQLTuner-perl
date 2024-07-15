@@ -19,3 +19,4 @@ sql/*.sql
 sql/*.csv
 cve.csv
 default*.cnf
+.env

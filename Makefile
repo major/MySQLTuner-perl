@@ -20,8 +20,9 @@ help:
 
 
 installdep_debian:
-	apt install -y cpanminus libpod-markdown-perl libwww-mechanize-gzip-perl perltidy dos2unix
-	cpanm File::Util
+	sudo apt install -y cpanminus libpod-markdown-perl libwww-mechanize-gzip-perl perltidy dos2unix
+	sudo cpanm File::Util
+	curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
 
 tidy:
 	dos2unix ./mysqltuner.pl
@@ -72,7 +73,15 @@ increment_major_version:
 	git push --tags
 
 docker_build:
-	docker build .
+	docker build . -t jmrenouard/mysqltuner:latest -t jmrenouard/mysqltuner:$(VERSION)
+
+docker_slim:
+	docker run --rm -it --privileged -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):/root/app -w /root/app jmrenouard/mysqltuner:latest slim build
+
+docker_push: docker_build
+	bash build/publishtodockerhub.sh $(VERSION)
+	
+
 push:
 	git push
 

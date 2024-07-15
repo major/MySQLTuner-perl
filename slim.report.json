@@ -1,0 +1,372 @@
+{
+  "version": "1.1",
+  "engine": "linux/amd64|Transformer|1.40.11|1b271555882eacdfb4e6598d6d0552e9b9b1449b|2024-02-02_01:36:22PM",
+  "containerized": false,
+  "host_distro": {
+    "name": "Ubuntu",
+    "version": "24.04",
+    "display_name": "Ubuntu 24.04 LTS"
+  },
+  "type": "build",
+  "state": "done",
+  "target_reference": "jmrenouard/mysqltuner:latest",
+  "system": {
+    "type": "Linux",
+    "release": "5.15.153.1-microsoft-standard-WSL2",
+    "distro": {
+      "name": "Ubuntu",
+      "version": "24.04",
+      "display_name": "Ubuntu 24.04 LTS"
+    }
+  },
+  "source_image": {
+    "identity": {
+      "id": "sha256:de54a9bc71612ce378cafe4d719064ae17578f7a5c202f08c2340cb4a5bd8fa9",
+      "tags": [
+        "2.5.4",
+        "latest"
+      ],
+      "names": [
+        "jmrenouard/mysqltuner:2.5.4",
+        "jmrenouard/mysqltuner:latest"
+      ]
+    },
+    "size": 210101762,
+    "size_human": "210 MB",
+    "create_time": "2024-07-15T20:57:18Z",
+    "docker_version": "",
+    "architecture": "amd64",
+    "os": "linux",
+    "labels": {
+      "maintainer": "jmrenouard@gmail.com",
+      "org.opencontainers.image.ref.name": "ubuntu",
+      "org.opencontainers.image.version": "24.04"
+    },
+    "env_vars": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "DEBIAN_FRONTEND=noninteractive"
+    ],
+    "container_entry": {
+      "exe_path": ""
+    }
+  },
+  "minified_image_size": 37270902,
+  "minified_image_size_human": "37 MB",
+  "minified_image": "jmrenouard/mysqltuner.slim",
+  "minified_image_id": "sha256:cc97d204ab37932775e72b3d45523bac97c6a58f3fea9130c3e5a478655be815",
+  "minified_image_digest": "sha256:025d34ffb0fa21690d6852e2d2d72ca6bf7892400a141dc1c750aa5b82ffc0a5",
+  "minified_image_has_data": true,
+  "minified_by": 5.637152596950833,
+  "artifact_location": "/tmp/slim-state/.slim-state/images/de54a9bc71612ce378cafe4d719064ae17578f7a5c202f08c2340cb4a5bd8fa9/artifacts",
+  "container_report_name": "creport.json",
+  "seccomp_profile_name": "jmrenouard-mysqltuner-seccomp.json",
+  "apparmor_profile_name": "jmrenouard-mysqltuner-apparmor-profile",
+  "image_stack": [
+    {
+      "is_top_image": true,
+      "id": "sha256:de54a9bc71612ce378cafe4d719064ae17578f7a5c202f08c2340cb4a5bd8fa9",
+      "full_name": "jmrenouard/mysqltuner:2.5.4",
+      "repo_name": "jmrenouard/mysqltuner",
+      "version_tag": "2.5.4",
+      "raw_tags": [
+        "jmrenouard/mysqltuner:2.5.4",
+        "jmrenouard/mysqltuner:latest"
+      ],
+      "create_time": "2024-07-15T20:57:18Z",
+      "new_size": 210101762,
+      "new_size_human": "210 MB",
+      "instructions": [
+        {
+          "type": "ARG",
+          "time": "2024-06-07T12:00:06Z",
+          "is_nop": true,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "params": "RELEASE",
+          "command_snippet": "ARG RELEASE",
+          "command_all": "ARG RELEASE",
+          "inst_set_time_bucket": "2024-06-07T14:00:00+02:00",
+          "inst_set_time_index": 0,
+          "inst_set_time_reverse_index": 2
+        },
+        {
+          "type": "ARG",
+          "time": "2024-06-07T12:00:06Z",
+          "is_nop": true,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "params": "LAUNCHPAD_BUILD_ARCH",
+          "command_snippet": "ARG LAUNCHPAD_BUILD_ARCH",
+          "command_all": "ARG LAUNCHPAD_BUILD_ARCH",
+          "inst_set_time_bucket": "2024-06-07T14:00:00+02:00",
+          "inst_set_time_index": 0,
+          "inst_set_time_reverse_index": 2
+        },
+        {
+          "type": "LABEL",
+          "time": "2024-06-07T12:00:06Z",
+          "is_nop": true,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "params": "org.opencontainers.image.ref.name=ubuntu",
+          "command_snippet": "LABEL org.opencontainers.image.ref.name=ubun...",
+          "command_all": "LABEL org.opencontainers.image.ref.name=ubuntu",
+          "inst_set_time_bucket": "2024-06-07T14:00:00+02:00",
+          "inst_set_time_index": 0,
+          "inst_set_time_reverse_index": 2
+        },
+        {
+          "type": "LABEL",
+          "time": "2024-06-07T12:00:06Z",
+          "is_nop": true,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "params": "org.opencontainers.image.version=24.04",
+          "command_snippet": "LABEL org.opencontainers.image.version=24.04",
+          "command_all": "LABEL org.opencontainers.image.version=24.04",
+          "inst_set_time_bucket": "2024-06-07T14:00:00+02:00",
+          "inst_set_time_index": 0,
+          "inst_set_time_reverse_index": 2
+        },
+        {
+          "type": "ADD",
+          "time": "2024-06-07T12:00:08Z",
+          "is_nop": true,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 78050118,
+          "size_human": "78 MB",
+          "params": "file:5601f441718b0d192d73394b35fd07675342837ec9089ddd52dd1dc0de79630e in /",
+          "command_snippet": "ADD file:5601f441718b0d192d73394b35fd0767534...",
+          "command_all": "ADD file:5601f441718b0d192d73394b35fd07675342837ec9089ddd52dd1dc0de79630e /",
+          "target": "/",
+          "source_type": "file",
+          "inst_set_time_bucket": "2024-06-07T14:00:00+02:00",
+          "inst_set_time_index": 0,
+          "inst_set_time_reverse_index": 2
+        },
+        {
+          "type": "CMD",
+          "time": "2024-06-07T12:00:09Z",
+          "is_nop": true,
+          "is_exec_form": true,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "params": "[\"/bin/bash\"]\n",
+          "command_snippet": "CMD [\"/bin/bash\"]\n",
+          "command_all": "CMD [\"/bin/bash\"]\n",
+          "inst_set_time_bucket": "2024-06-07T14:00:00+02:00",
+          "inst_set_time_index": 0,
+          "inst_set_time_reverse_index": 2
+        },
+        {
+          "type": "LABEL",
+          "time": "2024-07-15T20:30:50Z",
+          "is_nop": false,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "params": "maintainer=jmrenouard@gmail.com",
+          "command_snippet": "LABEL maintainer=jmrenouard@gmail.com",
+          "command_all": "LABEL maintainer=jmrenouard@gmail.com",
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:30:00+02:00",
+          "inst_set_time_index": 1,
+          "inst_set_time_reverse_index": 1
+        },
+        {
+          "type": "ENV",
+          "time": "2024-07-15T20:30:50Z",
+          "is_nop": false,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "params": "DEBIAN_FRONTEND=noninteractive",
+          "command_snippet": "ENV DEBIAN_FRONTEND=noninteractive",
+          "command_all": "ENV DEBIAN_FRONTEND=noninteractive",
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:30:00+02:00",
+          "inst_set_time_index": 1,
+          "inst_set_time_reverse_index": 1
+        },
+        {
+          "type": "RUN",
+          "time": "2024-07-15T20:30:50Z",
+          "is_nop": false,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 129424033,
+          "size_human": "129 MB",
+          "command_snippet": "RUN apt-get update && \\\n\tapt upgrade -y && \\...",
+          "command_all": "RUN apt-get update && \\\n\tapt upgrade -y && \\\n\tapt-get install -yq --no-install-recommends     apt-utils     curl     wget     perl     perl-doc     mysql-client     libjson-perl     libtext-template-perl && \\\n\tapt-get clean && \\\n\trm -rf /var/lib/apt/lists/* && \\\n\tmkdir -p /results",
+          "system_commands": [
+            "apt-get update",
+            "apt upgrade -y",
+            "apt-get install -yq --no-install-recommends     apt-utils     curl     wget     perl     perl-doc     mysql-client     libjson-perl     libtext-template-perl",
+            "apt-get clean",
+            "rm -rf /var/lib/apt/lists/*",
+            "mkdir -p /results"
+          ],
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:30:00+02:00",
+          "inst_set_time_index": 1,
+          "inst_set_time_reverse_index": 1
+        },
+        {
+          "type": "RUN",
+          "time": "2024-07-15T20:57:17Z",
+          "is_nop": false,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "command_snippet": "RUN apt clean all",
+          "command_all": "RUN apt clean all",
+          "system_commands": [
+            "apt clean all"
+          ],
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:45:00+02:00",
+          "inst_set_time_index": 2,
+          "inst_set_time_reverse_index": 0
+        },
+        {
+          "type": "WORKDIR",
+          "time": "2024-07-15T20:57:17Z",
+          "is_nop": false,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "params": "/",
+          "command_snippet": "WORKDIR /",
+          "command_all": "WORKDIR /",
+          "system_commands": [
+            "mkdir -p /"
+          ],
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:45:00+02:00",
+          "inst_set_time_index": 2,
+          "inst_set_time_reverse_index": 0
+        },
+        {
+          "type": "COPY",
+          "time": "2024-07-15T20:57:17Z",
+          "is_nop": false,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 264380,
+          "size_human": "264 kB",
+          "params": "./mysqltuner.pl /mysqltuner.pl",
+          "command_snippet": "COPY ./mysqltuner.pl /mysqltuner.pl",
+          "command_all": "COPY ./mysqltuner.pl /mysqltuner.pl",
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:45:00+02:00",
+          "inst_set_time_index": 2,
+          "inst_set_time_reverse_index": 0
+        },
+        {
+          "type": "COPY",
+          "time": "2024-07-15T20:57:18Z",
+          "is_nop": false,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 2355059,
+          "size_human": "2.4 MB",
+          "params": "./vulnerabilities.csv /vulnerabilities.txt",
+          "command_snippet": "COPY ./vulnerabilities.csv /vulnerabilities....",
+          "command_all": "COPY ./vulnerabilities.csv /vulnerabilities.txt",
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:45:00+02:00",
+          "inst_set_time_index": 2,
+          "inst_set_time_reverse_index": 0
+        },
+        {
+          "type": "COPY",
+          "time": "2024-07-15T20:57:18Z",
+          "is_nop": false,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 3988,
+          "size_human": "4.0 kB",
+          "params": "./basic_passwords.txt /basic_passwords.txt",
+          "command_snippet": "COPY ./basic_passwords.txt /basic_passwords....",
+          "command_all": "COPY ./basic_passwords.txt /basic_passwords.txt",
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:45:00+02:00",
+          "inst_set_time_index": 2,
+          "inst_set_time_reverse_index": 0
+        },
+        {
+          "type": "COPY",
+          "time": "2024-07-15T20:57:18Z",
+          "is_nop": false,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 4184,
+          "size_human": "4.2 kB",
+          "params": "./template_example.tpl /template.tpl",
+          "command_snippet": "COPY ./template_example.tpl /template.tpl",
+          "command_all": "COPY ./template_example.tpl /template.tpl",
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:45:00+02:00",
+          "inst_set_time_index": 2,
+          "inst_set_time_reverse_index": 0
+        },
+        {
+          "type": "ENTRYPOINT",
+          "time": "2024-07-15T20:57:18Z",
+          "is_nop": false,
+          "is_exec_form": true,
+          "local_image_exists": false,
+          "layer_index": 0,
+          "size": 0,
+          "params": "[\"perl\",\"/mysqltuner.pl\",\"--passwordfile\",\"/basic_passwords.txt\",\"--cvefile\",\"/vulnerabilities.txt\",\"--nosysstat\",\"--defaults-file\",\"/defaults.cnf\",\"--dumpdir\",\"/results\",\"--outputfile\",\"/results/mysqltuner.txt\",\"--template\",\"/template.tpl\",\"--reportfile\",\"/results/mysqltuner.html\"]\n",
+          "command_snippet": "ENTRYPOINT [\"perl\",\"/mysqltuner.pl\",\"--passw...",
+          "command_all": "ENTRYPOINT [\"perl\",\"/mysqltuner.pl\",\"--passwordfile\",\"/basic_passwords.txt\",\"--cvefile\",\"/vulnerabilities.txt\",\"--nosysstat\",\"--defaults-file\",\"/defaults.cnf\",\"--dumpdir\",\"/results\",\"--outputfile\",\"/results/mysqltuner.txt\",\"--template\",\"/template.tpl\",\"--reportfile\",\"/results/mysqltuner.html\"]\n",
+          "comment": "buildkit.dockerfile.v0",
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:45:00+02:00",
+          "inst_set_time_index": 2,
+          "inst_set_time_reverse_index": 0
+        },
+        {
+          "type": "CMD",
+          "time": "2024-07-15T20:57:18Z",
+          "is_last_instruction": true,
+          "is_nop": false,
+          "is_exec_form": true,
+          "local_image_exists": true,
+          "layer_index": 0,
+          "size": 0,
+          "params": "[\"--verbose\"]\n",
+          "command_snippet": "CMD [\"--verbose\"]\n",
+          "command_all": "CMD [\"--verbose\"]\n",
+          "comment": "buildkit.dockerfile.v0",
+          "raw_tags": [
+            "jmrenouard/mysqltuner:2.5.4",
+            "jmrenouard/mysqltuner:latest"
+          ],
+          "is_buildkit_instruction": true,
+          "inst_set_time_bucket": "2024-07-15T22:45:00+02:00",
+          "inst_set_time_index": 2,
+          "inst_set_time_reverse_index": 0
+        }
+      ]
+    }
+  ],
+  "image_created": true,
+  "image_build_engine": "internal"
+}
