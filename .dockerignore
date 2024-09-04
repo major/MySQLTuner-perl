@@ -1,5 +1,4 @@
 *.md
-*.md
 build/**
 Makefile
 .perltidy
