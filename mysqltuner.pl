@@ -1590,12 +1590,9 @@ sub log_file_recommendations {
     while ( my $logLi = <$fh> ) {
         chomp $logLi;
         $numLi++;
-        debugprint "$numLi: $logLi"
-          if $logLi =~ /warning|error/i and $logLi !~ /Logging to/;
-        $nbErrLog++
-          if $logLi  =~ /error/i
-          and $logLi !~ /(Logging to|\[Warning\].*ERROR_FOR_DIVISION_BY_ZERO)/;
-        $nbWarnLog++ if $logLi =~ /warning/i;
+        debugprint "$numLi: $logLi" if $logLi =~ /\[(warning|error)\]/i;
+        $nbErrLog++  if $logLi =~ /\[error\]/i;
+        $nbWarnLog++ if $logLi =~ /\[warning\]/i;
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
         push @lastStarts, $logLi if $logLi =~ /ready for connections/;
