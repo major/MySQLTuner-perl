@@ -76,7 +76,7 @@ Test result are available here:
 * ColummStore
 * Connect
 
-Unmaintenained staff from MySQL or MariaDB:
+Unmaintenained stuff from MySQL or MariaDB:
 --
 
 * MyISAM is too old and no longer active
