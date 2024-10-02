@@ -3179,10 +3179,16 @@ sub calculations {
     $myvar{"innodb_buffer_pool_instances"} = 1
       unless defined( $myvar{'innodb_buffer_pool_instances'} );
     if ( $myvar{'have_innodb'} eq "YES" ) {
-        $mycalc{'innodb_log_size_pct'} =
-          ( $myvar{'innodb_log_file_size'} *
-              $myvar{'innodb_log_files_in_group'} * 100 /
-              $myvar{'innodb_buffer_pool_size'} );
+        if ( defined $myvar{'innodb_redo_log_capacity'} ) {
+          $mycalc{'innodb_log_size_pct'} =
+            ( $myvar{'innodb_redo_log_capacity'} /
+                $myvar{'innodb_buffer_pool_size'} ) * 100;
+        } else {
+          $mycalc{'innodb_log_size_pct'} =
+            ( $myvar{'innodb_log_file_size'} *
+                $myvar{'innodb_log_files_in_group'} * 100 /
+                $myvar{'innodb_buffer_pool_size'} );
+        }
     }
     if ( !defined $myvar{'innodb_buffer_pool_size'} ) {
         $mycalc{'innodb_log_size_pct'}    = 0;
