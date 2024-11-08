@@ -40,23 +40,17 @@ MySQLTuner needs you
 Compatibility
 ====
 
-Test result are available here:
-
-* MySQL 8.0, 8.2, 8.3 (full support)
-* Percona Server 8.0, 8.2, 8.3 (full support)
-* MariaDB 10.4, 10.5, 10.6, 10.11, 11.0, 11.1, 11.2 (full support)
+Test result are available here for LTS only:
+* MySQL (full support)
+* Percona Server (full support)
+* MariaDB (full support)
 * Galera replication (full support)
 * Percona XtraDB cluster (full support)
-* Mysql Replications (partial support, no test environment)
+* MySQL Replication (partial support, no test environment)
 
-* MySQL 8.1 (not supported, deprecated version)
-* Percona Server 5.7 (not supported, deprecated version)
-* MySQL 5.7 (not supported, deprecated version)
-* MySQL 5.6 and earlier (not supported, deprecated version)
-* Percona Server 5.6 (not supported, deprecated version)
-* MariaDB 10.7, 10.8, 10.9, 10.10 (not supported, deprecated version)
-* MariaDB 10.3 and earlier (not supported, deprecated version)
-* MariaDB 5.5 (not supported, deprecated version)
+Thanks to [endoflife.date](endoflife.date)
+  * Refer to [MariaDB Supported versions](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
+  * Refer to [MySQL Supported versions](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
 
 ***Windows Support is partial***
 

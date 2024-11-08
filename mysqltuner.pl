@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.6.0
+# mysqltuner.pl - Version 2.6.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.6.0";
+my $tunerversion = "2.6.1";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -117,7 +117,8 @@ my %opt = (
     "dumpdir"             => '',
     "feature"             => '',
     "dbgpattern"          => '',
-    "defaultarch"         => 64
+    "defaultarch"         => 64,
+    "noprettyicon"        => 0
 );
 
 # Gather the options from the command line
@@ -154,7 +155,7 @@ GetOptions(
     'defaults-extra-file=s', 'dumpdir=s',
     'feature=s',             'dbgpattern=s',
     'defaultarch=i',         'experimental',
-    'nondedicated'
+    'nondedicated',          'noprettyicon'
   )
   or pod2usage(
     -exitval  => 1,
@@ -232,6 +233,7 @@ if ( $opt{verbose} ) {
 
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
+$opt{prettyicon}=0 if $opt{prettyicon}!=1;
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
@@ -275,12 +277,23 @@ $opt{nocolor} = 0 if ( $opt{color} == 1 );
 # Setting up the colors for the print styles
 my $me = `whoami`;
 $me =~ s/\n//g;
+
+
 my $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]"  : "[OK]";
 my $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]"  : "[!!]";
 my $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]"  : "[--]";
 my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]"  : "[DG]";
 my $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
 my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
+
+if ($opt{prettyicon} == 1) {
+  $good = "✔ ";
+  $bad  = "✘ ";
+  $info = "ℹ ";
+  $deb  = "⚙ ";
+  $cmd  = "⌨️($me)";
+  $end  = "  ";
+}
 
 # Maximum lines of log output to read from end
 my $maxlines = 30000;
@@ -7441,7 +7454,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.6.0 - MySQL High Performance Tuning Script
+ MySQLTuner 2.6.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -7493,6 +7506,7 @@ You must provide the remote server's total memory when connecting to other serve
  --verbose                   Print out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
  --color                     Print output in color
  --nocolor                   Don't print output in color
+ --noprettyicon              Print output with legacy tag [OK], [!!], [--], [CMD], ...
  --nogood                    Remove OK responses
  --nobad                     Remove negative/suggestion responses
  --noinfo                    Remove informational responses

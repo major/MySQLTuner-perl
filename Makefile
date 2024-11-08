@@ -43,7 +43,13 @@ generate_cve:
 generate_version_file:
 	rm -f CURRENT_VERSION.txt
 	grep "# mysqltuner.pl - Version" ./mysqltuner.pl | awk '{ print $$NF}' > CURRENT_VERSION.txt
-	
+
+generate_eof_files:
+	bash ./build/endoflife.sh mariadb 
+	bash ./build/endoflife.sh mysql
+	git add ./*_support.md
+	git commit -m "Generate End Of Life (endoflive.date) at $(shell date --iso=seconds)"
+
 generate_features:
 	perl ./build/genFeatures.sh
 	git add ./FEATURES.md
