@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.6.0 - MySQL High Performance Tuning Script
+    MySQLTuner 2.6.1 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -52,6 +52,7 @@ You must provide the remote server's total memory when connecting to other serve
     --verbose                   Print out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
     --color                     Print output in color
     --nocolor                   Don't print output in color
+    --noprettyicon              Print output with legacy tag [OK], [!!], [--], [CMD], ...
     --nogood                    Remove OK responses
     --nobad                     Remove negative/suggestion responses
     --noinfo                    Remove informational responses
