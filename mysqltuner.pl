@@ -233,7 +233,7 @@ if ( $opt{verbose} ) {
 
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
-$opt{prettyicon}=0 if $opt{prettyicon}!=1;
+$opt{noprettyicon}=0 if $opt{noprettyicon}!=1;
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
@@ -286,7 +286,7 @@ my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]"  : "[DG]";
 my $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
 my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
 
-if ($opt{prettyicon} == 1) {
+if ($opt{noprettyicon} == 0) {
   $good = "✔ ";
   $bad  = "✘ ";
   $info = "ℹ ";
