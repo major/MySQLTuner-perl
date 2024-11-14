@@ -118,6 +118,7 @@ my %opt = (
     "feature"             => '',
     "dbgpattern"          => '',
     "defaultarch"         => 64,
+    "prettyicon"          => 0,
     "noprettyicon"        => 0
 );
 
@@ -155,7 +156,8 @@ GetOptions(
     'defaults-extra-file=s', 'dumpdir=s',
     'feature=s',             'dbgpattern=s',
     'defaultarch=i',         'experimental',
-    'nondedicated',          'noprettyicon'
+    'nondedicated',          'prettyicon',
+    'noprettyicon'
   )
   or pod2usage(
     -exitval  => 1,
@@ -233,7 +235,8 @@ if ( $opt{verbose} ) {
 
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
-$opt{prettyicon}=0 if $opt{prettyicon}!=1;
+$opt{prettyicon} = 0 if $opt{prettyicon}!=1;
+$opt{prettyicon} = 0 if ( $opt{noprettyicon} == 1 );
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
@@ -7506,6 +7509,7 @@ You must provide the remote server's total memory when connecting to other serve
  --verbose                   Print out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
  --color                     Print output in color
  --nocolor                   Don't print output in color
+ --prettyicon                Print output with new icons: ✔, ✘, ℹ, ⚙, ⌨️, ...
  --noprettyicon              Print output with legacy tag [OK], [!!], [--], [CMD], ...
  --nogood                    Remove OK responses
  --nobad                     Remove negative/suggestion responses
