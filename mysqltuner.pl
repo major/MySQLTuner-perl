@@ -3512,7 +3512,7 @@ sub mysql_stats {
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
-    elsif ( mysql_version_eq(8) ) {
+    elsif ( mysql_version_ge(8) and mysql_version_le(9,9) ) {
         infoprint "Query cache has been removed since MySQL 8.0";
 
         #return;
