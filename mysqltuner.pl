@@ -2140,7 +2140,7 @@ sub system_recommendations {
 sub security_recommendations {
     subheaderprint "Security Recommendations";
 
-    if ( mysql_version_eq(8) ) {
+    if ( mysql_version_le(8.0.0) ) {
         infoprint "Skipped due to unsupported feature for MySQL 8.0+";
         return;
     }
@@ -2511,6 +2511,8 @@ sub mysql_version_le {
     $mic ||= 0;
     my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
       $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+    #infoprint "MySQL version: $mysqlvermajor.$mysqlverminor.$mysqlvermicro";
+
     return
          int($mysqlvermajor) < int($maj)
       || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) < int($min) )
@@ -2861,7 +2863,9 @@ sub calculations {
         badprint "Your server has not answered any queries: cannot continue...";
         exit 2;
     }
-
+    #infoprint "====>>>> MySQL version: $myvar{'version'}";
+    $myvar{'version'} =~ s/(.+)-.*?$/$1/;
+    #infoprint "====>>>> MySQL version updated: $myvar{'version'}";
     # Per-thread memory
     $mycalc{'per_thread_buffers'} = 0;
     $mycalc{'per_thread_buffers'} += $myvar{'read_buffer_size'}
