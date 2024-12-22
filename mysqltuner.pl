@@ -2140,7 +2140,8 @@ sub system_recommendations {
 sub security_recommendations {
     subheaderprint "Security Recommendations";
 
-    if ( mysql_version_le(8.0.0) ) {
+    infoprint "$myvar{'version_comment'} - $myvar{'version'}";
+    if ( mysql_version_le(8.0) ) {
         infoprint "Skipped due to unsupported feature for MySQL 8.0+";
         return;
     }
@@ -2448,13 +2449,14 @@ sub validate_mysql_version {
 
     prettyprint " ";
 
-    if (   mysql_version_eq(9)
+    if (   mysql_version_eq(9,1)
         or mysql_version_eq(8, 4)
 				or mysql_version_eq(8, 0)
         or mysql_version_eq( 10, 5 )
         or mysql_version_eq( 10, 6 )
         or mysql_version_eq( 10, 11 )
-        or mysql_version_eq( 11, 4 ) )
+        or mysql_version_eq( 11, 4 )
+        or mysql_version_eq( 11, 6 ) )
     {
         goodprint "Currently running supported MySQL version "
           . $myvar{'version'} . "";
