@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.6.1
+# mysqltuner.pl - Version 2.6.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -57,7 +57,7 @@ use Cwd 'abs_path';
 #use Env;
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.6.1";
+my $tunerversion = "2.6.2";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2140,7 +2140,8 @@ sub system_recommendations {
 sub security_recommendations {
     subheaderprint "Security Recommendations";
 
-    if ( mysql_version_eq(8) ) {
+    infoprint "$myvar{'version_comment'} - $myvar{'version'}";
+    if ( mysql_version_le(8.0) ) {
         infoprint "Skipped due to unsupported feature for MySQL 8.0+";
         return;
     }
@@ -2448,13 +2449,14 @@ sub validate_mysql_version {
 
     prettyprint " ";
 
-    if (   mysql_version_eq(9)
+    if (   mysql_version_eq(9,1)
         or mysql_version_eq(8, 4)
 				or mysql_version_eq(8, 0)
         or mysql_version_eq( 10, 5 )
         or mysql_version_eq( 10, 6 )
         or mysql_version_eq( 10, 11 )
-        or mysql_version_eq( 11, 4 ) )
+        or mysql_version_eq( 11, 4 )
+        or mysql_version_eq( 11, 6 ) )
     {
         goodprint "Currently running supported MySQL version "
           . $myvar{'version'} . "";
@@ -2511,6 +2513,8 @@ sub mysql_version_le {
     $mic ||= 0;
     my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
       $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+    #infoprint "MySQL version: $mysqlvermajor.$mysqlverminor.$mysqlvermicro";
+
     return
          int($mysqlvermajor) < int($maj)
       || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) < int($min) )
@@ -2861,7 +2865,9 @@ sub calculations {
         badprint "Your server has not answered any queries: cannot continue...";
         exit 2;
     }
-
+    #infoprint "====>>>> MySQL version: $myvar{'version'}";
+    $myvar{'version'} =~ s/(.+)-.*?$/$1/;
+    #infoprint "====>>>> MySQL version updated: $myvar{'version'}";
     # Per-thread memory
     $mycalc{'per_thread_buffers'} = 0;
     $mycalc{'per_thread_buffers'} += $myvar{'read_buffer_size'}
@@ -3512,7 +3518,7 @@ sub mysql_stats {
         push( @generalrec,
             "Upgrade MySQL to version 4+ to utilize query caching" );
     }
-    elsif ( mysql_version_eq(8) ) {
+    elsif ( mysql_version_ge(8) and mysql_version_le(9,9) ) {
         infoprint "Query cache has been removed since MySQL 8.0";
 
         #return;
@@ -7454,7 +7460,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.6.1 - MySQL High Performance Tuning Script
+ MySQLTuner 2.6.2 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
