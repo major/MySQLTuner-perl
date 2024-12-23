@@ -2,6 +2,7 @@ build/mysqltuner-*
 build/mysqltuner.spec
 build/build.log
 build/cve*
+output/**
 build/vulnerabilities*
 *.bak
 Vagrant/Vagrantfile
