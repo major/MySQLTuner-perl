@@ -2141,7 +2141,7 @@ sub security_recommendations {
     subheaderprint "Security Recommendations";
 
     infoprint "$myvar{'version_comment'} - $myvar{'version'}";
-    if ( mysql_version_le(8.0) ) {
+    if ( mysql_version_ge(8.0) ) {
         infoprint "Skipped due to unsupported feature for MySQL 8.0+";
         return;
     }
