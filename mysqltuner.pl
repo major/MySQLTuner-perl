@@ -3935,14 +3935,15 @@ sub mysql_myisam {
         my $sql_mig = "";
         for my $myisam_table (
             select_array(
-"SELECT CONCAT(TABLE_SCHEMA, '.', TABLE_NAME) FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')"
+"SELECT CONCAT('|',TABLE_SCHEMA, '|.|', TABLE_NAME,'|') FROM information_schema.TABLES WHERE ENGINE='MyISAM' and TABLE_SCHEMA NOT IN ('mysql','information_schema','performance_schema')"
             )
           )
         {
+	    my $myisam_table_escape = $myisam_table =~ s/\|/\`/gr;
             $sql_mig =
-"${sql_mig}-- InnoDB migration for $myisam_table\nALTER TABLE $myisam_table ENGINE=InnoDB;\n\n";
+"${sql_mig}-- InnoDB migration for $myisam_table_escape\nALTER TABLE $myisam_table_escape ENGINE=InnoDB;\n\n";
             infoprint
-"* InnoDB migration request for $myisam_table Table: ALTER TABLE $myisam_table ENGINE=InnoDB;";
+"* InnoDB migration request for $myisam_table_escape Table: ALTER TABLE $myisam_table_escape ENGINE=InnoDB;";
         }
         dump_into_file( "migrate_myisam_to_innodb.sql", $sql_mig );
     }
