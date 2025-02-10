@@ -234,7 +234,6 @@ if ( $opt{verbose} ) {
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
 }
 $opt{noprettyicon}=0 if $opt{noprettyicon}!=1;
-$opt{nocolor} = 1 if defined( $opt{outputfile} );
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
 $opt{dbstat}  = 0 if ( $opt{nodbstat} == 1 ); # Don't print database information
@@ -269,22 +268,20 @@ my $fh = undef;
 open( $fh, '>', $outputfile )
   or die("Fail opening $outputfile")
   if defined($outputfile);
-$opt{nocolor} = 1 if defined($outputfile);
-$opt{nocolor} = 1 unless ( -t STDOUT );
-
-$opt{nocolor} = 0 if ( $opt{color} == 1 );
 
 # Setting up the colors for the print styles
+$opt{nocolor} = 1 if defined($outputfile);
+$opt{color}   = 0 if $opt{nocolor} == 1;
+
 my $me = `whoami`;
 $me =~ s/\n//g;
 
-
-my $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]"  : "[OK]";
-my $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]"  : "[!!]";
-my $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]"  : "[--]";
-my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]"  : "[DG]";
-my $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
-my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
+my $good = $opt{color} ? "[\e[0;32mOK\e[0m]"  : "[OK]";
+my $bad  = $opt{color} ? "[\e[0;31m!!\e[0m]"  : "[!!]";
+my $info = $opt{color} ? "[\e[0;34m--\e[0m]"  : "[--]";
+my $deb  = $opt{color} ? "[\e[0;31mDG\e[0m]"  : "[DG]";
+my $cmd  = $opt{color} ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
+my $end  = $opt{color} ? "\e[0m"              : "";
 
 if ($opt{noprettyicon} == 0) {
   $good = "✔ ";
@@ -333,11 +330,11 @@ sub debugprint {
 }
 
 sub redwrap {
-    return ( $opt{nocolor} == 0 ) ? "\e[0;31m" . $_[0] . "\e[0m" : $_[0];
+    return $opt{color} ? "\e[0;31m" . $_[0] . "\e[0m" : $_[0];
 }
 
 sub greenwrap {
-    return ( $opt{nocolor} == 0 ) ? "\e[0;32m" . $_[0] . "\e[0m" : $_[0];
+    return $opt{color} ? "\e[0;32m" . $_[0] . "\e[0m" : $_[0];
 }
 
 sub cmdprint {
