@@ -34,26 +34,23 @@ MySQLTuner needs you
 
 ## Stargazers over time
 
-[![Stargazers over time](https://starcharts.herokuapp.com/major/MySQLTuner-perl.svg)](https://starcharts.herokuapp.com/major/MySQLTuner-perl)
+[![Stargazers over time](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
+
 
 Compatibility
 ====
 
-Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.org/major/MySQLTuner-perl)
-
-* MySQL 8.0 (partial support, password checks don't work)
-* Percona Server 8.0 (partial support, password checks don't work)
-* MySQL 5.7 (full support)
-* Percona Server 5.7 (full support)
-* MariaDB 10.3 - 10.11 (full support)
+Test result are available here for LTS only:
+* MySQL (full support)
+* Percona Server (full support)
+* MariaDB (full support)
 * Galera replication (full support)
 * Percona XtraDB cluster (full support)
-* Mysql Replications (partial support, no test environment)
+* MySQL Replication (partial support, no test environment)
 
-* MySQL 5.6 and earlier (not supported, deprecated version)
-* Percona Server 5.6 (not supported, deprecated version)
-* MariaDB 5.5 (not supported, deprecated version)
-* MariaDB 10.2 and earlier (not supported, deprecated version)
+Thanks to [endoflife.date](endoflife.date)
+  * Refer to [MariaDB Supported versions](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
+  * Refer to [MySQL Supported versions](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
 
 ***Windows Support is partial***
 
@@ -65,16 +62,21 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 * Cloud based is not supported at this time (Help wanted! GCP, AWS, Azure support requested)
 
 ***Unsupported storage engines: PRs welcome***
+--
 
 * NDB is not supported feel free to create a Pull Request
-* MyISAM is too old and no longer active
-* RockDB
 * Archive
 * Spider
 * ColummStore
-* TokuDB
-* XtraDB
 * Connect
+
+Unmaintenained stuff from MySQL or MariaDB:
+--
+
+* MyISAM is too old and no longer active
+* RockDB is not maintained anymore
+* TokuDB is not maintained anymore
+* XtraDB is not maintained anymore
 
 * CVE vulnerabilities detection support from [https://cve.mitre.org](https://cve.mitre.org)
 
@@ -82,7 +84,8 @@ Test result are available here: [Travis CI/MySQLTuner-perl](https://travis-ci.or
 
 * Perl 5.6 or later (with [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod) package)
 * Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
-* Unrestricted read access to the MySQL server (OS root access recommended for MySQL < 5.1)
+* Unrestricted read access to the MySQL server
+OS root access recommended for MySQL < 5.1
 
 ***WARNING***
 --
@@ -131,8 +134,11 @@ Optional Sysschema installation for MySQL 5.6
 --
 
 Sysschema is installed by default under MySQL 5.7 and MySQL 8 from Oracle.
-By default, on MySQL 5.6/5.7/8, performance schema is enabled by default.
+By default, on MySQL 5.6/5.7/8, performance schema is enabled.
 For previous MySQL 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
+
+Sysschema for MySQL old version
+--
 
 ```bash
 curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
@@ -143,17 +149,51 @@ cd mysql-sys-master
 mysql -uroot -p < sys_56.sql
 ```
 
-Optional Performance schema and Sysschema installation for MariaDB < 10.6
+Sysschema for MariaDB old version
 --
 
-Sysschema is not installed by default under MariaDB prior to 10.6 [MariaDB sys](https://mariadb.com/kb/en/sys-schema/)
+```bash
+curl "https://github.com/FromDual/mariadb-sys/archive/refs/heads/master.zip" > sysschema.zip
+# check zip file
+unzip -l sysschema.zip
+unzip sysschema.zip
+cd mariadb-sys-master
+mysql -u root -p < ./sys_10.sql
+```
 
-By default, on MariaDB, performance schema is disabled by default. consider activating performance schema across your my.cnf configuration file:
+Performance schema setup
+--
+
+By default, performance_schema is enabled and sysschema is installed on latest version.
+
+By default, on MariaDB, performance schema is disabled (MariaDB<10.6).
+
+Consider activating performance schema across your my.cnf configuration file:
 
 ```ini
 [mysqld]
 performance_schema = on
+performance-schema-consumer-events-statements-history-long = ON
+performance-schema-consumer-events-statements-history = ON
+performance-schema-consumer-events-statements-current = ON
+performance-schema-consumer-events-stages-current=ON
+performance-schema-consumer-events-stages-history=ON
+performance-schema-consumer-events-stages-history-long=ON
+performance-schema-consumer-events-transactions-current=ON
+performance-schema-consumer-events-transactions-history=ON
+performance-schema-consumer-events-transactions-history-long=ON
+performance-schema-consumer-events-waits-current=ON
+performance-schema-consumer-events-waits-history=ON
+performance-schema-consumer-events-waits-history-long=ON
+performance-schema-instrument='%=ON'
+max-digest-length=2048
+performance-schema-max-digest-length=2018
 ```
+
+Sysschema installation for MariaDB < 10.6
+--
+
+Sysschema is not installed by default under MariaDB prior to 10.6 [MariaDB sys](https://mariadb.com/kb/en/sys-schema/)
 
 You can follow this command to create a new database sys containing a useful view on Performance schema:
 
@@ -167,23 +207,27 @@ mysql -u root -p < ./sys_10.sql
 ```
 
 Errors & solutions for performance schema installation
+--
+
+
+ERROR 1054 (42S22) at line 78 in file: './views/p_s/metrics_56.sql': Unknown column 'STATUS' in 'field list'
+--
+
+
+This error can be safely ignored
+Consider using a recent MySQL/MariaDB version to avoid this kind of issue during sysschema installation
+
+In recent versions, sysschema is installed and integrated by default as sys schema (SHOW DATABASES)
+
+
 
 ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
 Have a look at #452 solution given by @ericx
-
-Performance tips
 --
-
-Metadata statistic updates in MySQL 5.6 and lower can strongly impact performance of database servers.
-Be sure that innodb_stats_on_metadata is disabled.
-
-```bash
-set global innodb_stats_on_metadata = 0;
-```
 
 Fixing sysctl configuration (/etc/sysctl.conf)
---
 
+--
 It is a system wide setting and not a database setting: [Linux FS Kernel settings](https://www.kernel.org/doc/html/latest/admin-guide/sysctl/fs.html#id1)
 
 You can check its values via:
@@ -262,6 +306,14 @@ perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/
 
 __Important__: [Text::Template](https://metacpan.org/pod/Text::Template) module is mandatory for `--reportfile` and/or `--template` options, because this module is needed to generate appropriate output based on a text template.
 
+
+__Usage:__ Dumping all information_schema and sysschema views as csv file into results subdirectory
+
+```bash
+perl mysqltuner.pl --verbose --dumpdir=./result
+```
+
+
 __Usage:__ Enable debugging information
 
 ```bash
@@ -317,14 +369,13 @@ HTML generation is based on AHA
 **HTML generation Procedure**
 
  - Generate mysqltuner.pl report using standard text reports
- - Generate HTML report using aha 
+ - Generate HTML report using aha
 
 **Installation Aha**
 
 Follow instructions from Github repo
 
 [GitHub AHA main repository](https://github.com/theZiz/aha)
-
 
 **Using AHA Html report generation**
 
@@ -358,9 +409,9 @@ For optimal results, run the script after your server has been running for at le
 
 **Question: How do I interpret the results from MySQL tuner ?**
 
-MySQL tuner provides output in the form of suggestions and warnings. 
+MySQL tuner provides output in the form of suggestions and warnings.
 
-Review each recommendation and consider implementing the changes in your MySQL configuration file (usually 'my.cnf' or 'my.ini'). 
+Review each recommendation and consider implementing the changes in your MySQL configuration file (usually 'my.cnf' or 'my.ini').
 
 Be cautious when making changes and always backup your configuration file before making any modifications.
 
@@ -381,7 +432,7 @@ Yes, MySQL tuner supports MariaDB and Percona Server since they are derivatives 
 
 **Question: What should I do if I need help with MySQL tuner or have questions about the recommendations ?**
 
-If you need help with MySQL tuner or have questions about the recommendations provided by the script, you can consult the MySQL tuner documentation, seek advice from online forums, or consult a MySQL expert. 
+If you need help with MySQL tuner or have questions about the recommendations provided by the script, you can consult the MySQL tuner documentation, seek advice from online forums, or consult a MySQL expert.
 
 Be cautious when implementing changes to ensure the stability and performance of your server.
 
@@ -416,15 +467,22 @@ After which, `~/.mylogin.cnf` will be created with the appropriate access.
 
 To get information about stored credentials, use the following command:
 
-	$mysql_config_editor print
-	[client]
-	user = someusername
-	password = *****
-	host = localhost
+```bash
+$mysql_config_editor print
+[client]
+user = someusername
+password = *****
+host = localhost
+```
 
 **Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
 
-        mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* TO 'mysqltuner'@'localhost' identified by pwd1234;
+```bash
+ mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
+ SHOW DATABASES,SHOW VIEW
+ ON *.*
+ TO 'mysqltuner'@'localhost' identified by pwd1234;
+```
 
 **Question: It's not working on my OS! What gives?!**
 
@@ -542,7 +600,7 @@ Contributions welcome !
 How to contribute using Pull Request ? Follow this guide : [Pull request creation](https://opensource.com/article/19/7/create-pull-request-github)
 
 Simple steps to create a pull request:
--- 
+--
 
 - Fork this Github project
 - Clone it to your local system

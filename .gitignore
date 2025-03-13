@@ -2,6 +2,7 @@ build/mysqltuner-*
 build/mysqltuner.spec
 build/build.log
 build/cve*
+output/**
 build/vulnerabilities*
 *.bak
 Vagrant/Vagrantfile
@@ -18,3 +19,5 @@ result_*
 sql/*.sql
 sql/*.csv
 cve.csv
+default*.cnf
+.env

@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.3.2 - MySQL High Performance Tuning Script
+    MySQLTuner 2.6.2 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -44,15 +44,21 @@ You must provide the remote server's total memory when connecting to other serve
     --template   <path>         Path to a template file
     --dumpdir <path>            Path to a directory where to dump information files
     --feature <feature>         Run a specific feature (see FEATURES section)
-   =head1 OUTPUT OPTIONS
+    --dumpdir <path>            information_schema tables and sys views are dumped in CSV in this path
+
+# OUTPUT OPTIONS
 
     --silent                    Don't output anything on screen
     --verbose                   Print out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
+    --color                     Print output in color
     --nocolor                   Don't print output in color
+    --noprettyicon              Print output with legacy tag [OK], [!!], [--], [CMD], ...
     --nogood                    Remove OK responses
     --nobad                     Remove negative/suggestion responses
     --noinfo                    Remove informational responses
     --debug                     Print debug information
+    --experimental              Print experimental analysis (may fail)
+    --nondedicated              Consider server is not dedicated to Db server usage only
     --noprocess                 Consider no other process is running
     --dbstat                    Print database information
     --nodbstat                  Don't print database information
