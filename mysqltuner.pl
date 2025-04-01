@@ -608,8 +608,6 @@ sub os_setup {
     chomp($physical_memory);
     chomp($swap_memory);
     chomp($os);
-    $physical_memory = $opt{forcemem}
-      if ( defined( $opt{forcemem} ) and $opt{forcemem} gt 0 );
     $result{'OS'}{'OS Type'}                   = $os;
     $result{'OS'}{'Physical Memory'}{'bytes'}  = $physical_memory;
     $result{'OS'}{'Physical Memory'}{'pretty'} = hr_bytes($physical_memory);
