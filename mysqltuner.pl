@@ -287,12 +287,12 @@ my $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
 my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
 
 if ($opt{noprettyicon} == 0) {
-  $good = "✔ ";
-  $bad  = "✘ ";
-  $info = "ℹ ";
-  $deb  = "⚙ ";
-  $cmd  = "⌨️($me)";
-  $end  = "  ";
+  $good = ( $opt{nocolor} == 0 ) ? "\e[0;32m✔\e[0m " : "✔ ";
+  $bad  = ( $opt{nocolor} == 0 ) ? "\e[0;31m✘\e[0m " : "✘ ";
+  $info = ( $opt{nocolor} == 0 ) ? "\e[0;34mℹ\e[0m " : "ℹ ";
+  $deb  = ( $opt{nocolor} == 0 ) ? "\e[0;31m⚙\e[0m " : "⚙ ";
+  $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m⌨️($me)" : "⌨️($me)";
+  $end  = ( $opt{nocolor} == 0 ) ? "\e[0m  " : "  ";
 }
 
 # Maximum lines of log output to read from end
