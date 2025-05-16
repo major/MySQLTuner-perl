@@ -6557,37 +6557,40 @@ sub mysql_innodb {
     }
 
     # InnoDB Used Buffer Pool Size vs CHUNK size
-    if ( !defined( $myvar{'innodb_buffer_pool_chunk_size'} ) ) {
-        infoprint
-          "InnoDB Buffer Pool Chunk Size not used or defined in your version";
-    }
-    else {
-        infoprint "Number of InnoDB Buffer Pool Chunk: "
-          . int( $myvar{'innodb_buffer_pool_size'} ) /
-          int( $myvar{'innodb_buffer_pool_chunk_size'} ) . " for "
-          . $myvar{'innodb_buffer_pool_instances'}
-          . " Buffer Pool Instance(s)";
+   if ( !defined($myvar{'innodb_buffer_pool_chunk_size'}) || 
+     $myvar{'innodb_buffer_pool_chunk_size'} == 0 || 
+     !defined($myvar{'innodb_buffer_pool_size'}) || 
+     $myvar{'innodb_buffer_pool_size'} == 0 || 
+     !defined($myvar{'innodb_buffer_pool_instances'}) || 
+     $myvar{'innodb_buffer_pool_instances'} == 0 ) {
 
-        if (
-            int( $myvar{'innodb_buffer_pool_size'} ) % (
-                int( $myvar{'innodb_buffer_pool_chunk_size'} ) *
-                  int( $myvar{'innodb_buffer_pool_instances'} )
-            ) eq 0
-          )
-        {
-            goodprint
-"Innodb_buffer_pool_size aligned with Innodb_buffer_pool_chunk_size & Innodb_buffer_pool_instances";
-        }
-        else {
-            badprint
-"Innodb_buffer_pool_size aligned with Innodb_buffer_pool_chunk_size & Innodb_buffer_pool_instances";
+    badprint "Cannot calculate InnoDB Buffer Pool Chunk breakdown due to missing or zero values:";
+    
+    infoprint " - innodb_buffer_pool_size: " . 
+        (defined $myvar{'innodb_buffer_pool_size'} ? $myvar{'innodb_buffer_pool_size'} : "undefined");
+    infoprint " - innodb_buffer_pool_chunk_size: " . 
+        (defined $myvar{'innodb_buffer_pool_chunk_size'} ? $myvar{'innodb_buffer_pool_chunk_size'} : "undefined");
+    infoprint " - innodb_buffer_pool_instances: " . 
+        (defined $myvar{'innodb_buffer_pool_instances'} ? $myvar{'innodb_buffer_pool_instances'} : "undefined");
 
-#push( @adjvars, "Adjust innodb_buffer_pool_instances, innodb_buffer_pool_chunk_size with innodb_buffer_pool_size" );
-            push( @adjvars,
-"innodb_buffer_pool_size must always be equal to or a multiple of innodb_buffer_pool_chunk_size * innodb_buffer_pool_instances"
-            );
-        }
+} else {
+    my $num_chunks = int($myvar{'innodb_buffer_pool_size'} / $myvar{'innodb_buffer_pool_chunk_size'});
+    infoprint "Number of InnoDB Buffer Pool Chunk: $num_chunks for " 
+        . $myvar{'innodb_buffer_pool_instances'} . " Buffer Pool Instance(s)";
+
+    my $expected_size = int($myvar{'innodb_buffer_pool_chunk_size'}) * 
+                        int($myvar{'innodb_buffer_pool_instances'});
+
+    if (int($myvar{'innodb_buffer_pool_size'}) % $expected_size == 0) {
+        goodprint "Innodb_buffer_pool_size aligned with Innodb_buffer_pool_chunk_size & Innodb_buffer_pool_instances";
+    } else {
+        badprint "Innodb_buffer_pool_size not aligned with Innodb_buffer_pool_chunk_size & Innodb_buffer_pool_instances";
+
+        push(@adjvars, 
+            "innodb_buffer_pool_size must always be equal to or a multiple of innodb_buffer_pool_chunk_size * innodb_buffer_pool_instances"
+        );
     }
+}
 
     # InnoDB Read efficiency
     if ( defined $mycalc{'pct_read_efficiency'}
