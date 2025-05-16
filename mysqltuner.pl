@@ -56,6 +56,8 @@ use Cwd 'abs_path';
 # for which()
 #use Env;
 
+my $is_win=$^O eq 'MSWin32';
+
 # Set up a few variables for use in the script
 my $tunerversion = "2.6.2";
 my ( @adjvars, @generalrec );
@@ -73,6 +75,8 @@ my %opt = (
     "forceswap"           => 0,
     "host"                => 0,
     "socket"              => 0,
+    "pipe"                => 0,
+    "pipe_name"           => 0,
     "port"                => 0,
     "user"                => 0,
     "pass"                => 0,
@@ -128,6 +132,7 @@ GetOptions(
     'debug',                 'nocolor',
     'forcemem=i',            'forceswap=i',
     'host=s',                'socket=s',
+    'pipe',                  'pipe_name=s',
     'port=i',                'user=s',
     'pass=s',                'skipsize',
     'checkversion',          'mysqladmin=s',
@@ -278,7 +283,7 @@ $opt{nocolor} = 0 if ( $opt{color} == 1 );
 my $me = `whoami`;
 $me =~ s/\n//g;
 
-
+if ($is_win) { $opt{nocolor} = 1; }
 my $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]"  : "[OK]";
 my $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]"  : "[!!]";
 my $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]"  : "[--]";
@@ -286,7 +291,7 @@ my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]"  : "[DG]";
 my $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
 my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
 
-if ($opt{noprettyicon} == 0) {
+if ( (not $is_win) and ($opt{noprettyicon} == 0) ) {
   $good = ( $opt{nocolor} == 0 ) ? "\e[0;32m✔\e[0m " : "✔ ";
   $bad  = ( $opt{nocolor} == 0 ) ? "\e[0;31m✘\e[0m " : "✘ ";
   $info = ( $opt{nocolor} == 0 ) ? "\e[0;34mℹ\e[0m " : "ℹ ";
@@ -294,7 +299,6 @@ if ($opt{noprettyicon} == 0) {
   $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m⌨️($me)" : "⌨️($me)";
   $end  = ( $opt{nocolor} == 0 ) ? "\e[0m  " : "  ";
 }
-
 # Maximum lines of log output to read from end
 my $maxlines = 30000;
 
@@ -307,7 +311,7 @@ my @dblist;
 # Super structure containing all information
 my %result;
 $result{'MySQLTuner'}{'version'}  = $tunerversion;
-$result{'MySQLTuner'}{'datetime'} = `date '+%d-%m-%Y %H:%M:%S'`;
+$result{'MySQLTuner'}{'datetime'} = scalar localtime;
 $result{'MySQLTuner'}{'options'}  = \%opt;
 
 # Functions that handle the print styles
@@ -403,6 +407,11 @@ sub cpu_cores {
 
     if ( $^O eq 'freebsd' ) {
         my $cntCPU = `sysctl -n kern.smp.cores`;
+        chomp $cntCPU;
+        return $cntCPU + 0;
+    }
+    if ($is_win) {
+	my $cntCPU=`wmic cpu get NumberOfCores| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`;
         chomp $cntCPU;
         return $cntCPU + 0;
     }
@@ -529,7 +538,7 @@ sub memerror {
 }
 
 sub os_setup {
-    my $os = `uname`;
+    my $os = $is_win ? 'windows' : `uname`;
     $duflags    = ( $os =~ /Linux/ )        ? '-b' : '';
     $xargsflags = ( $os =~ /Darwin|SunOS/ ) ? ''   : '-r';
     if ( $opt{'forcemem'} > 0 ) {
@@ -596,10 +605,10 @@ sub os_setup {
         }
         elsif ( $os =~ /windows/i ) {
             $physical_memory =
-`wmic ComputerSystem get TotalPhysicalMemory | perl -ne "chomp; print if /[0-9]+/;"`
+`wmic ComputerSystem get TotalPhysicalMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`
               or memerror;
             $swap_memory =
-`wmic OS get FreeVirtualMemory | perl -ne "chomp; print if /[0-9]+/;"`
+`wmic OS get FreeVirtualMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`
               or memerror;
         }
     }
@@ -649,9 +658,16 @@ sub validate_tuner_version {
         debugprint "$httpcli is available.";
 
         debugprint
-"$httpcli -m 3 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2";
-        $update =
-`$httpcli -m 3 -silent '$url' 2>/dev/null | grep 'my \$tunerversion'| cut -d\\\" -f2`;
+"$httpcli -m 3 -silent '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2";
+	if ($is_win) {
+	    $update = map { my @f=split /"/; $f[1] }  grep { /my \$tunerversion/ } 
+`$httpcli -m 3 -silent '$url' 2>$devnull`;
+
+	}
+	else {
+	    $update =
+`$httpcli -m 3 -silent '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2`;
+	}
         chomp($update);
         debugprint "VERSION: $update";
 
@@ -664,8 +680,14 @@ sub validate_tuner_version {
 
         debugprint
 "$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
-        $update =
+	if ($is_win) {
+	    $update = map { my @f=split /"/; $f[1] }  grep { /my \$tunerversion/ } 
+`$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull`;
+	} 
+	else {
+	    $update =
 `$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
+	}
         chomp($update);
         compare_tuner_version($update);
         return;
@@ -769,11 +791,10 @@ sub compare_tuner_version {
 # Checks to see if a MySQL login is possible
 my ( $mysqllogin, $doremote, $remotestring, $mysqlcmd, $mysqladmincmd );
 
-my $osname = $^O;
-if ( $osname eq 'MSWin32' ) {
+if ( $is_win ) {
     eval { require Win32; } or last;
-    $osname = Win32::GetOSName();
-    infoprint "* Windows OS ($osname) is not fully supported.\n";
+    my $osname = Win32::GetOSName();
+    infoprint "* Windows OS ($osname) is not fully tested.\n";
 
     #exit 1;
 }
@@ -786,8 +807,8 @@ sub mysql_setup {
     }
     else {
         $mysqladmincmd = which( "mariadb-admin", $ENV{'PATH'} );
-        if ( !-e $mysqladmincmd ) {
-            $mysqladmincmd = which( "mysqladmin", $ENV{'PATH'} );
+	if ( !-e $mysqladmincmd ) {
+	    $mysqladmincmd = which( "mysqladmin", $ENV{'PATH'} );
         }
     }
     chomp($mysqladmincmd);
@@ -808,8 +829,8 @@ sub mysql_setup {
     else {
         $mysqlcmd = which( "mariadb", $ENV{'PATH'} );
         if ( !-e $mysqlcmd ) {
-            $mysqlcmd = which( "mysql", $ENV{'PATH'} );
-        }
+		$mysqlcmd = which( "mysql", $ENV{'PATH'} );
+	}
     }
     chomp($mysqlcmd);
     if ( !-e $mysqlcmd && $opt{mysqlcmd} ) {
@@ -840,6 +861,16 @@ sub mysql_setup {
         }
         else {
             $remotestring = " -S $opt{socket}";
+        }
+    }
+
+    # Are we being asked to connect via a named pipe?
+    if ( $opt{pipe} ne 0 ) {
+        if ( $opt{pipe_name} ne 0 ) {
+            $remotestring = " -W -S $opt{pipe_name}";
+        }
+        else {
+            $remotestring = " -W";
         }
     }
 
@@ -1052,7 +1083,7 @@ sub mysql_setup {
             $mysqllogin = " $remotestring ";
 
        # Did this go well because of a .my.cnf file or is there no password set?
-            my $userpath = `printenv HOME`;
+	    my $userpath = $is_win ? ($ENV{MARIADB_HOME} || $ENV{MYSQL_HOME} || $ENV{USERPROFILE}) : `printenv HOME`;
             if ( length($userpath) > 0 ) {
                 chomp($userpath);
             }
@@ -1096,7 +1127,11 @@ sub mysql_setup {
             $mysqllogin = "-u $name";
 
             if ( length($password) > 0 ) {
-                $mysqllogin .= " -p'$password'";
+		if ($is_win) {
+		    $mysqllogin .= " -p\"$password\"";
+		} else {
+		    $mysqllogin .= " -p'$password'";
+		}
             }
             $mysqllogin .= $remotestring;
             my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
@@ -1106,7 +1141,7 @@ sub mysql_setup {
                 if ( !length($password) ) {
 
        # Did this go well because of a .my.cnf file or is there no password set?
-                    my $userpath = `printenv HOME`;
+                    my $userpath = $is_win ? ($ENV{MARIADB_HOME} || $ENV{MYSQL_HOME} || $ENV{USERPROFILE}) : `printenv HOME`;
                     chomp($userpath);
                     unless ( -e "$userpath/.my.cnf" ) {
                         print STDERR "";
@@ -1131,7 +1166,7 @@ sub mysql_setup {
 sub select_array {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>/dev/null`;
+    my @result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>$devnull`;
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -1150,7 +1185,7 @@ sub select_array {
 sub select_array_with_headers {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = `$mysqlcmd $mysqllogin -Bre "\\w$req" 2>>/dev/null`;
+    my @result = `$mysqlcmd $mysqllogin -Bre "\\w$req" 2>>$devnull`;
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -1195,7 +1230,7 @@ sub human_size {
 sub select_one {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my $result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>/dev/null`;
+    my $result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>$devnull`;
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -1216,7 +1251,7 @@ sub select_one_g {
 
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = `$mysqlcmd $mysqllogin -re "\\w$req\\G" 2>>/dev/null`;
+    my @result = `$mysqlcmd $mysqllogin -re "\\w$req\\G" 2>>$devnull`;
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -1438,7 +1473,7 @@ sub get_all_vars {
 
     my @mysqlslaves;
     if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
-        @mysqlslaves = select_array "SHOW REPLICAS\\G";
+        @mysqlslaves = select_array "SHOW SLAVE STATUS\\G";
     }
     else {
         @mysqlslaves = select_array("SHOW SLAVE HOSTS\\G");
@@ -1703,9 +1738,12 @@ sub cve_recommendations {
 
 sub get_opened_ports {
     my @opened_ports = `netstat -ltn`;
+    if ($is_win) {
+	@opened_ports = grep {/LISTEN/} `netstat -n`;
+    }
     @opened_ports = map {
         my $v = $_;
-        $v =~ s/.*:(\d+)\s.*$/$1/;
+        $v =~ s/^.*:(\d+)\s.*$/$1/;
         $v =~ s/\D//g;
         $v;
     } @opened_ports;
@@ -1725,6 +1763,7 @@ sub is_open_port {
 }
 
 sub get_process_memory {
+    return 0 if $is_win; #Windows cmd cannot provide this
     my $pid = shift;
     my @mem = `ps -p $pid -o rss`;
     return 0 if scalar @mem != 2;
@@ -1733,6 +1772,7 @@ sub get_process_memory {
 
 sub get_other_process_memory {
     return 0 if ( $opt{tbstat} == 0 );
+    return 0 if $is_win; #Windows cmd cannot provide this
     my @procs = `ps eaxo pid,command`;
     @procs = map {
         my $v = $_;
@@ -1834,6 +1874,34 @@ sub get_fs_info {
     }
 }
 
+sub get_fs_info_win {
+    my @sinfo = `wmic logicaldisk get Name,Size,FreeSpace`;
+
+    foreach my $info (@sinfo) {
+	if ($info =~ /^\s*(\d+)\s+(.*?)\s+(\d+)\s*$/) {
+	    my ($free,$name,$size)=($1,$2,$3);
+	    my $used=$size-$free;
+	    my $free_pct=int(($free / $size) * 100);
+	    my $used_pct=int(($used / $size) * 100);
+	    if ($used_pct > 85) {
+                badprint "Disk $name is using $used_pct % total space ("
+                  . human_size( $used ) . " / "
+                  . human_size( $size ) . ")";
+                push( @generalrec, "Add some space to DIsk $name." );
+	    }
+	    else {
+		infoprint "Disk $name is using $used_pct % total space ("
+                  . human_size( $used ) . " / "
+                  . human_size( $size ) . ")";
+	    }
+            $result{'Filesystem'}{'Space Pct'}{$name}   = $used_pct;
+            $result{'Filesystem'}{'Used Space'}{$name}  = $used;
+            $result{'Filesystem'}{'Free Space'}{$name}  = $free;
+            $result{'Filesystem'}{'Total Space'}{$name} = $size;
+	}
+    }
+}
+
 sub merge_hash {
     my $h1     = shift;
     my $h2     = shift;
@@ -1858,6 +1926,11 @@ sub is_virtual_machine {
         chomp $isVm;
         print "FARK DEBUG isVm=[$isVm]";
         return ( $isVm eq 'none' ? 0 : 1 );
+    }
+    
+    if ($is_win) {
+	my $isVM=`systeminfo`;
+	return ( $isVM =~ /System Model:\s*(Virtual Machine|VMware)/i ? 1 : 0 )
     }
     return 0;
 }
@@ -1898,8 +1971,8 @@ sub get_kernel_info {
     );
     infoprint "Information about kernel tuning:";
     foreach my $param (@params) {
-        infocmd_tab("sysctl $param 2>/dev/null");
-        $result{'OS'}{'Config'}{$param} = `sysctl -n $param 2>/dev/null`;
+        infocmd_tab("sysctl $param 2>$devnull");
+        $result{'OS'}{'Config'}{$param} = `sysctl -n $param 2>$devnull`;
     }
     if ( `sysctl -n vm.swappiness` > 10 ) {
         badprint
@@ -1914,7 +1987,7 @@ sub get_kernel_info {
 
     # only if /proc/sys/sunrpc exists
     my $tcp_slot_entries =
-      `sysctl -n sunrpc.tcp_slot_table_entries 2>/dev/null`;
+      `sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull`;
     if ( -f "/proc/sys/sunrpc"
         and ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) )
     {
@@ -1968,7 +2041,11 @@ sub get_system_info {
     }
 
     $result{'Network'}{'Connected'} = 'NO';
-    `ping -c 1 ipecho.net &>/dev/null`;
+    if ($is_win) {
+	`ping -s 1 ipecho.net &>$devnull`;
+    } else {
+	`ping -c 1 ipecho.net &>$devnull`;
+    }
     my $isConnected = $?;
     if ( $? == 0 ) {
         infoprint "Internet              : Connected";
@@ -1979,12 +2056,12 @@ sub get_system_info {
     }
     $result{'OS'}{'NbCore'} = cpu_cores;
     infoprint "Number of Core CPU : " . cpu_cores;
-    $result{'OS'}{'Type'} = `uname -o`;
+    $result{'OS'}{'Type'} = $is_win ? 'Windows' : `uname -o`;
     infoprint "Operating System Type : " . infocmd_one "uname -o";
-    $result{'OS'}{'Kernel'} = `uname -r`;
+    $result{'OS'}{'Kernel'} = $is_win ? `ver` : `uname -r`;
     infoprint "Kernel Release        : " . infocmd_one "uname -r";
     $result{'OS'}{'Hostname'}         = `hostname`;
-    $result{'Network'}{'Internal Ip'} = `hostname -I`;
+    $result{'Network'}{'Internal Ip'} = $is_win ? `ipconfig |perl -ne "if (/IPv. Address/) {print s/^.*?([\\d\\.]*)\\s*$/$1/r; exit; }` : `hostname -I`;
     infoprint "Hostname              : " . infocmd_one "hostname";
     infoprint "Network Cards         : ";
     infocmd_tab "ifconfig| grep -A1 mtu";
@@ -2029,7 +2106,7 @@ sub system_recommendations {
     }
     return if ( $opt{sysstat} == 0 );
     subheaderprint "System Linux Recommendations";
-    my $os = `uname`;
+    my $os = $is_win ? 'windows' : `uname`;
     unless ( $os =~ /Linux/i ) {
         infoprint "Skipped due to non Linux server";
         return;
@@ -2130,9 +2207,13 @@ sub system_recommendations {
     }
 
     subheaderprint "Filesystem Linux Recommendations";
-    get_fs_info;
-    subheaderprint "Kernel Information Recommendations";
-    get_kernel_info;
+    if ($is_win) {
+	get_fs_info_win;
+    } else { 
+	get_fs_info;
+	subheaderprint "Kernel Information Recommendations";
+	get_kernel_info;
+    }
 }
 
 sub security_recommendations {
@@ -2156,9 +2237,9 @@ sub security_recommendations {
     # But need to be checked
     if ( $myvar{'version'} =~ /5\.7|10\.[2-5]\..*MariaDB*/ ) {
         my $password_column_exists =
-`$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'" 2>>/dev/null`;
+`$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'" 2>>$devnull`;
         my $authstring_column_exists =
-`$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'authentication_string'" 2>>/dev/null`;
+`$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'authentication_string'" 2>>$devnull`;
         if ( $password_column_exists && $authstring_column_exists ) {
             $PASS_COLUMN_NAME =
 "IF(plugin='mysql_native_password', authentication_string, password)";
@@ -2531,7 +2612,13 @@ sub check_architecture {
         $arch = $opt{defaultarch};
         return;
     }
-    if ( `uname` =~ /SunOS/ && `isainfo -b` =~ /64/ ) {
+    if ( $is_win) {
+	if (`wmic os get osarchitecture` =~ /64/) {
+	    goodprint "Operating on 64-bit architecture";
+	    $arch = 64;
+	}
+    } 
+    elsif ( `uname` =~ /SunOS/ && `isainfo -b` =~ /64/ ) {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
@@ -2707,9 +2794,14 @@ sub check_storage_engines {
                 # MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
                 @ixs = ( 1, 5, 8 );
             }
+	    my $cmd="SHOW TABLE STATUS FROM \\\`$db\\\`";
+	    if ($is_win) {
+		$cmd="SHOW TABLE STATUS FROM \`$db\`";
+	    }
             push( @tblist,
                 map { [ (split)[@ixs] ] }
-                  select_array "SHOW TABLE STATUS FROM \\\`$db\\\`" );
+                  select_array $cmd
+	    );
         }
 
      # Parse through the table list to generate storage engine counts/statistics
@@ -2819,10 +2911,14 @@ sub check_storage_engines {
             # MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
             @ia = ( 0, 9 );
         }
+	my $cmd="SHOW TABLE STATUS FROM \\\`$db\\\`";
+	if ($is_win) {
+	    $cmd="SHOW TABLE STATUS FROM \`$db\`";
+	}
         push(
             @{ $tblist{$db} },
             map { [ (split)[@ia] ] }
-              select_array "SHOW TABLE STATUS FROM \\\`$db\\\`"
+              select_array $cmd
         );
     }
 
@@ -3034,15 +3130,26 @@ sub calculations {
     }
 
     if ( $doremote eq 0 and !mysql_version_ge(5) ) {
-        my $size = 0;
-        $size += (split)[0]
-          for
-`find "$myvar{'datadir'}" -name "*.MYI" -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1`;
-        $mycalc{'total_myisam_indexes'} = $size;
-        $size = 0 + (split)[0]
-          for
-`find "$myvar{'datadir'}" -name "*.MAI" -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1`;
-        $mycalc{'total_aria_indexes'} = $size;
+	if ($is_win) {
+	    my $size=0;
+	    my @allfiles=`dir /-c /s $myvar{'datadir'}`;
+	    foreach (map { /^\s*\d+\/\S+\s+\S+\s+(A|P)M\s+(\d+)\s/i; $2 } grep { /\.MYI$/i } @allfiles) { $size+=$_; }
+	    $mycalc{'total_myisam_indexes'} = $size;
+	    $size=0;
+	    foreach (map { /^\s*\d+\/\S+\s+\S+\s+(A|P)M\s+(\d+)\s/i; $2 } grep { /\.MAI$/i } @allfiles) { $size+=$_; }
+	    $mycalc{'total_aria_indexes'} = $size;
+	} 
+	else {
+	    my $size = 0;
+	    $size += (split)[0]
+	      for
+    `find "$myvar{'datadir'}" -name "*.MYI" -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1`;
+	    $mycalc{'total_myisam_indexes'} = $size;
+	    $size = 0 + (split)[0]
+	      for
+    `find "$myvar{'datadir'}" -name "*.MAI" -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1`;
+	    $mycalc{'total_aria_indexes'} = $size;
+	}
     }
     elsif ( mysql_version_ge(5) ) {
         $mycalc{'total_myisam_indexes'} = select_one
@@ -7378,9 +7485,16 @@ sub which {
     my $prog_name   = shift;
     my $path_string = shift;
     my @path_array  = split /:/, $ENV{'PATH'};
+    if ($is_win) { @path_array = split /;/, $ENV{'PATH'}=~s/\\/\//gr; }
 
     for my $path (@path_array) {
-        return "$path/$prog_name" if ( -x "$path/$prog_name" );
+	if ($is_win) {
+	    return "$path/$prog_name.exe" if ( -x "$path/$prog_name.exe" );
+	    return "$path/$prog_name.com" if ( -x "$path/$prog_name.com" );
+	    return "$path/$prog_name.bat" if ( -x "$path/$prog_name.bat" );
+	} else {
+	    return "$path/$prog_name" if ( -x "$path/$prog_name" );
+	}
     }
 
     return 0;
@@ -7475,6 +7589,8 @@ You must provide the remote server's total memory when connecting to other serve
 
  --host <hostname>           Connect to a remote host to perform tests (default: localhost)
  --socket <socket>           Use a different socket for a local connection
+ --pipe                      Connect to a local Windows database using named pipes
+ --pipe_name <na>            Use a different pipe name for a local connection
  --port <port>               Port to use for connection (default: 3306)
  --protocol tcp              Force TCP connection instead of socket
  --user <username>           Username to use for authentication
