@@ -3308,10 +3308,15 @@ sub calculations {
             ( $myvar{'innodb_redo_log_capacity'} /
                 $myvar{'innodb_buffer_pool_size'} ) * 100;
         } else {
-          $mycalc{'innodb_log_size_pct'} =
-            ( $myvar{'innodb_log_file_size'} *
-                $myvar{'innodb_log_files_in_group'} * 100 /
-                $myvar{'innodb_buffer_pool_size'} );
+          $mycalc{'innodb_log_size_pct'} = 0;
+          if ( defined $myvar{'innodb_log_file_size'} && $myvar{'innodb_log_file_size'} ne '' &&
+               defined $myvar{'innodb_buffer_pool_size'} && $myvar{'innodb_buffer_pool_size'} ne '' &&
+               $myvar{'innodb_buffer_pool_size'} != 0 ) {
+            $mycalc{'innodb_log_size_pct'} =
+              ( $myvar{'innodb_log_file_size'} *
+                  $myvar{'innodb_log_files_in_group'} * 100 /
+                  $myvar{'innodb_buffer_pool_size'} );
+          }
         }
     }
     if ( !defined $myvar{'innodb_buffer_pool_size'} ) {
@@ -6574,8 +6579,8 @@ sub mysql_innodb {
                 @adjvars,
                 "innodb_log_file_size should be (="
                   . hr_bytes_rnd(
-                    $myvar{'innodb_buffer_pool_size'} /
-                      $myvar{'innodb_log_files_in_group'} / 4
+                    ( defined $myvar{'innodb_buffer_pool_size'} && $myvar{'innodb_buffer_pool_size'} ne '' ? $myvar{'innodb_buffer_pool_size'} : 0 ) /
+                    ( defined $myvar{'innodb_log_files_in_group'} && $myvar{'innodb_log_files_in_group'} ne '' && $myvar{'innodb_log_files_in_group'} != 0 ? $myvar{'innodb_log_files_in_group'} : 1 ) / 4
                   )
                   . ") if possible, so InnoDB total log file size equals 25% of buffer pool size."
             );
