@@ -19,7 +19,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Setup MySQL Tuner repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up MySQL
         uses: shogo82148/actions-setup-mysql@v1
