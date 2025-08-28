@@ -3148,15 +3148,19 @@ sub calculations {
         if ($is_win) {
             my $size     = 0;
             my @allfiles = `dir /-c /s $myvar{'datadir'}`;
-            foreach ( map { /^\s*\d+\/\S+\s+\S+\s+(A|P)M\s+(\d+)\s/i; $2 }
-                grep { /\.MYI$/i } @allfiles )
+            foreach (
+                map  { /^\s*\d+\/\S+\s+\S+\s+(A|P)M\s+(\d+)\s/i; $2 }
+                grep { /\.MYI$/i } @allfiles
+              )
             {
                 $size += $_;
             }
             $mycalc{'total_myisam_indexes'} = $size;
             $size = 0;
-            foreach ( map { /^\s*\d+\/\S+\s+\S+\s+(A|P)M\s+(\d+)\s/i; $2 }
-                grep { /\.MAI$/i } @allfiles )
+            foreach (
+                map  { /^\s*\d+\/\S+\s+\S+\s+(A|P)M\s+(\d+)\s/i; $2 }
+                grep { /\.MAI$/i } @allfiles
+              )
             {
                 $size += $_;
             }
@@ -6721,17 +6725,20 @@ sub mysql_innodb {
           . (
             defined $myvar{'innodb_buffer_pool_size'}
             ? $myvar{'innodb_buffer_pool_size'}
-            : "undefined" );
+            : "undefined"
+          );
         infoprint " - innodb_buffer_pool_chunk_size: "
           . (
             defined $myvar{'innodb_buffer_pool_chunk_size'}
             ? $myvar{'innodb_buffer_pool_chunk_size'}
-            : "undefined" );
+            : "undefined"
+          );
         infoprint " - innodb_buffer_pool_instances: "
           . (
             defined $myvar{'innodb_buffer_pool_instances'}
             ? $myvar{'innodb_buffer_pool_instances'}
-            : "undefined" );
+            : "undefined"
+          );
 
     }
     else {
