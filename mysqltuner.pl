@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.6.2
+# mysqltuner.pl - Version 2.7.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win=$^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.6.2";
+my $tunerversion = "2.7.0";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -7581,7 +7581,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.6.2 - MySQL High Performance Tuning Script
+ MySQLTuner 2.7.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
