@@ -1,0 +1,32 @@
+name: Docker Publish
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USER_LOGIN }}
+        password: ${{ secrets.DOCKER_USER_PASSWORD }}
+
+    - name: Extract version from mysqltuner.pl
+      id: version
+      run: echo "VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')" >> $GITHUB_ENV
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          jmrenouard/mysqltuner:latest
+          jmrenouard/mysqltuner:${{ env.VERSION }}
