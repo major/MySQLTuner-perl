@@ -13,6 +13,8 @@ You must provide the remote server's total memory when connecting to other serve
 
     --host <hostname>           Connect to a remote host to perform tests (default: localhost)
     --socket <socket>           Use a different socket for a local connection
+    --pipe                      Connect to a local Windows database using named pipes
+    --pipe_name <na>            Use a different pipe name for a local connection
     --port <port>               Port to use for connection (default: 3306)
     --protocol tcp              Force TCP connection instead of socket
     --user <username>           Username to use for authentication
