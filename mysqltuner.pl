@@ -6766,7 +6766,10 @@ sub mysql_innodb {
     }
 
     # InnoDB Read efficiency
-    if ( defined $mycalc{'pct_read_efficiency'}
+    if ( $mystat{'Innodb_buffer_pool_reads'} > $mystat{'Innodb_buffer_pool_read_requests'} ) {
+        infoprint "InnoDB Read buffer efficiency: metrics are not reliable (reads > read requests)";
+    }
+    elsif ( defined $mycalc{'pct_read_efficiency'}
         && $mycalc{'pct_read_efficiency'} < 90 )
     {
         badprint "InnoDB Read buffer efficiency: "
@@ -6788,7 +6791,10 @@ sub mysql_innodb {
     }
 
     # InnoDB Write efficiency
-    if ( defined $mycalc{'pct_write_efficiency'}
+    if ( $mystat{'Innodb_log_writes'} > $mystat{'Innodb_log_write_requests'} ) {
+        infoprint "InnoDB Write Log efficiency: metrics are not reliable (writes > write requests)";
+    }
+    elsif ( defined $mycalc{'pct_write_efficiency'}
         && $mycalc{'pct_write_efficiency'} < 90 )
     {
         badprint "InnoDB Write Log efficiency: "
