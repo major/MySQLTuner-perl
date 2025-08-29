@@ -441,6 +441,20 @@ sub hr_bytes {
     }
 }
 
+# Calculates the parameter passed in bytes, then rounds it to a practical power-of-2 value in GB.
+sub hr_bytes_practical_rnd {
+    my $num = shift;
+    return "0B" unless defined($num) and $num > 0;
+
+    my $gbs = $num / (1024**3); # convert to GB
+    my $power_of_2_gb = 1;
+    while ($power_of_2_gb < $gbs) {
+        $power_of_2_gb *= 2;
+    }
+
+    return $power_of_2_gb . "G";
+}
+
 sub hr_raw {
     my $num = shift;
     return "0" unless defined($num);
@@ -6580,79 +6594,116 @@ sub mysql_innodb {
             }
         }
     }
-    if (   $mycalc{'innodb_log_size_pct'} < 20
-        or $mycalc{'innodb_log_size_pct'} > 30 )
-    {
-        if ( defined $myvar{'innodb_redo_log_capacity'} ) {
-            badprint
-              "Ratio InnoDB redo log capacity / InnoDB Buffer pool size ("
-              . $mycalc{'innodb_log_size_pct'} . "%): "
-              . hr_bytes( $myvar{'innodb_redo_log_capacity'} ) . " / "
-              . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
-              . " should be equal to 25%";
-            push( @adjvars,
-                    "innodb_redo_log_capacity should be (="
-                  . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'} / 4 )
-                  . ") if possible, so InnoDB Redo log Capacity equals 25% of buffer pool size."
-            );
-            push( @generalrec,
-"Be careful, increasing innodb_redo_log_capacity means higher crash recovery mean time"
-            );
-        }
-        else {
-            badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
-              . $mycalc{'innodb_log_size_pct'} . "%): "
-              . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
-              . $myvar{'innodb_log_files_in_group'} . " / "
-              . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
-              . " should be equal to 25%";
-            push(
-                @adjvars,
-                "innodb_log_file_size should be (="
-                  . hr_bytes_rnd(
-                    (
-                        defined $myvar{'innodb_buffer_pool_size'}
-                          && $myvar{'innodb_buffer_pool_size'} ne ''
-                        ? $myvar{'innodb_buffer_pool_size'}
-                        : 0
-                    ) / (
-                        defined $myvar{'innodb_log_files_in_group'}
-                          && $myvar{'innodb_log_files_in_group'} ne ''
-                          && $myvar{'innodb_log_files_in_group'} != 0
-                        ? $myvar{'innodb_log_files_in_group'}
-                        : 1
-                    ) / 4
-                  )
-                  . ") if possible, so InnoDB total log file size equals 25% of buffer pool size."
-            );
-            push( @generalrec,
-"Be careful, increasing innodb_log_file_size / innodb_log_files_in_group means higher crash recovery mean time"
-            );
-        }
-        if ( mysql_version_le( 5, 6, 2 ) ) {
-            push( @generalrec,
-"For MySQL 5.6.2 and lower, total innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB."
-            );
-        }
+    # InnoDB Log File Size / InnoDB Redo Log Capacity Recommendations
+    # For MySQL < 8.0.30, the recommendation is based on innodb_log_file_size and innodb_log_files_in_group.
+    # For MySQL >= 8.0.30, innodb_redo_log_capacity replaces the old system.
+    if ( mysql_version_ge( 8, 0, 30 ) ) {
+        # New recommendation logic for MySQL >= 8.0.30
+        infoprint "InnoDB Redo Log Capacity is set to " . hr_bytes($myvar{'innodb_redo_log_capacity'});
 
+        my $innodb_os_log_written = $mystat{'Innodb_os_log_written'} || 0;
+        my $uptime = $mystat{'Uptime'} || 1;
+
+        if ($uptime > 3600) { # Only make a recommendation if server has been up for at least an hour
+            my $hourly_rate = $innodb_os_log_written / ( $uptime / 3600 );
+            my $suggested_redo_log_capacity_str = hr_bytes_practical_rnd($hourly_rate);
+            my $suggested_redo_log_capacity_bytes = hr_raw($suggested_redo_log_capacity_str);
+
+            infoprint "Hourly InnoDB log write rate: " . hr_bytes_rnd($hourly_rate) . "/hour";
+
+            if (hr_raw($myvar{'innodb_redo_log_capacity'}) < $hourly_rate) {
+                badprint "Your innodb_redo_log_capacity is not large enough to hold at least 1 hour of writes.";
+                push( @adjvars, "innodb_redo_log_capacity (>= " . $suggested_redo_log_capacity_str . ")" );
+            } else {
+                goodprint "Your innodb_redo_log_capacity is sized to handle more than 1 hour of writes.";
+            }
+
+            # Sanity check against total InnoDB data size
+            if ( defined $enginestats{'InnoDB'} and $enginestats{'InnoDB'} > 0 ) {
+                my $total_innodb_size = $enginestats{'InnoDB'};
+                if ( $suggested_redo_log_capacity_bytes > $total_innodb_size * 0.25 ) {
+                     infoprint "The suggested innodb_redo_log_capacity (" . $suggested_redo_log_capacity_str . ") is more than 25% of your total InnoDB data size. This might be unnecessarily large.";
+                }
+            }
+        } else {
+            infoprint "Server uptime is less than 1 hour. Cannot make a reliable recommendation for innodb_redo_log_capacity.";
+        }
     }
     else {
-        if ( defined $myvar{'innodb_redo_log_capacity'} ) {
-            goodprint
-              "Ratio InnoDB Redo Log Capacity / InnoDB Buffer pool size: "
-              . hr_bytes( $myvar{'innodb_redo_log_capacity'} ) . "/"
-              . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
-              . " should be equal to 25%";
+        # Keep existing logic for older versions
+        if (   $mycalc{'innodb_log_size_pct'} < 20
+            or $mycalc{'innodb_log_size_pct'} > 30 )
+        {
+            if ( defined $myvar{'innodb_redo_log_capacity'} ) {
+                badprint
+                  "Ratio InnoDB redo log capacity / InnoDB Buffer pool size ("
+                  . $mycalc{'innodb_log_size_pct'} . "%): "
+                  . hr_bytes( $myvar{'innodb_redo_log_capacity'} ) . " / "
+                  . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+                  . " should be equal to 25%";
+                push( @adjvars,
+                        "innodb_redo_log_capacity should be (="
+                      . hr_bytes_rnd( $myvar{'innodb_buffer_pool_size'} / 4 )
+                      . ") if possible, so InnoDB Redo log Capacity equals 25% of buffer pool size."
+                );
+                push( @generalrec,
+    "Be careful, increasing innodb_redo_log_capacity means higher crash recovery mean time"
+                );
+            }
+            else {
+                badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
+                  . $mycalc{'innodb_log_size_pct'} . "%): "
+                  . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
+                  . $myvar{'innodb_log_files_in_group'} . " / "
+                  . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+                  . " should be equal to 25%";
+                push(
+                    @adjvars,
+                    "innodb_log_file_size should be (="
+                      . hr_bytes_rnd(
+                        (
+                            defined $myvar{'innodb_buffer_pool_size'}
+                              && $myvar{'innodb_buffer_pool_size'} ne ''
+                            ? $myvar{'innodb_buffer_pool_size'}
+                            : 0
+                        ) / (
+                            defined $myvar{'innodb_log_files_in_group'}
+                              && $myvar{'innodb_log_files_in_group'} ne ''
+                              && $myvar{'innodb_log_files_in_group'} != 0
+                            ? $myvar{'innodb_log_files_in_group'}
+                            : 1
+                        ) / 4
+                      )
+                      . ") if possible, so InnoDB total log file size equals 25% of buffer pool size."
+                );
+                push( @generalrec,
+    "Be careful, increasing innodb_log_file_size / innodb_log_files_in_group means higher crash recovery mean time"
+                );
+            }
+            if ( mysql_version_le( 5, 6, 2 ) ) {
+                push( @generalrec,
+    "For MySQL 5.6.2 and lower, total innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB."
+                );
+            }
         }
         else {
-            push( @generalrec,
-"Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU"
-            );
-            goodprint "Ratio InnoDB log file size / InnoDB Buffer pool size: "
-              . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
-              . $myvar{'innodb_log_files_in_group'} . "/"
-              . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
-              . " should be equal to 25%";
+            if ( defined $myvar{'innodb_redo_log_capacity'} ) {
+                goodprint
+                  "Ratio InnoDB Redo Log Capacity / InnoDB Buffer pool size: "
+                  . hr_bytes( $myvar{'innodb_redo_log_capacity'} ) . "/"
+                  . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+                  . " should be equal to 25%";
+            }
+            else {
+                push( @generalrec,
+    "Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU"
+                );
+                goodprint "Ratio InnoDB log file size / InnoDB Buffer pool size: "
+                  . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
+                  . $myvar{'innodb_log_files_in_group'} . "/"
+                  . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+                  . " should be equal to 25%";
+            }
         }
     }
 
