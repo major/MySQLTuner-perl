@@ -6598,7 +6598,7 @@ sub mysql_innodb {
     # InnoDB Log File Size / InnoDB Redo Log Capacity Recommendations
     # For MySQL < 8.0.30, the recommendation is based on innodb_log_file_size and innodb_log_files_in_group.
     # For MySQL >= 8.0.30, innodb_redo_log_capacity replaces the old system.
-    if ( mysql_version_ge( 8, 0, 30 ) ) {
+    if ( mysql_version_ge( 8, 0, 30 ) && defined $myvar{'innodb_redo_log_capacity'} ) {
         # New recommendation logic for MySQL >= 8.0.30
         infoprint "InnoDB Redo Log Capacity is set to " . hr_bytes($myvar{'innodb_redo_log_capacity'});
 
