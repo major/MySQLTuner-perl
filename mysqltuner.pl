@@ -6178,6 +6178,8 @@ sub mariadb_galera {
     if ( defined( $myvar{'wsrep_applier_threads'} ) ) {
         $wsrep_threads_var_name = 'wsrep_applier_threads';
     }
+    # Use 1 as a fallback if $myvar{$wsrep_threads_var_name} is undefined or zero,
+    # to ensure there is at least one thread for Galera replication.
     my $wsrep_threads_value = $myvar{$wsrep_threads_var_name} || 1;
 
     infoprint "$wsrep_threads_var_name: " . $wsrep_threads_value;
