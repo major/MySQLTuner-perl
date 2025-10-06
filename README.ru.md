@@ -1,4 +1,4 @@
-![MySQLTuner-perl](https://github.com/major/MySQLTuner-perl/blob/master/mtlogo2.png)
+![MySQLTuner-perl](mtlogo2.png)
 
 [!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
