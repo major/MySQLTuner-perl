@@ -2253,10 +2253,6 @@ sub security_recommendations {
     subheaderprint "Security Recommendations";
 
     infoprint "$myvar{'version_comment'} - $myvar{'version'}";
-    if ( mysql_version_ge(8.0) ) {
-        infoprint "Skipped due to unsupported feature for MySQL 8.0+";
-        return;
-    }
 
     #exit 0;
     if ( $opt{skippassword} eq 1 ) {
@@ -2377,15 +2373,17 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     }
 
     # Looking for User with user/ uppercase /capitalise user as password
-    @mysqlstatlist = select_array
+    if ( !mysql_version_ge(8) ) {
+        @mysqlstatlist = select_array
 "SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE user != '' AND (CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(CONCAT(UPPER(LEFT(User, 1)), SUBSTRING(User, 2, LENGTH(User)))))";
-    if (@mysqlstatlist) {
-        foreach my $line ( sort @mysqlstatlist ) {
-            chomp($line);
-            badprint "User " . $line . " has user name as password.";
-            push( @generalrec,
+        if (@mysqlstatlist) {
+            foreach my $line ( sort @mysqlstatlist ) {
+                chomp($line);
+                badprint "User " . $line . " has user name as password.";
+                push( @generalrec,
 "Set up a Secure Password for $line user: SET PASSWORD FOR $line = PASSWORD('secure_password');"
-            );
+                );
+            }
         }
     }
 
@@ -2419,44 +2417,46 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     my $nbins = 0;
     my $passreq;
     if (@passwords) {
-        my $nbInterPass = 0;
-        foreach my $pass (@passwords) {
-            $nbInterPass++;
+        if ( !mysql_version_ge(8) ) {
+            my $nbInterPass = 0;
+            foreach my $pass (@passwords) {
+                $nbInterPass++;
 
-            $pass =~ s/\s//g;
-            $pass =~ s/\'/\\\'/g;
-            chomp($pass);
+                $pass =~ s/\s//g;
+                $pass =~ s/\'/\\\'/g;
+                chomp($pass);
 
-            # Looking for User with user/ uppercase /capitalise weak password
-            @mysqlstatlist =
-              select_array
+               # Looking for User with user/ uppercase /capitalise weak password
+                @mysqlstatlist =
+                  select_array
 "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = PASSWORD('"
-              . $pass
-              . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
-              . $pass
-              . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
-              . $pass
-              . "', 1)), SUBSTRING('"
-              . $pass
-              . "', 2, LENGTH('"
-              . $pass . "'))))";
-            debugprint "There are " . scalar(@mysqlstatlist) . " items.";
-            if (@mysqlstatlist) {
-                foreach my $line (@mysqlstatlist) {
-                    chomp($line);
-                    badprint "User '" . $line
-                      . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
+                  . $pass
+                  . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
+                  . $pass
+                  . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
+                  . $pass
+                  . "', 1)), SUBSTRING('"
+                  . $pass
+                  . "', 2, LENGTH('"
+                  . $pass . "'))))";
+                debugprint "There are " . scalar(@mysqlstatlist) . " items.";
+                if (@mysqlstatlist) {
+                    foreach my $line (@mysqlstatlist) {
+                        chomp($line);
+                        badprint "User '" . $line
+                          . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
 
-                    push( @generalrec,
+                        push( @generalrec,
 "Set up a Secure Password for $line user: SET PASSWORD FOR '"
-                          . ( split /@/, $line )[0] . "'\@'"
-                          . ( split /@/, $line )[1]
-                          . "' = PASSWORD('secure_password');" );
-                    $nbins++;
+                              . ( split /@/, $line )[0] . "'\@'"
+                              . ( split /@/, $line )[1]
+                              . "' = PASSWORD('secure_password');" );
+                        $nbins++;
+                    }
                 }
+                debugprint "$nbInterPass / " . scalar(@passwords)
+                  if ( $nbInterPass % 1000 == 0 );
             }
-            debugprint "$nbInterPass / " . scalar(@passwords)
-              if ( $nbInterPass % 1000 == 0 );
         }
     }
     if ( $nbins > 0 ) {
