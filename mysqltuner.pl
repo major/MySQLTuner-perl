@@ -49,7 +49,6 @@ use Getopt::Long;
 use Pod::Usage;
 use File::Basename;
 use Cwd 'abs_path';
-use IO::Interactive qw(is_interactive);
 
 #use Data::Dumper;
 #$Data::Dumper::Pair = " : ";
@@ -70,8 +69,8 @@ my %opt = (
     "nogood"              => 0,
     "noinfo"              => 0,
     "debug"               => 0,
-    "nocolor"             => ( !is_interactive() ),
-    "color"               => ( is_interactive() ),
+    "nocolor"             => ( !-t STDOUT ),
+    "color"               => ( -t STDOUT ),
     "forcemem"            => 0,
     "forceswap"           => 0,
     "host"                => 0,
@@ -276,7 +275,7 @@ open( $fh, '>', $outputfile )
   or die("Fail opening $outputfile")
   if defined($outputfile);
 $opt{nocolor} = 1 if defined($outputfile);
-$opt{nocolor} = 1 unless ( is_interactive() );
+$opt{nocolor} = 1 unless ( -t STDOUT );
 
 $opt{nocolor} = 0 if ( $opt{color} == 1 );
 
@@ -447,9 +446,9 @@ sub hr_bytes_practical_rnd {
     my $num = shift;
     return "0B" unless defined($num) and $num > 0;
 
-    my $gbs           = $num / ( 1024**3 );    # convert to GB
+    my $gbs = $num / (1024**3); # convert to GB
     my $power_of_2_gb = 1;
-    while ( $power_of_2_gb < $gbs ) {
+    while ($power_of_2_gb < $gbs) {
         $power_of_2_gb *= 2;
     }
 
@@ -2976,9 +2975,9 @@ sub dump_into_file {
     my $content = shift;
     if ( -d "$opt{dumpdir}" ) {
         $file = "$opt{dumpdir}/$file";
-        open( my $fh, '>', $file ) or die "Can't open $file: $!";
-        print $fh $content if defined($content);
-        close $fh;
+        open( FILE, ">$file" ) or die "Can't open $file: $!";
+        print FILE $content;
+        close FILE;
         infoprint "Data saved to $file";
     }
 }
@@ -5934,7 +5933,7 @@ sub mariadb_xtradb {
     infoprint "XtraDB is enabled.";
     infoprint "Note that MariaDB 10.2 makes use of InnoDB, not XtraDB."
 
-    # Not implemented
+      # Not implemented
 }
 
 # Recommendations for RocksDB
@@ -6256,9 +6255,7 @@ sub mariadb_galera {
         goodprint "InnoDB flush log at each commit is disabled for Galera.";
     }
 
-    if ( defined $myvar{'wsrep_causal_reads'}
-        and $myvar{'wsrep_causal_reads'} ne '' )
-    {
+    if ( defined $myvar{'wsrep_causal_reads'} and $myvar{'wsrep_causal_reads'} ne '' ) {
         infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
     }
     elsif ( defined $myvar{'wsrep_sync_wait'} ) {
@@ -6603,60 +6600,39 @@ sub mysql_innodb {
             }
         }
     }
-
-# InnoDB Log File Size / InnoDB Redo Log Capacity Recommendations
-# For MySQL < 8.0.30, the recommendation is based on innodb_log_file_size and innodb_log_files_in_group.
-# For MySQL >= 8.0.30, innodb_redo_log_capacity replaces the old system.
-    if ( mysql_version_ge( 8, 0, 30 )
-        && defined $myvar{'innodb_redo_log_capacity'} )
-    {
+    # InnoDB Log File Size / InnoDB Redo Log Capacity Recommendations
+    # For MySQL < 8.0.30, the recommendation is based on innodb_log_file_size and innodb_log_files_in_group.
+    # For MySQL >= 8.0.30, innodb_redo_log_capacity replaces the old system.
+    if ( mysql_version_ge( 8, 0, 30 ) && defined $myvar{'innodb_redo_log_capacity'} ) {
         # New recommendation logic for MySQL >= 8.0.30
-        infoprint "InnoDB Redo Log Capacity is set to "
-          . hr_bytes( $myvar{'innodb_redo_log_capacity'} );
+        infoprint "InnoDB Redo Log Capacity is set to " . hr_bytes($myvar{'innodb_redo_log_capacity'});
 
         my $innodb_os_log_written = $mystat{'Innodb_os_log_written'} || 0;
-        my $uptime                = $mystat{'Uptime'}                || 1;
+        my $uptime = $mystat{'Uptime'} || 1;
 
-        if ( $uptime > 3600 )
-        { # Only make a recommendation if server has been up for at least an hour
+        if ($uptime > 3600) { # Only make a recommendation if server has been up for at least an hour
             my $hourly_rate = $innodb_os_log_written / ( $uptime / 3600 );
-            my $suggested_redo_log_capacity_str =
-              hr_bytes_practical_rnd($hourly_rate);
-            my $suggested_redo_log_capacity_bytes =
-              hr_raw($suggested_redo_log_capacity_str);
+            my $suggested_redo_log_capacity_str = hr_bytes_practical_rnd($hourly_rate);
+            my $suggested_redo_log_capacity_bytes = hr_raw($suggested_redo_log_capacity_str);
 
-            infoprint "Hourly InnoDB log write rate: "
-              . hr_bytes_rnd($hourly_rate) . "/hour";
+            infoprint "Hourly InnoDB log write rate: " . hr_bytes_rnd($hourly_rate) . "/hour";
 
-            if ( hr_raw( $myvar{'innodb_redo_log_capacity'} ) < $hourly_rate ) {
-                badprint
-"Your innodb_redo_log_capacity is not large enough to hold at least 1 hour of writes.";
-                push( @adjvars,
-                        "innodb_redo_log_capacity (>= "
-                      . $suggested_redo_log_capacity_str
-                      . ")" );
-            }
-            else {
-                goodprint
-"Your innodb_redo_log_capacity is sized to handle more than 1 hour of writes.";
+            if (hr_raw($myvar{'innodb_redo_log_capacity'}) < $hourly_rate) {
+                badprint "Your innodb_redo_log_capacity is not large enough to hold at least 1 hour of writes.";
+                push( @adjvars, "innodb_redo_log_capacity (>= " . $suggested_redo_log_capacity_str . ")" );
+            } else {
+                goodprint "Your innodb_redo_log_capacity is sized to handle more than 1 hour of writes.";
             }
 
             # Sanity check against total InnoDB data size
-            if ( defined $enginestats{'InnoDB'} and $enginestats{'InnoDB'} > 0 )
-            {
+            if ( defined $enginestats{'InnoDB'} and $enginestats{'InnoDB'} > 0 ) {
                 my $total_innodb_size = $enginestats{'InnoDB'};
-                if ( $suggested_redo_log_capacity_bytes >
-                    $total_innodb_size * 0.25 )
-                {
-                    infoprint "The suggested innodb_redo_log_capacity ("
-                      . $suggested_redo_log_capacity_str
-                      . ") is more than 25% of your total InnoDB data size. This might be unnecessarily large.";
+                if ( $suggested_redo_log_capacity_bytes > $total_innodb_size * 0.25 ) {
+                     infoprint "The suggested innodb_redo_log_capacity (" . $suggested_redo_log_capacity_str . ") is more than 25% of your total InnoDB data size. This might be unnecessarily large.";
                 }
             }
-        }
-        else {
-            infoprint
-"Server uptime is less than 1 hour. Cannot make a reliable recommendation for innodb_redo_log_capacity.";
+        } else {
+            infoprint "Server uptime is less than 1 hour. Cannot make a reliable recommendation for innodb_redo_log_capacity.";
         }
     }
     else {
@@ -6677,12 +6653,11 @@ sub mysql_innodb {
                       . ") if possible, so InnoDB Redo log Capacity equals 25% of buffer pool size."
                 );
                 push( @generalrec,
-"Be careful, increasing innodb_redo_log_capacity means higher crash recovery mean time"
+    "Be careful, increasing innodb_redo_log_capacity means higher crash recovery mean time"
                 );
             }
             else {
-                badprint
-                  "Ratio InnoDB log file size / InnoDB Buffer pool size ("
+                badprint "Ratio InnoDB log file size / InnoDB Buffer pool size ("
                   . $mycalc{'innodb_log_size_pct'} . "%): "
                   . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
                   . $myvar{'innodb_log_files_in_group'} . " / "
@@ -6708,12 +6683,12 @@ sub mysql_innodb {
                       . ") if possible, so InnoDB total log file size equals 25% of buffer pool size."
                 );
                 push( @generalrec,
-"Be careful, increasing innodb_log_file_size / innodb_log_files_in_group means higher crash recovery mean time"
+    "Be careful, increasing innodb_log_file_size / innodb_log_files_in_group means higher crash recovery mean time"
                 );
             }
             if ( mysql_version_le( 5, 6, 2 ) ) {
                 push( @generalrec,
-"For MySQL 5.6.2 and lower, total innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB."
+    "For MySQL 5.6.2 and lower, total innodb_log_file_size should have a ceiling of (4096MB / log files in group) - 1MB."
                 );
             }
         }
@@ -6727,10 +6702,9 @@ sub mysql_innodb {
             }
             else {
                 push( @generalrec,
-"Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU"
+    "Before changing innodb_log_file_size and/or innodb_log_files_in_group read this: https://bit.ly/2TcGgtU"
                 );
-                goodprint
-                  "Ratio InnoDB log file size / InnoDB Buffer pool size: "
+                goodprint "Ratio InnoDB log file size / InnoDB Buffer pool size: "
                   . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
                   . $myvar{'innodb_log_files_in_group'} . "/"
                   . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
@@ -6793,14 +6767,10 @@ sub mysql_innodb {
     }
 
     # InnoDB Used Buffer Pool Size vs CHUNK size
-    if (    $myvar{'version'} =~ /MariaDB/i
-        and mysql_version_ge( 10, 8 )
-        and $myvar{'innodb_buffer_pool_chunk_size'} == 0 )
-    {
-        infoprint
-"innodb_buffer_pool_chunk_size is set to 'autosize' (0) in MariaDB >= 10.8. Skipping chunk size checks.";
+    if ( $myvar{'version'} =~ /MariaDB/i and mysql_version_ge(10, 8) and $myvar{'innodb_buffer_pool_chunk_size'} == 0) {
+        infoprint "innodb_buffer_pool_chunk_size is set to 'autosize' (0) in MariaDB >= 10.8. Skipping chunk size checks.";
     }
-    elsif ( !defined( $myvar{'innodb_buffer_pool_chunk_size'} )
+    elsif (   !defined( $myvar{'innodb_buffer_pool_chunk_size'} )
         || $myvar{'innodb_buffer_pool_chunk_size'} == 0
         || !defined( $myvar{'innodb_buffer_pool_size'} )
         || $myvar{'innodb_buffer_pool_size'} == 0
@@ -6856,11 +6826,8 @@ sub mysql_innodb {
     }
 
     # InnoDB Read efficiency
-    if ( $mystat{'Innodb_buffer_pool_reads'} >
-        $mystat{'Innodb_buffer_pool_read_requests'} )
-    {
-        infoprint
-"InnoDB Read buffer efficiency: metrics are not reliable (reads > read requests)";
+    if ( $mystat{'Innodb_buffer_pool_reads'} > $mystat{'Innodb_buffer_pool_read_requests'} ) {
+        infoprint "InnoDB Read buffer efficiency: metrics are not reliable (reads > read requests)";
     }
     elsif ( defined $mycalc{'pct_read_efficiency'}
         && $mycalc{'pct_read_efficiency'} < 90 )
@@ -6885,8 +6852,7 @@ sub mysql_innodb {
 
     # InnoDB Write efficiency
     if ( $mystat{'Innodb_log_writes'} > $mystat{'Innodb_log_write_requests'} ) {
-        infoprint
-"InnoDB Write Log efficiency: metrics are not reliable (writes > write requests)";
+        infoprint "InnoDB Write Log efficiency: metrics are not reliable (writes > write requests)";
     }
     elsif ( defined $mycalc{'pct_write_efficiency'}
         && $mycalc{'pct_write_efficiency'} < 90 )
@@ -7632,8 +7598,7 @@ sub dump_result {
         }
 
         my $json = JSON->new->allow_nonref;
-        print $json->utf8(1)
-          ->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
+        print $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
           ->encode( \%result );
 
         if ( $opt{'outputfile'} ne 0 ) {
@@ -7641,8 +7606,7 @@ sub dump_result {
             open my $fh, q(>), $opt{'outputfile'}
               or die
 "Unable to open $opt{'outputfile'} in write mode. please check permissions for this file or directory";
-            print $fh $json->utf8(1)
-              ->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
+            print $fh $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
               ->encode( \%result );
             close $fh;
         }
