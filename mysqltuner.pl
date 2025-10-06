@@ -6261,7 +6261,12 @@ sub mariadb_galera {
         goodprint "InnoDB flush log at each commit is disabled for Galera.";
     }
 
-    infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
+    if ( defined $myvar{'wsrep_causal_reads'} and $myvar{'wsrep_causal_reads'} ne '' ) {
+        infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
+    }
+    elsif ( defined $myvar{'wsrep_sync_wait'} ) {
+        infoprint "Sync Wait mode : " . $myvar{'wsrep_sync_wait'};
+    }
 
     if ( defined( $myvar{'wsrep_cluster_name'} )
         and $myvar{'wsrep_on'} eq "ON" )
