@@ -6917,6 +6917,39 @@ sub mysql_innodb {
     $result{'Calculations'} = {%mycalc};
 }
 
+sub mariadb_query_cache_info {
+    subheaderprint "Query Cache Information";
+
+    unless ( $myvar{'version'} =~ /MariaDB/i ) {
+        infoprint "Not a MariaDB server. Skipping Query Cache Info plugin check.";
+        return;
+    }
+
+    my $plugin_status = select_one("SELECT PLUGIN_STATUS FROM information_schema.PLUGINS WHERE PLUGIN_NAME = 'QUERY_CACHE_INFO'");
+
+    if ( defined $plugin_status and $plugin_status eq 'ACTIVE' ) {
+        goodprint "QUERY_CACHE_INFO plugin is installed and active.";
+
+        my $query = "SELECT CONCAT_WS(';;', statement_schema, LEFT(statement_text, 80), result_blocks_count, result_blocks_size) FROM information_schema.query_cache_info";
+        my @query_cache_data = select_array($query);
+
+        if (@query_cache_data) {
+            infoprint sprintf("%-20s | %-82s | %-10s | %-10s", "Schema", "Query (truncated)", "Blocks", "Size");
+            infoprint "-" x 130;
+            foreach my $line (@query_cache_data) {
+                my ($schema, $text, $blocks, $size) = split(/;;/, $line);
+                infoprint sprintf("%-20s | %-82s | %-10s | %-10s", $schema, $text, $blocks, hr_bytes($size));
+            }
+        } else {
+            infoprint "No queries found in the query cache.";
+        }
+    }
+    else {
+        infoprint "QUERY_CACHE_INFO plugin is not active or not installed.";
+        return;
+    }
+}
+
 sub check_metadata_perf {
     subheaderprint "Analysis Performance Metrics";
     if ( defined $myvar{'innodb_stats_on_metadata'} ) {
@@ -7678,6 +7711,7 @@ mysql_pfs;                # Print Performance schema info
 mariadb_threadpool;       # Print MariaDB ThreadPool stats
 mysql_myisam;             # Print MyISAM stats
 mysql_innodb;             # Print InnoDB stats
+mariadb_query_cache_info; # Print Query Cache Info stats
 mariadb_aria;             # Print MariaDB Aria stats
 mariadb_tokudb;           # Print MariaDB Tokudb stats
 mariadb_xtradb;           # Print MariaDB XtraDB stats
