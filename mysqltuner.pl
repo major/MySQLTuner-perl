@@ -2253,10 +2253,6 @@ sub security_recommendations {
     subheaderprint "Security Recommendations";
 
     infoprint "$myvar{'version_comment'} - $myvar{'version'}";
-    if ( mysql_version_ge(8.0) ) {
-        infoprint "Skipped due to unsupported feature for MySQL 8.0+";
-        return;
-    }
 
     #exit 0;
     if ( $opt{skippassword} eq 1 ) {
@@ -2377,15 +2373,17 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     }
 
     # Looking for User with user/ uppercase /capitalise user as password
-    @mysqlstatlist = select_array
+    if ( !mysql_version_ge(8) ) {
+        @mysqlstatlist = select_array
 "SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE user != '' AND (CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(user) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(UPPER(user)) OR CAST($PASS_COLUMN_NAME as Binary) = PASSWORD(CONCAT(UPPER(LEFT(User, 1)), SUBSTRING(User, 2, LENGTH(User)))))";
-    if (@mysqlstatlist) {
-        foreach my $line ( sort @mysqlstatlist ) {
-            chomp($line);
-            badprint "User " . $line . " has user name as password.";
-            push( @generalrec,
+        if (@mysqlstatlist) {
+            foreach my $line ( sort @mysqlstatlist ) {
+                chomp($line);
+                badprint "User " . $line . " has user name as password.";
+                push( @generalrec,
 "Set up a Secure Password for $line user: SET PASSWORD FOR $line = PASSWORD('secure_password');"
-            );
+                );
+            }
         }
     }
 
@@ -2419,44 +2417,46 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     my $nbins = 0;
     my $passreq;
     if (@passwords) {
-        my $nbInterPass = 0;
-        foreach my $pass (@passwords) {
-            $nbInterPass++;
+        if ( !mysql_version_ge(8) ) {
+            my $nbInterPass = 0;
+            foreach my $pass (@passwords) {
+                $nbInterPass++;
 
-            $pass =~ s/\s//g;
-            $pass =~ s/\'/\\\'/g;
-            chomp($pass);
+                $pass =~ s/\s//g;
+                $pass =~ s/\'/\\\'/g;
+                chomp($pass);
 
-            # Looking for User with user/ uppercase /capitalise weak password
-            @mysqlstatlist =
-              select_array
+               # Looking for User with user/ uppercase /capitalise weak password
+                @mysqlstatlist =
+                  select_array
 "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = PASSWORD('"
-              . $pass
-              . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
-              . $pass
-              . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
-              . $pass
-              . "', 1)), SUBSTRING('"
-              . $pass
-              . "', 2, LENGTH('"
-              . $pass . "'))))";
-            debugprint "There are " . scalar(@mysqlstatlist) . " items.";
-            if (@mysqlstatlist) {
-                foreach my $line (@mysqlstatlist) {
-                    chomp($line);
-                    badprint "User '" . $line
-                      . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
+                  . $pass
+                  . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
+                  . $pass
+                  . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
+                  . $pass
+                  . "', 1)), SUBSTRING('"
+                  . $pass
+                  . "', 2, LENGTH('"
+                  . $pass . "'))))";
+                debugprint "There are " . scalar(@mysqlstatlist) . " items.";
+                if (@mysqlstatlist) {
+                    foreach my $line (@mysqlstatlist) {
+                        chomp($line);
+                        badprint "User '" . $line
+                          . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
 
-                    push( @generalrec,
+                        push( @generalrec,
 "Set up a Secure Password for $line user: SET PASSWORD FOR '"
-                          . ( split /@/, $line )[0] . "'\@'"
-                          . ( split /@/, $line )[1]
-                          . "' = PASSWORD('secure_password');" );
-                    $nbins++;
+                              . ( split /@/, $line )[0] . "'\@'"
+                              . ( split /@/, $line )[1]
+                              . "' = PASSWORD('secure_password');" );
+                        $nbins++;
+                    }
                 }
+                debugprint "$nbInterPass / " . scalar(@passwords)
+                  if ( $nbInterPass % 1000 == 0 );
             }
-            debugprint "$nbInterPass / " . scalar(@passwords)
-              if ( $nbInterPass % 1000 == 0 );
         }
     }
     if ( $nbins > 0 ) {
@@ -5996,9 +5996,7 @@ sub trim {
 sub get_wsrep_options {
     return () unless defined $myvar{'wsrep_provider_options'};
 
-    my @galera_options      = split /;/, $myvar{'wsrep_provider_options'};
-    my $wsrep_slave_threads = $myvar{'wsrep_slave_threads'};
-    push @galera_options, ' wsrep_slave_threads = ' . $wsrep_slave_threads;
+    my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
     @galera_options = remove_cr @galera_options;
     @galera_options = remove_empty @galera_options;
 
@@ -6176,25 +6174,33 @@ sub mariadb_galera {
       . hr_bytes_rnd( get_wsrep_option('gcache.mem_size') );
 
     infoprint "CPU cores detected : " . (cpu_cores);
-    infoprint "wsrep_slave_threads: " . get_wsrep_option('wsrep_slave_threads');
+    my $wsrep_threads_var_name = 'wsrep_slave_threads';
+    if ( defined( $myvar{'wsrep_applier_threads'} ) ) {
+        $wsrep_threads_var_name = 'wsrep_applier_threads';
+    }
+    # Use 1 as a fallback if $myvar{$wsrep_threads_var_name} is undefined or zero,
+    # to ensure there is at least one thread for Galera replication.
+    my $wsrep_threads_value = $myvar{$wsrep_threads_var_name} || 1;
 
-    if (   get_wsrep_option('wsrep_slave_threads') > ( (cpu_cores) * 4 )
-        or get_wsrep_option('wsrep_slave_threads') < ( (cpu_cores) * 2 ) )
+    infoprint "$wsrep_threads_var_name: " . $wsrep_threads_value;
+
+    if (   $wsrep_threads_value > ( (cpu_cores) * 4 )
+        or $wsrep_threads_value < ( (cpu_cores) * 2 ) )
     {
         badprint
-"wsrep_slave_threads is not equal to 2, 3 or 4 times the number of CPU(s)";
-        push @adjvars, "wsrep_slave_threads = " . ( (cpu_cores) * 4 );
+"$wsrep_threads_var_name is not equal to 2, 3 or 4 times the number of CPU(s)";
+        push @adjvars, "$wsrep_threads_var_name = " . ( (cpu_cores) * 4 );
     }
     else {
         goodprint
-"wsrep_slave_threads is equal to 2, 3 or 4 times the number of CPU(s)";
+"$wsrep_threads_var_name is equal to 2, 3 or 4 times the number of CPU(s)";
     }
 
-    if ( get_wsrep_option('wsrep_slave_threads') > 1 ) {
+    if ( $wsrep_threads_value > 1 ) {
         infoprint
           "wsrep parallel slave can cause frequent inconsistency crash.";
         push @adjvars,
-"Set wsrep_slave_threads to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
+"Set $wsrep_threads_var_name to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
 
         # check options for parallel slave
         if ( get_wsrep_option('wsrep_slave_FK_checks') eq "OFF" ) {
@@ -6212,15 +6218,15 @@ sub mariadb_galera {
         }
     }
 
-    if ( get_wsrep_option('gcs.fc_limit') != $myvar{'wsrep_slave_threads'} * 5 )
-    {
-        badprint "gcs.fc_limit should be equal to 5 * wsrep_slave_threads (="
-          . ( $myvar{'wsrep_slave_threads'} * 5 ) . ")";
-        push @adjvars, "gcs.fc_limit= wsrep_slave_threads * 5 (="
-          . ( $myvar{'wsrep_slave_threads'} * 5 ) . ")";
+    if ( get_wsrep_option('gcs.fc_limit') != $wsrep_threads_value * 5 ) {
+        badprint
+          "gcs.fc_limit should be equal to 5 * $wsrep_threads_var_name (="
+          . ( $wsrep_threads_value * 5 ) . ")";
+        push @adjvars, "gcs.fc_limit= $wsrep_threads_var_name * 5 (="
+          . ( $wsrep_threads_value * 5 ) . ")";
     }
     else {
-        goodprint "gcs.fc_limit is equal to 5 * wsrep_slave_threads ( ="
+        goodprint "gcs.fc_limit is equal to 5 * $wsrep_threads_var_name ( ="
           . get_wsrep_option('gcs.fc_limit') . ")";
     }
 
@@ -6255,7 +6261,12 @@ sub mariadb_galera {
         goodprint "InnoDB flush log at each commit is disabled for Galera.";
     }
 
-    infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
+    if ( defined $myvar{'wsrep_causal_reads'} and $myvar{'wsrep_causal_reads'} ne '' ) {
+        infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
+    }
+    elsif ( defined $myvar{'wsrep_sync_wait'} ) {
+        infoprint "Sync Wait mode : " . $myvar{'wsrep_sync_wait'};
+    }
 
     if ( defined( $myvar{'wsrep_cluster_name'} )
         and $myvar{'wsrep_on'} eq "ON" )
