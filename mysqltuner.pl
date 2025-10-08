@@ -5933,7 +5933,7 @@ sub mariadb_xtradb {
     infoprint "XtraDB is enabled.";
     infoprint "Note that MariaDB 10.2 makes use of InnoDB, not XtraDB."
 
-      # Not implemented
+    # Not implemented
 }
 
 # Recommendations for RocksDB
@@ -6261,7 +6261,12 @@ sub mariadb_galera {
         goodprint "InnoDB flush log at each commit is disabled for Galera.";
     }
 
-    infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
+    if ( defined $myvar{'wsrep_causal_reads'} and $myvar{'wsrep_causal_reads'} ne '' ) {
+        infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
+    }
+    elsif ( defined $myvar{'wsrep_sync_wait'} ) {
+        infoprint "Sync Wait mode : " . $myvar{'wsrep_sync_wait'};
+    }
 
     if ( defined( $myvar{'wsrep_cluster_name'} )
         and $myvar{'wsrep_on'} eq "ON" )
@@ -6757,6 +6762,15 @@ sub mysql_innodb {
             #  InnoDB Buffer Pool Size > 64Go
             my $max_innodb_buffer_pool_instances =
               int( $myvar{'innodb_buffer_pool_size'} / ( 1024 * 1024 * 1024 ) );
+
+            my $nb_cpus = cpu_cores();
+            if ( $nb_cpus > 0 && $max_innodb_buffer_pool_instances > $nb_cpus )
+            {
+                infoprint
+"Recommendation for innodb_buffer_pool_instances is capped by the number of CPU cores ($nb_cpus).";
+                $max_innodb_buffer_pool_instances = $nb_cpus;
+            }
+
             $max_innodb_buffer_pool_instances = 64
               if ( $max_innodb_buffer_pool_instances > 64 );
 
@@ -6798,7 +6812,7 @@ sub mysql_innodb {
         infoprint
 "innodb_buffer_pool_chunk_size is set to 'autosize' (0) in MariaDB >= 10.8. Skipping chunk size checks.";
     }
-    elsif (!defined( $myvar{'innodb_buffer_pool_chunk_size'} )
+    elsif ( !defined( $myvar{'innodb_buffer_pool_chunk_size'} )
         || $myvar{'innodb_buffer_pool_chunk_size'} == 0
         || !defined( $myvar{'innodb_buffer_pool_size'} )
         || $myvar{'innodb_buffer_pool_size'} == 0
@@ -6952,6 +6966,39 @@ sub mysql_innodb {
           . " writes)";
     }
     $result{'Calculations'} = {%mycalc};
+}
+
+sub mariadb_query_cache_info {
+    subheaderprint "Query Cache Information";
+
+    unless ( $myvar{'version'} =~ /MariaDB/i ) {
+        infoprint "Not a MariaDB server. Skipping Query Cache Info plugin check.";
+        return;
+    }
+
+    my $plugin_status = select_one("SELECT PLUGIN_STATUS FROM information_schema.PLUGINS WHERE PLUGIN_NAME = 'QUERY_CACHE_INFO'");
+
+    if ( defined $plugin_status and $plugin_status eq 'ACTIVE' ) {
+        goodprint "QUERY_CACHE_INFO plugin is installed and active.";
+
+        my $query = "SELECT CONCAT_WS(';;', statement_schema, LEFT(statement_text, 80), result_blocks_count, result_blocks_size) FROM information_schema.query_cache_info";
+        my @query_cache_data = select_array($query);
+
+        if (@query_cache_data) {
+            infoprint sprintf("%-20s | %-82s | %-10s | %-10s", "Schema", "Query (truncated)", "Blocks", "Size");
+            infoprint "-" x 130;
+            foreach my $line (@query_cache_data) {
+                my ($schema, $text, $blocks, $size) = split(/;;/, $line);
+                infoprint sprintf("%-20s | %-82s | %-10s | %-10s", $schema, $text, $blocks, hr_bytes($size));
+            }
+        } else {
+            infoprint "No queries found in the query cache.";
+        }
+    }
+    else {
+        infoprint "QUERY_CACHE_INFO plugin is not active or not installed.";
+        return;
+    }
 }
 
 sub check_metadata_perf {
@@ -7630,7 +7677,8 @@ sub dump_result {
         }
 
         my $json = JSON->new->allow_nonref;
-        print $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
+        print $json->utf8(1)
+          ->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
           ->encode( \%result );
 
         if ( $opt{'outputfile'} ne 0 ) {
@@ -7638,7 +7686,8 @@ sub dump_result {
             open my $fh, q(>), $opt{'outputfile'}
               or die
 "Unable to open $opt{'outputfile'} in write mode. please check permissions for this file or directory";
-            print $fh $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
+            print $fh $json->utf8(1)
+              ->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
               ->encode( \%result );
             close $fh;
         }
@@ -7715,6 +7764,7 @@ mysql_pfs;                # Print Performance schema info
 mariadb_threadpool;       # Print MariaDB ThreadPool stats
 mysql_myisam;             # Print MyISAM stats
 mysql_innodb;             # Print InnoDB stats
+mariadb_query_cache_info; # Print Query Cache Info stats
 mariadb_aria;             # Print MariaDB Aria stats
 mariadb_tokudb;           # Print MariaDB Tokudb stats
 mariadb_xtradb;           # Print MariaDB XtraDB stats
