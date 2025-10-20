@@ -2551,7 +2551,7 @@ sub get_replication_status {
     }
 }
 
-# https://endoflife.software/applications/databases/mysql
+# https://endoflife.date/mysql
 # https://endoflife.date/mariadb
 sub validate_mysql_version {
     ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
