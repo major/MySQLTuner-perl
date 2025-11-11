@@ -326,6 +326,54 @@ __Usage:__ Update MySQLTuner and data files (password and cve) if needed
 perl mysqltuner.pl --checkversion --updateversion
 ```
 
+Cloud Support
+--
+
+MySQLTuner now has experimental support for cloud-based MySQL services.
+
+*   `--cloud`: Enable cloud mode. This is a generic flag for any cloud provider.
+*   `--azure`: Enable Azure-specific support.
+*   `--ssh-host <hostname>`: The SSH host for cloud connections.
+*   `--ssh-user <username>`: The SSH user for cloud connections.
+*   `--ssh-password <password>`: The SSH password for cloud connections.
+*   `--ssh-identity-file <path>`: The path to the SSH identity file for cloud connections.
+
+Support Cloud (French)
+--
+
+MySQLTuner dispose désormais d'un support expérimental pour les services MySQL basés sur le cloud.
+
+*   `--cloud`: Activez le mode cloud. Il s'agit d'un indicateur générique pour tout fournisseur de cloud.
+*   `--azure`: Activez la prise en charge spécifique à Azure.
+*   `--ssh-host <hostname>`: L'hôte SSH pour les connexions cloud.
+*   `--ssh-user <username>`: L'utilisateur SSH pour les connexions cloud.
+*   `--ssh-password <password>`: Le mot de passe SSH pour les connexions cloud.
+*   `--ssh-identity-file <path>`: Le chemin d'accès au fichier d'identité SSH pour les connexions cloud.
+
+Supporto Cloud (Italian)
+--
+
+MySQLTuner ora ha il supporto sperimentale per i servizi MySQL basati su cloud.
+
+*   `--cloud`: Abilita la modalità cloud. Questo è un flag generico per qualsiasi provider di cloud.
+*   `--azure`: Abilita il supporto specifico per Azure.
+*   `--ssh-host <hostname>`: L'host SSH per le connessioni cloud.
+*   `--ssh-user <username>`: L'utente SSH per le connessioni cloud.
+*   `--ssh-password <password>`: La password SSH per le connessioni cloud.
+*   `--ssh-identity-file <path>`: Il percorso del file di identità SSH per le connessioni cloud.
+
+Поддержка облачных сервисов (Russian)
+--
+
+MySQLTuner теперь имеет экспериментальную поддержку облачных сервисов MySQL.
+
+*   `--cloud`: Включить облачный режим. Это общий флаг для любого облачного провайдера.
+*   `--azure`: Включить специальную поддержку Azure.
+*   `--ssh-host <hostname>`: SSH-хост для облачных подключений.
+*   `--ssh-user <username>`: SSH-пользователь для облачных подключений.
+*   `--ssh-password <password>`: SSH-пароль для облачных подключений.
+*   `--ssh-identity-file <path>`: Путь к файлу идентификации SSH для облачных подключений.
+
 HTML reports based on  Python Jinja2
 --
 

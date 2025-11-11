@@ -122,7 +122,13 @@ my %opt = (
     "feature"             => '',
     "dbgpattern"          => '',
     "defaultarch"         => 64,
-    "noprettyicon"        => 0
+    "noprettyicon"        => 0,
+    "cloud"               => 0,
+    "azure"               => 0,
+    "ssh-host"            => '',
+    "ssh-user"            => '',
+    "ssh-password"        => '',
+    "ssh-identity-file"   => ''
 );
 
 # Gather the options from the command line
@@ -160,7 +166,10 @@ GetOptions(
     'defaults-extra-file=s', 'dumpdir=s',
     'feature=s',             'dbgpattern=s',
     'defaultarch=i',         'experimental',
-    'nondedicated',          'noprettyicon'
+    'nondedicated',          'noprettyicon',
+    'cloud',                 'azure',
+    'ssh-host=s',            'ssh-user=s',
+    'ssh-password=s',        'ssh-identity-file=s'
   )
   or pod2usage(
     -exitval  => 1,
@@ -280,7 +289,7 @@ $opt{nocolor} = 1 unless ( -t STDOUT );
 $opt{nocolor} = 0 if ( $opt{color} == 1 );
 
 # Setting up the colors for the print styles
-my $me = `whoami`;
+my $me = execute_system_command('whoami');
 $me =~ s/\n//g;
 
 if ($is_win) { $opt{nocolor} = 1; }
@@ -374,6 +383,7 @@ sub infoprinthcmd {
 
 sub is_remote() {
     my $host = $opt{'host'};
+    return 1 if ($opt{'cloud'} && $opt{'ssh-host'} ne '');
     return 0 if ( $host eq '' );
     return 0 if ( $host eq 'localhost' );
     return 0 if ( $host eq '127.0.0.1' );
@@ -554,7 +564,7 @@ sub memerror {
 }
 
 sub os_setup {
-    my $os = $is_win ? 'windows' : `uname`;
+    my $os = $is_win ? 'windows' : execute_system_command('uname');
     $duflags    = ( $os =~ /Linux/ )        ? '-b' : '';
     $xargsflags = ( $os =~ /Darwin|SunOS/ ) ? ''   : '-r';
     if ( $opt{'forcemem'} > 0 ) {
@@ -572,59 +582,59 @@ sub os_setup {
     else {
         if ( $os =~ /Linux|CYGWIN/ ) {
             $physical_memory =
-              `grep -i memtotal: /proc/meminfo | awk '{print \$2}'`
+              execute_system_command("grep -i memtotal: /proc/meminfo | awk '{print \$2}'")
               or memerror;
             $physical_memory *= 1024;
 
             $swap_memory =
-              `grep -i swaptotal: /proc/meminfo | awk '{print \$2}'`
+              execute_system_command("grep -i swaptotal: /proc/meminfo | awk '{print \$2}'")
               or memerror;
             $swap_memory *= 1024;
         }
         elsif ( $os =~ /Darwin/ ) {
-            $physical_memory = `sysctl -n hw.memsize` or memerror;
+            $physical_memory = execute_system_command('sysctl -n hw.memsize') or memerror;
             $swap_memory =
-              `sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'`
+              execute_system_command("sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'")
               or memerror;
         }
         elsif ( $os =~ /NetBSD|OpenBSD|FreeBSD/ ) {
-            $physical_memory = `sysctl -n hw.physmem` or memerror;
+            $physical_memory = execute_system_command('sysctl -n hw.physmem') or memerror;
             if ( $physical_memory < 0 ) {
-                $physical_memory = `sysctl -n hw.physmem64` or memerror;
+                $physical_memory = execute_system_command('sysctl -n hw.physmem64') or memerror;
             }
             $swap_memory =
-              `swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'`
+              execute_system_command("swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'")
               or memerror;
         }
         elsif ( $os =~ /BSD/ ) {
-            $physical_memory = `sysctl -n hw.realmem` or memerror;
+            $physical_memory = execute_system_command('sysctl -n hw.realmem') or memerror;
             $swap_memory =
-              `swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'`;
+              execute_system_command("swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'");
         }
         elsif ( $os =~ /SunOS/ ) {
             $physical_memory =
-              `/usr/sbin/prtconf | grep Memory | cut -f 3 -d ' '`
+              execute_system_command("/usr/sbin/prtconf | grep Memory | cut -f 3 -d ' '")
               or memerror;
             chomp($physical_memory);
             $physical_memory = $physical_memory * 1024 * 1024;
         }
         elsif ( $os =~ /AIX/ ) {
             $physical_memory =
-              `lsattr -El sys0 | grep realmem | awk '{print \$2}'`
+              execute_system_command("lsattr -El sys0 | grep realmem | awk '{print \$2}'")
               or memerror;
             chomp($physical_memory);
             $physical_memory = $physical_memory * 1024;
-            $swap_memory     = `lsps -as | awk -F"(MB| +)" '/MB /{print \$2}'`
+            $swap_memory     = execute_system_command("lsps -as | awk -F'(MB| +)' '/MB /{print \$2}'")
               or memerror;
             chomp($swap_memory);
             $swap_memory = $swap_memory * 1024 * 1024;
         }
         elsif ( $os =~ /windows/i ) {
             $physical_memory =
-`wmic ComputerSystem get TotalPhysicalMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`
+execute_system_command('wmic ComputerSystem get TotalPhysicalMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;')
               or memerror;
             $swap_memory =
-`wmic OS get FreeVirtualMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`
+execute_system_command('wmic OS get FreeVirtualMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;')
               or memerror;
         }
     }
@@ -679,12 +689,12 @@ sub validate_tuner_version {
             $update =
               map  { my @f = split /"/; $f[1] }
               grep { /my \$tunerversion/ }
-              `$httpcli -m 3 -silent '$url' 2>$devnull`;
+              execute_system_command("$httpcli -m 3 -silent '$url' 2>$devnull");
 
         }
         else {
             $update =
-`$httpcli -m 3 -silent '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2`;
+execute_system_command("$httpcli -m 3 -silent '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2");
         }
         chomp($update);
         debugprint "VERSION: $update";
@@ -702,11 +712,11 @@ sub validate_tuner_version {
             $update =
               map  { my @f = split /"/; $f[1] }
               grep { /my \$tunerversion/ }
-              `$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull`;
+              execute_system_command("$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull");
         }
         else {
             $update =
-`$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2`;
+execute_system_command("$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2");
         }
         chomp($update);
         compare_tuner_version($update);
@@ -746,7 +756,7 @@ sub update_tuner_version {
             debugprint
 "$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath";
             $update =
-`$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath`;
+execute_system_command("$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath");
             chomp($update);
             debugprint "$script updated: $update";
 
@@ -765,7 +775,7 @@ sub update_tuner_version {
             debugprint
 "$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'";
             $update =
-`$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'`;
+execute_system_command("$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'");
             chomp($update);
 
             if ( -s $script eq 0 ) {
@@ -811,6 +821,101 @@ sub compare_tuner_version {
 # Checks to see if a MySQL login is possible
 my ( $mysqllogin, $doremote, $remotestring, $mysqlcmd, $mysqladmincmd );
 
+sub cloud_setup {
+    if ($opt{'cloud'} || $opt{'azure'}) {
+        $opt{'cloud'} = 1; # Ensure cloud is enabled if azure is
+        infoprint "Cloud mode activated.";
+        if ($opt{'azure'}) {
+             infoprint "Azure-specific checks enabled (currently generic cloud checks).";
+        }
+        if ($opt{'ssh-host'} ne '') {
+            infoprint "Cloud SSH mode.";
+            my @os_info = execute_system_command('uname -a');
+            infoprint "Remote OS Info:";
+            infoprintml @os_info;
+            my @mem_info = execute_system_command('grep MemTotal /proc/meminfo');
+            if (scalar @mem_info > 0 && $mem_info[0] =~ /(\d+)/) {
+                my $remote_mem_bytes = $1 * 1024;
+                $opt{'forcemem'} = $remote_mem_bytes / 1048576;
+                infoprint "Remote memory detected: " . hr_bytes($remote_mem_bytes);
+            } else {
+                badprint "Could not determine remote memory. Using --forcemem if provided, or default.";
+                if ($opt{'forcemem'} == 0) {
+                     $opt{'forcemem'} = 1024; # Default to 1GB
+                }
+            }
+            my @swap_info = execute_system_command('grep SwapTotal /proc/meminfo');
+            if (scalar @swap_info > 0 && $swap_info[0] =~ /(\d+)/) {
+                 my $remote_swap_bytes = $1 * 1024;
+                 $opt{'forceswap'} = $remote_swap_bytes / 1048576;
+                 infoprint "Remote swap detected: " . hr_bytes($remote_swap_bytes);
+            } else {
+                infoprint "Could not determine remote swap. Assuming 0.";
+                if ($opt{'forceswap'} == 0) {
+                    $opt{'forceswap'} = 0;
+                }
+            }
+        } else {
+            infoprint "Direct DB Connection mode.";
+            $opt{'nosysstat'} = 1;
+            if ($opt{'forcemem'} == 0) {
+                badprint "Direct cloud connection requires --forcemem. Assuming 1GB.";
+                $opt{'forcemem'} = 1024;
+            }
+        }
+    }
+}
+
+sub get_ssh_prefix {
+    return "" if not ($opt{'cloud'} and $opt{'ssh-host'} ne '');
+
+    my $ssh_base_cmd = 'ssh';
+    if ($opt{'ssh-identity-file'} ne '') {
+        $ssh_base_cmd .= " -i '" . $opt{'ssh-identity-file'} . "'";
+    }
+    $ssh_base_cmd .= " -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null'";
+    my $ssh_target = '';
+    if ($opt{'ssh-user'} ne '') {
+        $ssh_target = $opt{'ssh-user'} . '@';
+    }
+    $ssh_target .= $opt{'ssh-host'};
+
+    my $prefix;
+    if ($opt{'ssh-password'} ne '') {
+        my $sshpass_path = which("sshpass", $ENV{'PATH'});
+        if ($sshpass_path) {
+            $prefix = "sshpass -p '" . $opt{'ssh-password'} . "' " . $ssh_base_cmd . " " . $ssh_target;
+        } else {
+            badprint "sshpass is not installed. Password authentication for SSH will not work.";
+            $prefix = $ssh_base_cmd . " " . $ssh_target;
+        }
+    } else {
+        $prefix = $ssh_base_cmd . " " . $ssh_target;
+    }
+    return $prefix . " ";
+}
+
+sub execute_system_command {
+    my ($command) = @_;
+    my $ssh_prefix = get_ssh_prefix();
+    # Important: Single quote the command to prevent shell expansion on the client side
+    my $full_cmd = ($ssh_prefix ne '') ? "$ssh_prefix '$command'" : $command;
+
+    debugprint "Executing system command: $full_cmd";
+    my @output = `$full_cmd 2>&1`;
+
+    if ($? != 0) {
+        # Be less verbose for commands that are expected to fail on some systems
+        if ($command !~ /^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop)/) {
+            badprint "System command failed: $command";
+            infoprintml @output;
+        }
+    }
+
+    # Return based on calling context
+    return wantarray ? @output : join("\n", @output);
+}
+
 if ($is_win) {
     eval { require Win32; } or last;
     my $osname = Win32::GetOSName();
@@ -822,47 +927,35 @@ if ($is_win) {
 sub mysql_setup {
     $doremote     = 0;
     $remotestring = '';
+    my $ssh_prefix = get_ssh_prefix();
+
     if ( $opt{mysqladmin} ) {
         $mysqladmincmd = $opt{mysqladmin};
     }
     else {
-        $mysqladmincmd = which( "mariadb-admin", $ENV{'PATH'} );
-        if ( !-e $mysqladmincmd ) {
-            $mysqladmincmd = which( "mysqladmin", $ENV{'PATH'} );
-        }
+        $mysqladmincmd = ($ssh_prefix ne '') ? "mysqladmin" : (which("mariadb-admin", $ENV{'PATH'}) || which("mysqladmin", $ENV{'PATH'}));
     }
     chomp($mysqladmincmd);
-    if ( !-e $mysqladmincmd && $opt{mysqladmin} ) {
-        badprint "Unable to find the mysqladmin command you specified: "
-          . $mysqladmincmd . "";
+    if ( !$mysqladmincmd || ($ssh_prefix eq '' && !-x $mysqladmincmd) ) {
+        badprint "Couldn't find an executable mysqladmin/mariadb-admin command.";
         exit 1;
     }
-    elsif ( !-e $mysqladmincmd ) {
-        badprint
-"Couldn't find mysqladmin/mariadb-admin in your \$PATH. Is MySQL installed?";
 
-        #exit 1;
-    }
     if ( $opt{mysqlcmd} ) {
         $mysqlcmd = $opt{mysqlcmd};
     }
     else {
-        $mysqlcmd = which( "mariadb", $ENV{'PATH'} );
-        if ( !-e $mysqlcmd ) {
-            $mysqlcmd = which( "mysql", $ENV{'PATH'} );
-        }
+        $mysqlcmd = ($ssh_prefix ne '') ? "mysql" : (which("mariadb", $ENV{'PATH'}) || which("mysql", $ENV{'PATH'}));
     }
     chomp($mysqlcmd);
-    if ( !-e $mysqlcmd && $opt{mysqlcmd} ) {
-        badprint "Unable to find the mysql command you specified: "
-          . $mysqlcmd . "";
+    if ( !$mysqlcmd || ($ssh_prefix eq '' && !-x $mysqlcmd) ) {
+        badprint "Couldn't find an executable mysql/mariadb command.";
         exit 1;
     }
-    elsif ( !-e $mysqlcmd ) {
-        badprint
-          "Couldn't find mysql/mariadb in your \$PATH. Is MySQL installed?";
-        exit 1;
-    }
+
+    # Prepend SSH prefix if in cloud mode
+    $mysqladmincmd = $ssh_prefix . $mysqladmincmd;
+    $mysqlcmd = $ssh_prefix . $mysqlcmd;
     $mysqlcmd =~ s/\n$//g;
     my $mysqlclidefaults = `$mysqlcmd --print-defaults`;
     debugprint "MySQL Client: $mysqlclidefaults";
@@ -1766,9 +1859,9 @@ sub cve_recommendations {
 }
 
 sub get_opened_ports {
-    my @opened_ports = `netstat -ltn`;
+    my @opened_ports = execute_system_command('netstat -ltn');
     if ($is_win) {
-        @opened_ports = grep { /LISTEN/ } `netstat -n`;
+        @opened_ports = grep { /LISTEN/ } execute_system_command('netstat -n');
     }
     @opened_ports = map {
         my $v = $_;
@@ -1794,7 +1887,7 @@ sub is_open_port {
 sub get_process_memory {
     return 0 if $is_win;    #Windows cmd cannot provide this
     my $pid = shift;
-    my @mem = `ps -p $pid -o rss`;
+    my @mem = execute_system_command("ps -p $pid -o rss");
     return 0 if scalar @mem != 2;
     return $mem[1] * 1024;
 }
@@ -1802,7 +1895,7 @@ sub get_process_memory {
 sub get_other_process_memory {
     return 0 if ( $opt{tbstat} == 0 );
     return 0 if $is_win;                 #Windows cmd cannot provide this
-    my @procs = `ps eaxo pid,command`;
+    my @procs = execute_system_command('ps eaxo pid,command');
     @procs = map {
         my $v = $_;
         $v =~ s/.*PID.*//;
@@ -1853,8 +1946,8 @@ sub get_os_release {
 }
 
 sub get_fs_info {
-    my @sinfo = `df -P | grep '%'`;
-    my @iinfo = `df -Pi| grep '%'`;
+    my @sinfo = execute_system_command("df -P | grep '%'");
+    my @iinfo = execute_system_command("df -Pi| grep '%'");
     shift @sinfo;
     shift @iinfo;
 
@@ -1904,7 +1997,7 @@ sub get_fs_info {
 }
 
 sub get_fs_info_win {
-    my @sinfo = `wmic logicaldisk get Name,Size,FreeSpace`;
+    my @sinfo = execute_system_command('wmic logicaldisk get Name,Size,FreeSpace');
 
     foreach my $info (@sinfo) {
         if ( $info =~ /^\s*(\d+)\s+(.*?)\s+(\d+)\s*$/ ) {
@@ -1946,19 +2039,19 @@ sub merge_hash {
 
 sub is_virtual_machine {
     if ( $^O eq 'linux' ) {
-        my $isVm = `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo`;
+        my $isVm = execute_system_command("grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo");
         return ( $isVm == 0 ? 0 : 1 );
     }
 
     if ( $^O eq 'freebsd' ) {
-        my $isVm = `sysctl -n kern.vm_guest`;
+        my $isVm = execute_system_command('sysctl -n kern.vm_guest');
         chomp $isVm;
         print "FARK DEBUG isVm=[$isVm]";
         return ( $isVm eq 'none' ? 0 : 1 );
     }
 
     if ($is_win) {
-        my $isVM = `systeminfo`;
+        my $isVM = execute_system_command('systeminfo');
         return ( $isVM =~ /System Model:\s*(Virtual Machine|VMware)/i ? 1 : 0 );
     }
     return 0;
@@ -1967,7 +2060,7 @@ sub is_virtual_machine {
 sub infocmd {
     my $cmd = "@_";
     debugprint "CMD: $cmd";
-    my @result = `$cmd`;
+    my @result = execute_system_command($cmd);
     @result = remove_cr @result;
     for my $l (@result) {
         infoprint "$l";
@@ -1977,7 +2070,7 @@ sub infocmd {
 sub infocmd_tab {
     my $cmd = "@_";
     debugprint "CMD: $cmd";
-    my @result = `$cmd`;
+    my @result = execute_system_command($cmd);
     @result = remove_cr @result;
     for my $l (@result) {
         infoprint "\t$l";
@@ -1986,7 +2079,7 @@ sub infocmd_tab {
 
 sub infocmd_one {
     my $cmd    = "@_";
-    my @result = `$cmd 2>&1`;
+    my @result = execute_system_command("$cmd 2>&1");
     @result = remove_cr @result;
     return join ', ', @result;
 }
@@ -2001,9 +2094,9 @@ sub get_kernel_info {
     infoprint "Information about kernel tuning:";
     foreach my $param (@params) {
         infocmd_tab("sysctl $param 2>$devnull");
-        $result{'OS'}{'Config'}{$param} = `sysctl -n $param 2>$devnull`;
+        $result{'OS'}{'Config'}{$param} = execute_system_command("sysctl -n $param 2>$devnull");
     }
-    if ( `sysctl -n vm.swappiness` > 10 ) {
+    if ( execute_system_command('sysctl -n vm.swappiness') > 10 ) {
         badprint
           "Swappiness is > 10, please consider having a value lower than 10";
         push @generalrec, "setup swappiness lower or equal to 10";
@@ -2015,7 +2108,7 @@ sub get_kernel_info {
     }
 
     # only if /proc/sys/sunrpc exists
-    my $tcp_slot_entries = `sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull`;
+    my $tcp_slot_entries = execute_system_command('sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull');
     if ( -f "/proc/sys/sunrpc"
         and ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) )
     {
@@ -2030,7 +2123,7 @@ sub get_kernel_info {
     }
 
     if ( -f "/proc/sys/fs/aio-max-nr" ) {
-        if ( `sysctl -n fs.aio-max-nr` < 1000000 ) {
+        if ( execute_system_command('sysctl -n fs.aio-max-nr') < 1000000 ) {
             badprint
 "Max running total of the number of max. events is < 1M, please consider having a value greater than 1M";
             push @generalrec, "setup Max running number events greater than 1M";
@@ -2042,7 +2135,7 @@ sub get_kernel_info {
         }
     }
     if ( -f "/proc/sys/fs/nr_open" ) {
-        if ( `sysctl -n fs.nr_open` < 1000000 ) {
+        if ( execute_system_command('sysctl -n fs.nr_open') < 1000000 ) {
             badprint
 "Max running total of the number of file open request is < 1M, please consider having a value greater than 1M";
             push @generalrec,
@@ -2070,10 +2163,10 @@ sub get_system_info {
 
     $result{'Network'}{'Connected'} = 'NO';
     if ($is_win) {
-        `ping -s 1 ipecho.net &>$devnull`;
+        execute_system_command('ping -s 1 ipecho.net &>$devnull');
     }
     else {
-        `ping -c 1 ipecho.net &>$devnull`;
+        execute_system_command('ping -c 1 ipecho.net &>$devnull');
     }
     my $isConnected = $?;
     if ( $? == 0 ) {
@@ -2085,20 +2178,20 @@ sub get_system_info {
     }
     $result{'OS'}{'NbCore'} = cpu_cores;
     infoprint "Number of Core CPU : " . cpu_cores;
-    $result{'OS'}{'Type'} = $is_win ? 'Windows' : `uname -o`;
+    $result{'OS'}{'Type'} = $is_win ? 'Windows' : execute_system_command('uname -o');
     infoprint "Operating System Type : " . infocmd_one "uname -o";
-    $result{'OS'}{'Kernel'} = $is_win ? `ver` : `uname -r`;
+    $result{'OS'}{'Kernel'} = $is_win ? execute_system_command('ver') : execute_system_command('uname -r');
     infoprint "Kernel Release        : " . infocmd_one "uname -r";
-    $result{'OS'}{'Hostname'} = `hostname`;
+    $result{'OS'}{'Hostname'} = execute_system_command('hostname');
     $result{'Network'}{'Internal Ip'} =
       $is_win
-      ? `ipconfig |perl -ne "if (/IPv. Address/) {print s/^.*?([\\d\\.]*)\\s*$/$1/r; exit; }`
-      : `hostname -I`;
+      ? execute_system_command('ipconfig |perl -ne "if (/IPv. Address/) {print s/^.*?([\\d\\.]*)\\s*$/$1/r; exit; }"')
+      : execute_system_command('hostname -I');
     infoprint "Hostname              : " . infocmd_one "hostname";
     infoprint "Network Cards         : ";
     infocmd_tab "ifconfig| grep -A1 mtu";
     infoprint "Internal IP           : " . infocmd_one "hostname -I";
-    $result{'Network'}{'Internal Ip'} = `ifconfig| grep -A1 mtu`;
+    $result{'Network'}{'Internal Ip'} = execute_system_command('ifconfig| grep -A1 mtu');
     my $httpcli = get_http_cli();
     infoprint "HTTP client found: $httpcli" if defined $httpcli;
 
@@ -2118,17 +2211,17 @@ sub get_system_info {
       . infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
     infoprint "Logged In users       : ";
     infocmd_tab "who";
-    $result{'OS'}{'Logged users'} = `who`;
+    $result{'OS'}{'Logged users'} = execute_system_command('who');
     infoprint "Ram Usages in MB      : ";
     infocmd_tab "free -m | grep -v +";
-    $result{'OS'}{'Free Memory RAM'} = `free -m | grep -v +`;
+    $result{'OS'}{'Free Memory RAM'} = execute_system_command('free -m | grep -v +');
     infoprint "Load Average          : ";
     infocmd_tab "top -n 1 -b | grep 'load average:'";
-    $result{'OS'}{'Load Average'} = `top -n 1 -b | grep 'load average:'`;
+    $result{'OS'}{'Load Average'} = execute_system_command("top -n 1 -b | grep 'load average:'");
 
     infoprint "System Uptime         : ";
     infocmd_tab "uptime";
-    $result{'OS'}{'Uptime'} = `uptime`;
+    $result{'OS'}{'Uptime'} = execute_system_command('uptime');
 }
 
 sub system_recommendations {
@@ -2138,7 +2231,7 @@ sub system_recommendations {
     }
     return if ( $opt{sysstat} == 0 );
     subheaderprint "System Linux Recommendations";
-    my $os = $is_win ? 'windows' : `uname`;
+    my $os = $is_win ? 'windows' : execute_system_command('uname');
     unless ( $os =~ /Linux/i ) {
         infoprint "Skipped due to non Linux server";
         return;
@@ -2646,38 +2739,38 @@ sub check_architecture {
         return;
     }
     if ($is_win) {
-        if ( `wmic os get osarchitecture` =~ /64/ ) {
+        if ( execute_system_command('wmic os get osarchitecture') =~ /64/ ) {
             goodprint "Operating on 64-bit architecture";
             $arch = 64;
         }
     }
-    elsif ( `uname` =~ /SunOS/ && `isainfo -b` =~ /64/ ) {
+    elsif ( execute_system_command('uname') =~ /SunOS/ && execute_system_command('isainfo -b') =~ /64/ ) {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( `uname` !~ /SunOS/ && `uname -m` =~ /(64|s390x)/ ) {
+    elsif ( execute_system_command('uname') !~ /SunOS/ && execute_system_command('uname -m') =~ /(64|s390x)/ ) {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( `uname` =~ /AIX/ && `bootinfo -K` =~ /64/ ) {
+    elsif ( execute_system_command('uname') =~ /AIX/ && execute_system_command('bootinfo -K') =~ /64/ ) {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( `uname` =~ /NetBSD|OpenBSD/ && `sysctl -b hw.machine` =~ /64/ ) {
+    elsif ( execute_system_command('uname') =~ /NetBSD|OpenBSD/ && execute_system_command('sysctl -b hw.machine') =~ /64/ ) {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( `uname` =~ /FreeBSD/ && `sysctl -b hw.machine_arch` =~ /64/ ) {
+    elsif ( execute_system_command('uname') =~ /FreeBSD/ && execute_system_command('sysctl -b hw.machine_arch') =~ /64/ ) {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( `uname` =~ /Darwin/ && `uname -m` =~ /Power Macintosh/ ) {
+    elsif ( execute_system_command('uname') =~ /Darwin/ && execute_system_command('uname -m') =~ /Power Macintosh/ ) {
 
 # Darwin box.local 9.8.0 Darwin Kernel Version 9.8.0: Wed Jul 15 16:57:01 PDT 2009; root:xnu1228.15.4~1/RELEASE_PPC Power Macintosh
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( `uname` =~ /Darwin/ && `uname -m` =~ /x86_64/ ) {
+    elsif ( execute_system_command('uname') =~ /Darwin/ && execute_system_command('uname -m') =~ /x86_64/ ) {
 
 # Darwin gibas.local 12.6.0 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
         $arch = 64;
@@ -3160,7 +3253,7 @@ sub calculations {
     if ( $doremote eq 0 and !mysql_version_ge(5) ) {
         if ($is_win) {
             my $size     = 0;
-            my @allfiles = `dir /-c /s $myvar{'datadir'}`;
+            my @allfiles = execute_system_command("dir /-c /s $myvar{'datadir'}");
             foreach (
                 map  { /^\s*\d+\/\S+\s+\S+\s+(A|P)M\s+(\d+)\s/i; $2 }
                 grep { /\.MYI$/i } @allfiles
@@ -3183,11 +3276,11 @@ sub calculations {
             my $size = 0;
             $size += (split)[0]
               for
-`find "$myvar{'datadir'}" -name "*.MYI" -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1`;
+execute_system_command("find '$myvar{'datadir'}' -name '*.MYI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1");
             $mycalc{'total_myisam_indexes'} = $size;
             $size = 0 + (split)[0]
               for
-`find "$myvar{'datadir'}" -name "*.MAI" -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1`;
+execute_system_command("find '$myvar{'datadir'}' -name '*.MAI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1");
             $mycalc{'total_aria_indexes'} = $size;
         }
     }
@@ -7712,12 +7805,26 @@ sub which {
     return 0;
 }
 
+# Generic SSH command executor
+sub ssh_executor {
+    my $remote_cmd = shift;
+    my $full_ssh_cmd = build_ssh_command($remote_cmd);
+    debugprint "Executing remote command: $full_ssh_cmd";
+    my @output = `$full_ssh_cmd 2>&1`;
+    if ($? != 0) {
+        badprint "Remote command execution failed: $remote_cmd";
+        infoprintml @output;
+    }
+    return @output;
+}
+
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 headerprint;    # Header Print
 
 validate_tuner_version;    # Check latest version
+cloud_setup;
 mysql_setup;               # Gotta login first
 debugprint "MySQL FINAL Client : $mysqlcmd $mysqllogin";
 debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
@@ -7816,6 +7923,15 @@ You must provide the remote server's total memory when connecting to other serve
  --defaults-file <path>      Path to a custom .my.cnf
  --defaults-extra-file <path>      Path to an extra custom config file
  --server-log <path>         Path to explicit log file (error_log)
+
+=head1 CLOUD SUPPORT
+
+ --cloud                     Enable cloud mode. This is a generic flag for any cloud provider.
+ --azure                     Enable Azure-specific support.
+ --ssh-host <hostname>       The SSH host for cloud connections.
+ --ssh-user <username>       The SSH user for cloud connections.
+ --ssh-password <password>   The SSH password for cloud connections.
+ --ssh-identity-file <path>  The path to the SSH identity file for cloud connections.
 
 =head1 PERFORMANCE AND REPORTING OPTIONS
 
