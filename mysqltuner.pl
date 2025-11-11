@@ -7805,19 +7805,6 @@ sub which {
     return 0;
 }
 
-# Generic SSH command executor
-sub ssh_executor {
-    my $remote_cmd = shift;
-    my $full_ssh_cmd = build_ssh_command($remote_cmd);
-    debugprint "Executing remote command: $full_ssh_cmd";
-    my @output = `$full_ssh_cmd 2>&1`;
-    if ($? != 0) {
-        badprint "Remote command execution failed: $remote_cmd";
-        infoprintml @output;
-    }
-    return @output;
-}
-
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
