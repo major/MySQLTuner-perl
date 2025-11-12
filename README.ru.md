@@ -2,291 +2,551 @@
 
 [!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
-[![Project Status](http://opensource.box.com/badges/active.svg)](http://opensource.box.com/badges)
-[![Project Status](http://opensource.box.com/badges/maintenance.svg)](http://opensource.box.com/badges)
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
-[![Percentage of open issues](http://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](http://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
+[![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
+[![Test Status](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
+[![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
+[![Percentage of open issues](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
 [![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
+**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
 
-**MySQLTuner** - это скрипт, написанный на Perl, который позволяет быстро произвести осмотр текущего состояния сервера баз данных MySQL
-и составить рекомендации для увеличения производительности и стабильности работы. Выводятся текущие параметры конфигурации
-и информация о состоянии в формате отчета с основными подсказками по оптимизации.
+**MySQLTuner** supports ~300 indicators for MySQL/MariaDB/Percona Server in this latest version.
 
-**MySQLTuner** поддерживает порядка 300 показателей для MySQL/MariaDB/Percona Server последних версий.
+**MySQLTuner** is actively maintained supporting many configurations such as [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
-**MySQLTuner** поддерживает сбор показателей для множества таких конфигураций, как [Galera Cluster](http://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), метрики ОС Linux, [InnoDB](http://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](http://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/kb/en/mariadb/aria/), ...
-
-
-Вы можете найти больше информации об этих показателях на
+You can find more details on these indicators here:
 [Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
-
 
 ![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
 
-MySQLTuner нуждается в вас:
+MySQLTuner needs you
 ===
 
-**MySQLTuner** нуждается в вашем вкладе в документацию и код, а так же ждёт обратную связь.
+**MySQLTuner** needs contributors for documentation, code and feedback:
 
-* Присоединяйтесь, пожалуйста, к нашему трекеру ошибок [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
-* Руководство по поддержке проекта доступно на [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Ставьте "звезды" **проекту MySQLTuner** на [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
+* Please join us on our issue tracker at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
+* Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
+* Paid support for LightPath here: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
+* Paid support for Releem available here: [Releem App](https://releem.com/)
 
-## Количество "звезд" по времени
+![Anurag's GitHub stats](https://github-readme-stats.vercel.app/api?username=anuraghazra&show_icons=true&theme=radical)
+
+## Stargazers over time
 
 [![Stargazers over time](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
 
-Совместимость
+
+Compatibility
 ====
-Результаты тестов:
-* MySQL 8   (полная поддержка, проверка пароля не работает)
-* MySQL 5.7 (полная поддержка)
-* MySQL 5.6 (полная поддержка)
-* MySQL 5.5 (полная поддержка)
-* MariaDB 10.4 (полная поддержка)
-* MariaDB 10.3 (полная поддержка)
-* MariaDB 10.2 (полная поддержка)
-* MariaDB 10.1 (полная поддержка)
-* MariaDB 10.0 (полная поддержка, последние 6 месяцeв)
-* MariaDB 5.5  (полная поддержка, но без поддержки от MariaDB)
-* Percona Server 8.0 (полная поддержка, проверка пароля не работает)
-* Percona Server 5.7 (полная поддержка)
-* Percona Server 5.6 (полная поддержка)
-* Percona XtraDB cluster (частичная поддержка, нет тестового окружения)
 
-* Mysql Replications (частичная поддержка, нет тестового окружения)
-* Galera replication (частичная поддержка, нет тестового окружения)
+Test result are available here for LTS only:
+* MySQL (full support)
+* Percona Server (full support)
+* MariaDB (full support)
+* Galera replication (full support)
+* Percona XtraDB cluster (full support)
+* MySQL Replication (partial support, no test environment)
 
-* MySQL 3.23, 4.0, 4.1, 5.0, 5.1, 5.5 (частичная поддержка - устаревшие версии)
+Thanks to [endoflife.date](endoflife.date)
+  * Refer to [MariaDB Supported versions](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
+  * Refer to [MySQL Supported versions](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
 
-*** НЕ ПОДДЕРЖИВАЕМЫЕ ОКРУЖЕНИЯ - НУЖНА ПОМОЩЬ С НИМИ :) ***
-* Windows не поддерживается на данное время (Необходима помощь!!!!!)
-* Облачные сервисы(cloud based) не поддерживаются на данное время (Необходима помощь!!!!!)
+***Windows Support is partial***
 
-* Поддержка детектирования CVE уязвимостей из [https://cve.mitre.org](https://cve.mitre.org)
+* Windows is now supported at this time
+* Successfully run MySQLtuner across WSL2 (Windows Subsystem Linux)
+* [https://docs.microsoft.com/en-us/windows/wsl/](https://docs.microsoft.com/en-us/windows/wsl/)
 
-*** МИНИМАЛЬНЫЕ ТРЕБОВАНИЯ ***
+***UNSUPPORTED ENVIRONMENTS - NEED HELP WITH THAT***
+* Cloud based is not supported at this time (Help wanted! GCP, AWS, Azure support requested)
 
-* Perl 5.6 или более поздний (с пакетом [perl-doc](http://search.cpan.org/~dapm/perl-5.14.4/pod/perldoc.pod))
-* Операционная система семейства Unix/Linux (протестировано на Linux, различных вариациях BSD и Solaris)
-* Неограниченный доступ на чтение для MySQL-сервера (Для работы с MySQL < 5.1 требуется root-доступ к серверу)
-
-Пожалуйста, прочитайте раздел ЧаВо, который расположен чуть ниже.
-
-***ПРЕДУПРЕЖДЕНИЕ***
---
-Очень важно, чтобы вы имели представление о том, какие изменения вы
-вносите в параметры сервера баз данных MySQL. Если вы даже частично
-не понимаете вывод отчета скрипта, или не понимаете рекомендации,
-которые делает скрипт, то вам лучше всего обратиться за помощью либо
-к документации к серверу баз данных, либо ближайшему системному
-администратору. Всегда проверяйте ваши изменения на тестовом сервере
-и всегда будьте готовы к тому, что улучшения в одной области могут иметь
-отрицательный эфект в работе MySQL в другой области.
-
-Так же **важно** подождать, что бы сервер баз данных отработал хотя бы день, для получения точных реультатов. Запуск **mysqltuner** на только что перезапущенном сервере баз данных, по факту полностью бесполезен.
-
-**Серьезно - прочитайте раздел ЧаВо, который расположен чуть ниже.**
-
-
-Рекомендации по безопасности
+***Unsupported storage engines: PRs welcome***
 --
 
-Здравствуй, пользователь directadmin!
-Мы обнаружили, что запуск mysqltuner с доступами da_admin, взятыми из файла `/usr/local/directadmin/conf/my.cnf`, может привести к компрометации пароля!
-Детали можно прочитать по ссылке [Issue #289](https://github.com/major/MySQLTuner-perl/issues/289).
+* NDB is not supported feel free to create a Pull Request
+* Archive
+* Spider
+* ColummStore
+* Connect
 
-
-Что именно проверяет MySQLTuner?
---
-Все проверки, что выполняет **MySQLTuner**, задокументированы в [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md)
-
-Загрузка/Установка
+Unmaintenained stuff from MySQL or MariaDB:
 --
 
-Доступны несколько методов:
-1) Прямая загрузка скрипта(самый простой и короткий метод):
-```
+* MyISAM is too old and no longer active
+* RockDB is not maintained anymore
+* TokuDB is not maintained anymore
+* XtraDB is not maintained anymore
+
+* CVE vulnerabilities detection support from [https://cve.mitre.org](https://cve.mitre.org)
+
+***MINIMAL REQUIREMENTS***
+
+* Perl 5.6 or later (with [perl-doc](https://metacpan.org/release/DAPM/perl-5.14.4/view/pod/perldoc.pod) package)
+* Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
+* Unrestricted read access to the MySQL server
+OS root access recommended for MySQL < 5.1
+
+***WARNING***
+--
+
+It is **important** for you to fully understand each change
+you make to a MySQL database server.  If you don't understand portions
+of the script's output, or if you don't understand the recommendations,
+**you should consult** a knowledgeable DBA or system administrator
+that you trust.  **Always** test your changes on staging environments, and
+always keep in mind that improvements in one area can **adversely affect**
+MySQL in other areas.
+
+It's **also important** to wait at least 24 hours of uptime to get accurate results. In fact, running
+**mysqltuner** on a fresh restarted server is completely useless.
+
+**Also review the FAQ section below.**
+
+Security recommendations
+--
+
+Hi directadmin user!
+We detected that you run mysqltuner with da_admin's credentials taken from `/usr/local/directadmin/conf/my.cnf`, which might bring to a password discovery!
+Read link for more details [Issue #289](https://github.com/major/MySQLTuner-perl/issues/289).
+
+What is MySQLTuner checking exactly ?
+--
+
+All checks done by **MySQLTuner** are documented in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) documentation.
+
+Download/Installation
+--
+
+Choose one of these methods:
+
+1) Script direct download (the simplest and shortest method):
+
+```bash
 wget http://mysqltuner.pl/ -O mysqltuner.pl
 wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
 wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 ```
 
-2) Вы можете скачать весь репозиторий с помощью `git clone` или `git clone --depth 1 -b master` c URL текущего репозитория.
+2) You can download the entire repository by using `git clone` or `git clone --depth 1 -b master` followed by the cloning URL above.
 
-
-Оциональная установка Sysschema для MySQL 5.6
+Optional Sysschema installation for MySQL 5.6
 --
 
-Sysschema по умолчанию установлена на MySQL 5.7 и MySQL 8 от Oracle.
-В  MySQL 5.6/5.7/8 по умолчанию performance schema включена.
-Для версий старше 5.6 вы можете создать новую базу данных sys, содержащую очень полезный взгляд на Performance schema следующими командами:
+Sysschema is installed by default under MySQL 5.7 and MySQL 8 from Oracle.
+By default, on MySQL 5.6/5.7/8, performance schema is enabled.
+For previous MySQL 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
 
-	curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
-	# check zip file
-	unzip -l sysschema.zip
-	unzip sysschema.zip
-	cd mysql-sys-master
-	mysql -uroot -p < sys_56.sql
-
-Опциональная установка  Performance schema и Sysschema для MariaDB 10.x
+Sysschema for MySQL old version
 --
 
-Sysschema не установлена по умолчанию на MariaDB 10.x.
-А performance schema по умолчанию отключена в MariaDB. Для активации ее требуется включить в конфигурационном файле my.cnf:
+```bash
+curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
+# check zip file
+unzip -l sysschema.zip
+unzip sysschema.zip
+cd mysql-sys-master
+mysql -uroot -p < sys_56.sql
+```
 
-	[mysqld]
-	performance_schema = on
-
-Вы можете создать новую базу данных sys, содержащую очень полезный взгляд на Performance schema следующими командами:
-
-	curl "https://codeload.github.com/FromDual/mariadb-sys/zip/master" > mariadb-sys.zip
-	# check zip file
-	unzip -l mariadb-sys.zip
-	unzip mariadb-sys.zip
-	cd mariadb-sys-master/
-	mysql -u root -p < ./sys_10.sql
-
-Ошибки и их решения при установке performance schema
-
-     ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
-     Посмотрите на #452 решение, данное @ericx
-
-Примеры использования
+Sysschema for MariaDB old version
 --
 
-__Пример:__ Минимальный локальный запуск
+```bash
+curl "https://github.com/FromDual/mariadb-sys/archive/refs/heads/master.zip" > sysschema.zip
+# check zip file
+unzip -l sysschema.zip
+unzip sysschema.zip
+cd mariadb-sys-master
+mysql -u root -p < ./sys_10.sql
+```
 
-	perl mysqltuner.pl --host 127.0.0.1
-
-Конечно, вам нужно будет добавить права на выполнение скрипта (chmod +x mysqltuner.pl), если вы хотите запускать его напрямую, без указания perl.
-
-__Пример:__ Минимальный удаленный запуск
-
-	perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
-
-__Пример:__ Включение максимамльного вывода информации о MySQL/MariaDb без отладочной информации
-
-	perl mysqltuner.pl --verbose
-    perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat --tbstat
-
-
-__Пример:__ Включение проверки на CVE уязвимости для MariaDB или MySQL
-
-	perl mysqltuner.pl --cvefile=vulnerabilities.csv
-
-__Пример:__ Запись результата в файл с отображением информации
-
-	perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
-
-__Пример:__ Запись результата в файл **без вывода информации**
-
-	perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
-
-__Пример:__ Использование шаблона для кастомизации отчетов, сохраняющихся в файл на базе синтаксиса [Text::Template](https://metacpan.org/pod/Text::Template).
-
- 	perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
-
-__Пример:__ Включение вывода отладочной информации
-
-	perl mysqltuner.pl --debug
-
-__Пример:__ Обновление MySQLTuner и файлов с данными (пароль и cve), если необходимо.
-
-    perl mysqltuner.pl --checkversion --updateversion
-
-ЧаВо
+Performance schema setup
 --
 
-**Вопрос: MySQLTuner починит мой медленный MySQL сервер?**
+By default, performance_schema is enabled and sysschema is installed on latest version.
 
-**Нет.** MySQLTuner работает только на чтение. Он не будет записывать какие-либо конфигурационные файлы, изменять статус каких-либо демонов или звонить вашей маме, чтобы поздравить её с днём рождения. Он только даст обзор производительности вашего сервера и предложит несколько базовых рекомендаций, которые вы можете выполнить. *Убедитесь, что вы прочитали предупреждения до следования рекомендациям.*
+By default, on MariaDB, performance schema is disabled (MariaDB<10.6).
 
-**Вопрос: Теперь я могу уволить моего DBA?**
+Consider activating performance schema across your my.cnf configuration file:
 
-**MySQLTuner не заменяет вашего DBA никоим образом.** Однако, если ваш DBA постоянно занимает ваше парковочное место и крадёт ваш обед из холодильника, вы можете попробовать сделать это - но это будет ваш выбор.
+```ini
+[mysqld]
+performance_schema = on
+performance-schema-consumer-events-statements-history-long = ON
+performance-schema-consumer-events-statements-history = ON
+performance-schema-consumer-events-statements-current = ON
+performance-schema-consumer-events-stages-current=ON
+performance-schema-consumer-events-stages-history=ON
+performance-schema-consumer-events-stages-history-long=ON
+performance-schema-consumer-events-transactions-current=ON
+performance-schema-consumer-events-transactions-history=ON
+performance-schema-consumer-events-transactions-history-long=ON
+performance-schema-consumer-events-waits-current=ON
+performance-schema-consumer-events-waits-history=ON
+performance-schema-consumer-events-waits-history-long=ON
+performance-schema-instrument='%=ON'
+max-digest-length=2048
+performance-schema-max-digest-length=2018
+```
 
-**Вопрос: Почему MySQLTuner каждый раз запрашивает доступы в MySQL?**
+Sysschema installation for MariaDB < 10.6
+--
 
-Скрипт пытается использовать лучшие способы войти из возможных. Он проверяет ~/.my.cnf файлы, файлы паролей Plesk и пробует пустой пароль для пользователя root. Если ни один из этих способов не сработал, то запрашивается ввод пароля. Если вы хотите, чтобы скрипт работал автоматически, создайте в своей домашней директории файл .my.cnf, содержащий:
+Sysschema is not installed by default under MariaDB prior to 10.6 [MariaDB sys](https://mariadb.com/kb/en/sys-schema/)
+
+You can follow this command to create a new database sys containing a useful view on Performance schema:
+
+```bash
+curl "https://codeload.github.com/FromDual/mariadb-sys/zip/master" > mariadb-sys.zip
+# check zip file
+unzip -l mariadb-sys.zip
+unzip mariadb-sys.zip
+cd mariadb-sys-master/
+mysql -u root -p < ./sys_10.sql
+```
+
+Errors & solutions for performance schema installation
+--
+
+
+ERROR 1054 (42S22) at line 78 in file: './views/p_s/metrics_56.sql': Unknown column 'STATUS' in 'field list'
+--
+
+
+This error can be safely ignored
+Consider using a recent MySQL/MariaDB version to avoid this kind of issue during sysschema installation
+
+In recent versions, sysschema is installed and integrated by default as sys schema (SHOW DATABASES)
+
+
+
+ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
+Have a look at #452 solution given by @ericx
+--
+
+Fixing sysctl configuration (/etc/sysctl.conf)
+
+--
+It is a system wide setting and not a database setting: [Linux FS Kernel settings](https://www.kernel.org/doc/html/latest/admin-guide/sysctl/fs.html#id1)
+
+You can check its values via:
+
+```bash
+$ cat /proc/sys/fs/aio-*
+65536
+2305
+```
+
+For example, to set the aio-max-nr value, add the following line to the /etc/sysctl.conf file:
+
+```bash
+fs.aio-max-nr = 1048576
+```
+
+To activate the new setting:
+
+```bash
+$ sysctl -p /etc/sysctl.conf
+```
+
+Specific usage
+--
+
+__Usage:__ Minimal usage locally
+
+```bash
+perl mysqltuner.pl --host 127.0.0.1
+```
+
+Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling Perl directly.
+
+__Usage:__ Minimal usage remotely
+
+In previous version, --forcemem shoud be set manually, in order to be able to run an MySQLTuner analysis
+
+Since 2.1.10, memory and swap are defined to 1Gb by default.
+
+If you want a more accurate value according to your remote server, feel free to setup --forcemem and --forceswap to real RAM value
+
+```bash
+perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
+```
+
+__Usage:__ Enable maximum output information around MySQL/MariaDb without debugging
+
+```bash
+perl mysqltuner.pl --verbose
+perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat --tbstat
+```
+
+__Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
+
+```bash
+perl mysqltuner.pl --cvefile=vulnerabilities.csv
+```
+
+__Usage:__ Write your result in a file with information displayed
+
+```bash
+perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
+```
+
+__Usage:__ Write your result in a file **without outputting information**
+
+```bash
+perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
+```
+
+__Usage:__ Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
+
+```bash
+perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
+```
+
+__Important__: [Text::Template](https://metacpan.org/pod/Text::Template) module is mandatory for `--reportfile` and/or `--template` options, because this module is needed to generate appropriate output based on a text template.
+
+
+__Usage:__ Dumping all information_schema and sysschema views as csv file into results subdirectory
+
+```bash
+perl mysqltuner.pl --verbose --dumpdir=./result
+```
+
+
+__Usage:__ Enable debugging information
+
+```bash
+perl mysqltuner.pl --debug
+```
+
+__Usage:__ Update MySQLTuner and data files (password and cve) if needed
+
+```bash
+perl mysqltuner.pl --checkversion --updateversion
+```
+
+Cloud Support
+--
+
+MySQLTuner now has experimental support for cloud-based MySQL services.
+
+*   `--cloud`: Enable cloud mode. This is a generic flag for any cloud provider.
+*   `--azure`: Enable Azure-specific support.
+*   `--ssh-host <hostname>`: The SSH host for cloud connections.
+*   `--ssh-user <username>`: The SSH user for cloud connections.
+*   `--ssh-password <password>`: The SSH password for cloud connections.
+*   `--ssh-identity-file <path>`: The path to the SSH identity file for cloud connections.
+
+
+HTML reports based on  Python Jinja2
+--
+
+HTML generation is based on Python/Jinja2
+
+**HTML generation Procedure**
+
+ - Generate mysqltuner.pl report using JSON format (--json)
+ - Generate HTML report using j2 python tools
+
+**Jinja2 Templates are located under templates sub directory**
+
+A basic example is called basic.html.j2
+
+**Installation Python j2**
+
+```bash
+python -mvenv j2
+source ./j2/bin/activate
+(j2) pip install j2
+```
+
+**Using Html report generation**
+
+```bash
+perl mysqltuner.pl --verbose --json > reports.json
+cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
+```
+
+or
+
+```bash
+perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
+```
+
+HTML reports based on AHA
+--
+
+HTML generation is based on AHA
+
+**HTML generation Procedure**
+
+ - Generate mysqltuner.pl report using standard text reports
+ - Generate HTML report using aha
+
+**Installation Aha**
+
+Follow instructions from Github repo
+
+[GitHub AHA main repository](https://github.com/theZiz/aha)
+
+**Using AHA Html report generation**
+
+	perl mysqltuner.pl --verbose --color > reports.txt
+	aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
+
+or
+
+	perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
+
+
+FAQ
+--
+**Question: What are the prerequisites for running MySQL tuner ?**
+
+Before running MySQL tuner, you should have the following:
+
+ - A MySQL server installation
+ - Perl installed on your system
+ - Administrative access to your MySQL server
+
+**Question: Can MySQL tuner make changes to my configuration automatically ?**
+
+**No.**, MySQL tuner only provides recommendations. It does not make any changes to your configuration files automatically. It is up to the user to review the suggestions and implement them as needed.
+
+**Question: How often should I run MySQL tuner ?**
+
+It is recommended to run MySQL tuner periodically, especially after significant changes to your MySQL server or its workload.
+
+For optimal results, run the script after your server has been running for at least 24 hours to gather sufficient performance data.
+
+**Question: How do I interpret the results from MySQL tuner ?**
+
+MySQL tuner provides output in the form of suggestions and warnings.
+
+Review each recommendation and consider implementing the changes in your MySQL configuration file (usually 'my.cnf' or 'my.ini').
+
+Be cautious when making changes and always backup your configuration file before making any modifications.
+
+**Question: Can MySQL tuner cause harm to my database or server ?**
+
+While MySQL tuner itself will not make any changes to your server, blindly implementing its recommendations without understanding the impact can cause issues.
+
+Always ensure you understand the implications of each suggestion before applying it to your server.
+
+**Question: Can I use MySQL tuner for optimizing other database systems like PostgreSQL or SQL Server ?**
+
+MySQL tuner is specifically designed for MySQL servers.
+To optimize other database systems, you would need to use tools designed for those systems, such as pgTune for PostgreSQL or SQL Server's built-in performance tools.
+
+**Question: Does MySQL tuner support MariaDB and Percona Server ?**
+
+Yes, MySQL tuner supports MariaDB and Percona Server since they are derivatives of MySQL and share a similar architecture. The script can analyze and provide recommendations for these systems as well.
+
+**Question: What should I do if I need help with MySQL tuner or have questions about the recommendations ?**
+
+If you need help with MySQL tuner or have questions about the recommendations provided by the script, you can consult the MySQL tuner documentation, seek advice from online forums, or consult a MySQL expert.
+
+Be cautious when implementing changes to ensure the stability and performance of your server.
+
+**Question: Will MySQLTuner fix my slow MySQL server ?**
+
+**No.**  MySQLTuner is a read only script.  It won't write to any configuration files, change the status of any daemons.  It will give you an overview of your server's performance and make some basic recommendations for improvements that you can make after it completes.
+
+**Question: Can I fire my DBA now?**
+
+**MySQLTuner will not replace your DBA in any form or fashion.**
+
+If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
+
+**Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?**
+
+The script will try its best to log in via any means possible.  It will check for ~/.my.cnf files, Plesk password files, and empty password root logins.  If none of those are available, then you'll be prompted for a password.  If you'd like the script to run in an automated fashion without user intervention, then create a .my.cnf file in your home directory which contains:
 
 	[client]
-	user=distributions
+	user=someusername
 	password=thatuserspassword
 
-Сразу после создания файла убедитесь, что его владельцем является ваш пользователь, а права на файл - 0600. Это защитит ваш логин и пароль от базы данных от любопытных глаз в нормальных условиях. Но у вас не будет выбора, если появится [T-1000 в униформе полицейского из Лос-Анджелеса](https://ru.wikipedia.org/wiki/T-1000) и потребует доступы от вашей базы данных.
+Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.
 
-**Вопрос: Есть ли другой способ безопасно сохранить данные для входа в последних версиях MySQL и MariaDB?**
-Вы можете использовать утилиту mysql_config_editor.
+**Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
+
+You could use mysql_config_editor utilities.
 ~~~bash
 	$ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
-	Enter passord: ********
+	Enter password: ********
 ~~~
-Она создаст `~/.mylogin.cnf` с корректными правами доступа.
+After which, `~/.mylogin.cnf` will be created with the appropriate access.
 
-Чтобы получить информацию о сохраненных данных для входа, выполните:
+To get information about stored credentials, use the following command:
 
-	$mysql_config_editor print
-	[client]
-	user = someusername
-	password = *****
-	host = localhost
+```bash
+$mysql_config_editor print
+[client]
+user = someusername
+password = *****
+host = localhost
+```
 
-**Вопрос: Какие минимальные привелегии нужны для специального пользователя базы данных mysqltuner?**
+**Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
 
-        mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,SHOW DATABASES,SHOW VIEW ON *.* TO 'mysqltuner'@'localhost' identified by pwd1234;
+```bash
+ mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
+ SHOW DATABASES,SHOW VIEW
+ ON *.*
+ TO 'mysqltuner'@'localhost' identified by pwd1234;
+```
 
-**Вопрос: Это не работает на моей ОС! Что делать?!**
+**Question: It's not working on my OS! What gives?!**
 
-Иногда такое случается. Чтобы тщательно исследовать проблему, необходимы следующие данные:
+These kinds of things are bound to happen. Here are the details I need from you to investigate the issue:
 
-* ОС и версия ОС
-* Архитектура (x86, x86_64, IA64, Commodore 64)
-* Точная версия MySQL
-* Где вы взяли данную версию MySQL(OS package, source, etc)
-* Полный текст ошибки
-* Копия вывода SHOW VARIABLES и SHOW GLOBAL STATUS (если это возможно)
+* OS and OS version
+* Architecture (x86, x86_64, IA64, Commodore 64)
+* Exact MySQL version
+* Where you obtained your MySQL version (OS package, source, etc)
+* The full text of the error
+* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
 
-**Вопрос: Как выполнить проверку на CVE уязвимости?**
+**Question: How to perform CVE vulnerability checks?**
 
-* Скачать vulnerabilities.csv с этого репозитория.
-* Использовать опцию --cvefile для проверки
+* Download vulnerabilities.csv from this repository.
+* use option --cvefile to perform CVE checks
 
-**Вопрос: Как использовать mysqltuner с удалённого хоста?**
-Спасибо  [@rolandomysqldba](http://dba.stackexchange.com/users/877/rolandomysqldba)
+**Question: How to use mysqltuner from a remote host?**
+Thanks to  [@rolandomysqldba](https://dba.stackexchange.com/users/877/rolandomysqldba)
 
-* Вы можете подключиться так же, как для обычного mysql-клиета:
+* You will still have to connect like a mysql client:
 
-Подключение и аутентификация.
+Connection and Authentication
 
 	--host <hostname> Connect to a remote host to perform tests (default: localhost)
 	--socket <socket> Use a different socket for a local connection
 	--port <port>     Port to use for connection (default: 3306)
 	--user <username> Username to use for authentication
 	--pass <password> Password to use for authentication
-	--defaults-file <path> defaulfs file for credentials
+	--defaults-file <path> defaults file for credentials
 
-Так как вы используете удалённый хост, используйте параметры для указания данных об ОС
+Since you are using a remote host, use parameters to supply values from the OS
 
-	--forcemem <size>  Количество оперативной памяти в мегабайтах
-	--forceswap <size> Количество swap памяти в мегабайтах
+	--forcemem <size>  Amount of RAM installed in megabytes
+	--forceswap <size> Amount of swap memory configured in megabytes
 
-* Вы можете обратиться к вашему системному администратору, чтобы спросить, сколько оперативной памяти и swap'а вам доступно
+* You may have to contact your remote SysAdmin to ask how much RAM and swap you have
 
-Если у баз слишком много таблиц, или есть очень большие таблицы, используйте опцию
+If the database has too many tables, or very large table, use this:
 
 	--skipsize           Don't enumerate tables and their types/sizes (default: on)
 	                     (Recommended for servers with many tables)
 
-**Вопрос: Я могу установить этот проект с помощью homebrew на Apple Macintosh?**
+**Question: Can I install this project using homebrew on Apple Macintosh?**
 
-Да! Вы можете уставновить его командой `brew install mysqltuner` с помощью [homebrew](https://brew.sh/) на Apple Macintosh.
+Yes! `brew install mysqltuner` can be used to install this application using [homebrew](https://brew.sh/) on Apple Macintosh.
 
-MySQLTuner и Vagrant
+MySQLTuner and Vagrant
 --
-**MySQLTuner** содержится в следующих конфигурациях Vagrant:
-* Fedora Core 10 / Docker
+**MySQLTuner** contains following Vagrant configurations:
+* Fedora Core 30 / Docker
 
 **Vagrant File** is stored in Vagrant subdirectory.
 * Follow following step after vagrant installation:
@@ -307,7 +567,7 @@ MySQLTuner и Vagrant
 	* mkdir data
 
 
-## Настройка тестовых окружений
+## setup test environments
 
     $ sh build/createTestEnvs.sh
 
@@ -333,8 +593,7 @@ MySQLTuner и Vagrant
     $ docker ps
     CONTAINER ID        IMAGE                        COMMAND                  CREATED             STATUS              PORTS                               NAMES
     da2be9b050c9        mariadb:5.5                  "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5311->3306/tcp              mariadb55
-    5deca25d5ac8        mariadb:10.0                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5310->3306/tcp              mariadb100
-    73aaeb37e2c2        mariadb:10.1                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5309->3306/tcp              mariadb101
+    5deca25d5ac8        mariadb:10.0                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5310->3.0.0.0:5309->3306/tcp              mariadb101
     72ffa77e01ec        mariadb:10.2                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5308->3306/tcp              mariadb102
     f5996f2041df        mariadb:10.3                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5307->3306/tcp              mariadb103
     4890c52372bb        mariadb:10.4                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5306->3306/tcp              mariadb104
@@ -346,11 +605,19 @@ MySQLTuner и Vagrant
     a49783249a11        mysql:5.7                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:3307->3306/tcp   mysql57
     d985820667c2        mysql:8.0                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3306->3306/tcp, 33060/tcp   mysql 8    0
 
-MySQLTuner нуждается в Вас:
-===
 
-**MySQLTuner** нуждается в вашем вкладе в документацию и код, а так же ждёт обратную связь.
+Contributions welcome !
+--
 
-* Присоединяйтесь, пожалуйста, к нашему трекеру ошибок [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
-* Руководство по поддержке проекта доступно на [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Ставьте "звезды" **проекту MySQLTuner** на [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
+How to contribute using Pull Request ? Follow this guide : [Pull request creation](https://opensource.com/article/19/7/create-pull-request-github)
+
+Simple steps to create a pull request:
+--
+
+- Fork this Github project
+- Clone it to your local system
+- Make a new branch
+- Make your changes
+- Push it back to your repo
+- Click the Compare & pull request button
+- Click Create pull request to open a new pull request
