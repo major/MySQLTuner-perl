@@ -1,126 +1,126 @@
 ![MySQLTuner-perl](mtlogo2.png)
 
-[!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
+[!["Offrici un caffè"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
-[![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
-[![Test Status](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
-[![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
-[![Percentage of open issues](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
-[![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
+[![Stato del progetto](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
+[![Stato dei test](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
+[![Tempo medio per risolvere un problema](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Tempo medio per risolvere un problema")
+[![Percentuale di problemi aperti](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Percentuale di problemi ancora aperti")
+[![Licenza GPL](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
-**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
+**MySQLTuner** è uno script scritto in Perl che consente di esaminare rapidamente un'installazione di MySQL e apportare modifiche per aumentare le prestazioni e la stabilità. Le variabili di configurazione correnti e i dati di stato vengono recuperati e presentati in un formato breve insieme ad alcuni suggerimenti di base sulle prestazioni.
 
-**MySQLTuner** supports ~300 indicators for MySQL/MariaDB/Percona Server in this latest version.
+**MySQLTuner** supporta circa 300 indicatori per MySQL/MariaDB/Percona Server in quest'ultima versione.
 
-**MySQLTuner** is actively maintained supporting many configurations such as [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
+**MySQLTuner** è attivamente mantenuto e supporta molte configurazioni come [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), metriche del sistema operativo Linux, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
-You can find more details on these indicators here:
-[Indicators description](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+Puoi trovare maggiori dettagli su questi indicatori qui:
+[Descrizione degli indicatori](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 ![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
 
-MySQLTuner needs you
+MySQLTuner ha bisogno di te
 ===
 
-**MySQLTuner** needs contributors for documentation, code and feedback:
+**MySQLTuner** ha bisogno di contributori per la documentazione, il codice e il feedback:
 
-* Please join us on our issue tracker at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
-* Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl)
-* Paid support for LightPath here: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
-* Paid support for Releem available here: [Releem App](https://releem.com/)
+* Unisciti a noi sul nostro issue tracker su [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
+* La guida per i contributi è disponibile seguendo la [guida per i contributi di MySQLTuner](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Metti una stella al **progetto MySQLTuner** su [Progetto Git Hub di MySQLTuner](https://github.com/major/MySQLTuner-perl)
+* Supporto a pagamento per LightPath qui: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
+* Supporto a pagamento per Releem disponibile qui: [App Releem](https://releem.com/)
 
-![Anurag's GitHub stats](https://github-readme-stats.vercel.app/api?username=anuraghazra&show_icons=true&theme=radical)
+![Statistiche GitHub di Anurag](https://github-readme-stats.vercel.app/api?username=anuraghazra&show_icons=true&theme=radical)
 
-## Stargazers over time
+## Stargazer nel tempo
 
-[![Stargazers over time](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
+[![Stargazer nel tempo](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
 
 
-Compatibility
+Compatibilità
 ====
 
-Test result are available here for LTS only:
-* MySQL (full support)
-* Percona Server (full support)
-* MariaDB (full support)
-* Galera replication (full support)
-* Percona XtraDB cluster (full support)
-* MySQL Replication (partial support, no test environment)
+I risultati dei test sono disponibili qui solo per LTS:
+* MySQL (supporto completo)
+* Percona Server (supporto completo)
+* MariaDB (supporto completo)
+* Replica Galera (supporto completo)
+* Cluster Percona XtraDB (supporto completo)
+* Replica MySQL (supporto parziale, nessun ambiente di test)
 
-Thanks to [endoflife.date](endoflife.date)
-  * Refer to [MariaDB Supported versions](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
-  * Refer to [MySQL Supported versions](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
+Grazie a [endoflife.date](endoflife.date)
+  * Fare riferimento a [Versioni supportate di MariaDB](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
+  * Fare riferimento a [Versioni supportate di MySQL](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
 
-***Windows Support is partial***
+***Il supporto per Windows è parziale***
 
-* Windows is now supported at this time
-* Successfully run MySQLtuner across WSL2 (Windows Subsystem Linux)
+* Windows è ora supportato
+* Eseguito con successo MySQLtuner su WSL2 (sottosistema Windows per Linux)
 * [https://docs.microsoft.com/en-us/windows/wsl/](https://docs.microsoft.com/en-us/windows/wsl/)
 
-***UNSUPPORTED ENVIRONMENTS - NEED HELP WITH THAT***
-* Cloud based is not supported at this time (Help wanted! GCP, AWS, Azure support requested)
+***AMBIENTI NON SUPPORTATI - È NECESSARIO AIUTO***
+* Il cloud based non è attualmente supportato (aiuto richiesto! Supporto richiesto per GCP, AWS, Azure)
 
-***Unsupported storage engines: PRs welcome***
+***Motori di archiviazione non supportati: le PR sono benvenute***
 --
 
-* NDB is not supported feel free to create a Pull Request
+* NDB non è supportato, sentiti libero di creare una Pull Request
 * Archive
 * Spider
 * ColummStore
 * Connect
 
-Unmaintenained stuff from MySQL or MariaDB:
+Cose non mantenute da MySQL o MariaDB:
 --
 
-* MyISAM is too old and no longer active
-* RockDB is not maintained anymore
-* TokuDB is not maintained anymore
-* XtraDB is not maintained anymore
+* MyISAM è troppo vecchio e non più attivo
+* RockDB non è più mantenuto
+* TokuDB non è più mantenuto
+* XtraDB non è più mantenuto
 
-* CVE vulnerabilities detection support from [https://cve.mitre.org](https://cve.mitre.org)
+* Supporto per il rilevamento delle vulnerabilità CVE da [https://cve.mitre.org](https://cve.mitre.org)
 
-***MINIMAL REQUIREMENTS***
+***REQUISITI MINIMI***
 
-* Perl 5.6 or later (with [perl-doc](https://metacpan.org/release/DAPM/perl-5.14.4/view/pod/perldoc.pod) package)
-* Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
-* Unrestricted read access to the MySQL server
-OS root access recommended for MySQL < 5.1
+* Perl 5.6 o successivo (con pacchetto [perl-doc](https://metacpan.org/release/DAPM/perl-5.14.4/view/pod/perldoc.pod))
+* Sistema operativo basato su Unix/Linux (testato su Linux, varianti BSD e varianti Solaris)
+* Accesso in lettura illimitato al server MySQL
+Accesso root al sistema operativo consigliato per MySQL < 5.1
 
-***WARNING***
+***AVVERTIMENTO***
 --
 
-It is **important** for you to fully understand each change
-you make to a MySQL database server.  If you don't understand portions
-of the script's output, or if you don't understand the recommendations,
-**you should consult** a knowledgeable DBA or system administrator
-that you trust.  **Always** test your changes on staging environments, and
-always keep in mind that improvements in one area can **adversely affect**
-MySQL in other areas.
+È **importante** comprendere appieno ogni modifica
+apportata a un server di database MySQL. Se non si comprendono porzioni
+dell'output dello script o se non si comprendono le raccomandazioni,
+**è necessario consultare** un DBA o un amministratore di sistema esperto
+di cui ci si fida. **Testare sempre** le modifiche in ambienti di staging e
+tenere sempre presente che i miglioramenti in un'area possono **influire negativamente**
+su MySQL in altre aree.
 
-It's **also important** to wait at least 24 hours of uptime to get accurate results. In fact, running
-**mysqltuner** on a fresh restarted server is completely useless.
+È **anche importante** attendere almeno 24 ore di uptime per ottenere risultati accurati. Infatti, eseguire
+**mysqltuner** su un server appena riavviato è completamente inutile.
 
-**Also review the FAQ section below.**
+**Rivedi anche la sezione delle domande frequenti di seguito.**
 
-Security recommendations
+Raccomandazioni di sicurezza
 --
 
-Hi directadmin user!
-We detected that you run mysqltuner with da_admin's credentials taken from `/usr/local/directadmin/conf/my.cnf`, which might bring to a password discovery!
-Read link for more details [Issue #289](https://github.com/major/MySQLTuner-perl/issues/289).
+Ciao utente di directadmin!
+Abbiamo rilevato che esegui mysqltuner con le credenziali di da_admin prese da `/usr/local/directadmin/conf/my.cnf`, il che potrebbe portare alla scoperta di una password!
+Leggi il link per maggiori dettagli [Problema #289](https://github.com/major/MySQLTuner-perl/issues/289).
 
-What is MySQLTuner checking exactly ?
+Cosa sta controllando esattamente MySQLTuner?
 --
 
-All checks done by **MySQLTuner** are documented in [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md) documentation.
+Tutti i controlli eseguiti da **MySQLTuner** sono documentati nella documentazione [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
-Download/Installation
+Download/Installazione
 --
 
-Choose one of these methods:
+Scegli uno di questi metodi:
 
-1) Script direct download (the simplest and shortest method):
+1) Download diretto dello script (il metodo più semplice e breve):
 
 ```bash
 wget http://mysqltuner.pl/ -O mysqltuner.pl
@@ -128,47 +128,47 @@ wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwo
 wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 ```
 
-2) You can download the entire repository by using `git clone` or `git clone --depth 1 -b master` followed by the cloning URL above.
+2) È possibile scaricare l'intero repository utilizzando `git clone` o `git clone --depth 1 -b master` seguito dall'URL di clonazione sopra.
 
-Optional Sysschema installation for MySQL 5.6
+Installazione facoltativa di Sysschema per MySQL 5.6
 --
 
-Sysschema is installed by default under MySQL 5.7 and MySQL 8 from Oracle.
-By default, on MySQL 5.6/5.7/8, performance schema is enabled.
-For previous MySQL 5.6 version, you can follow this command to create a new database sys containing very useful view on Performance schema:
+Sysschema è installato per impostazione predefinita in MySQL 5.7 e MySQL 8 da Oracle.
+Per impostazione predefinita, in MySQL 5.6/5.7/8, lo schema delle prestazioni è abilitato.
+Per la versione precedente di MySQL 5.6, è possibile seguire questo comando per creare un nuovo database sys contenente una vista molto utile sullo schema delle prestazioni:
 
-Sysschema for MySQL old version
+Sysschema per la vecchia versione di MySQL
 --
 
 ```bash
 curl "https://codeload.github.com/mysql/mysql-sys/zip/master" > sysschema.zip
-# check zip file
+# controlla il file zip
 unzip -l sysschema.zip
 unzip sysschema.zip
 cd mysql-sys-master
 mysql -uroot -p < sys_56.sql
 ```
 
-Sysschema for MariaDB old version
+Sysschema per la vecchia versione di MariaDB
 --
 
 ```bash
 curl "https://github.com/FromDual/mariadb-sys/archive/refs/heads/master.zip" > sysschema.zip
-# check zip file
+# controlla il file zip
 unzip -l sysschema.zip
 unzip sysschema.zip
 cd mariadb-sys-master
 mysql -u root -p < ./sys_10.sql
 ```
 
-Performance schema setup
+Impostazione dello schema delle prestazioni
 --
 
-By default, performance_schema is enabled and sysschema is installed on latest version.
+Per impostazione predefinita, performance_schema è abilitato e sysschema è installato sull'ultima versione.
 
-By default, on MariaDB, performance schema is disabled (MariaDB<10.6).
+Per impostazione predefinita, su MariaDB, lo schema delle prestazioni è disabilitato (MariaDB<10.6).
 
-Consider activating performance schema across your my.cnf configuration file:
+Considera di attivare lo schema delle prestazioni nel tuo file di configurazione my.cnf:
 
 ```ini
 [mysqld]
@@ -190,47 +190,47 @@ max-digest-length=2048
 performance-schema-max-digest-length=2018
 ```
 
-Sysschema installation for MariaDB < 10.6
+Installazione di Sysschema per MariaDB < 10.6
 --
 
-Sysschema is not installed by default under MariaDB prior to 10.6 [MariaDB sys](https://mariadb.com/kb/en/sys-schema/)
+Sysschema non è installato per impostazione predefinita in MariaDB prima della 10.6 [MariaDB sys](https://mariadb.com/kb/en/sys-schema/)
 
-You can follow this command to create a new database sys containing a useful view on Performance schema:
+È possibile seguire questo comando per creare un nuovo database sys contenente una vista utile sullo schema delle prestazioni:
 
 ```bash
 curl "https://codeload.github.com/FromDual/mariadb-sys/zip/master" > mariadb-sys.zip
-# check zip file
+# controlla il file zip
 unzip -l mariadb-sys.zip
 unzip mariadb-sys.zip
 cd mariadb-sys-master/
 mysql -u root -p < ./sys_10.sql
 ```
 
-Errors & solutions for performance schema installation
+Errori e soluzioni per l'installazione dello schema delle prestazioni
 --
 
 
-ERROR 1054 (42S22) at line 78 in file: './views/p_s/metrics_56.sql': Unknown column 'STATUS' in 'field list'
+ERRORE 1054 (42S22) alla riga 78 nel file: './views/p_s/metrics_56.sql': colonna sconosciuta 'STATUS' nell'elenco dei campi
 --
 
 
-This error can be safely ignored
-Consider using a recent MySQL/MariaDB version to avoid this kind of issue during sysschema installation
+Questo errore può essere tranquillamente ignorato
+Considera di utilizzare una versione recente di MySQL/MariaDB per evitare questo tipo di problema durante l'installazione di sysschema
 
-In recent versions, sysschema is installed and integrated by default as sys schema (SHOW DATABASES)
+Nelle versioni recenti, sysschema è installato e integrato per impostazione predefinita come schema sys (SHOW DATABASES)
 
 
 
-ERROR at line 21: Failed to open file './tables/sys_config_data_10.sql -- ported', error: 2
-Have a look at #452 solution given by @ericx
+ERRORE alla riga 21: impossibile aprire il file './tables/sys_config_data_10.sql -- ported', errore: 2
+Dai un'occhiata alla soluzione #452 fornita da @ericx
 --
 
-Fixing sysctl configuration (/etc/sysctl.conf)
+Correzione della configurazione di sysctl (/etc/sysctl.conf)
 
 --
-It is a system wide setting and not a database setting: [Linux FS Kernel settings](https://www.kernel.org/doc/html/latest/admin-guide/sysctl/fs.html#id1)
+È un'impostazione a livello di sistema e non un'impostazione del database: [Impostazioni del kernel FS di Linux](https://www.kernel.org/doc/html/latest/admin-guide/sysctl/fs.html#id1)
 
-You can check its values via:
+È possibile controllare i suoi valori tramite:
 
 ```bash
 $ cat /proc/sys/fs/aio-*
@@ -238,122 +238,122 @@ $ cat /proc/sys/fs/aio-*
 2305
 ```
 
-For example, to set the aio-max-nr value, add the following line to the /etc/sysctl.conf file:
+Ad esempio, per impostare il valore aio-max-nr, aggiungere la seguente riga al file /etc/sysctl.conf:
 
 ```bash
 fs.aio-max-nr = 1048576
 ```
 
-To activate the new setting:
+Per attivare la nuova impostazione:
 
 ```bash
 $ sysctl -p /etc/sysctl.conf
 ```
 
-Specific usage
+Utilizzo specifico
 --
 
-__Usage:__ Minimal usage locally
+__Utilizzo:__ utilizzo minimo a livello locale
 
 ```bash
 perl mysqltuner.pl --host 127.0.0.1
 ```
 
-Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can execute it without calling Perl directly.
+Naturalmente, è possibile aggiungere il bit di esecuzione (`chmod +x mysqltuner.pl`) in modo da poterlo eseguire senza chiamare direttamente Perl.
 
-__Usage:__ Minimal usage remotely
+__Utilizzo:__ utilizzo minimo da remoto
 
-In previous version, --forcemem shoud be set manually, in order to be able to run an MySQLTuner analysis
+Nella versione precedente, --forcemem doveva essere impostato manualmente, per poter eseguire un'analisi di MySQLTuner
 
-Since 2.1.10, memory and swap are defined to 1Gb by default.
+Dalla versione 2.1.10, memoria e swap sono definiti a 1 Gb per impostazione predefinita.
 
-If you want a more accurate value according to your remote server, feel free to setup --forcemem and --forceswap to real RAM value
+Se si desidera un valore più accurato in base al proprio server remoto, è possibile impostare --forcemem e --forceswap sul valore reale della RAM
 
 ```bash
 perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
 ```
 
-__Usage:__ Enable maximum output information around MySQL/MariaDb without debugging
+__Utilizzo:__ abilita le informazioni di output massime su MySQL/MariaDb senza debug
 
 ```bash
 perl mysqltuner.pl --verbose
 perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat --tbstat
 ```
 
-__Usage:__ Enable CVE vulnerabilities check for your MariaDB or MySQL version
+__Utilizzo:__ abilita il controllo delle vulnerabilità CVE per la tua versione di MariaDB o MySQL
 
 ```bash
 perl mysqltuner.pl --cvefile=vulnerabilities.csv
 ```
 
-__Usage:__ Write your result in a file with information displayed
+__Utilizzo:__ scrivi il risultato in un file con le informazioni visualizzate
 
 ```bash
 perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 ```
 
-__Usage:__ Write your result in a file **without outputting information**
+__Utilizzo:__ scrivi il risultato in un file **senza visualizzare le informazioni**
 
 ```bash
 perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 ```
 
-__Usage:__ Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
+__Utilizzo:__ utilizzo del modello per personalizzare il file di reporting in base alla sintassi di [Text::Template](https://metacpan.org/pod/Text::Template).
 
 ```bash
 perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
 ```
 
-__Important__: [Text::Template](https://metacpan.org/pod/Text::Template) module is mandatory for `--reportfile` and/or `--template` options, because this module is needed to generate appropriate output based on a text template.
+__Importante__: il modulo [Text::Template](https://metacpan.org/pod/Text::Template) è obbligatorio per le opzioni `--reportfile` e/o `--template`, perché questo modulo è necessario per generare un output appropriato basato su un modello di testo.
 
 
-__Usage:__ Dumping all information_schema and sysschema views as csv file into results subdirectory
+__Utilizzo:__ dump di tutte le viste information_schema e sysschema come file csv nella sottodirectory dei risultati
 
 ```bash
 perl mysqltuner.pl --verbose --dumpdir=./result
 ```
 
 
-__Usage:__ Enable debugging information
+__Utilizzo:__ abilita le informazioni di debug
 
 ```bash
 perl mysqltuner.pl --debug
 ```
 
-__Usage:__ Update MySQLTuner and data files (password and cve) if needed
+__Utilizzo:__ aggiorna MySQLTuner e i file di dati (password e cve) se necessario
 
 ```bash
 perl mysqltuner.pl --checkversion --updateversion
 ```
 
-Cloud Support
+Supporto cloud
 --
 
-MySQLTuner now has experimental support for cloud-based MySQL services.
+MySQLTuner ora ha un supporto sperimentale per i servizi MySQL basati su cloud.
 
-*   `--cloud`: Enable cloud mode. This is a generic flag for any cloud provider.
-*   `--azure`: Enable Azure-specific support.
-*   `--ssh-host <hostname>`: The SSH host for cloud connections.
-*   `--ssh-user <username>`: The SSH user for cloud connections.
-*   `--ssh-password <password>`: The SSH password for cloud connections.
-*   `--ssh-identity-file <path>`: The path to the SSH identity file for cloud connections.
+*   `--cloud`: abilita la modalità cloud. Questo è un flag generico per qualsiasi provider di cloud.
+*   `--azure`: abilita il supporto specifico per Azure.
+*   `--ssh-host <hostname>`: l'host SSH per le connessioni cloud.
+*   `--ssh-user <username>`: l'utente SSH per le connessioni cloud.
+*   `--ssh-password <password>`: la password SSH per le connessioni cloud.
+*   `--ssh-identity-file <path>`: il percorso del file di identità SSH per le connessioni cloud.
 
 
-HTML reports based on  Python Jinja2
+Report HTML basati su Python Jinja2
 --
 
-HTML generation is based on Python/Jinja2
+La generazione di HTML si basa su Python/Jinja2
 
-**HTML generation Procedure**
+**Procedura di generazione di HTML**
 
- - Generate mysqltuner.pl report using JSON format (--json)
- - Generate HTML report using j2 python tools
+ - Genera il report di mysqltuner.pl utilizzando il formato JSON (--json)
+ - Genera il report HTML utilizzando gli strumenti j2 di Python
 
-**Jinja2 Templates are located under templates sub directory**
+**I modelli Jinja2 si trovano nella sottodirectory dei modelli**
 
-A basic example is called basic.html.j2
+Un esempio di base si chiama basic.html.j2
 
-**Installation Python j2**
+**Installazione di Python j2**
 
 ```bash
 python -mvenv j2
@@ -361,124 +361,124 @@ source ./j2/bin/activate
 (j2) pip install j2
 ```
 
-**Using Html report generation**
+**Utilizzo della generazione di report HTML**
 
 ```bash
 perl mysqltuner.pl --verbose --json > reports.json
 cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
 ```
 
-or
+o
 
 ```bash
 perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
 ```
 
-HTML reports based on AHA
+Report HTML basati su AHA
 --
 
-HTML generation is based on AHA
+La generazione di HTML si basa su AHA
 
-**HTML generation Procedure**
+**Procedura di generazione di HTML**
 
- - Generate mysqltuner.pl report using standard text reports
- - Generate HTML report using aha
+ - Genera il report di mysqltuner.pl utilizzando i report di testo standard
+ - Genera il report HTML utilizzando aha
 
-**Installation Aha**
+**Installazione di Aha**
 
-Follow instructions from Github repo
+Segui le istruzioni dal repository di Github
 
-[GitHub AHA main repository](https://github.com/theZiz/aha)
+[Repository principale di GitHub AHA](https://github.com/theZiz/aha)
 
-**Using AHA Html report generation**
+**Utilizzo della generazione di report HTML AHA**
 
 	perl mysqltuner.pl --verbose --color > reports.txt
 	aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
 
-or
+o
 
 	perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
 
 
 FAQ
 --
-**Question: What are the prerequisites for running MySQL tuner ?**
+**Domanda: quali sono i prerequisiti per l'esecuzione di MySQL tuner?**
 
-Before running MySQL tuner, you should have the following:
+Prima di eseguire MySQL tuner, è necessario disporre di quanto segue:
 
- - A MySQL server installation
- - Perl installed on your system
- - Administrative access to your MySQL server
+ - Un'installazione del server MySQL
+ - Perl installato sul tuo sistema
+ - Accesso amministrativo al tuo server MySQL
 
-**Question: Can MySQL tuner make changes to my configuration automatically ?**
+**Domanda: MySQL tuner può apportare modifiche alla mia configurazione automaticamente?**
 
-**No.**, MySQL tuner only provides recommendations. It does not make any changes to your configuration files automatically. It is up to the user to review the suggestions and implement them as needed.
+**No.**, MySQL tuner fornisce solo raccomandazioni. Non apporta automaticamente alcuna modifica ai file di configurazione. Spetta all'utente rivedere i suggerimenti e implementarli secondo necessità.
 
-**Question: How often should I run MySQL tuner ?**
+**Domanda: con quale frequenza devo eseguire MySQL tuner?**
 
-It is recommended to run MySQL tuner periodically, especially after significant changes to your MySQL server or its workload.
+Si consiglia di eseguire periodicamente MySQL tuner, soprattutto dopo modifiche significative al server MySQL o al suo carico di lavoro.
 
-For optimal results, run the script after your server has been running for at least 24 hours to gather sufficient performance data.
+Per risultati ottimali, esegui lo script dopo che il server è stato in esecuzione per almeno 24 ore per raccogliere dati sufficienti sulle prestazioni.
 
-**Question: How do I interpret the results from MySQL tuner ?**
+**Domanda: come interpreto i risultati di MySQL tuner?**
 
-MySQL tuner provides output in the form of suggestions and warnings.
+MySQL tuner fornisce l'output sotto forma di suggerimenti e avvisi.
 
-Review each recommendation and consider implementing the changes in your MySQL configuration file (usually 'my.cnf' or 'my.ini').
+Rivedi ogni raccomandazione e considera di implementare le modifiche nel tuo file di configurazione di MySQL (di solito "my.cnf" o "my.ini").
 
-Be cautious when making changes and always backup your configuration file before making any modifications.
+Sii cauto quando apporti modifiche e esegui sempre il backup del file di configurazione prima di apportare qualsiasi modifica.
 
-**Question: Can MySQL tuner cause harm to my database or server ?**
+**Domanda: MySQL tuner può causare danni al mio database o server?**
 
-While MySQL tuner itself will not make any changes to your server, blindly implementing its recommendations without understanding the impact can cause issues.
+Sebbene MySQL tuner stesso non apporterà alcuna modifica al tuo server, l'implementazione cieca delle sue raccomandazioni senza comprenderne l'impatto può causare problemi.
 
-Always ensure you understand the implications of each suggestion before applying it to your server.
+Assicurati sempre di comprendere le implicazioni di ogni suggerimento prima di applicarlo al tuo server.
 
-**Question: Can I use MySQL tuner for optimizing other database systems like PostgreSQL or SQL Server ?**
+**Domanda: posso usare MySQL tuner per ottimizzare altri sistemi di database come PostgreSQL o SQL Server?**
 
-MySQL tuner is specifically designed for MySQL servers.
-To optimize other database systems, you would need to use tools designed for those systems, such as pgTune for PostgreSQL or SQL Server's built-in performance tools.
+MySQL tuner è progettato specificamente per i server MySQL.
+Per ottimizzare altri sistemi di database, sarebbe necessario utilizzare strumenti progettati per tali sistemi, come pgTune per PostgreSQL o gli strumenti di prestazione integrati di SQL Server.
 
-**Question: Does MySQL tuner support MariaDB and Percona Server ?**
+**Domanda: MySQL tuner supporta MariaDB e Percona Server?**
 
-Yes, MySQL tuner supports MariaDB and Percona Server since they are derivatives of MySQL and share a similar architecture. The script can analyze and provide recommendations for these systems as well.
+Sì, MySQL tuner supporta MariaDB e Percona Server poiché sono derivati ​​di MySQL e condividono un'architettura simile. Lo script può analizzare e fornire raccomandazioni anche per questi sistemi.
 
-**Question: What should I do if I need help with MySQL tuner or have questions about the recommendations ?**
+**Domanda: cosa devo fare se ho bisogno di aiuto con MySQL tuner o ho domande sulle raccomandazioni?**
 
-If you need help with MySQL tuner or have questions about the recommendations provided by the script, you can consult the MySQL tuner documentation, seek advice from online forums, or consult a MySQL expert.
+Se hai bisogno di aiuto con MySQL tuner o hai domande sulle raccomandazioni fornite dallo script, puoi consultare la documentazione di MySQL tuner, chiedere consiglio ai forum online o consultare un esperto di MySQL.
 
-Be cautious when implementing changes to ensure the stability and performance of your server.
+Sii cauto quando implementi le modifiche per garantire la stabilità e le prestazioni del tuo server.
 
-**Question: Will MySQLTuner fix my slow MySQL server ?**
+**Domanda: MySQLTuner risolverà il mio server MySQL lento?**
 
-**No.**  MySQLTuner is a read only script.  It won't write to any configuration files, change the status of any daemons.  It will give you an overview of your server's performance and make some basic recommendations for improvements that you can make after it completes.
+**No.** MySQLTuner è uno script di sola lettura. Non scriverà in alcun file di configurazione, non modificherà lo stato di alcun demone. Ti darà una panoramica delle prestazioni del tuo server e formulerà alcune raccomandazioni di base per i miglioramenti che puoi apportare dopo il suo completamento.
 
-**Question: Can I fire my DBA now?**
+**Domanda: posso licenziare il mio DBA ora?**
 
-**MySQLTuner will not replace your DBA in any form or fashion.**
+**MySQLTuner non sostituirà il tuo DBA in nessuna forma o modo.**
 
-If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
+Se il tuo DBA prende costantemente il tuo parcheggio e ti ruba il pranzo dal frigorifero, allora potresti volerlo considerare, ma questa è una tua decisione.
 
-**Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?**
+**Domanda: perché MySQLTuner continua a chiedermi le credenziali di accesso per MySQL più e più volte?**
 
-The script will try its best to log in via any means possible.  It will check for ~/.my.cnf files, Plesk password files, and empty password root logins.  If none of those are available, then you'll be prompted for a password.  If you'd like the script to run in an automated fashion without user intervention, then create a .my.cnf file in your home directory which contains:
+Lo script farà del suo meglio per accedere con ogni mezzo possibile. Verificherà i file ~/.my.cnf, i file delle password di Plesk e gli accessi root con password vuota. Se nessuno di questi è disponibile, ti verrà richiesta una password. Se desideri che lo script venga eseguito in modo automatizzato senza l'intervento dell'utente, crea un file .my.cnf nella tua home directory che contenga:
 
 	[client]
 	user=someusername
 	password=thatuserspassword
 
-Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.
+Una volta creato, assicurati che sia di proprietà del tuo utente e che la modalità del file sia 0600. Ciò dovrebbe impedire agli occhi indiscreti di ottenere le credenziali di accesso al database in condizioni normali.
 
-**Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
+**Domanda: c'è un altro modo per proteggere le credenziali sulle ultime distribuzioni di MySQL e MariaDB?**
 
-You could use mysql_config_editor utilities.
+È possibile utilizzare le utilità di mysql_config_editor.
 ~~~bash
 	$ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
-	Enter password: ********
+	Inserisci password: ********
 ~~~
-After which, `~/.mylogin.cnf` will be created with the appropriate access.
+Successivamente, verrà creato `~/.mylogin.cnf` con l'accesso appropriato.
 
-To get information about stored credentials, use the following command:
+Per ottenere informazioni sulle credenziali archiviate, utilizzare il seguente comando:
 
 ```bash
 $mysql_config_editor print
@@ -488,7 +488,7 @@ password = *****
 host = localhost
 ```
 
-**Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
+**Domanda: quali sono i privilegi minimi necessari per un utente specifico di mysqltuner nel database?**
 
 ```bash
  mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
@@ -497,77 +497,77 @@ host = localhost
  TO 'mysqltuner'@'localhost' identified by pwd1234;
 ```
 
-**Question: It's not working on my OS! What gives?!**
+**Domanda: non funziona sul mio sistema operativo! Che succede?!**
 
-These kinds of things are bound to happen. Here are the details I need from you to investigate the issue:
+Questo genere di cose è destinato ad accadere. Ecco i dettagli di cui ho bisogno da te per indagare sul problema:
 
-* OS and OS version
-* Architecture (x86, x86_64, IA64, Commodore 64)
-* Exact MySQL version
-* Where you obtained your MySQL version (OS package, source, etc)
-* The full text of the error
-* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
+* Sistema operativo e versione del sistema operativo
+* Architettura (x86, x86_64, IA64, Commodore 64)
+* Versione esatta di MySQL
+* Da dove hai ottenuto la tua versione di MySQL (pacchetto del sistema operativo, sorgente, ecc.)
+* Il testo completo dell'errore
+* Una copia dell'output di SHOW VARIABLES e SHOW GLOBAL STATUS (se possibile)
 
-**Question: How to perform CVE vulnerability checks?**
+**Domanda: come eseguire i controlli delle vulnerabilità CVE?**
 
-* Download vulnerabilities.csv from this repository.
-* use option --cvefile to perform CVE checks
+* Scarica vulnerabilities.csv da questo repository.
+* usa l'opzione --cvefile per eseguire i controlli CVE
 
-**Question: How to use mysqltuner from a remote host?**
-Thanks to  [@rolandomysqldba](https://dba.stackexchange.com/users/877/rolandomysqldba)
+**Domanda: come usare mysqltuner da un host remoto?**
+Grazie a [@rolandomysqldba](https://dba.stackexchange.com/users/877/rolandomysqldba)
 
-* You will still have to connect like a mysql client:
+* Dovrai comunque connetterti come un client mysql:
 
-Connection and Authentication
+Connessione e autenticazione
 
-	--host <hostname> Connect to a remote host to perform tests (default: localhost)
-	--socket <socket> Use a different socket for a local connection
-	--port <port>     Port to use for connection (default: 3306)
-	--user <username> Username to use for authentication
-	--pass <password> Password to use for authentication
-	--defaults-file <path> defaults file for credentials
+	--host <hostname> Connettiti a un host remoto per eseguire i test (predefinito: localhost)
+	--socket <socket> Usa un socket diverso per una connessione locale
+	--port <port>     Porta da utilizzare per la connessione (predefinita: 3306)
+	--user <username> Nome utente da utilizzare per l'autenticazione
+	--pass <password> Password da utilizzare per l'autenticazione
+	--defaults-file <path> file dei valori predefiniti per le credenziali
 
-Since you are using a remote host, use parameters to supply values from the OS
+Poiché si sta utilizzando un host remoto, utilizzare i parametri per fornire i valori dal sistema operativo
 
-	--forcemem <size>  Amount of RAM installed in megabytes
-	--forceswap <size> Amount of swap memory configured in megabytes
+	--forcemem <size>  Quantità di RAM installata in megabyte
+	--forceswap <size> Quantità di memoria di swap configurata in megabyte
 
-* You may have to contact your remote SysAdmin to ask how much RAM and swap you have
+* Potrebbe essere necessario contattare l'amministratore di sistema remoto per chiedere quanta RAM e swap si dispone
 
-If the database has too many tables, or very large table, use this:
+Se il database ha troppe tabelle o tabelle molto grandi, usa questo:
 
-	--skipsize           Don't enumerate tables and their types/sizes (default: on)
-	                     (Recommended for servers with many tables)
+	--skipsize           Non enumerare tabelle e i loro tipi/dimensioni (predefinito: on)
+	                     (Consigliato per server con molte tabelle)
 
-**Question: Can I install this project using homebrew on Apple Macintosh?**
+**Domanda: posso installare questo progetto usando homebrew su Apple Macintosh?**
 
-Yes! `brew install mysqltuner` can be used to install this application using [homebrew](https://brew.sh/) on Apple Macintosh.
+Sì! `brew install mysqltuner` può essere usato per installare questa applicazione usando [homebrew](https://brew.sh/) su Apple Macintosh.
 
-MySQLTuner and Vagrant
+MySQLTuner e Vagrant
 --
-**MySQLTuner** contains following Vagrant configurations:
+**MySQLTuner** contiene le seguenti configurazioni di Vagrant:
 * Fedora Core 30 / Docker
 
-**Vagrant File** is stored in Vagrant subdirectory.
-* Follow following step after vagrant installation:
+**Il file Vagrant** è archiviato nella sottodirectory Vagrant.
+* Segui i seguenti passaggi dopo l'installazione di Vagrant:
     $ vagrant up
 
-**MySQLTuner** contains a Vagrant configurations for test purpose and development
-* Install VirtualBox and Vagrant
+**MySQLTuner** contiene una configurazione Vagrant per scopi di test e sviluppo
+* Installa VirtualBox e Vagrant
 	* https://www.virtualbox.org/wiki/Downloads
 	* https://www.vagrantup.com/downloads.html
-* Clone repository
+* Clona il repository
  	* git clone https://github.com/major/MySQLTuner-perl.git
-* Install Vagrant plugins vagrant-hostmanager and  vagrant-vbguest
+* Installa i plugin di Vagrant vagrant-hostmanager e vagrant-vbguest
 	* vagrant plugin install vagrant-hostmanager
 	* vagrant plugin install vagrant-vbguest
-* Add Fedora Core 30 box for official Fedora Download Website
+* Aggiungi la box di Fedora Core 30 dal sito Web di download ufficiale di Fedora
 	* vagrant box add --name generic/fedora30
-* Create a data directory
+* Crea una directory di dati
 	* mkdir data
 
 
-## setup test environments
+## configura ambienti di test
 
     $ sh build/createTestEnvs.sh
 
@@ -607,18 +607,18 @@ MySQLTuner and Vagrant
     d985820667c2        mysql:8.0                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3306->3306/tcp, 33060/tcp   mysql 8    0
 
 
-Contributions welcome !
+I contributi sono benvenuti!
 --
 
-How to contribute using Pull Request ? Follow this guide : [Pull request creation](https://opensource.com/article/19/7/create-pull-request-github)
+Come contribuire utilizzando una Pull Request? Segui questa guida: [Creazione di una pull request](https://opensource.com/article/19/7/create-pull-request-github)
 
-Simple steps to create a pull request:
+Semplici passaggi per creare una pull request:
 --
 
-- Fork this Github project
-- Clone it to your local system
-- Make a new branch
-- Make your changes
-- Push it back to your repo
-- Click the Compare & pull request button
-- Click Create pull request to open a new pull request
+- Esegui il fork di questo progetto Github
+- Clonalo sul tuo sistema locale
+- Crea un nuovo ramo
+- Apporta le tue modifiche
+- Esegui il push di nuovo nel tuo repository
+- Fai clic sul pulsante Confronta e pull request
+- Fai clic su Crea pull request per aprire una nuova pull request
