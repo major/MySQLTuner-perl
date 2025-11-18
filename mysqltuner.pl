@@ -2658,7 +2658,6 @@ sub validate_mysql_version {
         or mysql_version_eq( 8,  4 )
         or mysql_version_eq( 9,  5 )
         or mysql_version_eq( 10, 6 )
-        or mysql_version_eq( 10, 6 )
         or mysql_version_eq( 10, 11)
         or mysql_version_eq( 11, 4 )
         or mysql_version_eq( 11, 8 ) )
