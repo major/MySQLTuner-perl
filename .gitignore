@@ -21,3 +21,4 @@ sql/*.csv
 cve.csv
 default*.cnf
 .env
+.gemini/settings.json
