@@ -21,3 +21,8 @@ sql/*.csv
 cve.csv
 default*.cnf
 .env
+.gemini/settings.json
+Dumps/*.csv
+raw_mysqltuner_*.txt
+
+mysqltuner_*.json
