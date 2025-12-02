@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.7.0
+# mysqltuner.pl - Version 2.7.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -213,13 +213,6 @@ if ( exists $opt{passenv} && exists $ENV{ $opt{passenv} } ) {
     $opt{pass} = $ENV{ $opt{passenv} };
 }
 $opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
-
-if ( $opt{dumpdir} ne '' ) {
-    $opt{dumpdir} = abs_path( $opt{dumpdir} );
-    if ( !-d $opt{dumpdir} ) {
-        mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
-    }
-}
 
 # for RPM distributions
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
@@ -2897,6 +2890,12 @@ sub check_storage_engines {
 "SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
           ];
         $fragtables = scalar @{ $result{'Tables'}{'Fragmented tables'} };
+        if ($dumpdir -ne '') {
+          select_csv_file(
+            "$opt{dumpdir}/fragmented_tables.csv", 
+            "SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
+          );
+        }
 
     }
     else {
@@ -4479,20 +4478,6 @@ sub mysql_pfs {
 
     infoprint "Sys schema Version: "
       . select_one("select sys_version from sys.version");
-
-    # Store all sys schema in dumpdir if defined
-    if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
-        for my $sys_view ( select_array('use sys;show tables;') ) {
-            infoprint "Dumping $sys_view into $opt{dumpdir}";
-            my $sys_view_table = $sys_view;
-            $sys_view_table =~ s/\$/\\\$/g;
-            select_csv_file( "$opt{dumpdir}/sys_$sys_view.csv",
-                'select * from sys.\`' . $sys_view_table . '\`' );
-        }
-        return;
-
-        #exit 0 if ( $opt{stop} == 1 );
-    }
 
     # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
@@ -7367,22 +7352,6 @@ sub mysql_tables {
 
     }
 
-    infoprint("Dumpdir: $opt{dumpdir}");
-
-    # Store all information schema in dumpdir if defined
-    if ( defined $opt{dumpdir} and -d "$opt{dumpdir}" ) {
-        for my $info_s_table (
-            select_array('use information_schema;show tables;') )
-        {
-            infoprint "Dumping $info_s_table into $opt{dumpdir}";
-            select_csv_file(
-                "$opt{dumpdir}/ifs_${info_s_table}.csv",
-                "select * from information_schema.$info_s_table"
-            );
-        }
-
-        #exit 0 if ( $opt{stop} == 1 );
-    }
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
         next unless defined $_;
@@ -7805,6 +7774,54 @@ sub which {
     return 0;
 }
 
+sub dump_csv_files {
+    return if ( $opt{dumpdir} eq '' );
+
+    subheaderprint "Dumping CSV files";
+    
+    $opt{dumpdir} = abs_path( $opt{dumpdir} );
+    if ( !-d $opt{dumpdir} ) {
+        mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
+    }
+  
+    infoprint("Dumpdir: $opt{dumpdir}");
+
+    # Store all sys schema in dumpdir if defined
+    infoprint("Dumping sys schema");
+    for my $sys_view ( select_array('use sys;show tables;') ) {
+        infoprint "Dumping $sys_view into $opt{dumpdir}";
+        my $sys_view_table = $sys_view;
+        $sys_view_table =~ s/\$/\\\$/g;
+        select_csv_file( "$opt{dumpdir}/sys_$sys_view.csv",
+            'select * from sys.\`' . $sys_view_table . '\`' );
+    }
+
+    # Store all information schema in dumpdir if defined
+    infoprint("Dumping information schema");
+    for my $info_s_table (
+        select_array('use information_schema;show tables;') )
+    {
+        next if $info_s_table =~ /INNODB_BUFFER_PAGE/;
+        infoprint "Dumping $info_s_table into $opt{dumpdir}";
+        select_csv_file(
+            "$opt{dumpdir}/ifs_${info_s_table}.csv",
+            "select * from information_schema.$info_s_table"
+            );
+    }
+
+    # Store all performance schema in dumpdir if defined
+    infoprint("Dumping performance schema");
+    for my $info_pf_table (
+        select_array('use performance_schema;show tables;') )
+    {
+        next if $info_pf_table =~ /^events_/;
+        infoprint "Performance Schema Dumping $info_pf_table into $opt{dumpdir}";
+        select_csv_file(
+            "$opt{dumpdir}/ps_${info_pf_table}.csv",
+            "select * from performance_schema.$info_pf_table"
+            );
+    }
+}
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
@@ -7816,7 +7833,7 @@ mysql_setup;               # Gotta login first
 debugprint "MySQL FINAL Client : $mysqlcmd $mysqllogin";
 debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
 
-#exit(0);
+dump_csv_files;            # dump csv files
 os_setup;                  # Set up some OS variables
 get_all_vars;              # Toss variables/status into hashes
 get_tuning_info;           # Get information about the tuning connection
@@ -7837,7 +7854,6 @@ validate_mysql_version;    # Check current MySQL version
 
 system_recommendations;    # Avoid too many services on the same host
 log_file_recommendations;  # check log file content
-
 check_metadata_perf;      # Show parameter impacting performance during analysis
 mysql_databases;          # Show information about databases
 mysql_tables;             # Show information about table column
