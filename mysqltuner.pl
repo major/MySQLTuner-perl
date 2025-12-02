@@ -376,7 +376,7 @@ sub infoprinthcmd {
 
 sub is_remote() {
     my $host = $opt{'host'};
-    return 1 if ($opt{'cloud'} && $opt{'ssh-host'} ne '');
+    return 1 if ( $opt{'cloud'} && $opt{'ssh-host'} ne '' );
     return 0 if ( $host eq '' );
     return 0 if ( $host eq 'localhost' );
     return 0 if ( $host eq '127.0.0.1' );
@@ -575,60 +575,75 @@ sub os_setup {
     else {
         if ( $os =~ /Linux|CYGWIN/ ) {
             $physical_memory =
-              execute_system_command("grep -i memtotal: /proc/meminfo | awk '{print \$2}'")
+              execute_system_command(
+                "grep -i memtotal: /proc/meminfo | awk '{print \$2}'")
               or memerror;
             $physical_memory *= 1024;
 
             $swap_memory =
-              execute_system_command("grep -i swaptotal: /proc/meminfo | awk '{print \$2}'")
+              execute_system_command(
+                "grep -i swaptotal: /proc/meminfo | awk '{print \$2}'")
               or memerror;
             $swap_memory *= 1024;
         }
         elsif ( $os =~ /Darwin/ ) {
-            $physical_memory = execute_system_command('sysctl -n hw.memsize') or memerror;
+            $physical_memory = execute_system_command('sysctl -n hw.memsize')
+              or memerror;
             $swap_memory =
-              execute_system_command("sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'")
+              execute_system_command(
+                "sysctl -n vm.swapusage | awk '{print \$3}' | sed 's/\..*\$//'")
               or memerror;
         }
         elsif ( $os =~ /NetBSD|OpenBSD|FreeBSD/ ) {
-            $physical_memory = execute_system_command('sysctl -n hw.physmem') or memerror;
+            $physical_memory = execute_system_command('sysctl -n hw.physmem')
+              or memerror;
             if ( $physical_memory < 0 ) {
-                $physical_memory = execute_system_command('sysctl -n hw.physmem64') or memerror;
+                $physical_memory =
+                     execute_system_command('sysctl -n hw.physmem64')
+                  or memerror;
             }
             $swap_memory =
-              execute_system_command("swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'")
+              execute_system_command(
+                "swapctl -l | grep '^/' | awk '{ s+= \$2 } END { print s }'")
               or memerror;
         }
         elsif ( $os =~ /BSD/ ) {
-            $physical_memory = execute_system_command('sysctl -n hw.realmem') or memerror;
+            $physical_memory = execute_system_command('sysctl -n hw.realmem')
+              or memerror;
             $swap_memory =
-              execute_system_command("swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'");
+              execute_system_command(
+                "swapinfo | grep '^/' | awk '{ s+= \$2 } END { print s }'");
         }
         elsif ( $os =~ /SunOS/ ) {
             $physical_memory =
-              execute_system_command("/usr/sbin/prtconf | grep Memory | cut -f 3 -d ' '")
+              execute_system_command(
+                "/usr/sbin/prtconf | grep Memory | cut -f 3 -d ' '")
               or memerror;
             chomp($physical_memory);
             $physical_memory = $physical_memory * 1024 * 1024;
         }
         elsif ( $os =~ /AIX/ ) {
             $physical_memory =
-              execute_system_command("lsattr -El sys0 | grep realmem | awk '{print \$2}'")
+              execute_system_command(
+                "lsattr -El sys0 | grep realmem | awk '{print \$2}'")
               or memerror;
             chomp($physical_memory);
             $physical_memory = $physical_memory * 1024;
-            $swap_memory     = execute_system_command("lsps -as | awk -F'(MB| +)' '/MB /{print \$2}'")
+            $swap_memory     = execute_system_command(
+                "lsps -as | awk -F'(MB| +)' '/MB /{print \$2}'")
               or memerror;
             chomp($swap_memory);
             $swap_memory = $swap_memory * 1024 * 1024;
         }
         elsif ( $os =~ /windows/i ) {
             $physical_memory =
-execute_system_command('wmic ComputerSystem get TotalPhysicalMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;')
-              or memerror;
+              execute_system_command(
+'wmic ComputerSystem get TotalPhysicalMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;'
+              ) or memerror;
             $swap_memory =
-execute_system_command('wmic OS get FreeVirtualMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;')
-              or memerror;
+              execute_system_command(
+'wmic OS get FreeVirtualMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;'
+              ) or memerror;
         }
     }
     debugprint "Physical Memory: $physical_memory";
@@ -687,7 +702,9 @@ sub validate_tuner_version {
         }
         else {
             $update =
-execute_system_command("$httpcli -m 3 -silent '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2");
+              execute_system_command(
+"$httpcli -m 3 -silent '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2"
+              );
         }
         chomp($update);
         debugprint "VERSION: $update";
@@ -705,11 +722,15 @@ execute_system_command("$httpcli -m 3 -silent '$url' 2>$devnull | grep 'my \$tun
             $update =
               map  { my @f = split /"/; $f[1] }
               grep { /my \$tunerversion/ }
-              execute_system_command("$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull");
+              execute_system_command(
+                "$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull"
+              );
         }
         else {
             $update =
-execute_system_command("$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2");
+              execute_system_command(
+"$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2"
+              );
         }
         chomp($update);
         compare_tuner_version($update);
@@ -749,7 +770,9 @@ sub update_tuner_version {
             debugprint
 "$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath";
             $update =
-execute_system_command("$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath");
+              execute_system_command(
+"$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath"
+              );
             chomp($update);
             debugprint "$script updated: $update";
 
@@ -768,7 +791,9 @@ execute_system_command("$httpcli --connect-timeout 3 '$url$script' 2>$devnull > 
             debugprint
 "$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'";
             $update =
-execute_system_command("$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'");
+              execute_system_command(
+"$httpcli -qe timestamping=off -t 1 -T 3 -O $script '$url$script'"
+              );
             chomp($update);
 
             if ( -s $script eq 0 ) {
@@ -815,44 +840,54 @@ sub compare_tuner_version {
 my ( $mysqllogin, $doremote, $remotestring, $mysqlcmd, $mysqladmincmd );
 
 sub cloud_setup {
-    if ($opt{'cloud'} || $opt{'azure'}) {
-        $opt{'cloud'} = 1; # Ensure cloud is enabled if azure is
+    if ( $opt{'cloud'} || $opt{'azure'} ) {
+        $opt{'cloud'} = 1;    # Ensure cloud is enabled if azure is
         infoprint "Cloud mode activated.";
-        if ($opt{'azure'}) {
-             infoprint "Azure-specific checks enabled (currently generic cloud checks).";
+        if ( $opt{'azure'} ) {
+            infoprint
+              "Azure-specific checks enabled (currently generic cloud checks).";
         }
-        if ($opt{'ssh-host'} ne '') {
+        if ( $opt{'ssh-host'} ne '' ) {
             infoprint "Cloud SSH mode.";
             my @os_info = execute_system_command('uname -a');
             infoprint "Remote OS Info:";
             infoprintml @os_info;
-            my @mem_info = execute_system_command('grep MemTotal /proc/meminfo');
-            if (scalar @mem_info > 0 && $mem_info[0] =~ /(\d+)/) {
+            my @mem_info =
+              execute_system_command('grep MemTotal /proc/meminfo');
+            if ( scalar @mem_info > 0 && $mem_info[0] =~ /(\d+)/ ) {
                 my $remote_mem_bytes = $1 * 1024;
                 $opt{'forcemem'} = $remote_mem_bytes / 1048576;
-                infoprint "Remote memory detected: " . hr_bytes($remote_mem_bytes);
-            } else {
-                badprint "Could not determine remote memory. Using --forcemem if provided, or default.";
-                if ($opt{'forcemem'} == 0) {
-                     $opt{'forcemem'} = 1024; # Default to 1GB
+                infoprint "Remote memory detected: "
+                  . hr_bytes($remote_mem_bytes);
+            }
+            else {
+                badprint
+"Could not determine remote memory. Using --forcemem if provided, or default.";
+                if ( $opt{'forcemem'} == 0 ) {
+                    $opt{'forcemem'} = 1024;    # Default to 1GB
                 }
             }
-            my @swap_info = execute_system_command('grep SwapTotal /proc/meminfo');
-            if (scalar @swap_info > 0 && $swap_info[0] =~ /(\d+)/) {
-                 my $remote_swap_bytes = $1 * 1024;
-                 $opt{'forceswap'} = $remote_swap_bytes / 1048576;
-                 infoprint "Remote swap detected: " . hr_bytes($remote_swap_bytes);
-            } else {
+            my @swap_info =
+              execute_system_command('grep SwapTotal /proc/meminfo');
+            if ( scalar @swap_info > 0 && $swap_info[0] =~ /(\d+)/ ) {
+                my $remote_swap_bytes = $1 * 1024;
+                $opt{'forceswap'} = $remote_swap_bytes / 1048576;
+                infoprint "Remote swap detected: "
+                  . hr_bytes($remote_swap_bytes);
+            }
+            else {
                 infoprint "Could not determine remote swap. Assuming 0.";
-                if ($opt{'forceswap'} == 0) {
+                if ( $opt{'forceswap'} == 0 ) {
                     $opt{'forceswap'} = 0;
                 }
             }
-        } else {
+        }
+        else {
             infoprint "Direct DB Connection mode.";
             $opt{'nosysstat'} = 1;
-            if ($opt{'forcemem'} == 0) {
-                badprint "Direct cloud connection requires --forcemem. Assuming 1GB.";
+            if ( $opt{'forcemem'} == 0 ) {
+                badprint
+                  "Direct cloud connection requires --forcemem. Assuming 1GB.";
                 $opt{'forcemem'} = 1024;
             }
         }
@@ -860,29 +895,37 @@ sub cloud_setup {
 }
 
 sub get_ssh_prefix {
-    return "" if not ($opt{'cloud'} and $opt{'ssh-host'} ne '');
+    return "" if not( $opt{'cloud'} and $opt{'ssh-host'} ne '' );
 
     my $ssh_base_cmd = 'ssh';
-    if ($opt{'ssh-identity-file'} ne '') {
+    if ( $opt{'ssh-identity-file'} ne '' ) {
         $ssh_base_cmd .= " -i '" . $opt{'ssh-identity-file'} . "'";
     }
-    $ssh_base_cmd .= " -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null'";
+    $ssh_base_cmd .=
+      " -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null'";
     my $ssh_target = '';
-    if ($opt{'ssh-user'} ne '') {
+    if ( $opt{'ssh-user'} ne '' ) {
         $ssh_target = $opt{'ssh-user'} . '@';
     }
     $ssh_target .= $opt{'ssh-host'};
 
     my $prefix;
-    if ($opt{'ssh-password'} ne '') {
-        my $sshpass_path = which("sshpass", $ENV{'PATH'});
+    if ( $opt{'ssh-password'} ne '' ) {
+        my $sshpass_path = which( "sshpass", $ENV{'PATH'} );
         if ($sshpass_path) {
-            $prefix = "sshpass -p '" . $opt{'ssh-password'} . "' " . $ssh_base_cmd . " " . $ssh_target;
-        } else {
-            badprint "sshpass is not installed. Password authentication for SSH will not work.";
+            $prefix =
+                "sshpass -p '"
+              . $opt{'ssh-password'} . "' "
+              . $ssh_base_cmd . " "
+              . $ssh_target;
+        }
+        else {
+            badprint
+"sshpass is not installed. Password authentication for SSH will not work.";
             $prefix = $ssh_base_cmd . " " . $ssh_target;
         }
-    } else {
+    }
+    else {
         $prefix = $ssh_base_cmd . " " . $ssh_target;
     }
     return $prefix . " ";
@@ -891,22 +934,27 @@ sub get_ssh_prefix {
 sub execute_system_command {
     my ($command) = @_;
     my $ssh_prefix = get_ssh_prefix();
-    # Important: Single quote the command to prevent shell expansion on the client side
-    my $full_cmd = ($ssh_prefix ne '') ? "$ssh_prefix '$command'" : $command;
+
+# Important: Single quote the command to prevent shell expansion on the client side
+    my $full_cmd = ( $ssh_prefix ne '' ) ? "$ssh_prefix '$command'" : $command;
 
     debugprint "Executing system command: $full_cmd";
     my @output = `$full_cmd 2>&1`;
 
-    if ($? != 0) {
+    if ( $? != 0 ) {
+
         # Be less verbose for commands that are expected to fail on some systems
-        if ($command !~ /^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop)/) {
+        if ( $command !~
+/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop)/
+          )
+        {
             badprint "System command failed: $command";
             infoprintml @output;
         }
     }
 
     # Return based on calling context
-    return wantarray ? @output : join("\n", @output);
+    return wantarray ? @output : join( "\n", @output );
 }
 
 if ($is_win) {
@@ -926,11 +974,16 @@ sub mysql_setup {
         $mysqladmincmd = $opt{mysqladmin};
     }
     else {
-        $mysqladmincmd = ($ssh_prefix ne '') ? "mysqladmin" : (which("mariadb-admin", $ENV{'PATH'}) || which("mysqladmin", $ENV{'PATH'}));
+        $mysqladmincmd =
+          ( $ssh_prefix ne '' )
+          ? "mysqladmin"
+          : (    which( "mariadb-admin", $ENV{'PATH'} )
+              || which( "mysqladmin", $ENV{'PATH'} ) );
     }
     chomp($mysqladmincmd);
-    if ( !$mysqladmincmd || ($ssh_prefix eq '' && !-x $mysqladmincmd) ) {
-        badprint "Couldn't find an executable mysqladmin/mariadb-admin command.";
+    if ( !$mysqladmincmd || ( $ssh_prefix eq '' && !-x $mysqladmincmd ) ) {
+        badprint
+          "Couldn't find an executable mysqladmin/mariadb-admin command.";
         exit 1;
     }
 
@@ -938,17 +991,21 @@ sub mysql_setup {
         $mysqlcmd = $opt{mysqlcmd};
     }
     else {
-        $mysqlcmd = ($ssh_prefix ne '') ? "mysql" : (which("mariadb", $ENV{'PATH'}) || which("mysql", $ENV{'PATH'}));
+        $mysqlcmd =
+          ( $ssh_prefix ne '' )
+          ? "mysql"
+          : (    which( "mariadb", $ENV{'PATH'} )
+              || which( "mysql", $ENV{'PATH'} ) );
     }
     chomp($mysqlcmd);
-    if ( !$mysqlcmd || ($ssh_prefix eq '' && !-x $mysqlcmd) ) {
+    if ( !$mysqlcmd || ( $ssh_prefix eq '' && !-x $mysqlcmd ) ) {
         badprint "Couldn't find an executable mysql/mariadb command.";
         exit 1;
     }
 
     # Prepend SSH prefix if in cloud mode
     $mysqladmincmd = $ssh_prefix . $mysqladmincmd;
-    $mysqlcmd = $ssh_prefix . $mysqlcmd;
+    $mysqlcmd      = $ssh_prefix . $mysqlcmd;
     $mysqlcmd =~ s/\n$//g;
     my $mysqlclidefaults = `$mysqlcmd --print-defaults`;
     debugprint "MySQL Client: $mysqlclidefaults";
@@ -1990,7 +2047,8 @@ sub get_fs_info {
 }
 
 sub get_fs_info_win {
-    my @sinfo = execute_system_command('wmic logicaldisk get Name,Size,FreeSpace');
+    my @sinfo =
+      execute_system_command('wmic logicaldisk get Name,Size,FreeSpace');
 
     foreach my $info (@sinfo) {
         if ( $info =~ /^\s*(\d+)\s+(.*?)\s+(\d+)\s*$/ ) {
@@ -2032,7 +2090,8 @@ sub merge_hash {
 
 sub is_virtual_machine {
     if ( $^O eq 'linux' ) {
-        my $isVm = execute_system_command("grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo");
+        my $isVm = execute_system_command(
+            "grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo");
         return ( $isVm == 0 ? 0 : 1 );
     }
 
@@ -2087,7 +2146,8 @@ sub get_kernel_info {
     infoprint "Information about kernel tuning:";
     foreach my $param (@params) {
         infocmd_tab("sysctl $param 2>$devnull");
-        $result{'OS'}{'Config'}{$param} = execute_system_command("sysctl -n $param 2>$devnull");
+        $result{'OS'}{'Config'}{$param} =
+          execute_system_command("sysctl -n $param 2>$devnull");
     }
     if ( execute_system_command('sysctl -n vm.swappiness') > 10 ) {
         badprint
@@ -2101,7 +2161,8 @@ sub get_kernel_info {
     }
 
     # only if /proc/sys/sunrpc exists
-    my $tcp_slot_entries = execute_system_command('sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull');
+    my $tcp_slot_entries = execute_system_command(
+        'sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull');
     if ( -f "/proc/sys/sunrpc"
         and ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) )
     {
@@ -2171,20 +2232,27 @@ sub get_system_info {
     }
     $result{'OS'}{'NbCore'} = cpu_cores;
     infoprint "Number of Core CPU : " . cpu_cores;
-    $result{'OS'}{'Type'} = $is_win ? 'Windows' : execute_system_command('uname -o');
+    $result{'OS'}{'Type'} =
+      $is_win ? 'Windows' : execute_system_command('uname -o');
     infoprint "Operating System Type : " . infocmd_one "uname -o";
-    $result{'OS'}{'Kernel'} = $is_win ? execute_system_command('ver') : execute_system_command('uname -r');
+    $result{'OS'}{'Kernel'} =
+      $is_win
+      ? execute_system_command('ver')
+      : execute_system_command('uname -r');
     infoprint "Kernel Release        : " . infocmd_one "uname -r";
     $result{'OS'}{'Hostname'} = execute_system_command('hostname');
     $result{'Network'}{'Internal Ip'} =
       $is_win
-      ? execute_system_command('ipconfig |perl -ne "if (/IPv. Address/) {print s/^.*?([\\d\\.]*)\\s*$/$1/r; exit; }"')
+      ? execute_system_command(
+'ipconfig |perl -ne "if (/IPv. Address/) {print s/^.*?([\\d\\.]*)\\s*$/$1/r; exit; }"'
+      )
       : execute_system_command('hostname -I');
     infoprint "Hostname              : " . infocmd_one "hostname";
     infoprint "Network Cards         : ";
     infocmd_tab "ifconfig| grep -A1 mtu";
     infoprint "Internal IP           : " . infocmd_one "hostname -I";
-    $result{'Network'}{'Internal Ip'} = execute_system_command('ifconfig| grep -A1 mtu');
+    $result{'Network'}{'Internal Ip'} =
+      execute_system_command('ifconfig| grep -A1 mtu');
     my $httpcli = get_http_cli();
     infoprint "HTTP client found: $httpcli" if defined $httpcli;
 
@@ -2207,10 +2275,12 @@ sub get_system_info {
     $result{'OS'}{'Logged users'} = execute_system_command('who');
     infoprint "Ram Usages in MB      : ";
     infocmd_tab "free -m | grep -v +";
-    $result{'OS'}{'Free Memory RAM'} = execute_system_command('free -m | grep -v +');
+    $result{'OS'}{'Free Memory RAM'} =
+      execute_system_command('free -m | grep -v +');
     infoprint "Load Average          : ";
     infocmd_tab "top -n 1 -b | grep 'load average:'";
-    $result{'OS'}{'Load Average'} = execute_system_command("top -n 1 -b | grep 'load average:'");
+    $result{'OS'}{'Load Average'} =
+      execute_system_command("top -n 1 -b | grep 'load average:'");
 
     infoprint "System Uptime         : ";
     infocmd_tab "uptime";
@@ -2635,20 +2705,19 @@ sub get_replication_status {
             goodprint "This replication slave is up to date with master.";
         }
     }
+
     # Parallel replication checks (MariaDB specific)
     if ( $myvar{'version'} =~ /MariaDB/i ) {
-        my $parallel_threads =
-          $myvar{'slave_parallel_threads'} // $myvar{'replica_parallel_threads'}
-          // 0;
+        my $parallel_threads = $myvar{'slave_parallel_threads'}
+          // $myvar{'replica_parallel_threads'} // 0;
         if ( $parallel_threads > 1 ) {
             goodprint
-"Parallel replication is enabled with $parallel_threads threads.";
+              "Parallel replication is enabled with $parallel_threads threads.";
 
             # Check parallel mode for MariaDB 10.5+
             if ( mysql_version_ge( 10, 5 ) ) {
-                my $parallel_mode =
-                  $myvar{'slave_parallel_mode'} // $myvar{'replica_parallel_mode'}
-                  // '';
+                my $parallel_mode = $myvar{'slave_parallel_mode'}
+                  // $myvar{'replica_parallel_mode'} // '';
                 if ( $parallel_mode eq 'optimistic' ) {
                     goodprint
                       "Parallel replication mode is set to 'optimistic'.";
@@ -2680,11 +2749,11 @@ sub validate_mysql_version {
 
     prettyprint " ";
 
-    if (   mysql_version_eq( 8,  0 )
+    if (   mysql_version_eq( 8, 0 )
         or mysql_version_eq( 8,  4 )
         or mysql_version_eq( 9,  5 )
         or mysql_version_eq( 10, 6 )
-        or mysql_version_eq( 10, 11)
+        or mysql_version_eq( 10, 11 )
         or mysql_version_eq( 11, 4 )
         or mysql_version_eq( 11, 8 ) )
     {
@@ -2770,33 +2839,47 @@ sub check_architecture {
             $arch = 64;
         }
     }
-    elsif ( execute_system_command('uname') =~ /SunOS/ && execute_system_command('isainfo -b') =~ /64/ ) {
+    elsif (execute_system_command('uname') =~ /SunOS/
+        && execute_system_command('isainfo -b') =~ /64/ )
+    {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( execute_system_command('uname') !~ /SunOS/ && execute_system_command('uname -m') =~ /(64|s390x)/ ) {
+    elsif (execute_system_command('uname') !~ /SunOS/
+        && execute_system_command('uname -m') =~ /(64|s390x)/ )
+    {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( execute_system_command('uname') =~ /AIX/ && execute_system_command('bootinfo -K') =~ /64/ ) {
+    elsif (execute_system_command('uname') =~ /AIX/
+        && execute_system_command('bootinfo -K') =~ /64/ )
+    {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( execute_system_command('uname') =~ /NetBSD|OpenBSD/ && execute_system_command('sysctl -b hw.machine') =~ /64/ ) {
+    elsif (execute_system_command('uname') =~ /NetBSD|OpenBSD/
+        && execute_system_command('sysctl -b hw.machine') =~ /64/ )
+    {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( execute_system_command('uname') =~ /FreeBSD/ && execute_system_command('sysctl -b hw.machine_arch') =~ /64/ ) {
+    elsif (execute_system_command('uname') =~ /FreeBSD/
+        && execute_system_command('sysctl -b hw.machine_arch') =~ /64/ )
+    {
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( execute_system_command('uname') =~ /Darwin/ && execute_system_command('uname -m') =~ /Power Macintosh/ ) {
+    elsif (execute_system_command('uname') =~ /Darwin/
+        && execute_system_command('uname -m') =~ /Power Macintosh/ )
+    {
 
 # Darwin box.local 9.8.0 Darwin Kernel Version 9.8.0: Wed Jul 15 16:57:01 PDT 2009; root:xnu1228.15.4~1/RELEASE_PPC Power Macintosh
         $arch = 64;
         goodprint "Operating on 64-bit architecture";
     }
-    elsif ( execute_system_command('uname') =~ /Darwin/ && execute_system_command('uname -m') =~ /x86_64/ ) {
+    elsif (execute_system_command('uname') =~ /Darwin/
+        && execute_system_command('uname -m') =~ /x86_64/ )
+    {
 
 # Darwin gibas.local 12.6.0 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
         $arch = 64;
@@ -2923,11 +3006,10 @@ sub check_storage_engines {
 "SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
           ];
         $fragtables = scalar @{ $result{'Tables'}{'Fragmented tables'} };
-        if ($opt{dumpdir} ne '') {
-          select_csv_file(
-            "$opt{dumpdir}/fragmented_tables.csv", 
-            "SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
-          );
+        if ( $opt{dumpdir} ne '' ) {
+            select_csv_file( "$opt{dumpdir}/fragmented_tables.csv",
+"SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
+            );
         }
 
     }
@@ -3284,8 +3366,9 @@ sub calculations {
 
     if ( $doremote eq 0 and !mysql_version_ge(5) ) {
         if ($is_win) {
-            my $size     = 0;
-            my @allfiles = execute_system_command("dir /-c /s $myvar{'datadir'}");
+            my $size = 0;
+            my @allfiles =
+              execute_system_command("dir /-c /s $myvar{'datadir'}");
             foreach (
                 map  { /^\s*\d+\/\S+\s+\S+\s+(A|P)M\s+(\d+)\s/i; $2 }
                 grep { /\.MYI$/i } @allfiles
@@ -3307,12 +3390,14 @@ sub calculations {
         else {
             my $size = 0;
             $size += (split)[0]
-              for
-execute_system_command("find '$myvar{'datadir'}' -name '*.MYI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1");
+              for execute_system_command(
+"find '$myvar{'datadir'}' -name '*.MYI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1"
+              );
             $mycalc{'total_myisam_indexes'} = $size;
             $size = 0 + (split)[0]
-              for
-execute_system_command("find '$myvar{'datadir'}' -name '*.MAI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1");
+              for execute_system_command(
+"find '$myvar{'datadir'}' -name '*.MAI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1"
+              );
             $mycalc{'total_aria_indexes'} = $size;
         }
     }
@@ -6042,7 +6127,7 @@ sub mariadb_xtradb {
     infoprint "XtraDB is enabled.";
     infoprint "Note that MariaDB 10.2 makes use of InnoDB, not XtraDB."
 
-    # Not implemented
+      # Not implemented
 }
 
 # Recommendations for RocksDB
@@ -6287,8 +6372,9 @@ sub mariadb_galera {
     if ( defined( $myvar{'wsrep_applier_threads'} ) ) {
         $wsrep_threads_var_name = 'wsrep_applier_threads';
     }
-    # Use 1 as a fallback if $myvar{$wsrep_threads_var_name} is undefined or zero,
-    # to ensure there is at least one thread for Galera replication.
+
+  # Use 1 as a fallback if $myvar{$wsrep_threads_var_name} is undefined or zero,
+  # to ensure there is at least one thread for Galera replication.
     my $wsrep_threads_value = $myvar{$wsrep_threads_var_name} || 1;
 
     infoprint "$wsrep_threads_var_name: " . $wsrep_threads_value;
@@ -6370,7 +6456,9 @@ sub mariadb_galera {
         goodprint "InnoDB flush log at each commit is disabled for Galera.";
     }
 
-    if ( defined $myvar{'wsrep_causal_reads'} and $myvar{'wsrep_causal_reads'} ne '' ) {
+    if ( defined $myvar{'wsrep_causal_reads'}
+        and $myvar{'wsrep_causal_reads'} ne '' )
+    {
         infoprint "Read consistency mode :" . $myvar{'wsrep_causal_reads'};
     }
     elsif ( defined $myvar{'wsrep_sync_wait'} ) {
@@ -6921,7 +7009,7 @@ sub mysql_innodb {
         infoprint
 "innodb_buffer_pool_chunk_size is set to 'autosize' (0) in MariaDB >= 10.8. Skipping chunk size checks.";
     }
-    elsif ( !defined( $myvar{'innodb_buffer_pool_chunk_size'} )
+    elsif (!defined( $myvar{'innodb_buffer_pool_chunk_size'} )
         || $myvar{'innodb_buffer_pool_chunk_size'} == 0
         || !defined( $myvar{'innodb_buffer_pool_size'} )
         || $myvar{'innodb_buffer_pool_size'} == 0
@@ -7081,26 +7169,36 @@ sub mariadb_query_cache_info {
     subheaderprint "Query Cache Information";
 
     unless ( $myvar{'version'} =~ /MariaDB/i ) {
-        infoprint "Not a MariaDB server. Skipping Query Cache Info plugin check.";
+        infoprint
+          "Not a MariaDB server. Skipping Query Cache Info plugin check.";
         return;
     }
 
-    my $plugin_status = select_one("SELECT PLUGIN_STATUS FROM information_schema.PLUGINS WHERE PLUGIN_NAME = 'QUERY_CACHE_INFO'");
+    my $plugin_status = select_one(
+"SELECT PLUGIN_STATUS FROM information_schema.PLUGINS WHERE PLUGIN_NAME = 'QUERY_CACHE_INFO'"
+    );
 
     if ( defined $plugin_status and $plugin_status eq 'ACTIVE' ) {
         goodprint "QUERY_CACHE_INFO plugin is installed and active.";
 
-        my $query = "SELECT CONCAT_WS(';;', statement_schema, LEFT(statement_text, 80), result_blocks_count, result_blocks_size) FROM information_schema.query_cache_info";
+        my $query =
+"SELECT CONCAT_WS(';;', statement_schema, LEFT(statement_text, 80), result_blocks_count, result_blocks_size) FROM information_schema.query_cache_info";
         my @query_cache_data = select_array($query);
 
         if (@query_cache_data) {
-            infoprint sprintf("%-20s | %-82s | %-10s | %-10s", "Schema", "Query (truncated)", "Blocks", "Size");
+            infoprint sprintf(
+                "%-20s | %-82s | %-10s | %-10s",
+                "Schema", "Query (truncated)",
+                "Blocks", "Size"
+            );
             infoprint "-" x 130;
             foreach my $line (@query_cache_data) {
-                my ($schema, $text, $blocks, $size) = split(/;;/, $line);
-                infoprint sprintf("%-20s | %-82s | %-10s | %-10s", $schema, $text, $blocks, hr_bytes($size));
+                my ( $schema, $text, $blocks, $size ) = split( /;;/, $line );
+                infoprint sprintf( "%-20s | %-82s | %-10s | %-10s",
+                    $schema, $text, $blocks, hr_bytes($size) );
             }
-        } else {
+        }
+        else {
             infoprint "No queries found in the query cache.";
         }
     }
@@ -7770,8 +7868,7 @@ sub dump_result {
         }
 
         my $json = JSON->new->allow_nonref;
-        print $json->utf8(1)
-          ->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
+        print $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
           ->encode( \%result );
 
         if ( $opt{'outputfile'} ne 0 ) {
@@ -7779,8 +7876,7 @@ sub dump_result {
             open my $fh, q(>), $opt{'outputfile'}
               or die
 "Unable to open $opt{'outputfile'} in write mode. please check permissions for this file or directory";
-            print $fh $json->utf8(1)
-              ->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
+            print $fh $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
               ->encode( \%result );
             close $fh;
         }
@@ -7811,12 +7907,12 @@ sub dump_csv_files {
     return if ( $opt{dumpdir} eq '' );
 
     subheaderprint "Dumping CSV files";
-    
+
     $opt{dumpdir} = abs_path( $opt{dumpdir} );
     if ( !-d $opt{dumpdir} ) {
         mkdir $opt{dumpdir} or die "Cannot create directory $opt{dumpdir}: $!";
     }
-  
+
     infoprint("Dumpdir: $opt{dumpdir}");
 
     # Store all sys schema in dumpdir if defined
@@ -7831,30 +7927,31 @@ sub dump_csv_files {
 
     # Store all information schema in dumpdir if defined
     infoprint("Dumping information schema");
-    for my $info_s_table (
-        select_array('use information_schema;show tables;') )
+    for my $info_s_table ( select_array('use information_schema;show tables;') )
     {
         next if $info_s_table =~ /INNODB_BUFFER_PAGE/;
         infoprint "Dumping $info_s_table into $opt{dumpdir}";
         select_csv_file(
             "$opt{dumpdir}/ifs_${info_s_table}.csv",
             "select * from information_schema.$info_s_table"
-            );
+        );
     }
 
     # Store all performance schema in dumpdir if defined
     infoprint("Dumping performance schema");
-    for my $info_pf_table (
-        select_array('use performance_schema;show tables;') )
+    for
+      my $info_pf_table ( select_array('use performance_schema;show tables;') )
     {
         next if $info_pf_table =~ /^events_/;
-        infoprint "Performance Schema Dumping $info_pf_table into $opt{dumpdir}";
+        infoprint
+          "Performance Schema Dumping $info_pf_table into $opt{dumpdir}";
         select_csv_file(
             "$opt{dumpdir}/ps_${info_pf_table}.csv",
             "select * from performance_schema.$info_pf_table"
-            );
+        );
     }
 }
+
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
@@ -7885,8 +7982,8 @@ if ( $opt{'feature'} ne '' ) {
 }
 validate_mysql_version;    # Check current MySQL version
 
-system_recommendations;    # Avoid too many services on the same host
-log_file_recommendations;  # check log file content
+system_recommendations;   # Avoid too many services on the same host
+log_file_recommendations; # check log file content
 check_metadata_perf;      # Show parameter impacting performance during analysis
 mysql_databases;          # Show information about databases
 mysql_tables;             # Show information about table column
