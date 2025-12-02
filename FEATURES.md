@@ -2,7 +2,9 @@ Features list for option: --feature (dev only)
 ---
 
 
+* cloud_setup
 * cve_recommendations
+* execute_system_command
 * log_file_recommendations
 * make_recommendations
 * mariadb_aria
