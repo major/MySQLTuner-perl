@@ -2635,6 +2635,39 @@ sub get_replication_status {
             goodprint "This replication slave is up to date with master.";
         }
     }
+    # Parallel replication checks (MariaDB specific)
+    if ( $myvar{'version'} =~ /MariaDB/i ) {
+        my $parallel_threads =
+          $myvar{'slave_parallel_threads'} // $myvar{'replica_parallel_threads'}
+          // 0;
+        if ( $parallel_threads > 1 ) {
+            goodprint
+"Parallel replication is enabled with $parallel_threads threads.";
+
+            # Check parallel mode for MariaDB 10.5+
+            if ( mysql_version_ge( 10, 5 ) ) {
+                my $parallel_mode =
+                  $myvar{'slave_parallel_mode'} // $myvar{'replica_parallel_mode'}
+                  // '';
+                if ( $parallel_mode eq 'optimistic' ) {
+                    goodprint
+                      "Parallel replication mode is set to 'optimistic'.";
+                }
+                else {
+                    badprint
+"Parallel replication mode is not 'optimistic' (recommended for MariaDB 10.5+).";
+                    push( @adjvars, "replica_parallel_mode=optimistic" );
+                }
+            }
+            infoprint
+"Ensure binlog_format=ROW is set on the master for parallel replication to work effectively.";
+        }
+        else {
+            badprint "Parallel replication is disabled.";
+            push( @adjvars,
+                "replica_parallel_threads (set to number of vCPUs)" );
+        }
+    }
 }
 
 # https://endoflife.date/mysql
