@@ -48,7 +48,7 @@ generate_eof_files:
 	bash ./build/endoflife.sh mariadb 
 	bash ./build/endoflife.sh mysql
 	git add ./*_support.md
-	git commit -m "Generate End Of Life (endoflive.date) at $(shell date --iso=seconds)"
+	git commit -m "Generate End Of Life (endoflive.date) at $(shell date --iso=seconds)" || echo "No changes to commit"
 
 generate_features:
 	perl ./build/genFeatures.sh
