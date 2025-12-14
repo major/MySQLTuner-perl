@@ -20,8 +20,7 @@ help:
 
 
 installdep_debian:
-	sudo apt install -y cpanminus libpod-markdown-perl libwww-mechanize-gzip-perl perltidy dos2unix
-	sudo cpanm File::Util
+	sudo apt install -y cpanminus libfile-util-perl libpod-markdown-perl libwww-mechanize-gzip-perl perltidy dos2unix
 	curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
 
 tidy:
@@ -43,12 +42,14 @@ generate_cve:
 generate_version_file:
 	rm -f CURRENT_VERSION.txt
 	grep "# mysqltuner.pl - Version" ./mysqltuner.pl | awk '{ print $$NF}' > CURRENT_VERSION.txt
+	git add ./CURRENT_VERSION.txt
+	git commit -m "Generate CURRENT_VERSION.txt at $(shell date --iso=seconds)"
 
 generate_eof_files:
 	bash ./build/endoflife.sh mariadb 
 	bash ./build/endoflife.sh mysql
 	git add ./*_support.md
-	git commit -m "Generate End Of Life (endoflive.date) at $(shell date --iso=seconds)"
+	git commit -m "Generate End Of Life (endoflive.date) at $(shell date --iso=seconds)" || echo "No changes to commit"
 
 generate_features:
 	perl ./build/genFeatures.sh
