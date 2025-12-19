@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.7.2
+# mysqltuner.pl - Version 2.7.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.7.2";
+my $tunerversion = "2.7.3";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -2545,20 +2545,27 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
 
     @mysqlstatlist = select_array
       "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
-    if (@mysqlstatlist) {
+    if (scalar(@mysqlstatlist) > 0) {
+        if ( $opt{dumpdir} ne '' ) {
+            select_csv_file( "$opt{dumpdir}/user_with_general_wildcard.csv",
+                "SELECT user, host FROM mysql.user WHERE HOST='%'" );
+        }
+        my $luser = 'user_name';
+        if ( scalar(@mysqlstatlist) == 1 ) {
+            $luser = ( split /@/, $mysqlstatlist[0] )[0];
+        }
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
-            my $luser = ( split /@/, $line )[0];
             badprint "User " . $line
               . " does not specify hostname restrictions.";
-            push( @generalrec,
+        }
+        push( @generalrec,
 "Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
             );
-            push( @generalrec,
+        push( @generalrec,
                     "RENAME USER $luser\@'%' TO "
                   . $luser
-                  . "\@LimitedIPRangeOrLocalhost;" );
-        }
+                  . "\@LimitedIPRangeOrLocalhost;" );  
     }
 
     unless ( -f $basic_password_files ) {
@@ -3103,24 +3110,30 @@ sub check_storage_engines {
         push @generalrec,
 'Run ALTER TABLE ... FORCE or OPTIMIZE TABLE to defragment tables for better performance';
         my $total_free = 0;
+        my $fragmented_tables_csv = "schema,table,free_space_mb,sql\n";
         foreach my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } ) {
             my ( $table_schema, $table_name, $engine, $data_free ) =
               split /\t/msx, $table_line;
             $data_free = $data_free / 1024 / 1024;
             $total_free += $data_free;
             my $generalrec;
+            my $fragmented_tables_sql;
             if ( $engine eq 'InnoDB' ) {
+                $fragmented_tables_sql = "ALTER TABLE `$table_schema`.`$table_name` FORCE;";
                 $generalrec =
-                  "  ALTER TABLE `$table_schema`.`$table_name` FORCE;";
+                  "  $fragmented_tables_sql";
             }
             else {
-                $generalrec = "  OPTIMIZE TABLE `$table_schema`.`$table_name`;";
+                $fragmented_tables_sql = "OPTIMIZE TABLE `$table_schema`.`$table_name`;";
+                $generalrec = "  $fragmented_tables_sql";
             }
+            $fragmented_tables_csv .= "$table_schema,$table_name,$data_free,\"$fragmented_tables_sql\"\n";
             $generalrec .= " -- can free $data_free MiB";
             push @generalrec, $generalrec;
         }
+        dump_into_file( 'fragmented_tables.csv', $fragmented_tables_csv );
         push @generalrec,
-          "Total freed space after defragmentation: $total_free MiB";
+          "Consider defragmenting $fragtables tables to free up $total_free MiB";
     }
     else {
         goodprint "Total fragmented tables: $fragtables";
@@ -8029,7 +8042,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.7.2 - MySQL High Performance Tuning Script
+ MySQLTuner 2.7.3 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
