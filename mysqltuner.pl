@@ -1107,7 +1107,6 @@ sub mysql_setup {
                 system("stty -echo >$devnull 2>&1");
                 my $password = <STDIN>;
                 system("stty echo >$devnull 2>&1");
-                print STDERR "\n";
                 chomp($password);
                 
                 $mysqllogin = "-u $opt{user}";
@@ -1126,17 +1125,10 @@ sub mysql_setup {
                     goodprint "Logged in using credentials with prompted password";
                     return 1;
                 }
-                else {
-                    badprint
-                      "Attempted to use login credentials, but they were invalid";
-                    exit 1;
-                }
             }
-            else {
-                badprint
-                  "Attempted to use login credentials, but they were invalid";
-                exit 1;
-            }
+            badprint
+              "Attempted to use login credentials, but they were invalid";
+            exit 1;
         }
     }
 
