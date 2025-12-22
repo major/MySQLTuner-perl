@@ -1100,9 +1100,43 @@ sub mysql_setup {
             return 1;
         }
         else {
-            badprint
-              "Attempted to use login credentials, but they were invalid";
-            exit 1;
+            # If password was not provided and noask is not set, prompt for it
+            if ( $opt{pass} eq 0 && $opt{'noask'} == 0 ) {
+                print STDERR
+                  "Please enter your MySQL administrative password: ";
+                system("stty -echo >$devnull 2>&1");
+                my $password = <STDIN>;
+                system("stty echo >$devnull 2>&1");
+                print STDERR "\n";
+                chomp($password);
+                
+                $mysqllogin = "-u $opt{user}";
+                if ( length($password) > 0 ) {
+                    if ($is_win) {
+                        $mysqllogin .= " -p\"$password\"";
+                    }
+                    else {
+                        $mysqllogin .= " -p'$password'";
+                    }
+                }
+                $mysqllogin .= $remotestring;
+                
+                $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
+                if ( $loginstatus =~ /mysqld is alive/ ) {
+                    goodprint "Logged in using credentials with prompted password";
+                    return 1;
+                }
+                else {
+                    badprint
+                      "Attempted to use login credentials, but they were invalid";
+                    exit 1;
+                }
+            }
+            else {
+                badprint
+                  "Attempted to use login credentials, but they were invalid";
+                exit 1;
+            }
         }
     }
 
