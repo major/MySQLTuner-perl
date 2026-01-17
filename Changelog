@@ -1,0 +1,8 @@
+2.8.0 2026-01-17
+
+- Bump version to 2.8.0
+- enhance user hostname restriction checks
+- feat: Translate comments and messages in updateCVElist.py to English
+- chore: ignore VS Code workspace files
+- build: update Debian File::Util dependency installation
+- cleanup: MariaDB and MySQL support documentation (focus on LTS)
