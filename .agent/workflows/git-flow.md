@@ -38,7 +38,7 @@ Update CHANGELOG.md based on the gathered logs and uncommitted changes.
 
 ### **5\. Commit Changes**
 
-Stage and commit the updated Changelog and any other pending changes. The commit message should reflect the new version information.
+Stage and commit the updated Changelog, mysqltuner.pl (with updated $tunerversion and header comment), CURRENT_VERSION.txt and any other pending changes. The commit message should reflect the new version information.
 
 git add CHANGELOG.md .  
 git commit \-m "chore(release): update changelog for version \[VERSION\_NUMBER\] \+ \<ALL VERSION ITEMS FROM Changelog\>"
