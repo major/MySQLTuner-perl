@@ -94,7 +94,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 # VERSION
 
-Version 2.8.9
+Version 2.8.13
 &#x3d;head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
