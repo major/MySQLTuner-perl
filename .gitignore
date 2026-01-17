@@ -26,3 +26,5 @@ Dumps/*.csv
 raw_mysqltuner_*.txt
 mysqltuner_*.json
 *.code-workspace
+examples
+examples/**

@@ -17,6 +17,8 @@ help:
 	@echo "  increment_minor_version: Increment minor version"
 	@echo "  increment_major_version: Increment major version"
 	@echo "  push:              Push to GitHub"
+	@echo "  vendor_setup:      Setup external test repositories (multi-db-docker-env, test_db)"
+	@echo "  test:              Run multi-version database tests (requires Docker)"
 
 
 installdep_debian:
@@ -89,6 +91,24 @@ docker_slim:
 docker_push: docker_build
 	bash build/publishtodockerhub.sh $(VERSION)
 	
+
+vendor_setup:
+	@echo "Setting up vendor repositories..."
+	mkdir -p vendor
+	if [ ! -d "vendor/multi-db-docker-env" ]; then \
+		git clone https://github.com/jmrenouard/multi-db-docker-env vendor/multi-db-docker-env; \
+	else \
+		cd vendor/multi-db-docker-env && git pull; \
+	fi
+	if [ ! -d "vendor/test_db" ]; then \
+		git clone https://github.com/jmrenouard/test_db vendor/test_db; \
+	else \
+		cd vendor/test_db && git pull; \
+	fi
+
+test: vendor_setup
+	@echo "Running MySQLTuner tests..."
+	bash build/test_envs.sh
 
 push:
 	git push

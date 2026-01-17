@@ -5,7 +5,7 @@ DB_WORLD_URL="https://downloads.mysql.com/docs/world.sql.zip"
 DB_WORLDX_URL="https://downloads.mysql.com/docs/world_x-db.zip"
 DB_SAKILA_URL="https://downloads.mysql.com/docs/sakila-db.zip"
 DB_MESSAGERIE_URL="https://downloads.mysql.com/docs/menagerie-db.zip"
-DB_TESTDB_URL="https://github.com/datacharmer/test_db/archive/master.zip"
+DB_TESTDB_URL="https://github.com/jmrenouard/test_db/archive/master.zip"
 
 getVal()
 {

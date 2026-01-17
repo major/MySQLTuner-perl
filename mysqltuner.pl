@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.0
+# mysqltuner.pl - Version 2.8.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.0";
+my $tunerversion = "2.8.2";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -942,10 +942,8 @@ sub execute_system_command {
     my @output = `$full_cmd 2>&1`;
 
     if ( $? != 0 ) {
-
         # Be less verbose for commands that are expected to fail on some systems
-        if ( $command !~
-/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop)/
+/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat)/
           )
         {
             badprint "System command failed: $command";
@@ -1937,6 +1935,27 @@ sub is_open_port {
 sub get_process_memory {
     return 0 if $is_win;    #Windows cmd cannot provide this
     my $pid = shift;
+
+    # Linux /proc fallback
+    if ( $^O eq 'linux' && -f "/proc/$pid/statm" ) {
+        if ( open( my $fh, '<', "/proc/$pid/statm" ) ) {
+            my $line = <$fh>;
+            close($fh);
+            if ( $line =~ /^\d+\s+(\d+)/ ) {
+                my $rss_pages = $1;
+                # Get page size (default to 4096 if uncertain, but usually 4096 on Linux)
+                my $pagesize = 4096;
+                # Attempt to get real page size if possible
+                my $getconf_pagesize = `getconf PAGESIZE 2>$devnull`;
+                if ( $? == 0 && $getconf_pagesize =~ /^(\d+)/ ) {
+                    $pagesize = $1;
+                }
+                debugprint "Memory for PID $pid from /proc: " . ( $rss_pages * $pagesize );
+                return $rss_pages * $pagesize;
+            }
+        }
+    }
+
     my @mem = execute_system_command("ps -p $pid -o rss");
     return 0 if scalar @mem != 2;
     return $mem[1] * 1024;
@@ -1960,7 +1979,9 @@ sub get_other_process_memory {
     @procs = remove_cr @procs;
     @procs = remove_empty @procs;
     my $totalMemOther = 0;
-    map { $totalMemOther += get_process_memory($_); } @procs;
+    if (@procs) {
+        map { $totalMemOther += get_process_memory($_); } @procs;
+    }
     return $totalMemOther;
 }
 
@@ -2162,7 +2183,7 @@ sub get_kernel_info {
 
     # only if /proc/sys/sunrpc exists
     my $tcp_slot_entries = execute_system_command(
-        'sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull');
+        "sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull");
     if ( -f "/proc/sys/sunrpc"
         and ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) )
     {
@@ -2217,10 +2238,10 @@ sub get_system_info {
 
     $result{'Network'}{'Connected'} = 'NO';
     if ($is_win) {
-        execute_system_command('ping -s 1 ipecho.net &>$devnull');
+        execute_system_command("ping -n 1 ipecho.net > $devnull 2>&1") if which("ping", $ENV{'PATH'});
     }
     else {
-        execute_system_command('ping -c 1 ipecho.net &>$devnull');
+        execute_system_command("ping -c 1 ipecho.net > $devnull 2>&1") if which("ping", $ENV{'PATH'});
     }
     my $isConnected = $?;
     if ( $? == 0 ) {
@@ -2249,10 +2270,21 @@ sub get_system_info {
       : execute_system_command('hostname -I');
     infoprint "Hostname              : " . infocmd_one "hostname";
     infoprint "Network Cards         : ";
-    infocmd_tab "ifconfig| grep -A1 mtu";
+    if ( which( "ip", $ENV{'PATH'} ) ) {
+        infocmd_tab "ip addr | grep -A1 mtu";
+    }
+    elsif ( which( "ifconfig", $ENV{'PATH'} ) ) {
+        infocmd_tab "ifconfig| grep -A1 mtu";
+    }
     infoprint "Internal IP           : " . infocmd_one "hostname -I";
-    $result{'Network'}{'Internal Ip'} =
-      execute_system_command('ifconfig| grep -A1 mtu');
+    if ( which( "ip", $ENV{'PATH'} ) ) {
+        $result{'Network'}{'Internal Ip'} =
+          execute_system_command('ip addr | grep -A1 mtu');
+    }
+    elsif ( which( "ifconfig", $ENV{'PATH'} ) ) {
+        $result{'Network'}{'Internal Ip'} =
+          execute_system_command('ifconfig| grep -A1 mtu');
+    }
     my $httpcli = get_http_cli();
     infoprint "HTTP client found: $httpcli" if defined $httpcli;
 
@@ -8042,7 +8074,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.7.3 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.2 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
