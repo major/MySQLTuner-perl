@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==================================================================================
+# Script: test_envs.sh
+# Description: Runs MySQLTuner tests against multiple database configurations.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 # Configuration
 PROJECT_ROOT=$(pwd)
@@ -12,7 +19,57 @@ TEST_DB_REPO="https://github.com/jmrenouard/test_db"
 
 # Default configurations to test if none provided
 DEFAULT_CONFIGS="mysql84 mariadb1011 percona80"
-CONFIGS=${*:-$DEFAULT_CONFIGS}
+CONFIGS=""
+TARGET_DB=""
+
+show_usage() {
+    echo "Usage: $0 [options] [configs...]"
+    echo "Options:"
+    echo "  -c, --configs \"list\"   List of configurations to test (e.g. \"mysql84 mariadb1011\")"
+    echo "  -d, --database name    Target database name for MySQLTuner to tune"
+    echo "  -h, --help             Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  $0 mysql84 mariadb106"
+    echo "  $0 -d employees mysql84"
+    echo "  $0 --configs \"percona80\" --database my_app_db"
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -c|--configs)
+            CONFIGS="$CONFIGS $2"
+            shift 2
+            ;;
+        -d|--database)
+            TARGET_DB="$2"
+            shift 2
+            ;;
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        *)
+            CONFIGS="$CONFIGS $1"
+            shift
+            ;;
+    esac
+done
+
+# Fallback to defaults if no configs provided
+if [ -z "$(echo $CONFIGS | xargs)" ]; then
+    CONFIGS=$DEFAULT_CONFIGS
+fi
+
+log_step() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+echo "======================================================================"
+echo "MySQLTuner Test Suite - $(date)"
+echo "Command: $0 $*"
+echo "======================================================================"
 
 mkdir -p "$EXAMPLES_DIR"
 mkdir -p "$VENDOR_DIR"
@@ -56,16 +113,16 @@ run_test() {
     fi
 
     # Start the DB
-    echo "Starting database container..."
+    log_step "Starting database container for $config..."
     start_time=$(date +%s)
     make "$config" > "$target_dir/docker_start.log" 2>&1
     
     # Wait for DB to be ready
-    echo "Waiting for DB to be healthy (30s)..."
+    log_step "Waiting for DB to be healthy (30s)..."
     sleep 30
     
     # Inject test data
-    echo "Injecting employees database..."
+    log_step "Injecting employees database..."
     if [ -d "$VENDOR_DIR/test_db" ]; then
         cd "$VENDOR_DIR/test_db"
         export MYSQL_HOST=127.0.0.1
@@ -91,11 +148,17 @@ run_test() {
     cd "$PROJECT_ROOT"
     
     # Run MySQLTuner
-    echo "Running MySQLTuner..."
-    perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test --verbose --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
+    log_step "Running MySQLTuner..."
+    local db_param=""
+    if [ -n "$TARGET_DB" ]; then
+        db_param="--database $TARGET_DB"
+        echo "Tuning specific database: $TARGET_DB"
+    fi
+    perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
     ret_code=$?
     
     # Capture more info
+    log_step "Capturing environment snapshots..."
     docker_stats=$(docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}")
     db_version=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SELECT VERSION();" -sN 2>/dev/null || echo "Unknown")
     db_list=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SHOW DATABASES;" -sN 2>/dev/null || echo "Could not list databases")
@@ -104,9 +167,10 @@ run_test() {
     exec_time=$((end_time - start_time))
 
     # Compile text report
-    echo "Generating text report..."
+    log_step "Generating text report..."
     {
         echo "Configuration: $config"
+        [ -n "$TARGET_DB" ] && echo "Target Database: $TARGET_DB"
         echo "Database Version: $db_version"
         echo "Date: $(date)"
         echo "Return Code: $ret_code"
@@ -121,7 +185,7 @@ run_test() {
     } > "$target_dir/report.txt"
 
     # Prepare HTML content
-    echo "Generating HTML report..."
+    log_step "Generating HTML report..."
     mt_output=$(cat "$target_dir/mysqltuner_output.txt" 2>/dev/null | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' || echo "No MySQLTuner output captured.")
     
     # Generate HTML report
@@ -140,7 +204,7 @@ run_test() {
         <header class="flex justify-between items-center mb-10 border-b border-gray-700 pb-6">
             <div>
                 <h1 class="text-4xl font-extrabold text-blue-500 tracking-tight">MySQLTuner <span class="text-white">Report</span></h1>
-                <p class="text-gray-400 mt-2">Configuration: <span class="font-mono text-blue-400">$config</span></p>
+                <p class="text-gray-400 mt-2">Configuration: <span class="font-mono text-blue-400">$config</span> $( [ -n "$TARGET_DB" ] && echo "| Target DB: <span class='font-mono text-yellow-400'>$TARGET_DB</span>" )</p>
             </div>
             <div class="text-right">
                 <div class="text-sm text-gray-400">Tested on</div>
@@ -243,7 +307,7 @@ run_test() {
 EOF
 
     # Stop the DB
-    echo "Cleaning up..."
+    log_step "Cleaning up and stopping container..."
     cd "$VENDOR_DIR/multi-db-docker-env" || return 1
     make stop >> "$target_dir/docker_start.log" 2>&1
     
