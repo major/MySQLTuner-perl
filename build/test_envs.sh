@@ -115,7 +115,12 @@ run_test() {
     # Start the DB
     log_step "Starting database container for $config..."
     start_time=$(date +%s)
-    make "$config" > "$target_dir/docker_start.log" 2>&1
+    {
+        echo "--- Start: $(date) ---"
+        echo "Command: make $config"
+        make "$config" 2>&1
+        echo "===================="
+    } > "$target_dir/docker_start.log"
     
     # Wait for DB to be ready
     log_step "Waiting for DB to be healthy (30s)..."
@@ -130,16 +135,22 @@ run_test() {
         export MYSQL_USER=root
         export MYSQL_PWD=mysqltuner_test
         
-        if [ -f "employees.sql" ]; then
-            cd employees && mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" < employees.sql > "$target_dir/db_injection.log" 2>&1 && cd ..
-        else
-            echo "Searching for employees database entry point..."
-            find . -name "employees.sql" -print0 | while IFS= read -r -d '' sql_file; do
-                sql_dir=$(dirname "$sql_file")
-                sql_base=$(basename "$sql_file")
-                (cd "$sql_dir" && mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" < "$sql_base") >> "$target_dir/db_injection.log" 2>&1
-            done
-        fi
+        {
+            echo "--- Start: $(date) ---"
+            if [ -f "employees.sql" ]; then
+                echo "Command: cd employees && mysql -h $MYSQL_HOST -u $MYSQL_USER -p\$MYSQL_PWD < employees.sql"
+                cd employees && mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" < employees.sql && cd ..
+            else
+                echo "Command: searching for employees.sql and injecting"
+                find . -name "employees.sql" -print0 | while IFS= read -r -d '' sql_file; do
+                    sql_dir=$(dirname "$sql_file")
+                    sql_base=$(basename "$sql_file")
+                    echo "Injecting: $sql_file"
+                    (cd "$sql_dir" && mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" < "$sql_base")
+                done
+            fi
+            echo "===================="
+        } > "$target_dir/db_injection.log" 2>&1
         cd "$VENDOR_DIR/multi-db-docker-env"
     else
         echo "Warning: test_db repository not found. Skipping employees injection."
@@ -154,7 +165,13 @@ run_test() {
         db_param="--database $TARGET_DB"
         echo "Tuning specific database: $TARGET_DB"
     fi
-    perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
+    
+    {
+        echo "--- Start: $(date) ---"
+        echo "Command: perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --outputfile $target_dir/mysqltuner_output.txt"
+        perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --outputfile "$target_dir/mysqltuner_output.txt"
+        echo "===================="
+    } > "$target_dir/execution.log" 2>&1
     ret_code=$?
     
     # Capture more info
@@ -309,7 +326,12 @@ EOF
     # Stop the DB
     log_step "Cleaning up and stopping container..."
     cd "$VENDOR_DIR/multi-db-docker-env" || return 1
-    make stop >> "$target_dir/docker_start.log" 2>&1
+    {
+        echo "--- Stop: $(date) ---"
+        echo "Command: make stop"
+        make stop 2>&1
+        echo "===================="
+    } >> "$target_dir/docker_start.log"
     
     echo "Done with $config. Results in $target_dir"
 }
