@@ -7376,23 +7376,21 @@ sub mysql_plugins {
     subheaderprint "Plugin Information";
 
     my $query =
-"SELECT PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_STATUS, PLUGIN_TYPE, PLUGIN_LIBRARY, PLUGIN_LICENSE FROM information_schema.PLUGINS ORDER BY PLUGIN_NAME";
+"SELECT PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_STATUS, PLUGIN_TYPE FROM information_schema.PLUGINS WHERE PLUGIN_STATUS = 'ACTIVE' AND PLUGIN_TYPE != 'INFORMATION SCHEMA' ORDER BY PLUGIN_TYPE, PLUGIN_NAME";
     my @plugin_data = select_array($query);
 
     if (@plugin_data) {
-        infoprint sprintf( "%-30s | %-10s | %-10s | %-20s | %-20s | %-10s",
-            "Plugin", "Version", "Status", "Type", "Library", "License" );
-        infoprint "-" x 120;
+        infoprint sprintf( "%-30s | %-10s | %-10s | %-20s",
+            "Plugin", "Version", "Status", "Type" );
+        infoprint "-" x 80;
         foreach my $line (@plugin_data) {
-            my ( $name, $version, $status, $type, $library, $license ) =
-              split( /\t/, $line );
-            $library = "Built-in" if ( !defined $library or $library eq "" );
-            infoprint sprintf( "%-30s | %-10s | %-10s | %-20s | %-20s | %-10s",
-                $name, $version, $status, $type, $library, $license );
+            my ( $name, $version, $status, $type ) = split( /\t/, $line );
+            infoprint sprintf( "%-30s | %-10s | %-10s | %-20s",
+                $name, $version, $status, $type );
         }
     }
     else {
-        infoprint "No plugins found in the information_schema.";
+        infoprint "No ACTIVE plugins found (excluding INFORMATION SCHEMA) in the information_schema.";
     }
 }
 

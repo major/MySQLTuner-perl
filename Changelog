@@ -1,6 +1,7 @@
 2.8.14 2026-01-18
 
 - feat: update all GitHub links from 'major' to 'jmrenouard' organization
+- feat: refactor plugin information to filter ACTIVE status and display specific columns grouped by type
 - chore: bump version to 2.8.14
 
 2.8.13 2026-01-18
