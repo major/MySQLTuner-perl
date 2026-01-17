@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.4
+# mysqltuner.pl - Version 2.8.6
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.4";
+my $tunerversion = "2.8.7";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -106,6 +106,8 @@ my %opt = (
     "nosysstat"           => 0,
     "pfstat"              => 0,
     "nopfstat"            => 0,
+    "plugininfo"          => 0,
+    "noplugininfo"        => 0,
     "skippassword"        => 0,
     "noask"               => 0,
     "template"            => 0,
@@ -159,8 +161,8 @@ GetOptions(
     'tbstat',                'notbstat',
     'colstat',               'nocolstat',
     'sysstat',               'nosysstat',
-    'pfstat',                'nopfstat',
-    'idxstat',               'noidxstat',
+    'pfstat',                'plugininfo',
+    'noplugininfo',          'idxstat',               'noidxstat',
     'structstat',            'nostructstat',
     'myisamstat',            'nomyisamstat',
     'server-log=s',          'protocol=s',
@@ -241,8 +243,10 @@ if ( $opt{verbose} ) {
     $opt{myisamstat}   = 1;    # Print MyISAM table information
 
     $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
+    $opt{plugininfo} = 1;    # Print plugin information
 }
 $opt{noprettyicon} = 0 if $opt{noprettyicon} != 1;
+$opt{plugininfo} = 0 if ( $opt{noplugininfo} == 1 ); # Don't print plugin information
 $opt{nocolor}      = 1 if defined( $opt{outputfile} );
 $opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );   # Don't print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
@@ -2420,8 +2424,8 @@ sub system_recommendations {
           "Consider increasing number of CPU for your database server";
     }
 
-    if ( $physical_memory >= 1.5 * 1024 ) {
-        goodprint "There is at least 1 Gb of RAM dedicated to Linux server.";
+    if ( $physical_memory >= 1.5 * 1024 * 1024 * 1024 ) {
+        goodprint "There is at least 1.5 Gb of RAM dedicated to Linux server.";
     }
     else {
         badprint
@@ -7344,6 +7348,33 @@ sub check_metadata_perf {
     return 0;
 }
 
+sub mysql_plugins {
+    return if ( $opt{plugininfo} == 0 );
+    subheaderprint "Plugin Information";
+
+    my $query =
+"SELECT PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_STATUS, PLUGIN_TYPE, PLUGIN_LIBRARY, PLUGIN_LICENSE FROM information_schema.PLUGINS ORDER BY PLUGIN_NAME";
+    my @plugin_data = select_array($query);
+
+    if (@plugin_data) {
+        infoprint sprintf(
+            "%-30s | %-10s | %-10s | %-20s | %-20s | %-10s",
+            "Plugin", "Version", "Status", "Type", "Library", "License"
+        );
+        infoprint "-" x 120;
+        foreach my $line (@plugin_data) {
+            my ( $name, $version, $status, $type, $library, $license ) =
+              split( /\t/, $line );
+            $library = "Built-in" if ( !defined $library or $library eq "" );
+            infoprint sprintf( "%-30s | %-10s | %-10s | %-20s | %-20s | %-10s",
+                $name, $version, $status, $type, $library, $license );
+        }
+    }
+    else {
+        infoprint "No plugins found in the information_schema.";
+    }
+}
+
 # Recommendations for Database metrics
 sub mysql_databases {
     return if ( $opt{dbstat} == 0 );
@@ -8113,6 +8144,7 @@ mysql_triggers;           # Show information about triggers
 mysql_routines;           # Show information about routines
 security_recommendations; # Display some security recommendations
 cve_recommendations;      # Display related CVE
+mysql_plugins;            # Print Plugin Information
 
 mysql_stats;              # Print the server stats
 mysql_pfs;                # Print Performance schema info
@@ -8147,7 +8179,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.4 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.6 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -8232,6 +8264,8 @@ You must provide the remote server's total memory when connecting to other serve
  --nostructstat              Don't print table structures information
  --pfstat                    Print Performance schema
  --nopfstat                  Don't print Performance schema
+ --plugininfo                Print Plugin information
+ --noplugininfo              Don't print Plugin information
  --bannedports               Ports banned separated by comma (,)
  --server-log                Define specific error_log to analyze
  --maxportallowed            Number of open ports allowable on this host

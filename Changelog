@@ -1,3 +1,15 @@
+2.8.6 2026-01-17
+
+- feat: add Plugin Information section and --plugininfo flag (#794)
+- fix: memory calculation bug in system_recommendations (1.5GB check)
+- fix: ensure forcemem is correctly interpreted and displayed as MB in os_setup
+- chore: synchronize version strings across script, POD, and version file
+
+2.8.5 2026-01-17
+
+- fix: noisy sysctl errors for sunrpc parameters when kernel module is not loaded
+- fix: refactor get_kernel_info to handle missing sysctl parameters gracefully
+
 2.8.4 2026-01-17
 
 - fix: database injection failing to find dump files due to incorrect working directory

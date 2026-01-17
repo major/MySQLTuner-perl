@@ -19,6 +19,7 @@ help:
 	@echo "  push:              Push to GitHub"
 	@echo "  vendor_setup:      Setup external test repositories (multi-db-docker-env, test_db)"
 	@echo "  test:              Run multi-version database tests (requires Docker)"
+	@echo "  clean_examples:    Cleanup examples directory (KEEP=n, default 5)"
 
 
 installdep_debian:
@@ -109,6 +110,10 @@ vendor_setup:
 test: vendor_setup
 	@echo "Running MySQLTuner tests..."
 	bash build/test_envs.sh
+
+clean_examples:
+	@echo "Cleaning up examples..."
+	bash build/clean_examples.sh $(KEEP)
 
 push:
 	git push

@@ -9,7 +9,7 @@ trigger: always_on
 1. **History Update:** Add new entries to the top of Changelog if the action is correct and tested.  
 Changelog is a file at root of this projet
 insure consistency between CURRENT_VERSION.txt
-MySQLtuner version inside mysqltuner.pl ($tunerversion and header comment)
+MySQLtuner version inside mysqltuner.pl (begin of script this script and begin of pod dcoc =pod)
 Changelog last version
 
 2. **Git Sync:** Consult git log \-n 15 to synchronize context.  

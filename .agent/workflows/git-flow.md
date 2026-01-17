@@ -1,102 +1,54 @@
 ---
-description: git-flow
+description: Automate git-flow release process
 ---
 
-Trigger Command: /git-sync  
-Description: This workflow automates the lifecycle of a release, ensuring strict adherence to changelog management, clean branching strategies, and proper version tagging.
+1. **Ensure clean working tree**
 
-## **Workflow Steps**
+   ```bash
+   git status --porcelain
+   ```
 
-### **1\. Read the Changelog File**
+   // turbo
+2. **Update version**
+   - Increment patch version in `CURRENT_VERSION.txt` (e.g., `1.0.9` → `1.0.10`).
+   - Update `$tunerversion` variable in `mysqltuner.pl` header.
 
-The process begins by reading the current state of the CHANGELOG.md file located at the project root to determine the current version and history.
+   ```bash
+   NEW_VER=$(awk -F. '{print $1"."$2"."($3+1)}' CURRENT_VERSION.txt)
+   echo $NEW_VER > CURRENT_VERSION.txt
+   sed -i "s/\$tunerversion = .*/\$tunerversion = \"$NEW_VER\";/" mysqltuner.pl
+   ```
 
-\# Display content or read into a variable  
-cat CHANGELOG.md
+   // turbo
+3. **Update Changelog**
+   - Prepend entry with new version and date.
 
-### **2\. Read the Git Log**
+   ```bash
+   DATE=$(date +%Y-%m-%d)
+   echo "$NEW_VER $DATE" > tmp_changelog && cat Changelog >> tmp_changelog && mv tmp_changelog Changelog
+   ```
 
-Retrieve the history of commits since the last release to identify new features, fixes, or breaking changes.
+   // turbo
+4. **Commit changes**
 
-\# Example: List commits since the last tag  
-git log $(git describe \--tags \--abbrev=0)..HEAD \--oneline
+   ```bash
+   git add CURRENT_VERSION.txt mysqltuner.pl Changelog
+   git commit -m "feat: release $NEW_VER"
+   ```
 
-### **3\. Scrutinize Uncommitted Changes**
+   // turbo
+5. **Create tag**
 
-Check the working directory for any modified files that have not yet been staged or committed.
+   ```bash
+   git tag -a v$NEW_VER -m "Release $NEW_VER"
+   ```
 
-\# Check for uncommitted changes  
-git status \--porcelain
+   // turbo
+6. **Push branch and tags**
 
-### **4\. Update the Changelog**
+   ```bash
+   git push origin main
+   git push origin v$NEW_VER
+   ```
 
-Update CHANGELOG.md based on the gathered logs and uncommitted changes.
-
-**Note:** This step must strictly follow the rules defined in the **changelog\_management** reference document.
-
-*(This step usually involves a script appending text to the file)*.
-
-### **5\. Commit Changes**
-
-Stage and commit the updated Changelog, mysqltuner.pl (with updated $tunerversion and header comment), CURRENT_VERSION.txt and any other pending changes. The commit message should reflect the new version information.
-
-git add CHANGELOG.md .  
-git commit \-m "chore(release): update changelog for version \[VERSION\_NUMBER\] \+ \<ALL VERSION ITEMS FROM Changelog\>"
-
-### **6\. Generate a Specific Branch**
-
-Create a dedicated branch for this release to isolate the deployment process.
-
-\# Create and switch to a release branch  
-git checkout \-b release/\[VERSION\_NUMBER\]
-
-### **7\. Push the Branch**
-
-Push the newly created release branch to the remote repository.
-
-git push \-u origin release/\[VERSION\_NUMBER\]
-
-### **8\. Realize a Pull Request**
-
-Open a Pull Request (PR) from the release branch to the main branch.  
-(Note: Standard Git cannot create PRs natively. This requires a CLI tool like GitHub CLI gh or an API call).  
-\# Example using GitHub CLI  
-gh pr create \--title "Release \[VERSION\_NUMBER\]" \--body "Automated release PR" \--base main
-
-### **9\. Merge the Pull Request**
-
-Merge the PR into the main (or master) branch.
-
-\# Option A: Using GitHub CLI  
-gh pr merge \--merge \--delete-branch
-
-\# Option B: Manual Local Merge (if not using a platform specific CLI)  
-git checkout main  
-git merge release/\[VERSION\_NUMBER\]
-
-### **10\. Delete the Branch**
-
-Remove the temporary release branch to keep the repository clean.
-
-\# Local deletion  
-git branch \-d release/\[VERSION\_NUMBER\]
-
-\# Remote deletion (if not handled automatically by the merge)  
-git push origin \--delete release/\[VERSION\_NUMBER\]
-
-### **11\. Return to Main Branch**
-
-Ensure the local environment is back on the primary branch and up to date.
-
-git checkout main  
-git pull origin main
-
-### **12\. Push a Tag**
-
-Create a version tag corresponding to the latest entry in the Changelog and push it to the remote.
-
-\# Create the tag  
-git tag \-a v\[VERSION\_NUMBER\] \-m "Release version \[VERSION\_NUMBER\]+ \<ALL VERSION ITEMS FROM Changelog\>"
-
-\# Push tags to remote  
-git push origin \--tags
+   // turbo
