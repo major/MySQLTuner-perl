@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.11
+# mysqltuner.pl - Version 2.8.12
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.11";
+my $tunerversion = "2.8.12";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -395,7 +395,7 @@ sub is_docker() {
     if ( -f '/proc/self/cgroup' ) {
         if ( open( my $fh, '<', '/proc/self/cgroup' ) ) {
             while ( my $line = <$fh> ) {
-                if ( $line =~ /docker|kubepods/ ) {
+                if ( $line =~ /docker|kubepods|containerd|podman/ ) {
                     close $fh;
                     return 1;
                 }
@@ -403,6 +403,9 @@ sub is_docker() {
             close $fh;
         }
     }
+    return 1
+      if ( defined $ENV{'container'}
+        && $ENV{'container'} =~ /^(docker|podman|lxc)$/ );
     return 0;
 }
 
@@ -2313,7 +2316,11 @@ sub get_kernel_info {
 sub get_system_info {
     $result{'OS'}{'Release'} = get_os_release();
     infoprint get_os_release;
-    if (is_virtual_machine) {
+    if (is_docker()) {
+        infoprint "Machine type          : Container";
+        $result{'OS'}{'Virtual Machine'} = 'YES';
+    }
+    elsif (is_virtual_machine) {
         infoprint "Machine type          : Virtual machine";
         $result{'OS'}{'Virtual Machine'} = 'YES';
     }
@@ -8287,7 +8294,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 VERSION
 
-Version 2.8.11
+Version 2.8.12
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
