@@ -36,12 +36,19 @@ setup_vendor() {
 # Run test for a specific configuration
 run_test() {
     local config=$1
-    local target_dir="$EXAMPLES_DIR/${DATE_TAG}_${config}"
+    local current_date=$(date +%Y%m%d_%H%M%S)
+    local target_dir="$PROJECT_ROOT/examples/${current_date}_${config}"
+    
     mkdir -p "$target_dir"
+    if [ ! -d "$target_dir" ]; then
+        echo "Error: Could not create target directory $target_dir"
+        return 1
+    fi
 
     echo "=== Testing configuration: $config ==="
+    echo "Results will be stored in: $target_dir"
     
-    cd "$VENDOR_DIR/multi-db-docker-env"
+    cd "$VENDOR_DIR/multi-db-docker-env" || { echo "Error: multi-db-docker-env not found"; return 1; }
     
     # Ensure .env exists with default password
     if [ ! -f .env ]; then
@@ -49,35 +56,32 @@ run_test() {
     fi
 
     # Start the DB
+    echo "Starting database container..."
     start_time=$(date +%s)
     make "$config" > "$target_dir/docker_start.log" 2>&1
     
     # Wait for DB to be ready
-    echo "Waiting for DB to be healthy..."
-    sleep 15
+    echo "Waiting for DB to be healthy (30s)..."
+    sleep 30
     
     # Inject test data
     echo "Injecting employees database..."
     if [ -d "$VENDOR_DIR/test_db" ]; then
         cd "$VENDOR_DIR/test_db"
-        # We need to pass connection details to the test_db setup
-        # The test_db repo usually expects a local mysql client or environment variables
         export MYSQL_HOST=127.0.0.1
         export MYSQL_TCP_PORT=3306
         export MYSQL_USER=root
         export MYSQL_PWD=mysqltuner_test
         
-        # Check if we need to map port (multi-db-docker-env might use different port)
-        # For now, assuming default 3306 as set in .env above
-        
-        # Run the injection
         if [ -f "employees.sql" ]; then
-            mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" < employees.sql > "$target_dir/db_injection.log" 2>&1
-        elif [ -f "setup_employees.sh" ]; then
-            bash setup_employees.sh >> "$target_dir/db_injection.log" 2>&1
+            cd employees && mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" < employees.sql > "$target_dir/db_injection.log" 2>&1 && cd ..
         else
             echo "Searching for employees database entry point..."
-            find . -name "employees.sql" -exec mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" < {} + >> "$target_dir/db_injection.log" 2>&1
+            find . -name "employees.sql" -print0 | while IFS= read -r -d '' sql_file; do
+                sql_dir=$(dirname "$sql_file")
+                sql_base=$(basename "$sql_file")
+                (cd "$sql_dir" && mysql -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" < "$sql_base") >> "$target_dir/db_injection.log" 2>&1
+            done
         fi
         cd "$VENDOR_DIR/multi-db-docker-env"
     else
@@ -88,24 +92,159 @@ run_test() {
     
     # Run MySQLTuner
     echo "Running MySQLTuner..."
-    perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
+    perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test --verbose --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
     ret_code=$?
+    
+    # Capture more info
+    docker_stats=$(docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}")
+    db_version=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SELECT VERSION();" -sN 2>/dev/null || echo "Unknown")
+    db_list=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SHOW DATABASES;" -sN 2>/dev/null || echo "Could not list databases")
+    
     end_time=$(date +%s)
     exec_time=$((end_time - start_time))
 
-    # Compile report
+    # Compile text report
+    echo "Generating text report..."
     {
         echo "Configuration: $config"
+        echo "Database Version: $db_version"
         echo "Date: $(date)"
         echo "Return Code: $ret_code"
         echo "Execution Time: ${exec_time}s"
         echo "Environment: Docker via multi-db-docker-env"
+        echo "----------------------------------------"
         echo "Databases:"
-        mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SHOW DATABASES;" 2>/dev/null || echo "Could not list databases"
+        echo "$db_list"
+        echo "----------------------------------------"
+        echo "Docker Stats:"
+        echo "$docker_stats"
     } > "$target_dir/report.txt"
 
+    # Prepare HTML content
+    echo "Generating HTML report..."
+    mt_output=$(cat "$target_dir/mysqltuner_output.txt" 2>/dev/null | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' || echo "No MySQLTuner output captured.")
+    
+    # Generate HTML report
+    cat <<EOF > "$target_dir/report.html"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQLTuner Test Report - $config</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <header class="flex justify-between items-center mb-10 border-b border-gray-700 pb-6">
+            <div>
+                <h1 class="text-4xl font-extrabold text-blue-500 tracking-tight">MySQLTuner <span class="text-white">Report</span></h1>
+                <p class="text-gray-400 mt-2">Configuration: <span class="font-mono text-blue-400">$config</span></p>
+            </div>
+            <div class="text-right">
+                <div class="text-sm text-gray-400">Tested on</div>
+                <div class="font-medium">$(date)</div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
+                <div class="text-gray-400 text-sm mb-1"><i class="fas fa-microchip mr-2"></i>Status</div>
+                <div class="text-2xl font-bold $( [ $ret_code -eq 0 ] && echo "text-green-500" || echo "text-red-500" )">
+                    $( [ $ret_code -eq 0 ] && echo "SUCCESS" || echo "FAILED ($ret_code)" )
+                </div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
+                <div class="text-gray-400 text-sm mb-1"><i class="fas fa-clock mr-2"></i>Runtime</div>
+                <div class="text-2xl font-bold text-blue-400">${exec_time}s</div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
+                <div class="text-gray-400 text-sm mb-1"><i class="fas fa-database mr-2"></i>DB Version</div>
+                <div class="text-lg font-bold truncate" title="$db_version">$db_version</div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
+                <div class="text-gray-400 text-sm mb-1"><i class="fas fa-server mr-2"></i>Platform</div>
+                <div class="text-lg font-bold text-purple-400">Docker Manager</div>
+            </div>
+        </div>
+
+        <div class="space-y-8">
+            <section class="bg-gray-800 rounded-xl border border-gray-700 shadow-xl overflow-hidden">
+                <div class="bg-gray-700 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-terminal mr-3 text-blue-400"></i>MySQLTuner Output</h2>
+                    <a href="mysqltuner_output.txt" class="text-sm text-blue-400 hover:text-blue-300 transition-colors">View Raw</a>
+                </div>
+                <div class="p-6">
+                    <pre class="bg-gray-950 p-4 rounded-lg overflow-x-auto text-sm font-mono text-gray-300 whitespace-pre-wrap">$mt_output</pre>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <section class="bg-gray-800 rounded-xl border border-gray-700 shadow-xl overflow-hidden">
+                    <div class="bg-gray-700 px-6 py-4">
+                        <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-chart-line mr-3 text-green-400"></i>Environment Snapshot</h2>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">Docker Container Stats</h3>
+                        <pre class="bg-gray-950 p-4 rounded-lg text-xs font-mono text-green-400 overflow-x-auto">$docker_stats</pre>
+                        
+                        <h3 class="text-sm font-bold text-gray-400 mt-6 mb-3 uppercase tracking-wider">Databases Found</h3>
+                        <div class="flex flex-wrap gap-2">
+                            $(echo "$db_list" | while read db; do echo "<span class='bg-gray-700 px-3 py-1 rounded-full text-xs'>$db</span>"; done)
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bg-gray-800 rounded-xl border border-gray-700 shadow-xl overflow-hidden">
+                    <div class="bg-gray-700 px-6 py-4">
+                        <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-list-check mr-3 text-yellow-400"></i>Debug & Logs</h2>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <a href="execution.log" class="block bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors group">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold group-hover:text-blue-400 transition-colors">Execution Log</h3>
+                                    <p class="text-sm text-gray-400">Standard output and error from the test run.</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-500"></i>
+                            </div>
+                        </a>
+                        <a href="docker_start.log" class="block bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors group">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold group-hover:text-blue-400 transition-colors">Docker Lifecycle</h3>
+                                    <p class="text-sm text-gray-400">Logs from container start and stop operations.</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-500"></i>
+                            </div>
+                        </a>
+                        <a href="db_injection.log" class="block bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors group">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold group-hover:text-blue-400 transition-colors">Database Injection</h3>
+                                    <p class="text-sm text-gray-400">Logs from employees database injection.</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-500"></i>
+                            </div>
+                        </a>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-gray-500 text-sm border-t border-gray-800 pt-8">
+            <p>Generated by MySQLTuner Automation Suite</p>
+            <p class="mt-1">&copy; 2026 - Jean-Marie Renouard</p>
+        </footer>
+    </div>
+</body>
+</html>
+EOF
+
     # Stop the DB
-    cd "$VENDOR_DIR/multi-db-docker-env"
+    echo "Cleaning up..."
+    cd "$VENDOR_DIR/multi-db-docker-env" || return 1
     make stop >> "$target_dir/docker_start.log" 2>&1
     
     echo "Done with $config. Results in $target_dir"

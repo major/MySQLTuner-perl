@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.2
+# mysqltuner.pl - Version 2.8.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.2";
+my $tunerversion = "2.8.4";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -128,7 +128,8 @@ my %opt = (
     "ssh-host"            => '',
     "ssh-user"            => '',
     "ssh-password"        => '',
-    "ssh-identity-file"   => ''
+    "ssh-identity-file"   => '',
+    "container"           => ''
 );
 
 # Gather the options from the command line
@@ -169,7 +170,8 @@ GetOptions(
     'nondedicated',          'noprettyicon',
     'cloud',                 'azure',
     'ssh-host=s',            'ssh-user=s',
-    'ssh-password=s',        'ssh-identity-file=s'
+    'ssh-password=s',        'ssh-identity-file=s',
+    'container=s'
   )
   or pod2usage(
     -exitval  => 1,
@@ -381,6 +383,22 @@ sub is_remote() {
     return 0 if ( $host eq 'localhost' );
     return 0 if ( $host eq '127.0.0.1' );
     return 1;
+}
+
+sub is_docker() {
+    return 1 if -f '/.dockerenv';
+    if ( -f '/proc/self/cgroup' ) {
+        if ( open( my $fh, '<', '/proc/self/cgroup' ) ) {
+            while ( my $line = <$fh> ) {
+                if ( $line =~ /docker|kubepods/ ) {
+                    close $fh;
+                    return 1;
+                }
+            }
+            close $fh;
+        }
+    }
+    return 0;
 }
 
 sub is_int {
@@ -943,9 +961,7 @@ sub execute_system_command {
 
     if ( $? != 0 ) {
         # Be less verbose for commands that are expected to fail on some systems
-/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat)/
-          )
-        {
+        if ( $command !~ /^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl)/ ) {
             badprint "System command failed: $command";
             infoprintml @output;
         }
@@ -1741,6 +1757,52 @@ sub log_file_recommendations {
       || get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
         $myvar{'datadir'} );
 
+    # Use explicit container if provided
+    if ( $opt{'container'} ne '' ) {
+        my $container_cmd = "docker";
+        if ( $opt{'container'} =~ /^(docker|podman|kubectl):(.*)/ ) {
+            $myvar{'log_error'} = $opt{'container'};
+        }
+        else {
+            if ( which( "podman", $ENV{'PATH'} ) && !which( "docker", $ENV{'PATH'} ) ) {
+                $container_cmd = "podman";
+            }
+            $myvar{'log_error'} = "$container_cmd:$opt{'container'}";
+        }
+        debugprint "Using explicit container: $myvar{'log_error'}";
+    }
+    # Try to find logs from docker/podman if file doesn't exist locally
+    elsif (
+        !-f "$myvar{'log_error'}"
+        && $myvar{'log_error'} !~ /^(docker|podman|kubectl|systemd):/
+        && !is_docker()
+      )
+    {
+        my $container_cmd = "";
+        if ( which( "docker", $ENV{'PATH'} ) ) {
+            $container_cmd = "docker";
+        }
+        elsif ( which( "podman", $ENV{'PATH'} ) ) {
+            $container_cmd = "podman";
+        }
+
+        if ( $container_cmd ne "" ) {
+            my $port = $opt{'port'} || 3306;
+            my $container =
+`$container_cmd ps --filter "publish=$port" --format "{{.Names}}" | head -n 1`;
+            chomp $container;
+            if ( $container eq "" ) {
+                $container =
+`$container_cmd ps --format "{{.Names}} {{.Image}}" | grep -Ei "mysql|mariadb|percona" | head -n 1 | awk '{print \$1}'`;
+                chomp $container;
+            }
+            if ( $container ne "" ) {
+                $myvar{'log_error'} = "$container_cmd:$container";
+                debugprint "Detected $container_cmd container: $container";
+            }
+        }
+    }
+
     subheaderprint "Log file Recommendations";
     if ( "$myvar{'log_error'}" eq "stderr" ) {
         badprint
@@ -2166,9 +2228,19 @@ sub get_kernel_info {
     );
     infoprint "Information about kernel tuning:";
     foreach my $param (@params) {
-        infocmd_tab("sysctl $param 2>$devnull");
-        $result{'OS'}{'Config'}{$param} =
-          execute_system_command("sysctl -n $param 2>$devnull");
+        if ( $param =~ /^sunrpc/ ) {
+            next unless -d "/proc/sys/sunrpc";
+        }
+        my @res = execute_system_command("sysctl $param 2>/dev/null");
+        if ( $? == 0 ) {
+            foreach my $l (@res) {
+                chomp $l;
+                infoprint "\t$l";
+            }
+            my $val = execute_system_command("sysctl -n $param 2>/dev/null");
+            chomp $val;
+            $result{'OS'}{'Config'}{$param} = $val;
+        }
     }
     if ( execute_system_command('sysctl -n vm.swappiness') > 10 ) {
         badprint
@@ -2182,19 +2254,20 @@ sub get_kernel_info {
     }
 
     # only if /proc/sys/sunrpc exists
-    my $tcp_slot_entries = execute_system_command(
-        "sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull");
-    if ( -f "/proc/sys/sunrpc"
-        and ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) )
-    {
-        badprint
+    if ( -d "/proc/sys/sunrpc" ) {
+        my $tcp_slot_entries = execute_system_command(
+            "sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull");
+        chomp $tcp_slot_entries;
+        if ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) {
+            badprint
 "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
-        push @generalrec, "setup Initial TCP slot entries greater than 100";
-        push @adjvars,
+            push @generalrec, "setup Initial TCP slot entries greater than 100";
+            push @adjvars,
 'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)  or sunrpc.tcp_slot_table_entries=128 in /etc/sysctl.conf';
-    }
-    else {
-        infoprint "TCP slot entries is > 100.";
+        }
+        else {
+            infoprint "TCP slot entries is > 100.";
+        }
     }
 
     if ( -f "/proc/sys/fs/aio-max-nr" ) {
@@ -8074,7 +8147,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.2 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.4 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
