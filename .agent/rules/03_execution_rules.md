@@ -32,6 +32,7 @@ trigger: always_on
 
 1. **Validation by Proof:** All changes must be verifiable via `make test-*` or dedicated test scripts.
 2. **Git Protocol:**.
+/!\ NOT COMMIT, NO TAG CODE UNLESS USING /git-flow or explicit order
 Use **Conventional Commits** (feat:, fix:, chore:, docs:).
 WARNING: Don't increment version in changelog or script if code is not tagged and pushed
 If last tag is not remotely present, don't increment version unless explicitly asked

@@ -9,12 +9,15 @@ trigger: always_on
 1. **History Update:** Add new entries to the top of Changelog if the action is correct and tested.  
 Changelog is a file at root of this projet
 insure consistency between CURRENT_VERSION.txt
-MySQLtuner version inside mysqltuner.pl (begin of script this script and begin of pod dcoc =pod)
+MySQLtuner version inside mysqltuner.pl (begin of script this script and begin of pod doc =pod)
 Changelog last version
 
 2. **Git Sync:** Consult git log \-n 15 to synchronize context.  
 3. **Rotation:** FIFO Rotation (Max 600 lines). Remove oldest entries beyond 600 lines.
-4. Git tag all version and push tags when push code to git
+
+4. All changes must be added to last version
+5. No Increment version if explicit git commit/tag/push via /git-flow or specific order from previous version has'nt been made
+After Git tag and push, increment version on last digit  
 
 ### **History Entry example**
 
