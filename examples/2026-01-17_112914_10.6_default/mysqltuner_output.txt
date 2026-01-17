@@ -1,9 +1,0 @@
- >>  MySQLTuner 2.7.3
-	 * Jean-Marie Renouard <jmrenouard@gmail.com>
-	 * Major Hayden <major@mhtx.net>
- >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/
- >>  Run with '--help' for additional options and output filtering
-
-ℹ  Skipped version check for MySQLTuner script
-ℹ  Performing tests on 127.0.0.1:3306
-✘  Attempted to use login credentials, but they were invalid
