@@ -94,7 +94,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 # VERSION
 
-Version 2.8.13
+Version 2.8.14
 &#x3d;head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
@@ -103,7 +103,7 @@ You can find documentation for this module with the perldoc command.
 
 ## INTERNALS
 
-[https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md)
+[https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md)
 
     Internal documentation
 
@@ -154,15 +154,15 @@ Jean-Marie Renouard - jmrenouard@gmail.com
 
 Bug reports, feature requests, and downloads at http://mysqltuner.pl/
 
-Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
+Bug tracker can be found at https://github.com/jmrenouard/MySQLTuner-perl/issues
 
 Maintained by Jean-Marie Renouard (jmrenouard\\@gmail.com) - Licensed under GPL
 
 # SOURCE CODE
 
-[https://github.com/major/MySQLTuner-perl](https://github.com/major/MySQLTuner-perl)
+[https://github.com/jmrenouard/MySQLTuner-perl/](https://github.com/jmrenouard/MySQLTuner-perl/)
 
-    git clone https://github.com/major/MySQLTuner-perl.git
+    git clone https://github.com/jmrenouard/MySQLTuner-perl/.git
 
 # COPYRIGHT AND LICENSE
 
@@ -171,7 +171,7 @@ Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 
 For the latest updates, please visit http://mysqltuner.pl/
 
-Git repository available at https://github.com/major/MySQLTuner-perl
+Git repository available at https://github.com/jmrenouard/MySQLTuner-perl/
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -15,9 +15,9 @@
 **MySQLTuner** est activement maintenu et prend en charge de nombreuses configurations telles que [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Schéma de performance](https://github.com/mysql/mysql-sys), les métriques du système d'exploitation Linux, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
 Vous pouvez trouver plus de détails sur ces indicateurs ici :
-[Description des indicateurs](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+[Description des indicateurs](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
 
-![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
+![MysqlTuner](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysqltuner.png)
 
 Liens utiles
 ==
@@ -31,9 +31,9 @@ MySQLTuner a besoin de vous
 
 **MySQLTuner** a besoin de contributeurs pour la documentation, le code et les commentaires :
 
-* Veuillez nous rejoindre sur notre outil de suivi des problèmes sur [le suivi GitHub](https://github.com/major/MySQLTuner-perl/issues).
-* Le guide de contribution est disponible en suivant [le guide de contribution de MySQLTuner](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Mettez une étoile au **projet MySQLTuner** sur [le projet Git Hub de MySQLTuner](https://github.com/major/MySQLTuner-perl)
+* Veuillez nous rejoindre sur notre outil de suivi des problèmes sur [le suivi GitHub](https://github.com/jmrenouard/MySQLTuner-perl/issues).
+* Le guide de contribution est disponible en suivant [le guide de contribution de MySQLTuner](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Mettez une étoile au **projet MySQLTuner** sur [le projet Git Hub de MySQLTuner](https://github.com/jmrenouard/MySQLTuner-perl/)
 * Support payant pour LightPath ici : [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
 * Support payant pour Releem disponible ici : [Application Releem](https://releem.com/)
 
@@ -57,8 +57,8 @@ Les résultats des tests sont disponibles ici uniquement pour les versions LTS 
 
 Merci à [endoflife.date](endoflife.date)
 
-* Reportez-vous aux [versions prises en charge de MariaDB](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
-* Reportez-vous aux [versions prises en charge de MySQL](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
+* Reportez-vous aux [versions prises en charge de MariaDB](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mariadb_support.md).
+* Reportez-vous aux [versions prises en charge de MySQL](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysql_support.md).
 
 ***La prise en charge de Windows est partielle***
 
@@ -117,12 +117,12 @@ Recommandations de sécurité
 
 Salut l'utilisateur de directadmin !
 Nous avons détecté que vous exécutez mysqltuner avec les informations d'identification de da_admin extraites de `/usr/local/directadmin/conf/my.cnf`, ce qui pourrait entraîner une découverte de mot de passe !
-Lisez le lien pour plus de détails [Problème n°289](https://github.com/major/MySQLTuner-perl/issues/289).
+Lisez le lien pour plus de détails [Problème n°289](https://github.com/jmrenouard/MySQLTuner-perl/issues/289).
 
 Que vérifie exactement MySQLTuner ?
 --
 
-Toutes les vérifications effectuées par **MySQLTuner** sont documentées dans la documentation [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+Toutes les vérifications effectuées par **MySQLTuner** sont documentées dans la documentation [MySQLTuner Internals](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 Téléchargement/Installation
 --
@@ -565,7 +565,7 @@ MySQLTuner et Vagrant
  	* <https://www.virtualbox.org/wiki/Downloads>
  	* <https://www.vagrantup.com/downloads.html>
 * Clonez le dépôt
-  * git clone <https://github.com/major/MySQLTuner-perl.git>
+  * git clone <https://github.com/jmrenouard/MySQLTuner-perl/.git>
 * Installez les plugins Vagrant vagrant-hostmanager et vagrant-vbguest
  	* vagrant plugin install vagrant-hostmanager
  	* vagrant plugin install vagrant-vbguest

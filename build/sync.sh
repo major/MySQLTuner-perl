@@ -12,7 +12,7 @@
 git stash
 
 #add project url to current repository as upstream-live
-git remote add upstream-live https://github.com/major/MySQLTuner-perl
+git remote add upstream-live https://github.com/jmrenouard/MySQLTuner-perl/
 
 #Fetch updated code
 git fetch upstream-live

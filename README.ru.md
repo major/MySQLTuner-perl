@@ -15,9 +15,9 @@
 **MySQLTuner** активно поддерживается и поддерживает множество конфигураций, таких как [кластер Galera](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [схема производительности](https://github.com/mysql/mysql-sys), метрики ОС Linux, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
 Более подробную информацию об этих индикаторах можно найти здесь:
-[Описание индикаторов](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+[Описание индикаторов](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
 
-![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
+![MysqlTuner](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysqltuner.png)
 
 Полезные ссылки
 ==
@@ -31,9 +31,9 @@ MySQLTuner нуждается в вас
 
 **MySQLTuner** нуждается в участниках для документации, кода и обратной связи:
 
-* Присоединяйтесь к нам в нашем трекере проблем на [трекере GitHub](https://github.com/major/MySQLTuner-perl/issues).
-* Руководство по участию доступно по следующей [руководству по участию в MySQLTuner](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Отметьте звездочкой **проект MySQLTuner** на [проекте MySQLTuner на Git Hub](https://github.com/major/MySQLTuner-perl)
+* Присоединяйтесь к нам в нашем трекере проблем на [трекере GitHub](https://github.com/jmrenouard/MySQLTuner-perl/issues).
+* Руководство по участию доступно по следующей [руководству по участию в MySQLTuner](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Отметьте звездочкой **проект MySQLTuner** на [проекте MySQLTuner на Git Hub](https://github.com/jmrenouard/MySQLTuner-perl/)
 * Платная поддержка LightPath здесь: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
 * Платная поддержка Releem доступна здесь: [приложение Releem](https://releem.com/)
 
@@ -57,8 +57,8 @@ MySQLTuner нуждается в вас
 
 Спасибо [endoflife.date](endoflife.date)
 
-* См. [Поддерживаемые версии MariaDB](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
-* См. [Поддерживаемые версии MySQL](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
+* См. [Поддерживаемые версии MariaDB](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mariadb_support.md).
+* См. [Поддерживаемые версии MySQL](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysql_support.md).
 
 ***Поддержка Windows частична***
 
@@ -117,12 +117,12 @@ MySQLTuner нуждается в вас
 
 Привет, пользователь directadmin!
 Мы обнаружили, что вы запускаете mysqltuner с учетными данными da_admin, взятыми из `/usr/local/directadmin/conf/my.cnf`, что может привести к раскрытию пароля!
-Подробнее читайте по ссылке [Проблема №289](https://github.com/major/MySQLTuner-perl/issues/289).
+Подробнее читайте по ссылке [Проблема №289](https://github.com/jmrenouard/MySQLTuner-perl/issues/289).
 
 Что именно проверяет MySQLTuner?
 --
 
-Все проверки, выполняемые **MySQLTuner**, задокументированы в документации [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+Все проверки, выполняемые **MySQLTuner**, задокументированы в документации [MySQLTuner Internals](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 Скачивание/установка
 --
@@ -565,7 +565,7 @@ MySQLTuner и Vagrant
  	* <https://www.virtualbox.org/wiki/Downloads>
  	* <https://www.vagrantup.com/downloads.html>
 * Клонируйте репозиторий
-  * git clone <https://github.com/major/MySQLTuner-perl.git>
+  * git clone <https://github.com/jmrenouard/MySQLTuner-perl/.git>
 * Установите плагины Vagrant vagrant-hostmanager и vagrant-vbguest
  	* vagrant plugin install vagrant-hostmanager
  	* vagrant plugin install vagrant-vbguest

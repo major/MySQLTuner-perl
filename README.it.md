@@ -15,9 +15,9 @@
 **MySQLTuner** è attivamente mantenuto e supporta molte configurazioni come [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), metriche del sistema operativo Linux, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
 Puoi trovare maggiori dettagli su questi indicatori qui:
-[Descrizione degli indicatori](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+[Descrizione degli indicatori](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
 
-![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
+![MysqlTuner](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysqltuner.png)
 
 Link Utili
 ==
@@ -31,9 +31,9 @@ MySQLTuner ha bisogno di te
 
 **MySQLTuner** ha bisogno di contributori per la documentazione, il codice e il feedback:
 
-* Unisciti a noi sul nostro issue tracker su [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
-* La guida per i contributi è disponibile seguendo la [guida per i contributi di MySQLTuner](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Metti una stella al **progetto MySQLTuner** su [Progetto Git Hub di MySQLTuner](https://github.com/major/MySQLTuner-perl)
+* Unisciti a noi sul nostro issue tracker su [GitHub tracker](https://github.com/jmrenouard/MySQLTuner-perl/issues).
+* La guida per i contributi è disponibile seguendo la [guida per i contributi di MySQLTuner](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Metti una stella al **progetto MySQLTuner** su [Progetto Git Hub di MySQLTuner](https://github.com/jmrenouard/MySQLTuner-perl/)
 * Supporto a pagamento per LightPath qui: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
 * Supporto a pagamento per Releem disponibile qui: [App Releem](https://releem.com/)
 
@@ -57,8 +57,8 @@ I risultati dei test sono disponibili qui solo per LTS:
 
 Grazie a [endoflife.date](endoflife.date)
 
-* Fare riferimento a [Versioni supportate di MariaDB](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
-* Fare riferimento a [Versioni supportate di MySQL](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
+* Fare riferimento a [Versioni supportate di MariaDB](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mariadb_support.md).
+* Fare riferimento a [Versioni supportate di MySQL](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysql_support.md).
 
 ***Il supporto per Windows è parziale***
 
@@ -117,12 +117,12 @@ Raccomandazioni di sicurezza
 
 Ciao utente di directadmin!
 Abbiamo rilevato che esegui mysqltuner con le credenziali di da_admin prese da `/usr/local/directadmin/conf/my.cnf`, il che potrebbe portare alla scoperta di una password!
-Leggi il link per maggiori dettagli [Problema #289](https://github.com/major/MySQLTuner-perl/issues/289).
+Leggi il link per maggiori dettagli [Problema #289](https://github.com/jmrenouard/MySQLTuner-perl/issues/289).
 
 Cosa sta controllando esattamente MySQLTuner?
 --
 
-Tutti i controlli eseguiti da **MySQLTuner** sono documentati nella documentazione [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
+Tutti i controlli eseguiti da **MySQLTuner** sono documentati nella documentazione [MySQLTuner Internals](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 Download/Installazione
 --
@@ -565,7 +565,7 @@ MySQLTuner e Vagrant
  	* <https://www.virtualbox.org/wiki/Downloads>
  	* <https://www.vagrantup.com/downloads.html>
 * Clona il repository
-  * git clone <https://github.com/major/MySQLTuner-perl.git>
+  * git clone <https://github.com/jmrenouard/MySQLTuner-perl/.git>
 * Installa i plugin di Vagrant vagrant-hostmanager e vagrant-vbguest
  	* vagrant plugin install vagrant-hostmanager
  	* vagrant plugin install vagrant-vbguest

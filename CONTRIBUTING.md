@@ -15,7 +15,7 @@ an excellent starting point for contributing to any open source project._
 
 ## Using the issue tracker
 
-The [issue tracker](https://github.com/major/MySQLTuner-perl/issues) is the
+The [issue tracker](https://github.com/jmrenouard/MySQLTuner-perl/issues) is the
 preferred channel for [bug reports](#bugs), [features requests](#features)
 and [submitting pull requests](#pull-requests), but please respect the
 following restrictions:
@@ -37,7 +37,7 @@ following restrictions:
 
 4. [Read the doc](https://github.com/major/mysqltuner-perl/). It is short and useful.
 
-5. [Read the internal doc](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md). It is a complete and detailed documentation of all checks performed by this tool and this organization.
+5. [Read the internal doc](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md). It is a complete and detailed documentation of all checks performed by this tool and this organization.
 
 <a name="bugs"></a>
 ## Bug reports
@@ -136,7 +136,7 @@ these guidelines is the best way to get your work included in MySQLTuner.
    # Navigate to the newly cloned directory
    cd MySQLTuner-perl
    # Assign the original repo to a remote called "upstream"
-   git remote add upstream https://github.com/major/MySQLTuner-perl
+   git remote add upstream https://github.com/jmrenouard/MySQLTuner-perl/
    ```
 
 2. If you cloned a while ago, get the latest changes from upstream:
@@ -184,9 +184,9 @@ Copy of the license is available at [LICENSE]
 2. Don't manually update the version number in `mysqltuner.pl`.
 
 
-[Enhancement issue]:https://github.com/major/MySQLTuner-perl/labels/enhancement
-[GitHub issue search]:https://github.com/major/MySQLTuner-perl/search?type=Issues
+[Enhancement issue]:https://github.com/jmrenouard/MySQLTuner-perl/labels/enhancement
+[GitHub issue search]:https://github.com/jmrenouard/MySQLTuner-perl/search?type=Issues
 [git commit message guidelines]:http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 [Open a Pull Request]:https://help.github.com/articles/using-pull-requests/
 [GPLv3 License]:https://en.wikipedia.org/wiki/GNU_General_Public_License
-[LICENSE]:https://github.com/major/MySQLTuner-perl/blob/master/LICENSE
+[LICENSE]:https://github.com/jmrenouard/MySQLTuner-perl/blob/master/LICENSE
