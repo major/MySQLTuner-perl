@@ -153,12 +153,12 @@
 * Performance analysis parameter checks (metadata performance)
 - Per database information
         * Tables number
- 	- Rows number
- 	- Total size
- 	- Data size
- 	- Percentage of data size
- 	- Index size
- 	- Percentage of index size
+   - Rows number
+   - Total size
+   - Data size
+   - Percentage of data size
+   - Index size
+   - Percentage of index size
     - Views number
     - Triggers number
     - Routines number
@@ -171,10 +171,10 @@
 
 - Top 10 worth selectivity index
 - Per index information
- 	- Index Cardinality
- 	- Index Selectivity
- 	- Misc information about index definition
- 	- Misc information about index size
+   - Index Cardinality
+   - Index Selectivity
+   - Misc information about index definition
+   - Misc information about index size
 
 ## MySQLTuner Connections information
 
@@ -212,10 +212,10 @@
 - Per Thread Buffer
   - Read Buffer
   - Read RND Buffer
- 	- Sort Buffer
- 	- Thread stack
- 	- Join Buffer
- 	- Binlog Cache Buffers size if activated
+   - Sort Buffer
+   - Thread stack
+   - Join Buffer
+   - Binlog Cache Buffers size if activated
 
 ## MySQLTuner query cache checks
 
@@ -295,13 +295,13 @@
 - wsrep_node_name is defined.
 - Check thet notification script wsrep_notify_cmd is defined
 - wsrep_cluster_status PRIMARY /NON PRIMARY.
- 	- PRIMARY : Coherent cluster
- 	- NO PRIMARY : cluster gets several states
+   - PRIMARY : Coherent cluster
+   - NO PRIMARY : cluster gets several states
 - wsrep_local_state_comment: Node state
- 	- SYNCED (uptodate),
- 	- DONOR (sending information to another node)
- 	- Joiner (try to reach cluster group)
- 	- SYNCED state able to read/write
+   - SYNCED (uptodate),
+   - DONOR (sending information to another node)
+   - Joiner (try to reach cluster group)
+   - SYNCED state able to read/write
 - wsrep_cluster_conf_id configuration level must be identical in all nodes
 - wsrep_slave_thread is between 3 or 4 times number of CPU core.
 - gcs.limit should be equal to wsrep_slave_threads * 5
