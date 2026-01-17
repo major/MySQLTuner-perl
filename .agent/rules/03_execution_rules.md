@@ -31,7 +31,10 @@ trigger: always_on
 ### **4.4. Development Workflow**
 
 1. **Validation by Proof:** All changes must be verifiable via `make test-*` or dedicated test scripts.
-2. **Git Protocol:** Commit immediately after validation. Use **Conventional Commits** (feat:, fix:, chore:, docs:).
-3. **Changelog:** All changes MUST be traced and documented inside `@Changelog`.
+2. **Git Protocol:**.
+Use **Conventional Commits** (feat:, fix:, chore:, docs:).
 WARNING: Don't increment version in changelog or script if code is not tagged and pushed
 If last tag is not remotely present, don't increment version unless explicitly asked
+Commit and tag should be done together
+
+3. **Changelog:** All changes MUST be traced and documented inside `@Changelog`.

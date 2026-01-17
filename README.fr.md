@@ -19,6 +19,13 @@ Vous pouvez trouver plus de détails sur ces indicateurs ici :
 
 ![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
 
+Liens utiles
+==
+
+* **Développement actif :** [https://github.com/jmrenouard/MySQLTuner-perl](https://github.com/jmrenouard/MySQLTuner-perl)
+* **Versions/Tags :** [https://github.com/jmrenouard/MySQLTuner-perl/tags](https://github.com/jmrenouard/MySQLTuner-perl/tags)
+* **Images Docker :** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
+
 MySQLTuner a besoin de vous
 ===
 
@@ -36,11 +43,11 @@ MySQLTuner a besoin de vous
 
 [![Stargazers au fil du temps](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
 
-
 Compatibilité
 ====
 
 Les résultats des tests sont disponibles ici uniquement pour les versions LTS :
+
 * MySQL (prise en charge complète)
 * Percona Server (prise en charge complète)
 * MariaDB (prise en charge complète)
@@ -49,8 +56,9 @@ Les résultats des tests sont disponibles ici uniquement pour les versions LTS 
 * Réplication MySQL (prise en charge partielle, pas d'environnement de test)
 
 Merci à [endoflife.date](endoflife.date)
-  * Reportez-vous aux [versions prises en charge de MariaDB](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
-  * Reportez-vous aux [versions prises en charge de MySQL](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
+
+* Reportez-vous aux [versions prises en charge de MariaDB](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
+* Reportez-vous aux [versions prises en charge de MySQL](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
 
 ***La prise en charge de Windows est partielle***
 
@@ -59,6 +67,7 @@ Merci à [endoflife.date](endoflife.date)
 * [https://docs.microsoft.com/en-us/windows/wsl/](https://docs.microsoft.com/en-us/windows/wsl/)
 
 ***ENVIRONNEMENTS NON PRIS EN CHARGE - BESOIN D'AIDE POUR CELA***
+
 * Le cloud n'est pas pris en charge pour le moment (aide souhaitée ! Prise en charge de GCP, AWS, Azure demandée)
 
 ***Moteurs de stockage non pris en charge : les PR sont les bienvenues***
@@ -70,7 +79,7 @@ Merci à [endoflife.date](endoflife.date)
 * ColummStore
 * Connexion
 
-Éléments non maintenus de MySQL ou MariaDB :
+Éléments non maintenus de MySQL ou MariaDB
 --
 
 * MyISAM est trop ancien et n'est plus actif
@@ -128,7 +137,7 @@ wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwo
 wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 ```
 
-2) Vous pouvez télécharger l'intégralité du référentiel en utilisant `git clone` ou `git clone --depth 1 -b master` suivi de l'URL de clonage ci-dessus.
+1) Vous pouvez télécharger l'intégralité du référentiel en utilisant `git clone` ou `git clone --depth 1 -b master` suivi de l'URL de clonage ci-dessus.
 
 Installation facultative de Sysschema pour MySQL 5.6
 --
@@ -209,17 +218,13 @@ mysql -u root -p < ./sys_10.sql
 Erreurs et solutions pour l'installation du schéma de performance
 --
 
-
 ERREUR 1054 (42S22) à la ligne 78 dans le fichier : './views/p_s/metrics_56.sql' : Colonne inconnue 'STATUS' dans la liste des champs
 --
-
 
 Cette erreur peut être ignorée en toute sécurité
 Envisagez d'utiliser une version récente de MySQL/MariaDB pour éviter ce genre de problème lors de l'installation de sysschema
 
 Dans les versions récentes, sysschema est installé et intégré par défaut en tant que schéma sys (SHOW DATABASES)
-
-
 
 ERREUR à la ligne 21 : Impossible d'ouvrir le fichier './tables/sys_config_data_10.sql -- ported', erreur : 2
 Jetez un œil à la solution n°452 proposée par @ericx
@@ -247,13 +252,13 @@ fs.aio-max-nr = 1048576
 Pour activer le nouveau paramètre :
 
 ```bash
-$ sysctl -p /etc/sysctl.conf
+sysctl -p /etc/sysctl.conf
 ```
 
 Utilisation spécifique
 --
 
-__Utilisation :__ Utilisation minimale localement
+**Utilisation :** Utilisation minimale localement
 
 ```bash
 perl mysqltuner.pl --host 127.0.0.1
@@ -261,7 +266,7 @@ perl mysqltuner.pl --host 127.0.0.1
 
 Bien sûr, vous pouvez ajouter le bit d'exécution (`chmod +x mysqltuner.pl`) pour pouvoir l'exécuter sans appeler Perl directement.
 
-__Utilisation :__ Utilisation minimale à distance
+**Utilisation :** Utilisation minimale à distance
 
 Dans la version précédente, --forcemem devait être défini manuellement, afin de pouvoir exécuter une analyse MySQLTuner
 
@@ -273,54 +278,52 @@ Si vous souhaitez une valeur plus précise en fonction de votre serveur distant,
 perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
 ```
 
-__Utilisation :__ Activer la sortie maximale d'informations sur MySQL/MariaDb sans débogage
+**Utilisation :** Activer la sortie maximale d'informations sur MySQL/MariaDb sans débogage
 
 ```bash
 perl mysqltuner.pl --verbose
 perl mysqltuner.pl --buffers --dbstat --idxstat --sysstat --pfstat --tbstat
 ```
 
-__Utilisation :__ Activer la vérification des vulnérabilités CVE pour votre version de MariaDB ou MySQL
+**Utilisation :** Activer la vérification des vulnérabilités CVE pour votre version de MariaDB ou MySQL
 
 ```bash
 perl mysqltuner.pl --cvefile=vulnerabilities.csv
 ```
 
-__Utilisation :__ Écrire votre résultat dans un fichier avec les informations affichées
+**Utilisation :** Écrire votre résultat dans un fichier avec les informations affichées
 
 ```bash
 perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 ```
 
-__Utilisation :__ Écrire votre résultat dans un fichier **sans afficher d'informations**
+**Utilisation :** Écrire votre résultat dans un fichier **sans afficher d'informations**
 
 ```bash
 perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 ```
 
-__Utilisation :__ Utilisation d'un modèle pour personnaliser votre fichier de rapport basé sur la syntaxe [Text::Template](https://metacpan.org/pod/Text::Template).
+**Utilisation :** Utilisation d'un modèle pour personnaliser votre fichier de rapport basé sur la syntaxe [Text::Template](https://metacpan.org/pod/Text::Template).
 
 ```bash
 perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
 ```
 
-__Important__ : le module [Text::Template](https://metacpan.org/pod/Text::Template) est obligatoire pour les options `--reportfile` et/ou `--template`, car ce module est nécessaire pour générer une sortie appropriée basée sur un modèle de texte.
+**Important** : le module [Text::Template](https://metacpan.org/pod/Text::Template) est obligatoire pour les options `--reportfile` et/ou `--template`, car ce module est nécessaire pour générer une sortie appropriée basée sur un modèle de texte.
 
-
-__Utilisation :__ Vidage de toutes les vues information_schema et sysschema sous forme de fichier csv dans le sous-répertoire des résultats
+**Utilisation :** Vidage de toutes les vues information_schema et sysschema sous forme de fichier csv dans le sous-répertoire des résultats
 
 ```bash
 perl mysqltuner.pl --verbose --dumpdir=./result
 ```
 
-
-__Utilisation :__ Activer les informations de débogage
+**Utilisation :** Activer les informations de débogage
 
 ```bash
 perl mysqltuner.pl --debug
 ```
 
-__Utilisation :__ Mettre à jour MySQLTuner et les fichiers de données (mot de passe et cve) si nécessaire
+**Utilisation :** Mettre à jour MySQLTuner et les fichiers de données (mot de passe et cve) si nécessaire
 
 ```bash
 perl mysqltuner.pl --checkversion --updateversion
@@ -331,13 +334,12 @@ Prise en charge du cloud
 
 MySQLTuner dispose désormais d'une prise en charge expérimentale des services MySQL basés sur le cloud.
 
-*   `--cloud` : activez le mode cloud. Il s'agit d'un indicateur générique pour tout fournisseur de cloud.
-*   `--azure` : activez la prise en charge spécifique à Azure.
-*   `--ssh-host <hostname>` : l'hôte SSH pour les connexions cloud.
-*   `--ssh-user <username>` : l'utilisateur SSH pour les connexions cloud.
-*   `--ssh-password <password>` : le mot de passe SSH pour les connexions cloud.
-*   `--ssh-identity-file <path>` : le chemin d'accès au fichier d'identité SSH pour les connexions cloud.
-
+* `--cloud` : activez le mode cloud. Il s'agit d'un indicateur générique pour tout fournisseur de cloud.
+* `--azure` : activez la prise en charge spécifique à Azure.
+* `--ssh-host <hostname>` : l'hôte SSH pour les connexions cloud.
+* `--ssh-user <username>` : l'utilisateur SSH pour les connexions cloud.
+* `--ssh-password <password>` : le mot de passe SSH pour les connexions cloud.
+* `--ssh-identity-file <path>` : le chemin d'accès au fichier d'identité SSH pour les connexions cloud.
 
 Rapports HTML basés sur Python Jinja2
 --
@@ -346,8 +348,8 @@ La génération de HTML est basée sur Python/Jinja2
 
 **Procédure de génération de HTML**
 
- - Générer le rapport mysqltuner.pl au format JSON (--json)
- - Générer un rapport HTML à l'aide des outils Python j2
+* Générer le rapport mysqltuner.pl au format JSON (--json)
+* Générer un rapport HTML à l'aide des outils Python j2
 
 **Les modèles Jinja2 se trouvent dans le sous-répertoire des modèles**
 
@@ -381,8 +383,8 @@ La génération de HTML est basée sur AHA
 
 **Procédure de génération de HTML**
 
- - Générer le rapport mysqltuner.pl à l'aide de rapports texte standard
- - Générer un rapport HTML à l'aide d'aha
+* Générer le rapport mysqltuner.pl à l'aide de rapports texte standard
+* Générer un rapport HTML à l'aide d'aha
 
 **Installation d'Aha**
 
@@ -392,23 +394,23 @@ Suivez les instructions du dépôt Github
 
 **Utilisation de la génération de rapports HTML AHA**
 
-	perl mysqltuner.pl --verbose --color > reports.txt
-	aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
+ perl mysqltuner.pl --verbose --color > reports.txt
+ aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
 
 ou
 
-	perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
-
+ perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
 
 FAQ
 --
+
 **Question : Quels sont les prérequis pour exécuter MySQL tuner ?**
 
 Avant d'exécuter MySQL tuner, vous devez disposer des éléments suivants :
 
- - Une installation du serveur MySQL
- - Perl installé sur votre système
- - Un accès administratif à votre serveur MySQL
+* Une installation du serveur MySQL
+* Perl installé sur votre système
+* Un accès administratif à votre serveur MySQL
 
 **Question : MySQL tuner peut-il apporter des modifications à ma configuration automatiquement ?**
 
@@ -463,19 +465,21 @@ Si votre DBA prend constamment votre place de parking et vole votre déjeuner da
 
 Le script fera de son mieux pour se connecter par tous les moyens possibles. Il vérifiera les fichiers ~/.my.cnf, les fichiers de mot de passe Plesk et les connexions root avec mot de passe vide. Si aucun de ceux-ci n'est disponible, un mot de passe vous sera demandé. Si vous souhaitez que le script s'exécute de manière automatisée sans intervention de l'utilisateur, créez un fichier .my.cnf dans votre répertoire personnel qui contient :
 
-	[client]
-	user=someusername
-	password=thatuserspassword
+ [client]
+ user=someusername
+ password=thatuserspassword
 
 Une fois que vous l'avez créé, assurez-vous qu'il appartient à votre utilisateur et que le mode du fichier est 0600. Cela devrait empêcher les regards indiscrets d'obtenir vos informations de connexion à la base de données dans des conditions normales.
 
 **Question : Existe-t-il un autre moyen de sécuriser les informations d'identification sur les dernières distributions MySQL et MariaDB ?**
 
 Vous pouvez utiliser les utilitaires mysql_config_editor.
+
 ~~~bash
-	$ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
-	Enter password: ********
+ $ mysql_config_editor set --login-path=client --user=someusername --password --host=localhost
+ Enter password: ********
 ~~~
+
 Après quoi, `~/.mylogin.cnf` sera créé avec l'accès approprié.
 
 Pour obtenir des informations sur les informations d'identification stockées, utilisez la commande suivante :
@@ -520,24 +524,24 @@ Merci à [@rolandomysqldba](https://dba.stackexchange.com/users/877/rolandomysql
 
 Connexion et authentification
 
-	--host <hostname> Se connecter à un hôte distant pour effectuer des tests (par défaut : localhost)
-	--socket <socket> Utiliser un socket différent pour une connexion locale
-	--port <port>     Port à utiliser pour la connexion (par défaut : 3306)
-	--user <username> Nom d'utilisateur à utiliser pour l'authentification
-	--pass <password> Mot de passe à utiliser pour l'authentification
-	--defaults-file <path> fichier de valeurs par défaut pour les informations d'identification
+ --host <hostname> Se connecter à un hôte distant pour effectuer des tests (par défaut : localhost)
+ --socket <socket> Utiliser un socket différent pour une connexion locale
+ --port <port>     Port à utiliser pour la connexion (par défaut : 3306)
+ --user <username> Nom d'utilisateur à utiliser pour l'authentification
+ --pass <password> Mot de passe à utiliser pour l'authentification
+ --defaults-file <path> fichier de valeurs par défaut pour les informations d'identification
 
 Étant donné que vous utilisez un hôte distant, utilisez des paramètres pour fournir des valeurs à partir du système d'exploitation
 
-	--forcemem <size>  Quantité de RAM installée en mégaoctets
-	--forceswap <size> Quantité de mémoire de pagination configurée en mégaoctets
+ --forcemem <size>  Quantité de RAM installée en mégaoctets
+ --forceswap <size> Quantité de mémoire de pagination configurée en mégaoctets
 
 * Vous devrez peut-être contacter votre administrateur système distant pour lui demander la quantité de RAM et de pagination dont vous disposez
 
 Si la base de données a trop de tables, ou une très grande table, utilisez ceci :
 
-	--skipsize           Ne pas énumérer les tables et leurs types/tailles (par défaut : activé)
-	                     (Recommandé pour les serveurs avec de nombreuses tables)
+ --skipsize           Ne pas énumérer les tables et leurs types/tailles (par défaut : activé)
+                      (Recommandé pour les serveurs avec de nombreuses tables)
 
 **Question : Puis-je installer ce projet à l'aide de homebrew sur Apple Macintosh ?**
 
@@ -545,27 +549,30 @@ Oui ! `brew install mysqltuner` peut être utilisé pour installer cette applic
 
 MySQLTuner et Vagrant
 --
+
 **MySQLTuner** contient les configurations Vagrant suivantes :
+
 * Fedora Core 30 / Docker
 
 **Le fichier Vagrant** est stocké dans le sous-répertoire Vagrant.
+
 * Suivez les étapes suivantes après l'installation de Vagrant :
     $ vagrant up
 
 **MySQLTuner** contient une configuration Vagrant à des fins de test et de développement
-* Installez VirtualBox et Vagrant
-	* https://www.virtualbox.org/wiki/Downloads
-	* https://www.vagrantup.com/downloads.html
-* Clonez le dépôt
- 	* git clone https://github.com/major/MySQLTuner-perl.git
-* Installez les plugins Vagrant vagrant-hostmanager et vagrant-vbguest
-	* vagrant plugin install vagrant-hostmanager
-	* vagrant plugin install vagrant-vbguest
-* Ajoutez la boîte Fedora Core 30 depuis le site de téléchargement officiel de Fedora
-	* vagrant box add --name generic/fedora30
-* Créez un répertoire de données
-	* mkdir data
 
+* Installez VirtualBox et Vagrant
+ 	* <https://www.virtualbox.org/wiki/Downloads>
+ 	* <https://www.vagrantup.com/downloads.html>
+* Clonez le dépôt
+  * git clone <https://github.com/major/MySQLTuner-perl.git>
+* Installez les plugins Vagrant vagrant-hostmanager et vagrant-vbguest
+ 	* vagrant plugin install vagrant-hostmanager
+ 	* vagrant plugin install vagrant-vbguest
+* Ajoutez la boîte Fedora Core 30 depuis le site de téléchargement officiel de Fedora
+ 	* vagrant box add --name generic/fedora30
+* Créez un répertoire de données
+ 	* mkdir data
 
 ## configurer les environnements de test
 
@@ -606,19 +613,18 @@ MySQLTuner et Vagrant
     a49783249a11        mysql:5.7                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:3307->3306/tcp   mysql57
     d985820667c2        mysql:8.0                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3306->3306/tcp, 33060/tcp   mysql 8    0
 
-
-Les contributions sont les bienvenues !
+Les contributions sont les bienvenues
 --
 
 Comment contribuer à l'aide d'une demande d'extraction ? Suivez ce guide : [Création d'une demande d'extraction](https://opensource.com/article/19/7/create-pull-request-github)
 
-Étapes simples pour créer une demande d'extraction :
+Étapes simples pour créer une demande d'extraction
 --
 
-- Forker ce projet Github
-- Clonez-le sur votre système local
-- Créez une nouvelle branche
-- Apportez vos modifications
-- Repoussez-le dans votre dépôt
-- Cliquez sur le bouton Comparer et demande d'extraction
-- Cliquez sur Créer une demande d'extraction pour ouvrir une nouvelle demande d'extraction
+* Forker ce projet Github
+* Clonez-le sur votre système local
+* Créez une nouvelle branche
+* Apportez vos modifications
+* Repoussez-le dans votre dépôt
+* Cliquez sur le bouton Comparer et demande d'extraction
+* Cliquez sur Créer une demande d'extraction pour ouvrir une nouvelle demande d'extraction
