@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.7.2 - MySQL High Performance Tuning Script
+    MySQLTuner 2.8.7 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -85,12 +85,17 @@ You must provide the remote server's total memory when connecting to other serve
     --nostructstat              Don't print table structures information
     --pfstat                    Print Performance schema
     --nopfstat                  Don't print Performance schema
+    --plugininfo                Print Plugin information
+    --noplugininfo              Don't print Plugin information
     --bannedports               Ports banned separated by comma (,)
     --server-log                Define specific error_log to analyze
     --maxportallowed            Number of open ports allowable on this host
     --buffers                   Print global and per-thread buffer values
 
-# PERLDOC
+# VERSION
+
+Version 2.8.9
+&#x3d;head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
 

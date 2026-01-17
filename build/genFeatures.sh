@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==================================================================================
+# Script: genFeatures.sh
+# Description: Generates FEATURES.md by extracting subroutines from mysqltuner.pl.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 # Update Feature list
 (

@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==================================================================================
+# Script: endoflife.sh
+# Description: Generates EOL reports for products using the endoflife.date API.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 # Check if a product name has been provided as an argument
 if [ -z "$1" ]; then

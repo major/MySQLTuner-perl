@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==================================================================================
+# Script: clean_examples.sh
+# Description: Cleans up the examples directory, keeping only recent test executions.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 set -euo pipefail
 
 # Configuration

@@ -1,4 +1,11 @@
 #!/bin/sh
+# ==================================================================================
+# Script: createMassDockerImages.sh
+# Description: Creates and starts multiple Docker containers for different DB versions.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 input="./build/configimg.conf"
 default_password="secret"
@@ -87,4 +94,3 @@ docker images
 
 echo "* LISTING DOCKER CONTAINER"
 docker ps
-

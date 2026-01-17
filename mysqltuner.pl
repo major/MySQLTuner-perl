@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.8
+# mysqltuner.pl - Version 2.8.9
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -136,44 +136,44 @@ my %opt = (
 
 # Gather the options from the command line
 GetOptions(
-    \%opt,                   'nobad',
-    'nogood',                'noinfo',
-    'debug',                 'nocolor',
-    'forcemem=i',            'forceswap=i',
-    'host=s',                'socket=s',
-    'pipe',                  'pipe_name=s',
-    'port=i',                'user=s',
-    'pass=s',                'skipsize',
-    'checkversion',          'mysqladmin=s',
-    'mysqlcmd=s',            'help',
-    'buffers',               'skippassword',
-    'passwordfile=s',        'outputfile=s',
-    'silent',                'noask',
-    'json',                  'prettyjson',
-    'template=s',            'reportfile=s',
-    'cvefile=s',             'bannedports=s',
-    'updateversion',         'maxportallowed=s',
-    'verbose',               'password=s',
-    'passenv=s',             'userenv=s',
-    'defaults-file=s',       'ssl-ca=s',
-    'color',                 'noprocess',
-    'dbstat',                'nodbstat',
-    'tbstat',                'notbstat',
-    'colstat',               'nocolstat',
-    'sysstat',               'nosysstat',
-    'pfstat',                'plugininfo',
-    'noplugininfo',          'idxstat',               'noidxstat',
-    'structstat',            'nostructstat',
-    'myisamstat',            'nomyisamstat',
-    'server-log=s',          'protocol=s',
-    'defaults-extra-file=s', 'dumpdir=s',
-    'feature=s',             'dbgpattern=s',
-    'defaultarch=i',         'experimental',
-    'nondedicated',          'noprettyicon',
-    'cloud',                 'azure',
-    'ssh-host=s',            'ssh-user=s',
-    'ssh-password=s',        'ssh-identity-file=s',
-    'container=s'
+    \%opt,                 'nobad',
+    'nogood',              'noinfo',
+    'debug',               'nocolor',
+    'forcemem=i',          'forceswap=i',
+    'host=s',              'socket=s',
+    'pipe',                'pipe_name=s',
+    'port=i',              'user=s',
+    'pass=s',              'skipsize',
+    'checkversion',        'mysqladmin=s',
+    'mysqlcmd=s',          'help',
+    'buffers',             'skippassword',
+    'passwordfile=s',      'outputfile=s',
+    'silent',              'noask',
+    'json',                'prettyjson',
+    'template=s',          'reportfile=s',
+    'cvefile=s',           'bannedports=s',
+    'updateversion',       'maxportallowed=s',
+    'verbose',             'password=s',
+    'passenv=s',           'userenv=s',
+    'defaults-file=s',     'ssl-ca=s',
+    'color',               'noprocess',
+    'dbstat',              'nodbstat',
+    'tbstat',              'notbstat',
+    'colstat',             'nocolstat',
+    'sysstat',             'nosysstat',
+    'pfstat',              'plugininfo',
+    'noplugininfo',        'idxstat',
+    'noidxstat',           'structstat',
+    'nostructstat',        'myisamstat',
+    'nomyisamstat',        'server-log=s',
+    'protocol=s',          'defaults-extra-file=s',
+    'dumpdir=s',           'feature=s',
+    'dbgpattern=s',        'defaultarch=i',
+    'experimental',        'nondedicated',
+    'noprettyicon',        'cloud',
+    'azure',               'ssh-host=s',
+    'ssh-user=s',          'ssh-password=s',
+    'ssh-identity-file=s', 'container=s'
   )
   or pod2usage(
     -exitval  => 1,
@@ -242,13 +242,14 @@ if ( $opt{verbose} ) {
     $opt{structstat}   = 1;    # Print table structure information
     $opt{myisamstat}   = 1;    # Print MyISAM table information
 
-    $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
-    $opt{plugininfo} = 1;    # Print plugin information
+    $opt{cvefile}    = 'vulnerabilities.csv'; #CVE File for vulnerability checks
+    $opt{plugininfo} = 1;                     # Print plugin information
 }
 $opt{noprettyicon} = 0 if $opt{noprettyicon} != 1;
-$opt{plugininfo} = 0 if ( $opt{noplugininfo} == 1 ); # Don't print plugin information
-$opt{nocolor}      = 1 if defined( $opt{outputfile} );
-$opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );   # Don't print table information
+$opt{plugininfo}   = 0
+  if ( $opt{noplugininfo} == 1 );             # Don't print plugin information
+$opt{nocolor} = 1 if defined( $opt{outputfile} );
+$opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
 $opt{dbstat}  = 0 if ( $opt{nodbstat} == 1 ); # Don't print database information
 $opt{noprocess} = 0
@@ -964,8 +965,12 @@ sub execute_system_command {
     my @output = `$full_cmd 2>&1`;
 
     if ( $? != 0 ) {
+
         # Be less verbose for commands that are expected to fail on some systems
-        if ( $command !~ /^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl)/ ) {
+        if ( $command !~
+/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl)/
+          )
+        {
             badprint "System command failed: $command";
             infoprintml @output;
         }
@@ -1768,19 +1773,20 @@ sub log_file_recommendations {
             $myvar{'log_error'} = $opt{'container'};
         }
         else {
-            if ( which( "podman", $ENV{'PATH'} ) && !which( "docker", $ENV{'PATH'} ) ) {
+            if ( which( "podman", $ENV{'PATH'} )
+                && !which( "docker", $ENV{'PATH'} ) )
+            {
                 $container_cmd = "podman";
             }
             $myvar{'log_error'} = "$container_cmd:$opt{'container'}";
         }
         debugprint "Using explicit container: $myvar{'log_error'}";
     }
+
     # Try to find logs from docker/podman if file doesn't exist locally
-    elsif (
-        !-f "$myvar{'log_error'}"
+    elsif (!-f "$myvar{'log_error'}"
         && $myvar{'log_error'} !~ /^(docker|podman|kubectl|systemd):/
-        && !is_docker()
-      )
+        && !is_docker() )
     {
         my $container_cmd = "";
         if ( which( "docker", $ENV{'PATH'} ) ) {
@@ -1793,11 +1799,11 @@ sub log_file_recommendations {
         if ( $container_cmd ne "" ) {
             my $port = $opt{'port'} || 3306;
             my $container =
-`$container_cmd ps --filter "publish=$port" --format "{{.Names}}" | head -n 1`;
+`$container_cmd ps --filter "publish=$port" --format "{{.Names}}" | grep -vEi "traefik|haproxy|maxscale|maxsale|proxy" | head -n 1`;
             chomp $container;
             if ( $container eq "" ) {
                 $container =
-`$container_cmd ps --format "{{.Names}} {{.Image}}" | grep -Ei "mysql|mariadb|percona" | head -n 1 | awk '{print \$1}'`;
+`$container_cmd ps --format "{{.Names}} {{.Image}}" | grep -Ei "mysql|mariadb|percona|db|database" | grep -vEi "traefik|haproxy|maxscale|maxsale|proxy" | head -n 1 | awk '{print \$1}'`;
                 chomp $container;
             }
             if ( $container ne "" ) {
@@ -2009,14 +2015,17 @@ sub get_process_memory {
             close($fh);
             if ( $line =~ /^\d+\s+(\d+)/ ) {
                 my $rss_pages = $1;
-                # Get page size (default to 4096 if uncertain, but usually 4096 on Linux)
+
+       # Get page size (default to 4096 if uncertain, but usually 4096 on Linux)
                 my $pagesize = 4096;
+
                 # Attempt to get real page size if possible
                 my $getconf_pagesize = `getconf PAGESIZE 2>$devnull`;
                 if ( $? == 0 && $getconf_pagesize =~ /^(\d+)/ ) {
                     $pagesize = $1;
                 }
-                debugprint "Memory for PID $pid from /proc: " . ( $rss_pages * $pagesize );
+                debugprint "Memory for PID $pid from /proc: "
+                  . ( $rss_pages * $pagesize );
                 return $rss_pages * $pagesize;
             }
         }
@@ -2315,10 +2324,12 @@ sub get_system_info {
 
     $result{'Network'}{'Connected'} = 'NO';
     if ($is_win) {
-        execute_system_command("ping -n 1 ipecho.net > $devnull 2>&1") if which("ping", $ENV{'PATH'});
+        execute_system_command("ping -n 1 ipecho.net > $devnull 2>&1")
+          if which( "ping", $ENV{'PATH'} );
     }
     else {
-        execute_system_command("ping -c 1 ipecho.net > $devnull 2>&1") if which("ping", $ENV{'PATH'});
+        execute_system_command("ping -c 1 ipecho.net > $devnull 2>&1")
+          if which( "ping", $ENV{'PATH'} );
     }
     my $isConnected = $?;
     if ( $? == 0 ) {
@@ -2347,6 +2358,7 @@ sub get_system_info {
       : execute_system_command('hostname -I');
     infoprint "Hostname              : " . infocmd_one "hostname";
     infoprint "Network Cards         : ";
+
     if ( which( "ip", $ENV{'PATH'} ) ) {
         infocmd_tab "ip addr | grep -A1 mtu";
     }
@@ -2654,10 +2666,12 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
 
     @mysqlstatlist = select_array
       "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
-    if (scalar(@mysqlstatlist) > 0) {
+    if ( scalar(@mysqlstatlist) > 0 ) {
         if ( $opt{dumpdir} ne '' ) {
-            select_csv_file( "$opt{dumpdir}/user_with_general_wildcard.csv",
-                "SELECT user, host FROM mysql.user WHERE HOST='%'" );
+            select_csv_file(
+                "$opt{dumpdir}/user_with_general_wildcard.csv",
+                "SELECT user, host FROM mysql.user WHERE HOST='%'"
+            );
         }
         my $luser = 'user_name';
         if ( scalar(@mysqlstatlist) == 1 ) {
@@ -2669,12 +2683,12 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
               . " does not specify hostname restrictions.";
         }
         push( @generalrec,
-"Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
-            );
+            "Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
+        );
         push( @generalrec,
-                    "RENAME USER $luser\@'%' TO "
-                  . $luser
-                  . "\@LimitedIPRangeOrLocalhost;" );  
+                "RENAME USER $luser\@'%' TO "
+              . $luser
+              . "\@LimitedIPRangeOrLocalhost;" );
     }
 
     unless ( -f $basic_password_files ) {
@@ -3218,7 +3232,7 @@ sub check_storage_engines {
         badprint "Total fragmented tables: $fragtables";
         push @generalrec,
 'Run ALTER TABLE ... FORCE or OPTIMIZE TABLE to defragment tables for better performance';
-        my $total_free = 0;
+        my $total_free            = 0;
         my $fragmented_tables_csv = "schema,table,free_space_mb,sql\n";
         foreach my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } ) {
             my ( $table_schema, $table_name, $engine, $data_free ) =
@@ -3228,21 +3242,23 @@ sub check_storage_engines {
             my $generalrec;
             my $fragmented_tables_sql;
             if ( $engine eq 'InnoDB' ) {
-                $fragmented_tables_sql = "ALTER TABLE `$table_schema`.`$table_name` FORCE;";
-                $generalrec =
-                  "  $fragmented_tables_sql";
-            }
-            else {
-                $fragmented_tables_sql = "OPTIMIZE TABLE `$table_schema`.`$table_name`;";
+                $fragmented_tables_sql =
+                  "ALTER TABLE `$table_schema`.`$table_name` FORCE;";
                 $generalrec = "  $fragmented_tables_sql";
             }
-            $fragmented_tables_csv .= "$table_schema,$table_name,$data_free,\"$fragmented_tables_sql\"\n";
+            else {
+                $fragmented_tables_sql =
+                  "OPTIMIZE TABLE `$table_schema`.`$table_name`;";
+                $generalrec = "  $fragmented_tables_sql";
+            }
+            $fragmented_tables_csv .=
+"$table_schema,$table_name,$data_free,\"$fragmented_tables_sql\"\n";
             $generalrec .= " -- can free $data_free MiB";
             push @generalrec, $generalrec;
         }
         dump_into_file( 'fragmented_tables.csv', $fragmented_tables_csv );
         push @generalrec,
-          "Consider defragmenting $fragtables tables to free up $total_free MiB";
+"Consider defragmenting $fragtables tables to free up $total_free MiB";
     }
     else {
         goodprint "Total fragmented tables: $fragtables";
@@ -7357,10 +7373,8 @@ sub mysql_plugins {
     my @plugin_data = select_array($query);
 
     if (@plugin_data) {
-        infoprint sprintf(
-            "%-30s | %-10s | %-10s | %-20s | %-20s | %-10s",
-            "Plugin", "Version", "Status", "Type", "Library", "License"
-        );
+        infoprint sprintf( "%-30s | %-10s | %-10s | %-20s | %-20s | %-10s",
+            "Plugin", "Version", "Status", "Type", "Library", "License" );
         infoprint "-" x 120;
         foreach my $line (@plugin_data) {
             my ( $name, $version, $status, $type, $library, $license ) =
@@ -8273,7 +8287,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 VERSION
 
-Version 2.8.8
+Version 2.8.9
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.

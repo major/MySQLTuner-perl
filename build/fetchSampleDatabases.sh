@@ -1,4 +1,11 @@
 #!/bin/sh
+# ==================================================================================
+# Script: fetchSampleDatabases.sh
+# Description: Fetches sample MySQL databases (sakila, world, etc.) for testing.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 
 DB_WORLD_URL="https://downloads.mysql.com/docs/world.sql.zip"
