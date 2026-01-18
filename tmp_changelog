@@ -1,6 +1,6 @@
 2.8.27 2026-01-18
 
-- refactor: replace massive raw backtick usage with execute_system_command wrapper for better security and compliance (Compliance Sentinel)
+- 
 
 2.8.26 2026-01-18
 

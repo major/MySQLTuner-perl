@@ -1000,7 +1000,7 @@ sub execute_system_command {
 
         # Be less verbose for commands that are expected to fail on some systems
         if ( $command !~
-/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl)/
+/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb)/
           )
         {
             badprint "System command failed: $command";
@@ -1009,7 +1009,7 @@ sub execute_system_command {
     }
 
     # Return based on calling context
-    return wantarray ? @output : join( "\n", @output );
+    return wantarray ? @output : join( "", @output );
 }
 
 if ($is_win) {
@@ -1149,7 +1149,7 @@ sub mysql_setup {
           . ( ( $opt{pass} ne 0 ) ? "-p'$opt{pass}' " : " " )
           . $remotestring;
         my $loginstatus =
-          `$mysqlcmd -Nrs -e 'select "mysqld is alive";' $mysqllogin 2>&1`;
+          execute_system_command("$mysqlcmd -Nrs -e 'select \"mysqld is alive\";' $mysqllogin");
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint "Logged in using credentials passed on the command line";
             return 1;
@@ -1175,7 +1175,7 @@ sub mysql_setup {
                 }
                 $mysqllogin .= $remotestring;
                 
-                $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
+                $loginstatus = execute_system_command("$mysqladmincmd ping $mysqllogin");
                 if ( $loginstatus =~ /mysqld is alive/ ) {
                     goodprint "Logged in using credentials with prompted password";
                     return 1;
@@ -1201,7 +1201,7 @@ sub mysql_setup {
 
             # mysql-quickbackup is installed
             $mysqllogin = "-u $mysql_login -p$mysql_pass";
-            my $loginstatus = `mysqladmin $mysqllogin ping 2>&1`;
+            my $loginstatus = execute_system_command("mysqladmin $mysqllogin ping");
             if ( $loginstatus =~ /mysqld is alive/ ) {
                 goodprint "Logged in using credentials from mysql-quickbackup.";
                 return 1;
@@ -1217,13 +1217,13 @@ sub mysql_setup {
 
         # It's a Plesk box, use the available credentials
         $mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
-        my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
+        my $loginstatus = execute_system_command("$mysqladmincmd ping $mysqllogin");
         unless ( $loginstatus =~ /mysqld is alive/ ) {
 
             # Plesk 10+
             $mysqllogin =
               "-u admin -p`/usr/local/psa/bin/admin --show-password`";
-            $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
+            $loginstatus = execute_system_command("$mysqladmincmd ping $mysqllogin");
             unless ( $loginstatus =~ /mysqld is alive/ ) {
                 badprint
 "Attempted to use login credentials from Plesk and Plesk 10+, but they failed.";
@@ -1246,7 +1246,7 @@ sub mysql_setup {
 
         $mysqllogin = "-u $mysqluser -p$mysqlpass";
 
-        my $loginstatus = `mysqladmin ping $mysqllogin 2>&1`;
+        my $loginstatus = execute_system_command("mysqladmin ping $mysqllogin");
         unless ( $loginstatus =~ /mysqld is alive/ ) {
             badprint
 "Attempted to use login credentials from DirectAdmin, but they failed.";
@@ -1260,7 +1260,7 @@ sub mysql_setup {
 
         # We have a Debian maintenance account, use it
         $mysqllogin = "--defaults-file=/etc/mysql/debian.cnf";
-        my $loginstatus = `$mysqladmincmd $mysqllogin ping 2>&1`;
+        my $loginstatus = execute_system_command("$mysqladmincmd $mysqllogin ping");
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint
               "Logged in using credentials from Debian maintenance account.";
@@ -1280,7 +1280,7 @@ sub mysql_setup {
         debugprint "MySQL Client Default File: $opt{'defaults-file'}";
 
         $mysqllogin = "--defaults-file=" . $opt{'defaults-file'};
-        my $loginstatus = `$mysqladmincmd $mysqllogin ping 2>&1`;
+        my $loginstatus = execute_system_command("$mysqladmincmd $mysqllogin ping");
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint "Logged in using credentials from defaults file account.";
             return 1;
@@ -1297,7 +1297,7 @@ sub mysql_setup {
           "MySQL Client Extra Default File: $opt{'defaults-extra-file'}";
 
         $mysqllogin = "--defaults-extra-file=" . $opt{'defaults-extra-file'};
-        my $loginstatus = `$mysqladmincmd $mysqllogin ping 2>&1`;
+        my $loginstatus = execute_system_command("$mysqladmincmd $mysqllogin ping");
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint
               "Logged in using credentials from extra defaults file account.";
@@ -1317,7 +1317,7 @@ sub mysql_setup {
         #} else {
         infoprint "Using mysql to check login";
         my $loginstatus =
-`$mysqlcmd $remotestring -Nrs -e 'select "mysqld is alive"' --connect-timeout=3 2>&1`;
+execute_system_command("$mysqlcmd $remotestring -Nrs -e 'select \"mysqld is alive\"' --connect-timeout=3");
 
         #}
 
@@ -1382,7 +1382,7 @@ sub mysql_setup {
                 }
             }
             $mysqllogin .= $remotestring;
-            my $loginstatus = `$mysqladmincmd ping $mysqllogin 2>&1`;
+            my $loginstatus = execute_system_command("$mysqladmincmd ping $mysqllogin");
             if ( $loginstatus =~ /mysqld is alive/ ) {
 
                 #print STDERR "";
