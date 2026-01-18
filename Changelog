@@ -1,6 +1,9 @@
-2.8.25 2026-01-18
+2.8.26 2026-01-18
 
--
+- fix: inverted replication command logic causing wrong SQL on MySQL 8.0+/MariaDB 10.5+ (issue #553)
+- feat: add MySQL/MariaDB version detection to prevent version number conflicts in replication logic
+- test: add comprehensive test suite (test_issue_553.t) for replication command compatibility
+- chore: bump version to 2.8.26
 
 2.8.24 2026-01-18
 

@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.25";
+my $tunerversion = "2.8.26";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -1715,7 +1715,14 @@ sub get_all_vars {
     #debugprint Dumper(@mysqlenginelist);
 
     my @mysqlslave;
-    if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
+    # Issue #553: Fix replication command compatibility
+    # MySQL 8.0+: SHOW REPLICA STATUS (deprecated: SHOW SLAVE STATUS)
+    # MariaDB 10.5+: SHOW REPLICA STATUS (deprecated: SHOW SLAVE STATUS)
+    # Older versions: SHOW SLAVE STATUS
+    my $is_mysql8 = ( $myvar{'version'} =~ /^8\./ && $myvar{'version'} !~ /mariadb/i );
+    my $is_mariadb105 = ( $myvar{'version'} =~ /mariadb/i && mysql_version_ge( 10, 5 ) );
+    
+    if ( $is_mysql8 or $is_mariadb105 ) {
         @mysqlslave = select_array("SHOW REPLICA STATUS\\G");
     }
     else {
@@ -1724,9 +1731,16 @@ sub get_all_vars {
     arr2hash( \%myrepl, \@mysqlslave, ':' );
     $result{'Replication'}{'Status'} = \%myrepl;
 
+    # Issue #553: Fix slave/replica host listing commands
+    # MySQL 8.0+: SHOW REPLICAS (deprecated: SHOW SLAVE HOSTS)
+    # MariaDB 10.5+: SHOW REPLICA HOSTS (deprecated: SHOW SLAVE HOSTS)
+    # Older versions: SHOW SLAVE HOSTS
     my @mysqlslaves;
-    if ( mysql_version_eq(8) or mysql_version_ge( 10, 5 ) ) {
-        @mysqlslaves = select_array "SHOW SLAVE STATUS\\G";
+    if ( $is_mysql8 ) {
+        @mysqlslaves = select_array("SHOW REPLICAS");
+    }
+    elsif ( $is_mariadb105 ) {
+        @mysqlslaves = select_array("SHOW REPLICA HOSTS\\G");
     }
     else {
         @mysqlslaves = select_array("SHOW SLAVE HOSTS\\G");
@@ -8361,7 +8375,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 VERSION
 
-Version 2.8.25
+Version 2.8.26
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
