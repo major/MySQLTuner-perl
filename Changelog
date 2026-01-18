@@ -1,6 +1,13 @@
+2.8.24 2026-01-18
+
+- fix: improve MariaDB 11+ detection by checking version_comment (issue #869)
+- fix: handle innodb_buffer_pool_chunk_size=0 (autosize) in MariaDB 10.8+ (#869)
+- chore: bump version to 2.8.24
+
 2.8.23 2026-01-18
 
--
+- feat: add --ignore-tables CLI option to filter specific tables from analysis (#749)
+- chore: bump version to 2.8.23
 
 2.8.22 2026-01-18
 
