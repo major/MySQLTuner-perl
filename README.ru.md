@@ -4,8 +4,8 @@
 
 [![Статус проекта](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
 [![Статус тестов](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
-[![Среднее время решения проблемы](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Среднее время решения проблемы")
-[![Процент открытых проблем](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Процент все еще открытых проблем")
+[![Среднее время решения проблемы](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Среднее время решения проблемы")
+[![Процент открытых проблем](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Процент все еще открытых проблем")
 [![Лицензия GPL](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** — это скрипт, написанный на Perl, который позволяет быстро просмотреть установку MySQL и внести коррективы для повышения производительности и стабильности. Текущие переменные конфигурации и данные о состоянии извлекаются и представляются в кратком формате вместе с некоторыми основными предложениями по производительности.
@@ -24,6 +24,7 @@
 
 * **Активная разработка:** [https://github.com/jmrenouard/MySQLTuner-perl](https://github.com/jmrenouard/MySQLTuner-perl)
 * **Релизы/Теги:** [https://github.com/jmrenouard/MySQLTuner-perl/tags](https://github.com/jmrenouard/MySQLTuner-perl/tags)
+* **Changelog:** [https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog)
 * **Docker-образы:** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
 
 MySQLTuner нуждается в вас
@@ -41,7 +42,7 @@ MySQLTuner нуждается в вас
 
 ## Звездочеты с течением времени
 
-[![Звездочеты с течением времени](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
+[![Звездочеты с течением времени](https://starchart.cc/jmrenouard/MySQLTuner-perl.svg)](https://starchart.cc/jmrenouard/MySQLTuner-perl)
 
 Совместимость
 ====
@@ -133,8 +134,8 @@ MySQLTuner нуждается в вас
 
 ```bash
 wget http://mysqltuner.pl/ -O mysqltuner.pl
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
+wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
+wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 ```
 
 1) Вы можете загрузить весь репозиторий, используя `git clone` или `git clone --depth 1 -b master`, за которым следует URL-адрес клонирования выше.
@@ -562,17 +563,17 @@ MySQLTuner и Vagrant
 **MySQLTuner** содержит конфигурации Vagrant для целей тестирования и разработки
 
 * Установите VirtualBox и Vagrant
- 	* <https://www.virtualbox.org/wiki/Downloads>
- 	* <https://www.vagrantup.com/downloads.html>
+  * <https://www.virtualbox.org/wiki/Downloads>
+  * <https://www.vagrantup.com/downloads.html>
 * Клонируйте репозиторий
   * git clone <https://github.com/jmrenouard/MySQLTuner-perl/.git>
 * Установите плагины Vagrant vagrant-hostmanager и vagrant-vbguest
- 	* vagrant plugin install vagrant-hostmanager
- 	* vagrant plugin install vagrant-vbguest
+  * vagrant plugin install vagrant-hostmanager
+  * vagrant plugin install vagrant-vbguest
 * Добавьте образ Fedora Core 30 с официального сайта загрузки Fedora
- 	* vagrant box add --name generic/fedora30
+  * vagrant box add --name generic/fedora30
 * Создайте каталог данных
- 	* mkdir data
+  * mkdir data
 
 ## настроить тестовые среды
 

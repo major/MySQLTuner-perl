@@ -1,7 +1,7 @@
 #!/bin/sh
 # ==================================================================================
 # Script: sync.sh
-# Description: Synchronizes local repo with upstream major/MySQLTuner-perl.
+# Description: Synchronizes local repo with jmrenouard/MySQLTuner-perl.
 # Author: Jean-Marie Renouard
 # Project: MySQLTuner-perl
 # ==================================================================================

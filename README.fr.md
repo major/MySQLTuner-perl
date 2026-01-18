@@ -4,8 +4,8 @@
 
 [![État du projet](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
 [![État des tests](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
-[![Temps moyen de résolution d'un problème](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Temps moyen de résolution d'un problème")
-[![Pourcentage de problèmes ouverts](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Pourcentage de problèmes encore ouverts")
+[![Temps moyen de résolution d'un problème](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Temps moyen de résolution d'un problème")
+[![Pourcentage de problèmes ouverts](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Pourcentage de problèmes encore ouverts")
 [![Licence GPL](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** est un script écrit en Perl qui vous permet d'examiner rapidement une installation MySQL et de faire des ajustements pour augmenter les performances et la stabilité. Les variables de configuration actuelles et les données d'état sont récupérées et présentées dans un bref format avec quelques suggestions de performances de base.
@@ -24,6 +24,7 @@ Liens utiles
 
 * **Développement actif :** [https://github.com/jmrenouard/MySQLTuner-perl](https://github.com/jmrenouard/MySQLTuner-perl)
 * **Versions/Tags :** [https://github.com/jmrenouard/MySQLTuner-perl/tags](https://github.com/jmrenouard/MySQLTuner-perl/tags)
+* **Changelog :** [https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog)
 * **Images Docker :** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
 
 MySQLTuner a besoin de vous
@@ -41,7 +42,7 @@ MySQLTuner a besoin de vous
 
 ## Stargazers au fil du temps
 
-[![Stargazers au fil du temps](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
+[![Stargazers au fil du temps](https://starchart.cc/jmrenouard/MySQLTuner-perl.svg)](https://starchart.cc/jmrenouard/MySQLTuner-perl)
 
 Compatibilité
 ====
@@ -133,8 +134,8 @@ Choisissez l'une de ces méthodes :
 
 ```bash
 wget http://mysqltuner.pl/ -O mysqltuner.pl
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
+wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
+wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 ```
 
 1) Vous pouvez télécharger l'intégralité du référentiel en utilisant `git clone` ou `git clone --depth 1 -b master` suivi de l'URL de clonage ci-dessus.
@@ -562,17 +563,17 @@ MySQLTuner et Vagrant
 **MySQLTuner** contient une configuration Vagrant à des fins de test et de développement
 
 * Installez VirtualBox et Vagrant
- 	* <https://www.virtualbox.org/wiki/Downloads>
- 	* <https://www.vagrantup.com/downloads.html>
+  * <https://www.virtualbox.org/wiki/Downloads>
+  * <https://www.vagrantup.com/downloads.html>
 * Clonez le dépôt
   * git clone <https://github.com/jmrenouard/MySQLTuner-perl/.git>
 * Installez les plugins Vagrant vagrant-hostmanager et vagrant-vbguest
- 	* vagrant plugin install vagrant-hostmanager
- 	* vagrant plugin install vagrant-vbguest
+  * vagrant plugin install vagrant-hostmanager
+  * vagrant plugin install vagrant-vbguest
 * Ajoutez la boîte Fedora Core 30 depuis le site de téléchargement officiel de Fedora
- 	* vagrant box add --name generic/fedora30
+  * vagrant box add --name generic/fedora30
 * Créez un répertoire de données
- 	* mkdir data
+  * mkdir data
 
 ## configurer les environnements de test
 
