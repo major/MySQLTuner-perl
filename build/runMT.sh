@@ -1,4 +1,11 @@
 #!/bin/sh
+# ==================================================================================
+# Script: runMT.sh
+# Description: Runs MySQLTuner against a specific Docker container.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 input="./build/configimg.conf"
 

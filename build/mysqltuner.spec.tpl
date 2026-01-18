@@ -5,7 +5,7 @@ Release:	1
 License:	GPL v3+
 Group:		Applications
 Source0:	https://github.com/build/MySQLTuner-perl/build/%{name}-%{version}.tgz
-URL:		https://github.com/major/MySQLTuner-perl
+URL:		https://github.com/jmrenouard/MySQLTuner-perl/
 Requires:	mysql
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)

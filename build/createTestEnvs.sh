@@ -1,4 +1,11 @@
 #!/bin/sh
+# ==================================================================================
+# Script: createTestEnvs.sh
+# Description: Initializes the Docker environment for database tests.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 source build/bashrc
 

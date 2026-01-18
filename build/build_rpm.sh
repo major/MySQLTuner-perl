@@ -1,4 +1,11 @@
 #!/bin/sh
+# ==================================================================================
+# Script: build_rpm.sh
+# Description: Builds an RPM package for MySQLTuner.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 BUILD_DIR="$(dirname $(readlink -f "$0"))"
 

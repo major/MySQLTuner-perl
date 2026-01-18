@@ -1,0 +1,528 @@
+ >>  MySQLTuner 2.8.8
+	 * Jean-Marie Renouard <jmrenouard@gmail.com>
+	 * Major Hayden <major@mhtx.net>
+ >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/
+ >>  Run with '--help' for additional options and output filtering
+ℹ  Skipped version check for MySQLTuner script
+ℹ  Performing tests on 127.0.0.1:3306
+✔  Logged in using credentials passed on the command line
+✔  Operating on 64-bit architecture
+ 
+-------- Storage Engine Statistics -----------------------------------------------------------------
+ℹ  Status: +Aria +CSV +InnoDB +MEMORY +MRG_MyISAM +MyISAM +PERFORMANCE_SCHEMA +SEQUENCE 
+ℹ  Data in InnoDB tables: 146.8M (Tables: 6)
+ℹ  Data in Aria tables: 32.0K (Tables: 1)
+✔  Total fragmented tables: 0
+ 
+✔  Currently running supported MySQL/MariaDB version 11.8.5-MariaDB(LTS)
+ 
+-------- System Linux Recommendations --------------------------------------------------------------
+Look for related Linux system recommendations
+ℹ  Ubuntu 24.04.3 LTS
+ℹ  Machine type          : Virtual machine
+ℹ  Internet              : Connected
+ℹ  Number of Core CPU : 10
+ℹ  Operating System Type : GNU/Linux
+ℹ  Kernel Release        : 6.6.87.2-microsoft-standard-WSL2
+ℹ  Hostname              : Ligthpath-Main
+ℹ  Network Cards         : 
+ℹ  	1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+ℹ  	    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+ℹ  	--
+ℹ  	3: loopback0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+ℹ  	    link/ether 00:15:5d:20:48:9e brd ff:ff:ff:ff:ff:ff
+ℹ  	4: eth1: <BROADCAST,MULTICAST> mtu 1500 qdisc mq state DOWN group default qlen 1000
+ℹ  	    link/ether 00:15:5d:5a:76:e2 brd ff:ff:ff:ff:ff:ff
+ℹ  	5: eth2: <BROADCAST,MULTICAST> mtu 1500 qdisc mq state DOWN group default qlen 1000
+ℹ  	    link/ether 00:15:5d:4b:2b:e4 brd ff:ff:ff:ff:ff:ff
+ℹ  	6: eth3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+ℹ  	    link/ether 7c:fa:80:ef:db:58 brd ff:ff:ff:ff:ff:ff
+ℹ  	--
+ℹ  	11: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+ℹ  	    link/ether ba:c0:f0:90:18:b9 brd ff:ff:ff:ff:ff:ff
+ℹ  	--
+ℹ  	25: eth0: <BROADCAST,MULTICAST> mtu 1500 qdisc mq state DOWN group default qlen 1000
+ℹ  	    link/ether 7e:fa:80:ef:db:58 brd ff:ff:ff:ff:ff:ff
+ℹ  	26: eth4: <BROADCAST,MULTICAST> mtu 1500 qdisc mq state DOWN group default qlen 1000
+ℹ  	    link/ether 72:fa:80:ef:db:58 brd ff:ff:ff:ff:ff:ff
+ℹ  	64: br-4691d9c2d4ea: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+ℹ  	    link/ether 92:d5:a1:40:d4:a1 brd ff:ff:ff:ff:ff:ff
+ℹ  	--
+ℹ  	77: veth43bbbaa@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-4691d9c2d4ea state UP group default 
+ℹ  	    link/ether 5a:33:58:0f:be:c0 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+ℹ  	78: vethe8530e8@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-4691d9c2d4ea state UP group default 
+ℹ  	    link/ether 4e:08:af:22:df:bf brd ff:ff:ff:ff:ff:ff link-netnsid 1
+ℹ  Internal IP           : 192.168.1.148 172.17.0.1 172.18.0.1 2a01:e0a:ed9:46a0:4ef0:c96d:9db7:b542 2a01:e0a:ed9:46a0:2576:577f:d426:6fd0 
+ℹ  HTTP client found: /usr/bin/curl
+ℹ  External IP           :   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current,                                  Dload  Upload   Total   Spent    Left  Speed,   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    37  100    37    0     0    178      0 --:--:-- --:--:-- --:--:--   180, 2a01:e0a:ed9:46a0:2576:577f:d426:6fd0
+ℹ  Name Servers          : 10.255.255.254
+ℹ  Logged In users       : 
+ℹ  	jmren    pts/1        2026-01-14 21:27
+ℹ  Ram Usages in MB      : 
+ℹ  	               total        used        free      shared  buff/cache   available
+ℹ  	Mem:           15631        3739        9031           3        3104       11891
+ℹ  	Swap:           4096           0        4096
+ℹ  Load Average          : 
+ℹ  	top - 23:40:08 up 1 day, 53 min,  1 user,  load average: 1.10, 0.60, 0.44
+ℹ  System Uptime         : 
+ℹ  	 23:40:08 up 1 day, 53 min,  1 user,  load average: 1.09, 0.61, 0.44
+✔  There is at least one CPU dedicated to database server.
+✔  There is at least 1.5 Gb of RAM dedicated to Linux server.
+ℹ  User process except mysqld used 3G RAM.
+✘  Other user process except mysqld used more than 15% of total physical memory 23.96% (3G / 15G)
+ 
+-------- Filesystem Linux Recommendations ----------------------------------------------------------
+ℹ  mount point /mnt/wsl is using 1 % total space (4.00 KB / 7.63 GB)
+ℹ  mount point /usr/lib/wsl/drivers is using 19 % total space (175.26 GB / 951.65 GB)
+ℹ  mount point / is using 2 % total space (17.29 GB / 1006.85 GB)
+ℹ  mount point /mnt/wslg is using 1 % total space (232.00 KB / 7.63 GB)
+ℹ  mount point /usr/lib/wsl/lib is using 0 % total space (0.00 bytes / 7.63 GB)
+ℹ  mount point /mnt/wslg/versions.txt is using 1 % total space (100.00 KB / 7.63 GB)
+ℹ  mount point /mnt/wslg/doc is using 1 % total space (100.00 KB / 7.63 GB)
+ℹ  mount point /mnt/c is using 19 % total space (175.26 GB / 951.65 GB)
+ℹ  mount point /usr/lib/modules/6.6.87.2-microsoft-standard-WSL2 is using 1 % of max allowed inodes
+ℹ  mount point /mnt/wsl is using 1 % of max allowed inodes
+ℹ  mount point / is using 1 % of max allowed inodes
+ℹ  mount point /mnt/wslg is using 1 % of max allowed inodes
+ℹ  mount point /usr/lib/wsl/lib is using 1 % of max allowed inodes
+ℹ  mount point /init is using 1 % of max allowed inodes
+ℹ  mount point /mnt/wslg/versions.txt is using 1 % of max allowed inodes
+ℹ  mount point /mnt/wslg/doc is using 1 % of max allowed inodes
+ 
+-------- Kernel Information Recommendations --------------------------------------------------------
+ℹ  Information about kernel tuning:
+ℹ  	fs.aio-max-nr = 65536
+ℹ  	fs.aio-nr = 2048
+ℹ  	fs.nr_open = 1048576
+ℹ  	fs.file-max = 9223372036854775807
+ℹ  	vm.swappiness = 60
+✘  Swappiness is > 10, please consider having a value lower than 10
+✘  Max running total of the number of max. events is < 1M, please consider having a value greater than 1M
+ℹ  Max Number of open file requests is > 1M.
+ 
+-------- Log file Recommendations ------------------------------------------------------------------
+✔  Log from cloud` docker:traefik-db-proxy exists
+✔  docker:traefik-db-proxy doesn't contain any warning.
+✔  docker:traefik-db-proxy doesn't contain any error.
+ℹ  0 start(s) detected in docker:traefik-db-proxy
+ℹ  0 shutdown(s) detected in docker:traefik-db-proxy
+ 
+-------- Analysis Performance Metrics --------------------------------------------------------------
+ℹ  innodb_stats_on_metadata: OFF
+✔  No stat updates during querying INFORMATION_SCHEMA.
+ 
+-------- Database Metrics --------------------------------------------------------------------------
+ℹ  There is 1 Database(s).
+ℹ  All User Databases:
+ℹ   +-- TABLE : 6
+ℹ   +-- VIEW  : 2
+ℹ   +-- INDEX : 9
+ℹ   +-- CHARS : 1 (utf8mb4)
+ℹ   +-- COLLA : 1 (utf8mb4_uca1400_ai_ci)
+ℹ   +-- ROWS  : 3910993
+ℹ   +-- DATA  : 141.2M(96.22%)
+ℹ   +-- INDEX : 5.5M(3.78%)
+ℹ   +-- SIZE  : 146.8M
+ℹ   +-- ENGINE: 1 (InnoDB)
+ℹ  Database: employees
+ℹ   +-- TABLE : 6
+ℹ   +-- VIEW  : 2
+ℹ   +-- INDEX : 9
+ℹ   +-- CHARS : 1 (utf8mb4)
+ℹ   +-- COLLA : 1 (utf8mb4_uca1400_ai_ci)
+ℹ   +-- ROWS  : 3910993
+ℹ   +-- DATA  : 141.2M(96.22%)
+ℹ   +-- INDEX : 5.5M(3.78%)
+ℹ   +-- TOTAL : 146.8M
+ℹ   +-- ENGINE: 1 (InnoDB)
+ℹ   +-- ENGINE InnoDB : 6 TABLE(s)
+✔  1 collation for employees database.
+✔  1 engine for employees database.
+ℹ  Charsets for employees database table column: utf8mb4
+✔  employees table column(s) has same charset defined for all text like column(s).
+ℹ  Collations for employees database table column: utf8mb4_uca1400_ai_ci
+✔  employees table column(s) has same collation defined for all text like column(s).
+ 
+-------- Table Column Metrics ----------------------------------------------------------------------
+ℹ  MySQL and Percona version 8.0 and greater have removed PROCEDURE ANALYSE feature
+ℹ  Disabling colstat parameter
+ℹ  Database: employees
+ℹ   +-- TABLE: departments
+ℹ       +-- TYPE: InnoDB
+ℹ       +-- Index dept_name - Cols: dept_name - Type: BTREE
+ℹ       +-- Index PRIMARY - Cols: dept_no - Type: BTREE
+ℹ       +-- Column departments.dept_no: CHAR(4) NOT NULL
+ℹ       +-- Column departments.dept_name: VARCHAR(40) NOT NULL
+ℹ   +-- TABLE: dept_emp
+ℹ       +-- TYPE: InnoDB
+ℹ       +-- Index dept_no - Cols: dept_no - Type: BTREE
+ℹ       +-- Index PRIMARY - Cols: emp_no,dept_no - Type: BTREE
+ℹ       +-- Column dept_emp.emp_no: INT(11) NOT NULL
+ℹ       +-- Column dept_emp.dept_no: CHAR(4) NOT NULL
+ℹ       +-- Column dept_emp.from_date: DATE NOT NULL
+ℹ       +-- Column dept_emp.to_date: DATE NOT NULL
+ℹ   +-- TABLE: dept_manager
+ℹ       +-- TYPE: InnoDB
+ℹ       +-- Index dept_no - Cols: dept_no - Type: BTREE
+ℹ       +-- Index PRIMARY - Cols: emp_no,dept_no - Type: BTREE
+ℹ       +-- Column dept_manager.emp_no: INT(11) NOT NULL
+ℹ       +-- Column dept_manager.dept_no: CHAR(4) NOT NULL
+ℹ       +-- Column dept_manager.from_date: DATE NOT NULL
+ℹ       +-- Column dept_manager.to_date: DATE NOT NULL
+ℹ   +-- TABLE: employees
+ℹ       +-- TYPE: InnoDB
+ℹ       +-- Index PRIMARY - Cols: emp_no - Type: BTREE
+ℹ       +-- Column employees.emp_no: INT(11) NOT NULL
+ℹ       +-- Column employees.birth_date: DATE NOT NULL
+ℹ       +-- Column employees.first_name: VARCHAR(14) NOT NULL
+ℹ       +-- Column employees.last_name: VARCHAR(16) NOT NULL
+ℹ       +-- Column employees.gender: ENUM('M','F') NOT NULL
+ℹ       +-- Column employees.hire_date: DATE NOT NULL
+ℹ   +-- TABLE: salaries
+ℹ       +-- TYPE: InnoDB
+ℹ       +-- Index PRIMARY - Cols: emp_no,from_date - Type: BTREE
+ℹ       +-- Column salaries.emp_no: INT(11) NOT NULL
+ℹ       +-- Column salaries.salary: INT(11) NOT NULL
+ℹ       +-- Column salaries.from_date: DATE NOT NULL
+ℹ       +-- Column salaries.to_date: DATE NOT NULL
+ℹ   +-- TABLE: titles
+ℹ       +-- TYPE: InnoDB
+ℹ       +-- Index PRIMARY - Cols: emp_no,title,from_date - Type: BTREE
+ℹ       +-- Column titles.emp_no: INT(11) NOT NULL
+ℹ       +-- Column titles.title: VARCHAR(50) NOT NULL
+ℹ       +-- Column titles.from_date: DATE NOT NULL
+ℹ       +-- Column titles.to_date: DATE NULL
+ 
+-------- Table structures analysis -----------------------------------------------------------------
+✔  All tables get a primary key
+✔  All tables are InnoDB tables
+✔  All columns are UTF-8 compliant
+ 
+-------- Indexes Metrics ---------------------------------------------------------------------------
+ℹ  Worst selectivity indexes:
+ℹ  Index: dept_no(dept_no)
+ℹ   +-- COLUMN      : employees.dept_emp
+ℹ   +-- NB SEQS     : 1 sequence(s)
+ℹ   +-- NB COLS     : 1 column(s)
+ℹ   +-- CARDINALITY : 8 distinct values
+ℹ   +-- NB ROWS     : 331143 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 0.00%
+✘  dept_no(dept_no) has a low selectivity
+ℹ  Index: PRIMARY(emp_no)
+ℹ   +-- COLUMN      : employees.salaries
+ℹ   +-- NB SEQS     : 1 sequence(s)
+ℹ   +-- NB COLS     : 2 column(s)
+ℹ   +-- CARDINALITY : 315380 distinct values
+ℹ   +-- NB ROWS     : 2838426 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 11.11%
+✘  PRIMARY(emp_no) has a low selectivity
+ℹ  Index: dept_no(dept_no)
+ℹ   +-- COLUMN      : employees.dept_manager
+ℹ   +-- NB SEQS     : 1 sequence(s)
+ℹ   +-- NB COLS     : 1 column(s)
+ℹ   +-- CARDINALITY : 12 distinct values
+ℹ   +-- NB ROWS     : 24 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 50.00%
+ℹ  Index: PRIMARY(emp_no)
+ℹ   +-- COLUMN      : employees.dept_emp
+ℹ   +-- NB SEQS     : 1 sequence(s)
+ℹ   +-- NB COLS     : 2 column(s)
+ℹ   +-- CARDINALITY : 331143 distinct values
+ℹ   +-- NB ROWS     : 331143 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 100.00%
+ℹ  Index: PRIMARY(emp_no)
+ℹ   +-- COLUMN      : employees.titles
+ℹ   +-- NB SEQS     : 1 sequence(s)
+ℹ   +-- NB COLS     : 3 column(s)
+ℹ   +-- CARDINALITY : 442189 distinct values
+ℹ   +-- NB ROWS     : 442189 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 100.00%
+ℹ  Index: PRIMARY(emp_no)
+ℹ   +-- COLUMN      : employees.dept_manager
+ℹ   +-- NB SEQS     : 1 sequence(s)
+ℹ   +-- NB COLS     : 2 column(s)
+ℹ   +-- CARDINALITY : 24 distinct values
+ℹ   +-- NB ROWS     : 24 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 100.00%
+ℹ  Index: PRIMARY(dept_no)
+ℹ   +-- COLUMN      : employees.dept_emp
+ℹ   +-- NB SEQS     : 2 sequence(s)
+ℹ   +-- NB COLS     : 2 column(s)
+ℹ   +-- CARDINALITY : 331143 distinct values
+ℹ   +-- NB ROWS     : 331143 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 100.00%
+ℹ  Index: PRIMARY(title)
+ℹ   +-- COLUMN      : employees.titles
+ℹ   +-- NB SEQS     : 2 sequence(s)
+ℹ   +-- NB COLS     : 3 column(s)
+ℹ   +-- CARDINALITY : 442189 distinct values
+ℹ   +-- NB ROWS     : 442189 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 100.00%
+ℹ  Index: PRIMARY(emp_no)
+ℹ   +-- COLUMN      : employees.employees
+ℹ   +-- NB SEQS     : 1 sequence(s)
+ℹ   +-- NB COLS     : 1 column(s)
+ℹ   +-- CARDINALITY : 299202 distinct values
+ℹ   +-- NB ROWS     : 299202 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 100.00%
+ℹ  Index: PRIMARY(from_date)
+ℹ   +-- COLUMN      : employees.salaries
+ℹ   +-- NB SEQS     : 2 sequence(s)
+ℹ   +-- NB COLS     : 2 column(s)
+ℹ   +-- CARDINALITY : 2838426 distinct values
+ℹ   +-- NB ROWS     : 2838426 rows
+ℹ   +-- TYPE        : BTREE
+ℹ   +-- SELECTIVITY : 100.00%
+ℹ  Indexes per database:
+ℹ  Database: employees
+ℹ   +-- INDEX      : departments.dept_name
+ℹ   +-- COLUMNS    : dept_name
+ℹ   +-- CARDINALITY: 9
+ℹ   +-- INDEX      : departments.PRIMARY
+ℹ   +-- COLUMNS    : dept_no
+ℹ   +-- CARDINALITY: 9
+ℹ   +-- INDEX      : dept_emp.dept_no
+ℹ   +-- COLUMNS    : dept_no
+ℹ   +-- CARDINALITY: 8
+ℹ   +-- INDEX      : dept_emp.PRIMARY
+ℹ   +-- COLUMNS    : emp_no,dept_no
+ℹ   +-- CARDINALITY: 662286
+ℹ   +-- INDEX      : dept_manager.dept_no
+ℹ   +-- COLUMNS    : dept_no
+ℹ   +-- CARDINALITY: 12
+ℹ   +-- INDEX      : dept_manager.PRIMARY
+ℹ   +-- COLUMNS    : emp_no,dept_no
+ℹ   +-- CARDINALITY: 48
+ℹ   +-- INDEX      : employees.PRIMARY
+ℹ   +-- COLUMNS    : emp_no
+ℹ   +-- CARDINALITY: 299202
+ℹ   +-- INDEX      : salaries.PRIMARY
+ℹ   +-- COLUMNS    : emp_no,from_date
+ℹ   +-- CARDINALITY: 3153806
+ℹ   +-- INDEX      : titles.PRIMARY
+ℹ   +-- COLUMNS    : emp_no,title,from_date
+ℹ   +-- CARDINALITY: 1326567
+ 
+-------- Views Metrics -----------------------------------------------------------------------------
+ 
+-------- Triggers Metrics --------------------------------------------------------------------------
+ 
+-------- Routines Metrics --------------------------------------------------------------------------
+ 
+-------- Security Recommendations ------------------------------------------------------------------
+ℹ  mariadb.org binary distribution - 11.8.5-MariaDB
+✔  There are no anonymous accounts for any database users
+✔  All database users have passwords assigned
+✘  User 'root'@% does not specify hostname restrictions.
+ℹ  There are 620 basic passwords in the list.
+ 
+-------- CVE Security Recommendations --------------------------------------------------------------
+ℹ  Skipped due to --cvefile option undefined
+ 
+-------- Plugin Information ------------------------------------------------------------------------
+ℹ  Plugin                         | Version    | Status     | Type                 | Library              | License   
+ℹ  ------------------------------------------------------------------------------------------------------------------------
+ℹ  Aria                           | 1.5        | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  binlog                         | 2.0        | ACTIVE     | DAEMON               | NULL                 | GPL       
+ℹ  CLIENT_STATISTICS              | 2.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  CSV                            | 1.0        | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  FEEDBACK                       | 1.1        | DISABLED   | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  GEOMETRY_COLUMNS               | 1.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INDEX_STATISTICS               | 2.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  inet4                          | 1.0        | ACTIVE     | DATA TYPE            | NULL                 | GPL       
+ℹ  inet6                          | 1.0        | ACTIVE     | DATA TYPE            | NULL                 | GPL       
+ℹ  inet6_aton                     | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  inet6_ntoa                     | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  inet_aton                      | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  inet_ntoa                      | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  InnoDB                         | 11.8       | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  INNODB_BUFFER_PAGE             | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_BUFFER_PAGE_LRU         | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_BUFFER_POOL_STATS       | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_CMP                     | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_CMPMEM                  | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_CMPMEM_RESET            | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_CMP_PER_INDEX           | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_CMP_PER_INDEX_RESET     | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_CMP_RESET               | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_FT_BEING_DELETED        | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_FT_CONFIG               | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_FT_DEFAULT_STOPWORD     | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_FT_DELETED              | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_FT_INDEX_CACHE          | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_FT_INDEX_TABLE          | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_LOCKS                   | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_LOCK_WAITS              | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_METRICS                 | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_SYS_COLUMNS             | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_SYS_FIELDS              | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_SYS_FOREIGN             | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_SYS_FOREIGN_COLS        | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_SYS_INDEXES             | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_SYS_TABLES              | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_SYS_TABLESPACES         | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_SYS_TABLESTATS          | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_SYS_VIRTUAL             | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  INNODB_TABLESPACES_ENCRYPTION  | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | BSD       
+ℹ  INNODB_TRX                     | 11.8       | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  is_ipv4                        | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  is_ipv4_compat                 | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  is_ipv4_mapped                 | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  is_ipv6                        | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  MEMORY                         | 1.0        | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  mhnsw                          | 1.0        | ACTIVE     | DAEMON               | NULL                 | GPL       
+ℹ  MRG_MyISAM                     | 1.0        | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  MyISAM                         | 1.0        | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  mysql_native_password          | 1.0        | ACTIVE     | AUTHENTICATION       | NULL                 | GPL       
+ℹ  mysql_old_password             | 1.0        | ACTIVE     | AUTHENTICATION       | NULL                 | GPL       
+ℹ  online_alter_log               | 2.0        | ACTIVE     | DAEMON               | NULL                 | GPL       
+ℹ  partition                      | 1.0        | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  PERFORMANCE_SCHEMA             | 0.1        | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  SEQUENCE                       | 1.0        | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  SPATIAL_REF_SYS                | 1.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  SQL_SEQUENCE                   | 1.0        | ACTIVE     | STORAGE ENGINE       | NULL                 | GPL       
+ℹ  sys_guid                       | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  TABLE_STATISTICS               | 2.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  THREAD_POOL_GROUPS             | 1.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  THREAD_POOL_QUEUES             | 1.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  THREAD_POOL_STATS              | 1.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  THREAD_POOL_WAITS              | 1.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  unix_socket                    | 1.1        | ACTIVE     | AUTHENTICATION       | NULL                 | GPL       
+ℹ  USER_STATISTICS                | 2.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  user_variables                 | 1.0        | ACTIVE     | INFORMATION SCHEMA   | NULL                 | GPL       
+ℹ  uuid                           | 1.0        | ACTIVE     | DATA TYPE            | NULL                 | GPL       
+ℹ  uuid                           | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  uuid_v4                        | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  uuid_v7                        | 1.0        | ACTIVE     | FUNCTION             | NULL                 | GPL       
+ℹ  wsrep                          | 1.0        | ACTIVE     | REPLICATION          | NULL                 | GPL       
+ℹ  wsrep_provider                 | 1.0        | ACTIVE     | REPLICATION          | NULL                 | GPL       
+ 
+-------- Performance Metrics -----------------------------------------------------------------------
+ℹ  Up for: 59s (204 q [3.458 qps], 9 conn, TX: 76K, RX: 164M)
+ℹ  Reads / Writes: 6% / 94%
+ℹ  Binary logging is disabled
+ℹ  Physical Memory     : 15.3G
+ℹ  Max MySQL memory    : 861.2M
+ℹ  Other process memory: 3.7G
+ℹ  Total buffers: 417.0M global + 2.9M per thread (151 max threads)
+ℹ  Performance_schema Max memory usage: 0B
+ℹ  Galera GCache Max memory usage: 0B
+ℹ  Global Buffers
+ℹ   +-- Key Buffer: 128.0M
+ℹ   +-- Max Tmp Table: 16.0M
+ℹ  Query Cache Buffers
+ℹ   +-- Query Cache: OFF - DISABLED
+ℹ   +-- Query Cache Size: 1.0M
+ℹ  Per Thread Buffers
+ℹ   +-- Read Buffer: 128.0K
+ℹ   +-- Read RND Buffer: 256.0K
+ℹ   +-- Sort Buffer: 2.0M
+ℹ   +-- Thread stack: 292.0K
+ℹ   +-- Join Buffer: 256.0K
+✔  Maximum reached memory usage: 419.9M (2.69% of installed RAM)
+✔  Maximum possible memory usage: 861.2M (5.51% of installed RAM)
+✔  Overall possible memory usage with other process is compatible with memory available
+✔  Slow queries: 0% (0/204)
+✔  Highest usage of available connections: 0% (1/151)
+✔  Aborted connections: 0.00% (0/9)
+✔  Query cache is disabled by default due to mutex contention on multiprocessor machines.
+✔  No Sort requiring temporary tables
+✔  No joins without indexes
+✔  Temporary tables created on disk: 0% (0 on disk / 6 total)
+✔  Thread cache hit rate: 88% (1 created / 9 connections)
+✔  Table cache hit rate: 88% (226 hits / 255 requests)
+✔  table_definition_cache (400) is greater than number of tables (307)
+✔  Open file limit used: 0% (32/32K)
+✔  Table locks acquired immediately: 100% (80 immediate / 80 locks)
+ 
+-------- Performance schema ------------------------------------------------------------------------
+✘  Performance_schema should be activated.
+ℹ  Sys schema is installed.
+ 
+-------- ThreadPool Metrics ------------------------------------------------------------------------
+ℹ  ThreadPool stat is disabled.
+ 
+-------- MyISAM Metrics ----------------------------------------------------------------------------
+ℹ  General MyIsam metrics:
+ℹ   +-- Total MyISAM Tables  : 0
+ℹ   +-- Total MyISAM indexes : 0B
+ℹ   +-- KB Size :128.0M
+ℹ   +-- KB Used Size :23.3M
+ℹ   +-- KB used :18.2%
+ℹ   +-- Read KB hit rate: 0% (0 cached / 0 reads)
+ℹ   +-- Write KB hit rate: 0% (0 cached / 0 writes)
+ℹ  No MyISAM table(s) detected ....
+ 
+-------- InnoDB Metrics ----------------------------------------------------------------------------
+ℹ  InnoDB is enabled.
+ℹ  InnoDB Buffers
+ℹ   +-- InnoDB Buffer Pool: 128.0M
+ℹ   +-- InnoDB Buffer Pool Instances: 1
+ℹ   +-- InnoDB Buffer Pool Chunk Size: 0B
+ℹ   +-- InnoDB Log File Size: 96.0M
+ℹ   +-- InnoDB Log File In Group: 1
+ℹ   +-- InnoDB Total Log File Size: 96.0M(75 % of buffer pool)
+ℹ   +-- InnoDB Log Buffer: 16.0M
+ℹ   +-- InnoDB Buffer Free: 1.5K
+ℹ   +-- InnoDB Buffer Used: 7.9K
+✔  InnoDB File per table is activated
+✔  InnoDB Buffer Pool size ( 128.0M ) under limit for 64 bits architecture: (17179869184.0G )
+✘  InnoDB buffer pool / data size: 128.0M / 146.8M
+✘  Ratio InnoDB log file size / InnoDB Buffer pool size (75%): 96.0M * 1 / 128.0M should be equal to 25%
+ℹ  innodb_buffer_pool_chunk_size is set to 'autosize' (0) in MariaDB >= 10.8. Skipping chunk size checks.
+✔  InnoDB Read buffer efficiency: 100.00% (22700840 hits / 22701252 total)
+✔  InnoDB Write Log efficiency: 100.00% (8179224 hits / 8179466 total)
+✔  InnoDB log waits: 0.00% (0 waits / 242 writes)
+ 
+-------- Query Cache Information -------------------------------------------------------------------
+ℹ  QUERY_CACHE_INFO plugin is not active or not installed.
+ 
+-------- Aria Metrics ------------------------------------------------------------------------------
+ℹ  Aria Storage Engine is enabled.
+✔  Aria pagecache size / total Aria indexes: 128.0M/936.0K
+✘  Aria pagecache hit rate: 18.8% (16 cached / 13 reads)
+ 
+-------- TokuDB Metrics ----------------------------------------------------------------------------
+ℹ  TokuDB is disabled.
+ 
+-------- XtraDB Metrics ----------------------------------------------------------------------------
+ℹ  XtraDB is disabled.
+ 
+-------- Galera Metrics ----------------------------------------------------------------------------
+ℹ  Galera is disabled.
+ 
+-------- Replication Metrics -----------------------------------------------------------------------
+ℹ  Galera Synchronous replication: NO
+ℹ  No replication slave(s) for this server.
+ℹ  Binlog format: MIXED
+ℹ  XA support enabled: ON
+ℹ  Semi synchronous replication Master: OFF
+ℹ  Semi synchronous replication Slave: OFF
+ℹ  This is a standalone server
+ 
+-------- Recommendations ---------------------------------------------------------------------------
+General recommendations:
+    Consider stopping or dedicate server for additional process other than mysqld.
+    setup swappiness lower or equal to 10
+    setup Max running number events greater than 1M
+    Restrict Host for 'root'@'%' to 'root'@LimitedIPRangeOrLocalhost
+    RENAME USER 'root'@'%' TO 'root'@LimitedIPRangeOrLocalhost;
+    MySQL was started within the last 24 hours: recommendations may be inaccurate
+    Performance schema should be activated for better diagnostics
+    Be careful, increasing innodb_log_file_size / innodb_log_files_in_group means higher crash recovery mean time
+Variables to adjust:
+    DON'T APPLY SETTINGS BECAUSE THERE ARE TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCUR!
+    vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness) or vm.swappiness=10 in /etc/sysctl.conf
+    fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr) or fs.aio-max-nr=1048576 in /etc/sysctl.conf
+    performance_schema=ON
+    innodb_buffer_pool_size (>= 146.8M) if possible.
+    innodb_log_file_size should be (=32M) if possible, so InnoDB total log file size equals 25% of buffer pool size.

@@ -20,6 +20,7 @@ Features list for option: --feature (dev only)
 * mysql_innodb
 * mysql_myisam
 * mysql_pfs
+* mysql_plugins
 * mysql_routines
 * mysql_setup
 * mysql_stats

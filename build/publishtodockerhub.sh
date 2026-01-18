@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==================================================================================
+# Script: publishtodockerhub.sh
+# Description: Tags and pushes the MySQLTuner Docker image to Docker Hub.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 [ -f "./.env" ] && source ./.env
 [ -f "../.env" ] && source ../.env

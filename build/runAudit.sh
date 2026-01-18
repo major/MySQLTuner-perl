@@ -1,4 +1,11 @@
 #!/bin/bash
+# ==================================================================================
+# Script: runAudit.sh
+# Description: Runs a comprehensive audit on a remote server via SSH.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 server=$1
 _DIR=$(dirname `readlink -f $0`)

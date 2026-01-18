@@ -1,11 +1,11 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.7.2
+# mysqltuner.pl - Version 2.8.19
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 
 # For the latest updates, please visit http://mysqltuner.pl/
-# Git repository available at https://github.com/major/MySQLTuner-perl
+# Git repository available at https://github.com/jmrenouard/MySQLTuner-perl/
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.7.2";
+my $tunerversion = "2.8.21";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -106,6 +106,8 @@ my %opt = (
     "nosysstat"           => 0,
     "pfstat"              => 0,
     "nopfstat"            => 0,
+    "plugininfo"          => 0,
+    "noplugininfo"        => 0,
     "skippassword"        => 0,
     "noask"               => 0,
     "template"            => 0,
@@ -128,48 +130,51 @@ my %opt = (
     "ssh-host"            => '',
     "ssh-user"            => '',
     "ssh-password"        => '',
-    "ssh-identity-file"   => ''
+    "ssh-identity-file"   => '',
+    "container"           => '',
+    "max-password-checks" => 100
 );
 
 # Gather the options from the command line
 GetOptions(
-    \%opt,                   'nobad',
-    'nogood',                'noinfo',
-    'debug',                 'nocolor',
-    'forcemem=i',            'forceswap=i',
-    'host=s',                'socket=s',
-    'pipe',                  'pipe_name=s',
-    'port=i',                'user=s',
-    'pass=s',                'skipsize',
-    'checkversion',          'mysqladmin=s',
-    'mysqlcmd=s',            'help',
-    'buffers',               'skippassword',
-    'passwordfile=s',        'outputfile=s',
-    'silent',                'noask',
-    'json',                  'prettyjson',
-    'template=s',            'reportfile=s',
-    'cvefile=s',             'bannedports=s',
-    'updateversion',         'maxportallowed=s',
-    'verbose',               'password=s',
-    'passenv=s',             'userenv=s',
-    'defaults-file=s',       'ssl-ca=s',
-    'color',                 'noprocess',
-    'dbstat',                'nodbstat',
-    'tbstat',                'notbstat',
-    'colstat',               'nocolstat',
-    'sysstat',               'nosysstat',
-    'pfstat',                'nopfstat',
-    'idxstat',               'noidxstat',
-    'structstat',            'nostructstat',
-    'myisamstat',            'nomyisamstat',
-    'server-log=s',          'protocol=s',
-    'defaults-extra-file=s', 'dumpdir=s',
-    'feature=s',             'dbgpattern=s',
-    'defaultarch=i',         'experimental',
-    'nondedicated',          'noprettyicon',
-    'cloud',                 'azure',
-    'ssh-host=s',            'ssh-user=s',
-    'ssh-password=s',        'ssh-identity-file=s'
+    \%opt,                 'nobad',
+    'nogood',              'noinfo',
+    'debug',               'nocolor',
+    'forcemem=i',          'forceswap=i',
+    'host=s',              'socket=s',
+    'pipe',                'pipe_name=s',
+    'port=i',              'user=s',
+    'pass=s',              'skipsize',
+    'checkversion',        'mysqladmin=s',
+    'mysqlcmd=s',          'help',
+    'buffers',             'skippassword',
+    'passwordfile=s',      'outputfile=s',
+    'silent',              'noask',
+    'json',                'prettyjson',
+    'template=s',          'reportfile=s',
+    'cvefile=s',           'bannedports=s',
+    'updateversion',       'maxportallowed=s',
+    'verbose',             'password=s',
+    'passenv=s',           'userenv=s',
+    'defaults-file=s',     'ssl-ca=s',
+    'color',               'noprocess',
+    'dbstat',              'nodbstat',
+    'tbstat',              'notbstat',
+    'colstat',             'nocolstat',
+    'sysstat',             'nosysstat',
+    'pfstat',              'plugininfo',
+    'noplugininfo',        'idxstat',
+    'noidxstat',           'structstat',
+    'nostructstat',        'myisamstat',
+    'nomyisamstat',        'server-log=s',
+    'protocol=s',          'defaults-extra-file=s',
+    'dumpdir=s',           'feature=s',
+    'dbgpattern=s',        'defaultarch=i',
+    'experimental',        'nondedicated',
+    'noprettyicon',        'cloud',
+    'azure',               'ssh-host=s',
+    'ssh-user=s',          'ssh-password=s',
+    'ssh-identity-file=s', 'container=s', 'max-password-checks=i'
   )
   or pod2usage(
     -exitval  => 1,
@@ -238,11 +243,14 @@ if ( $opt{verbose} ) {
     $opt{structstat}   = 1;    # Print table structure information
     $opt{myisamstat}   = 1;    # Print MyISAM table information
 
-    $opt{cvefile} = 'vulnerabilities.csv';    #CVE File for vulnerability checks
+    $opt{cvefile}    = 'vulnerabilities.csv'; #CVE File for vulnerability checks
+    $opt{plugininfo} = 1;                     # Print plugin information
 }
 $opt{noprettyicon} = 0 if $opt{noprettyicon} != 1;
-$opt{nocolor}      = 1 if defined( $opt{outputfile} );
-$opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );   # Don't print table information
+$opt{plugininfo}   = 0
+  if ( $opt{noplugininfo} == 1 );             # Don't print plugin information
+$opt{nocolor} = 1 if defined( $opt{outputfile} );
+$opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't print table information
 $opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
 $opt{dbstat}  = 0 if ( $opt{nodbstat} == 1 ); # Don't print database information
 $opt{noprocess} = 0
@@ -381,6 +389,25 @@ sub is_remote() {
     return 0 if ( $host eq 'localhost' );
     return 0 if ( $host eq '127.0.0.1' );
     return 1;
+}
+
+sub is_docker() {
+    return 1 if -f '/.dockerenv';
+    if ( -f '/proc/self/cgroup' ) {
+        if ( open( my $fh, '<', '/proc/self/cgroup' ) ) {
+            while ( my $line = <$fh> ) {
+                if ( $line =~ /docker|kubepods|containerd|podman/ ) {
+                    close $fh;
+                    return 1;
+                }
+            }
+            close $fh;
+        }
+    }
+    return 1
+      if ( defined $ENV{'container'}
+        && $ENV{'container'} =~ /^(docker|podman|lxc)$/ );
+    return 0;
 }
 
 sub is_int {
@@ -945,7 +972,7 @@ sub execute_system_command {
 
         # Be less verbose for commands that are expected to fail on some systems
         if ( $command !~
-/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop)/
+/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl)/
           )
         {
             badprint "System command failed: $command";
@@ -1743,6 +1770,53 @@ sub log_file_recommendations {
       || get_log_file_real_path( $myvar{'log_error'}, $myvar{'hostname'},
         $myvar{'datadir'} );
 
+    # Use explicit container if provided
+    if ( $opt{'container'} ne '' ) {
+        my $container_cmd = "docker";
+        if ( $opt{'container'} =~ /^(docker|podman|kubectl):(.*)/ ) {
+            $myvar{'log_error'} = $opt{'container'};
+        }
+        else {
+            if ( which( "podman", $ENV{'PATH'} )
+                && !which( "docker", $ENV{'PATH'} ) )
+            {
+                $container_cmd = "podman";
+            }
+            $myvar{'log_error'} = "$container_cmd:$opt{'container'}";
+        }
+        debugprint "Using explicit container: $myvar{'log_error'}";
+    }
+
+    # Try to find logs from docker/podman if file doesn't exist locally
+    elsif (!-f "$myvar{'log_error'}"
+        && $myvar{'log_error'} !~ /^(docker|podman|kubectl|systemd):/
+        && !is_docker() )
+    {
+        my $container_cmd = "";
+        if ( which( "docker", $ENV{'PATH'} ) ) {
+            $container_cmd = "docker";
+        }
+        elsif ( which( "podman", $ENV{'PATH'} ) ) {
+            $container_cmd = "podman";
+        }
+
+        if ( $container_cmd ne "" ) {
+            my $port = $opt{'port'} || 3306;
+            my $container =
+`$container_cmd ps --filter "publish=$port" --format "{{.Names}}" | grep -vEi "traefik|haproxy|maxscale|maxsale|proxy" | head -n 1`;
+            chomp $container;
+            if ( $container eq "" ) {
+                $container =
+`$container_cmd ps --format "{{.Names}} {{.Image}}" | grep -Ei "mysql|mariadb|percona|db|database" | grep -vEi "traefik|haproxy|maxscale|maxsale|proxy" | head -n 1 | awk '{print \$1}'`;
+                chomp $container;
+            }
+            if ( $container ne "" ) {
+                $myvar{'log_error'} = "$container_cmd:$container";
+                debugprint "Detected $container_cmd container: $container";
+            }
+        }
+    }
+
     subheaderprint "Log file Recommendations";
     if ( "$myvar{'log_error'}" eq "stderr" ) {
         badprint
@@ -1937,6 +2011,30 @@ sub is_open_port {
 sub get_process_memory {
     return 0 if $is_win;    #Windows cmd cannot provide this
     my $pid = shift;
+
+    # Linux /proc fallback
+    if ( $^O eq 'linux' && -f "/proc/$pid/statm" ) {
+        if ( open( my $fh, '<', "/proc/$pid/statm" ) ) {
+            my $line = <$fh>;
+            close($fh);
+            if ( $line =~ /^\d+\s+(\d+)/ ) {
+                my $rss_pages = $1;
+
+       # Get page size (default to 4096 if uncertain, but usually 4096 on Linux)
+                my $pagesize = 4096;
+
+                # Attempt to get real page size if possible
+                my $getconf_pagesize = `getconf PAGESIZE 2>$devnull`;
+                if ( $? == 0 && $getconf_pagesize =~ /^(\d+)/ ) {
+                    $pagesize = $1;
+                }
+                debugprint "Memory for PID $pid from /proc: "
+                  . ( $rss_pages * $pagesize );
+                return $rss_pages * $pagesize;
+            }
+        }
+    }
+
     my @mem = execute_system_command("ps -p $pid -o rss");
     return 0 if scalar @mem != 2;
     return $mem[1] * 1024;
@@ -1960,7 +2058,9 @@ sub get_other_process_memory {
     @procs = remove_cr @procs;
     @procs = remove_empty @procs;
     my $totalMemOther = 0;
-    map { $totalMemOther += get_process_memory($_); } @procs;
+    if (@procs) {
+        map { $totalMemOther += get_process_memory($_); } @procs;
+    }
     return $totalMemOther;
 }
 
@@ -2145,9 +2245,19 @@ sub get_kernel_info {
     );
     infoprint "Information about kernel tuning:";
     foreach my $param (@params) {
-        infocmd_tab("sysctl $param 2>$devnull");
-        $result{'OS'}{'Config'}{$param} =
-          execute_system_command("sysctl -n $param 2>$devnull");
+        if ( $param =~ /^sunrpc/ ) {
+            next unless -d "/proc/sys/sunrpc";
+        }
+        my @res = execute_system_command("sysctl $param 2>/dev/null");
+        if ( $? == 0 ) {
+            foreach my $l (@res) {
+                chomp $l;
+                infoprint "\t$l";
+            }
+            my $val = execute_system_command("sysctl -n $param 2>/dev/null");
+            chomp $val;
+            $result{'OS'}{'Config'}{$param} = $val;
+        }
     }
     if ( execute_system_command('sysctl -n vm.swappiness') > 10 ) {
         badprint
@@ -2161,19 +2271,20 @@ sub get_kernel_info {
     }
 
     # only if /proc/sys/sunrpc exists
-    my $tcp_slot_entries = execute_system_command(
-        'sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull');
-    if ( -f "/proc/sys/sunrpc"
-        and ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) )
-    {
-        badprint
+    if ( -d "/proc/sys/sunrpc" ) {
+        my $tcp_slot_entries = execute_system_command(
+            "sysctl -n sunrpc.tcp_slot_table_entries 2>$devnull");
+        chomp $tcp_slot_entries;
+        if ( $tcp_slot_entries eq '' or $tcp_slot_entries < 100 ) {
+            badprint
 "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
-        push @generalrec, "setup Initial TCP slot entries greater than 100";
-        push @adjvars,
+            push @generalrec, "setup Initial TCP slot entries greater than 100";
+            push @adjvars,
 'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)  or sunrpc.tcp_slot_table_entries=128 in /etc/sysctl.conf';
-    }
-    else {
-        infoprint "TCP slot entries is > 100.";
+        }
+        else {
+            infoprint "TCP slot entries is > 100.";
+        }
     }
 
     if ( -f "/proc/sys/fs/aio-max-nr" ) {
@@ -2206,7 +2317,11 @@ sub get_kernel_info {
 sub get_system_info {
     $result{'OS'}{'Release'} = get_os_release();
     infoprint get_os_release;
-    if (is_virtual_machine) {
+    if ( is_docker() || $opt{'container'} ne '' ) {
+        infoprint "Machine type          : Container";
+        $result{'OS'}{'Virtual Machine'} = 'YES';
+    }
+    elsif (is_virtual_machine) {
         infoprint "Machine type          : Virtual machine";
         $result{'OS'}{'Virtual Machine'} = 'YES';
     }
@@ -2217,10 +2332,12 @@ sub get_system_info {
 
     $result{'Network'}{'Connected'} = 'NO';
     if ($is_win) {
-        execute_system_command('ping -s 1 ipecho.net &>$devnull');
+        execute_system_command("ping -n 1 ipecho.net > $devnull 2>&1")
+          if which( "ping", $ENV{'PATH'} );
     }
     else {
-        execute_system_command('ping -c 1 ipecho.net &>$devnull');
+        execute_system_command("ping -c 1 ipecho.net > $devnull 2>&1")
+          if which( "ping", $ENV{'PATH'} );
     }
     my $isConnected = $?;
     if ( $? == 0 ) {
@@ -2249,10 +2366,22 @@ sub get_system_info {
       : execute_system_command('hostname -I');
     infoprint "Hostname              : " . infocmd_one "hostname";
     infoprint "Network Cards         : ";
-    infocmd_tab "ifconfig| grep -A1 mtu";
+
+    if ( which( "ip", $ENV{'PATH'} ) ) {
+        infocmd_tab "ip addr | grep -A1 mtu";
+    }
+    elsif ( which( "ifconfig", $ENV{'PATH'} ) ) {
+        infocmd_tab "ifconfig| grep -A1 mtu";
+    }
     infoprint "Internal IP           : " . infocmd_one "hostname -I";
-    $result{'Network'}{'Internal Ip'} =
-      execute_system_command('ifconfig| grep -A1 mtu');
+    if ( which( "ip", $ENV{'PATH'} ) ) {
+        $result{'Network'}{'Internal Ip'} =
+          execute_system_command('ip addr | grep -A1 mtu');
+    }
+    elsif ( which( "ifconfig", $ENV{'PATH'} ) ) {
+        $result{'Network'}{'Internal Ip'} =
+          execute_system_command('ifconfig| grep -A1 mtu');
+    }
     my $httpcli = get_http_cli();
     infoprint "HTTP client found: $httpcli" if defined $httpcli;
 
@@ -2315,8 +2444,8 @@ sub system_recommendations {
           "Consider increasing number of CPU for your database server";
     }
 
-    if ( $physical_memory >= 1.5 * 1024 ) {
-        goodprint "There is at least 1 Gb of RAM dedicated to Linux server.";
+    if ( $physical_memory >= 1.5 * 1024 * 1024 * 1024 ) {
+        goodprint "There is at least 1.5 Gb of RAM dedicated to Linux server.";
     }
     else {
         badprint
@@ -2545,20 +2674,29 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
 
     @mysqlstatlist = select_array
       "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
-    if (@mysqlstatlist) {
+    if ( scalar(@mysqlstatlist) > 0 ) {
+        if ( $opt{dumpdir} ne '' ) {
+            select_csv_file(
+                "$opt{dumpdir}/user_with_general_wildcard.csv",
+                "SELECT user, host FROM mysql.user WHERE HOST='%'"
+            );
+        }
+        my $luser = 'user_name';
+        if ( scalar(@mysqlstatlist) == 1 ) {
+            $luser = ( split /@/, $mysqlstatlist[0] )[0];
+        }
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
-            my $luser = ( split /@/, $line )[0];
             badprint "User " . $line
               . " does not specify hostname restrictions.";
-            push( @generalrec,
-"Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
-            );
-            push( @generalrec,
-                    "RENAME USER $luser\@'%' TO "
-                  . $luser
-                  . "\@LimitedIPRangeOrLocalhost;" );
         }
+        push( @generalrec,
+            "Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
+        );
+        push( @generalrec,
+                "RENAME USER $luser\@'%' TO "
+              . $luser
+              . "\@LimitedIPRangeOrLocalhost;" );
     }
 
     unless ( -f $basic_password_files ) {
@@ -2573,47 +2711,68 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     my $nbins = 0;
     my $passreq;
     if (@passwords) {
-        if ( !mysql_version_ge(8) ) {
-            my $nbInterPass = 0;
+        my $nbInterPass = 0;
             foreach my $pass (@passwords) {
                 $nbInterPass++;
+                last if $nbInterPass > $opt{'max-password-checks'};
+                if ( $nbInterPass % 100 == 0 ) {
+                    select_one("FLUSH HOSTS;");
+                }
 
                 $pass =~ s/\s//g;
                 $pass =~ s/\'/\\\'/g;
                 chomp($pass);
 
-               # Looking for User with user/ uppercase /capitalise weak password
-                @mysqlstatlist =
-                  select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = PASSWORD('"
-                  . $pass
-                  . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
-                  . $pass
-                  . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
-                  . $pass
-                  . "', 1)), SUBSTRING('"
-                  . $pass
-                  . "', 2, LENGTH('"
-                  . $pass . "'))))";
-                debugprint "There are " . scalar(@mysqlstatlist) . " items.";
-                if (@mysqlstatlist) {
-                    foreach my $line (@mysqlstatlist) {
-                        chomp($line);
-                        badprint "User '" . $line
-                          . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
+                if ( !mysql_version_ge(8) ) {
+                    # Looking for User with user/ uppercase /capitalise weak password
+                    @mysqlstatlist =
+                      select_array
+                      "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = PASSWORD('"
+                      . $pass
+                      . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
+                      . $pass
+                      . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
+                      . $pass
+                      . "', 1)), SUBSTRING('"
+                      . $pass
+                      . "', 2, LENGTH('"
+                      . $pass . "'))))";
+                    debugprint "There are " . scalar(@mysqlstatlist) . " items.";
+                    if (@mysqlstatlist) {
+                        foreach my $line (@mysqlstatlist) {
+                            chomp($line);
+                            badprint "User '" . $line
+                              . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
 
-                        push( @generalrec,
-"Set up a Secure Password for $line user: SET PASSWORD FOR '"
-                              . ( split /@/, $line )[0] . "'\@'"
-                              . ( split /@/, $line )[1]
-                              . "' = PASSWORD('secure_password');" );
-                        $nbins++;
+                            push( @generalrec,
+                                    "Set up a Secure Password for $line user: SET PASSWORD FOR '"
+                                  . ( split /@/, $line )[0] . "'\@'"
+                                  . ( split /@/, $line )[1]
+                                  . "' = PASSWORD('secure_password');" );
+                            $nbins++;
+                        }
+                    }
+                }
+                else {
+                    # New way to check basic password for MySQL 8.0+
+                    my $target_user = $opt{user} || 'root';
+                    my @variants    = ( $pass, uc($pass), ucfirst($pass) );
+                    foreach my $v (@variants) {
+                        my $check_login = "-u $target_user -p'$v' $remotestring";
+                        my $loginstatus =
+                          `$mysqlcmd -Nrs -e 'select "mysqld is alive";' $check_login 2>$devnull`;
+                        if ( $loginstatus =~ /mysqld is alive/ ) {
+                            badprint "User '$target_user' is using weak password: $v";
+                            push( @generalrec,
+                                "Set up a Secure Password for $target_user user." );
+                            $nbins++;
+                            last;
+                        }
                     }
                 }
                 debugprint "$nbInterPass / " . scalar(@passwords)
                   if ( $nbInterPass % 1000 == 0 );
             }
-        }
     }
     if ( $nbins > 0 ) {
         push( @generalrec,
@@ -3102,25 +3261,33 @@ sub check_storage_engines {
         badprint "Total fragmented tables: $fragtables";
         push @generalrec,
 'Run ALTER TABLE ... FORCE or OPTIMIZE TABLE to defragment tables for better performance';
-        my $total_free = 0;
+        my $total_free            = 0;
+        my $fragmented_tables_csv = "schema,table,free_space_mb,sql\n";
         foreach my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } ) {
             my ( $table_schema, $table_name, $engine, $data_free ) =
               split /\t/msx, $table_line;
             $data_free = $data_free / 1024 / 1024;
             $total_free += $data_free;
             my $generalrec;
+            my $fragmented_tables_sql;
             if ( $engine eq 'InnoDB' ) {
-                $generalrec =
-                  "  ALTER TABLE `$table_schema`.`$table_name` FORCE;";
+                $fragmented_tables_sql =
+                  "ALTER TABLE `$table_schema`.`$table_name` FORCE;";
+                $generalrec = "  $fragmented_tables_sql";
             }
             else {
-                $generalrec = "  OPTIMIZE TABLE `$table_schema`.`$table_name`;";
+                $fragmented_tables_sql =
+                  "OPTIMIZE TABLE `$table_schema`.`$table_name`;";
+                $generalrec = "  $fragmented_tables_sql";
             }
+            $fragmented_tables_csv .=
+"$table_schema,$table_name,$data_free,\"$fragmented_tables_sql\"\n";
             $generalrec .= " -- can free $data_free MiB";
             push @generalrec, $generalrec;
         }
+        dump_into_file( 'fragmented_tables.csv', $fragmented_tables_csv );
         push @generalrec,
-          "Total freed space after defragmentation: $total_free MiB";
+"Consider defragmenting $fragtables tables to free up $total_free MiB";
     }
     else {
         goodprint "Total fragmented tables: $fragtables";
@@ -7226,6 +7393,29 @@ sub check_metadata_perf {
     return 0;
 }
 
+sub mysql_plugins {
+    return if ( $opt{plugininfo} == 0 );
+    subheaderprint "Plugin Information";
+
+    my $query =
+"SELECT PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_STATUS, PLUGIN_TYPE FROM information_schema.PLUGINS WHERE PLUGIN_STATUS = 'ACTIVE' AND PLUGIN_TYPE != 'INFORMATION SCHEMA' ORDER BY PLUGIN_TYPE, PLUGIN_NAME";
+    my @plugin_data = select_array($query);
+
+    if (@plugin_data) {
+        infoprint sprintf( "%-30s | %-10s | %-10s | %-20s",
+            "Plugin", "Version", "Status", "Type" );
+        infoprint "-" x 80;
+        foreach my $line (@plugin_data) {
+            my ( $name, $version, $status, $type ) = split( /\t/, $line );
+            infoprint sprintf( "%-30s | %-10s | %-10s | %-20s",
+                $name, $version, $status, $type );
+        }
+    }
+    else {
+        infoprint "No ACTIVE plugins found (excluding INFORMATION SCHEMA) in the information_schema.";
+    }
+}
+
 # Recommendations for Database metrics
 sub mysql_databases {
     return if ( $opt{dbstat} == 0 );
@@ -7995,6 +8185,7 @@ mysql_triggers;           # Show information about triggers
 mysql_routines;           # Show information about routines
 security_recommendations; # Display some security recommendations
 cve_recommendations;      # Display related CVE
+mysql_plugins;            # Print Plugin Information
 
 mysql_stats;              # Print the server stats
 mysql_pfs;                # Print Performance schema info
@@ -8029,7 +8220,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.7.2 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.21 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -8114,11 +8305,17 @@ You must provide the remote server's total memory when connecting to other serve
  --nostructstat              Don't print table structures information
  --pfstat                    Print Performance schema
  --nopfstat                  Don't print Performance schema
+ --plugininfo                Print Plugin information
+ --noplugininfo              Don't print Plugin information
  --bannedports               Ports banned separated by comma (,)
  --server-log                Define specific error_log to analyze
  --maxportallowed            Number of open ports allowable on this host
  --buffers                   Print global and per-thread buffer values
+ --max-password-checks       Max password checks from dictionary (default: 100)
 
+=head1 VERSION
+
+Version 2.8.19
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
@@ -8127,7 +8324,7 @@ You can find documentation for this module with the perldoc command.
 
 =head2 INTERNALS
 
-L<https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md>
+L<https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md>
 
  Internal documentation
 
@@ -8287,15 +8484,15 @@ Long Radix
 
 Bug reports, feature requests, and downloads at http://mysqltuner.pl/
 
-Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
+Bug tracker can be found at https://github.com/jmrenouard/MySQLTuner-perl/issues
 
 Maintained by Jean-Marie Renouard (jmrenouard\@gmail.com) - Licensed under GPL
 
 =head1 SOURCE CODE
 
-L<https://github.com/major/MySQLTuner-perl>
+L<https://github.com/jmrenouard/MySQLTuner-perl/>
 
- git clone https://github.com/major/MySQLTuner-perl.git
+ git clone https://github.com/jmrenouard/MySQLTuner-perl/.git
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -8304,7 +8501,7 @@ Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
 
 For the latest updates, please visit http://mysqltuner.pl/
 
-Git repository available at https://github.com/major/MySQLTuner-perl
+Git repository available at https://github.com/jmrenouard/MySQLTuner-perl/
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

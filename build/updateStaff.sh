@@ -1,4 +1,11 @@
 #!/bin/sh
+# ==================================================================================
+# Script: updateStaff.sh
+# Description: Updates project metadata, USAGE.md, FEATURES.md, and CVE lists.
+# Author: Jean-Marie Renouard
+# Project: MySQLTuner-perl
+# ==================================================================================
+
 
 (cd ..
 echo "* GENERATING USAGE FILE"
