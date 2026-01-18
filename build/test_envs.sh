@@ -168,8 +168,8 @@ run_test() {
     
     {
         echo "--- Start: $(date) ---"
-        echo "Command: perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --outputfile $target_dir/mysqltuner_output.txt"
-        perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --outputfile "$target_dir/mysqltuner_output.txt"
+        echo "Command: perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --passwordfile basic_passwords.txt --verbose --outputfile $target_dir/mysqltuner_output.txt"
+        perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --passwordfile basic_passwords.txt --verbose --outputfile "$target_dir/mysqltuner_output.txt"
         echo "===================="
     } > "$target_dir/execution.log" 2>&1
     ret_code=$?

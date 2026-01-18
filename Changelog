@@ -1,3 +1,18 @@
+2.8.19 2026-01-18
+
+- feat: release 2.8.19
+
+2.8.18 2026-01-18
+
+- feat: add --max-password-checks option to limit dictionary checks (default: 100)
+- fix: ensure Machine type is reported as 'Container' when --container option is used
+- chore: bump version to 2.8.18
+
+2.8.17 2026-01-18
+
+- feat: implementation of issue #403 to check weak passwords on MySQL 8.0+ and flush hosts every 100 attempts
+- chore: bump version to 2.8.17
+
 2.8.16 2026-01-18
 
 - chore: bump version to 2.8.16

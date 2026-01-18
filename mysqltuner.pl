@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.16
+# mysqltuner.pl - Version 2.8.19
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.16";
+my $tunerversion = "2.8.19";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -131,7 +131,8 @@ my %opt = (
     "ssh-user"            => '',
     "ssh-password"        => '',
     "ssh-identity-file"   => '',
-    "container"           => ''
+    "container"           => '',
+    "max-password-checks" => 100
 );
 
 # Gather the options from the command line
@@ -173,7 +174,7 @@ GetOptions(
     'noprettyicon',        'cloud',
     'azure',               'ssh-host=s',
     'ssh-user=s',          'ssh-password=s',
-    'ssh-identity-file=s', 'container=s'
+    'ssh-identity-file=s', 'container=s', 'max-password-checks=i'
   )
   or pod2usage(
     -exitval  => 1,
@@ -2316,7 +2317,7 @@ sub get_kernel_info {
 sub get_system_info {
     $result{'OS'}{'Release'} = get_os_release();
     infoprint get_os_release;
-    if (is_docker()) {
+    if ( is_docker() || $opt{'container'} ne '' ) {
         infoprint "Machine type          : Container";
         $result{'OS'}{'Virtual Machine'} = 'YES';
     }
@@ -2710,47 +2711,68 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     my $nbins = 0;
     my $passreq;
     if (@passwords) {
-        if ( !mysql_version_ge(8) ) {
-            my $nbInterPass = 0;
+        my $nbInterPass = 0;
             foreach my $pass (@passwords) {
                 $nbInterPass++;
+                last if $nbInterPass > $opt{'max-password-checks'};
+                if ( $nbInterPass % 100 == 0 ) {
+                    select_one("FLUSH HOSTS;");
+                }
 
                 $pass =~ s/\s//g;
                 $pass =~ s/\'/\\\'/g;
                 chomp($pass);
 
-               # Looking for User with user/ uppercase /capitalise weak password
-                @mysqlstatlist =
-                  select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = PASSWORD('"
-                  . $pass
-                  . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
-                  . $pass
-                  . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
-                  . $pass
-                  . "', 1)), SUBSTRING('"
-                  . $pass
-                  . "', 2, LENGTH('"
-                  . $pass . "'))))";
-                debugprint "There are " . scalar(@mysqlstatlist) . " items.";
-                if (@mysqlstatlist) {
-                    foreach my $line (@mysqlstatlist) {
-                        chomp($line);
-                        badprint "User '" . $line
-                          . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
+                if ( !mysql_version_ge(8) ) {
+                    # Looking for User with user/ uppercase /capitalise weak password
+                    @mysqlstatlist =
+                      select_array
+                      "SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = PASSWORD('"
+                      . $pass
+                      . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
+                      . $pass
+                      . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
+                      . $pass
+                      . "', 1)), SUBSTRING('"
+                      . $pass
+                      . "', 2, LENGTH('"
+                      . $pass . "'))))";
+                    debugprint "There are " . scalar(@mysqlstatlist) . " items.";
+                    if (@mysqlstatlist) {
+                        foreach my $line (@mysqlstatlist) {
+                            chomp($line);
+                            badprint "User '" . $line
+                              . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
 
-                        push( @generalrec,
-"Set up a Secure Password for $line user: SET PASSWORD FOR '"
-                              . ( split /@/, $line )[0] . "'\@'"
-                              . ( split /@/, $line )[1]
-                              . "' = PASSWORD('secure_password');" );
-                        $nbins++;
+                            push( @generalrec,
+                                    "Set up a Secure Password for $line user: SET PASSWORD FOR '"
+                                  . ( split /@/, $line )[0] . "'\@'"
+                                  . ( split /@/, $line )[1]
+                                  . "' = PASSWORD('secure_password');" );
+                            $nbins++;
+                        }
+                    }
+                }
+                else {
+                    # New way to check basic password for MySQL 8.0+
+                    my $target_user = $opt{user} || 'root';
+                    my @variants    = ( $pass, uc($pass), ucfirst($pass) );
+                    foreach my $v (@variants) {
+                        my $check_login = "-u $target_user -p'$v' $remotestring";
+                        my $loginstatus =
+                          `$mysqlcmd -Nrs -e 'select "mysqld is alive";' $check_login 2>$devnull`;
+                        if ( $loginstatus =~ /mysqld is alive/ ) {
+                            badprint "User '$target_user' is using weak password: $v";
+                            push( @generalrec,
+                                "Set up a Secure Password for $target_user user." );
+                            $nbins++;
+                            last;
+                        }
                     }
                 }
                 debugprint "$nbInterPass / " . scalar(@passwords)
                   if ( $nbInterPass % 1000 == 0 );
             }
-        }
     }
     if ( $nbins > 0 ) {
         push( @generalrec,
@@ -8289,10 +8311,11 @@ You must provide the remote server's total memory when connecting to other serve
  --server-log                Define specific error_log to analyze
  --maxportallowed            Number of open ports allowable on this host
  --buffers                   Print global and per-thread buffer values
+ --max-password-checks       Max password checks from dictionary (default: 100)
 
 =head1 VERSION
 
-Version 2.8.16
+Version 2.8.19
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.

@@ -109,6 +109,10 @@ vendor_setup:
 
 test: vendor_setup
 	@echo "Running MySQLTuner tests..."
+	bash build/test_envs.sh $(CONFIGS)
+
+test-all: vendor_setup
+	@echo "Running all MySQLTuner tests..."
 	bash build/test_envs.sh
 
 clean_examples:
