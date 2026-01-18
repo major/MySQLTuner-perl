@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.27";
+my $tunerversion = "2.8.28";
 my ( @adjvars, @generalrec );
 
 # Set defaults
