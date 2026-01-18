@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.23
+# mysqltuner.pl - Version 2.8.25
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.23";
+my $tunerversion = "2.8.25";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -132,7 +132,8 @@ my %opt = (
     "ssh-password"        => '',
     "ssh-identity-file"   => '',
     "container"           => '',
-    "max-password-checks" => 100
+    "max-password-checks" => 100,
+    "ignore-tables"       => ''
 );
 
 # Gather the options from the command line
@@ -174,7 +175,8 @@ GetOptions(
     'noprettyicon',        'cloud',
     'azure',               'ssh-host=s',
     'ssh-user=s',          'ssh-password=s',
-    'ssh-identity-file=s', 'container=s', 'max-password-checks=i'
+    'ssh-identity-file=s', 'container=s', 'max-password-checks=i',
+    'ignore-tables=s'
   )
   or pod2usage(
     -exitval  => 1,
@@ -2601,7 +2603,7 @@ sub security_recommendations {
 
     # New table schema available since mysql-5.7 and mariadb-10.2
     # But need to be checked
-    if ( $myvar{'version'} =~ /5\.7|10\.[2-5]\..*MariaDB*/ ) {
+    if ( ($myvar{'version'} =~ /5\.7/) or (($myvar{'version'} =~ /10\.[2-5]\..*/) and (($myvar{'version'} =~ /MariaDB/i) or ($myvar{'version_comment'} =~ /MariaDB/i)))) {
         my $password_column_exists =
 `$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'" 2>>$devnull`;
         my $authstring_column_exists =
@@ -2918,7 +2920,7 @@ sub get_replication_status {
     }
 
     # Parallel replication checks (MariaDB specific)
-    if ( $myvar{'version'} =~ /MariaDB/i ) {
+    if ( ($myvar{'version'} =~ /MariaDB/i) or ($myvar{'version_comment'} =~ /MariaDB/i) ) {
         my $parallel_threads = $myvar{'slave_parallel_threads'}
           // $myvar{'replica_parallel_threads'} // 0;
         if ( $parallel_threads > 1 ) {
@@ -7194,8 +7196,9 @@ sub mysql_innodb {
     }
 
     # InnoDB Used Buffer Pool Size vs CHUNK size
-    if (    $myvar{'version'} =~ /MariaDB/i
+    if (    ( ( $myvar{'version'} =~ /MariaDB/i ) or ( $myvar{'version_comment'} =~ /MariaDB/i ) )
         and mysql_version_ge( 10, 8 )
+        and defined( $myvar{'innodb_buffer_pool_chunk_size'} )
         and $myvar{'innodb_buffer_pool_chunk_size'} == 0 )
     {
         infoprint
@@ -7360,7 +7363,7 @@ sub mysql_innodb {
 sub mariadb_query_cache_info {
     subheaderprint "Query Cache Information";
 
-    unless ( $myvar{'version'} =~ /MariaDB/i ) {
+    unless ( ($myvar{'version'} =~ /MariaDB/i) or ($myvar{'version_comment'} =~ /MariaDB/i) ) {
         infoprint
           "Not a MariaDB server. Skipping Query Cache Info plugin check.";
         return;
@@ -7452,26 +7455,32 @@ sub mysql_databases {
         return;
     }
 
+    my $ignore_tables_sql = "";
+    if ( $opt{'ignore-tables'} ne '' ) {
+        my @ignored = split /,/, $opt{'ignore-tables'};
+        $ignore_tables_sql = " AND TABLE_NAME NOT IN ('" . join( "','", @ignored ) . "')";
+    }
+
     @dblist = select_array(
 "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME NOT IN ( 'mysql', 'performance_schema', 'information_schema', 'sys' );"
     );
     infoprint "There is " . scalar(@dblist) . " Database(s).";
     my @totaldbinfo = split /\s/,
       select_one(
-"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH), SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME), COUNT(DISTINCT(TABLE_COLLATION)), COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys');"
+"SELECT SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH), SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(TABLE_NAME), COUNT(DISTINCT(TABLE_COLLATION)), COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')$ignore_tables_sql;"
       );
     infoprint "All User Databases:";
     infoprint " +-- TABLE : "
       . select_one(
-"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')"
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')$ignore_tables_sql"
       ) . "";
     infoprint " +-- VIEW  : "
       . select_one(
-"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')"
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')$ignore_tables_sql"
       ) . "";
     infoprint " +-- INDEX : "
       . select_one(
-"SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')"
+"SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')$ignore_tables_sql"
       ) . "";
 
     infoprint " +-- CHARS : "
@@ -7479,7 +7488,7 @@ sub mysql_databases {
       . (
         join ", ",
         select_array(
-"select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys');"
+"select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')$ignore_tables_sql;"
         )
       ) . ")";
     infoprint " +-- COLLA : "
@@ -7487,7 +7496,7 @@ sub mysql_databases {
       . (
         join ", ",
         select_array(
-"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_COLLATION IS NOT NULL AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys');"
+"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_COLLATION IS NOT NULL AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')$ignore_tables_sql;"
         )
       ) . ")";
     infoprint " +-- ROWS  : "
@@ -7504,7 +7513,7 @@ sub mysql_databases {
       . (
         join ", ",
         select_array(
-"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE ENGINE IS NOT NULL AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys');"
+"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE ENGINE IS NOT NULL AND TABLE_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys')$ignore_tables_sql;"
         )
       ) . ")";
 
@@ -7524,29 +7533,29 @@ sub mysql_databases {
     foreach (@dblist) {
         my @dbinfo = split /\s/,
           select_one(
-"SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH), SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE), COUNT(TABLE_NAME), COUNT(DISTINCT(TABLE_COLLATION)), COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
+"SELECT TABLE_SCHEMA, SUM(TABLE_ROWS), SUM(DATA_LENGTH), SUM(INDEX_LENGTH), SUM(DATA_LENGTH+INDEX_LENGTH), COUNT(DISTINCT ENGINE), COUNT(TABLE_NAME), COUNT(DISTINCT(TABLE_COLLATION)), COUNT(DISTINCT(ENGINE)) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_'$ignore_tables_sql GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA"
           );
         next unless defined $dbinfo[0];
 
         infoprint "Database: " . $dbinfo[0] . "";
         $nbTables = select_one(
-"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA='$_'"
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA='$_'$ignore_tables_sql"
         );
         infoprint " +-- TABLE : $nbTables";
         infoprint " +-- VIEW  : "
           . select_one(
-"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA='$_'"
+"SELECT count(*) from information_schema.TABLES WHERE TABLE_TYPE ='VIEW' AND TABLE_SCHEMA='$_'$ignore_tables_sql"
           ) . "";
         infoprint " +-- INDEX : "
           . select_one(
-"SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA='$_'"
+"SELECT count(distinct(concat(TABLE_NAME, TABLE_SCHEMA, INDEX_NAME))) from information_schema.STATISTICS WHERE TABLE_SCHEMA='$_'$ignore_tables_sql"
           ) . "";
         infoprint " +-- CHARS : "
           . ( $totaldbinfo[5] eq 'NULL' ? 0 : $totaldbinfo[5] ) . " ("
           . (
             join ", ",
             select_array(
-"select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA='$_';"
+"select distinct(CHARACTER_SET_NAME) from information_schema.columns WHERE CHARACTER_SET_NAME IS NOT NULL AND TABLE_SCHEMA='$_'$ignore_tables_sql;"
             )
           ) . ")";
         infoprint " +-- COLLA : "
@@ -7554,7 +7563,7 @@ sub mysql_databases {
           . (
             join ", ",
             select_array(
-"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' AND TABLE_COLLATION IS NOT NULL;"
+"SELECT DISTINCT(TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' AND TABLE_COLLATION IS NOT NULL$ignore_tables_sql;"
             )
           ) . ")";
         infoprint " +-- ROWS  : "
@@ -7572,19 +7581,19 @@ sub mysql_databases {
           . (
             join ", ",
             select_array(
-"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' AND ENGINE IS NOT NULL"
+"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' AND ENGINE IS NOT NULL$ignore_tables_sql"
             )
           ) . ")";
 
         foreach my $eng (
             select_array(
-"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' AND ENGINE IS NOT NULL"
+"SELECT DISTINCT(ENGINE) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$_' AND ENGINE IS NOT NULL$ignore_tables_sql"
             )
           )
         {
             infoprint " +-- ENGINE $eng : "
               . select_one(
-"SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbinfo[0]' AND ENGINE='$eng'"
+"SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbinfo[0]' AND ENGINE='$eng'$ignore_tables_sql"
               ) . " TABLE(s)";
         }
 
@@ -7698,12 +7707,18 @@ sub mysql_tables {
 
     }
 
+    my $ignore_tables_sql = "";
+    if ( $opt{'ignore-tables'} ne '' ) {
+        my @ignored = split /,/, $opt{'ignore-tables'};
+        $ignore_tables_sql = " AND TABLE_NAME NOT IN ('" . join( "','", @ignored ) . "')";
+    }
+
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
         next unless defined $_;
         infoprint "Database: " . $_ . "";
         my @dbtable = select_array(
-"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbname' AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME"
+"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbname' AND TABLE_TYPE='BASE TABLE'$ignore_tables_sql ORDER BY TABLE_NAME"
         );
         foreach (@dbtable) {
             my $tbname = $_;
@@ -7805,7 +7820,13 @@ sub mysql_indexes {
 #"Skip Index metrics from information schema due to erroneous information provided in this version";
 #        return;
 #    }
-    my $selIdxReq = <<'ENDSQL';
+    my $ignore_tables_sql = "";
+    if ( $opt{'ignore-tables'} ne '' ) {
+        my @ignored = split /,/, $opt{'ignore-tables'};
+        $ignore_tables_sql = " AND TABLE_NAME NOT IN ('" . join( "','", @ignored ) . "')";
+    }
+
+    my $selIdxReq = <<"ENDSQL";
 SELECT
   CONCAT(t.TABLE_SCHEMA, '.', t.TABLE_NAME) AS 'table', 
   CONCAT(s.INDEX_NAME, '(', s.COLUMN_NAME, ')') AS 'index'
@@ -7826,14 +7847,14 @@ FROM INFORMATION_SCHEMA.STATISTICS s
    , INDEX_NAME
    , MAX(SEQ_IN_INDEX) AS max_columns
   FROM INFORMATION_SCHEMA.STATISTICS
-  WHERE TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema')
+  WHERE TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema')$ignore_tables_sql
   AND INDEX_TYPE <> 'FULLTEXT'
   GROUP BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME
  ) AS s2
  ON s.TABLE_SCHEMA = s2.TABLE_SCHEMA
  AND s.TABLE_NAME = s2.TABLE_NAME
  AND s.INDEX_NAME = s2.INDEX_NAME
-WHERE t.TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema')
+WHERE t.TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema')$ignore_tables_sql
 AND t.TABLE_ROWS > 10
 AND s.CARDINALITY IS NOT NULL
 AND (s.CARDINALITY / IFNULL(t.TABLE_ROWS, 0.01)) < 8.00
@@ -7876,7 +7897,7 @@ ENDSQL
                 INDEX_TYPE as type
         FROM information_schema.statistics
         WHERE INDEX_SCHEMA='$dbname'
-        AND index_name IS NOT NULL
+        AND index_name IS NOT NULL$ignore_tables_sql
         GROUP BY table_name, idxname, type
 ENDSQL
         my $found = 0;
@@ -7902,13 +7923,13 @@ ENDSQL
       unless ( defined( $myvar{'performance_schema'} )
         and $myvar{'performance_schema'} eq 'ON' );
 
-    $selIdxReq = <<'ENDSQL';
+    $selIdxReq = <<"ENDSQL";
 SELECT CONCAT(object_schema, '.', object_name) AS 'table', index_name
 FROM performance_schema.table_io_waits_summary_by_index_usage
 WHERE index_name IS NOT NULL
 AND count_star = 0
 AND index_name <> 'PRIMARY'
-AND object_schema NOT IN ('mysql', 'performance_schema', 'information_schema')
+AND object_schema NOT IN ('mysql', 'performance_schema', 'information_schema')$ignore_tables_sql
 ORDER BY count_star, object_schema, object_name;
 ENDSQL
     @idxinfo = select_array($selIdxReq);
@@ -8340,7 +8361,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 VERSION
 
-Version 2.8.23
+Version 2.8.25
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.

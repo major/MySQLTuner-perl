@@ -1,0 +1,248 @@
+2.8.23 2026-01-18
+
+- 
+
+2.8.22 2026-01-18
+
+- feat: update all repository links from 'major' to 'jmrenouard' (issue #410)
+- docs: add Changelog information and Useful Links to all README files (issue #411)
+- feat: improve thread_pool_size recommendations based on logical CPU count (issue #404)
+- feat: suggest enabling thread pool for servers with max_connections >= 512 (issue #404)
+- fix: hide ThreadPool metrics when thread pool is not enabled to avoid noise (issue #404)
+- feat: add logical_cpu_cores function to accurately detect threads including HT
+- chore: bump version to 2.8.22
+
+2.8.21 2026-01-18
+
+- fix: remove contradictory query_cache_limit recommendation when disabling query cache (issue #671)
+- fix: cap join_buffer_size recommendation at 4MB and prefer index optimization (issue #671)
+- chore: bump version to 2.8.21
+
+2.8.20 2026-01-18
+
+- feat: add automated regression test for forcemem MB interpretation (issues #780, #810)
+- chore: bump version to 2.8.20
+
+2.8.18 2026-01-18
+
+- feat: add --max-password-checks option to limit dictionary checks (default: 100)
+- fix: ensure Machine type is reported as 'Container' when --container option is used
+- chore: bump version to 2.8.18
+
+2.8.17 2026-01-18
+
+- feat: implementation of issue #403 to check weak passwords on MySQL 8.0+ and flush hosts every 100 attempts
+- chore: bump version to 2.8.17
+
+2.8.16 2026-01-18
+
+- chore: bump version to 2.8.16
+
+2.8.15 2026-01-18
+
+- feat: update all GitHub links from 'major' to 'jmrenouard' organization
+- feat: refactor plugin information to filter ACTIVE status and display specific columns grouped by type
+- chore: bump version to 2.8.15
+
+2.8.13 2026-01-18
+
+- docs: add Useful Links section to all README files (English, French, Russian, Italian)
+- chore: bump version to 2.8.13
+
+2.8.12 2026-01-17
+
+- feat: update is_docker() to detect containerd and podman runtimes
+- chore: bump version to 2.8.12
+
+2.8.11 2026-01-17
+
+- docs: update INTERNALS.md with information about Cloud, SSH, Containers, and Plugins
+- chore: bump version to 2.8.11
+
+2.8.10 2026-01-17
+
+- feat: add dates and commands to log files in test_envs.sh
+- feat: add separators (=) at the end of log files in test_envs.sh
+- chore: synchronize version strings across script, POD, and version file
+
+2.8.9 2026-01-17
+
+- feat: improve container log detection by excluding proxy containers (traefik, haproxy, maxscale, proxy)
+- feat: prioritize database-related container names (mysql, mariadb, percona, db, database)
+- chore: bump version to 2.8.9
+
+2.8.8 2026-01-17
+
+- feat: add -d/--database parameter to test_envs.sh to tune specific databases
+- feat: add -c/--configs parameter to test_envs.sh for easier configuration selection
+- feat: add timestamps to major steps in test_envs.sh logs
+- feat: add execution header to test_envs.sh output showing the full command
+- chore: bump version to 2.8.8
+
+2.8.7 2026-01-17
+
+- docs: add standardized comment headers to all build shell scripts
+- chore: synchronize version strings across script, POD, and version file
+- fix: ensure version consistency between Changelog and CURRENT_VERSION.txt
+
+2.8.6 2026-01-17
+
+- feat: add Plugin Information section and --plugininfo flag (#794)
+- fix: memory calculation bug in system_recommendations (1.5GB check)
+- fix: ensure forcemem is correctly interpreted and displayed as MB in os_setup
+- chore: synchronize version strings across script, POD, and version file
+
+2.8.5 2026-01-17
+
+- fix: noisy sysctl errors for sunrpc parameters when kernel module is not loaded
+- fix: refactor get_kernel_info to handle missing sysctl parameters gracefully
+
+2.8.4 2026-01-17
+
+- fix: database injection failing to find dump files due to incorrect working directory
+- fix: ensure correct path handling for 'source' commands in employees.sql
+
+2.8.3 2026-01-17
+
+- feat: detect docker/podman environment and automatically grab logs from container if local log file is not found
+- feat: add --container option to manually specify a container for log retrieval
+
+2.8.2 2026-01-17
+
+- fix: system command failures (ping/ifconfig/redirection) on modern Linux (Ubuntu 22.04/WSL2)
+- feat: integrate external test dependencies (multi-db-docker-env, test_db) and automated employees database injection
+
+2.8.1 2026-01-17
+
+- fix: resilient memory checks with /proc fallback on Linux and silencing expected ps failures
+
+2.8.0 2026-01-17
+
+- Bump version to 2.8.0
+- enhance user hostname restriction checks
+- feat: Translate comments and messages in updateCVElist.py to English
+- chore: ignore VS Code workspace files
+- build: update Debian File::Util dependency installation
+- cleanup: MariaDB and MySQL support documentation (focus on LTS)
+2.8.22 2026-01-18
+
+- feat: update all repository links from 'major' to 'jmrenouard' (issue #410)
+- docs: add Changelog information and Useful Links to all README files (issue #411)
+- feat: improve thread_pool_size recommendations based on logical CPU count (issue #404)
+- feat: suggest enabling thread pool for servers with max_connections >= 512 (issue #404)
+- fix: hide ThreadPool metrics when thread pool is not enabled to avoid noise (issue #404)
+- feat: add logical_cpu_cores function to accurately detect threads including HT
+- chore: bump version to 2.8.22
+
+2.8.21 2026-01-18
+
+- fix: remove contradictory query_cache_limit recommendation when disabling query cache (issue #671)
+- fix: cap join_buffer_size recommendation at 4MB and prefer index optimization (issue #671)
+- chore: bump version to 2.8.21
+
+2.8.20 2026-01-18
+
+- feat: add automated regression test for forcemem MB interpretation (issues #780, #810)
+- chore: bump version to 2.8.20
+
+2.8.18 2026-01-18
+
+- feat: add --max-password-checks option to limit dictionary checks (default: 100)
+- fix: ensure Machine type is reported as 'Container' when --container option is used
+- chore: bump version to 2.8.18
+
+2.8.17 2026-01-18
+
+- feat: implementation of issue #403 to check weak passwords on MySQL 8.0+ and flush hosts every 100 attempts
+- chore: bump version to 2.8.17
+
+2.8.16 2026-01-18
+
+- chore: bump version to 2.8.16
+
+2.8.15 2026-01-18
+
+- feat: update all GitHub links from 'major' to 'jmrenouard' organization
+- feat: refactor plugin information to filter ACTIVE status and display specific columns grouped by type
+- chore: bump version to 2.8.15
+
+2.8.13 2026-01-18
+
+- docs: add Useful Links section to all README files (English, French, Russian, Italian)
+- chore: bump version to 2.8.13
+
+2.8.12 2026-01-17
+
+- feat: update is_docker() to detect containerd and podman runtimes
+- chore: bump version to 2.8.12
+
+2.8.11 2026-01-17
+
+- docs: update INTERNALS.md with information about Cloud, SSH, Containers, and Plugins
+- chore: bump version to 2.8.11
+
+2.8.10 2026-01-17
+
+- feat: add dates and commands to log files in test_envs.sh
+- feat: add separators (=) at the end of log files in test_envs.sh
+- chore: synchronize version strings across script, POD, and version file
+
+2.8.9 2026-01-17
+
+- feat: improve container log detection by excluding proxy containers (traefik, haproxy, maxscale, proxy)
+- feat: prioritize database-related container names (mysql, mariadb, percona, db, database)
+- chore: bump version to 2.8.9
+
+2.8.8 2026-01-17
+
+- feat: add -d/--database parameter to test_envs.sh to tune specific databases
+- feat: add -c/--configs parameter to test_envs.sh for easier configuration selection
+- feat: add timestamps to major steps in test_envs.sh logs
+- feat: add execution header to test_envs.sh output showing the full command
+- chore: bump version to 2.8.8
+
+2.8.7 2026-01-17
+
+- docs: add standardized comment headers to all build shell scripts
+- chore: synchronize version strings across script, POD, and version file
+- fix: ensure version consistency between Changelog and CURRENT_VERSION.txt
+
+2.8.6 2026-01-17
+
+- feat: add Plugin Information section and --plugininfo flag (#794)
+- fix: memory calculation bug in system_recommendations (1.5GB check)
+- fix: ensure forcemem is correctly interpreted and displayed as MB in os_setup
+- chore: synchronize version strings across script, POD, and version file
+
+2.8.5 2026-01-17
+
+- fix: noisy sysctl errors for sunrpc parameters when kernel module is not loaded
+- fix: refactor get_kernel_info to handle missing sysctl parameters gracefully
+
+2.8.4 2026-01-17
+
+- fix: database injection failing to find dump files due to incorrect working directory
+- fix: ensure correct path handling for 'source' commands in employees.sql
+
+2.8.3 2026-01-17
+
+- feat: detect docker/podman environment and automatically grab logs from container if local log file is not found
+- feat: add --container option to manually specify a container for log retrieval
+
+2.8.2 2026-01-17
+
+- fix: system command failures (ping/ifconfig/redirection) on modern Linux (Ubuntu 22.04/WSL2)
+- feat: integrate external test dependencies (multi-db-docker-env, test_db) and automated employees database injection
+
+2.8.1 2026-01-17
+
+- fix: resilient memory checks with /proc fallback on Linux and silencing expected ps failures
+
+2.8.0 2026-01-17
+
+- Bump version to 2.8.0
+- enhance user hostname restriction checks
+- feat: Translate comments and messages in updateCVElist.py to English
+- chore: ignore VS Code workspace files
+- build: update Debian File::Util dependency installation
+- cleanup: MariaDB and MySQL support documentation (focus on LTS)
