@@ -1,3 +1,7 @@
+2.8.25 2026-01-18
+
+-
+
 2.8.24 2026-01-18
 
 - fix: improve MariaDB 11+ detection by checking version_comment (issue #869)
