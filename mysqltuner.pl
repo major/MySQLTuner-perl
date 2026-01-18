@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.20";
+my $tunerversion = "2.8.21";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -8220,7 +8220,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.20 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.21 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
