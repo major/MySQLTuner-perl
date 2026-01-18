@@ -1,6 +1,7 @@
-2.8.19 2026-01-18
+2.8.20 2026-01-18
 
-- feat: release 2.8.19
+- feat: add automated regression test for forcemem MB interpretation (issues #780, #810)
+- chore: bump version to 2.8.20
 
 2.8.18 2026-01-18
 
