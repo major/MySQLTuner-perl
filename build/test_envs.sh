@@ -21,12 +21,14 @@ TEST_DB_REPO="https://github.com/jmrenouard/test_db"
 DEFAULT_CONFIGS="mysql84 mariadb1011 percona80"
 CONFIGS=""
 TARGET_DB=""
+FORCEMEM_VAL=""
 
 show_usage() {
     echo "Usage: $0 [options] [configs...]"
     echo "Options:"
     echo "  -c, --configs \"list\"   List of configurations to test (e.g. \"mysql84 mariadb1011\")"
     echo "  -d, --database name    Target database name for MySQLTuner to tune"
+    echo "  -f, --forcemem value   Value for --forcemem parameter (in MB)"
     echo "  -h, --help             Show this help"
     echo ""
     echo "Examples:"
@@ -44,6 +46,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -d|--database)
             TARGET_DB="$2"
+            shift 2
+            ;;
+        -f|--forcemem)
+            FORCEMEM_VAL="$2"
             shift 2
             ;;
         -h|--help)
@@ -164,6 +170,11 @@ run_test() {
     if [ -n "$TARGET_DB" ]; then
         db_param="--database $TARGET_DB"
         echo "Tuning specific database: $TARGET_DB"
+    fi
+
+    if [ -n "$FORCEMEM_VAL" ]; then
+        db_param="$db_param --forcemem $FORCEMEM_VAL"
+        echo "Forcing memory to: ${FORCEMEM_VAL}MB"
     fi
     
     {

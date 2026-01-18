@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.19
+# mysqltuner.pl - Version 2.8.23
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 my $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.21";
+my $tunerversion = "2.8.23";
 my ( @adjvars, @generalrec );
 
 # Set defaults
@@ -427,13 +427,13 @@ sub is_int {
     return 0;
 }
 
-# Calculates the number of physical cores considering HyperThreading
+# Calculates the number of physical cores
 sub cpu_cores {
     if ( $^O eq 'linux' ) {
         my $cntCPU =
-`awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
+          `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
         chomp $cntCPU;
-        return ( $cntCPU == 0 ? `nproc` : $cntCPU );
+        return ( $cntCPU == 0 ? `nproc` : $cntCPU ) + 0;
     }
 
     if ( $^O eq 'freebsd' ) {
@@ -443,11 +443,37 @@ sub cpu_cores {
     }
     if ($is_win) {
         my $cntCPU =
-`wmic cpu get NumberOfCores| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`;
+          `wmic cpu get NumberOfCores| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`;
         chomp $cntCPU;
         return $cntCPU + 0;
     }
     return 0;
+}
+
+# Calculates the number of logical cores (including HT)
+sub logical_cpu_cores {
+    if ( $^O eq 'linux' ) {
+        my $cntCPU = `grep -c ^processor /proc/cpuinfo`;
+        chomp $cntCPU;
+        if ( $cntCPU == 0 ) {
+            $cntCPU = `nproc`;
+            chomp $cntCPU;
+        }
+        return $cntCPU + 0;
+    }
+
+    if ( $^O eq 'freebsd' ) {
+        my $cntCPU = `sysctl -n kern.smp.cpus`;
+        chomp $cntCPU;
+        return $cntCPU + 0;
+    }
+    if ($is_win) {
+        my $cntCPU =
+          `wmic cpu get NumberOfLogicalProcessors| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`;
+        chomp $cntCPU;
+        return $cntCPU + 0;
+    }
+    return cpu_cores();
 }
 
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
@@ -713,7 +739,7 @@ sub validate_tuner_version {
 
     my $update;
     my $url =
-"https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl";
+"https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/mysqltuner.pl";
     my $httpcli = get_http_cli();
     if ( $httpcli =~ /curl$/ ) {
         debugprint "$httpcli is available.";
@@ -780,7 +806,7 @@ sub update_tuner_version {
 
     my $update;
     my $fullpath = "";
-    my $url = "https://raw.githubusercontent.com/major/MySQLTuner-perl/master/";
+    my $url = "https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/";
     my @scripts =
       ( "mysqltuner.pl", "basic_passwords.txt", "vulnerabilities.csv" );
     my $totalScripts    = scalar(@scripts);
@@ -4072,10 +4098,6 @@ sub mysql_stats {
               . " cached / "
               . hr_num( $mystat{'Qcache_hits'} + $mystat{'Com_select'} )
               . " selects)";
-            push( @adjvars,
-                    "query_cache_limit (> "
-                  . hr_bytes_rnd( $myvar{'query_cache_limit'} )
-                  . ", or use smaller result sets)" );
             badprint
               "Query cache may be disabled by default due to mutex contention.";
             push( @adjvars, "query_cache_size (=0)" );
@@ -4148,10 +4170,15 @@ sub mysql_stats {
     if ( $mycalc{'joins_without_indexes_per_day'} > 250 ) {
         badprint
           "Joins performed without indexes: $mycalc{'joins_without_indexes'}";
-        push( @adjvars,
-                "join_buffer_size (> "
-              . hr_bytes( $myvar{'join_buffer_size'} )
-              . ", or always use indexes with JOINs)" );
+        if ( $myvar{'join_buffer_size'} < 4 * 1024 * 1024 ) {
+            push( @adjvars,
+                    "join_buffer_size (> "
+                  . hr_bytes( $myvar{'join_buffer_size'} )
+                  . ", or always use indexes with JOINs)" );
+        }
+        else {
+            push( @adjvars, "always use indexes with JOINs" );
+        }
         push(
             @generalrec,
 "We will suggest raising the 'join_buffer_size' until JOINs not using indexes are found.
@@ -4631,85 +4658,57 @@ sub mysql_myisam {
 }
 
 # Recommendations for ThreadPool
+# See issue #404: https://github.com/jmrenouard/MySQLTuner-perl/issues/404
 sub mariadb_threadpool {
-    subheaderprint "ThreadPool Metrics";
+    my $is_mariadb = ( ($myvar{'version'} // '') =~ /mariadb/i );
+    my $is_percona = ( ($myvar{'version'} // '') =~ /percona/i or ($myvar{'version_comment'} // '') =~ /percona/i );
 
-    # MariaDB
-    unless ( defined $myvar{'have_threadpool'}
-        && $myvar{'have_threadpool'} eq "YES" )
-    {
+    # Thread Pool is only relevant for MariaDB and Percona
+    return unless ($is_mariadb or $is_percona);
+
+    my $thread_handling = $myvar{'thread_handling'} // 'one-thread-per-connection';
+    my $is_threadpool_enabled = ( $thread_handling eq 'pool-of-threads' );
+
+    # Recommendation to ENABLE thread pool if connections are high
+    # https://www.percona.com/blog/2014/01/23/percona-server-improve-scalability-percona-thread-pool/
+    if (!$is_threadpool_enabled && ($mystat{'Max_used_connections'} // 0) >= 512) {
+        subheaderprint "ThreadPool Metrics";
         infoprint "ThreadPool stat is disabled.";
-        return;
-    }
-    infoprint "ThreadPool stat is enabled.";
-    infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
-
-    if (   $myvar{'version'} =~ /percona/i
-        or $myvar{'version_comment'} =~ /percona/i )
-    {
-        my $np = cpu_cores;
-        if (    $myvar{'thread_pool_size'} >= $np
-            and $myvar{'thread_pool_size'} < ( $np * 1.5 ) )
-        {
-            goodprint
-"thread_pool_size for Percona between 1 and 1.5 times number of CPUs ("
-              . $np . " and "
-              . ( $np * 1.5 ) . ")";
-        }
-        else {
-            badprint
-"thread_pool_size for Percona between 1 and 1.5 times number of CPUs ("
-              . $np . " and "
-              . ( $np * 1.5 ) . ")";
-            push( @adjvars,
-                    "thread_pool_size between "
-                  . $np . " and "
-                  . ( $np * 1.5 )
-                  . " for InnoDB usage" );
-        }
-        return;
+        badprint "Max_used_connections ($mystat{'Max_used_connections'}) is >= 512.";
+        push(@generalrec, "Enabling the thread pool is recommended for servers with max_connections >= 512 (currently $myvar{'max_connections'})");
+        push(@adjvars, "thread_handling=pool-of-threads");
     }
 
-    if ( $myvar{'version'} =~ /mariadb/i ) {
-        infoprint "Using default value is good enough for your version ("
-          . $myvar{'version'} . ")";
-        return;
-    }
+    # If it IS enabled, show metrics and recommendations
+    if ($is_threadpool_enabled) {
+        subheaderprint "ThreadPool Metrics";
+        infoprint "ThreadPool stat is enabled.";
+        infoprint "Thread Pool Size: " . $myvar{'thread_pool_size'} . " thread(s).";
 
-    if ( $myvar{'have_innodb'} eq 'YES' ) {
-        if (   $myvar{'thread_pool_size'} < 16
-            or $myvar{'thread_pool_size'} > 36 )
-        {
-            badprint
-"thread_pool_size between 16 and 36 when using InnoDB storage engine.";
-            push( @generalrec,
-                    "Thread pool size for InnoDB usage ("
-                  . $myvar{'thread_pool_size'}
-                  . ")" );
-            push( @adjvars,
-                "thread_pool_size between 16 and 36 for InnoDB usage" );
+        # Recommendation to DISABLE thread pool if connections are low
+        if (($mystat{'Max_used_connections'} // 0) < 512) {
+            badprint "ThreadPool is enabled but Max_used_connections is < 512 ($mystat{'Max_used_connections'}).";
+            push(@generalrec, "Thread pool is usually only efficient for servers with max_connections >= 512");
         }
-        else {
-            goodprint
-"thread_pool_size between 16 and 36 when using InnoDB storage engine.";
+
+        my $np = logical_cpu_cores();
+        if ($np <= 0) {
+            debugprint "Unable to detect logical CPU cores for thread_pool_size recommendation.";
+            return;
         }
-        return;
-    }
-    if ( $myvar{'have_isam'} eq 'YES' ) {
-        if ( $myvar{'thread_pool_size'} < 4 or $myvar{'thread_pool_size'} > 8 )
-        {
-            badprint
-"thread_pool_size between 4 and 8 when using MyISAM storage engine.";
-            push( @generalrec,
-                    "Thread pool size for MyISAM usage ("
-                  . $myvar{'thread_pool_size'}
-                  . ")" );
-            push( @adjvars,
-                "thread_pool_size between 4 and 8 for MyISAM usage" );
-        }
-        else {
-            goodprint
-"thread_pool_size between 4 and 8 when using MyISAM storage engine.";
+
+        # Percona and MariaDB recommendation: ideally one active thread per CPU
+        # Efficient range: [NCPU, NCPU + NCPU/2]
+        # Source: https://mariadb.com/kb/en/library/thread-pool-in-mariadb/
+        # Source: https://www.percona.com/blog/2014/01/23/percona-server-improve-scalability-percona-thread-pool/
+        my $min_tps = $np;
+        my $max_tps = int($np * 1.5);
+
+        if ($myvar{'thread_pool_size'} >= $min_tps && $myvar{'thread_pool_size'} <= $max_tps) {
+            goodprint "thread_pool_size is optimal ($myvar{'thread_pool_size'}) for your $np CPUs (range: $min_tps - $max_tps)";
+        } else {
+            badprint "thread_pool_size ($myvar{'thread_pool_size'}) is not in the recommended range [$min_tps, $max_tps] for your $np CPUs.";
+            push(@adjvars, "thread_pool_size between $min_tps and $max_tps");
         }
     }
 }
@@ -8220,7 +8219,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.21 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.22 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -8315,7 +8314,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 VERSION
 
-Version 2.8.19
+Version 2.8.23
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.

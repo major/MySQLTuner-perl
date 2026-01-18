@@ -4,8 +4,8 @@
 
 [![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
 [![Test Status](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
-[![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
-[![Percentage of open issues](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
+[![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Average time to resolve an issue")
+[![Percentage of open issues](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Percentage of issues still open")
 [![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
@@ -24,6 +24,7 @@ Useful Links
 
 * **Active Development:** [https://github.com/jmrenouard/MySQLTuner-perl](https://github.com/jmrenouard/MySQLTuner-perl)
 * **Releases/Tags:** [https://github.com/jmrenouard/MySQLTuner-perl/tags](https://github.com/jmrenouard/MySQLTuner-perl/tags)
+* **Changelog:** [https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog)
 * **Docker Images:** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
 
 MySQLTuner needs you
@@ -41,7 +42,7 @@ MySQLTuner needs you
 
 ## Stargazers over time
 
-[![Stargazers over time](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
+[![Stargazers over time](https://starchart.cc/jmrenouard/MySQLTuner-perl.svg)](https://starchart.cc/jmrenouard/MySQLTuner-perl)
 
 Compatibility
 ====
@@ -133,8 +134,8 @@ Choose one of these methods:
 
 ```bash
 wget http://mysqltuner.pl/ -O mysqltuner.pl
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
+wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
+wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 ```
 
 1) You can download the entire repository by using `git clone` or `git clone --depth 1 -b master` followed by the cloning URL above.
@@ -562,17 +563,17 @@ MySQLTuner and Vagrant
 **MySQLTuner** contains a Vagrant configurations for test purpose and development
 
 * Install VirtualBox and Vagrant
- 	* <https://www.virtualbox.org/wiki/Downloads>
- 	* <https://www.vagrantup.com/downloads.html>
+  * <https://www.virtualbox.org/wiki/Downloads>
+  * <https://www.vagrantup.com/downloads.html>
 * Clone repository
   * git clone <https://github.com/jmrenouard/MySQLTuner-perl/.git>
 * Install Vagrant plugins vagrant-hostmanager and  vagrant-vbguest
- 	* vagrant plugin install vagrant-hostmanager
- 	* vagrant plugin install vagrant-vbguest
+  * vagrant plugin install vagrant-hostmanager
+  * vagrant plugin install vagrant-vbguest
 * Add Fedora Core 30 box for official Fedora Download Website
- 	* vagrant box add --name generic/fedora30
+  * vagrant box add --name generic/fedora30
 * Create a data directory
- 	* mkdir data
+  * mkdir data
 
 ## setup test environments
 
