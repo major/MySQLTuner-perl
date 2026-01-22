@@ -1,6 +1,8 @@
-2.8.28 2026-01-18
+2.8.28 2026-01-22
 
-- 
+- feat: ajoute l'option --no-pfstat pour la partie performance schema
+- feat: ajoute l'option --no-colstat pour la partie colonne stat
+- fix: skip innodb_buffer_stats during sys schema dump to avoid performance issues
 
 2.8.27 2026-01-18
 

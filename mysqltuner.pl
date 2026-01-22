@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.25
+# mysqltuner.pl - Version 2.8.28
 # High Performance MySQL Tuning Script
-# Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
-# Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
+# Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
+# Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
 
 # For the latest updates, please visit http://mysqltuner.pl/
 # Git repository available at https://github.com/jmrenouard/MySQLTuner-perl/
@@ -162,8 +162,11 @@ GetOptions(
     'dbstat',              'nodbstat',
     'tbstat',              'notbstat',
     'colstat',             'nocolstat',
+    'no-colstat' => \$opt{nocolstat},
     'sysstat',             'nosysstat',
-    'pfstat',              'plugininfo',
+    'pfstat',              'nopfstat',
+    'no-pfstat' => \$opt{nopfstat},
+    'plugininfo',
     'noplugininfo',        'idxstat',
     'noidxstat',           'structstat',
     'nostructstat',        'myisamstat',
@@ -4770,6 +4773,7 @@ sub get_pf_memory {
 
 # Recommendations for Performance Schema
 sub mysql_pfs {
+    return if ( $opt{pfstat} == 0 );
     subheaderprint "Performance schema";
 
     # Performance Schema
@@ -8168,6 +8172,10 @@ sub dump_csv_files {
     # Store all sys schema in dumpdir if defined
     infoprint("Dumping sys schema");
     for my $sys_view ( select_array('use sys;show tables;') ) {
+        if ($sys_view =~ /innodb_buffer_stats/) {
+          infoprint("SKIPPING $sys_view");
+          next;
+        }
         infoprint "Dumping $sys_view into $opt{dumpdir}";
         my $sys_view_table = $sys_view;
         $sys_view_table =~ s/\$/\\\$/g;
@@ -8356,15 +8364,12 @@ You must provide the remote server's total memory when connecting to other serve
  --tbstat                    Print table information
  --notbstat                  Don't print table information
  --colstat                   Print column information
- --nocolstat                 Don't print column information
+ --nocolstat, --no-colstat   Don't print column information
  --idxstat                   Print index information
  --noidxstat                 Don't print index information
- --nomyisamstat              Don't print MyIsam information
- --sysstat                   Print system information
- --nosysstat                 Don't print system information
  --nostructstat              Don't print table structures information
  --pfstat                    Print Performance schema
- --nopfstat                  Don't print Performance schema
+ --nopfstat, --no-pfstat     Don't print Performance schema
  --plugininfo                Print Plugin information
  --noplugininfo              Don't print Plugin information
  --bannedports               Ports banned separated by comma (,)
@@ -8375,7 +8380,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 VERSION
 
-Version 2.8.26
+Version 2.8.28
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
