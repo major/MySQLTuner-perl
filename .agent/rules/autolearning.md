@@ -2,10 +2,9 @@
 trigger: always_on
 ---
 
-If new rules are invoqued with REMEMBER: in conversation
-Update this file with RULE: xxxx in .agent/rules/autolearning.md with this information under
-REMEMBER
+If new rules are invoked with the `REMEMBER:` tag in a conversation, trigger the `/remember` workflow.
+Update this file following the steps defined in `.agent/workflows/remember.md`.
 
-REMENBER:
+REMEMBER:
 Rule: Don't forget to updates this file with REMEMBER: tag
 Rule: Documentation updates (`docs:`) following Conventional Commits can skip manual `@Changelog` entry if they are synchronization-only.
