@@ -2,28 +2,13 @@
 description: Automate git-flow release process
 ---
 
-1. **Ensure clean working tree and Pre-flight Consistency Check**
-   - Verify that `Changelog`, `CURRENT_VERSION.txt`, and `mysqltuner.pl` are synchronized.
+1. **Run Release Preflight Workflow**
+   - Execute the `/release-preflight` workflow to ensure full consistency and test passing.
+   - **CRITICAL**: Do NOT proceed if `/release-preflight` fails.
 
    ```bash
-   git status --porcelain
-   CURRENT_VER=$(cat CURRENT_VERSION.txt | tr -d '[:space:]')
-   SCRIPT_VER=$(grep "my \$tunerversion =" mysqltuner.pl | cut -d'"' -f2)
-   CHANGELOG_VER=$(head -n 1 Changelog | awk '{print $1}')
-
-   echo "Checking version consistency: $CURRENT_VER"
-   
-   if [ "$CURRENT_VER" != "$SCRIPT_VER" ]; then
-       echo "ERROR: CURRENT_VERSION.txt ($CURRENT_VER) does not match mysqltuner.pl ($SCRIPT_VER)"
-       exit 1
-   fi
-
-   if [ "$CURRENT_VER" != "$CHANGELOG_VER" ]; then
-       echo "ERROR: CURRENT_VERSION.txt ($CURRENT_VER) does not match Changelog ($CHANGELOG_VER)"
-       exit 1
-   fi
-   
-   echo "Consistency check passed."
+   # Trigger preflight checks
+   /release-preflight
    ```
 
    // turbo
@@ -32,7 +17,7 @@ description: Automate git-flow release process
 
    ```bash
    git add .
-   git commit -m "feat: release $CURRENT_VER"
+   npm run commit  # Select 'feat' and enter "release $CURRENT_VER"
    ```
 
    // turbo
@@ -74,6 +59,7 @@ description: Automate git-flow release process
 
    ```bash
    git add CURRENT_VERSION.txt mysqltuner.pl Changelog
+   npx commitlint --from=HEAD~1 # Or simply use npm run commit if not automated
    git commit -m "chore: bump version to $NEW_VER"
    git push origin main
    ```

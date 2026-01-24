@@ -18,13 +18,22 @@ help:
 	@echo "  increment_major_version: Increment major version"
 	@echo "  push:              Push to GitHub"
 	@echo "  vendor_setup:      Setup external test repositories (multi-db-docker-env, test_db)"
-	@echo "  test:              Run multi-version database tests (requires Docker)"
+	@echo "  test:              Run database lab tests (mysql84, mariadb1011, percona80)"
+	@echo "  test-all:          Run all database lab tests"
+	@echo "  test-container:    Run tests against a specific CONTAINER (e.g. CONTAINER=my_db)"
+	@echo "  audit:             Run audit on remote HOST (e.g. HOST=db-server.com)"
+	@echo "  unit-tests:        Run unit and regression tests in tests/ directory"
 	@echo "  clean_examples:    Cleanup examples directory (KEEP=n, default 5)"
+	@echo "  setup_commits:     Install Conventional Commits tools (Node.js)"
 
 
-installdep_debian:
+installdep_debian: setup_commits
 	sudo apt install -y cpanminus libfile-util-perl libpod-markdown-perl libwww-mechanize-gzip-perl perltidy dos2unix
 	curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
+
+setup_commits:
+	@echo "Installing Conventional Commits tools..."
+	npm install
 
 tidy:
 	dos2unix ./mysqltuner.pl
@@ -108,12 +117,24 @@ vendor_setup:
 	fi
 
 test: vendor_setup
-	@echo "Running MySQLTuner tests..."
+	@echo "Running MySQLTuner Lab Tests..."
 	bash build/test_envs.sh $(CONFIGS)
 
 test-all: vendor_setup
-	@echo "Running all MySQLTuner tests..."
+	@echo "Running all MySQLTuner Lab Tests..."
 	bash build/test_envs.sh
+
+test-container:
+	@echo "Running MySQLTuner against container: $(CONTAINER)..."
+	bash build/test_envs.sh -e "$(CONTAINER)"
+
+audit:
+	@echo "Running MySQLTuner Audit on host: $(HOST)..."
+	bash build/test_envs.sh -r "$(HOST)" -a
+
+unit-tests:
+	@echo "Running unit and regression tests..."
+	prove -r tests/
 
 clean_examples:
 	@echo "Cleaning up examples..."

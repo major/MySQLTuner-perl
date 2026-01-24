@@ -31,3 +31,4 @@ examples/**
 vendor/
 vendor/**
 output.log
+node_modules

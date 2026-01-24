@@ -1,5 +1,7 @@
 ---
 trigger: always_on
+description: Protocols for maintaining contextual consistency and history.
+category: governance
 ---
 
 ## **5\. 📜 STATE MEMORY & HISTORY**

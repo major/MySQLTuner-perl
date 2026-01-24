@@ -1,3 +1,8 @@
+---
+trigger: always_on
+description: Guidelines and patterns for maintaining backward compatibility with older Perl versions (5.8+).
+category: skill
+---
 # Legacy Perl Patterns Skill
 
 ## Description

@@ -1,3 +1,8 @@
+---
+trigger: always_on
+description: Mapping of critical differences between MySQL and MariaDB versions for cross-compatible diagnostics.
+category: skill
+---
 # Database Version Rift Skill
 
 ## Description
@@ -55,4 +60,4 @@ Use the `mysqltuner.pl` valid variable abstraction or check for existence before
 
 - **Aria Engine**:
   - Specific to MariaDB (replacement for MyISAM for system tables).
-  - Don't tune `aria_pagecache_buffer_size` on Oracle MySQL.
+  - Don't tune `aria_pagecache_buffer_size` on Oracle MySQLand Percona version.

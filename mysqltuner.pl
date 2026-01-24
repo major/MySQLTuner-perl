@@ -989,12 +989,43 @@ sub get_ssh_prefix {
     return $prefix . " ";
 }
 
+sub get_container_prefix {
+    return "" if $opt{'container'} eq '';
+    my ( $engine, $name ) =
+      $opt{'container'} =~ /^(docker|podman|kubectl):(.*)/
+      ? ( $1, $2 )
+      : ( "docker", $opt{'container'} );
+    if ( $engine eq "docker" || $engine eq "podman" ) {
+        return "$engine exec $name sh -c ";
+    }
+    elsif ( $engine eq "kubectl" ) {
+        return "kubectl exec $name -- sh -c ";
+    }
+    return "";
+}
+
+sub get_transport_prefix {
+    my $prefix = get_ssh_prefix();
+    return $prefix if $prefix ne '';
+    return get_container_prefix();
+}
+
 sub execute_system_command {
     my ($command) = @_;
-    my $ssh_prefix = get_ssh_prefix();
+    my $ssh_prefix       = get_ssh_prefix();
+    my $container_prefix = get_container_prefix();
 
-# Important: Single quote the command to prevent shell expansion on the client side
-    my $full_cmd = ( $ssh_prefix ne '' ) ? "$ssh_prefix '$command'" : $command;
+    # Avoid double transport if the command is already prefixed
+    my $full_cmd = $command;
+    if ( $ssh_prefix ne '' && index( $command, $ssh_prefix ) != 0 ) {
+        $full_cmd = "$ssh_prefix '$command'";
+    }
+    elsif ( $container_prefix ne ''
+        && index( $command, $container_prefix ) != 0 )
+    {
+        $command =~ s/'/'\\''/g;
+        $full_cmd = "$container_prefix '$command'";
+    }
 
     debugprint "Executing system command: $full_cmd";
     my @output = `$full_cmd 2>&1`;
@@ -1024,22 +1055,29 @@ if ($is_win) {
 }
 
 sub mysql_setup {
-    $doremote     = 0;
-    $remotestring = '';
-    my $ssh_prefix = get_ssh_prefix();
+    $doremote           = 0;
+    $remotestring       = '';
+    my $transport_prefix = get_transport_prefix();
 
     if ( $opt{mysqladmin} ) {
         $mysqladmincmd = $opt{mysqladmin};
     }
     else {
-        $mysqladmincmd =
-          ( $ssh_prefix ne '' )
-          ? "mysqladmin"
-          : (    which( "mariadb-admin", $ENV{'PATH'} )
-              || which( "mysqladmin", $ENV{'PATH'} ) );
+        if ( $transport_prefix ne '' ) {
+            my $check = execute_system_command("mariadb-admin --version");
+            $mysqladmincmd =
+              ( $check =~ /mariadb-admin/i ) ? "mariadb-admin" : "mysqladmin";
+        }
+        else {
+            $mysqladmincmd =
+              (    which( "mariadb-admin", $ENV{'PATH'} )
+                || which( "mysqladmin", $ENV{'PATH'} ) );
+        }
     }
     chomp($mysqladmincmd);
-    if ( !$mysqladmincmd || ( $ssh_prefix eq '' && !-x $mysqladmincmd ) ) {
+    if ( !$mysqladmincmd
+        || ( $transport_prefix eq '' && !-x $mysqladmincmd ) )
+    {
         badprint
           "Couldn't find an executable mysqladmin/mariadb-admin command.";
         exit 1;
@@ -1049,23 +1087,25 @@ sub mysql_setup {
         $mysqlcmd = $opt{mysqlcmd};
     }
     else {
-        $mysqlcmd =
-          ( $ssh_prefix ne '' )
-          ? "mysql"
-          : (    which( "mariadb", $ENV{'PATH'} )
-              || which( "mysql", $ENV{'PATH'} ) );
+        if ( $transport_prefix ne '' ) {
+            my $check = execute_system_command("mariadb --version");
+            $mysqlcmd = ( $check =~ /mariadb/i ) ? "mariadb" : "mysql";
+        }
+        else {
+            $mysqlcmd =
+              (    which( "mariadb", $ENV{'PATH'} )
+                || which( "mysql",   $ENV{'PATH'} ) );
+        }
     }
     chomp($mysqlcmd);
-    if ( !$mysqlcmd || ( $ssh_prefix eq '' && !-x $mysqlcmd ) ) {
+    if ( !$mysqlcmd || ( $transport_prefix eq '' && !-x $mysqlcmd ) ) {
         badprint "Couldn't find an executable mysql/mariadb command.";
         exit 1;
     }
 
-    # Prepend SSH prefix if in cloud mode
-    $mysqladmincmd = $ssh_prefix . $mysqladmincmd;
-    $mysqlcmd      = $ssh_prefix . $mysqlcmd;
+    # MySQL Client defaults
     $mysqlcmd =~ s/\n$//g;
-    my $mysqlclidefaults = `$mysqlcmd --print-defaults`;
+    my $mysqlclidefaults = execute_system_command("$mysqlcmd --print-defaults");
     debugprint "MySQL Client: $mysqlclidefaults";
     if ( $mysqlclidefaults =~ /auto-vertical-output/ ) {
         badprint
@@ -1145,10 +1185,21 @@ sub mysql_setup {
         }
     }
 
+    if ( $transport_prefix ne '' && $opt{pass} eq 0 ) {
+        my $env_out = execute_system_command("env");
+        if ( $env_out =~ /MARIADB_ROOT_PASSWORD=([^\s]+)/
+            || $env_out =~ /MYSQL_ROOT_PASSWORD=([^\s]+)/ )
+        {
+            $opt{pass} = $1;
+            debugprint "Detected password from container environment";
+        }
+    }
+
    # Did we already get a username with or without password on the command line?
-    if ( $opt{user} ne 0 ) {
+    if ( $opt{user} ne 0 || $opt{container} ne '' ) {
+        my $username = $opt{user} ne 0 ? $opt{user} : "root";
         $mysqllogin =
-            "-u $opt{user} "
+            "-u $username "
           . ( ( $opt{pass} ne 0 ) ? "-p'$opt{pass}' " : " " )
           . $remotestring;
         my $loginstatus =
@@ -1195,10 +1246,10 @@ sub mysql_setup {
 
         # We are on solaris
         ( my $mysql_login =
-`svcprop -p quickbackup/username svc:/network/mysql-quickbackup:default`
+execute_system_command("svcprop -p quickbackup/username svc:/network/mysql-quickbackup:default")
         ) =~ s/\s+$//;
         ( my $mysql_pass =
-`svcprop -p quickbackup/password svc:/network/mysql-quickbackup:default`
+execute_system_command("svcprop -p quickbackup/password svc:/network/mysql-quickbackup:default")
         ) =~ s/\s+$//;
         if ( substr( $mysql_login, 0, 7 ) ne "svcprop" ) {
 
@@ -1219,13 +1270,13 @@ sub mysql_setup {
     elsif ( -r "/etc/psa/.psa.shadow" and $doremote == 0 ) {
 
         # It's a Plesk box, use the available credentials
-        $mysqllogin = "-u admin -p`cat /etc/psa/.psa.shadow`";
+        $mysqllogin = "-u admin -p" . execute_system_command("cat /etc/psa/.psa.shadow");
         my $loginstatus = execute_system_command("$mysqladmincmd ping $mysqllogin");
         unless ( $loginstatus =~ /mysqld is alive/ ) {
 
             # Plesk 10+
             $mysqllogin =
-              "-u admin -p`/usr/local/psa/bin/admin --show-password`";
+              "-u admin -p" . execute_system_command("/usr/local/psa/bin/admin --show-password");
             $loginstatus = execute_system_command("$mysqladmincmd ping $mysqllogin");
             unless ( $loginstatus =~ /mysqld is alive/ ) {
                 badprint
@@ -1238,9 +1289,9 @@ sub mysql_setup {
 
         # It's a DirectAdmin box, use the available credentials
         my $mysqluser =
-          `cat /usr/local/directadmin/conf/mysql.conf | egrep '^user=.*'`;
+          execute_system_command("cat /usr/local/directadmin/conf/mysql.conf | egrep '^user=.*'");
         my $mysqlpass =
-          `cat /usr/local/directadmin/conf/mysql.conf | egrep '^passwd=.*'`;
+          execute_system_command("cat /usr/local/directadmin/conf/mysql.conf | egrep '^passwd=.*'");
 
         $mysqluser =~ s/user=//;
         $mysqluser =~ s/[\r\n]//;
@@ -1279,7 +1330,7 @@ sub mysql_setup {
 
         # defaults-file
         debugprint "defaults file detected: $opt{'defaults-file'}";
-        my $mysqlclidefaults = `$mysqlcmd --print-defaults`;
+        my $mysqlclidefaults = execute_system_command("$mysqlcmd --print-defaults");
         debugprint "MySQL Client Default File: $opt{'defaults-file'}";
 
         $mysqllogin = "--defaults-file=" . $opt{'defaults-file'};
@@ -1295,7 +1346,7 @@ sub mysql_setup {
 
         # defaults-extra-file
         debugprint "defaults extra file detected: $opt{'defaults-extra-file'}";
-        my $mysqlclidefaults = `$mysqlcmd --print-defaults`;
+        my $mysqlclidefaults = execute_system_command("$mysqlcmd --print-defaults");
         debugprint
           "MySQL Client Extra Default File: $opt{'defaults-extra-file'}";
 
@@ -1333,7 +1384,7 @@ execute_system_command("$mysqlcmd $remotestring -Nrs -e 'select \"mysqld is aliv
             my $userpath =
               $is_win
               ? ( $ENV{MARIADB_HOME} || $ENV{MYSQL_HOME} || $ENV{USERPROFILE} )
-              : `printenv HOME`;
+              : execute_system_command("printenv HOME");
             if ( length($userpath) > 0 ) {
                 chomp($userpath);
             }
@@ -1397,7 +1448,7 @@ execute_system_command("$mysqlcmd $remotestring -Nrs -e 'select \"mysqld is aliv
                       ? ( $ENV{MARIADB_HOME}
                           || $ENV{MYSQL_HOME}
                           || $ENV{USERPROFILE} )
-                      : `printenv HOME`;
+                      : execute_system_command("printenv HOME");
                     chomp($userpath);
                     unless ( -e "$userpath/.my.cnf" ) {
                         print STDERR "";
@@ -1422,13 +1473,13 @@ execute_system_command("$mysqlcmd $remotestring -Nrs -e 'select \"mysqld is aliv
 sub select_array {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>$devnull`;
+    my @result = execute_system_command("$mysqlcmd $mysqllogin -Bse \"\\w$req\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
-        debugprint "CMD    : $mysqlcmd";
-        debugprint "OPTIONS: $mysqllogin";
-        debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+        if ( $opt{debug} ) {
+            debugprint execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req\" 2>&1");
+        }
 
         #exit $?;
     }
@@ -1441,13 +1492,13 @@ sub select_array {
 sub select_array_with_headers {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = `$mysqlcmd $mysqllogin -Bre "\\w$req" 2>>$devnull`;
+    my @result = execute_system_command("$mysqlcmd $mysqllogin -Bre \"\\w$req\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
-        debugprint "CMD    : $mysqlcmd";
-        debugprint "OPTIONS: $mysqllogin";
-        debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+        if ( $opt{debug} ) {
+            debugprint execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req\" 2>&1");
+        }
 
         #exit $?;
     }
@@ -1486,13 +1537,13 @@ sub human_size {
 sub select_one {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my $result = `$mysqlcmd $mysqllogin -Bse "\\w$req" 2>>$devnull`;
+    my $result = execute_system_command("$mysqlcmd $mysqllogin -Bse \"\\w$req\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
-        debugprint "CMD    : $mysqlcmd";
-        debugprint "OPTIONS: $mysqllogin";
-        debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+        if ( $opt{debug} ) {
+            debugprint execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req\" 2>&1");
+        }
 
         #exit $?;
     }
@@ -1507,13 +1558,13 @@ sub select_one_g {
 
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = `$mysqlcmd $mysqllogin -re "\\w$req\\G" 2>>$devnull`;
+    my @result = execute_system_command("$mysqlcmd $mysqllogin -re \"\\w$req\\G\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
-        debugprint "CMD    : $mysqlcmd";
-        debugprint "OPTIONS: $mysqllogin";
-        debugprint `$mysqlcmd $mysqllogin -Bse "$req" 2>&1`;
+        if ( $opt{debug} ) {
+            debugprint execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req\" 2>&1");
+        }
 
         #exit $?;
     }
@@ -1613,7 +1664,7 @@ sub get_tuning_info {
 }
 
 # Populates all of the variable and status hashes
-my ( %mystat, %myvar, $dummyselect, %myrepl, %myslaves );
+my ( %mystat, %myvar, $dummyselect, %myrepl, %myslaves, %mycalc );
 
 sub arr2hash {
     my $href = shift;
@@ -1792,7 +1843,7 @@ sub get_file_contents {
     open( my $fh, "<", $file ) or die "Can't open $file for read: $!";
     my @lines = <$fh>;
     close $fh or die "Cannot close $file: $!";
-    @lines = remove_cr @lines;
+    @lines = remove_cr(@lines);
     return @lines;
 }
 
@@ -1885,11 +1936,11 @@ sub log_file_recommendations {
         if ( $container_cmd ne "" ) {
             my $port = $opt{'port'} || 3306;
             my $container =
-`$container_cmd ps --filter "publish=$port" --format "{{.Names}}" | grep -vEi "traefik|haproxy|maxscale|maxsale|proxy" | head -n 1`;
+execute_system_command("$container_cmd ps --filter \"publish=$port\" --format \"{{.Names}}\" | grep -vEi \"traefik|haproxy|maxscale|maxsale|proxy\" | head -n 1");
             chomp $container;
             if ( $container eq "" ) {
                 $container =
-`$container_cmd ps --format "{{.Names}} {{.Image}}" | grep -Ei "mysql|mariadb|percona|db|database" | grep -vEi "traefik|haproxy|maxscale|maxsale|proxy" | head -n 1 | awk '{print \$1}'`;
+execute_system_command("$container_cmd ps --format \"{{.Names}} {{.Image}}\" | grep -Ei \"mysql|mariadb|percona|db|database\" | grep -vEi \"traefik|haproxy|maxscale|maxsale|proxy\" | head -n 1 | awk '{print \$1}'");
                 chomp $container;
             }
             if ( $container ne "" ) {
@@ -2106,7 +2157,7 @@ sub get_process_memory {
                 my $pagesize = 4096;
 
                 # Attempt to get real page size if possible
-                my $getconf_pagesize = `getconf PAGESIZE 2>$devnull`;
+                my $getconf_pagesize = execute_system_command("getconf PAGESIZE 2>$devnull");
                 if ( $? == 0 && $getconf_pagesize =~ /^(\d+)/ ) {
                     $pagesize = $1;
                 }
@@ -2611,8 +2662,10 @@ sub system_recommendations {
     }
     else {
         get_fs_info;
-        subheaderprint "Kernel Information Recommendations";
-        get_kernel_info;
+        if ( !is_docker() && $opt{'container'} eq '' ) {
+            subheaderprint "Kernel Information Recommendations";
+            get_kernel_info;
+        }
     }
 }
 
@@ -2632,18 +2685,20 @@ sub security_recommendations {
     # New table schema available since mysql-5.7 and mariadb-10.2
     # But need to be checked
     if ( ($myvar{'version'} =~ /5\.7/) or (($myvar{'version'} =~ /10\.[2-5]\..*/) and (($myvar{'version'} =~ /MariaDB/i) or ($myvar{'version_comment'} =~ /MariaDB/i)))) {
-        my $password_column_exists =
-`$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'" 2>>$devnull`;
-        my $authstring_column_exists =
-`$mysqlcmd $mysqllogin -Bse "SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'authentication_string'" 2>>$devnull`;
-        if ( $password_column_exists && $authstring_column_exists ) {
+        my $result_pass = execute_system_command(
+"$mysqlcmd $mysqllogin -Bse \"SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'\" 2>>$devnull"
+    );
+    my $result_auth = execute_system_command(
+"$mysqlcmd $mysqllogin -Bse \"SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'authentication_string'\" 2>>$devnull"
+    );
+        if ( $result_pass && $result_auth ) {
             $PASS_COLUMN_NAME =
 "IF(plugin='mysql_native_password', authentication_string, password)";
         }
-        elsif ($authstring_column_exists) {
+        elsif ($result_auth) {
             $PASS_COLUMN_NAME = 'authentication_string';
         }
-        elsif ( !$password_column_exists ) {
+        elsif ( !$result_pass ) {
             infoprint "Skipped due to none of known auth columns exists";
             return;
         }
@@ -2841,9 +2896,8 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                     my @variants    = ( $pass, uc($pass), ucfirst($pass) );
                     foreach my $v (@variants) {
                         my $check_login = "-u $target_user -p'$v' $remotestring";
-                        my $loginstatus =
-                          `$mysqlcmd -Nrs -e 'select "mysqld is alive";' $check_login 2>$devnull`;
-                        if ( $loginstatus =~ /mysqld is alive/ ) {
+                        my $alive_res = execute_system_command("$mysqlcmd -Nrs -e 'select \"mysqld is alive\";' $check_login 2>$devnull");
+                        if ( $alive_res =~ /mysqld is alive/ ) {
                             badprint "User '$target_user' is using weak password: $v";
                             push( @generalrec,
                                 "Set up a Secure Password for $target_user user." );
@@ -3422,7 +3476,6 @@ sub check_storage_engines {
     }
 }
 
-my %mycalc;
 
 sub dump_into_file {
     my $file    = shift;
@@ -4100,17 +4153,16 @@ sub mysql_stats {
 "Skipped name resolution test due to missing skip_name_resolve in system variables.";
     }
 
-    #Cpanel and Skip name resolve
+    # Cpanel and Skip name resolve (Issue #863)
+    # Ref: https://support.cpanel.net/hc/en-us/articles/21664293830423
     elsif ( -r "/usr/local/cpanel/cpanel" ) {
-        if ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF' ) {
-            infoprint "CPanel and Flex system skip-name-resolve should be on";
-        }
-        if ( $result{'Variables'}{'skip_name_resolve'} eq 'OFF' ) {
-            badprint "CPanel and Flex system skip-name-resolve should be on";
+        if ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF'
+            and $result{'Variables'}{'skip_name_resolve'} ne '0' )
+        {
+            badprint "CPanel and Flex system: skip-name-resolve should be OFF";
             push( @generalrec,
-"name resolution is enabled due to cPanel doesn't support this disabled."
+"cPanel recommends keeping skip-name-resolve disabled: https://support.cpanel.net/hc/en-us/articles/21664293830423"
             );
-            push( @adjvars, "skip-name-resolve=0" );
         }
     }
     elsif ( $result{'Variables'}{'skip_name_resolve'} ne 'ON'
@@ -7394,17 +7446,16 @@ sub mysql_innodb {
       || $myvar{'tx_isolation'}
       || $myvar{'isolation_level'};
     if ( defined $isolation ) {
-        infoprint "Transaction Isolation Level: $isolation";
+        infoprint ("Transaction Isolation Level: $isolation");
     }
 
     if ( defined $myvar{'innodb_snapshot_isolation'} ) {
-        infoprint "InnoDB Snapshot Isolation: "
-          . $myvar{'innodb_snapshot_isolation'};
+        infoprint ("InnoDB Snapshot Isolation: "
+          . $myvar{'innodb_snapshot_isolation'});
         if ( $myvar{'innodb_snapshot_isolation'} eq 'OFF'
             && ( $isolation || '' ) eq 'REPEATABLE-READ' )
         {
-            badprint
-"innodb_snapshot_isolation is OFF with REPEATABLE-READ (Stricter snapshot isolation is disabled)";
+            badprint ("innodb_snapshot_isolation is OFF with REPEATABLE-READ (Stricter snapshot isolation is disabled)");
             push( @adjvars, "innodb_snapshot_isolation=ON" );
         }
     }

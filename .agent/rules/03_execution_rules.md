@@ -1,5 +1,7 @@
 ---
 trigger: always_on
+description: Core project constitution and hard execution constraints.
+category: governance
 ---
 
 # **AI CONTEXT SPECIFICATIONS & PROJECT CONSTITUTION**
@@ -35,6 +37,9 @@ trigger: always_on
 4. **Traçabilité des Conseils (Audit Trail)**: Chaque recommandation ou conseil affiché par le script doit être documenté dans le code par un commentaire pointant vers la source officielle (Documentation MySQL/MariaDB ou KB) pour justifier le seuil choisi.
 5. **Efficience Mémoire (Parsing de Log)**: Pour le traitement des fichiers de logs (souvent volumineux), privilégier systématiquement le traitement ligne par ligne plutôt que le chargement complet en mémoire, surtout lors de la récupération via `--container`.
 6. **Standardisation @Changelog**: Maintenir le `@Changelog` en suivant strictement le format des _Conventional Commits_ (feat, fix, chore, docs, test, ci) pour permettre une extraction automatisée et propre des notes de version lors des tags Git.
+7. **Traçabilité des Tests**: Toute exécution de test en laboratoire doit impérativement capturer les logs d'infrastructure (docker start, db injection, container logs/inspect) et les lier dans le rapport HTML final.
+8. **Reproductibilité des Rapports**: Les rapports HTML doivent inclure une section "Reproduce" listant l'intégralité des commandes (git clone, setup, injection, exécution) permettant de rejouer le test à l'identique.
+9. **KISS & Context**: Les recommandations de tuning noyau (kernel tuning) doivent être ignorées en mode container ou via l'option `--container` pour éviter des conseils non pertinents.
 
 ### **4.3. Output & Restitution Format**
 
@@ -58,3 +63,6 @@ trigger: always_on
     - _Requirement_: Adding a new test MUST have a `test:` entry in the `@Changelog`.
     - _Requirement_: Changing test scripts or updating infrastructure MUST have a `ci:` entry in the `@Changelog`.
     - _Requirement_: Changing `Makefile` or files under `build/` MUST be traced in the `@Changelog` (usually via `ci:` or `chore:`).
+    - _Ordering_: Changelog entries MUST be ordered by category: `feat`, `fix`, `docs`, `ci`, then others (`test`, `chore`).
+    - _Requirement_: The `/git-flow` workflow MUST always be preceded by a successful `/release-preflight` execution.
+    - _Requirement_: Report files (HTML and logs) MUST NOT contain negative keywords (error, warning, fatal, failed) unless they are expected as part of a reproduction test case.

@@ -1,23 +1,38 @@
-## **2\. 🎯 OPERATIONAL OBJECTIVE**
+---
+trigger: always_on
+description: Current project roadmap and success criteria.
+category: governance
+---
+
+# **2\. 🎯 OPERATIONAL OBJECTIVE**
+
+## 🧠 Rationale
+
+Dynamic context tracking allows the agent to maintain focus on current priorities and measure success against defined criteria.
+
+## 🛠️ Implementation
 
 $$DYNAMIC\_CONTEXT$$
 
 * **Status:** \[IN PROGRESS\]  
-* **Priority Task:** Maintain and enhance `mysqltuner.pl`, a Perl script for MySQL/MariaDB database performance tuning. Ensure single-file architecture and high reliability through automated testing.
+* **Priority Task:** Maintain and enhance `mysqltuner.pl` as a production-grade tuning advisor. Focus on regression testing and broad version compatibility for MySQL, MariaDB, and Percona Server.
 
 **Success Criteria:**
 
-1. **Architecture:** No splitting of the main file; all logic resides in `mysqltuner.pl`.
-2. **Quality:** 100% of new features validated through TDD.
-3. **Docs:** Keep `README.md` and translations updated with new features and requirements.
-4. **Automation:** All tests runnable via `make test-*` or specific test scripts.
-5. **Goal:** Provide the most accurate and up-to-date performance tuning recommendations for MySQL-compatible databases.
+1. **Architecture:** Strict single-file architecture. No external non-core Perl dependencies.
+2. **Quality (Zero Regression):** 100% of new features and fixes validated through TDD and regression suits (Legacy 5.7 to Modern 11.x).
+3. **Stability:** All recommendations must be traceable to official documentation and verified safe for production use.
+4. **Docs:** Maintain automated synchronization between `mysqltuner.pl` capabilities and `README.md` / translations.
+5. **Efficiency:** Optimized execution for large databases (minimal memory footprint and execution time).
 
 **Roadmap / Evolution Paths:**
 
-1. **Schema Validation for Rules**: Créer un script de linting pour valider que les fichiers `.agent/rules/*.md` respectent un format standard.
-2. **Source Code Annotation**: Automatiser l'ajout des tags de version directement dans les commentaires des fonctions modifiées.
-3. **Automated Doc-Link Check**: Ajouter un test qui vérifie que les liens de documentation insérés dans les commentaires du code (`# See: http://...`) sont toujours valides.
-4. **Pre-commit Hook**: Implementer un hook Git local qui lance le pre-flight check de `/git-flow`.
-5. **Automated Roadmap Tracking**: Créer un script qui extrait les points de la roadmap pour générer un rapport de progression.
-6. **Perl Tidy Integration**: Ajouter une règle exigeant l'utilisation de `perltidy` avec une configuration spécifique pour garantir la lisibilité du fichier unique.
+1. **CI/CD Regression Suite**: Automate testing across 10+ major DB versions (MySQL 5.6-8.4, MariaDB 10.3-11.8).
+2. **Automated Documentation Sync**: Ensure `INTERNALS.md` and `README.md` are always in sync with internal indicator count.
+3. **Advanced Container Support**: Refine detection and tuning recommendations for Docker/K8s/Cloud environments.
+4. **Enhanced Security Auditing**: Improve detection of common security misconfigurations and weak credentials.
+
+## ✅ Verification
+
+* Review [task.md](file:///home/jmren/.gemini/antigravity/brain/2fa184f4-13e1-4c64-bf13-57b4addd2797/task.md) for current status.
+* Periodic roadmap reviews during `/release-preflight`.

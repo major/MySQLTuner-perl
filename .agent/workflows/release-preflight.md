@@ -1,5 +1,7 @@
 ---
+trigger: explicit_call
 description: Pre-flight checks before triggering a git-flow release
+category: tool
 ---
 
 # Release Preflight Workflow
@@ -54,7 +56,34 @@ else
 fi
 ```
 
-## 3. Smoke Test
+## 3. Automated Consistency Test
+
+Run the dedicated test to ensure all version strings are synchronized.
+
+```bash
+prove tests/version_consistency.t
+```
+
+## 4. Commit Log Validation
+
+Ensure all commits since the last release follow Conventional Commits.
+
+```bash
+LAST_TAG=$(git describe --tags --abbrev=0)
+echo "Validating commits since $LAST_TAG..."
+npx commitlint --from=$LAST_TAG --to=HEAD
+```
+
+## 5. Markdown Integrity
+
+Audit project documentation for cleanliness and standard compliance.
+
+```bash
+# Executing markdown linting across .agent and documentation
+python3 build/md_lint.py --all
+```
+
+## 6. Smoke Test
 
 Run the primary test suite to ensure the build isn't broken.
 
@@ -63,6 +92,6 @@ Run the primary test suite to ensure the build isn't broken.
 make test
 ```
 
-## 4. Proceed to Release
+## 5. Proceed to Release
 
 If all checks pass, proceed with `/git-flow`.
