@@ -1,6 +1,10 @@
 2.8.30 2026-01-24
 
-- 
+- feat: add InnoDB transaction isolation levels and metrics (active count, longest duration)
+- feat: add MariaDB innodb_snapshot_isolation detection and recommendation
+- test: add unit test tests/innodb_isolation.t for new transaction metrics
+- fix: noisy system command failures when absolute paths are used for whitelisted commands (issue #874)
+- test: add unit test tests/issue_874_regex.t to verify system command whitelisting
 
 2.8.29 2026-01-24
 

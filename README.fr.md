@@ -462,15 +462,27 @@ Soyez prudent lorsque vous mettez en œuvre des modifications pour assurer la st
 
 Si votre DBA prend constamment votre place de parking et vole votre déjeuner dans le réfrigérateur, vous voudrez peut-être y réfléchir - mais c'est votre décision.
 
-**Question : Pourquoi MySQLTuner me demande-t-il sans cesse les informations de connexion pour MySQL ?**
-
-Le script fera de son mieux pour se connecter par tous les moyens possibles. Il vérifiera les fichiers ~/.my.cnf, les fichiers de mot de passe Plesk et les connexions root avec mot de passe vide. Si aucun de ceux-ci n'est disponible, un mot de passe vous sera demandé. Si vous souhaitez que le script s'exécute de manière automatisée sans intervention de l'utilisateur, créez un fichier .my.cnf dans votre répertoire personnel qui contient :
-
- [client]
- user=someusername
- password=thatuserspassword
-
 Une fois que vous l'avez créé, assurez-vous qu'il appartient à votre utilisateur et que le mode du fichier est 0600. Cela devrait empêcher les regards indiscrets d'obtenir vos informations de connexion à la base de données dans des conditions normales.
+
+**Question : J'obtiens "ERROR 1524 (HY000): Plugin 'unix_socket' is not loaded" même avec unix_socket=OFF. Comment corriger ?**
+
+Cela se produit car le client MariaDB tente d'utiliser le plugin `unix_socket` par défaut lorsqu'aucun utilisateur/mot de passe n'est fourni.
+
+* **Solution 1 (Recommandée) :** Utilisez un fichier `~/.my.cnf` comme décrit ci-dessus pour fournir des identifiants explicites.
+* **Solution 2 :** Passez les identifiants directement : `perl mysqltuner.pl --user root --pass votre_mot_de_passe`.
+
+**Question : Comment réactiver l'authentification `unix_socket` de manière sécurisée ?**
+
+Si vous décidez d'utiliser `unix_socket` (qui permet à l'utilisateur `root` de l'OS de se connecter à `root` MariaDB sans mot de passe), suivez ces étapes :
+
+1. Assurez-vous que le plugin est activé dans `/etc/my.cnf` : `unix_socket=ON` (ou supprimez `OFF`).
+2. Dans MariaDB, définissez le plugin d'authentification pour l'utilisateur root :
+
+   ```sql
+   ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket;
+   ```
+
+3. Vérifiez que le plugin `auth_socket` ou `unix_socket` est `ACTIVE` dans `SHOW PLUGINS`.
 
 **Question : Existe-t-il un autre moyen de sécuriser les informations d'identification sur les dernières distributions MySQL et MariaDB ?**
 

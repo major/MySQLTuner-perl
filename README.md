@@ -462,15 +462,27 @@ Be cautious when implementing changes to ensure the stability and performance of
 
 If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
 
-**Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?**
-
-The script will try its best to log in via any means possible.  It will check for ~/.my.cnf files, Plesk password files, and empty password root logins.  If none of those are available, then you'll be prompted for a password.  If you'd like the script to run in an automated fashion without user intervention, then create a .my.cnf file in your home directory which contains:
-
- [client]
- user=someusername
- password=thatuserspassword
-
 Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.
+
+**Question: I get "ERROR 1524 (HY000): Plugin 'unix_socket' is not loaded" even with unix_socket=OFF. How to fix?**
+
+This occurs because the MariaDB client attempts to use the `unix_socket` plugin by default when no user/password is provided.
+
+* **Solution 1 (Recommended):** Use a `~/.my.cnf` file as described above to provide explicit credentials.
+* **Solution 2:** Pass credentials directly: `perl mysqltuner.pl --user root --pass your_password`.
+
+**Question: How to securely re-enable `unix_socket` authentication?**
+
+If you decide to use `unix_socket` (which allows the OS `root` user to log in to MariaDB `root` without a password), follow these steps:
+
+1. Ensure the plugin is enabled in `/etc/my.cnf`: `unix_socket=ON` (or remove `OFF`).
+2. In MariaDB, set the authentication plugin for the root user:
+
+   ```sql
+   ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket;
+   ```
+
+3. Verify that the `auth_socket` or `unix_socket` plugin is ACTIVE in `SHOW PLUGINS`.
 
 **Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
 

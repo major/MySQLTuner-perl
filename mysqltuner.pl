@@ -1003,7 +1003,7 @@ sub execute_system_command {
 
         # Be less verbose for commands that are expected to fail on some systems
         if ( $command !~
-/^(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb)/
+/(?:^|\/)(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb)/
           )
         {
             badprint "System command failed: $command";
@@ -1755,6 +1755,17 @@ sub get_all_vars {
         @lineitems                                        = split /\s+/, $line;
         $myslaves{ $lineitems[0] }                        = $line;
         $result{'Replication'}{'Slaves'}{ $lineitems[0] } = $lineitems[4];
+    }
+
+    # InnoDB Transaction Info
+    if ( $myvar{'have_innodb'} eq "YES" ) {
+        if ( mysql_version_ge(5) ) {
+            $mycalc{'innodb_active_transactions'} =
+              select_one("SELECT COUNT(*) FROM information_schema.INNODB_TRX");
+            $mycalc{'innodb_longest_transaction_duration'} = select_one(
+"SELECT IFNULL(MAX(TIMESTAMPDIFF(SECOND, trx_started, NOW())),0) FROM information_schema.INNODB_TRX"
+            );
+        }
     }
 }
 
@@ -7375,6 +7386,48 @@ sub mysql_innodb {
           . $mystat{'Innodb_log_writes'}
           . " writes)";
     }
+
+    # InnoDB Transaction Isolation and Metrics
+    subheaderprint "InnoDB Transactions";
+    my $isolation =
+         $myvar{'transaction_isolation'}
+      || $myvar{'tx_isolation'}
+      || $myvar{'isolation_level'};
+    if ( defined $isolation ) {
+        infoprint "Transaction Isolation Level: $isolation";
+    }
+
+    if ( defined $myvar{'innodb_snapshot_isolation'} ) {
+        infoprint "InnoDB Snapshot Isolation: "
+          . $myvar{'innodb_snapshot_isolation'};
+        if ( $myvar{'innodb_snapshot_isolation'} eq 'OFF'
+            && ( $isolation || '' ) eq 'REPEATABLE-READ' )
+        {
+            badprint
+"innodb_snapshot_isolation is OFF with REPEATABLE-READ (Stricter snapshot isolation is disabled)";
+            push( @adjvars, "innodb_snapshot_isolation=ON" );
+        }
+    }
+
+    if ( defined $mycalc{'innodb_active_transactions'} ) {
+        infoprint "Active InnoDB Transactions: "
+          . $mycalc{'innodb_active_transactions'};
+    }
+    if ( defined $mycalc{'innodb_longest_transaction_duration'}
+        && $mycalc{'innodb_longest_transaction_duration'} > 0 )
+    {
+        infoprint "Longest InnoDB Transaction Duration: "
+          . pretty_uptime( $mycalc{'innodb_longest_transaction_duration'} );
+        if ( $mycalc{'innodb_longest_transaction_duration'} > 3600 ) {
+            badprint "Long running InnoDB transaction detected ("
+              . pretty_uptime( $mycalc{'innodb_longest_transaction_duration'} )
+              . ")";
+            push( @generalrec,
+"Long running transactions can cause InnoDB history list length to increase and impact performance."
+            );
+        }
+    }
+
     $result{'Calculations'} = {%mycalc};
 }
 
