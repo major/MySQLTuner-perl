@@ -8,3 +8,4 @@ REMEMBER
 
 REMENBER:
 Rule: Don't forget to updates this file with REMEMBER: tag
+Rule: Documentation updates (`docs:`) following Conventional Commits can skip manual `@Changelog` entry if they are synchronization-only.

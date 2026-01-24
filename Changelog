@@ -5,6 +5,7 @@
 - test: add unit test tests/innodb_isolation.t for new transaction metrics
 - fix: noisy system command failures when absolute paths are used for whitelisted commands (issue #874)
 - test: add unit test tests/issue_874_regex.t to verify system command whitelisting
+- docs: synchronize all README files with authentication mismatch troubleshooting guide
 
 2.8.29 2026-01-24
 

@@ -2,6 +2,8 @@
 trigger: always_on
 ---
 
+# **AI CONTEXT SPECIFICATIONS & PROJECT CONSTITUTION**
+
 ## **4\. ⚙️ EXECUTION RULES & CONSTRAINTS**
 
 ### **4.1. Formal Prohibitions (Hard Constraints)**
@@ -13,6 +15,8 @@ trigger: always_on
 5. **TDD MANDATORY:** Use a TDD approach. _Do not assume_ that your solution is correct. Instead, _validate your solution is correct_ by first creating a test case and running the test case to _prove_ the solution is working as intended.
 6. **WEB SEARCH:** Assume your world knowledge is out of date. Use your web search tool to find up-to-date docs and information.
 7. **VERSION CONSISTENCY:** Version numbers MUST be synchronized across `CURRENT_VERSION.txt`, `Changelog`, and all occurrences within `mysqltuner.pl` (Header, internal variable, and POD documentation) before any release. Use `/release-preflight` to verify.
+8. **CONVENTIONAL COMMITS:** All commit messages MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. Use `npm run commit` for interactive commit creation. Compliance is enforced via `commitlint` and Git hooks.
+9. **NO DIRECT COMMIT:** All changes MUST be committed via `npm run commit` or `git cz` to ensure metadata quality and automated changelog compatibility.
 
 ### **4.2. Coding Guidelines**
 
@@ -45,9 +49,9 @@ trigger: always_on
 2. **Git Protocol:**
 
 - **STRICT PROHIBITION:** No `git commit`, `git push`, or `git tag` without using `/git-flow` or an explicit user order.
-- **Conventional Commits:** Use `feat:`, `fix:`, `chore:`, `docs:`.
-- **Versioning & Tagging:** Reserved ONLY for the `/git-flow` workflow.
-- **Atomic Operations:** Commit and tag must be synchronized via the workflow.
-- **Remote Sync:** If the last tag is not present on remote, do not increment version without explicit confirmation.
+- **Conventional Commits:** Use `feat:`, `fix:`, `chore:`, `docs:`, `perf:`, `refactor:`, `style:`, `test:`, `ci:`. Breaking changes must be marked with `!` after type/scope or `BREAKING CHANGE:` in footer.
+- **Commit Validation:** Commits are automatically linted via `commitlint`. Non-compliant messages will be rejected by the pre-commit hook.
+- **History Documentation:** Use `npm run commit` to generate structured history.
 
 1. **Changelog:** All changes MUST be traced and documented inside `@Changelog`.
+    - _Exception_: Documentation-only updates (`docs:`) following Conventional Commits may skip the manual `@Changelog` entry if they are primarily intended for README synchronization.
