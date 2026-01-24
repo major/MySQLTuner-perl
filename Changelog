@@ -1,7 +1,8 @@
-2.8.29 2026-01-22
+2.8.29 2026-01-24
 
-- 
-
+- fix: synchronize all version occurrences in mysqltuner.pl and update release workflows (issue #15)
+- feat: add version consistency check to release-preflight and git-flow workflows
+- docs: update copyright years to 2026
 2.8.28 2026-01-22
 
 - feat: ajoute l'option --no-pfstat pour la partie performance schema

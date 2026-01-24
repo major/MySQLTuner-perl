@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.28
+# mysqltuner.pl - Version 2.8.29
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -8288,7 +8288,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.22 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.29 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -8380,7 +8380,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 VERSION
 
-Version 2.8.28
+Version 2.8.29
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
@@ -8561,8 +8561,8 @@ L<https://github.com/jmrenouard/MySQLTuner-perl/>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2023 Major Hayden - major@mhtx.net
-# Copyright (C) 2015-2023 Jean-Marie Renouard - jmrenouard@gmail.com
+Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
+# Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 
 For the latest updates, please visit http://mysqltuner.pl/
 

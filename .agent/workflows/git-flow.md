@@ -61,7 +61,8 @@ description: Automate git-flow release process
    ```bash
    NEW_VER=$(echo $CURRENT_VER | awk -F. '{print $1"."$2"."($3+1)}')
    echo $NEW_VER > CURRENT_VERSION.txt
-   sed -i "s/my \$tunerversion = .*/my \$tunerversion = \"$NEW_VER\";/" mysqltuner.pl
+   # Update all version occurrences in mysqltuner.pl
+   perl -pi -e "s/\Q$CURRENT_VER\E/$NEW_VER/g" mysqltuner.pl
    
    DATE=$(date +%Y-%m-%d)
    echo -e "$NEW_VER $DATE\n\n- \n" > tmp_changelog && cat Changelog >> tmp_changelog && mv tmp_changelog Changelog
