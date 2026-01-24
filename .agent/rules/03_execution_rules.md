@@ -34,7 +34,7 @@ trigger: always_on
 3. **Politique "Zéro-Dépendance" CPAN**: Interdire l'usage de modules Perl qui ne font pas partie du "Core" (distribution standard Perl) afin que `mysqltuner.pl` reste un script unique, copiable et exécutable instantanément sur n'importe quel serveur sans installation préalable.
 4. **Traçabilité des Conseils (Audit Trail)**: Chaque recommandation ou conseil affiché par le script doit être documenté dans le code par un commentaire pointant vers la source officielle (Documentation MySQL/MariaDB ou KB) pour justifier le seuil choisi.
 5. **Efficience Mémoire (Parsing de Log)**: Pour le traitement des fichiers de logs (souvent volumineux), privilégier systématiquement le traitement ligne par ligne plutôt que le chargement complet en mémoire, surtout lors de la récupération via `--container`.
-6. **Standardisation @Changelog**: Maintenir le `@Changelog` en suivant strictement le format des _Conventional Commits_ (feat, fix, chore, docs) pour permettre une extraction automatisée et propre des notes de version lors des tags Git.
+6. **Standardisation @Changelog**: Maintenir le `@Changelog` en suivant strictement le format des _Conventional Commits_ (feat, fix, chore, docs, test, ci) pour permettre une extraction automatisée et propre des notes de version lors des tags Git.
 
 ### **4.3. Output & Restitution Format**
 
@@ -55,3 +55,5 @@ trigger: always_on
 
 1. **Changelog:** All changes MUST be traced and documented inside `@Changelog`.
     - _Exception_: Documentation-only updates (`docs:`) following Conventional Commits may skip the manual `@Changelog` entry if they are primarily intended for README synchronization.
+    - _Requirement_: Adding a new test MUST have a `test:` entry in the `@Changelog`.
+    - _Requirement_: Changing test scripts or updating infrastructure MUST have a `ci:` entry in the `@Changelog`.

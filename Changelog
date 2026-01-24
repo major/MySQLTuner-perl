@@ -4,8 +4,9 @@
 - feat: add MariaDB innodb_snapshot_isolation detection and recommendation
 - test: add unit test tests/innodb_isolation.t for new transaction metrics
 - fix: noisy system command failures when absolute paths are used for whitelisted commands (issue #874)
-- test: add unit test tests/issue_874_regex.t to verify system command whitelisting
+- test: add unit test tests/test_issue_874.t to verify system command whitelisting and unix_socket logic
 - docs: synchronize all README files with authentication mismatch troubleshooting guide
+- ci: update package.json test script and create remember workflow
 
 2.8.29 2026-01-24
 
