@@ -1,3 +1,7 @@
+2.8.30 2026-01-24
+
+- 
+
 2.8.29 2026-01-24
 
 - fix: synchronize all version occurrences in mysqltuner.pl and update release workflows (issue #15)
