@@ -57,3 +57,4 @@ trigger: always_on
     - _Exception_: Documentation-only updates (`docs:`) following Conventional Commits may skip the manual `@Changelog` entry if they are primarily intended for README synchronization.
     - _Requirement_: Adding a new test MUST have a `test:` entry in the `@Changelog`.
     - _Requirement_: Changing test scripts or updating infrastructure MUST have a `ci:` entry in the `@Changelog`.
+    - _Requirement_: Changing `Makefile` or files under `build/` MUST be traced in the `@Changelog` (usually via `ci:` or `chore:`).
