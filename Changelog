@@ -1,5 +1,51 @@
+# MySQLTuner Changelog
+
+2.8.32 2026-01-30
+
+- fix: resolve false positive weak password warnings on MariaDB socket authentication (issue #875) and prevent dictionary corruption by silencing `curl`/`wget` output.
+- test: add unit test [tests/test_issue_875.t](file:///tests/test_issue_875.t) to verify socket authentication detection.
+- style: enforce artifact path hygiene (hide absolute workstation paths) in agent-generated reports.
+- chore: rename release manager specification to a more generic name.
+- chore: update `multi-db-docker-env` and `test_db` vendors.
+
+2.8.31 2026-01-27
+
+- feat: add `--schemadir <path>` option to generate per-schema markdown documentation.
+- feat: support independent schema documentation generation without requiring `--dumpdir`.
+- feat: restructure specifications into `documentation/specifications/` (/hey-agent).
+- feat: add specification for Performance Schema Error Log analysis.
+- feat: add unused and redundant index checks via Performance Schema (sys schema) with recommendations and modeling findings.
+- feat: modernize CVE retrieval script `build/updateCVElist.pl` with NVD API 2.0 (JSON-based) (Fix #867).
+- feat: implement SQL modeling best practice checks (Primary Keys, Foreign Keys, Naming Conventions, Data Types).
+- feat: add MySQL 8.0+ specific modeling checks (JSON indexing, Invisible Indexes).
+- fix: resolve CLI option ambiguity and duplicate specification errors via unified Getopt::Long binding.
+- fix: resolve tab delimiter mismatch in `tests/sql_modeling.t` mock data.
+- fix: noisy system command failures when absolute paths are used for whitelisted commands (issue #874).
+- fix: resolve syntax error and Perl compilation warnings in `mysqltuner.pl`.
+- fix: ensure shell commands (pipes, redirections) work correctly in containers using `sh -c`.
+- test: add unit test `tests/schemadir.t` to verify schema documentation logic.
+- test: add unit test [tests/index_pfs_checks.t](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/tests/index_pfs_checks.t) for Performance Schema index verification.
+- test: add unit test [tests/sql_modeling.t](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/tests/sql_modeling.t) for comprehensive schema analysis verification.
+- ci: update `build/test_envs.sh` with `Schemadir` test scenario and fix logic ordering.
+- ci: establish formal "Advanced Test Log Auditing" protocol and anomaly tracking.
+- ci: enhance lab reports with integrated `execution.log` and collapsible panels for better readability.
+- ci: harden testing suite with rigorous return code checking across all test modes (lab, container, remote).
+- ci: improve laboratory error reporting to generate diagnostic reports even on startup failures.
+- ci: verify MySQL 8.0 integration post-CLI refactoring.
+- ci: reintroduce CVE analysis in Dockerfile with `--cvefile` support.
+- ci: cleanup all `examples/` and execute full LTS test suite (MySQL, MariaDB, Percona).
+- ci: update package.json test script and create remember workflow.
+- ci: consolidate testing laboratory scripts into unified [build/test_envs.sh](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/build/test_envs.sh) and update Makefile.
+- chore: uncomment examples directory in .gitignore.
+- chore: bump version to 2.8.31.
+- docs: formalize tracking of Makefile and build script changes
+- docs: formalize test and ci requirements in Changelog and rules
+- docs: update Changelog and relax rules for docs-only updates
+- chore: decommission MySQL 5.7 from testing laboratory and build scripts.
+
 2.8.30 2026-01-24
 
+- feat: auto-generate `raw_mysqltuner.txt` report in `dumps/` directory when using `--dumpdir`
 - feat: add InnoDB transaction isolation levels and metrics (active count, longest duration)
 - feat: add MariaDB innodb_snapshot_isolation detection and recommendation
 - feat: implement robust container transport support (--container)
@@ -7,12 +53,7 @@
 - feat: dynamic MySQL/MariaDB client detection in containers/remote hosts
 - feat: automatic database password retrieval from container environment (MYSQL_ROOT_PASSWORD/MARIADB_ROOT_PASSWORD)
 - fix: incorrect skip-name-resolve recommendations for cPanel systems (issue #863)
-- fix: noisy system command failures when absolute paths are used for whitelisted commands (issue #874)
-- fix: resolve syntax error and Perl compilation warnings in `mysqltuner.pl`
-- fix: ensure shell commands (pipes, redirections) work correctly in containers using `sh -c`
 - docs: synchronize all README files with authentication mismatch troubleshooting guide
-- ci: update package.json test script and create remember workflow
-- ci: consolidate testing laboratory scripts into unified build/test_envs.sh and update Makefile
 - ci: enhance `build/test_envs.sh` to capture and link all infrastructure logs (Docker start, DB injection, container logs, inspect data) in HTML reports for full audit traceability
 - ci: make HTML reports self-sufficient by embedding logs directly and reordering sections
 - ci: implement tripartite testing scenarios (Standard, Container, Dumpdir) per configuration with horizontal scenario selector in HTML reports
