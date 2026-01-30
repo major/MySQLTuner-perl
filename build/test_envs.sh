@@ -12,13 +12,26 @@ PROJECT_ROOT=$(pwd)
 EXAMPLES_DIR="$PROJECT_ROOT/examples"
 VENDOR_DIR="$PROJECT_ROOT/vendor"
 DATE_TAG=$(date +%Y%m%d_%H%M%S)
+CVE_FILE="$PROJECT_ROOT/vulnerabilities.csv"
+# log_step moved below declaration
 
 # Dependencies
 MULTI_DB_REPO="https://github.com/jmrenouard/multi-db-docker-env"
 TEST_DB_REPO="https://github.com/jmrenouard/test_db"
 
 # Default configurations
-DEFAULT_CONFIGS="mysql84 mariadb1011 percona80"
+get_supported_versions() {
+    local type=$1
+    local file="$PROJECT_ROOT/${type}_support.md"
+    if [ -f "$file" ]; then
+        grep "| Supported |" "$file" | awk -v t="$type" -F'|' '{gsub(/ /, "", $2); gsub(/\./, "", $2); print t$2}' | xargs
+    fi
+}
+
+MYSQL_SUPPORTED=$(get_supported_versions "mysql")
+MARIADB_SUPPORTED=$(get_supported_versions "mariadb")
+DEFAULT_CONFIGS="$MYSQL_SUPPORTED $MARIADB_SUPPORTED percona80"
+
 CONFIGS=""
 TARGET_DB=""
 FORCEMEM_VAL=""
@@ -27,6 +40,8 @@ EXISTING_CONTAINER=""
 REMOTE_HOST=""
 SSH_OPTIONS="-q -o TCPKeepAlive=yes -o ServerAliveInterval=50 -o strictHostKeyChecking=no"
 DO_AUDIT=false
+KEEP_ALIVE=false
+NO_INJECTION=false
 
 show_usage() {
     echo "Usage: $0 [options] [configs...]"
@@ -38,6 +53,8 @@ show_usage() {
     echo "  -d, --database name       Target database name for MySQLTuner to tune"
     echo "  -f, --forcemem value      Value for --forcemem parameter (in MB)"
     echo "  -s, --ssh-options \"opts\"  Additional SSH options"
+    echo "  -k, --keep-alive          Keep laboratory containers running after tests"
+    echo "  -n, --no-injection         Skip database data injection phase"
     echo "  --cleanup                 Maintain only 10 latest results in examples/"
     echo "  -h, --help                Show this help"
     echo ""
@@ -84,6 +101,14 @@ while [[ $# -gt 0 ]]; do
         -s|--ssh-options)
             SSH_OPTIONS="$SSH_OPTIONS $2"
             shift 2
+            ;;
+        -k|--keep-alive)
+            KEEP_ALIVE=true
+            shift
+            ;;
+        -n|--no-injection)
+            NO_INJECTION=true
+            shift
             ;;
         -h|--help)
             show_usage
@@ -155,6 +180,29 @@ cleanup_examples() {
     ls -dt "$EXAMPLES_DIR"/*/ 2>/dev/null | tail -n +11 | xargs -r rm -rf
 }
 
+# Helper to check exit code and log to execution.log
+check_exit_code() {
+    local ret=$1
+    local msg=$2
+    local log=$3
+    local output_file=$4
+    if [ $ret -ne 0 ]; then
+        log_step "WARNING: $msg (Exit code: $ret)"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $msg failed with exit code $ret" >> "$log"
+        return $ret
+    fi
+    # If output_file is provided, check for "Terminated successfully"
+    if [ -n "$output_file" ]; then
+        if [ ! -f "$output_file" ] || ! grep -q "Terminated successfully" "$output_file"; then
+             log_step "WARNING: $msg (Missing or incomplete output)"
+             echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $msg failed (Missing or incomplete output)" >> "$log"
+             return 254
+        fi
+    fi
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUCCESS: $msg" >> "$log"
+    return 0
+}
+
 # Generate unified HTML report
 generate_report() {
     local target_dir=$1
@@ -172,7 +220,7 @@ generate_report() {
     
     # helper for panels
     render_panel() {
-        local file=$1; local title=$2; local icon=$3; local color=$4; local content=$5; local log_file=$6
+        local file=$1; local title=$2; local icon=$3; local color=$4; local content=$5; local log_file=$6; local open=${7:-""}
         [ -z "$content" ] && [ -f "$target_dir/$file" ] && content=$(cat "$target_dir/$file" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
         [ -z "$content" ] && return
         
@@ -180,13 +228,18 @@ generate_report() {
         [ -n "$log_file" ] && [ -f "$target_dir/$log_file" ] && links+="<span class='mx-2 text-gray-600'>|</span><a href='$log_file' class='text-xs text-gray-400 hover:text-gray-300 transition-colors'>Log</a>"
 
         echo "<section class='bg-gray-800 rounded-xl border border-gray-700 shadow-xl overflow-hidden mb-8'>
-            <div class='bg-gray-700 px-6 py-4 flex justify-between items-center'>
-                <h2 class='text-lg font-semibold flex items-center'><i class='fas $icon mr-3 $color'></i>$title</h2>
-                <div class='flex items-center'>$links</div>
-            </div>
-            <div class='p-6'>
-                <pre class='bg-gray-950 p-4 rounded-lg overflow-x-auto text-xs font-mono text-gray-400 max-h-96 overflow-y-auto'>$content</pre>
-            </div>
+            <details $open class='group'>
+                <summary class='bg-gray-700 px-6 py-4 flex justify-between items-center cursor-pointer list-none'>
+                    <h2 class='text-lg font-semibold flex items-center'>
+                        <i class='fas fa-chevron-right mr-3 text-gray-500 transition-transform group-open:rotate-90'></i>
+                        <i class='fas $icon mr-3 $color'></i>$title
+                    </h2>
+                    <div class='flex items-center'>$links</div>
+                </summary>
+                <div class='p-6 border-t border-gray-700'>
+                    <pre class='bg-gray-950 p-4 rounded-lg overflow-x-auto text-xs font-mono text-gray-400 max-h-96 overflow-y-auto'>$content</pre>
+                </div>
+            </details>
         </section>"
     }
 
@@ -209,7 +262,7 @@ generate_report() {
     local scenario_bar=""
     if [ -n "$current_scenario" ]; then
         scenario_bar="<div class='flex border-b border-gray-700 mb-8'>"
-        for s in Standard Container Dumpdir; do
+        for s in Standard Container Dumpdir Schemadir; do
             local active=""
             [ "$s" = "$current_scenario" ] && active="border-b-2 border-blue-500 text-blue-400" || active="text-gray-400 hover:text-gray-200"
             scenario_bar+="<a href='../$s/report.html' class='px-6 py-3 font-medium transition-colors $active'>$s</a>"
@@ -309,7 +362,10 @@ generate_report() {
             $audit_html
 
             <!-- MySQLTuner Core Output (At the bottom) -->
-            $(render_panel "mysqltuner_output.txt" "MySQLTuner Output" "fa-terminal" "text-blue-400" "$mt_output" "execution.log")
+            $(render_panel "mysqltuner_output.txt" "MySQLTuner Output" "fa-terminal" "text-blue-400" "$mt_output" "" "open")
+
+            <!-- Execution Trace (Log) -->
+            $(render_panel "execution.log" "Full Execution Trace" "fa-file-code" "text-yellow-400")
         </div>
 
         <footer class="mt-12 text-center text-gray-500 text-xs border-t border-gray-800 pt-8">
@@ -355,16 +411,41 @@ run_test_lab() {
     
     log_step "Starting container..."
     # Capture docker start log at config level
-    make "$config" > "$root_target_dir/docker_start.log" 2>&1 || { log_step "FAILED: Container startup"; exit 1; }
-    sleep 30
+    make "$config" > "$root_target_dir/docker_start.log" 2>&1
+    local ret=$?
+    if [ $ret -ne 0 ]; then
+        log_step "CRITICAL FAILED: Container startup ($config)."
+        echo "ERROR: make $config failed with exit code $ret" >> "$root_target_dir/execution.log"
+        generate_report "$root_target_dir" "$config" "$ret" "0" "N/A" "N/A" "make $config" "FailedStartup"
+        exit 1
+    fi
+    sleep 10
+    log_step "Waiting for database to be ready..."
+    local timeout=120
+    local count=0
+    until mysqladmin -h 127.0.0.1 -u root -pmysqltuner_test ping >/dev/null 2>&1; do
+        sleep 2
+        count=$((count + 2))
+        if [ $count -ge $timeout ]; then
+            log_step "ERROR: Database readiness timeout reached."
+            break
+        fi
+    done
+    sleep 5
 
-    log_step "Injecting sample data..."
-    export MYSQL_HOST=127.0.0.1
-    export MYSQL_TCP_PORT=3306
-    export MYSQL_USER=root
-    export MYSQL_PWD=mysqltuner_test
-    
-    find "$VENDOR_DIR/test_db" -name "employees.sql" -exec sh -c 'cd $(dirname {}) && mysql -h 127.0.0.1 -u root -pmysqltuner_test < $(basename {})' \; > "$root_target_dir/db_injection.log" 2>&1 || { log_step "WARNING: Data injection had issues"; }
+    if [ "$NO_INJECTION" = false ]; then
+        log_step "Injecting sample data..."
+        export MYSQL_HOST=127.0.0.1
+        export MYSQL_TCP_PORT=3306
+        export MYSQL_USER=root
+        export MYSQL_PWD=mysqltuner_test
+        
+        find "$VENDOR_DIR/test_db" -name "employees.sql" -exec sh -c 'cd $(dirname {}) && mysql -h 127.0.0.1 -u root -pmysqltuner_test < $(basename {})' \; > "$root_target_dir/db_injection.log" 2>&1
+        check_exit_code $? "Database Data Injection" "$root_target_dir/execution.log"
+    else
+        log_step "Skipping data injection as requested (--no-injection)."
+        echo "Data injection skipped by user request." > "$root_target_dir/db_injection.log"
+    fi
 
     db_version=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SELECT VERSION();" -sN 2>/dev/null)
     db_list=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SHOW DATABASES;" -sN 2>/dev/null)
@@ -372,8 +453,8 @@ run_test_lab() {
     local container_name=$(docker ps --format '{{.Names}}' | grep -v "traefik" | head -n 1)
     [ -z "$container_name" ] && container_name="$config"
 
-    # Iterate over 3 scenarios
-    for scenario in Standard Container Dumpdir; do
+    # Iterate over 4 scenarios
+    for scenario in Standard Container Dumpdir Schemadir; do
         log_step "Executing Scenario: $scenario..."
         local target_dir="$root_target_dir/$scenario"
         mkdir -p "$target_dir"
@@ -388,27 +469,41 @@ run_test_lab() {
         [ -n "$TARGET_DB" ] && db_param="--database $TARGET_DB"
         [ -n "$FORCEMEM_VAL" ] && db_param="$db_param --forcemem $FORCEMEM_VAL"
         
-        # Use --noask to prevent hanging and --skippassword to avoid dictionary checks in lab
-        local mt_opts="--noask --skippassword"
+        # Use --noask to prevent hanging in lab
+        local mt_opts="--noask"
         
         case "$scenario" in
             Standard)
-                perl "$PROJECT_ROOT/mysqltuner.pl" --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose $mt_opts --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
-                local repro_cmds="perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose"
+                perl "$PROJECT_ROOT/mysqltuner.pl" --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose $mt_opts --cvefile "$CVE_FILE" --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
+                ret_code=$?
+                local repro_cmds="perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --cvefile vulnerabilities.csv"
                 ;;
             Container)
-                perl "$PROJECT_ROOT/mysqltuner.pl" --container docker:"$container_name" $db_param --verbose $mt_opts --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
-                local repro_cmds="perl mysqltuner.pl --container docker:\"$container_name\" $db_param --verbose"
+                # Scenario where we force container mode
+                perl "$PROJECT_ROOT/mysqltuner.pl" --container docker:"$container_name" --user root --pass mysqltuner_test $db_param --verbose $mt_opts --cvefile "$CVE_FILE" --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
+                ret_code=$?
+                local repro_cmds="perl mysqltuner.pl --container docker:\"$container_name\" --verbose --cvefile vulnerabilities.csv"
                 docker logs "$container_name" > "$target_dir/container_logs.log" 2>&1
                 docker inspect "$container_name" > "$target_dir/container_inspect.json" 2>/dev/null
                 ;;
             Dumpdir)
+                # Scenario where we use dumpdir (Offline analysis mode)
                 mkdir -p "$target_dir/dumps"
-                perl "$PROJECT_ROOT/mysqltuner.pl" --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --dumpdir="$target_dir/dumps" $mt_opts --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
-                local repro_cmds="perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --dumpdir=dumps"
+                # First, we need to generate the dumps (using Standard mode but with --dumpdir)
+                perl "$PROJECT_ROOT/mysqltuner.pl" --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --dumpdir="$target_dir/dumps" $mt_opts --cvefile "$CVE_FILE" --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
+                ret_code=$?
+                local repro_cmds="perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --dumpdir=dumps --cvefile vulnerabilities.csv"
+                ;;
+            Schemadir)
+                # Scenario where we use schemadir (Independent schema documentation)
+                mkdir -p "$target_dir/schemas"
+                perl "$PROJECT_ROOT/mysqltuner.pl" --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --schemadir="$target_dir/schemas" $mt_opts --cvefile "$CVE_FILE" --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
+                ret_code=$?
+                local repro_cmds="perl mysqltuner.pl --host 127.0.0.1 --user root --pass mysqltuner_test $db_param --verbose --schemadir=schemas --cvefile vulnerabilities.csv"
                 ;;
         esac
-        ret_code=$?
+        # ret_code=$?  # MOVED ABOVE to avoid being overwritten by local
+        check_exit_code $ret_code "MySQLTuner Execution ($scenario)" "$target_dir/execution.log" "$target_dir/mysqltuner_output.txt"
 
         # Robustness: Check if output exists, if not, grab it from execution.log as fallback
         [ ! -s "$target_dir/mysqltuner_output.txt" ] && cp "$target_dir/execution.log" "$target_dir/mysqltuner_output.txt"
@@ -442,7 +537,12 @@ $repro_cmds"
     echo "<html><head><meta http-equiv='refresh' content='0; url=Standard/report.html'></head></html>" > "$root_target_dir/report.html"
 
     log_step "Stopping container..."
-    make stop >> "$root_target_dir/docker_start.log" 2>&1
+    if [ "$KEEP_ALIVE" = false ]; then
+        make stop >> "$root_target_dir/docker_start.log" 2>&1
+    else
+        log_step "KEEP ALIVE: Container remains running."
+        echo "KEEP ALIVE: Container left running for manual debugging." >> "$root_target_dir/docker_start.log"
+    fi
     cd "$PROJECT_ROOT"
 }
 
@@ -460,8 +560,9 @@ run_test_container() {
     [ -n "$TARGET_DB" ] && db_param="--database $TARGET_DB"
     [ -n "$FORCEMEM_VAL" ] && db_param="$db_param --forcemem $FORCEMEM_VAL"
 
-    perl mysqltuner.pl --container docker:"$container" $db_param --verbose --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
+    perl mysqltuner.pl --container docker:"$container" $db_param --verbose --cvefile "$CVE_FILE" --outputfile "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log" 2>&1
     ret_code=$?
+    check_exit_code $ret_code "MySQLTuner Execution (Container: $container)" "$target_dir/execution.log" "$target_dir/mysqltuner_output.txt"
 
     log_step "Capturing container logs and inspection data..."
     docker logs "$container" > "$target_dir/container_logs.log" 2>&1
@@ -489,17 +590,18 @@ run_test_remote() {
     log_header "Remote Audit: $host"
     start_time=$(date +%s)
 
-    log_step "Transferring MySQLTuner to remote..."
-    scp $SSH_OPTIONS mysqltuner.pl "root@$host:/tmp/mysqltuner.pl" > /dev/null
+    log_step "Transferring MySQLTuner and CVE list to remote..."
+    scp $SSH_OPTIONS mysqltuner.pl vulnerabilities.csv "root@$host:/tmp/" > /dev/null
 
     log_step "Executing MySQLTuner on remote..."
     local db_param=""
     [ -n "$TARGET_DB" ] && db_param="--database $TARGET_DB"
     [ -n "$FORCEMEM_VAL" ] && db_param="$db_param --forcemem $FORCEMEM_VAL"
 
-    ssh $SSH_OPTIONS "root@$host" "perl /tmp/mysqltuner.pl $db_param --verbose" > "$target_dir/mysqltuner_output.txt" 2>&1
+    ssh $SSH_OPTIONS "root@$host" "perl /tmp/mysqltuner.pl $db_param --verbose --cvefile /tmp/vulnerabilities.csv" > "$target_dir/mysqltuner_output.txt" 2>&1
     ret_code=$?
     cat "$target_dir/mysqltuner_output.txt" > "$target_dir/execution.log"
+    check_exit_code $ret_code "MySQLTuner Execution (Remote: $host)" "$target_dir/execution.log" "$target_dir/mysqltuner_output.txt"
 
     [ "$DO_AUDIT" = true ] && run_audit_tools "$target_dir"
 
