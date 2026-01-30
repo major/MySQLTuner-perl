@@ -1,0 +1,21 @@
+# POTENTIAL ISSUES AUDIT
+
+This file records anomalies discovered during laboratory testing (Perl warnings, SQL errors, etc.).
+
+## [2026-01-27 00:32] Session Start (v2.8.31)
+
+### Logic Anomalies
+
+- [x] **SQL Check Syntax Error**: `sh: 1: Syntax error: "(" unexpected` during `select CONCAT(...) from sys.schema_redundant_indexes`.
+  - Found in: MySQL 8.x and Percona 8.x laboratory logs.
+  - Fix: Escaped double quotes in `select_array` and `select_array_with_headers` to ensure safe transport in container mode.
+- [x] **MariaDB LTS Stability**: Verified clean for 11.4, 10.11, 10.6.
+- [ ] **Performance Schema Disabled**: `✘ Performance_schema should be activated.` reported during audit.
+  - Found in: `examples/20260127_004622_mariadb114/Standard/execution.log`
+  - Impact: Reduced diagnostic depth for performance metrics.
+  - **How to fix**:
+    - **MySQL/MariaDB**: Add `performance_schema=ON` under `[mysqld]` in your `my.cnf` or `server.cnf` and restart the service.
+    - **Cloud/Managed**: Enable via your cloud provider console (e.g., AWS Parameter Group, GCP Flags).
+    - **Verification**: Run `SHOW VARIABLES LIKE 'performance_schema';` (should be `ON`).
+
+### Environment/Lab Issues

@@ -2,7 +2,7 @@ name: Docker Publish
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -11,24 +11,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USER_LOGIN }}
-        password: ${{ secrets.DOCKER_USER_PASSWORD }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER_LOGIN }}
+          password: ${{ secrets.DOCKER_USER_PASSWORD }}
 
-    - name: Extract version from mysqltuner.pl
-      id: version
-      run: echo "VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')" >> $GITHUB_ENV
+      - name: Extract version from mysqltuner.pl
+        id: version
+        run: echo "VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')" >> $GITHUB_ENV
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        push: true
-        tags: |
-          jmrenouard/mysqltuner:latest
-          jmrenouard/mysqltuner:${{ env.VERSION }}
+      - name: Extract release notes
+        id: release_notes
+        run: |
+          {
+            echo 'RELEASE_NOTES<<EOF'
+            cat "releases/v${{ env.VERSION }}.md"
+            echo 'EOF'
+          } >> $GITHUB_ENV
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            jmrenouard/mysqltuner:latest
+            jmrenouard/mysqltuner:${{ env.VERSION }}
+          labels: |
+            org.opencontainers.image.title=MySQLTuner
+            org.opencontainers.image.description=**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions. **MySQLTuner** supports ~300 indicators for MySQL/MariaDB/Percona Server in this latest version.
+            org.opencontainers.image.version=${{ env.VERSION }}
+            org.opencontainers.image.licenses=GPL-3.0
+            com.mysqltuner.release-notes=${{ env.RELEASE_NOTES }}

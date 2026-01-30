@@ -1,3 +1,8 @@
+---
+trigger: always_on
+description: Overview of project governance, skills, and workflows
+category: governance
+---
 # .agent - Project Governance & Artificial Intelligence Intelligence
 
 This directory contains the project's technical constitution, specialized skills, and operational workflows used by AI agents.
@@ -9,9 +14,9 @@ This directory contains the project's technical constitution, specialized skills
 | [`00_constitution.md`](./rules/00_constitution.md) | Core mission and unique source of truth for the project. |
 | [`01_objective.md`](./rules/01_objective.md) | Current project roadmap and success criteria. |
 | [`02_architecture.md`](./rules/02_architecture.md) | Immutable project architecture and technology stack. |
-| [`03_execution_rules.md`](./rules/03_execution_rules.md) | No description available. |
+| [`03_execution_rules.md`](./rules/03_execution_rules.md) | Core project constitution and hard execution constraints. |
 | [`04_best_practices.md`](./rules/04_best_practices.md) | Technical best practices and recommended internal patterns. |
-| [`05_memory_protocol.md`](./rules/05_memory_protocol.md) | No description available. |
+| [`05_memory_protocol.md`](./rules/05_memory_protocol.md) | Protocols for maintaining contextual consistency and history. |
 | [`remembers.md`](./rules/remembers.md) | Permanent storage for session-discovered patterns and rules. |
 
 
@@ -19,8 +24,9 @@ This directory contains the project's technical constitution, specialized skills
 
 | File | Description |
 | :--- | :--- |
-| [`db-version-rift/`](./skills/db-version-rift/SKILL.md) | No description available. |
-| [`legacy-perl-patterns/`](./skills/legacy-perl-patterns/SKILL.md) | No description available. |
+| [`cli-execution-mastery/`](./skills/cli-execution-mastery/SKILL.md) | Mastery of MySQLTuner CLI options for connection and authentication. |
+| [`db-version-rift/`](./skills/db-version-rift/SKILL.md) | Mapping of critical differences between MySQL and MariaDB versions for cross-compatible diagnostics. |
+| [`legacy-perl-patterns/`](./skills/legacy-perl-patterns/SKILL.md) | Guidelines and patterns for maintaining backward compatibility with older Perl versions (5.8+). |
 | [`testing-orchestration/`](./skills/testing-orchestration/SKILL.md) | Knowledge on how to run, orchestrate, and validate tests in the MySQLTuner project. |
 
 
@@ -30,18 +36,23 @@ This directory contains the project's technical constitution, specialized skills
 | :--- | :--- |
 | [`compliance-sentinel.md`](./workflows/compliance-sentinel.md) | Automated audit to enforce project constitution rules |
 | [`doc-sync.md`](./workflows/doc-sync.md) | Synchronize .agent/README.md with current Rules, Skills, and Workflows |
-| [`docker-clean.md`](./workflows/docker-clean.md) | /docker-clean |
+| [`docker-clean.md`](./workflows/docker-clean.md) | Reclaim disk space by removing unused containers and images |
 | [`examples-cleanup.md`](./workflows/examples-cleanup.md) | Maintain only the 10 most recent results in the examples directory |
 | [`git-flow.md`](./workflows/git-flow.md) | Automate git-flow release process |
 | [`git-rollback.md`](./workflows/git-rollback.md) | Rollback a failed release (delete tags and revert commits) |
 | [`hey-agent.md`](./workflows/hey-agent.md) | Unified management for Rules, Skills, and Workflows. |
+| [`lab-down.md`](./workflows/lab-down.md) | Stops and cleans up the database laboratory. |
+| [`lab-up.md`](./workflows/lab-up.md) | Starts a persistent database laboratory and injects data. |
 | [`markdown-lint.md`](./workflows/markdown-lint.md) | Check markdown content for cleanliness and project standard compliance (AFF, keywords, links) |
+| [`plan.md`](./workflows/plan.md) | Create or update an implementation plan (implementation_plan.md) |
+| [`release-manager.md`](./workflows/release-manager.md) | High-level release orchestrator for the Release Manager role |
 | [`release-notes-gen.md`](./workflows/release-notes-gen.md) | Generate detailed technical release notes for the current version |
 | [`release-preflight.md`](./workflows/release-preflight.md) | Pre-flight checks before triggering a git-flow release |
-| [`run-tests.md`](./workflows/run-tests.md) | No description available. |
+| [`run-tests.md`](./workflows/run-tests.md) | Comprehensive test suite execution (Unit, Regression, and Multi-DB) |
 | [`snapshot-to-test.md`](./workflows/snapshot-to-test.md) | Transform a running production issue into a reproducible test case |
-| [`test-it.md`](./workflows/test-it.md) | Run MySQLTuner tests against multiple database configurations |
+| [`specify.md`](./workflows/specify.md) | Create or update a feature specification (specification.md) |
+| [`tasks.md`](./workflows/tasks.md) | Break down an approved plan into actionable tasks (task.md) |
 
 
 ---
-*Generated automatically by `/doc-sync` on Sat Jan 24 11:43:55 CET 2026*
+*Generated automatically by `/doc-sync` on Fri Jan 30 08:23:33 CET 2026*

@@ -121,9 +121,42 @@ def analyze_tech_details(version):
     except Exception as e:
         return None
 
+def sort_changelog_lines(changelog_text):
+    # Split by lines and remove empty lines
+    lines = [l.strip() for l in changelog_text.strip().split('\n') if l.strip()]
+    if not lines:
+        return ""
+    
+    # Identify header if any (first line usually has version/date)
+    header = ""
+    start_idx = 0
+    if re.match(r'^\d+\.\d+\.\d+ \d{4}-\d{2}-\d{2}', lines[0]):
+        header = lines[0] + "\n\n"
+        start_idx = 1
+        
+    categories = ['chore', 'feat', 'fix', 'test', 'ci']
+    categorized = {cat: [] for cat in categories}
+    others = []
+    
+    for i in range(start_idx, len(lines)):
+        line = lines[i]
+        # Match "- type: message"
+        match = re.match(r'^- (\w+):', line)
+        if match and match.group(1) in categories:
+            categorized[match.group(1)].append(line)
+        else:
+            others.append(line)
+            
+    sorted_body = []
+    for cat in categories:
+        sorted_body.extend(categorized[cat])
+    sorted_body.extend(others)
+    
+    return header + '\n'.join(sorted_body)
+
 def generate_version_note(version, block):
     date = block['date']
-    changelog = block['summary']
+    changelog = sort_changelog_lines(block['summary'])
     commits = get_git_commits(version)
     tech_data = analyze_tech_details(version)
     

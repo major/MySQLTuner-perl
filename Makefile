@@ -22,6 +22,7 @@ help:
 	@echo "  test-all:          Run all database lab tests"
 	@echo "  test-container:    Run tests against a specific CONTAINER (e.g. CONTAINER=my_db)"
 	@echo "  audit:             Run audit on remote HOST (e.g. HOST=db-server.com)"
+	@echo "  audit-logs:        Run local audit on laboratory logs (examples/ directory)"
 	@echo "  unit-tests:        Run unit and regression tests in tests/ directory"
 	@echo "  clean_examples:    Cleanup examples directory (KEEP=n, default 5)"
 	@echo "  setup_commits:     Install Conventional Commits tools (Node.js)"
@@ -128,9 +129,21 @@ test-container:
 	@echo "Running MySQLTuner against container: $(CONTAINER)..."
 	bash build/test_envs.sh -e "$(CONTAINER)"
 
+lab-up: vendor_setup
+	@echo "Starting Persistent MySQLTuner Lab..."
+	bash build/test_envs.sh --keep-alive $(CONFIGS)
+
+lab-down:
+	@echo "Stopping MySQLTuner Lab..."
+	cd vendor/multi-db-docker-env && make stop
+
 audit:
 	@echo "Running MySQLTuner Audit on host: $(HOST)..."
 	bash build/test_envs.sh -r "$(HOST)" -a
+
+audit-logs:
+	@echo "Running laboratory logs audit..."
+	perl build/audit_logs.pl --dir=examples --verbose
 
 unit-tests:
 	@echo "Running unit and regression tests..."

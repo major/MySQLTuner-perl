@@ -35,11 +35,14 @@ category: [governance | tool | skill]
 ### 3. Execution Steps (The "Nuclear" Protocol)
 
 1. **Trigger**: Invoke `/hey-agent` for any structural change.
-2. **Analysis**: Scan existing files for contradictions (Audit Mode).
-3. **Execution**: Apply changes using `replace_file_content` or `multi_replace`.
-4. **Synchronization**: Immediately update `03_execution_rules.md` (constraints) and `04_best_practices.md` if necessary.
-5. **Autolearning**: Update `remembers.md` as the session-level memory buffer.
-6. **Documentation Sync**: Execute `/doc-sync` to refresh the project's technical summary.
+2. **Specify (`/specify`)**: Define requirements for new features or structural changes in `documentation/specifications/`.
+3. **Plan (`/plan`)**: Draft a technical strategy for the implementation.
+4. **Tasks (`/tasks`)**: Break down the plan into trackable units.
+5. **Analysis**: Scan existing files for contradictions (Audit Mode).
+6. **Execution**: Apply changes using `replace_file_content` or `multi_replace`.
+7. **Synchronization**: Immediately update `03_execution_rules.md` (constraints) and `04_best_practices.md` if necessary.
+8. **Autolearning**: Update `remembers.md` as the session-level memory buffer.
+9. **Documentation Sync**: Execute `/doc-sync` to refresh the project's technical summary.
 
 ## ✅ Verification
 

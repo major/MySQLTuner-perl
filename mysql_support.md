@@ -2,7 +2,7 @@
 
 | Version | End of Support Date | LTS | Status |
 |---------|------------------------|-----|--------|
-| 9.5 | N/A | NO | Supported |
+| 9.6 | N/A | NO | Supported |
 | 9.4 | 2025-10-21 | NO | Outdated |
 | 9.3 | 2025-07-22 | NO | Outdated |
 | 9.2 | 2025-04-15 | NO | Outdated |

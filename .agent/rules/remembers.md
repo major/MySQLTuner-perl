@@ -15,23 +15,11 @@ If new rules are identified during a session, invoke the `/hey-agent` workflow t
 
 **REMEMBER LOG:**
 
-- Rule: Documentation updates (`docs:`) following Conventional Commits can skip manual `@Changelog` entry if they are synchronization-only.
-- Rule: New tests MUST have a `test:` entry in the `@Changelog`.
-- Rule: Test script or infrastructure updates MUST have a `ci:` entry in the `@Changelog`.
-- Rule: `Makefile` and `build/*` changes MUST be traced in the `@Changelog`.
-- Rule: HTML reports MUST be self-sufficient, embedding all relevant logs (Docker, DB injection, etc.) and placing MySQLTuner output at the bottom for consolidated sharing.
-- Rule: Testing MUST encompass 3 specific scenarios: Standard (--verbose), Container (--verbose --container), and Dumpdir (--verbose --dumpdir=dumps).
-- Rule: HTML reports MUST include a horizontal scenario selector for tripartite test cases.
-- Rule: All test infrastructure logs (docker start, db injection, container logs, container inspect) MUST be captured and linked in HTML reports.
-- Rule: HTML reports MUST contain a "Reproduce" section with the full sequence of commands.
-- Rule: Kernel tuning recommendations MUST be skipped in container mode or when running in Docker.
-- Rule: Changelog entries MUST be ordered by category: `feat`, `fix`, `docs`, `ci`, then others (`test`, `chore`).
-- Rule: The `/git-flow` workflow MUST always be preceded by a successful `/release-preflight` execution.
-- Rule: The `examples/` directory MUST only retain the 10 most recent laboratory execution results to optimize storage.
-- Rule: Each version MUST have a detailed release notes file in `/releases/vX.Y.Z.md` generated via `/release-notes-gen` before triggering a release workflow.
-- Rule: The `.agent/README.md` MUST be synchronized using `/doc-sync` after any modification to governance assets (Rules/Skills/Workflows).
-- Rule: The `.agent/README.md` MUST be automatically updated via `/doc-sync` during the `/hey-agent` lifecycle.
-- Rule: Report files (HTML and logs) MUST NOT contain negative keywords like `error`, `warning`, `fatal`, or `failed` (except when explicitly documenting expected failures).
+- Rule: Report diagnostic anomalies (Perl warnings, SQL errors) in `POTENTIAL_ISSUES` at root, including the path to the relevant `execution.log`.
+- Rule: Cleanup `POTENTIAL_ISSUES` file as soon as the reported issue is handled, tested, or fixed.
+- Rule: Audit `execution.log` for "✘ Performance_schema should be activated." and report it in `POTENTIAL_ISSUES`.
+- Rule: Automated test example generation (via `run-tests`) MUST only target "Supported" versions of MySQL and MariaDB as defined in `mysql_support.md` and `mariadb_support.md`.
+- Rule: File links in artifacts MUST be cleaned up to remove workstation-specific absolute paths (e.g., replace `file:///home/jmren/GIT_REPOS/` with `file:///`).
 
 ## ✅ Verification
 

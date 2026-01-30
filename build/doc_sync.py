@@ -30,7 +30,12 @@ def generate_readme():
         'workflows': 'Automation & Operational Workflows'
     }
     
-    output = ["# .agent - Project Governance & Artificial Intelligence Intelligence\n"]
+    output = ["---"]
+    output.append("trigger: always_on")
+    output.append("description: Overview of project governance, skills, and workflows")
+    output.append("category: governance")
+    output.append("---")
+    output.append("# .agent - Project Governance & Artificial Intelligence Intelligence\n")
     output.append("This directory contains the project's technical constitution, specialized skills, and operational workflows used by AI agents.\n")
     
     for folder, cat_title in categories.items():

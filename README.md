@@ -601,7 +601,6 @@ MySQLTuner and Vagrant
     mariadb                  10.3                47dff68107c4        12 days ago         343MB
     mariadb                  10.4                92495405fc36        12 days ago         356MB
     mysql                    5.6                 95e0fc47b096        2 weeks ago         257MB
-    mysql                    5.7                 383867b75fd2        2 weeks ago         373MB
     mysql                    8.0                 b8fd9553f1f0        2 weeks ago         445MB
     percona/percona-server   5.7                 ddd245ed3496        5 weeks ago         585MB
     percona/percona-server   5.6                 ed0a36e0cf1b        6 weeks ago         421MB
@@ -623,7 +622,6 @@ MySQLTuner and Vagrant
     3dda408c91b0        percona/percona-server:8.0   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:4306->3306/tcp   percona80
     600a4e7e9dcd        mysql:5.5                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3309->3306/tcp              mysql55
     4bbe54342e5d        mysql:5.6                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3308->3306/tcp              mysql56
-    a49783249a11        mysql:5.7                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:3307->3306/tcp   mysql57
     d985820667c2        mysql:8.0                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3306->3306/tcp, 33060/tcp   mysql 8    0
 
 Contributions welcome

@@ -4,9 +4,9 @@ description: Protocols for maintaining contextual consistency and history.
 category: governance
 ---
 
-## **5\. 📜 STATE MEMORY & HISTORY**
+# **5\. 📜 STATE MEMORY & HISTORY**
 
-### **Contextual Consistency Protocols**
+## **Contextual Consistency Protocols**
 
 1. **History Update:** Add new entries to the top of Changelog if the action is correct and tested.  
 Changelog is a file at root of this projet
@@ -19,7 +19,7 @@ Changelog last version
 
 4. All changes must be added to last version in `Changelog`.
 5. No increment version if explicit git commit/tag/push via `/git-flow` or specific order from previous version hasn't been made.
-6. After Git tag and push, increment version on last digit for the next development cycle.
+6. After Git tag and push, version should be managed by the Release Manager or via the `/git-flow` lifecycle. The agent MUST NOT increment version numbers autonomously.
 
 ### **History Entry example**
 

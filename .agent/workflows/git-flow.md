@@ -1,6 +1,12 @@
 ---
+trigger: explicit_call
 description: Automate git-flow release process
+category: tool
 ---
+
+# Git-Flow Release Workflow
+
+This workflow MUST be orchestrated by the **Release Manager**.
 
 1. **Run Release Preflight Workflow**
    - Execute the `/release-preflight` workflow to ensure full consistency and test passing.

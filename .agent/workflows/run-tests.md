@@ -1,29 +1,70 @@
-# 🧪 Run Unit & Regression Tests
+---
+trigger: explicit_call
+description: Comprehensive test suite execution (Unit, Regression, and Multi-DB)
+category: tool
+---
 
-This workflow provides a high-level orchestrator for executing tests, based on the industrial-grade knowledge encapsulated in the **Testing Orchestration Skill**.
+# 🧪 Unified Test Orchestration
+
+This workflow provides a single entry point for all testing activities, from local unit tests to industrial-grade multi-DB integration tests.
 
 ## 🧠 Rationale
 
-Consistency in testing is paramount. By offloading detailed knowledge to a dedicated skill, we ensure all developers and agents follow the same verified testing patterns.
+Consistency and coverage are paramount. By unifying all testing entry points, we ensure that both core logic and multi-version compatibility are systematically verified following the **Testing Orchestration Skill** patterns.
 
 ## 🛠️ Implementation
 
-### 1. Trigger Core Suite
+### 1. Unit & Regression Tests (Local)
 
-Refer to the [Testing Orchestration Skill](file:///.agent/skills/testing-orchestration/SKILL.md) for detailed mandates (Tripartite Testing, Infrastructure Logs).
+Execute the standard Perl test suite to verify core logic.
 
 // turbo
 
 ```bash
-# Execute standard unit test suite
+# Using prove
 prove -r tests/
+
+# OR via Makefile
+make unit-tests
 ```
 
-### 2. Alternative Entry Points
+### 2. Multi-DB Integration Tests (Docker)
 
-- **CI/CD Logic**: `make unit-tests`
-- **Multi-Version Lab**: `make test-it`
+Validate compatibility across multiple database versions using the tripartite scenario laboratoy.
+
+// turbo
+
+```bash
+# Example: Run against MySQL 8.4 and MariaDB 11.4
+bash build/test_envs.sh mysql84 mariadb114
+
+# OR via Makefile
+make test-it
+```
+
+### 3. Advanced Diagnostic & Audit Scenarios
+
+#### Existing Container
+
+```bash
+bash build/test_envs.sh --existing-container <container_id>
+# OR: make test-container CONTAINER=<container_id>
+```
+
+#### Remote Audit (SSH)
+
+```bash
+bash build/test_envs.sh --remote <host> --audit
+# OR: make audit HOST=<host>
+```
 
 ## ✅ Verification
 
-Ensure the command returns an exit code of 0. Review any failures using `prove -v`.
+Ensure all commands return an exit code of 0. Review reports in `examples/` for detailed multi-DB analysis results:
+
+> [!NOTE]
+> Automated example generation in `examples/` is limited to "Supported" versions of MySQL and MariaDB to ensure relevance and stability.
+
+- `report.html`: Consolidated dashboard.
+- `raw_mysqltuner.txt`: Complete analysis output.
+- `execution.log`: Full system execution trace.

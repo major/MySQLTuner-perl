@@ -1,34 +1,52 @@
 # MySQLTuner-perl Roadmap
 
-This document outlines the future development plans for MySQLTuner-perl. It is a living document that will be updated as the project evolves. The goal is to provide a clear vision of the project's direction and to encourage community contributions.
+This document outlines the strategic direction and future development plans for MySQLTuner-perl. Our mission is to provide the most stable, portable, and reliable performance tuning advisor for MySQL-compatible databases.
 
-## Code Quality and Maintainability
+## 👤 Governance
 
-- **Refactor the codebase:** Break down the monolithic script into smaller, more manageable modules. This will improve readability, testability, and maintainability.
-- **Improve test coverage:** Implement a comprehensive test suite to ensure the script's reliability and prevent regressions.
-- **Enhance documentation:** Improve the internal documentation to make it easier for new contributors to understand the codebase.
-- **Adopt modern Perl practices:** Update the code to use modern Perl idioms and features, which can improve performance and readability.
+To ensure consistency and high-density development, the following roles are defined for roadmap orchestration:
 
-## Expanded Support
+* **Owner**: [Jean-Marie Renouard](https://github.com/jmrenouard) (@jmrenouard) - Ultimate authority on the project, constitution, and core mission.
+* **Product Manager**: **Antigravity (AI Agent)** - Responsible for backlog management, specification design, and execution tracking of the roadmap items.
+* **Release Manager**: **Antigravity (AI Agent)** - Responsible for technical validation, testing orchestration, and unified release cycle execution.
 
-- **Cloud-based services:** Add support for popular cloud-based MySQL services, such as Amazon RDS, Google Cloud SQL, and Microsoft Azure Database for MySQL.
-- **New storage engines:** Add support for new and emerging storage engines, such as MyRocks and Spider.
-- **Containerized environments:** Improve support for Docker and Kubernetes environments.
+## 🌟 Strategic Pillars
 
-## Enhanced Analysis and Recommendations
+1. **Production Stability & Safety**: All recommendations must be verified and safe for production.
+2. **SQL Modeling & Schema Design**: Beyond operational tuning, provide deep insights into database architecture.
+3. **Zero-Dependency Portability**: Maintain single-file architecture with core-only dependencies.
+4. **Modern Ecosystem Support**: Seamless integration with Containers (Docker/K8s) and Cloud providers.
 
-- **More granular recommendations:** Provide more specific and actionable recommendations, tailored to the user's specific workload and environment.
-- **Historical data analysis:** Collect and analyze historical data to identify trends and provide more accurate recommendations.
-- **Machine learning-based recommendations:** Explore the use of machine learning to provide more intelligent and predictive recommendations.
+---
 
-## User Experience
+## 🚀 Development Phases
 
-- **Improved output formats:** Add more output formats, such as HTML and JSON, to make the script's output easier to read and parse.
-- **Interactive mode:** Add an interactive mode that guides users through the tuning process and provides more context for the recommendations.
-- **Graphical user interface (GUI):** Create a GUI to make the script more user-friendly and accessible to a wider audience.
+### Phase 1: Stabilization & Observability (v2.8.32)
 
-## Community and Contribution
+* **Metadata-Driven CLI Options**: Refactor option parsing to centralize defaults, validation, and documentation. This eliminates synchronization errors between code and POD.
+* **Enhanced SQL Modeling**: Expand diagnostic checks for:
+  * Foreign Key type mismatches (e.g., `INT` vs `BIGINT`).
+  * Missing indexes on large tables (> 1GB).
+  * Schema sanitization (detection of empty or view-only schemas).
+* **Structured Error Log Ingestion**: Support `performance_schema.error_log` for diagnostic ingestion (MySQL 8.0+).
+* **Refined Reporting**: Improve the data richness in the new "Modeling Analysis" tab.
 
-- **Improve the contribution process:** Make it easier for new contributors to get involved by providing clear contribution guidelines and a welcoming community.
-- **Create a public roadmap:** Share the project's roadmap publicly to encourage community feedback and contributions.
-- **Organize community events:** Host online events, such as hackathons and webinars, to engage the community and encourage contributions.
+### Phase 2: Advanced Diagnostics
+
+* **Index Audit 2.0**: Integrate `performance_schema` to detect:
+  * **Redundant Indexes**: Overlapping prefix indexes that waste storage and IO.
+  * **Unused Indexes**: Identify indexes that haven't been touched since last restart.
+* **Transactional Contention Analysis**: Detect patterns leading to deadlocks and high lock wait times.
+* **Buffer Pool Advisory**: More granular analysis of InnoDB Buffer Pool usage and resizing recommendations.
+* **Aria & MyISAM Modernization**: Deeper checks for Aria-specific parameters (`aria_pagecache_age_threshold`) and migration paths for legacy engines.
+* **Kernel & Architecture Health**: Implement `io_uring` support detection, verifying kernel settings (`kernel.io_uring_disabled`) and group permissions.
+
+### Phase 3: Automation & Ecosystem
+
+* **Modular Reporting Engine**: Refactor Jinja2 templates to support dynamic section injection, allowing for highly extensible HTML reports.
+* **Container Abstraction Layer**: Refine transport discovery logic to handle complex K8s/Docker network topologies and permission constraints.
+* **Historical Trend Analysis**: (Experimental) Allow the script to ingest previous run data to identify performance regressions over time.
+
+## 🤝 Contribution & Feedback
+
+We welcome community feedback on this roadmap. If you have specific feature requests or want to contribute to a specific phase, please open an issue on our [GitHub repository](https://github.com/jmrenouard/MySQLTuner-perl).

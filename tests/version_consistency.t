@@ -35,7 +35,7 @@ is($header_ver, $expected, "mysqltuner.pl: Header version matches");
 my $var_ver = "";
 open $fh, '<', 'mysqltuner.pl' or die "Missing mysqltuner.pl";
 while (my $line = <$fh>) {
-    if ($line =~ /my\s+\$tunerversion\s+=\s+"([\d\.]+)";/) {
+    if ($line =~ /(?:my|our)\s+\$tunerversion\s+=\s+"([\d\.]+)";/) {
         $var_ver = $1;
         last;
     }
@@ -70,11 +70,13 @@ is($pod_sec_ver, $expected, "mysqltuner.pl: POD Version section matches");
 # 6. Changelog - Latest Entry
 my $log_ver = "";
 open my $fl, '<', 'Changelog' or die "Missing Changelog";
-my $first_line = <$fl>;
-close $fl;
-if ($first_line =~ /^([\d\.]+)/) {
-    $log_ver = $1;
+while (my $line = <$fl>) {
+    if ($line =~ /^([\d\.]+)/) {
+        $log_ver = $1;
+        last;
+    }
 }
+close $fl;
 is($log_ver, $expected, "Changelog: Latest version matches");
 
 done_testing();

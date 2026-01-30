@@ -1,6 +1,10 @@
 ---
+trigger: explicit_call
 description: Synchronize .agent/README.md with current Rules, Skills, and Workflows
+category: tool
 ---
+
+# Documentation Synchronization Workflow
 
 1. Execute the documentation synchronization script:
 // turbo

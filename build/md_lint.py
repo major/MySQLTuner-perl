@@ -23,8 +23,8 @@ def lint_file(file_path):
     if is_report:
         for kw in FORBIDDEN_KEYWORDS:
             if re.search(fr'\b{kw}\b', content, re.IGNORECASE):
-                # Simple heuristic: ignore if it looks like a shell command or expected code block
-                if not re.search(fr'```.*{kw}.*```', content, re.DOTALL | re.IGNORECASE):
+                # Simple heuristic: ignore if it looks like a shell command or expected code block (inline or fenced)
+                if not re.search(fr'`.*{kw}.*`|```.*{kw}.*```', content, re.DOTALL | re.IGNORECASE):
                     issues.append(f"Forbidden keyword found: '{kw}' (Rule 12 Violation)")
 
     # 3. Check for Broken Local Links

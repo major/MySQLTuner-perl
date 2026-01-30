@@ -20,7 +20,7 @@ $$DYNAMIC\_CONTEXT$$
 **Success Criteria:**
 
 1. **Architecture:** Strict single-file architecture. No external non-core Perl dependencies.
-2. **Quality (Zero Regression):** 100% of new features and fixes validated through TDD and regression suits (Legacy 5.7 to Modern 11.x).
+2. **Quality (Zero Regression):** 100% of new features and fixes validated through TDD and regression suits (Legacy 8.0 to Modern 11.x).
 3. **Stability:** All recommendations must be traceable to official documentation and verified safe for production use.
 4. **Docs:** Maintain automated synchronization between `mysqltuner.pl` capabilities and `README.md` / translations.
 5. **Efficiency:** Optimized execution for large databases (minimal memory footprint and execution time).

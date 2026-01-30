@@ -1,6 +1,10 @@
 ---
+trigger: explicit_call
 description: Generate detailed technical release notes for the current version
+category: tool
 ---
+
+# Release Notes Generation Workflow
 
 1. Run the release notes generator script for the current version:
 // turbo

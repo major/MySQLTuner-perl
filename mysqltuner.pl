@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.30
+# mysqltuner.pl - Version 2.8.32
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -56,131 +56,115 @@ use Cwd 'abs_path';
 # for which()
 #use Env;
 
-my $is_win = $^O eq 'MSWin32';
+our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-my $tunerversion = "2.8.30";
-my ( @adjvars, @generalrec );
+our $tunerversion = "2.8.32";
+our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 
 # Set defaults
-my %opt = (
-    "silent"              => 0,
-    "nobad"               => 0,
-    "nogood"              => 0,
-    "noinfo"              => 0,
-    "debug"               => 0,
-    "nocolor"             => ( !-t STDOUT ),
-    "color"               => ( -t STDOUT ),
-    "forcemem"            => 0,
-    "forceswap"           => 0,
-    "host"                => 0,
-    "socket"              => 0,
-    "pipe"                => 0,
-    "pipe_name"           => 0,
-    "port"                => 0,
-    "user"                => 0,
-    "pass"                => 0,
-    "password"            => 0,
-    "ssl-ca"              => 0,
-    "skipsize"            => 0,
-    "checkversion"        => 0,
-    "updateversion"       => 0,
-    "buffers"             => 0,
-    "passwordfile"        => 0,
-    "bannedports"         => '',
-    "maxportallowed"      => 0,
-    "outputfile"          => 0,
-    "noprocess"           => 0,
-    "dbstat"              => 0,
-    "nodbstat"            => 0,
-    "server-log"          => '',
-    "tbstat"              => 0,
-    "notbstat"            => 0,
-    "colstat"             => 0,
-    "nocolstat"           => 0,
-    "idxstat"             => 0,
-    "noidxstat"           => 0,
-    "nomyisamstat"        => 0,
-    "nostructstat"        => 0,
-    "sysstat"             => 0,
-    "nosysstat"           => 0,
-    "pfstat"              => 0,
-    "nopfstat"            => 0,
-    "plugininfo"          => 0,
-    "noplugininfo"        => 0,
-    "skippassword"        => 0,
-    "noask"               => 0,
-    "template"            => 0,
-    "json"                => 0,
-    "prettyjson"          => 0,
-    "reportfile"          => 0,
-    "verbose"             => 0,
-    "experimental"        => 0,
-    "nondedicated"        => 0,
-    "defaults-file"       => '',
-    "defaults-extra-file" => '',
-    "protocol"            => '',
-    "dumpdir"             => '',
-    "feature"             => '',
-    "dbgpattern"          => '',
-    "defaultarch"         => 64,
-    "noprettyicon"        => 0,
-    "cloud"               => 0,
-    "azure"               => 0,
-    "ssh-host"            => '',
-    "ssh-user"            => '',
-    "ssh-password"        => '',
-    "ssh-identity-file"   => '',
-    "container"           => '',
-    "max-password-checks" => 100,
-    "ignore-tables"       => ''
+# Central metadata for CLI options
+# Categories: CONNECTION, PERFORMANCE, OUTPUT, CLOUD, MISC
+our %CLI_METADATA = (
+    # Connection and Authentication
+    'host'                => { type => '=s', default => 0,  desc => 'Connect to a remote host to perform tests', cat => 'CONNECTION' },
+    'socket'              => { type => '=s', default => 0,  desc => 'Use a different socket for a local connection', cat => 'CONNECTION' },
+    'pipe'                => { type => '!',  default => 0,  desc => 'Connect to a local Windows database using named pipes', cat => 'CONNECTION' },
+    'pipe_name'           => { type => '=s', default => 0,  desc => 'Use a different pipe name for a local connection', cat => 'CONNECTION' },
+    'port'                => { type => '=i', default => 0,  desc => 'Port to use for connection', cat => 'CONNECTION' },
+    'user|u'              => { type => '=s', default => 0,  desc => 'Username to use for authentication', cat => 'CONNECTION' },
+    'pass|p|password'     => { type => '=s', default => 0,  desc => 'Password to use for authentication', cat => 'CONNECTION' },
+    'userenv'             => { type => '=s', default => '', desc => 'Env variable name for username', cat => 'CONNECTION' },
+    'passenv'             => { type => '=s', default => '', desc => 'Env variable name for password', cat => 'CONNECTION' },
+    'ssl-ca'              => { type => '=s', default => 0,  desc => 'Path to public key (SSL CA)', cat => 'CONNECTION' },
+    'mysqladmin'          => { type => '=s', default => '', desc => 'Path to a custom mysqladmin executable', cat => 'CONNECTION' },
+    'mysqlcmd'            => { type => '=s', default => '', desc => 'Path to a custom mysql executable', cat => 'CONNECTION' },
+    'defaults-file'       => { type => '=s', default => '', desc => 'Path to a custom .my.cnf', cat => 'CONNECTION' },
+    'defaults-extra-file' => { type => '=s', default => '', desc => 'Path to an extra custom config file', cat => 'CONNECTION' },
+    'protocol'            => { type => '=s', default => '', desc => 'Force TCP connection instead of socket', cat => 'CONNECTION' },
+
+    # Performance and Reporting
+    'skipsize'            => { type => '!', default => 0,  desc => "Don't enumerate tables and their sizes", cat => 'PERFORMANCE' },
+    'checkversion'        => { type => '!', default => 0,  desc => 'Check for updates to MySQLTuner', cat => 'PERFORMANCE' },
+    'updateversion'       => { type => '!', default => 0,  desc => 'Update MySQLTuner if newer version is available', cat => 'PERFORMANCE' },
+    'forcemem'            => { type => '=i', default => 0,  desc => 'Amount of RAM installed in megabytes', cat => 'PERFORMANCE' },
+    'forceswap'           => { type => '=i', default => 0,  desc => 'Amount of swap memory configured in megabytes', cat => 'PERFORMANCE' },
+    'buffers'             => { type => '!', default => 0,  desc => 'Print global and per-thread buffer values', cat => 'PERFORMANCE' },
+    'passwordfile'        => { type => '=s', default => 0,  desc => 'Path to a password file list', cat => 'PERFORMANCE' },
+    'cvefile'             => { type => '=s', default => '', desc => 'CVE File for vulnerability checks', cat => 'PERFORMANCE' },
+    'outputfile'          => { type => '=s', default => 0,  desc => 'Path to a output txt file', cat => 'PERFORMANCE' },
+    'reportfile'          => { type => '=s', default => 0,  desc => 'Path to a report txt file', cat => 'PERFORMANCE' },
+    'template'            => { type => '=s', default => 0,  desc => 'Path to a template file', cat => 'PERFORMANCE' },
+    'json'                => { type => '!', default => 0,  desc => 'Print result as JSON string', cat => 'PERFORMANCE' },
+    'prettyjson'          => { type => '!', default => 0,  desc => 'Print result as JSON formatted string', cat => 'PERFORMANCE' },
+    'dumpdir'             => { type => '=s', default => '', desc => 'Path to a directory where to dump information files', cat => 'PERFORMANCE' },
+    'schemadir'           => { type => '=s', default => '', desc => 'Path to a directory where to dump one markdown file per schema', cat => 'PERFORMANCE' },
+    'feature'             => { type => '=s', default => '', desc => 'Run a specific feature', cat => 'PERFORMANCE' },
+    'skippassword'        => { type => '!', default => 0,  desc => "Don't perform checks on user passwords", cat => 'PERFORMANCE' },
+
+    # Output Options
+    'silent'              => { type => '!', default => 0,  desc => "Don't output anything on screen", cat => 'OUTPUT' },
+    'verbose|v'           => { type => '!', default => 0,  desc => 'Print out all options', cat => 'OUTPUT' },
+    'color!'              => { type => '!', default => (-t STDOUT ? 1 : 0), desc => 'Print output in color', cat => 'OUTPUT' },
+    'nobad'               => { type => '!', default => 0,  desc => 'Remove negative/suggestion responses', cat => 'OUTPUT' },
+    'nogood'              => { type => '!', default => 0,  desc => 'Remove OK responses', cat => 'OUTPUT' },
+    'noinfo'              => { type => '!', default => 0,  desc => 'Remove informational responses', cat => 'OUTPUT' },
+    'debug'               => { type => '!', default => 0,  desc => 'Print debug information', cat => 'OUTPUT' },
+    'dbgpattern'          => { type => '=s', default => '', desc => 'Debug pattern (regex)', cat => 'OUTPUT' },
+    'noprettyicon'        => { type => '!', default => 0,  desc => 'Print output with legacy tags', cat => 'OUTPUT' },
+    'experimental'        => { type => '!', default => 0,  desc => 'Print experimental analysis', cat => 'OUTPUT' },
+    'nondedicated'        => { type => '!', default => 0,  desc => 'Consider server is not dedicated to DB', cat => 'OUTPUT' },
+    'noprocess'           => { type => '!', default => 0,  desc => 'Consider no other process is running', cat => 'OUTPUT' },
+    
+    # Stats / Reporting flags
+    'dbstat'              => { type => '!',  default => 0,  desc => 'Print database information', cat => 'REPORTING' },
+    'tbstat'              => { type => '!',  default => 0,  desc => 'Print table information', cat => 'REPORTING' },
+    'colstat'             => { type => '!',  default => 0,  desc => 'Print column information', cat => 'REPORTING' },
+    'idxstat'             => { type => '!',  default => 0,  desc => 'Print index information', cat => 'REPORTING' },
+    'sysstat'             => { type => '!',  default => 0,  desc => 'Print system stats', cat => 'REPORTING' },
+    'pfstat'              => { type => '!',  default => 0,  desc => 'Print Performance schema info', cat => 'REPORTING' },
+    'plugininfo'          => { type => '!',  default => 0,  desc => 'Print plugin information', cat => 'REPORTING' },
+    'myisamstat'          => { type => '!',  default => 0,  desc => 'Print MyISAM stats', cat => 'REPORTING' },
+    'structstat'          => { type => '!',  default => 0,  desc => 'Print table structures', cat => 'REPORTING' },
+
+    # Cloud and Containers
+    'cloud'               => { type => '!', default => 0,  desc => 'Enable cloud mode', cat => 'CLOUD' },
+    'azure'               => { type => '!', default => 0,  desc => 'Enable Azure-specific support', cat => 'CLOUD' },
+    'ssh-host'            => { type => '=s', default => '', desc => 'The SSH host for cloud connections', cat => 'CLOUD' },
+    'ssh-user'            => { type => '=s', default => '', desc => 'The SSH user for cloud connections', cat => 'CLOUD' },
+    'ssh-password'        => { type => '=s', default => '', desc => 'The SSH password for cloud connections', cat => 'CLOUD' },
+    'ssh-identity-file'   => { type => '=s', default => '', desc => 'The path to the SSH identity file', cat => 'CLOUD' },
+    'container'           => { type => '=s', default => '', desc => 'Enable container mode with ID or name', cat => 'CLOUD' },
+
+    # Misc
+    'max-password-checks' => { type => '=i', default => 100, desc => 'Max password checks from dictionary', cat => 'MISC' },
+    'ignore-tables'       => { type => '=s', default => '',  desc => 'Tables to ignore (comma separated)', cat => 'MISC' },
+    'bannedports'         => { type => '=s', default => '',  desc => 'Ports banned separated by comma', cat => 'MISC' },
+    'maxportallowed'      => { type => '=i', default => 0,   desc => 'Number of open ports allowable', cat => 'MISC' },
+    'defaultarch'         => { type => '=i', default => 64,  desc => 'Default architecture (32 or 64)', cat => 'MISC' },
+    'noask'               => { type => '!', default => 0,   desc => "Don't ask for confirmation", cat => 'MISC' },
+    'help|?'              => { type => '',  default => 0,   desc => 'Show this help message', cat => 'MISC' },
 );
 
+# Initialize %opt from metadata
+our %opt = map { my ($primary) = split /\|/, $_; $primary => $CLI_METADATA{$_}->{default} } keys %CLI_METADATA;
+
 # Gather the options from the command line
-GetOptions(
-    \%opt,                 'nobad',
-    'nogood',              'noinfo',
-    'debug',               'nocolor',
-    'forcemem=i',          'forceswap=i',
-    'host=s',              'socket=s',
-    'pipe',                'pipe_name=s',
-    'port=i',              'user=s',
-    'pass=s',              'skipsize',
-    'checkversion',        'mysqladmin=s',
-    'mysqlcmd=s',          'help',
-    'buffers',             'skippassword',
-    'passwordfile=s',      'outputfile=s',
-    'silent',              'noask',
-    'json',                'prettyjson',
-    'template=s',          'reportfile=s',
-    'cvefile=s',           'bannedports=s',
-    'updateversion',       'maxportallowed=s',
-    'verbose',             'password=s',
-    'passenv=s',           'userenv=s',
-    'defaults-file=s',     'ssl-ca=s',
-    'color',               'noprocess',
-    'dbstat',              'nodbstat',
-    'tbstat',              'notbstat',
-    'colstat',             'nocolstat',
-    'no-colstat' => \$opt{nocolstat},
-    'sysstat',             'nosysstat',
-    'pfstat',              'nopfstat',
-    'no-pfstat' => \$opt{nopfstat},
-    'plugininfo',
-    'noplugininfo',        'idxstat',
-    'noidxstat',           'structstat',
-    'nostructstat',        'myisamstat',
-    'nomyisamstat',        'server-log=s',
-    'protocol=s',          'defaults-extra-file=s',
-    'dumpdir=s',           'feature=s',
-    'dbgpattern=s',        'defaultarch=i',
-    'experimental',        'nondedicated',
-    'noprettyicon',        'cloud',
-    'azure',               'ssh-host=s',
-    'ssh-user=s',          'ssh-password=s',
-    'ssh-identity-file=s', 'container=s', 'max-password-checks=i',
-    'ignore-tables=s'
-  )
+# Build GetOptions arguments dynamically
+my @getopt_args;
+Getopt::Long::Configure("no_auto_abbrev", "no_ignore_case");
+foreach my $opt_spec ( sort keys %CLI_METADATA ) {
+    my $type = $CLI_METADATA{$opt_spec}->{type} // '';
+    my ($primary) = split /\|/, $opt_spec;
+    my $final_spec = $opt_spec;
+    # Only append type if it's not already part of the specification key
+    if ($type && $opt_spec !~ /\Q$type\E$/) {
+        $final_spec .= $type;
+    }
+    push @getopt_args, $final_spec => \$opt{$primary};
+}
+
+GetOptions(@getopt_args)
   or pod2usage(
     -exitval  => 1,
     -verbose  => 99,
@@ -214,21 +198,21 @@ my $basic_password_files =
   : abs_path( $opt{passwordfile} );
 
 # Username from envvar
-if ( exists $opt{userenv} && exists $ENV{ $opt{userenv} } ) {
-    $opt{user} = $ENV{ $opt{userenv} };
+if ( exists $opt{userenv} && exists $ENV{ $opt{userenv} // '' } ) {
+    $opt{user} = $ENV{ $opt{userenv} // '' };
 }
 
 # Related to password option
-if ( exists $opt{passenv} && exists $ENV{ $opt{passenv} } ) {
-    $opt{pass} = $ENV{ $opt{passenv} };
+if ( exists $opt{passenv} && exists $ENV{ $opt{userenv} // '' } ) {
+    $opt{pass} = $ENV{ $opt{userenv} // '' };
 }
-$opt{pass} = $opt{password} if ( $opt{pass} eq 0 and $opt{password} ne 0 );
+$opt{pass} = $opt{password} if ( ( $opt{pass} // '0' ) eq '0' and ( $opt{password} // '0' ) ne '0' );
 
 # for RPM distributions
 $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
   unless -f "$basic_password_files";
 
-$opt{dbgpattern} = '.*' if ( $opt{dbgpattern} eq '' );
+$opt{dbgpattern} = '.*' if ( ($opt{dbgpattern} // '') eq '' );
 
 # Activate debug variables
 #if ( $opt{debug} ne '' ) { $opt{debug} = 2; }
@@ -248,35 +232,31 @@ if ( $opt{verbose} ) {
     $opt{structstat}   = 1;    # Print table structure information
     $opt{myisamstat}   = 1;    # Print MyISAM table information
 
-    $opt{cvefile}    = 'vulnerabilities.csv'; #CVE File for vulnerability checks
     $opt{plugininfo} = 1;                     # Print plugin information
 }
-$opt{noprettyicon} = 0 if $opt{noprettyicon} != 1;
+$opt{noprettyicon} = 0 if ($opt{noprettyicon} // 0) != 1;
 $opt{plugininfo}   = 0
-  if ( $opt{noplugininfo} == 1 );             # Don't print plugin information
+  if ( ($opt{noplugininfo} // 0) == 1 );             # Don't print plugin information
 $opt{nocolor} = 1 if defined( $opt{outputfile} );
-$opt{tbstat}  = 0 if ( $opt{notbstat} == 1 );    # Don't print table information
-$opt{colstat} = 0 if ( $opt{nocolstat} == 1 );  # Don't print column information
-$opt{dbstat}  = 0 if ( $opt{nodbstat} == 1 ); # Don't print database information
+$opt{tbstat}  = 0 if ( ($opt{notbstat} // 0) == 1 );    # Don't print table information
+$opt{colstat} = 0 if ( ($opt{nocolstat} // 0) == 1 );  # Don't print column information
+$opt{dbstat}  = 0 if ( ($opt{nodbstat} // 0) == 1 ); # Don't print database information
 $opt{noprocess} = 0
-  if ( $opt{noprocess} == 1 );                # Don't print process information
-$opt{sysstat} = 0 if ( $opt{nosysstat} == 1 ); # Don't print sysstat information
+  if ( ($opt{noprocess} // 0) == 1 );                # Don't print process information
+$opt{sysstat} = 0 if ( ($opt{nosysstat} // 0) == 1 ); # Don't print sysstat information
 $opt{pfstat}  = 0
-  if ( $opt{nopfstat} == 1 );    # Don't print performance schema information
-$opt{idxstat} = 0 if ( $opt{noidxstat} == 1 );   # Don't print index information
+  if ( ($opt{nopfstat} // 0) == 1 );    # Don't print performance schema information
+$opt{idxstat} = 0 if ( ($opt{noidxstat} // 0) == 1 );   # Don't print index information
 $opt{structstat} = 0
-  if ( not defined( $opt{structstat} ) or $opt{nostructstat} == 1 )
+  if ( not defined( $opt{structstat} ) or ($opt{nostructstat} // 0) == 1 )
   ;    # Don't print table struct information
 $opt{myisamstat} = 1
   if ( not defined( $opt{myisamstat} ) );
 $opt{myisamstat} = 0
-  if ( $opt{nomyisamstat} == 1 );    # Don't print MyISAM table information
+  if ( ($opt{nomyisamstat} // 0) == 1 );    # Don't print MyISAM table information
 
-# for RPM distributions
-$opt{cvefile} = "/usr/share/mysqltuner/vulnerabilities.csv"
-  unless ( defined $opt{cvefile} and -f "$opt{cvefile}" );
-$opt{cvefile} = '' unless -f "$opt{cvefile}";
-$opt{cvefile} = './vulnerabilities.csv' if -f './vulnerabilities.csv';
+# Handle cvefile if it was not passed but exists locally
+$opt{cvefile} = './vulnerabilities.csv' if ( (!defined($opt{cvefile}) || $opt{cvefile} eq '') && -f './vulnerabilities.csv');
 
 $opt{'bannedports'} = '' unless defined( $opt{'bannedports'} );
 my @banned_ports = split ',', $opt{'bannedports'};
@@ -292,7 +272,7 @@ open( $fh, '>', $outputfile )
 $opt{nocolor} = 1 if defined($outputfile);
 $opt{nocolor} = 1 unless ( -t STDOUT );
 
-$opt{nocolor} = 0 if ( $opt{color} == 1 );
+$opt{nocolor} = 0 if ( ($opt{color} // 0) == 1 );
 
 # Setting up the colors for the print styles
 my $me = execute_system_command('whoami');
@@ -325,7 +305,7 @@ my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro );
 my @dblist;
 
 # Super structure containing all information
-my %result;
+our %result;
 $result{'MySQLTuner'}{'version'}  = $tunerversion;
 $result{'MySQLTuner'}{'datetime'} = scalar localtime;
 $result{'MySQLTuner'}{'options'}  = \%opt;
@@ -362,6 +342,14 @@ sub greenwrap {
 
 sub cmdprint {
     prettyprint $cmd. " " . $_[0] . $end;
+}
+
+sub push_recommendation {
+    my ( $cat, $msg ) = @_;
+    push @generalrec, $msg;
+    push @sysrec,     $msg if $cat =~ /sys/i;
+    push @secrec,     $msg if $cat =~ /sec/i;
+    push @modeling,   $msg if $cat =~ /mod/i;
 }
 
 sub infoprintml {
@@ -436,19 +424,19 @@ sub is_int {
 sub cpu_cores {
     if ( $^O eq 'linux' ) {
         my $cntCPU =
-          `awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo`;
+          execute_system_command("awk -F: '/^core id/ && !P[\$2] { CORES++; P[\$2]=1 }; /^physical id/ && !N[\$2] { CPUs++; N[\$2]=1 };  END { print CPUs*CORES }' /proc/cpuinfo");
         chomp $cntCPU;
-        return ( $cntCPU == 0 ? `nproc` : $cntCPU ) + 0;
+        return ( $cntCPU == 0 ? execute_system_command("nproc") : $cntCPU ) + 0;
     }
 
     if ( $^O eq 'freebsd' ) {
-        my $cntCPU = `sysctl -n kern.smp.cores`;
+        my $cntCPU = execute_system_command("sysctl -n kern.smp.cores");
         chomp $cntCPU;
         return $cntCPU + 0;
     }
     if ($is_win) {
         my $cntCPU =
-          `wmic cpu get NumberOfCores| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`;
+          execute_system_command('wmic cpu get NumberOfCores| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"');
         chomp $cntCPU;
         return $cntCPU + 0;
     }
@@ -458,23 +446,23 @@ sub cpu_cores {
 # Calculates the number of logical cores (including HT)
 sub logical_cpu_cores {
     if ( $^O eq 'linux' ) {
-        my $cntCPU = `grep -c ^processor /proc/cpuinfo`;
+        my $cntCPU = execute_system_command("grep -c ^processor /proc/cpuinfo");
         chomp $cntCPU;
         if ( $cntCPU == 0 ) {
-            $cntCPU = `nproc`;
+            $cntCPU = execute_system_command("nproc");
             chomp $cntCPU;
         }
         return $cntCPU + 0;
     }
 
     if ( $^O eq 'freebsd' ) {
-        my $cntCPU = `sysctl -n kern.smp.cpus`;
+        my $cntCPU = execute_system_command("sysctl -n kern.smp.cpus");
         chomp $cntCPU;
         return $cntCPU + 0;
     }
     if ($is_win) {
         my $cntCPU =
-          `wmic cpu get NumberOfLogicalProcessors| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"`;
+          execute_system_command('wmic cpu get NumberOfLogicalProcessors| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"');
         chomp $cntCPU;
         return $cntCPU + 0;
     }
@@ -750,18 +738,18 @@ sub validate_tuner_version {
         debugprint "$httpcli is available.";
 
         debugprint
-"$httpcli -m 3 -silent '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2";
+"$httpcli -s -m 3 '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2";
         if ($is_win) {
             $update =
               map  { my @f = split /"/; $f[1] }
               grep { /my \$tunerversion/ }
-              execute_system_command("$httpcli -m 3 -silent '$url' 2>$devnull");
+              execute_system_command("$httpcli -s -m 3 '$url' 2>$devnull");
 
         }
         else {
             $update =
               execute_system_command(
-"$httpcli -m 3 -silent '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2"
+"$httpcli -s -m 3 '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2"
               );
         }
         chomp($update);
@@ -775,19 +763,19 @@ sub validate_tuner_version {
         debugprint "$httpcli is available.";
 
         debugprint
-"$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2";
+"$httpcli -q -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2";
         if ($is_win) {
             $update =
               map  { my @f = split /"/; $f[1] }
               grep { /my \$tunerversion/ }
               execute_system_command(
-                "$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull"
+                "$httpcli -q -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull"
               );
         }
         else {
             $update =
               execute_system_command(
-"$httpcli -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull| grep 'my \$tunerversion'| cut -d\\\" -f2"
+"$httpcli -q -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2"
               );
         }
         chomp($update);
@@ -826,10 +814,10 @@ sub update_tuner_version {
             $fullpath = dirname(__FILE__) . "/" . $script;
             debugprint "FullPath: $fullpath";
             debugprint
-"$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath";
+"$httpcli -s --connect-timeout 3 '$url$script' 2>$devnull > $fullpath";
             $update =
               execute_system_command(
-"$httpcli --connect-timeout 3 '$url$script' 2>$devnull > $fullpath"
+"$httpcli -s --connect-timeout 3 '$url$script' 2>$devnull > $fullpath"
               );
             chomp($update);
             debugprint "$script updated: $update";
@@ -895,7 +883,7 @@ sub compare_tuner_version {
 }
 
 # Checks to see if a MySQL login is possible
-my ( $mysqllogin, $doremote, $remotestring, $mysqlcmd, $mysqladmincmd );
+our ( $mysqllogin, $doremote, $remotestring, $mysqlcmd, $mysqladmincmd );
 
 sub cloud_setup {
     if ( $opt{'cloud'} || $opt{'azure'} ) {
@@ -1176,7 +1164,6 @@ sub mysql_setup {
             $remotestring .= " --ssl-ca=$opt{'ssl-ca'}";
             infoprint
               "Will connect using ssl public key passed on the command line";
-            return 1;
         }
         else {
             badprint
@@ -1185,7 +1172,7 @@ sub mysql_setup {
         }
     }
 
-    if ( $transport_prefix ne '' && $opt{pass} eq 0 ) {
+    if ( $transport_prefix ne '' && ( $opt{pass} // '0' ) eq '0' ) {
         my $env_out = execute_system_command("env");
         if ( $env_out =~ /MARIADB_ROOT_PASSWORD=([^\s]+)/
             || $env_out =~ /MYSQL_ROOT_PASSWORD=([^\s]+)/ )
@@ -1208,37 +1195,37 @@ sub mysql_setup {
             goodprint "Logged in using credentials passed on the command line";
             return 1;
         }
-        else {
-            # If password was not provided and noask is not set, prompt for it
-            if ( $opt{pass} eq 0 && $opt{'noask'} == 0 ) {
-                print STDERR
-                  "Please enter your MySQL administrative password: ";
-                system("stty -echo >$devnull 2>&1");
-                my $password = <STDIN>;
-                system("stty echo >$devnull 2>&1");
-                chomp($password);
-                
-                $mysqllogin = "-u $opt{user}";
-                if ( length($password) > 0 ) {
-                    if ($is_win) {
-                        $mysqllogin .= " -p\"$password\"";
-                    }
-                    else {
-                        $mysqllogin .= " -p'$password'";
-                    }
+    }
+    else {
+        # If password was not provided and noask is not set, prompt for it
+        if ( $opt{pass} eq 0 && $opt{'noask'} == 0 ) {
+            print STDERR
+              "Please enter your MySQL administrative password: ";
+            system("stty -echo >$devnull 2>&1");
+            my $password = <STDIN>;
+            system("stty echo >$devnull 2>&1");
+            chomp($password);
+            
+            $mysqllogin = "-u $opt{user}";
+            if ( length($password) > 0 ) {
+                if ($is_win) {
+                    $mysqllogin .= " -p\"$password\"";
                 }
-                $mysqllogin .= $remotestring;
-                
-                $loginstatus = execute_system_command("$mysqladmincmd ping $mysqllogin");
-                if ( $loginstatus =~ /mysqld is alive/ ) {
-                    goodprint "Logged in using credentials with prompted password";
-                    return 1;
+                else {
+                    $mysqllogin .= " -p'$password'";
                 }
             }
-            badprint
-              "Attempted to use login credentials, but they were invalid";
-            exit 1;
+            $mysqllogin .= $remotestring;
+            
+            my $loginstatus = execute_system_command("$mysqladmincmd ping $mysqllogin");
+            if ( $loginstatus =~ /mysqld is alive/ ) {
+                goodprint "Logged in using credentials with prompted password";
+                return 1;
+            }
         }
+        badprint
+          "Attempted to use login credentials, but they were invalid";
+        exit 1;
     }
 
     my $svcprop = which( "svcprop", $ENV{'PATH'} );
@@ -1469,19 +1456,29 @@ execute_system_command("$mysqlcmd $remotestring -Nrs -e 'select \"mysqld is aliv
     }
 }
 
+sub build_mysql_connection_command {
+    return "$mysqlcmd $mysqllogin";
+}
+
 # MySQL Request Array
 sub select_array {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = execute_system_command("$mysqlcmd $mysqllogin -Bse \"\\w$req\" 2>>$devnull");
+    my $req_escaped = $req;
+    $req_escaped =~ s/"/\\"/g;
+    my @result =
+      execute_system_command(
+        "$mysqlcmd $mysqllogin -Bse \"\\w$req_escaped\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         if ( $opt{debug} ) {
-            debugprint execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req\" 2>&1");
+            debugprint
+              execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req_escaped\" 2>&1");
         }
 
         #exit $?;
+        return ();
     }
     debugprint "select_array: return code : $?";
     chomp(@result);
@@ -1492,12 +1489,17 @@ sub select_array {
 sub select_array_with_headers {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = execute_system_command("$mysqlcmd $mysqllogin -Bre \"\\w$req\" 2>>$devnull");
+    my $req_escaped = $req;
+    $req_escaped =~ s/"/\\"/g;
+    my @result =
+      execute_system_command(
+        "$mysqlcmd $mysqllogin -Bre \"\\w$req_escaped\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         if ( $opt{debug} ) {
-            debugprint execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req\" 2>&1");
+            debugprint
+              execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req_escaped\" 2>&1");
         }
 
         #exit $?;
@@ -1546,6 +1548,7 @@ sub select_one {
         }
 
         #exit $?;
+        return "";
     }
     debugprint "select_array: return code : $?";
     chomp($result);
@@ -1664,7 +1667,7 @@ sub get_tuning_info {
 }
 
 # Populates all of the variable and status hashes
-my ( %mystat, %myvar, $dummyselect, %myrepl, %myslaves, %mycalc );
+our ( %mystat, %myvar, $dummyselect, %myrepl, %myslaves, %mycalc );
 
 sub arr2hash {
     my $href = shift;
@@ -1894,8 +1897,16 @@ sub get_log_file_real_path {
 }
 
 sub log_file_recommendations {
-    if ( is_remote eq 1 ) {
-        infoprint "Skipping error log files checks on remote host";
+    my $has_pfs_error_log = 0;
+    if ( $opt{'dbstat'} ) {
+        my $pfs_result = select_one(
+            "SELECT 1 FROM information_schema.tables WHERE table_schema='performance_schema' AND table_name='error_log' LIMIT 1"
+        );
+        $has_pfs_error_log = 1 if $pfs_result;
+    }
+
+    if ( is_remote eq 1 && !$has_pfs_error_log ) {
+        infoprint "Skipping error log files checks on remote host (No Performance Schema error_log)";
         return;
     }
     my $fh;
@@ -1951,7 +1962,18 @@ execute_system_command("$container_cmd ps --format \"{{.Names}} {{.Image}}\" | g
     }
 
     subheaderprint "Log file Recommendations";
-    if ( "$myvar{'log_error'}" eq "stderr" ) {
+    if ( $has_pfs_error_log && !$opt{'server-log'} ) {
+        goodprint "Performance Schema error_log table detected";
+        my $pfs_count = select_one("SELECT COUNT(*) FROM performance_schema.error_log");
+        infoprint "Performance Schema error_log: $pfs_count entries detected";
+
+        # Build mysql command for streaming output
+        my $mysql_conn = build_mysql_connection_command();
+        open( $fh, '-|', "$mysql_conn -N -s -e \"SELECT DATA FROM performance_schema.error_log ORDER BY LOGGED DESC LIMIT $maxlines\"" )
+          || debugprint "Failed to open PFS error_log stream";
+        $myvar{'log_error'} = "performance_schema.error_log";
+    }
+    elsif ( "$myvar{'log_error'}" eq "stderr" ) {
         badprint
 "log_error is set to $myvar{'log_error'}, but this script can't read stderr";
         return;
@@ -2066,8 +2088,12 @@ execute_system_command("$container_cmd ps --format \"{{.Names}} {{.Image}}\" | g
 
 sub cve_recommendations {
     subheaderprint "CVE Security Recommendations";
-    unless ( defined( $opt{cvefile} ) && -f "$opt{cvefile}" ) {
-        infoprint "Skipped due to --cvefile option undefined";
+    unless ( defined( $opt{cvefile} ) && $opt{cvefile} ne '' ) {
+        infoprint "Skipped: --cvefile option not specified";
+        return;
+    }
+    unless ( -f "$opt{cvefile}" ) {
+        infoprint "Skipped: CVE file not found ($opt{cvefile})";
         return;
     }
 
@@ -2520,11 +2546,11 @@ sub get_system_info {
 
     my $ext_ip = "";
     if ( $httpcli =~ /curl$/ ) {
-        $ext_ip = infocmd_one "$httpcli -m 3 ipecho.net/plain";
+        $ext_ip = infocmd_one "$httpcli -s -m 3 ipecho.net/plain";
     }
     elsif ( $httpcli =~ /wget$/ ) {
 
-        $ext_ip = infocmd_one "$httpcli -t 1 -T 3 -q -O - ipecho.net/plain";
+        $ext_ip = infocmd_one "$httpcli -q -t 1 -T 3 -q -O - ipecho.net/plain";
     }
     infoprint "External IP           : " . $ext_ip;
     $result{'Network'}{'External Ip'} = $ext_ip;
@@ -2573,8 +2599,8 @@ sub system_recommendations {
     else {
         badprint
 "There is only one CPU, consider dedicated one CPU for your database server";
-        push @generalrec,
-          "Consider increasing number of CPU for your database server";
+        push_recommendation( 'System',
+          "Consider increasing number of CPU for your database server" );
     }
 
     if ( $physical_memory >= 1.5 * 1024 * 1024 * 1024 ) {
@@ -2583,8 +2609,8 @@ sub system_recommendations {
     else {
         badprint
 "There is less than 1,5 Gb of RAM, consider dedicated 1 Gb for your Linux server";
-        push @generalrec,
-          "Consider increasing 1,5 / 2 Gb of RAM for your Linux server";
+        push_recommendation( 'System',
+          "Consider increasing 1,5 / 2 Gb of RAM for your Linux server" );
     }
 
     my $omem = get_other_process_memory;
@@ -2674,12 +2700,6 @@ sub security_recommendations {
 
     infoprint "$myvar{'version_comment'} - $myvar{'version'}";
 
-    #exit 0;
-    if ( $opt{skippassword} eq 1 ) {
-        infoprint "Skipped due to --skippassword option";
-        return;
-    }
-
     my $PASS_COLUMN_NAME = 'password';
 
     # New table schema available since mysql-5.7 and mariadb-10.2
@@ -2733,7 +2753,7 @@ sub security_recommendations {
 
     #exit 0;
     if (@mysqlstatlist) {
-        push( @generalrec,
+        push_recommendation( 'Security',
                 "Remove Anonymous User accounts: there are "
               . scalar(@mysqlstatlist)
               . " anonymous accounts." );
@@ -2748,6 +2768,12 @@ sub security_recommendations {
     else {
         goodprint "There are no anonymous accounts for any database users";
     }
+
+    if ( $opt{skippassword} eq 1 ) {
+        infoprint "Skipped password checks due to --skippassword option";
+        return;
+    }
+
     if ( mysql_version_le( 5, 1 ) ) {
         badprint "No more password checks for MySQL version <=5.1";
         badprint "MySQL version <=5.1 is deprecated and end of support.";
@@ -2774,7 +2800,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
         foreach my $line ( sort @mysqlstatlist ) {
             chomp($line);
             badprint "User '" . $line . "' has no password set.";
-            push( @generalrec,
+            push_recommendation( 'Security',
 "Set up a Secure Password for $line user: SET PASSWORD FOR $line = PASSWORD('secure_password');"
             );
         }
@@ -2849,6 +2875,22 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     my $passreq;
     if (@passwords) {
         my $nbInterPass = 0;
+        my $skip_dict_check = 0;
+
+        # Behavioral check for socket authentication or password bypass (issue #875)
+        # Testing if any of these passwords work (including random tokens)
+        my $target_user = $opt{user} || 'root';
+        foreach my $p ("true", "false", "RA-ND-OM-P-ASS-W-ORD-" . int(rand(100000))) {
+            my $check_cmd = "$mysqlcmd $mysqllogin -u $target_user -p'$p' -Nrs -e 'select \"mysqld is alive\";' 2>$devnull";
+            my $alive_res = execute_system_command($check_cmd);
+            if ( $alive_res =~ /mysqld is alive/ ) {
+                infoprint "Authentication plugin allows access without a valid password for user '$target_user'. Skipping dictionary check.";
+                $skip_dict_check = 1;
+                last;
+            }
+        }
+
+        unless ($skip_dict_check) {
             foreach my $pass (@passwords) {
                 $nbInterPass++;
                 last if $nbInterPass > $opt{'max-password-checks'};
@@ -2895,7 +2937,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                     my $target_user = $opt{user} || 'root';
                     my @variants    = ( $pass, uc($pass), ucfirst($pass) );
                     foreach my $v (@variants) {
-                        my $check_login = "-u $target_user -p'$v' $remotestring";
+                        my $check_login = "$mysqllogin -u $target_user -p'$v'";
                         my $alive_res = execute_system_command("$mysqlcmd -Nrs -e 'select \"mysqld is alive\";' $check_login 2>$devnull");
                         if ( $alive_res =~ /mysqld is alive/ ) {
                             badprint "User '$target_user' is using weak password: $v";
@@ -2909,6 +2951,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                 debugprint "$nbInterPass / " . scalar(@passwords)
                   if ( $nbInterPass % 1000 == 0 );
             }
+        }
     }
     if ( $nbins > 0 ) {
         push( @generalrec,
@@ -5462,15 +5505,33 @@ sub mysql_pfs {
     $nbL = 1;
     for my $lQuery (
         select_array(
-"select \* from sys.schema_unused_indexes where object_schema not in ('performance_schema')"
+"select CONCAT(object_schema, '.', object_name, ' (', index_name, ')') from sys.schema_unused_indexes where object_schema not in ('performance_schema', 'mysql', 'information_schema', 'sys')"
         )
       )
     {
         infoprint " +-- $nbL: $lQuery";
+        my ( $schema, $table, $index ) = $lQuery =~ /^(.*?)\.(.*?)\s\((.*?)\)$/;
+        push(
+            @modeling,
+            {
+                type   => 'unused_index',
+                schema => $schema,
+                table  => $table,
+                index  => $index,
+            }
+        );
         $nbL++;
     }
-    infoprint "No information found or indicators deactivated."
-      if ( $nbL == 1 );
+    if ( $nbL > 1 ) {
+        my $idx_count = $nbL - 1;
+        badprint "Performance schema: $idx_count unused index(es) found.";
+        push( @generalrec,
+"Unused indexes found: $idx_count index(es) should be reviewed and potentially removed."
+        );
+    }
+    else {
+        infoprint "No information found or indicators deactivated.";
+    }
 
     # Full table scans
     subheaderprint "Performance schema: Tables with full table scans";
@@ -5837,13 +5898,37 @@ sub mysql_pfs {
     subheaderprint "Performance schema: Redundant indexes";
     $nbL = 1;
     for my $lQuery (
-        select_array('use sys;select * from schema_redundant_indexes;') )
+        select_array(
+'select CONCAT(table_schema, ".", table_name, " (", redundant_index_name, ") redundant of ", dominant_index_name, " - SQL: ", sql_drop_index) from sys.schema_redundant_indexes;'
+        )
+      )
     {
         infoprint " +-- $nbL: $lQuery";
+        my ( $schema, $table, $redundant, $dominant, $sql ) =
+          $lQuery =~ /^(.*?)\.(.*?)\s\((.*?)\)\sredundant\sof\s(.*?)\s-\sSQL:\s(.*)$/;
+        push(
+            @modeling,
+            {
+                type            => 'redundant_index',
+                schema          => $schema,
+                table           => $table,
+                index           => $redundant,
+                dominant_index  => $dominant,
+                sql             => $sql,
+            }
+        );
         $nbL++;
     }
-    infoprint "No information found or indicators deactivated."
-      if ( $nbL == 1 );
+    if ( $nbL > 1 ) {
+        my $idx_count = $nbL - 1;
+        badprint "Performance schema: $idx_count redundant index(es) found.";
+        push( @generalrec,
+"Redundant indexes found: $idx_count index(es) should be reviewed and potentially removed."
+        );
+    }
+    else {
+        infoprint "No information found or indicators deactivated.";
+    }
 
     subheaderprint "Performance schema: Table not using InnoDB buffer";
     $nbL = 1;
@@ -6517,6 +6602,7 @@ having sum(if(c.column_key in ('PRI', 'UNI'), 1, 0)) = 0"
         }
         push @generalrec,
 "Ensure that all table(s) get an explicit primary keys for performance, maintenance and also for replication";
+        push @modeling, "Following table(s) don't have primary key: " . join(', ', @primaryKeysNbTables);
 
     }
     else {
@@ -6524,8 +6610,84 @@ having sum(if(c.column_key in ('PRI', 'UNI'), 1, 0)) = 0"
     }
     dump_into_file( "tables_without_primary_keys.csv", $tmpContent );
 
+    # Advanced PK checks
+    my @pkInfo = select_array(
+"SELECT c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, c.COLUMN_TYPE
+FROM information_schema.columns c
+JOIN information_schema.tables t USING (TABLE_SCHEMA, TABLE_NAME)
+WHERE t.TABLE_TYPE = 'BASE TABLE'
+  AND c.COLUMN_KEY = 'PRI'
+  AND c.TABLE_SCHEMA NOT IN ('sys', 'mysql', 'information_schema', 'performance_schema')"
+    );
+
+    foreach my $pk (@pkInfo) {
+        my ( $schema, $table, $column, $datatype, $columntype ) = split /\t/, $pk;
+        $schema //= ''; $table //= ''; $column //= ''; $datatype //= ''; $columntype //= '';
+        
+        # PK Naming Convention
+        if ( $column ne 'id' && $column ne "${table}_id" ) {
+            badprint "Table $schema.$table: Primary key '$column' does not follow 'id' or '${table}_id' naming convention";
+            push @generalrec, "Use 'id' or '${table}_id' for Primary Key naming in $schema.$table";
+            push @modeling, "Table $schema.$table: Primary key '$column' does not follow naming convention (id or ${table}_id)";
+        }
+
+        # Surrogate Key Recommendation
+        if ( $datatype !~ /int/i || $columntype !~ /unsigned/i || $columntype !~ /auto_increment/i ) {
+            # Check if it might be a UUID
+            if ( $column =~ /uuid/i ) {
+                if ( $datatype !~ /binary/i || $columntype !~ /16/ ) {
+                    badprint "Table $schema.$table: UUID primary key '$column' is not optimized (use BINARY(16))";
+                    push @generalrec, "Use optimized BINARY(16) for UUID Primary Keys in $schema.$table";
+                    push @modeling, "Table $schema.$table: UUID primary key '$column' is not optimized (use BINARY(16))";
+                }
+            } else {
+                badprint "Table $schema.$table: Primary key '$column' is not a recommended surrogate key (BIGINT UNSIGNED AUTO_INCREMENT)";
+                push @generalrec, "Use BIGINT UNSIGNED AUTO_INCREMENT for Primary Keys in $schema.$table";
+                push @modeling, "Table $schema.$table: Primary key '$column' is not a recommended surrogate key (BIGINT UNSIGNED AUTO_INCREMENT)";
+            }
+        }
+    }
+
+    # Large Tables (>1GB) without Secondary Indexes
+    my @largeTablesWithoutIndexes = select_array(
+"SELECT TABLE_SCHEMA, TABLE_NAME, (DATA_LENGTH + INDEX_LENGTH)
+FROM information_schema.tables t
+WHERE TABLE_TYPE = 'BASE TABLE'
+  AND (DATA_LENGTH + INDEX_LENGTH) > 1024*1024*1024
+  AND (SELECT COUNT(*) FROM information_schema.statistics s WHERE s.TABLE_SCHEMA = t.TABLE_SCHEMA AND s.TABLE_NAME = t.TABLE_NAME AND s.INDEX_NAME != 'PRIMARY') = 0
+  AND TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    if (@largeTablesWithoutIndexes) {
+    foreach my $lt (@largeTablesWithoutIndexes) {
+            my ( $schema, $table, $size ) = split /\t/, $lt;
+            $schema //= ''; $table //= ''; $size //= 0;
+            badprint "Table $schema.$table is large (" . hr_bytes($size) . ") and has no secondary indexes";
+            push @generalrec, "Add secondary indexes to large table $schema.$table to improve query performance";
+            push @modeling, "Table $schema.$table is large (" . hr_bytes($size) . ") and has no secondary indexes";
+        }
+    }
+
+    # Foreign Key Type Mismatches
+    my @fkMismatches = select_array(
+"SELECT CONCAT(k.TABLE_SCHEMA, '.', k.TABLE_NAME, ' (', k.COLUMN_NAME, ': ', c1.COLUMN_TYPE, ') -> ', k.REFERENCED_TABLE_SCHEMA, '.', k.REFERENCED_TABLE_NAME, ' (', k.REFERENCED_COLUMN_NAME, ': ', c2.COLUMN_TYPE, ')')
+FROM information_schema.KEY_COLUMN_USAGE k
+JOIN information_schema.COLUMNS c1 ON k.TABLE_SCHEMA = c1.TABLE_SCHEMA AND k.TABLE_NAME = c1.TABLE_NAME AND k.COLUMN_NAME = c1.COLUMN_NAME
+JOIN information_schema.COLUMNS c2 ON k.REFERENCED_TABLE_SCHEMA = c2.TABLE_SCHEMA AND k.REFERENCED_TABLE_NAME = c2.TABLE_NAME AND k.REFERENCED_COLUMN_NAME = c2.COLUMN_NAME
+WHERE k.REFERENCED_TABLE_NAME IS NOT NULL
+  AND (c1.DATA_TYPE != c2.DATA_TYPE OR c1.COLUMN_TYPE != c2.COLUMN_TYPE)
+  AND k.TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    if (@fkMismatches) {
+        badprint "Following Foreign Key(s) have data type mismatches:";
+        foreach my $fk (@fkMismatches) {
+            badprint "\t$fk";
+            push @generalrec, "Fix data type mismatch for Foreign Key: $fk";
+            push @modeling, "Foreign Key type mismatch: $fk";
+        }
+    }
+
     my @nonInnoDBTables = select_array(
-        "select CONCAT(table_schema, ',', table_name, ',', ENGINE) 
+        "select table_schema, table_name, ENGINE 
 FROM information_schema.tables t
 WHERE ENGINE <> 'InnoDB' 
 and t.table_type = 'BASE TABLE'
@@ -6537,6 +6699,7 @@ and table_schema not in
         badprint "Following table(s) are not InnoDB table:";
         push @generalrec,
 "Ensure that all table(s) are InnoDB tables for performance and also for replication";
+        push @modeling, "Following table(s) are not InnoDB: " . join(', ', @nonInnoDBTables);
         foreach my $badtable (@nonInnoDBTables) {
             if ( $badtable =~ /Memory/i ) {
                 badprint
@@ -6566,6 +6729,7 @@ or COLLATION_name NOT LIKE 'utf8%');"
         badprint "Following character columns(s) are not utf8 compliant:";
         push @generalrec,
 "Ensure that all text colums(s) are UTF-8 compliant for encoding support and performance";
+        push @modeling, "Following collection(s) are not UTF-8 compliant: " . join(', ', @nonutf8columns);
         foreach my $badtable (@nonutf8columns) {
             badprint "\t$badtable";
             $tmpContent .= "\n$badtable";
@@ -6602,6 +6766,246 @@ AND data_type='FULLTEXT';"
     }
     dump_into_file( "fulltext_columns.csv", $tmpContent );
 
+    mysql_naming_conventions();
+    mysql_foreign_key_checks();
+    mysql_80_modeling_checks();
+    mysql_datatype_optimization();
+    mysql_schema_sanitization();
+}
+
+sub mysql_80_modeling_checks {
+    return unless mysql_version_ge( 8, 0 );
+    
+    my $is_mariadb = ( ($myvar{'version'} =~ /MariaDB/i) or ($myvar{'version_comment'} =~ /MariaDB/i) );
+    my $header = $is_mariadb ? "MariaDB 10.x+ Specific Modeling" : "MySQL 8.0+ Specific Modeling";
+    subheaderprint $header;
+
+    my $modeling80Count = 0;
+    # JSON indexability
+    my @jsonColumns = select_array(
+"SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME FROM information_schema.columns WHERE DATA_TYPE = 'json' AND TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    foreach my $jc (@jsonColumns) {
+        my ( $schema, $table, $column ) = split /\t/, $jc;
+        $schema //= ''; $table //= ''; $column //= '';
+        # Check if there are generated columns for this table
+        my @genCols = select_array(
+"SELECT COLUMN_NAME FROM information_schema.columns WHERE TABLE_SCHEMA = '$schema' AND TABLE_NAME = '$table' AND EXTRA LIKE '%VIRTUAL%'"
+        );
+        if ( scalar(@genCols) == 0 ) {
+            infoprint "Table $schema.$table: JSON column '$column' detected without Virtual Generated Columns for indexing";
+            push @generalrec, "Consider using Generated Columns to index frequently searched attributes in JSON column $schema.$table.$column";
+            push @modeling, "Table $schema.$table: JSON column '$column' detected without Virtual Generated Columns for indexing";
+            $modeling80Count++;
+        }
+    }
+
+    # Invisible Indexes (MySQL: IS_VISIBLE='NO', MariaDB: IGNORED='YES')
+    my $visible_col = $is_mariadb ? "IGNORED" : "IS_VISIBLE";
+    my $visible_val = $is_mariadb ? "'YES'"   : "'NO'";
+    
+    my @invisibleIdx = select_array(
+"SELECT TABLE_SCHEMA, TABLE_NAME, INDEX_NAME FROM information_schema.statistics WHERE $visible_col = $visible_val AND TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    foreach my $ii (@invisibleIdx) {
+        my ( $schema, $table, $index ) = split /\t/, $ii;
+        $schema //= ''; $table //= ''; $index //= '';
+        infoprint "Index $schema.$table.$index is INVISIBLE";
+        push @modeling, "Index $schema.$table.$index is INVISIBLE";
+        $modeling80Count++;
+    }
+
+    # Check Constraints
+    if ( mysql_version_ge( 8, 0, 16 ) ) {
+        my @checkConstraints = select_array(
+"SELECT CONSTRAINT_SCHEMA, TABLE_NAME, CONSTRAINT_NAME FROM information_schema.table_constraints WHERE CONSTRAINT_TYPE = 'CHECK' AND CONSTRAINT_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+        );
+        if ( scalar(@checkConstraints) == 0 ) {
+            # Maybe too noisy to always suggest, but it's a good practice
+            # infoprint "No CHECK constraints detected; consider using them for data integrity";
+        }
+        else {
+             # We skip counting these as we don't badprint/infoprint them for now
+        }
+    }
+    goodprint "No MySQL 8.0+ specific modeling issues found" if $modeling80Count == 0;
+}
+
+sub mysql_datatype_optimization {
+    subheaderprint "Data Type optimization";
+
+    # NULLability
+    my @nullableCols = select_array(
+"SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME FROM information_schema.columns WHERE IS_NULLABLE = 'YES' AND TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    my $nullableCount = scalar(@nullableCols);
+    if ( $nullableCount > 20 ) {
+        infoprint "There are $nullableCount columns with NULL enabled. Consider using NOT NULL where possible for better performance.";
+        push @modeling, "There are $nullableCount columns with NULL enabled. Consider using NOT NULL where possible for better performance.";
+    }
+    else {
+        goodprint "No data type optimization recommendations";
+    }
+
+    # BIGINT vs INT
+    # This is a bit hard to check without looking at table rows and max values
+}
+
+sub mysql_naming_conventions {
+    subheaderprint "Naming conventions analysis";
+
+    my $namingIssues = 0;
+    # Table Naming
+    my @tables = select_array(
+"SELECT TABLE_SCHEMA, TABLE_NAME FROM information_schema.tables WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    foreach my $t (@tables) {
+        my ( $schema, $table ) = split /\t/, $t;
+        $schema //= ''; $table //= '';
+        # Plural check (very basic: ends with 's' but not 'ss')
+        if ( ($table // '') =~ /[^s]s$/i && ($table // '') !~ /status|address|glass|process/i ) {
+            badprint "Table $schema.$table: Plural name detected (prefer singular)";
+            push @generalrec, "Use singular names for table $schema.$table";
+            push @modeling, "Table $schema.$table: Plural name detected (prefer singular)";
+            $namingIssues++;
+        }
+        # Casing check (detect CamelCase/PascalCase)
+        if ( ($table // '') =~ /[a-z][A-Z]/ ) {
+            badprint "Table $schema.$table: Non-snake_case name detected";
+            push @generalrec, "Use snake_case for table $schema.$table";
+            push @modeling, "Table $schema.$table: Non-snake_case name detected";
+            $namingIssues++;
+        }
+    }
+
+    # Column Naming
+    my @columns = select_array(
+"SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM information_schema.columns WHERE TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    foreach my $c (@columns) {
+        my ( $schema, $table, $column, $datatype ) = split /\t/, $c;
+        $schema //= ''; $table //= ''; $column //= ''; $datatype //= '';
+        # Casing check
+        if ( ($column // '') =~ /[a-z][A-Z]/ ) {
+            badprint "Column $schema.$table.$column: Non-snake_case name detected";
+            push @generalrec, "Use snake_case for column $schema.$table.$column";
+            push @modeling, "Column $schema.$table.$column: Non-snake_case name detected";
+            $namingIssues++;
+        }
+        # Boolean naming
+        if ( ($datatype // '') =~ /tinyint\(1\)|bool/i ) {
+            if ( ($column // '') !~ /^(is_|has_|was_|had_)/ ) {
+                infoprint "Column $schema.$table.$column: Boolean-like column missing verbal prefix (is_, has_, etc.)";
+                push @modeling, "Column $schema.$table.$column: Boolean-like column missing verbal prefix (is_, has_, etc.)";
+                # Not a badprint as it's a recommendation
+                $namingIssues++;
+            }
+        }
+        # Date naming
+        if ( ($datatype // '') =~ /date|time/i ) {
+            if ( ($column // '') !~ /(_at|_date|_time)$/ ) {
+                infoprint "Column $schema.$table.$column: Date/Time column missing explicit suffix (_at, _date, _time)";
+                push @modeling, "Column $schema.$table.$column: Date/Time column missing explicit suffix (_at, _date, _time)";
+                $namingIssues++;
+            }
+        }
+    }
+    goodprint "No naming convention issues found" if $namingIssues == 0;
+}
+
+sub mysql_foreign_key_checks {
+    subheaderprint "Foreign Key analysis";
+
+    my $fkIssues = 0;
+    # Unconstrained _id columns
+    my @unconstrainedId = select_array(
+"SELECT c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME
+FROM information_schema.columns c
+LEFT JOIN information_schema.key_column_usage k ON c.TABLE_SCHEMA = k.TABLE_SCHEMA AND c.TABLE_NAME = k.TABLE_NAME AND c.COLUMN_NAME = k.COLUMN_NAME AND k.REFERENCED_TABLE_NAME IS NOT NULL
+WHERE c.COLUMN_NAME LIKE '%_id'
+  AND k.COLUMN_NAME IS NULL
+  AND c.TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    foreach my $id (@unconstrainedId) {
+        my ( $schema, $table, $column ) = split /\t/, $id;
+        $schema //= ''; $table //= ''; $column //= '';
+        # Exclude PKs that are named table_id
+        next if $column eq "${table}_id";
+        
+        badprint "Column $schema.$table.$column ends in '_id' but has no FOREIGN KEY constraint";
+        push @generalrec, "Add FOREIGN KEY constraint to $schema.$table.$column";
+        push @modeling, "Column $schema.$table.$column ends in '_id' but has no FOREIGN KEY constraint";
+        $fkIssues++;
+    }
+
+    # FK Actions
+    my @fkActions = select_array(
+"SELECT rc.CONSTRAINT_SCHEMA, rc.TABLE_NAME, k.COLUMN_NAME, rc.REFERENCED_TABLE_NAME, k.REFERENCED_COLUMN_NAME, rc.DELETE_RULE
+FROM information_schema.referential_constraints rc
+JOIN information_schema.key_column_usage k ON rc.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA AND rc.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+WHERE rc.CONSTRAINT_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    foreach my $fk (@fkActions) {
+        my ( $schema, $table, $column, $ref_table, $ref_column, $delete_rule ) = split /\t/, $fk;
+        $schema //= ''; $table //= ''; $column //= ''; $ref_table //= ''; $ref_column //= ''; $delete_rule //= '';
+        if ( $delete_rule eq 'CASCADE' ) {
+            infoprint "Constraint on $schema.$table.$column uses ON DELETE CASCADE; ensure this is intended.";
+            push @modeling, "Constraint on $schema.$table.$column uses ON DELETE CASCADE; ensure this is intended.";
+            $fkIssues++;
+        }
+    }
+
+    # Foreign Key Type Mismatches
+    my @fkTypeMismatches = select_array(
+"SELECT k.CONSTRAINT_SCHEMA, k.TABLE_NAME, k.COLUMN_NAME, c1.COLUMN_TYPE, k.REFERENCED_TABLE_NAME, k.REFERENCED_COLUMN_NAME, c2.COLUMN_TYPE
+FROM information_schema.key_column_usage k
+JOIN information_schema.columns c1 ON k.TABLE_SCHEMA = c1.TABLE_SCHEMA AND k.TABLE_NAME = c1.TABLE_NAME AND k.COLUMN_NAME = c1.COLUMN_NAME
+JOIN information_schema.columns c2 ON k.REFERENCED_TABLE_SCHEMA = c2.TABLE_SCHEMA AND k.REFERENCED_TABLE_NAME = c2.TABLE_NAME AND k.REFERENCED_COLUMN_NAME = c2.COLUMN_NAME
+WHERE k.REFERENCED_TABLE_NAME IS NOT NULL
+  AND c1.COLUMN_TYPE != c2.COLUMN_TYPE
+  AND k.CONSTRAINT_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
+    );
+    foreach my $mm (@fkTypeMismatches) {
+        my ( $schema, $table, $col, $type1, $ref_table, $ref_col, $type2 ) = split /\t/, $mm;
+        $schema //= ''; $table //= ''; $col //= ''; $type1 //= ''; $ref_table //= ''; $ref_col //= ''; $type2 //= '';
+        badprint "FK Type Mismatch: $schema.$table.$col ($type1) -> $ref_table.$ref_col ($type2)";
+        push @generalrec, "Fix data type mismatch in Foreign Key $schema.$table.$col ($type1 vs $type2)";
+        push @modeling, "FK Type Mismatch: $schema.$table.$col ($type1) references $ref_table.$ref_col ($type2)";
+        $fkIssues++;
+    }
+    goodprint "No foreign key issues found" if $fkIssues == 0;
+}
+
+sub mysql_schema_sanitization {
+    subheaderprint "Schema sanitization";
+
+    my @emptyOrViewOnlySchemas = select_array(
+"SELECT TABLE_SCHEMA, 
+       SUM(CASE WHEN TABLE_TYPE = 'BASE TABLE' THEN 1 ELSE 0 END), 
+       SUM(CASE WHEN TABLE_TYPE = 'VIEW' THEN 1 ELSE 0 END)
+FROM information_schema.tables
+WHERE TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')
+GROUP BY TABLE_SCHEMA
+HAVING SUM(CASE WHEN TABLE_TYPE = 'BASE TABLE' THEN 1 ELSE 0 END) = 0"
+    );
+
+    if ( scalar(@emptyOrViewOnlySchemas) == 0 ) {
+        goodprint "No empty or view-only schemas detected";
+    }
+    else {
+        foreach my $s (@emptyOrViewOnlySchemas) {
+            my ( $schema, $tables, $views ) = split /\t/, $s;
+            $schema //= ''; $tables //= 0; $views //= 0;
+            if ( $tables == 0 && $views == 0 ) {
+                infoprint "Schema $schema is empty (no tables or views)";
+                push @modeling, "Schema $schema is empty (no tables or views)";
+            }
+            elsif ( $tables == 0 && $views > 0 ) {
+                infoprint "Schema $schema contains only views ($views views)";
+                push @modeling, "Schema $schema contains only views ($views views)";
+            }
+        }
+    }
 }
 
 # Recommendations for Galera
@@ -7835,20 +8239,62 @@ sub mysql_tables {
         $ignore_tables_sql = " AND TABLE_NAME NOT IN ('" . join( "','", @ignored ) . "')";
     }
 
+    my $schema_doc = "";
+    my $mermaid_er = "";
+    if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+        $schema_doc = "# Database Schema Documentation\n\n";
+        $schema_doc .= "Generated by MySQLTuner on " . scalar(localtime) . "\n\n";
+        $mermaid_er = "## Visual Database Schema (Mermaid)\n\n";
+        $mermaid_er .= "```mermaid\nerDiagram\n";
+    }
+
+    if ( $opt{schemadir} ne '' ) {
+        $opt{schemadir} = abs_path( $opt{schemadir} );
+        if ( !-d $opt{schemadir} ) {
+            mkdir $opt{schemadir} or die "Cannot create directory $opt{schemadir}: $!";
+        }
+    }
+
     foreach ( select_user_dbs() ) {
         my $dbname = $_;
         next unless defined $_;
+
+        my $current_schema_doc = "";
+        my $current_mermaid_er = "";
+        if ( $opt{schemadir} ne '' ) {
+            $current_schema_doc = "# Database: $dbname\n\n";
+            $current_schema_doc .= "Generated by MySQLTuner on " . scalar(localtime) . "\n\n";
+            $current_mermaid_er = "## Visual Database Schema (Mermaid)\n\n";
+            $current_mermaid_er .= "```mermaid\nerDiagram\n";
+        }
+
         infoprint "Database: " . $_ . "";
+        if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+            $schema_doc         .= "## Database: $dbname\n\n";
+            $current_schema_doc .= "### Tables\n\n" if $opt{schemadir} ne '';
+        }
+
         my @dbtable = select_array(
 "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbname' AND TABLE_TYPE='BASE TABLE'$ignore_tables_sql ORDER BY TABLE_NAME"
         );
         foreach (@dbtable) {
             my $tbname = $_;
             infoprint " +-- TABLE: $tbname";
-            infoprint "     +-- TYPE: "
-              . select_one(
+            my $engine = select_one(
 "SELECT ENGINE FROM information_schema.tables where TABLE_schema='$dbname' AND TABLE_NAME='$tbname'"
-              );
+            );
+            infoprint "     +-- TYPE: $engine";
+            if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+                my $table_info = "### Table: $tbname\n";
+                $table_info .= "- **Engine**: $engine\n\n";
+                $table_info .= "#### Indexes\n";
+
+                $schema_doc         .= $table_info;
+                $current_schema_doc .= $table_info if $opt{schemadir} ne '';
+
+                $mermaid_er         .= "    $tbname {\n";
+                $current_mermaid_er .= "    $tbname {\n" if $opt{schemadir} ne '';
+            }
 
             my $selIdxReq = <<"ENDSQL";
       SELECT  index_name AS idxname, 
@@ -7866,13 +8312,28 @@ ENDSQL
                 next if $info[0] eq 'NULL';
                 infoprint
                   "     +-- Index $info[0] - Cols: $info[1] - Type: $info[2]";
+                if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+                    my $idx_info = "- **$info[0]**: $info[1] ($info[2])\n";
+                    $schema_doc         .= $idx_info;
+                    $current_schema_doc .= $idx_info if $opt{schemadir} ne '';
+                }
                 $found++;
             }
             if ( $found == 0 ) {
                 badprint("Table $dbname.$tbname has no index defined");
+                if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+                    $schema_doc         .= "- *No indexes defined*\n";
+                    $current_schema_doc .= "- *No indexes defined*\n" if $opt{schemadir} ne '';
+                }
                 push @generalrec,
                   "Add at least a primary key on table $dbname.$tbname";
             }
+
+            if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+                $schema_doc         .= "\n#### Columns\n";
+                $current_schema_doc .= "\n#### Columns\n" if $opt{schemadir} ne '';
+            }
+
             my @tbcol = select_array(
 "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname'"
             );
@@ -7888,6 +8349,16 @@ ENDSQL
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : " NULL" );
                 my $optimal_type = '';
                 infoprint "     +-- Column $tbname.$_: $current_type";
+                if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+                    my $col_info = "- **$_**: $current_type\n";
+                    $schema_doc         .= $col_info;
+                    $current_schema_doc .= $col_info if $opt{schemadir} ne '';
+
+                    my $mtype = $ctype;
+                    $mtype =~ s/\(.*\)//g; # Strip lengths for Mermaid
+                    $mermaid_er         .= "        $mtype $_\n";
+                    $current_mermaid_er .= "        $mtype $_\n" if $opt{schemadir} ne '';
+                }
                 if ( $opt{colstat} == 1 ) {
                     $optimal_type = select_str_g( "Optimal_fieldtype",
 "SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
@@ -7922,6 +8393,42 @@ ENDSQL
                     goodprint "$dbname.$tbname ($_) type: $current_type";
                 }
             }
+            if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+                $schema_doc         .= "\n---\n\n";
+                $current_schema_doc .= "\n---\n\n" if $opt{schemadir} ne '';
+
+                $mermaid_er         .= "    }\n";
+                $current_mermaid_er .= "    }\n" if $opt{schemadir} ne '';
+            }
+        }
+
+        if ( $opt{schemadir} ne '' ) {
+            $current_mermaid_er .= "```\n\n";
+            $current_schema_doc .= $current_mermaid_er;
+            my $doc_file = "$opt{schemadir}/$dbname.md";
+            if ( open( my $fh, '>', $doc_file ) ) {
+                binmode($fh, ":utf8");
+                print $fh $current_schema_doc;
+                close($fh);
+                infoprint "Schema documentation for $dbname generated in $doc_file";
+            }
+            else {
+                badprint "Could not write schema documentation for $dbname to $doc_file: $!";
+            }
+        }
+    }
+    if ( $opt{dumpdir} ne '' ) {
+        $mermaid_er .= "```\n\n";
+        $schema_doc .= $mermaid_er;
+        my $doc_file = "$opt{dumpdir}/schema_documentation.md";
+        if ( open( my $fh, '>', $doc_file ) ) {
+            binmode($fh, ":utf8");
+            print $fh $schema_doc;
+            close($fh);
+            infoprint "Consolidated schema documentation generated in $doc_file";
+        }
+        else {
+            badprint "Could not write consolidated schema documentation to $doc_file: $!";
         }
     }
 }
@@ -8097,6 +8604,15 @@ sub mysql_triggers {
 sub make_recommendations {
     $result{'Recommendations'} = \@generalrec;
     $result{'AdjustVariables'} = \@adjvars;
+    $result{'Modeling'}        = \@modeling;
+
+    # Modular structure for modern reporting
+    $result{'Modules'} = {
+        'System'      => \@sysrec,
+        'Performance' => \@adjvars,
+        'Modeling'    => \@modeling,
+        'Security'    => \@secrec,
+    };
     subheaderprint "Recommendations";
     if ( @generalrec > 0 ) {
         prettyprint "General recommendations:";
@@ -8273,6 +8789,34 @@ sub dump_csv_files {
 
     infoprint("Dumpdir: $opt{dumpdir}");
 
+    # Always create raw_mysqltuner.txt in dumpdir for complete analysis output
+    # This is independent of --outputfile option
+    my $raw_output_file = "$opt{dumpdir}/raw_mysqltuner.txt";
+    infoprint("Auto-generating raw output file: $raw_output_file");
+    
+    # If outputfile is not already set, use raw_mysqltuner.txt as the main output
+    if ( $opt{outputfile} eq 0 ) {
+        $opt{outputfile} = $raw_output_file;
+        my $outputfile_path = abs_path( $opt{outputfile} );
+        open( $fh, '>', $outputfile_path )
+          or die("Failed to open $outputfile_path for writing: $!");
+        $opt{nocolor} = 1;  # Disable colors in file output
+    }
+    # If outputfile is already set, create a second file handle for raw output
+    else {
+        my $raw_fh;
+        open( $raw_fh, '>', $raw_output_file )
+          or die("Failed to open $raw_output_file for writing: $!");
+        # Duplicate all output to both file handles
+        # We'll need to modify prettyprint to write to both $fh and $raw_fh
+        # For now, just create a symlink
+        close($raw_fh);
+        unlink($raw_output_file);
+        my $target = abs_path($opt{outputfile});
+        symlink($target, $raw_output_file) 
+          or warn("Could not create symlink $raw_output_file -> $target: $!");
+    }
+
     # Store all sys schema in dumpdir if defined
     infoprint("Dumping sys schema");
     for my $sys_view ( select_array('use sys;show tables;') ) {
@@ -8317,7 +8861,8 @@ sub dump_csv_files {
 # ---------------------------------------------------------------------------
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
-headerprint;    # Header Print
+if ( !caller ) {
+    headerprint;    # Header Print
 
 validate_tuner_version;    # Check latest version
 cloud_setup;
@@ -8340,6 +8885,7 @@ if ( $opt{'feature'} ne '' ) {
         $feature->();
     }
     make_recommendations;
+    goodprint "Terminated successfully";
     exit(0);
 }
 validate_mysql_version;    # Check current MySQL version
@@ -8377,11 +8923,13 @@ mariadb_galera;            # Print MariaDB Galera Cluster stats
 get_replication_status;    # Print replication info
 make_recommendations;      # Make recommendations based on stats
 dump_result;               # Dump result if debug is on
+goodprint "Terminated successfully";
 close_outputfile;          # Close reportfile if needed
 
 # ---------------------------------------------------------------------------
 # END 'MAIN'
 # ---------------------------------------------------------------------------
+}
 1;
 
 __END__
@@ -8392,7 +8940,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.30 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.32 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -8446,6 +8994,7 @@ You must provide the remote server's total memory when connecting to other serve
  --reportfile <path>         Path to a report txt file
  --template   <path>         Path to a template file
  --dumpdir <path>            Path to a directory where to dump information files
+ --schemadir <path>          Path to a directory where to dump one markdown file per schema
  --feature <feature>         Run a specific feature (see FEATURES section)
  --dumpdir <path>            information_schema tables and sys views are dumped in CSV in this path
 
@@ -8484,7 +9033,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 VERSION
 
-Version 2.8.30
+Version 2.8.32
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
