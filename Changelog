@@ -1,5 +1,9 @@
 # MySQLTuner Changelog
 
+2.8.33 2026-01-30
+
+- 
+
 2.8.32 2026-01-30
 
 - feat: remove `--skippassword` from test laboratory to enable security checks.
