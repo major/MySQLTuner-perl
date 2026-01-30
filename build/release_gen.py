@@ -52,8 +52,8 @@ def get_git_commits(version):
         return "Commit history unavailable."
 
 def get_cli_options(content):
-    # Match strings inside %opt hash: "option" => value
-    return set(re.findall(r'"([a-zA-Z0-9_-]+)"\s*=>', content))
+    # Match strings inside %opt hash or %CLI_METADATA: "option" => value or 'option' => value
+    return set(re.findall(r'[\'"]([a-zA-Z0-9_-]+)[\'"]\s*=>', content))
 
 def analyze_indicators(content):
     # Count occurrences of goodprint(, badprint(, infoprint( diagnostic functions
@@ -219,6 +219,9 @@ def generate_version_note(version, block):
         
     print(f"Generated: {filename}")
 
+def version_to_tuple(v):
+    return tuple(int(x) for x in v.split('.'))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MySQLTuner Release Notes Generator')
     parser.add_argument('--since', type=str, help='Generate release notes for versions since this version (e.g. 2.8.0)')
@@ -228,9 +231,10 @@ if __name__ == "__main__":
     
     if args.since:
         os.environ['GEN_HISTORICAL'] = '1'
-        sorted_versions = sorted(blocks.keys(), key=lambda x: [int(y) for y in x.split('.')])
+        sorted_versions = sorted(blocks.keys(), key=version_to_tuple)
+        since_tuple = version_to_tuple(args.since)
         for v in sorted_versions:
-            if v >= args.since:
+            if version_to_tuple(v) >= since_tuple:
                 generate_version_note(v, blocks[v])
     else:
         version = get_current_version()

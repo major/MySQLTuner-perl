@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.33
+# mysqltuner.pl - Version 2.8.32
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -59,7 +59,7 @@ use Cwd 'abs_path';
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.8.33";
+our $tunerversion = "2.8.32";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 
 # Set defaults
@@ -8940,7 +8940,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.33 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.32 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -9033,7 +9033,7 @@ You must provide the remote server's total memory when connecting to other serve
 
 =head1 VERSION
 
-Version 2.8.33
+Version 2.8.32
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
