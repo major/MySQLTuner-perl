@@ -20,6 +20,7 @@ If new rules are identified during a session, invoke the `/hey-agent` workflow t
 - Rule: Audit `execution.log` for "✘ Performance_schema should be activated." and report it in `POTENTIAL_ISSUES`.
 - Rule: Automated test example generation (via `run-tests`) MUST only target "Supported" versions of MySQL and MariaDB as defined in `mysql_support.md` and `mariadb_support.md`.
 - Rule: File links in artifacts MUST be cleaned up to remove workstation-specific absolute paths (e.g., replace `file:///home/jmren/GIT_REPOS/` with `file:///`).
+- Rule: Release notes MUST be verified in `/release-preflight` to prevent omission on the remote repository.
 
 ## ✅ Verification
 

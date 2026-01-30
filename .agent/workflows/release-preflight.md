@@ -54,7 +54,21 @@ else
     echo "Changelog:        $LOG_VER"
     exit 1
 fi
-```
+
+## 2.1. Verify Release Notes
+
+Every release must have a corresponding markdown file in `releases/`.
+
+```bash
+REL_NOTES="releases/v$TXT_VER.md"
+if [ ! -f "$REL_NOTES" ]; then
+    echo "FAIL: Release notes missing: $REL_NOTES"
+    echo "Run '/release-notes-gen' to generate them."
+    exit 1
+else
+    echo "SUCCESS: Release notes found: $REL_NOTES"
+fi
+
 
 ## 3. Automated Consistency Test
 

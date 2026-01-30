@@ -84,9 +84,11 @@ Beyond hard constraints, following established patterns ensures code durability,
 - The `/git-flow` workflow MUST always be preceded by a successful `/release-preflight` execution.
 - Only the Release Manager is authorized to decide when to increment version numbers, or incrementing occurs automatically after a `git-flow` commit.
 
-### 12. Artifact Path Hygiene
+### 13. Release Artifact Integrity
 
-- File links in artifacts MUST be cleaned up to remove workstation-specific absolute paths (e.g., replace `file:///home/jmren/GIT_REPOS/` with `file:///`).
+- Every release MUST be accompanied by a technical release note in `releases/v[VERSION].md`.
+- The `/release-preflight` workflow MUST verify the existence of this file before allowing a release to proceed.
+- Omission of release artifacts is considered a regression in project governance.
 
 ## ✅ Verification
 
