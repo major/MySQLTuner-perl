@@ -1,0 +1,7 @@
+1.0.0 2026-02-01
+
+- feat: complete overhaul of the MySQLTuner website.
+- feat: implementation of a modern documentation hub with sidebar navigation.
+- feat: automated synchronization of docs from the perl repository.
+- feat: dynamic release notes archive and FAQ section.
+- feat: premium dark mode aesthetics and high-performance Vite build system.

@@ -1,182 +1,116 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>MySQLTuner-perl by major</title>
+<!DOCTYPE html>
+<html lang="en">
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1>MySQLTuner-perl</h1>
-        <p>MySQLTuner is a script written in Perl that will assist you with your MySQL configuration and make recommendations for increased performance and stability.</p>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MySQLTuner | Documentation Hub</title>
+  <meta name="description"
+    content="Official documentation for MySQLTuner-perl. Optimization guides, technical internals, and release notes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap"
+    rel="stylesheet">
+</head>
 
-        <p class="view"><a href="https://github.com/major/MySQLTuner-perl">View the Project on GitHub <small>major/MySQLTuner-perl</small></a></p>
+<body class="is-home">
+  <div id="app">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <a href="#" class="sidebar-brand">
+        <img src="./src/assets/logo.png" alt="Logo" style="height: 32px;">
+        <span>Docs</span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-group">
+          <div class="nav-group-title">Introduction</div>
+          <div class="nav-item"><a href="#" class="nav-link" data-route="home">Home</a></div>
+          <div class="nav-item"><a href="#/docs/overview" class="nav-link" data-route="docs/overview">Overview</a></div>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Guides</div>
+          <div class="nav-item"><a href="#/docs/usage" class="nav-link" data-route="docs/usage">Usage Guide</a></div>
+          <div class="nav-item"><a href="#/docs/internals" class="nav-link" data-route="docs/internals">Internals</a>
+          </div>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Compatibility</div>
+          <div class="nav-item"><a href="#/docs/mysql_support" class="nav-link"
+              data-route="docs/mysql_support">MySQL</a></div>
+          <div class="nav-item"><a href="#/docs/mariadb_support" class="nav-link"
+              data-route="docs/mariadb_support">MariaDB</a></div>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Resources</div>
+          <div class="nav-item"><a href="#/releases" class="nav-link" data-route="releases">Release Notes</a></div>
+          <div class="nav-item"><a href="#/faq" class="nav-link" data-route="faq">FAQ</a></div>
+        </div>
+      </nav>
+    </aside>
 
+    <!-- Main Content Wrapper -->
+    <main id="main-content" style="flex: 1; width: 100%;">
+      <!-- Landing Page Content (Default) -->
+      <div id="home-view">
+        <header class="hero">
+          <div class="hero-bg"></div>
+          <nav class="container"
+            style="display: flex; justify-content: space-between; padding: 2rem 1.5rem; align-items: center;">
+            <img src="./src/assets/logo.png" alt="MySQLTuner Logo" style="height: 48px;">
+            <div style="display: flex; gap: 2rem;">
+              <a href="#/docs/overview" class="btn btn-outline">Documentation</a>
+              <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="btn btn-outline">GitHub</a>
+            </div>
+          </nav>
 
-        
-        <ul>
-          <li><a href="https://github.com/major/MySQLTuner-perl/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/major/MySQLTuner-perl/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/major/MySQLTuner-perl">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h1>
-<a name="mysqltuner-perl" class="anchor" href="#mysqltuner-perl"><span class="octicon octicon-link"></span></a>MySQLTuner-perl</h1>
+          <div class="container" style="text-align: center; padding: 8rem 1rem;">
+            <h1 class="gradient-text" style="font-size: clamp(2.5rem, 8vw, 4.5rem); margin-bottom: 1.5rem;">
+              Optimize Your Database<br>With Confidence
+            </h1>
+            <p style="font-size: 1.25rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 2.5rem;">
+              The gold standard tuning advisor for MySQL, MariaDB, and Percona Server.
+              300+ indicators, zero dependencies, production safe.
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+              <a href="#/docs/overview" class="btn btn-primary">Get Started</a>
+              <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="btn btn-outline">Star on GitHub</a>
+            </div>
+          </div>
+        </header>
 
-<p>MySQLTuner is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability.  The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.</p>
+        <section class="container">
+          <div class="grid grid-3">
+            <div class="glass-card">
+              <h3 style="color: var(--accent-primary);">300+ Indicators</h3>
+              <p>Deep analysis of memory, storage engines, security, and performance schema.</p>
+            </div>
+            <div class="glass-card">
+              <h3 style="color: var(--accent-secondary);">Universal</h3>
+              <p>Supports MySQL 5.5 to 8.4+, MariaDB, Percona, and Cloud (AWS/Azure/GCP).</p>
+            </div>
+            <div class="glass-card">
+              <h3 style="color: var(--accent-primary);">Portable</h3>
+              <p>Zero dependencies. Runs anywhere with a base Perl installation.</p>
+            </div>
+          </div>
+        </section>
+      </div>
 
-<img src="https://github.com/major/MySQLTuner-perl/raw/master/mysqltuner.png" alt='mysqltuner' />
-<h1>Compatibility:</h1>
+      <!-- Documentation View (Dynamic) -->
+      <div id="doc-view" style="display: none;">
+        <article class="container doc-content" style="padding: 4rem 1.5rem; max-width: 900px; margin: 0 auto;">
+          <div id="doc-rendered-content"></div>
+        </article>
+      </div>
+    </main>
 
-<ul>
-
-<li>MySQL 3.23, 4.0, 4.1, 5.0, 5.1, 5.5, 5.6, 5.7 (full support)</li>
-<li>MariaDB 5.5, 10.0, 10.1 (full support)</li>
-<li>MySQL 3.23, 4.0, 4.1, 5.0, 5.1 (deprecated editor support)</li>
-<li>Perl 5.6 or later (with <a href="http://search.cpan.org/%7Edapm/perl-5.14.4/pod/perldoc.pod">perl-doc</a> package)</li>
-<li>Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)</li>
-<li>Windows is not supported at this time</li>
-<li>Unrestricted read access to the MySQL server (OS root access recommended for MySQL &lt; 5.0)</li>
-</ul><h2>
-<a name="warning" class="anchor" href="#warning"><span class="octicon octicon-link"></span></a><strong><em>WARNING</em></strong>
-</h2>
-
-<p>It is <strong>extremely important</strong> for you to fully understand each change 
-you make to a MySQL database server.  If you don't understand portions 
-of the script's output, or if you don't understand the recommendations, 
-<strong>you should consult</strong> a knowledgeable DBA or system administrator 
-that you trust.  <strong>Always</strong> test your changes on staging environments, and 
-always keep in mind that improvements in one area can <strong>negatively affect</strong> 
-MySQL in other areas.</p>
-
-<p><strong>Seriously - please review the FAQ section below.</strong></p>
-
-<h2>Checks performed by MySQLTuner</h2>
-<p>
-All checks done by <b>MySQLTuner</b> are documented in <a href="https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md">MySQLTuner Internals</a> documentation.
-</p>
-
-<h2>
-<a name="downloadinstallation" class="anchor" href="#downloadinstallation"><span class="octicon octicon-link"></span></a>Download/Installation</h2>
-
-<p>You can download the entire repository by using 'git clone' followed by the cloning URL above.  The simplest and shortest method is:</p>
-
-<pre><code>wget http://mysqltuner.pl/ -O mysqltuner.pl
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
-perl mysqltuner.pl
-</code></pre>
-
-<p>Of course, you can add the execute bit (<code>chmod +x mysqltuner.pl</code>) so you can execute it without calling perl directly.</p>
-
-
-<h2><a id="user-content-specific-usage" class="anchor" href="#specific-usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Specific usage</h2>
-
-<p><strong>Usage:</strong> Minimal usage locally</p>
-
-<pre><code>perl mysqltuner.pl 
-</code></pre>
-
-<p><strong>Usage:</strong> Minimal usage remotely</p>
-
-<pre><code>perl mysqltuner.pl --host targetDNS_IP --user admin_user --password admin_password
-</code></pre>
-
-<p><strong>Usage:</strong> Enable maximum output information around MySQL/MariaDb without debugging </p>
-
-<pre><code>perl mysqltuner.pl --buffers --dbstat --idxstat
-</code></pre>
-
-<p><strong>Usage:</strong> Write your result in a file with information displayed  </p>
-
-<pre><code>perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
-</code></pre>
-
-<p><strong>Usage:</strong> Write your result in a file <strong>without outputting information</strong> </p>
-
-<pre><code>perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
-</code></pre>
-
-<p><strong>Usage:</strong> Using template model to customize your reporting file based on <a href="https://metacpan.org/pod/Text::Template">Text::Template</a> syntax.</p>
-
-<pre><code>perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
-</code></pre>
-
-<p><strong>Usage:</strong> Enable debugging information </p>
-
-<pre><code>perl mysqltuner.pl --debug
-</code></pre>
-
-<h2>
-<a name="faq" class="anchor" href="#faq"><span class="octicon octicon-link"></span></a>FAQ</h2>
-
-<p>Question: Will MySQLTuner fix my slow MySQL server?</p>
-
-<p><strong>No.</strong>  MySQLTuner is a read only script.  It won't write to any configuration files, change the status of any daemons, or call your mother to wish her a happy birthday.  It will give you an overview of your server's performance and make some basic recommendations about improvements that you can make after it completes.  <em>Make sure you read the warning above prior to following any recommendations.</em></p>
-
-<p>Question: Can I fire my DBA now?</p>
-
-<p><strong>MySQLTuner will not replace your DBA in any form or fashion.</strong>  If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.</p>
-
-<p>Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?</p>
-
-<p>The script will try its best to log in via any means possible.  It will check for ~/.my.cnf files, Plesk password files, and empty password root logins.  If none of those are available, then you'll be prompted for a password.  If you'd like the script to run in an automated fashion without user intervention, then create a .my.cnf file in your home directory which contains:</p>
-
-<pre><code>[client]
-user=someusername
-pass=thatuserspassword
-</code></pre>
-
-<p>Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.  If a <a href="https://en.wikipedia.org/wiki/T-1000">T-1000 shows up in a LAPD uniform</a> and demands your database credentials, you won't have much of an option.</p>
-
-<p>Question: It's not working on my OS! What gives?!</p>
-
-<p>These kinds of things are bound to happen.  Here are the details I need from you in order to research the problem thoroughly:</p>
-
-<pre><code>* OS and OS version
-* Architecture (x86, x86_64, IA64, Commodore 64)
-* Exact MySQL version
-* Where you obtained your MySQL version (OS package, source, etc)
-* The full text of the error
-* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
-</code></pre>
-
-<h2>MySQLTuner-perl needs you</h2>
-        <p><b>MySQLTuner</b> needs contributors for documentation, code and feedbacks..</p>
-        <ul>
-        <li>Please join us on issue track at <a href="https://github.com/major/MySQLTuner-perl/issues">GitHub tracker</a>.</li>
-        <li>Contribution guide is avalaible following <a href="https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md">CONTRIBUTING</a> to MySQLTuner.</li>
-        <li>Star <b>MySQLTuner</b> project at <a href="https://github.com/major/MySQLTuner-perl"><strong>MySQLTuner GitHub</strong></a>.</li>
-          
-        </ul>
-
-
-
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/major">major</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
+    <!-- Mobile Nav Toggle -->
+    <div class="mobile-nav-toggle" id="sidebar-toggle">
+      <span>☰</span>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
-              <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-          </script>
-          <script type="text/javascript">
-            try {
-              var pageTracker = _gat._getTracker("UA-1115744-17");
-            pageTracker._trackPageview();
-            } catch(err) {}
-          </script>
+  </div>
+  <script type="module" src="./src/main.js"></script>
+</body>
 
-  </body>
 </html>

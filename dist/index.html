@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MySQLTuner | Documentation Hub</title>
+  <meta name="description"
+    content="Official documentation for MySQLTuner-perl. Optimization guides, technical internals, and release notes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap"
+    rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-oABDQeMw.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BOvQmDrB.css">
+</head>
+
+<body class="is-home">
+  <div id="app">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <a href="#" class="sidebar-brand">
+        <img src="/assets/logo-DCafZ4UH.png" alt="Logo" style="height: 32px;">
+        <span>Docs</span>
+      </a>
+      <nav class="sidebar-nav">
+        <div class="nav-group">
+          <div class="nav-group-title">Introduction</div>
+          <div class="nav-item"><a href="#" class="nav-link" data-route="home">Home</a></div>
+          <div class="nav-item"><a href="#/docs/overview" class="nav-link" data-route="docs/overview">Overview</a></div>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Guides</div>
+          <div class="nav-item"><a href="#/docs/usage" class="nav-link" data-route="docs/usage">Usage Guide</a></div>
+          <div class="nav-item"><a href="#/docs/internals" class="nav-link" data-route="docs/internals">Internals</a>
+          </div>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Compatibility</div>
+          <div class="nav-item"><a href="#/docs/mysql_support" class="nav-link"
+              data-route="docs/mysql_support">MySQL</a></div>
+          <div class="nav-item"><a href="#/docs/mariadb_support" class="nav-link"
+              data-route="docs/mariadb_support">MariaDB</a></div>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Resources</div>
+          <div class="nav-item"><a href="#/releases" class="nav-link" data-route="releases">Release Notes</a></div>
+          <div class="nav-item"><a href="#/faq" class="nav-link" data-route="faq">FAQ</a></div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <main id="main-content" style="flex: 1; width: 100%;">
+      <!-- Landing Page Content (Default) -->
+      <div id="home-view">
+        <header class="hero">
+          <div class="hero-bg"></div>
+          <nav class="container"
+            style="display: flex; justify-content: space-between; padding: 2rem 1.5rem; align-items: center;">
+            <img src="/assets/logo-DCafZ4UH.png" alt="MySQLTuner Logo" style="height: 48px;">
+            <div style="display: flex; gap: 2rem;">
+              <a href="#/docs/overview" class="btn btn-outline">Documentation</a>
+              <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="btn btn-outline">GitHub</a>
+            </div>
+          </nav>
+
+          <div class="container" style="text-align: center; padding: 8rem 1rem;">
+            <h1 class="gradient-text" style="font-size: clamp(2.5rem, 8vw, 4.5rem); margin-bottom: 1.5rem;">
+              Optimize Your Database<br>With Confidence
+            </h1>
+            <p style="font-size: 1.25rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 2.5rem;">
+              The gold standard tuning advisor for MySQL, MariaDB, and Percona Server.
+              300+ indicators, zero dependencies, production safe.
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+              <a href="#/docs/overview" class="btn btn-primary">Get Started</a>
+              <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="btn btn-outline">Star on GitHub</a>
+            </div>
+          </div>
+        </header>
+
+        <section class="container">
+          <div class="grid grid-3">
+            <div class="glass-card">
+              <h3 style="color: var(--accent-primary);">300+ Indicators</h3>
+              <p>Deep analysis of memory, storage engines, security, and performance schema.</p>
+            </div>
+            <div class="glass-card">
+              <h3 style="color: var(--accent-secondary);">Universal</h3>
+              <p>Supports MySQL 5.5 to 8.4+, MariaDB, Percona, and Cloud (AWS/Azure/GCP).</p>
+            </div>
+            <div class="glass-card">
+              <h3 style="color: var(--accent-primary);">Portable</h3>
+              <p>Zero dependencies. Runs anywhere with a base Perl installation.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Documentation View (Dynamic) -->
+      <div id="doc-view" style="display: none;">
+        <article class="container doc-content" style="padding: 4rem 1.5rem; max-width: 900px; margin: 0 auto;">
+          <div id="doc-rendered-content"></div>
+        </article>
+      </div>
+    </main>
+
+    <!-- Mobile Nav Toggle -->
+    <div class="mobile-nav-toggle" id="sidebar-toggle">
+      <span>☰</span>
+    </div>
+  </div>
+</body>
+
+</html>

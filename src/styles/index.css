@@ -1,0 +1,268 @@
+:root {
+  /* Colors - Deep Slate & Amber */
+  --bg-color: #0f172a;
+  --bg-card: rgba(30, 41, 59, 0.7);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent-primary: #f59e0b;
+  /* MySQL Amber */
+  --accent-secondary: #3b82f6;
+  /* DB Blue */
+  --accent-glow: rgba(245, 158, 11, 0.2);
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Spacing */
+  --section-padding: 5rem 1rem;
+  --card-radius: 12px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Typography */
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-bottom: 1rem;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #fff 0%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Layout Utilities */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* Components */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: #000;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px var(--accent-glow);
+}
+
+.btn-outline {
+  border: 1px solid var(--text-muted);
+  color: var(--text-main);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-main);
+}
+
+/* Glass Card */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--card-radius);
+  padding: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent-primary);
+}
+
+/* Hero bg */
+.hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: linear-gradient(to bottom, rgba(15, 23, 42, 0.8), var(--bg-color)),
+    url('../assets/hero-bg.png') center/cover no-repeat;
+}
+
+/* Terminal Mockup */
+.terminal {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 1.5rem;
+  font-family: 'Courier New', monospace;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.terminal-header {
+  height: 12px;
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.red {
+  background: #ff5f56;
+}
+
+.yellow {
+  background: #ffbd2e;
+}
+
+.green {
+  background: #27c93f;
+}
+
+code {
+  color: #d4d4d4;
+}
+
+.command {
+  color: var(--accent-primary);
+}
+
+/* Sections */
+section {
+  padding: var(--section-padding);
+}
+
+/* Documentation Content Styling */
+.doc-content {
+  color: var(--text-main);
+}
+
+.doc-content h1 {
+  font-size: 2.5rem;
+  margin-top: 3rem;
+  color: var(--accent-primary);
+}
+
+.doc-content h2 {
+  font-size: 1.8rem;
+  margin-top: 2.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.doc-content h3 {
+  font-size: 1.4rem;
+  margin-top: 2rem;
+  color: var(--accent-secondary);
+}
+
+.doc-content p {
+  margin-bottom: 1.25rem;
+  color: var(--text-muted);
+}
+
+.doc-content ul,
+.doc-content ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+  color: var(--text-muted);
+}
+
+.doc-content li {
+  margin-bottom: 0.5rem;
+}
+
+.doc-content code {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+}
+
+.doc-content pre {
+  background: #1e1e1e;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.doc-content pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.doc-content a {
+  color: var(--accent-secondary);
+  text-decoration: none;
+}
+
+.doc-content a:hover {
+  text-decoration: underline;
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 4rem;
+  color: var(--text-muted);
+}
+
+.error {
+  color: #ef4444;
+}
+
+/* Doc Page Layout Adjustments */
+body.is-docs .hero {
+  display: none;
+}
+
+body.is-docs #home-view {
+  display: none;
+}
+
+body.is-docs #doc-view {
+  display: block;
+}
