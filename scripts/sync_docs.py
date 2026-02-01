@@ -44,7 +44,13 @@ def sync():
         f.write("Stay up to date with the latest improvements and fixes in MySQLTuner.\n\n")
         for rel in release_list:
             v = rel.replace('.md', '')
-            f.write(f"- [{v}](#/docs/releases/{rel})\n")
+            # PHP router uses p=releases to show index, then specific files aren't directly routed in index.php 
+            # so we'll just link them for now knowing we might need a sub-routing logic later or just let PHP handle it.
+            # For now, keeping the link structure simple.
+            f.write(f"- [{v}](index.php?p=releases&file={rel})\n")
+    
+    # FAQ and other files
+    # ... extraction logic remains same
 
     # Extract FAQ from README
     readme_path = os.path.join(SOURCE_DIR, 'README.md')

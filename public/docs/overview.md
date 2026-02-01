@@ -1,4 +1,4 @@
-![MySQLTuner-perl](mtlogo2.png)
+![MySQLTuner-perl](assets/img/mtlogo2.png)
 
 [!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
@@ -6,7 +6,7 @@
 [![Test Status](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Average time to resolve an issue")
 [![Percentage of open issues](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Percentage of issues still open")
-[![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
+[![GPL License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
 
@@ -17,7 +17,7 @@
 You can find more details on these indicators here:
 [Indicators description](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
 
-![MysqlTuner](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysqltuner.png)
+![MysqlTuner](https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/mysqltuner.png)
 
 Useful Links
 ==
@@ -38,7 +38,7 @@ MySQLTuner needs you
 * Paid support for LightPath here: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
 * Paid support for Releem available here: [Releem App](https://releem.com/)
 
-![Anurag's GitHub stats](https://github-readme-stats.vercel.app/api?username=anuraghazra&show_icons=true&theme=radical)
+<!-- ![Anurag's GitHub stats](https://github-readme-stats.vercel.app/api?username=anuraghazra&show_icons=true&theme=radical) -->
 
 ## Stargazers over time
 

@@ -1,6 +1,8 @@
 1.0.3 2026-02-01
 
-- 
+- feat: established project governance with 7-tier AFF structure.
+- feat: implemented local verification tools (`/local-preview`, `/visual-audit`).
+- fix: repaired broken image icons and badges in `overview.md`.
 
 1.0.2 2026-02-01
 
