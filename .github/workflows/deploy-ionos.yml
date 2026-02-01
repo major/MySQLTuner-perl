@@ -1,0 +1,44 @@
+name: Deploy to IONOS
+
+# Déclenche le workflow à chaque push sur la branche 'main'
+# Adaptez 'main' si votre branche principale a un autre nom (ex: master, prod)
+on:
+  push:
+    branches:
+      - gh-pages # ou master, prod, etc.
+
+jobs:
+  deploy:
+    name: Deploy PHP Site to IONOS
+    runs-on: ubuntu-latest # Utilise la dernière version d'Ubuntu disponible
+
+    steps:
+      - name: Checkout de votre code
+        uses: actions/checkout@v4 # Action pour récupérer le code de votre dépôt
+
+      # Optionnel: Si vous avez des dépendances PHP gérées avec Composer
+      # Si votre site est purement statique ou PHP simple sans composer, cette étape n'est pas nécessaire.
+      # - name: Set up PHP
+      #   uses: shivammathur/setup-php@v2
+      #   with:
+      #     php-version: '8.1' # Spécifiez votre version de PHP
+      #     extensions: mbstring, xml, curl, zip # Ajoutez les extensions PHP nécessaires
+      #     tools: composer # Si vous utilisez Composer
+
+      # Optionnel: Installer les dépendances Composer
+      # - name: Install Composer dependencies
+      #   if: steps.setup-php.outputs.php-version != '' # S'exécute seulement si PHP est configuré
+      #   run: composer install --prefer-dist --no-progress --no-dev
+
+      - name: Deploy files via SFTP/FTP to IONOS
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.6
+        with:
+          server: ${{ secrets.IONOS_FTP_SERVER }}
+          username: ${{ secrets.IONOS_FTP_USERNAME }}
+          password: ${{ secrets.IONOS_FTP_PASSWORD }}
+          sftp_only: true
+          port: ${{ secrets.IONOS_FTP_PORT || '22' }} # Utilise le port 22 par défaut pour SFTP si IONOS_FTP_PORT n'est pas défini. Mettre '21' pour FTP.
+          local_path: ./ # Dossier local à téléverser. './' pour la racine du dépôt. Adaptez si votre site est dans un sous-dossier (ex: ./public/, ./dist/).
+          remote_path: ${{ secrets.IONOS_REMOTE_PATH }}/
+          rsyncArgs: "--exclude=.git --exclude=.github"
+          sftpArgs: "-o ConnectTimeout=5"
