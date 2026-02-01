@@ -56,13 +56,18 @@ Transform `MT-site` into a comprehensive documentation hub. The site will transi
 - Command+K shortcut to open.
 - Real-time result filtering.
 
-## 4. Technical Implementation
+### 3.4. Brand Assets
 
-### 4.1. Tech Stack (Vite + Vanilla)
+- **Primary Logo**: `assets/img/mtlogo2.png` is the official brand asset for the header branding.
+- **Secondary Assets**: `assets/img/logo.png` (legacy) and `assets/img/hero-bg.png` (hero background).
 
-- **Routing**: Minimal hash-based router (`#/docs/internals`) or Vite multi-page.
-- **Markdown Processing**: Use `marked` for client-side rendering or `vite-plugin-markdown` for build-time transformation.
-- **Search**: `Fuse.js` for lightweight client-side indexing.
+### 4.1. Tech Stack (PHP + Vanilla)
+
+- **Language**: PHP 7.4+ (Standard web server support).
+- **Routing**: Server-side routing via `index.php` using query parameters (e.g., `?p=overview`).
+- **Markdown Processing**: Server-side rendering using `Parsedown.php` (single-file library).
+- **Styling**: Vanilla CSS with modern technical dark-mode aesthetic.
+- **Interactivity**: Minimal vanilla JavaScript for mobile navigation and smooth scrolling.
 
 ### 4.2. Layout Engine
 

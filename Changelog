@@ -1,6 +1,11 @@
 1.0.2 2026-02-01
 
-- 
+- feat: migrated architecture to standalone PHP for zero-dependency portability.
+- feat: implemented server-side Markdown rendering using Parsedown.
+- feat: integrated official `mtlogo2.png` brand asset into header and sidebar.
+- refactor: extracted layout components into PHP includes (header, sidebar, footer).
+- chore: removed Node.js/Vite build artifacts and dependencies.
+- docs: updated specification to codify PHP architecture and brand assets.
 
 1.0.1 2026-02-01
 
