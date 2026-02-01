@@ -40,5 +40,5 @@ jobs:
           port: ${{ secrets.IONOS_FTP_PORT || '22' }} # Utilise le port 22 par défaut pour SFTP si IONOS_FTP_PORT n'est pas défini. Mettre '21' pour FTP.
           local_path: ./ # Dossier local à téléverser. './' pour la racine du dépôt. Adaptez si votre site est dans un sous-dossier (ex: ./public/, ./dist/).
           remote_path: ${{ secrets.IONOS_REMOTE_PATH }}/
-          rsyncArgs: "--delete --exclude=.git --exclude=.github"
+          rsyncArgs: "--delete --exclude=.git --exclude=.github --exclude=.agent"
           sftpArgs: "-o ConnectTimeout=5"
