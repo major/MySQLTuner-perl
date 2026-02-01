@@ -3,10 +3,34 @@
 # Set index.php as the primary entry point
 DirectoryIndex index.php index.html
 
-# Prevent access to .git and other sensitive files (Safety)
-RewriteEngine On
-RewriteRule ^\.git - [F,L]
-RewriteRule ^\.agent - [F,L]
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
 
-# Redirect common requests if necessary
-# ErrorDocument 404 /index.php?p=404
+    # 1. Redirect index.html to root /
+    RewriteRule ^index\.html$ / [R=301,L]
+
+    # 2. Redirect index.php to root / (only if no query string to avoid infinite loops)
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php\ HTTP/
+    RewriteCond %{QUERY_STRING} ^$
+    RewriteRule ^index\.php$ / [R=301,L]
+
+    # 3. Handle Pretty URLs: map /pagename to index.php?p=pagename
+    # If the request is NOT a real directory and NOT a real file
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^([a-zA-Z0-9_-]+)/?$ index.php?p=$1 [L,QSA]
+</IfModule>
+
+# Prevent access to .git and other sensitive files (Safety)
+<IfModule mod_authz_core.c>
+    <Files ".git">
+        Require all denied
+    </Files>
+    <Files ".agent">
+        Require all denied
+    </Files>
+</IfModule>
+
+# Handle common asset paths
+# No specific rules needed for assets/ or public/ as they are real directories/files

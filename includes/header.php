@@ -1,6 +1,9 @@
 <?php
 // header.php
-$is_home = (!isset($_GET['p']) || $_GET['p'] === 'home');
+// $is_home should be inherited from index.php
+if (!isset($is_home)) {
+    $is_home = (!isset($_GET['p']) || $_GET['p'] === 'home');
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

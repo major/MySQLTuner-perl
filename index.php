@@ -17,14 +17,61 @@ $valid_pages = [
 ];
 
 $page = $_GET['p'] ?? 'home';
+
+// --- Robust Routing (Pretty URLs fallback) ---
+$request_uri = $_SERVER['REQUEST_URI'] ?? '/';
+$path = parse_url($request_uri, PHP_URL_PATH);
+$path = trim($path, '/');
+
+if ($page === 'home' && !empty($path)) {
+    // Check if the path directly matches a valid page
+    if (isset($valid_pages[$path])) {
+        $page = $path;
+    } else {
+        // Handle sub-parts (e.g., /docs/overview)
+        $parts = explode('/', $path);
+        $last_part = end($parts);
+        if (isset($valid_pages[$last_part])) {
+            $page = $last_part;
+        }
+    }
+}
 $is_home = ($page === 'home');
+
+// --- Remote Version Sync ---
+$version_file = 'CURRENT_VERSION.txt';
+$remote_version_url = 'https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/refs/heads/master/CURRENT_VERSION.txt';
+
+// Read local version
+$current_version = file_exists($version_file) ? trim(file_get_contents($version_file)) : 'Unknown';
+
+// Force refresh if it looks like a placeholder or is too old
+$force_refresh = ($current_version === 'Unknown' || $current_version === '1.0.4'); // 1.0.4 seems to be a sticky local placeholder
+if ($force_refresh || !file_exists($version_file) || (time() - filemtime($version_file) > 3600)) {
+    $remote_version = @file_get_contents($remote_version_url);
+    if ($remote_version) {
+        $remote_version = trim($remote_version);
+        if ($remote_version !== $current_version) {
+            file_put_contents($version_file, $remote_version);
+            $current_version = $remote_version;
+        }
+    }
+}
+
+// Ensure includes have the expected variables
+$current_page = $page;
+
+// --- PHP-level redirect for index.html ---
+if (strpos($_SERVER['REQUEST_URI'], '/index.html') !== false) {
+    header("Location: /", true, 301);
+    exit;
+}
 
 // Header
 include 'includes/header.php';
 
 // Sidebar
 include 'includes/sidebar.php';
-
 ?>
 
 <!-- Main Content Wrapper -->
@@ -43,13 +90,13 @@ include 'includes/sidebar.php';
                         <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem;">MySQLTuner</span>
                     </div>
                     <div class="nav-actions">
-                        <a href="index.php?p=overview" class="btn btn-outline">Docs</a>
+                        <a href="/overview" class="btn btn-outline">Docs</a>
                         <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="btn btn-primary">GitHub</a>
                     </div>
                 </nav>
 
                 <div class="container fade-in" style="text-align: center; padding: 10rem 1rem;">
-                    <div class="badge">V2.8.33 GA Available</div>
+                    <div class="badge">V<?php echo htmlspecialchars($current_version); ?> GA Available</div>
                     <h1 class="gradient-text" style="font-size: clamp(3rem, 10vw, 5.5rem); margin-bottom: 2rem;">
                         Database Tuning<br>Reimagined.
                     </h1>
@@ -59,8 +106,8 @@ include 'includes/sidebar.php';
                         delivered in a zero-dependency Perl script.
                     </p>
                     <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
-                        <a href="index.php?p=overview" class="btn btn-primary">Start Optimizing</a>
-                        <a href="index.php?p=usage" class="btn btn-outline">How it works</a>
+                        <a href="/overview" class="btn btn-primary">Start Optimizing</a>
+                        <a href="/usage" class="btn btn-outline">How it works</a>
                     </div>
                 </div>
             </header>

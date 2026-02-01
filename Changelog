@@ -1,6 +1,10 @@
-1.0.4 2026-02-01
+2.8.33 2026-02-01
 
-- 
+- feat: synchronize site versioning with core script logic (2.8.33).
+- feat: implement robust Pretty URLs logic and routing in index.php.
+- feat: fix link variable shadowing in header/sidebar components.
+- feat: implement automated redirect from index.html to root.
+- chore: establish .agent governance and aesthetic verification.
 
 1.0.3 2026-02-01
 
