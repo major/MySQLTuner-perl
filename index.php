@@ -49,7 +49,7 @@ include 'includes/sidebar.php';
                 </nav>
 
                 <div class="container fade-in" style="text-align: center; padding: 10rem 1rem;">
-                    <div class="badge">V1.9.9 GA Available</div>
+                    <div class="badge">V2.8.33 GA Available</div>
                     <h1 class="gradient-text" style="font-size: clamp(3rem, 10vw, 5.5rem); margin-bottom: 2rem;">
                         Database Tuning<br>Reimagined.
                     </h1>
