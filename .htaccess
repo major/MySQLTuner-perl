@@ -1,0 +1,12 @@
+# MySQLTuner Documentation Site - Apache Configuration
+
+# Set index.php as the primary entry point
+DirectoryIndex index.php index.html
+
+# Prevent access to .git and other sensitive files (Safety)
+RewriteEngine On
+RewriteRule ^\.git - [F,L]
+RewriteRule ^\.agent - [F,L]
+
+# Redirect common requests if necessary
+# ErrorDocument 404 /index.php?p=404
