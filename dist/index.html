@@ -4,104 +4,137 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MySQLTuner | Documentation Hub</title>
+  <title>MySQLTuner | The Gold Standard Database Tuning Advisor</title>
   <meta name="description"
-    content="Official documentation for MySQLTuner-perl. Optimization guides, technical internals, and release notes.">
+    content="Official documentation for MySQLTuner-perl. Optimize MySQL, MariaDB, and Percona Server with 300+ verified indicators.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;800&family=Fira+Code:wght@400;500&display=swap"
     rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-oABDQeMw.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BOvQmDrB.css">
+  <script type="module" crossorigin src="/assets/index-ByiauCGw.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-C1JdLWAJ.css">
 </head>
 
 <body class="is-home">
   <div id="app">
     <!-- Sidebar Navigation -->
-    <aside class="sidebar">
+    <aside class="sidebar glass">
       <a href="#" class="sidebar-brand">
-        <img src="/assets/logo-DCafZ4UH.png" alt="Logo" style="height: 32px;">
-        <span>Docs</span>
+        <div class="logo-icon">M</div>
+        <span>MySQLTuner</span>
       </a>
       <nav class="sidebar-nav">
         <div class="nav-group">
-          <div class="nav-group-title">Introduction</div>
-          <div class="nav-item"><a href="#" class="nav-link" data-route="home">Home</a></div>
+          <div class="nav-group-title">Get Started</div>
+          <div class="nav-item"><a href="#" class="nav-link" data-route="home">Introduction</a></div>
           <div class="nav-item"><a href="#/docs/overview" class="nav-link" data-route="docs/overview">Overview</a></div>
-        </div>
-        <div class="nav-group">
-          <div class="nav-group-title">Guides</div>
           <div class="nav-item"><a href="#/docs/usage" class="nav-link" data-route="docs/usage">Usage Guide</a></div>
-          <div class="nav-item"><a href="#/docs/internals" class="nav-link" data-route="docs/internals">Internals</a>
-          </div>
         </div>
+
+        <div class="nav-group">
+          <div class="nav-group-title">Advanced</div>
+          <div class="nav-item"><a href="#/docs/internals" class="nav-link" data-route="docs/internals">Technical
+              Internals</a></div>
+        </div>
+
         <div class="nav-group">
           <div class="nav-group-title">Compatibility</div>
-          <div class="nav-item"><a href="#/docs/mysql_support" class="nav-link"
-              data-route="docs/mysql_support">MySQL</a></div>
+          <div class="nav-item"><a href="#/docs/mysql_support" class="nav-link" data-route="docs/mysql_support">MySQL
+              Support</a></div>
           <div class="nav-item"><a href="#/docs/mariadb_support" class="nav-link"
-              data-route="docs/mariadb_support">MariaDB</a></div>
+              data-route="docs/mariadb_support">MariaDB Support</a></div>
         </div>
+
         <div class="nav-group">
           <div class="nav-group-title">Resources</div>
           <div class="nav-item"><a href="#/releases" class="nav-link" data-route="releases">Release Notes</a></div>
           <div class="nav-item"><a href="#/faq" class="nav-link" data-route="faq">FAQ</a></div>
         </div>
       </nav>
+
+      <div class="sidebar-footer">
+        <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="github-link">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+            </path>
+          </svg>
+          Repository
+        </a>
+      </div>
     </aside>
 
     <!-- Main Content Wrapper -->
-    <main id="main-content" style="flex: 1; width: 100%;">
+    <main id="main-content" style="flex: 1; min-width: 0;">
       <!-- Landing Page Content (Default) -->
       <div id="home-view">
         <header class="hero">
           <div class="hero-bg"></div>
-          <nav class="container"
-            style="display: flex; justify-content: space-between; padding: 2rem 1.5rem; align-items: center;">
-            <img src="/assets/logo-DCafZ4UH.png" alt="MySQLTuner Logo" style="height: 48px;">
-            <div style="display: flex; gap: 2rem;">
-              <a href="#/docs/overview" class="btn btn-outline">Documentation</a>
-              <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="btn btn-outline">GitHub</a>
+          <div class="hero-glow"></div>
+
+          <nav class="container top-nav">
+            <div class="logo-wrap">
+              <img src="/assets/logo-DCafZ4UH.png" alt="Logo" style="height: 40px;">
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem;">MySQLTuner</span>
+            </div>
+            <div class="nav-actions">
+              <a href="#/docs/overview" class="btn btn-outline">Docs</a>
+              <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="btn btn-primary">GitHub</a>
             </div>
           </nav>
 
-          <div class="container" style="text-align: center; padding: 8rem 1rem;">
-            <h1 class="gradient-text" style="font-size: clamp(2.5rem, 8vw, 4.5rem); margin-bottom: 1.5rem;">
-              Optimize Your Database<br>With Confidence
+          <div class="container fade-in" style="text-align: center; padding: 10rem 1rem;">
+            <div class="badge">V1.9.9 GA Available</div>
+            <h1 class="gradient-text" style="font-size: clamp(3rem, 10vw, 5.5rem); margin-bottom: 2rem;">
+              Database Tuning<br>Reimagined.
             </h1>
-            <p style="font-size: 1.25rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 2.5rem;">
-              The gold standard tuning advisor for MySQL, MariaDB, and Percona Server.
-              300+ indicators, zero dependencies, production safe.
+            <p
+              style="font-size: 1.25rem; color: var(--text-muted); max-width: 750px; margin: 0 auto 3.5rem; line-height: 1.8;">
+              The gold standard advisor for MySQL, MariaDB, and Percona.
+              Gain deep insights with <span style="color: var(--accent-primary); font-weight: 600;">300+ performance
+                indicators</span>
+              delivered in a zero-dependency Perl script.
             </p>
-            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-              <a href="#/docs/overview" class="btn btn-primary">Get Started</a>
-              <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="btn btn-outline">Star on GitHub</a>
+            <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
+              <a href="#/docs/overview" class="btn btn-primary">Start Optimizing</a>
+              <a href="#/docs/usage" class="btn btn-outline">How it works</a>
             </div>
           </div>
         </header>
 
-        <section class="container">
+        <section class="container fade-in">
           <div class="grid grid-3">
-            <div class="glass-card">
-              <h3 style="color: var(--accent-primary);">300+ Indicators</h3>
-              <p>Deep analysis of memory, storage engines, security, and performance schema.</p>
+            <div class="card">
+              <div class="card-icon" style="color: var(--accent-primary);">⚡</div>
+              <h3>300+ Indicators</h3>
+              <p>Deep analysis spanning memory allocation, storage engines, security vulnerabilities, and performance
+                schema.</p>
             </div>
-            <div class="glass-card">
-              <h3 style="color: var(--accent-secondary);">Universal</h3>
-              <p>Supports MySQL 5.5 to 8.4+, MariaDB, Percona, and Cloud (AWS/Azure/GCP).</p>
+            <div class="card">
+              <div class="card-icon" style="color: var(--accent-secondary);">🌐</div>
+              <h3>Universal Scope</h3>
+              <p>Optimized for everything from Legacy 5.5 to Modern 8.4+, including MariaDB 11.x and Cloud DBs (RDS,
+                Azure, GCP).</p>
             </div>
-            <div class="glass-card">
-              <h3 style="color: var(--accent-primary);">Portable</h3>
-              <p>Zero dependencies. Runs anywhere with a base Perl installation.</p>
+            <div class="card">
+              <div class="card-icon" style="color: var(--accent-success);">🛠️</div>
+              <h3>Pure Portability</h3>
+              <p>Zero external CPAN dependencies. Execute instantly on any server with a base Perl installation.</p>
             </div>
           </div>
         </section>
+
+        <footer class="container"
+          style="padding: 4rem 1.5rem; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+          <p>© 2026 MySQLTuner Project. Released under GPLv3.</p>
+        </footer>
       </div>
 
       <!-- Documentation View (Dynamic) -->
       <div id="doc-view" style="display: none;">
-        <article class="container doc-content" style="padding: 4rem 1.5rem; max-width: 900px; margin: 0 auto;">
+        <article class="container doc-content fade-in" style="padding: 6rem 1.5rem; max-width: 900px; margin: 0 auto;">
           <div id="doc-rendered-content"></div>
         </article>
       </div>
@@ -109,7 +142,12 @@
 
     <!-- Mobile Nav Toggle -->
     <div class="mobile-nav-toggle" id="sidebar-toggle">
-      <span>☰</span>
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
     </div>
   </div>
 </body>

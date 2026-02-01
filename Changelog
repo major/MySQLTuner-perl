@@ -1,6 +1,10 @@
 1.0.1 2026-02-01
 
-- 
+- feat: comprehensive modern redesign of the UI (Navy & Cyan technical aesthetic).
+- feat: implementation of glassmorphism effects on cards and sidebar.
+- feat: redesigned Hero section with dynamic typography and glow effects.
+- feat: enhanced mobile responsiveness and navigation logic.
+- feat: added smooth transitions and scroll-to-top on route changes.
 
 1.0.0 2026-02-01
 
