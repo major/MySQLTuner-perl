@@ -437,11 +437,6 @@ Sebbene MySQL tuner stesso non apporterà alcuna modifica al tuo server, l'imple
 
 Assicurati sempre di comprendere le implicazioni di ogni suggerimento prima di applicarlo al tuo server.
 
-**Domanda: posso usare MySQL tuner per ottimizzare altri sistemi di database come PostgreSQL o SQL Server?**
-
-MySQL tuner è progettato specificamente per i server MySQL.
-Per ottimizzare altri sistemi di database, sarebbe necessario utilizzare strumenti progettati per tali sistemi, come pgTune per PostgreSQL o gli strumenti di prestazione integrati di SQL Server.
-
 **Domanda: MySQL tuner supporta MariaDB e Percona Server?**
 
 Sì, MySQL tuner supporta MariaDB e Percona Server poiché sono derivati ​​di MySQL e condividono un'architettura simile. Lo script può analizzare e fornire raccomandazioni anche per questi sistemi.

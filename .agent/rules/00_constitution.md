@@ -21,11 +21,24 @@ Make `mysqltuner.pl` the most stable, portable, and reliable performance tuning 
 **Key Pillars:**
 
 - **Production Stability**: Every recommendation must be safe for production environments. Zero tolerance for destructive or experimental "hacks" without explicit user opt-in.
-- **Zero-Dependency Portability**: Maintain a single-file architecture. The script must remain self-contained and executable on any server with a base Perl installation.
+- **Single-File Architecture**: Strict enforcement of a single-file structure. Modules or splitting are prohibited to ensure maximum portability.
+- **Zero-Dependency Portability**: The script must remain self-contained and executable on any server with a base Perl installation (Core modules only).
 - **Universal Compatibility**: Support the widest possible range of MySQL-compatible versions (Legacy 5.5 to Modern 11.x).
 - **Regression Limit**: Proactively identify and prevent regressions through exhaustive automated testing.
 - **Actionable Insights**: Provide clear, verified, and well-documented tuning advice.
 - **Release Integrity**: Guarantee artifact consistency and multi-version validation through a formal Release Management protocol.
+
+## 🏗️ Governance Hierarchy (7-Tier AFF)
+
+This project follows a standardized governance structure:
+
+- **Tier 00**: [00_constitution.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/00_constitution.md) (Absolute Truth)
+- **Tier 01**: [01_objective.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/01_objective.md) (Identity & Mission)
+- **Tier 02**: [02_architecture.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/02_architecture.md) (Environment)
+- **Tier 03**: [03_execution_rules.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/03_execution_rules.md) (Constraints)
+- **Tier 04**: [04_best_practices.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/04_best_practices.md) (Implementation)
+- **Tier 05**: [05_memory_protocol.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/05_memory_protocol.md) (History)
+- **Dynamic**: [remembers.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/remembers.md) (Session Buffer)
 
 ## ✅ Verification
 

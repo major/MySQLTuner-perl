@@ -21,31 +21,35 @@ To ensure consistency and high-density development, the following roles are defi
 
 ## 🚀 Development Phases
 
-### Phase 1: Stabilization & Observability (v2.8.32)
+### Phase 1: Stabilization & Observability (v2.8.31 - v2.8.33) [COMPLETED]
 
-* **Metadata-Driven CLI Options**: Refactor option parsing to centralize defaults, validation, and documentation. This eliminates synchronization errors between code and POD.
-* **Enhanced SQL Modeling**: Expand diagnostic checks for:
-  * Foreign Key type mismatches (e.g., `INT` vs `BIGINT`).
-  * Missing indexes on large tables (> 1GB).
-  * Schema sanitization (detection of empty or view-only schemas).
-* **Structured Error Log Ingestion**: Support `performance_schema.error_log` for diagnostic ingestion (MySQL 8.0+).
-* **Refined Reporting**: Improve the data richness in the new "Modeling Analysis" tab.
+* [x] **Metadata-Driven CLI Options**: Refactored option parsing to centralize defaults, validation, and documentation.
+* [x] **Enhanced SQL Modeling**: Expanded diagnostic checks for Foreign Key type mismatches, missing indexes, and schema sanitization.
+* [x] **Structured Error Log Ingestion**: Supported `performance_schema.error_log` for diagnostic ingestion (MySQL 8.0+).
+* [x] **Refined Reporting**: Improved data richness in the "Modeling Analysis" tab.
 
-### Phase 2: Advanced Diagnostics
+### Phase 2: Advanced Diagnostics [IN PROGRESS]
 
-* **Index Audit 2.0**: Integrate `performance_schema` to detect:
-  * **Redundant Indexes**: Overlapping prefix indexes that waste storage and IO.
-  * **Unused Indexes**: Identify indexes that haven't been touched since last restart.
+* **Plugin & Hook Stability**: Formalize the custom hook mechanism (verified for MySQL and SSL) to enable scalable third-party integrations.
+* **Compliance Awareness Framework**: Specialized audit profiles (`--audit-pci`, `--audit-hipaa`, `--audit-gdpr`) to verify regulatory configuration requirements.
+* **Index Audit 2.0**: Integrate `performance_schema` to detect redundant and unused indexes.
 * **Transactional Contention Analysis**: Detect patterns leading to deadlocks and high lock wait times.
 * **Buffer Pool Advisory**: More granular analysis of InnoDB Buffer Pool usage and resizing recommendations.
-* **Aria & MyISAM Modernization**: Deeper checks for Aria-specific parameters (`aria_pagecache_age_threshold`) and migration paths for legacy engines.
-* **Kernel & Architecture Health**: Implement `io_uring` support detection, verifying kernel settings (`kernel.io_uring_disabled`) and group permissions.
+* **Kernel & Architecture Health**: Implement `io_uring` support detection and kernel setting verification.
 
 ### Phase 3: Automation & Ecosystem
 
-* **Modular Reporting Engine**: Refactor Jinja2 templates to support dynamic section injection, allowing for highly extensible HTML reports.
-* **Container Abstraction Layer**: Refine transport discovery logic to handle complex K8s/Docker network topologies and permission constraints.
-* **Historical Trend Analysis**: (Experimental) Allow the script to ingest previous run data to identify performance regressions over time.
+* **Infrastructure-Aware Tuning**: Detect storage types (NVMe/SSD) and hardware architectures (ARM64/Graviton).
+* **Sysbench Metrics Integration**: Automated baseline capture and performance comparison within the report.
+* **Multi-Cloud Autodiscovery**: Automated detection of RDS, GCP, and Azure specific performance flags and optimizations.
+* **Query Anti-Pattern Detection**: Use `performance_schema` to identify non-SARGable queries and `SELECT *` abuse.
+* **Modular Reporting Engine**: Refactor Jinja2 templates for dynamic section injection.
+* **Historical Trend Analysis**: (Experimental) Allow the script to ingest previous run data to identify performance regressions.
+
+### Phase 4: Advanced Intelligence & Ecosystem
+
+* **Smart Migration LTS Advisor**: Provide risk reports for upgrading between major versions.
+* **Weighted Health Score**: Implement a unified KPI (0-100) based on Security, Performance, and Resilience.
 
 ## 🤝 Contribution & Feedback
 

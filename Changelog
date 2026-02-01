@@ -1,8 +1,25 @@
 # MySQLTuner Changelog
 
-2.8.33 2026-01-30
+2.8.33 2026-01-31
 
--
+- fix: improved cPanel/Flex detection and refined `skip-name-resolve` recommendation (issue #863).
+- test: add enhanced unit test `tests/issue_863_enhanced.t` for cPanel detection verification.
+- docs: consolidate project governance rules and resolve backwards compatibility contradiction (00_constitution.md, 03_execution_rules.md).
+- style: promote session-discovered rules to Tier 04 Best Practices and reset `remembers.md`.
+
+- feat: add automated validation (regex/coderef) for CLI options like `--port` and `--defaultarch`.
+- feat: implement option implications (e.g., `--feature` implies `--verbose`) in metadata.
+- feat: add SSL/TLS security checks for missing configuration, insecure protocols (TLSv1.0, TLSv1.1), and secure transport enforcement.
+- feat: add automated detection of current session encryption status.
+- feat: add observability warning and explicit recommendation when `performance_schema` is disabled.
+- fix: resolve numeric comparison warnings and prevent full workstation path leakage in CLI output.
+- fix: resolve contradictory key_buffer_size recommendations by adding a usage threshold to the increase recommendation (issue #774).
+- test: add unit test `tests/cli_validation.t` for comprehensive option validation verification.
+- test: add unit test `tests/ssl_tls_validation.t` for comprehensive SSL/TLS verification.
+- test: add unit test `tests/pfs_observability.t` to verify `performance_schema` diagnostics.
+- test: add unit test `tests/issue_774.t` to verify key_buffer_size recommendation logic.
+- docs: cleanup MongoDB and PostgreSQL references from `ROADMAP.md` and README files.
+- refactor: implement metadata-driven CLI option parsing to centralize defaults, validation, and documentation.
 
 2.8.32 2026-01-30
 

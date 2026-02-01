@@ -45,3 +45,6 @@ smoke_test.txt
 tmp
 v_test.txt
 tmp_changelog
+mysqltuner.pl.bak
+0
+0/**

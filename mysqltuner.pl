@@ -50,6 +50,11 @@ use Pod::Usage;
 use File::Basename;
 use Cwd 'abs_path';
 
+# Subroutine declarations
+sub show_help;
+sub subheaderprint;
+sub execute_system_command;
+
 #use Data::Dumper;
 #$Data::Dumper::Pair = " : ";
 
@@ -67,81 +72,82 @@ our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 # Categories: CONNECTION, PERFORMANCE, OUTPUT, CLOUD, MISC
 our %CLI_METADATA = (
     # Connection and Authentication
-    'host'                => { type => '=s', default => 0,  desc => 'Connect to a remote host to perform tests', cat => 'CONNECTION' },
-    'socket'              => { type => '=s', default => 0,  desc => 'Use a different socket for a local connection', cat => 'CONNECTION' },
-    'pipe'                => { type => '!',  default => 0,  desc => 'Connect to a local Windows database using named pipes', cat => 'CONNECTION' },
-    'pipe_name'           => { type => '=s', default => 0,  desc => 'Use a different pipe name for a local connection', cat => 'CONNECTION' },
-    'port'                => { type => '=i', default => 0,  desc => 'Port to use for connection', cat => 'CONNECTION' },
-    'user|u'              => { type => '=s', default => 0,  desc => 'Username to use for authentication', cat => 'CONNECTION' },
-    'pass|p|password'     => { type => '=s', default => 0,  desc => 'Password to use for authentication', cat => 'CONNECTION' },
-    'userenv'             => { type => '=s', default => '', desc => 'Env variable name for username', cat => 'CONNECTION' },
-    'passenv'             => { type => '=s', default => '', desc => 'Env variable name for password', cat => 'CONNECTION' },
-    'ssl-ca'              => { type => '=s', default => 0,  desc => 'Path to public key (SSL CA)', cat => 'CONNECTION' },
-    'mysqladmin'          => { type => '=s', default => '', desc => 'Path to a custom mysqladmin executable', cat => 'CONNECTION' },
-    'mysqlcmd'            => { type => '=s', default => '', desc => 'Path to a custom mysql executable', cat => 'CONNECTION' },
-    'defaults-file'       => { type => '=s', default => '', desc => 'Path to a custom .my.cnf', cat => 'CONNECTION' },
-    'defaults-extra-file' => { type => '=s', default => '', desc => 'Path to an extra custom config file', cat => 'CONNECTION' },
-    'protocol'            => { type => '=s', default => '', desc => 'Force TCP connection instead of socket', cat => 'CONNECTION' },
+    'host'                => { type => '=s', default => '0',  desc => 'Connect to a remote host to perform tests', placeholder => '<host>', cat => 'CONNECTION' },
+    'socket'              => { type => '=s', default => '0',  desc => 'Use a different socket for a local connection', placeholder => '<path>', cat => 'CONNECTION' },
+    'pipe'                => { type => '!',  default => 0,   desc => 'Connect to a local Windows database using named pipes', cat => 'CONNECTION' },
+    'pipe_name'           => { type => '=s', default => '0',  desc => 'Use a different pipe name for a local connection', placeholder => '<name>', cat => 'CONNECTION' },
+    'port'                => { type => '=i', default => 3306, desc => 'Port to use for connection', placeholder => '<port>', cat => 'CONNECTION', validate => qr/^\d+$/ },
+    'user|u'              => { type => '=s', default => '0',  desc => 'Username to use for authentication', placeholder => '<user>', cat => 'CONNECTION' },
+    'pass|p|password'     => { type => '=s', default => '0',  desc => 'Password to use for authentication', placeholder => '<pass>', cat => 'CONNECTION' },
+    'userenv'             => { type => '=s', default => '0',  desc => 'Env variable name for username', placeholder => '<envvar>', cat => 'CONNECTION' },
+    'passenv'             => { type => '=s', default => '0',  desc => 'Env variable name for password', placeholder => '<envvar>', cat => 'CONNECTION' },
+    'ssl-ca'              => { type => '=s', default => '0',  desc => 'Path to public key (SSL CA)', placeholder => '<path>', cat => 'CONNECTION' },
+    'mysqladmin'          => { type => '=s', default => '0',  desc => 'Path to a custom mysqladmin executable', placeholder => '<path>', cat => 'CONNECTION' },
+    'mysqlcmd'            => { type => '=s', default => '0',  desc => 'Path to a custom mysql executable', placeholder => '<path>', cat => 'CONNECTION' },
+    'defaults-file'       => { type => '=s', default => '0',  desc => 'Path to a custom .my.cnf', placeholder => '<path>', cat => 'CONNECTION' },
+    'defaults-extra-file' => { type => '=s', default => '0',  desc => 'Path to an extra custom config file', placeholder => '<path>', cat => 'CONNECTION' },
+    'protocol'            => { type => '=s', default => '0',  desc => 'Force TCP connection instead of socket', placeholder => 'tcp', cat => 'CONNECTION' },
+    'server-log'          => { type => '=s', default => '0',  desc => 'Path to explicit log file (error_log)', placeholder => '<path>', cat => 'CONNECTION' },
 
     # Performance and Reporting
     'skipsize'            => { type => '!', default => 0,  desc => "Don't enumerate tables and their sizes", cat => 'PERFORMANCE' },
     'checkversion'        => { type => '!', default => 0,  desc => 'Check for updates to MySQLTuner', cat => 'PERFORMANCE' },
     'updateversion'       => { type => '!', default => 0,  desc => 'Update MySQLTuner if newer version is available', cat => 'PERFORMANCE' },
-    'forcemem'            => { type => '=i', default => 0,  desc => 'Amount of RAM installed in megabytes', cat => 'PERFORMANCE' },
-    'forceswap'           => { type => '=i', default => 0,  desc => 'Amount of swap memory configured in megabytes', cat => 'PERFORMANCE' },
+    'forcemem'            => { type => '=i', default => 0,  desc => 'Amount of RAM installed in megabytes', placeholder => '<size>', cat => 'PERFORMANCE', validate => qr/^\d+$/ },
+    'forceswap'           => { type => '=i', default => 0,  desc => 'Amount of swap memory configured in megabytes', placeholder => '<size>', cat => 'PERFORMANCE', validate => qr/^\d+$/ },
     'buffers'             => { type => '!', default => 0,  desc => 'Print global and per-thread buffer values', cat => 'PERFORMANCE' },
-    'passwordfile'        => { type => '=s', default => 0,  desc => 'Path to a password file list', cat => 'PERFORMANCE' },
-    'cvefile'             => { type => '=s', default => '', desc => 'CVE File for vulnerability checks', cat => 'PERFORMANCE' },
-    'outputfile'          => { type => '=s', default => 0,  desc => 'Path to a output txt file', cat => 'PERFORMANCE' },
-    'reportfile'          => { type => '=s', default => 0,  desc => 'Path to a report txt file', cat => 'PERFORMANCE' },
-    'template'            => { type => '=s', default => 0,  desc => 'Path to a template file', cat => 'PERFORMANCE' },
+    'passwordfile'        => { type => '=s', default => '0', desc => 'Path to a password file list', placeholder => '<path>', cat => 'PERFORMANCE' },
+    'cvefile'             => { type => '=s', default => '0', desc => 'CVE File for vulnerability checks', placeholder => '<path>', cat => 'PERFORMANCE' },
+    'outputfile'          => { type => '=s', default => '0', desc => 'Path to a output txt file', placeholder => '<path>', cat => 'PERFORMANCE' },
+    'reportfile'          => { type => '=s', default => '0', desc => 'Path to a report txt file', placeholder => '<path>', cat => 'PERFORMANCE' },
+    'template'            => { type => '=s', default => '0', desc => 'Path to a template file', placeholder => '<path>', cat => 'PERFORMANCE' },
     'json'                => { type => '!', default => 0,  desc => 'Print result as JSON string', cat => 'PERFORMANCE' },
     'prettyjson'          => { type => '!', default => 0,  desc => 'Print result as JSON formatted string', cat => 'PERFORMANCE' },
-    'dumpdir'             => { type => '=s', default => '', desc => 'Path to a directory where to dump information files', cat => 'PERFORMANCE' },
-    'schemadir'           => { type => '=s', default => '', desc => 'Path to a directory where to dump one markdown file per schema', cat => 'PERFORMANCE' },
-    'feature'             => { type => '=s', default => '', desc => 'Run a specific feature', cat => 'PERFORMANCE' },
+    'dumpdir'             => { type => '=s', default => '0', desc => 'Path to a directory where to dump information files', placeholder => '<path>', cat => 'PERFORMANCE' },
+    'schemadir'           => { type => '=s', default => '0', desc => 'Path to a directory where to dump one markdown file per schema', placeholder => '<path>', cat => 'PERFORMANCE' },
+    'feature'             => { type => '=s', default => '0', desc => 'Run a specific feature', placeholder => '<feature>', cat => 'PERFORMANCE', implies => { verbose => 1 } },
     'skippassword'        => { type => '!', default => 0,  desc => "Don't perform checks on user passwords", cat => 'PERFORMANCE' },
 
     # Output Options
     'silent'              => { type => '!', default => 0,  desc => "Don't output anything on screen", cat => 'OUTPUT' },
-    'verbose|v'           => { type => '!', default => 0,  desc => 'Print out all options', cat => 'OUTPUT' },
+    'verbose|v'           => { type => '!', default => 0,  desc => 'Print out all options', cat => 'OUTPUT', implies => { checkversion => 0, dbstat => 1, tbstat => 1, idxstat => 1, sysstat => 1, buffers => 1, pfstat => 1, structstat => 1, myisamstat => 1, plugininfo => 1 } },
     'color!'              => { type => '!', default => (-t STDOUT ? 1 : 0), desc => 'Print output in color', cat => 'OUTPUT' },
     'nobad'               => { type => '!', default => 0,  desc => 'Remove negative/suggestion responses', cat => 'OUTPUT' },
     'nogood'              => { type => '!', default => 0,  desc => 'Remove OK responses', cat => 'OUTPUT' },
     'noinfo'              => { type => '!', default => 0,  desc => 'Remove informational responses', cat => 'OUTPUT' },
     'debug'               => { type => '!', default => 0,  desc => 'Print debug information', cat => 'OUTPUT' },
-    'dbgpattern'          => { type => '=s', default => '', desc => 'Debug pattern (regex)', cat => 'OUTPUT' },
+    'dbgpattern'          => { type => '=s', default => '', desc => 'Debug pattern (regex)', placeholder => '<regex>', cat => 'OUTPUT' },
     'noprettyicon'        => { type => '!', default => 0,  desc => 'Print output with legacy tags', cat => 'OUTPUT' },
     'experimental'        => { type => '!', default => 0,  desc => 'Print experimental analysis', cat => 'OUTPUT' },
     'nondedicated'        => { type => '!', default => 0,  desc => 'Consider server is not dedicated to DB', cat => 'OUTPUT' },
     'noprocess'           => { type => '!', default => 0,  desc => 'Consider no other process is running', cat => 'OUTPUT' },
     
     # Stats / Reporting flags
-    'dbstat'              => { type => '!',  default => 0,  desc => 'Print database information', cat => 'REPORTING' },
-    'tbstat'              => { type => '!',  default => 0,  desc => 'Print table information', cat => 'REPORTING' },
-    'colstat'             => { type => '!',  default => 0,  desc => 'Print column information', cat => 'REPORTING' },
-    'idxstat'             => { type => '!',  default => 0,  desc => 'Print index information', cat => 'REPORTING' },
-    'sysstat'             => { type => '!',  default => 0,  desc => 'Print system stats', cat => 'REPORTING' },
-    'pfstat'              => { type => '!',  default => 0,  desc => 'Print Performance schema info', cat => 'REPORTING' },
-    'plugininfo'          => { type => '!',  default => 0,  desc => 'Print plugin information', cat => 'REPORTING' },
-    'myisamstat'          => { type => '!',  default => 0,  desc => 'Print MyISAM stats', cat => 'REPORTING' },
-    'structstat'          => { type => '!',  default => 0,  desc => 'Print table structures', cat => 'REPORTING' },
+    'dbstat!'             => { type => '!',  default => 0,  desc => 'Print database information', cat => 'OUTPUT' },
+    'tbstat!'             => { type => '!',  default => 0,  desc => 'Print table information', cat => 'OUTPUT' },
+    'colstat!'            => { type => '!',  default => 0,  desc => 'Print column information', cat => 'OUTPUT' },
+    'idxstat!'            => { type => '!',  default => 0,  desc => 'Print index information', cat => 'OUTPUT' },
+    'sysstat!'            => { type => '!',  default => 0,  desc => 'Print system stats', cat => 'OUTPUT' },
+    'pfstat!'             => { type => '!',  default => 0,  desc => 'Print Performance schema info', cat => 'OUTPUT' },
+    'plugininfo!'         => { type => '!',  default => 0,  desc => 'Print plugin information', cat => 'OUTPUT' },
+    'myisamstat!'         => { type => '!',  default => 0,  desc => 'Print MyISAM stats', cat => 'OUTPUT' },
+    'structstat!'         => { type => '!',  default => 0,  desc => 'Print table structures', cat => 'OUTPUT' },
 
     # Cloud and Containers
     'cloud'               => { type => '!', default => 0,  desc => 'Enable cloud mode', cat => 'CLOUD' },
     'azure'               => { type => '!', default => 0,  desc => 'Enable Azure-specific support', cat => 'CLOUD' },
-    'ssh-host'            => { type => '=s', default => '', desc => 'The SSH host for cloud connections', cat => 'CLOUD' },
-    'ssh-user'            => { type => '=s', default => '', desc => 'The SSH user for cloud connections', cat => 'CLOUD' },
-    'ssh-password'        => { type => '=s', default => '', desc => 'The SSH password for cloud connections', cat => 'CLOUD' },
-    'ssh-identity-file'   => { type => '=s', default => '', desc => 'The path to the SSH identity file', cat => 'CLOUD' },
-    'container'           => { type => '=s', default => '', desc => 'Enable container mode with ID or name', cat => 'CLOUD' },
-
+    'ssh-host'            => { type => '=s', default => '0', desc => 'The SSH host for cloud connections', placeholder => '<host>', cat => 'CLOUD' },
+    'ssh-user'            => { type => '=s', default => '0', desc => 'The SSH user for cloud connections', placeholder => '<user>', cat => 'CLOUD' },
+    'ssh-password'        => { type => '=s', default => '0', desc => 'The SSH password for cloud connections', placeholder => '<pass>', cat => 'CLOUD' },
+    'ssh-identity-file'   => { type => '=s', default => '0', desc => 'The path to the SSH identity file', placeholder => '<path>', cat => 'CLOUD' },
+    'container'           => { type => '=s', default => '0', desc => 'Enable container mode with ID or name', placeholder => '<id>', cat => 'CLOUD' },
+    'server-log'          => { type => '=s', default => '0', desc => 'Path to explicit log file (error_log)', placeholder => '<path>', cat => 'PERFORMANCE' },
     # Misc
-    'max-password-checks' => { type => '=i', default => 100, desc => 'Max password checks from dictionary', cat => 'MISC' },
-    'ignore-tables'       => { type => '=s', default => '',  desc => 'Tables to ignore (comma separated)', cat => 'MISC' },
-    'bannedports'         => { type => '=s', default => '',  desc => 'Ports banned separated by comma', cat => 'MISC' },
-    'maxportallowed'      => { type => '=i', default => 0,   desc => 'Number of open ports allowable', cat => 'MISC' },
-    'defaultarch'         => { type => '=i', default => 64,  desc => 'Default architecture (32 or 64)', cat => 'MISC' },
+    'max-password-checks' => { type => '=i', default => 100, desc => 'Max password checks from dictionary', placeholder => '<n>', cat => 'MISC' },
+    'ignore-tables'       => { type => '=s', default => '0',  desc => 'Tables to ignore (comma separated)', placeholder => '<t>', cat => 'MISC' },
+    'bannedports'         => { type => '=s', default => '0',  desc => 'Ports banned separated by comma', placeholder => '<p>', cat => 'MISC' },
+    'maxportallowed'      => { type => '=i', default => 0,   desc => 'Number of open ports allowable', placeholder => '<n>', cat => 'MISC' },
+    'defaultarch'         => { type => '=i', default => 64,  desc => 'Default architecture (32 or 64)', placeholder => '<32|64>', cat => 'MISC', validate => sub { $_[0] == 32 || $_[0] == 64 } },
     'noask'               => { type => '!', default => 0,   desc => "Don't ask for confirmation", cat => 'MISC' },
     'help|?'              => { type => '',  default => 0,   desc => 'Show this help message', cat => 'MISC' },
 );
@@ -149,168 +155,238 @@ our %CLI_METADATA = (
 # Initialize %opt from metadata
 our %opt = map { my ($primary) = split /\|/, $_; $primary => $CLI_METADATA{$_}->{default} } keys %CLI_METADATA;
 
+# Declare shared variables at top level
+our (
+    $devnull,              $basic_password_files, $outputfile,
+    $fh,                   $me,                   $good,
+    $bad,                  $info,                 $deb,
+    $cmd,                  $end,                  $maxlines,
+    $mysqlvermajor,        $mysqlverminor,        $mysqlvermicro,
+    @banned_ports, @dblist,               %result
+);
+
 # Gather the options from the command line
-# Build GetOptions arguments dynamically
-my @getopt_args;
-Getopt::Long::Configure("no_auto_abbrev", "no_ignore_case");
-foreach my $opt_spec ( sort keys %CLI_METADATA ) {
-    my $type = $CLI_METADATA{$opt_spec}->{type} // '';
-    my ($primary) = split /\|/, $opt_spec;
-    my $final_spec = $opt_spec;
-    # Only append type if it's not already part of the specification key
-    if ($type && $opt_spec !~ /\Q$type\E$/) {
-        $final_spec .= $type;
+sub parse_cli_args {
+    # Build GetOptions arguments dynamically
+    my @getopt_args;
+    Getopt::Long::Configure( "no_auto_abbrev", "no_ignore_case" );
+    foreach my $opt_spec ( sort keys %CLI_METADATA ) {
+        my $type = $CLI_METADATA{$opt_spec}->{type} // '';
+        my ($primary) = split /\|/, $opt_spec;
+        my $final_spec = $opt_spec;
+
+        # Only append type if it's not already part of the specification key
+        if ( $type && $opt_spec !~ /\Q$type\E$/ ) {
+            $final_spec .= $type;
+        }
+        push @getopt_args, $final_spec => \$opt{$primary};
     }
-    push @getopt_args, $final_spec => \$opt{$primary};
-}
 
-GetOptions(@getopt_args)
-  or pod2usage(
-    -exitval  => 1,
-    -verbose  => 99,
-    -sections => [
-        "NAME",
-        "IMPORTANT USAGE GUIDELINES",
-        "CONNECTION AND AUTHENTICATION",
-        "PERFORMANCE AND REPORTING OPTIONS",
-        "OUTPUT OPTIONS"
-    ]
-  );
-
-if ( defined $opt{'help'} && $opt{'help'} == 1 ) {
-    pod2usage(
-        -exitval  => 0,
+    GetOptions(@getopt_args)
+      or pod2usage(
+        -exitval  => 1,
         -verbose  => 99,
         -sections => [
             "NAME",
             "IMPORTANT USAGE GUIDELINES",
-            "CONNECTION AND AUTHENTICATION",
-            "PERFORMANCE AND REPORTING OPTIONS",
-            "OUTPUT OPTIONS"
+            "OPTIONS",
+            "VERSION"
         ]
-    );
+      );
+
+    # Apply metadata-driven rules (Implications and Validation)
+    foreach my $opt_spec ( keys %CLI_METADATA ) {
+        my ($primary) = split /\|/, $opt_spec;
+        my $meta      = $CLI_METADATA{$opt_spec};
+
+        # Implications (e.g., --feature implies --verbose)
+        if ( ( $opt{$primary} // '0' ) ne '0' && $meta->{implies} ) {
+            while ( my ( $target, $value ) = each %{ $meta->{implies} } ) {
+                $opt{$target} = $value;
+            }
+        }
+
+        # Validation (regex or coderef)
+        if (    defined $opt{$primary}
+            && ( $opt{$primary} // '0' ) ne '0'
+            && $meta->{validate} )
+        {
+            my $val      = $opt{$primary};
+            my $is_valid = 1;
+            if ( ref $meta->{validate} eq 'Regexp' ) {
+                $is_valid = ( $val =~ $meta->{validate} );
+            }
+            elsif ( ref $meta->{validate} eq 'CODE' ) {
+                $is_valid = $meta->{validate}->($val);
+            }
+
+            unless ($is_valid) {
+                print "Error: Invalid value for --$primary: $val\n";
+                exit 1;
+            }
+        }
+    }
 }
 
-my $devnull = File::Spec->devnull();
-my $basic_password_files =
-  ( $opt{passwordfile} eq "0" )
-  ? abs_path( dirname(__FILE__) ) . "/basic_passwords.txt"
-  : abs_path( $opt{passwordfile} );
+sub setup_environment {
+    if ( defined $opt{'help'} && $opt{'help'} == 1 ) {
+        show_help();
+    }
 
-# Username from envvar
-if ( exists $opt{userenv} && exists $ENV{ $opt{userenv} // '' } ) {
-    $opt{user} = $ENV{ $opt{userenv} // '' };
+    if ( defined $opt{'version'} && $opt{'version'} == 1 ) {
+        subheaderprint("MySQLTuner $tunerversion");
+        exit(0);
+    }
+
+    $devnull = File::Spec->devnull();
+    $basic_password_files =
+      ( $opt{passwordfile} eq "0" )
+      ? abs_path( dirname(__FILE__) ) . "/basic_passwords.txt"
+      : abs_path( $opt{passwordfile} );
+
+    # Username from envvar
+    if ( exists $opt{userenv} && exists $ENV{ $opt{userenv} // '' } ) {
+        $opt{user} = $ENV{ $opt{userenv} // '' };
+    }
+
+    # Related to password option
+    if ( exists $opt{passenv} && exists $ENV{ $opt{userenv} // '' } ) {
+        $opt{pass} = $ENV{ $opt{userenv} // '' };
+    }
+    $opt{pass} = $opt{password}
+      if ( ( $opt{pass} // '0' ) eq '0' and ( $opt{password} // '0' ) ne '0' );
+
+    # for RPM distributions
+    $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
+      unless -f "$basic_password_files";
+
+    $opt{dbgpattern} = '.*' if ( ( $opt{dbgpattern} // '' ) eq '' );
+
+    # check if we need to enable verbose mode
+    $opt{noprettyicon} = 0 if ( $opt{noprettyicon} // 0 ) != 1;
+    $opt{nocolor} = 1 if defined( $opt{outputfile} );
+    $opt{noprocess} = 0
+      if ( ( $opt{noprocess} // 0 ) == 1 );    # Don't print process information
+    $opt{structstat} = 0
+      if ( ( $opt{nostructstat} // 0 ) == 1 )
+      ;                                        # Don't print table struct information
+    $opt{myisamstat} = 1
+      if ( not defined( $opt{myisamstat} ) );
+    $opt{myisamstat} = 0
+      if ( ( $opt{nomyisamstat} // 0 ) == 1 )
+      ;                                        # Don't print MyISAM table information
+
+    # Handle cvefile if it was not passed but exists locally
+    $opt{cvefile} = './vulnerabilities.csv'
+      if ( ( !defined( $opt{cvefile} ) || $opt{cvefile} eq '' )
+        && -f './vulnerabilities.csv' );
+
+    $opt{'bannedports'} = '' unless defined( $opt{'bannedports'} );
+    @banned_ports = split ',', $opt{'bannedports'};
+
+    $outputfile = undef;
+    $outputfile = abs_path( $opt{outputfile} ) unless $opt{outputfile} eq "0";
+
+    $fh = undef;
+    open( $fh, '>', $outputfile )
+      or die("Fail opening $outputfile")
+      if defined($outputfile);
+    $opt{nocolor} = 1 if defined($outputfile);
+    $opt{nocolor} = 1 unless ( -t STDOUT );
+
+    $opt{nocolor} = 0 if ( ( $opt{color} // 0 ) == 1 );
+
+    # Setting up the colors for the print styles
+    $me = execute_system_command('whoami');
+    $me =~ s/\n//g;
+
+    if ($is_win) { $opt{nocolor} = 1; }
+    $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]"  : "[OK]";
+    $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]"  : "[!!]";
+    $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]"  : "[--]";
+    $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]"  : "[DG]";
+    $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
+    $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
+
+    if ( ( not $is_win ) and ( $opt{noprettyicon} == 0 ) ) {
+        $good = ( $opt{nocolor} == 0 ) ? "\e[0;32m✔\e[0m " : "✔ ";
+        $bad  = ( $opt{nocolor} == 0 ) ? "\e[0;31m✘\e[0m " : "✘ ";
+        $info = ( $opt{nocolor} == 0 ) ? "\e[0;34mℹ\e[0m " : "ℹ ";
+        $deb  = ( $opt{nocolor} == 0 ) ? "\e[0;31m⚙\e[0m " : "⚙ ";
+        $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m⌨️($me)" : "⌨️($me)";
+        $end  = ( $opt{nocolor} == 0 ) ? "\e[0m  "         : "  ";
+    }
+
+    # Maximum lines of log output to read from end
+    $maxlines = 30000;
+
+    # Super structure containing all information
+    %result = ();
+    $result{'MySQLTuner'}{'version'}  = $tunerversion;
+    $result{'MySQLTuner'}{'datetime'} = scalar localtime;
+    $result{'MySQLTuner'}{'options'}  = \%opt;
 }
 
-# Related to password option
-if ( exists $opt{passenv} && exists $ENV{ $opt{userenv} // '' } ) {
-    $opt{pass} = $ENV{ $opt{userenv} // '' };
-}
-$opt{pass} = $opt{password} if ( ( $opt{pass} // '0' ) eq '0' and ( $opt{password} // '0' ) ne '0' );
-
-# for RPM distributions
-$basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
-  unless -f "$basic_password_files";
-
-$opt{dbgpattern} = '.*' if ( ($opt{dbgpattern} // '') eq '' );
-
-# Activate debug variables
-#if ( $opt{debug} ne '' ) { $opt{debug} = 2; }
-# Activate experimental calculations and analysis
-#if ( $opt{experimental} ne '' ) { $opt{experimental} = 1; }
-
-# check if we need to enable verbose mode
-if ( $opt{feature} ne '' ) { $opt{verbose} = 1; }
-if ( $opt{verbose} ) {
-    $opt{checkversion} = 0;    # Check for updates to MySQLTuner
-    $opt{dbstat}       = 1;    # Print database information
-    $opt{tbstat}       = 1;    # Print database information
-    $opt{idxstat}      = 1;    # Print index information
-    $opt{sysstat}      = 1;    # Print index information
-    $opt{buffers}      = 1;    # Print global and per-thread buffer values
-    $opt{pfstat}       = 1;    # Print performance schema info.
-    $opt{structstat}   = 1;    # Print table structure information
-    $opt{myisamstat}   = 1;    # Print MyISAM table information
-
-    $opt{plugininfo} = 1;                     # Print plugin information
-}
-$opt{noprettyicon} = 0 if ($opt{noprettyicon} // 0) != 1;
-$opt{plugininfo}   = 0
-  if ( ($opt{noplugininfo} // 0) == 1 );             # Don't print plugin information
-$opt{nocolor} = 1 if defined( $opt{outputfile} );
-$opt{tbstat}  = 0 if ( ($opt{notbstat} // 0) == 1 );    # Don't print table information
-$opt{colstat} = 0 if ( ($opt{nocolstat} // 0) == 1 );  # Don't print column information
-$opt{dbstat}  = 0 if ( ($opt{nodbstat} // 0) == 1 ); # Don't print database information
-$opt{noprocess} = 0
-  if ( ($opt{noprocess} // 0) == 1 );                # Don't print process information
-$opt{sysstat} = 0 if ( ($opt{nosysstat} // 0) == 1 ); # Don't print sysstat information
-$opt{pfstat}  = 0
-  if ( ($opt{nopfstat} // 0) == 1 );    # Don't print performance schema information
-$opt{idxstat} = 0 if ( ($opt{noidxstat} // 0) == 1 );   # Don't print index information
-$opt{structstat} = 0
-  if ( not defined( $opt{structstat} ) or ($opt{nostructstat} // 0) == 1 )
-  ;    # Don't print table struct information
-$opt{myisamstat} = 1
-  if ( not defined( $opt{myisamstat} ) );
-$opt{myisamstat} = 0
-  if ( ($opt{nomyisamstat} // 0) == 1 );    # Don't print MyISAM table information
-
-# Handle cvefile if it was not passed but exists locally
-$opt{cvefile} = './vulnerabilities.csv' if ( (!defined($opt{cvefile}) || $opt{cvefile} eq '') && -f './vulnerabilities.csv');
-
-$opt{'bannedports'} = '' unless defined( $opt{'bannedports'} );
-my @banned_ports = split ',', $opt{'bannedports'};
-
-#
-my $outputfile = undef;
-$outputfile = abs_path( $opt{outputfile} ) unless $opt{outputfile} eq "0";
-
-my $fh = undef;
-open( $fh, '>', $outputfile )
-  or die("Fail opening $outputfile")
-  if defined($outputfile);
-$opt{nocolor} = 1 if defined($outputfile);
-$opt{nocolor} = 1 unless ( -t STDOUT );
-
-$opt{nocolor} = 0 if ( ($opt{color} // 0) == 1 );
-
-# Setting up the colors for the print styles
-my $me = execute_system_command('whoami');
-$me =~ s/\n//g;
-
-if ($is_win) { $opt{nocolor} = 1; }
-my $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]"  : "[OK]";
-my $bad  = ( $opt{nocolor} == 0 ) ? "[\e[0;31m!!\e[0m]"  : "[!!]";
-my $info = ( $opt{nocolor} == 0 ) ? "[\e[0;34m--\e[0m]"  : "[--]";
-my $deb  = ( $opt{nocolor} == 0 ) ? "[\e[0;31mDG\e[0m]"  : "[DG]";
-my $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m[CMD]($me)" : "[CMD]($me)";
-my $end  = ( $opt{nocolor} == 0 ) ? "\e[0m"              : "";
-
-if ( ( not $is_win ) and ( $opt{noprettyicon} == 0 ) ) {
-    $good = ( $opt{nocolor} == 0 ) ? "\e[0;32m✔\e[0m " : "✔ ";
-    $bad  = ( $opt{nocolor} == 0 ) ? "\e[0;31m✘\e[0m " : "✘ ";
-    $info = ( $opt{nocolor} == 0 ) ? "\e[0;34mℹ\e[0m " : "ℹ ";
-    $deb  = ( $opt{nocolor} == 0 ) ? "\e[0;31m⚙\e[0m " : "⚙ ";
-    $cmd  = ( $opt{nocolor} == 0 ) ? "\e[1;32m⌨️($me)" : "⌨️($me)";
-    $end  = ( $opt{nocolor} == 0 ) ? "\e[0m  "         : "  ";
-}
-
-# Maximum lines of log output to read from end
-my $maxlines = 30000;
-
-# Checks for supported or EOL'ed MySQL versions
-my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro );
-
-# Database
-my @dblist;
-
-# Super structure containing all information
-our %result;
-$result{'MySQLTuner'}{'version'}  = $tunerversion;
-$result{'MySQLTuner'}{'datetime'} = scalar localtime;
-$result{'MySQLTuner'}{'options'}  = \%opt;
 
 # Functions that handle the print styles
+sub show_help {
+    my %categories = (
+        'CONNECTION' => 'CONNECTION AND AUTHENTICATION',
+        'CLOUD'      => 'CLOUD SUPPORT',
+        'PERFORMANCE'=> 'PERFORMANCE AND REPORTING OPTIONS',
+        'OUTPUT'     => 'OUTPUT OPTIONS',
+        'MISC'       => 'MISCELLANEOUS OPTIONS',
+    );
+
+    print "MySQLTuner $tunerversion - MySQL High Performance Tuning Script\n\n";
+    print "Usage: ./mysqltuner.pl [options]\n\n";
+
+    foreach my $cat (qw(CONNECTION CLOUD PERFORMANCE OUTPUT MISC)) {
+        print "$categories{$cat}:\n";
+        foreach my $opt_spec (sort keys %CLI_METADATA) {
+            next unless $CLI_METADATA{$opt_spec}->{cat} eq $cat;
+            my $meta = $CLI_METADATA{$opt_spec};
+            my ($primary) = split /\|/, $opt_spec;
+            my $display = "--$primary";
+            
+            # Handle negatable options (trailing !)
+            my $is_negatable = ($opt_spec =~ /!$/ || ($meta->{type} // '') eq '!');
+            if ($is_negatable) {
+                # Remove ! from display if present
+                $display =~ s/!$//;
+            }
+
+            $display .= " " . $meta->{placeholder} if $meta->{placeholder};
+            
+            # Handle aliases
+            my @parts = split /\|/, $opt_spec;
+            shift @parts; # remove primary
+            
+            my @display_parts;
+            if ($is_negatable) {
+                push @display_parts, "no-$primary";
+            }
+            push @display_parts, @parts;
+
+            if (@display_parts) {
+                # Format aliases: length 1 -> -x, length > 1 -> --xx
+                $display .= " (" . join(", ", map { my $p = $_; $p =~ s/!$//; length($p) == 1 ? "-$p" : "--$p" } @display_parts) . ")";
+            }
+
+            printf "  %-32s %s", $display, $meta->{desc};
+            # Special case for defaults: Don't print if 0 or empty string unless meaningful
+            # For booleans (type !), default 0 is expected and silent.
+            if (defined $meta->{default} && $meta->{default} ne '0' && $meta->{default} ne '' && $meta->{default} ne "0") {
+                 # For string/numeric defaults, use ne and != appropriately or just string compare since it's for display
+                 print " (default: $meta->{default})";
+            }
+            print "\n";
+        }
+        print "\n";
+    }
+    exit 0;
+}
+
 sub prettyprint {
     print $_[0] . "\n" unless ( $opt{'silent'} or $opt{'json'} );
     print $fh $_[0] . "\n" if defined($fh);
@@ -377,8 +453,8 @@ sub infoprinthcmd {
 
 sub is_remote() {
     my $host = $opt{'host'};
-    return 1 if ( $opt{'cloud'} && $opt{'ssh-host'} ne '' );
-    return 0 if ( $host eq '' );
+    return 1 if ( $opt{'cloud'} && ( $opt{'ssh-host'} // '0' ) ne '0' );
+    return 0 if ( ( $host // '0' ) eq '0' );
     return 0 if ( $host eq 'localhost' );
     return 0 if ( $host eq '127.0.0.1' );
     return 1;
@@ -398,8 +474,8 @@ sub is_docker() {
         }
     }
     return 1
-      if ( defined $ENV{'container'}
-        && $ENV{'container'} =~ /^(docker|podman|lxc)$/ );
+      if ( ( defined $ENV{'container'} && $ENV{'container'} =~ /^(docker|podman|lxc)$/ )
+        || ( defined $opt{'container'} && ( $opt{'container'} // '0' ) ne '0' ) );
     return 0;
 }
 
@@ -893,7 +969,7 @@ sub cloud_setup {
             infoprint
               "Azure-specific checks enabled (currently generic cloud checks).";
         }
-        if ( $opt{'ssh-host'} ne '' ) {
+        if ( $opt{'ssh-host'} ) {
             infoprint "Cloud SSH mode.";
             my @os_info = execute_system_command('uname -a');
             infoprint "Remote OS Info:";
@@ -941,22 +1017,22 @@ sub cloud_setup {
 }
 
 sub get_ssh_prefix {
-    return "" if not( $opt{'cloud'} and $opt{'ssh-host'} ne '' );
+    return "" if not( $opt{'cloud'} and $opt{'ssh-host'} );
 
     my $ssh_base_cmd = 'ssh';
-    if ( $opt{'ssh-identity-file'} ne '' ) {
+    if ( $opt{'ssh-identity-file'} ) {
         $ssh_base_cmd .= " -i '" . $opt{'ssh-identity-file'} . "'";
     }
     $ssh_base_cmd .=
       " -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null'";
     my $ssh_target = '';
-    if ( $opt{'ssh-user'} ne '' ) {
+    if ( $opt{'ssh-user'} ) {
         $ssh_target = $opt{'ssh-user'} . '@';
     }
     $ssh_target .= $opt{'ssh-host'};
 
     my $prefix;
-    if ( $opt{'ssh-password'} ne '' ) {
+    if ( $opt{'ssh-password'} ) {
         my $sshpass_path = which( "sshpass", $ENV{'PATH'} );
         if ($sshpass_path) {
             $prefix =
@@ -978,7 +1054,7 @@ sub get_ssh_prefix {
 }
 
 sub get_container_prefix {
-    return "" if $opt{'container'} eq '';
+    return "" if ( $opt{'container'} // '0' ) eq '0' or $opt{'container'} eq '';
     my ( $engine, $name ) =
       $opt{'container'} =~ /^(docker|podman|kubectl):(.*)/
       ? ( $1, $2 )
@@ -1022,7 +1098,7 @@ sub execute_system_command {
 
         # Be less verbose for commands that are expected to fail on some systems
         if ( $command !~
-/(?:^|\/)(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb)/
+/(?:^|\/)(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb|curl|wget)/
           )
         {
             badprint "System command failed: $command";
@@ -1052,9 +1128,8 @@ sub mysql_setup {
     }
     else {
         if ( $transport_prefix ne '' ) {
-            my $check = execute_system_command("mariadb-admin --version");
-            $mysqladmincmd =
-              ( $check =~ /mariadb-admin/i ) ? "mariadb-admin" : "mysqladmin";
+            my $check = execute_system_command("which mariadb-admin");
+            $mysqladmincmd = ( $check =~ /mariadb-admin/ ) ? "mariadb-admin" : "mysqladmin";
         }
         else {
             $mysqladmincmd =
@@ -1076,8 +1151,8 @@ sub mysql_setup {
     }
     else {
         if ( $transport_prefix ne '' ) {
-            my $check = execute_system_command("mariadb --version");
-            $mysqlcmd = ( $check =~ /mariadb/i ) ? "mariadb" : "mysql";
+            my $check = execute_system_command("which mariadb");
+            $mysqlcmd = ( $check =~ /mariadb/ ) ? "mariadb" : "mysql";
         }
         else {
             $mysqlcmd =
@@ -1123,7 +1198,7 @@ sub mysql_setup {
         }
     }
 
-    if ( $opt{protocol} ne '' ) {
+    if ( $opt{protocol} ) {
         $remotestring = " --protocol=$opt{protocol}";
     }
 
@@ -1183,7 +1258,7 @@ sub mysql_setup {
     }
 
    # Did we already get a username with or without password on the command line?
-    if ( $opt{user} ne 0 || $opt{container} ne '' ) {
+    if ( $opt{user} ne 0 || $opt{container} ) {
         my $username = $opt{user} ne 0 ? $opt{user} : "root";
         $mysqllogin =
             "-u $username "
@@ -1313,7 +1388,7 @@ execute_system_command("svcprop -p quickbackup/password svc:/network/mysql-quick
             exit 1;
         }
     }
-    elsif ( $opt{'defaults-file'} ne '' and -r "$opt{'defaults-file'}" ) {
+    elsif ( $opt{'defaults-file'} and -r "$opt{'defaults-file'}" ) {
 
         # defaults-file
         debugprint "defaults file detected: $opt{'defaults-file'}";
@@ -1327,7 +1402,7 @@ execute_system_command("svcprop -p quickbackup/password svc:/network/mysql-quick
             return 1;
         }
     }
-    elsif ( $opt{'defaults-extra-file'} ne ''
+    elsif ( $opt{'defaults-extra-file'}
         and -r "$opt{'defaults-extra-file'}" )
     {
 
@@ -1468,7 +1543,7 @@ sub select_array {
     $req_escaped =~ s/"/\\"/g;
     my @result =
       execute_system_command(
-        "$mysqlcmd $mysqllogin -Bse \"\\w$req_escaped\" 2>>$devnull");
+        "$mysqlcmd $mysqllogin -Bse \"$req_escaped\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -1493,7 +1568,7 @@ sub select_array_with_headers {
     $req_escaped =~ s/"/\\"/g;
     my @result =
       execute_system_command(
-        "$mysqlcmd $mysqllogin -Bre \"\\w$req_escaped\" 2>>$devnull");
+        "$mysqlcmd $mysqllogin -Bre \"$req_escaped\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -1539,7 +1614,7 @@ sub human_size {
 sub select_one {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my $result = execute_system_command("$mysqlcmd $mysqllogin -Bse \"\\w$req\" 2>>$devnull");
+    my $result = execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -1561,7 +1636,7 @@ sub select_one_g {
 
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my @result = execute_system_command("$mysqlcmd $mysqllogin -re \"\\w$req\\G\" 2>>$devnull");
+    my @result = execute_system_command("$mysqlcmd $mysqllogin -re \"$req\\G\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -1915,7 +1990,7 @@ sub log_file_recommendations {
         $myvar{'datadir'} );
 
     # Use explicit container if provided
-    if ( $opt{'container'} ne '' ) {
+    if ( $opt{'container'} ) {
         my $container_cmd = "docker";
         if ( $opt{'container'} =~ /^(docker|podman|kubectl):(.*)/ ) {
             $myvar{'log_error'} = $opt{'container'};
@@ -2088,7 +2163,7 @@ execute_system_command("$container_cmd ps --format \"{{.Names}} {{.Image}}\" | g
 
 sub cve_recommendations {
     subheaderprint "CVE Security Recommendations";
-    unless ( defined( $opt{cvefile} ) && $opt{cvefile} ne '' ) {
+    unless ( defined( $opt{cvefile} ) && $opt{cvefile} ) {
         infoprint "Skipped: --cvefile option not specified";
         return;
     }
@@ -2476,7 +2551,7 @@ sub get_kernel_info {
 sub get_system_info {
     $result{'OS'}{'Release'} = get_os_release();
     infoprint get_os_release;
-    if ( is_docker() || $opt{'container'} ne '' ) {
+    if ( is_docker() || $opt{'container'} ) {
         infoprint "Machine type          : Container";
         $result{'OS'}{'Virtual Machine'} = 'YES';
     }
@@ -2695,6 +2770,77 @@ sub system_recommendations {
     }
 }
 
+# ---------------------------------------------------------------------------
+# SSL/TLS Security Recommendations
+# ---------------------------------------------------------------------------
+sub ssl_tls_recommendations {
+	subheaderprint "SSL/TLS Security Recommendations";
+
+	# Check current session encryption
+	# Ssl_cipher session status variable tells us if the current connection is encrypted.
+	my $session_ssl = select_one("SHOW SESSION STATUS LIKE 'Ssl_cipher'");
+	if ( $session_ssl =~ /Ssl_cipher\s+(.*)/ ) {
+		my $cipher = $1;
+		$cipher =~ s/^\s+|\s+$//g;
+		if ( $cipher eq "" || $cipher eq "NULL" || $cipher eq "0" ) {
+			badprint "Current connection is NOT encrypted!";
+			push_recommendation( 'Security',
+				"Current connection is NOT encrypted! Consider using SSL for all connections."
+			);
+		}
+		else {
+			goodprint "Current connection is encrypted ($cipher)";
+		}
+	}
+
+	# Global SSL check
+	if ( defined( $myvar{'have_ssl'} ) ) {
+		if ( $myvar{'have_ssl'} eq 'DISABLED' ) {
+			badprint "SSL is DISABLED on the server.";
+			push_recommendation( 'Security',
+				"Enable SSL support on the server (check have_ssl variable)." );
+		}
+		elsif ( $myvar{'have_ssl'} eq 'YES' || $myvar{'have_ssl'} eq 'ON' ) {
+			goodprint "SSL support is enabled";
+		}
+	}
+
+	# require_secure_transport (MySQL 5.7+, MariaDB 10.5+)
+	if ( defined( $myvar{'require_secure_transport'} ) ) {
+		if ( $myvar{'require_secure_transport'} eq 'OFF' ) {
+			badprint "require_secure_transport is OFF";
+			push_recommendation( 'Security',
+				"Enable require_secure_transport to force all connections to use SSL."
+			);
+		}
+		else {
+			goodprint "require_secure_transport is ON";
+		}
+	}
+
+	# TLS Versions (MySQL 8.0+, MariaDB 10.4.6+)
+	if ( defined( $myvar{'tls_version'} ) ) {
+		my $tls_versions = $myvar{'tls_version'};
+		if ( $tls_versions =~ /TLSv1\.0/i || $tls_versions =~ /TLSv1\.1/i ) {
+			badprint "Insecure TLS versions enabled: $tls_versions";
+			push_recommendation( 'Security',
+				"Disable TLSv1.0 and TLSv1.1. Use only TLSv1.2 or TLSv1.3." );
+		}
+		else {
+			goodprint "Only secure TLS versions enabled: $tls_versions";
+		}
+	}
+
+	# missing certificates
+	if ( ( $myvar{'ssl_cert'} || "" ) eq "" && ( $myvar{'ssl_key'} || "" ) eq "" )
+	{
+		badprint "No SSL certificates configured (ssl_cert/ssl_key are empty)";
+		push_recommendation( 'Security',
+			"Configure SSL certificates (ssl_cert, ssl_key, ssl_ca) to enable encrypted connections."
+		);
+	}
+}
+
 sub security_recommendations {
     subheaderprint "Security Recommendations";
 
@@ -2838,7 +2984,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     @mysqlstatlist = select_array
       "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
     if ( scalar(@mysqlstatlist) > 0 ) {
-        if ( $opt{dumpdir} ne '' ) {
+        if ( $opt{dumpdir} ) {
             select_csv_file(
                 "$opt{dumpdir}/user_with_general_wildcard.csv",
                 "SELECT user, host FROM mysql.user WHERE HOST='%'"
@@ -3344,7 +3490,7 @@ sub check_storage_engines {
 "SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
           ];
         $fragtables = scalar @{ $result{'Tables'}{'Fragmented tables'} };
-        if ( $opt{dumpdir} ne '' ) {
+        if ( $opt{dumpdir} ) {
             select_csv_file( "$opt{dumpdir}/fragmented_tables.csv",
 "SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
             );
@@ -4198,11 +4344,15 @@ sub mysql_stats {
 
     # Cpanel and Skip name resolve (Issue #863)
     # Ref: https://support.cpanel.net/hc/en-us/articles/21664293830423
-    elsif ( -r "/usr/local/cpanel/cpanel" ) {
+    elsif ( -r "/usr/local/cpanel/cpanel"
+        || -r "/var/cpanel/cpanel.config"
+        || -r "/etc/cpupdate.conf" )
+    {
         if ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF'
             and $result{'Variables'}{'skip_name_resolve'} ne '0' )
         {
-            badprint "CPanel and Flex system: skip-name-resolve should be OFF";
+            badprint
+"cPanel/Flex system detected: skip-name-resolve should be disabled (OFF)";
             push( @generalrec,
 "cPanel recommends keeping skip-name-resolve disabled: https://support.cpanel.net/hc/en-us/articles/21664293830423"
             );
@@ -4741,7 +4891,8 @@ sub mysql_myisam {
 
     # Key buffer size / total MyISAM indexes
     if (   $myvar{'key_buffer_size'} < $mycalc{'total_myisam_indexes'}
-        && $mycalc{'pct_keys_from_mem'} < 95 )
+        && $mycalc{'pct_keys_from_mem'} < 95
+        && $mycalc{'pct_key_buffer_used'} >= 90 )
     {
         badprint "Key buffer size / total MyISAM indexes: "
           . hr_bytes( $myvar{'key_buffer_size'} ) . "/"
@@ -4887,10 +5038,10 @@ sub mysql_pfs {
     $myvar{'performance_schema'} = 'OFF'
       unless defined( $myvar{'performance_schema'} );
     if ( $myvar{'performance_schema'} eq 'OFF' ) {
-        badprint "Performance_schema should be activated.";
+        badprint "Performance_schema should be activated (observability issue).";
         push( @adjvars, "performance_schema=ON" );
         push( @generalrec,
-            "Performance schema should be activated for better diagnostics" );
+            "Performance schema should be activated for better diagnostics and observability" );
     }
     if ( $myvar{'performance_schema'} eq 'ON' ) {
         infoprint "Performance_schema is activated.";
@@ -7982,7 +8133,7 @@ sub mysql_databases {
     }
 
     my $ignore_tables_sql = "";
-    if ( $opt{'ignore-tables'} ne '' ) {
+    if ( $opt{'ignore-tables'} ) {
         my @ignored = split /,/, $opt{'ignore-tables'};
         $ignore_tables_sql = " AND TABLE_NAME NOT IN ('" . join( "','", @ignored ) . "')";
     }
@@ -8234,21 +8385,21 @@ sub mysql_tables {
     }
 
     my $ignore_tables_sql = "";
-    if ( $opt{'ignore-tables'} ne '' ) {
+    if ( $opt{'ignore-tables'} ) {
         my @ignored = split /,/, $opt{'ignore-tables'};
         $ignore_tables_sql = " AND TABLE_NAME NOT IN ('" . join( "','", @ignored ) . "')";
     }
 
     my $schema_doc = "";
     my $mermaid_er = "";
-    if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+    if ( $opt{dumpdir} or $opt{schemadir} ) {
         $schema_doc = "# Database Schema Documentation\n\n";
         $schema_doc .= "Generated by MySQLTuner on " . scalar(localtime) . "\n\n";
         $mermaid_er = "## Visual Database Schema (Mermaid)\n\n";
         $mermaid_er .= "```mermaid\nerDiagram\n";
     }
 
-    if ( $opt{schemadir} ne '' ) {
+    if ( $opt{schemadir} ) {
         $opt{schemadir} = abs_path( $opt{schemadir} );
         if ( !-d $opt{schemadir} ) {
             mkdir $opt{schemadir} or die "Cannot create directory $opt{schemadir}: $!";
@@ -8261,7 +8412,7 @@ sub mysql_tables {
 
         my $current_schema_doc = "";
         my $current_mermaid_er = "";
-        if ( $opt{schemadir} ne '' ) {
+        if ( $opt{schemadir} ) {
             $current_schema_doc = "# Database: $dbname\n\n";
             $current_schema_doc .= "Generated by MySQLTuner on " . scalar(localtime) . "\n\n";
             $current_mermaid_er = "## Visual Database Schema (Mermaid)\n\n";
@@ -8269,7 +8420,7 @@ sub mysql_tables {
         }
 
         infoprint "Database: " . $_ . "";
-        if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+        if ( $opt{dumpdir} or $opt{schemadir} ) {
             $schema_doc         .= "## Database: $dbname\n\n";
             $current_schema_doc .= "### Tables\n\n" if $opt{schemadir} ne '';
         }
@@ -8284,7 +8435,7 @@ sub mysql_tables {
 "SELECT ENGINE FROM information_schema.tables where TABLE_schema='$dbname' AND TABLE_NAME='$tbname'"
             );
             infoprint "     +-- TYPE: $engine";
-            if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+            if ( $opt{dumpdir} or $opt{schemadir} ) {
                 my $table_info = "### Table: $tbname\n";
                 $table_info .= "- **Engine**: $engine\n\n";
                 $table_info .= "#### Indexes\n";
@@ -8312,7 +8463,7 @@ ENDSQL
                 next if $info[0] eq 'NULL';
                 infoprint
                   "     +-- Index $info[0] - Cols: $info[1] - Type: $info[2]";
-                if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+                if ( $opt{dumpdir} or $opt{schemadir} ) {
                     my $idx_info = "- **$info[0]**: $info[1] ($info[2])\n";
                     $schema_doc         .= $idx_info;
                     $current_schema_doc .= $idx_info if $opt{schemadir} ne '';
@@ -8321,7 +8472,7 @@ ENDSQL
             }
             if ( $found == 0 ) {
                 badprint("Table $dbname.$tbname has no index defined");
-                if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+                if ( $opt{dumpdir} or $opt{schemadir} ) {
                     $schema_doc         .= "- *No indexes defined*\n";
                     $current_schema_doc .= "- *No indexes defined*\n" if $opt{schemadir} ne '';
                 }
@@ -8329,7 +8480,7 @@ ENDSQL
                   "Add at least a primary key on table $dbname.$tbname";
             }
 
-            if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+            if ( $opt{dumpdir} or $opt{schemadir} ) {
                 $schema_doc         .= "\n#### Columns\n";
                 $current_schema_doc .= "\n#### Columns\n" if $opt{schemadir} ne '';
             }
@@ -8349,7 +8500,7 @@ ENDSQL
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : " NULL" );
                 my $optimal_type = '';
                 infoprint "     +-- Column $tbname.$_: $current_type";
-                if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+                if ( $opt{dumpdir} or $opt{schemadir} ) {
                     my $col_info = "- **$_**: $current_type\n";
                     $schema_doc         .= $col_info;
                     $current_schema_doc .= $col_info if $opt{schemadir} ne '';
@@ -8393,7 +8544,7 @@ ENDSQL
                     goodprint "$dbname.$tbname ($_) type: $current_type";
                 }
             }
-            if ( $opt{dumpdir} ne '' or $opt{schemadir} ne '' ) {
+            if ( $opt{dumpdir} or $opt{schemadir} ) {
                 $schema_doc         .= "\n---\n\n";
                 $current_schema_doc .= "\n---\n\n" if $opt{schemadir} ne '';
 
@@ -8402,7 +8553,7 @@ ENDSQL
             }
         }
 
-        if ( $opt{schemadir} ne '' ) {
+        if ( $opt{schemadir} ) {
             $current_mermaid_er .= "```\n\n";
             $current_schema_doc .= $current_mermaid_er;
             my $doc_file = "$opt{schemadir}/$dbname.md";
@@ -8450,7 +8601,7 @@ sub mysql_indexes {
 #        return;
 #    }
     my $ignore_tables_sql = "";
-    if ( $opt{'ignore-tables'} ne '' ) {
+    if ( $opt{'ignore-tables'} ) {
         my @ignored = split /,/, $opt{'ignore-tables'};
         $ignore_tables_sql = " AND TABLE_NAME NOT IN ('" . join( "','", @ignored ) . "')";
     }
@@ -8862,7 +9013,9 @@ sub dump_csv_files {
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 if ( !caller ) {
-    headerprint;    # Header Print
+    parse_cli_args;              # Parse CLI arguments
+    setup_environment;           # Initialize variables and handle early exits
+    headerprint;                 # Header Print
 
 validate_tuner_version;    # Check latest version
 cloud_setup;
@@ -8877,11 +9030,11 @@ get_tuning_info;           # Get information about the tuning connection
 calculations;              # Calculate everything we need
 check_architecture;        # Suggest 64-bit upgrade
 check_storage_engines;     # Show enabled storage engines
-if ( $opt{'feature'} ne '' ) {
+if ( $opt{'feature'} ) {
     subheaderprint "See FEATURES.md for more information";
     no strict 'refs';
     for my $feature ( split /,/, $opt{'feature'} ) {
-        subheaderprint "Running feature: $opt{'feature'}";
+        subheaderprint "Running feature: $feature";
         $feature->();
     }
     make_recommendations;
@@ -8902,6 +9055,7 @@ mysql_views;              # Show information about views
 mysql_triggers;           # Show information about triggers
 mysql_routines;           # Show information about routines
 security_recommendations; # Display some security recommendations
+ssl_tls_recommendations;  # Display SSL/TLS recommendations
 cve_recommendations;      # Display related CVE
 mysql_plugins;            # Print Plugin Information
 
@@ -8949,87 +9103,9 @@ Allow MySQL server to run for at least 24-48 hours before trusting suggestions
 Some routines may require root level privileges (script will provide warnings)
 You must provide the remote server's total memory when connecting to other servers
 
-=head1 CONNECTION AND AUTHENTICATION
+=head1 OPTIONS
 
- --host <hostname>           Connect to a remote host to perform tests (default: localhost)
- --socket <socket>           Use a different socket for a local connection
- --pipe                      Connect to a local Windows database using named pipes
- --pipe_name <na>            Use a different pipe name for a local connection
- --port <port>               Port to use for connection (default: 3306)
- --protocol tcp              Force TCP connection instead of socket
- --user <username>           Username to use for authentication
- --userenv <envvar>          Name of env variable which contains username to use for authentication
- --pass <password>           Password to use for authentication
- --passenv <envvar>          Name of env variable which contains password to use for authentication
- --ssl-ca <path>             Path to public key
- --mysqladmin <path>         Path to a custom mysqladmin executable
- --mysqlcmd <path>           Path to a custom mysql executable
- --defaults-file <path>      Path to a custom .my.cnf
- --defaults-extra-file <path>      Path to an extra custom config file
- --server-log <path>         Path to explicit log file (error_log)
-
-=head1 CLOUD SUPPORT
-
- --cloud                     Enable cloud mode. This is a generic flag for any cloud provider.
- --azure                     Enable Azure-specific support.
- --ssh-host <hostname>       The SSH host for cloud connections.
- --ssh-user <username>       The SSH user for cloud connections.
- --ssh-password <password>   The SSH password for cloud connections.
- --ssh-identity-file <path>  The path to the SSH identity file for cloud connections.
-
-=head1 PERFORMANCE AND REPORTING OPTIONS
-
- --skipsize                  Don't enumerate tables and their types/sizes (default: on)
-                             (Recommended for servers with many tables)
- --json                      Print result as JSON string
- --prettyjson                Print result as JSON formatted string
- --skippassword              Don't perform checks on user passwords (default: off)
- --checkversion              Check for updates to MySQLTuner (default: don't check)
- --updateversion             Check for updates to MySQLTuner and update when newer version is available (default: don't check)
- --forcemem <size>           Amount of RAM installed in megabytes
- --forceswap <size>          Amount of swap memory configured in megabytes
- --passwordfile <path>       Path to a password file list (one password by line)
- --cvefile <path>            CVE File for vulnerability checks
- --outputfile <path>         Path to a output txt file
- --reportfile <path>         Path to a report txt file
- --template   <path>         Path to a template file
- --dumpdir <path>            Path to a directory where to dump information files
- --schemadir <path>          Path to a directory where to dump one markdown file per schema
- --feature <feature>         Run a specific feature (see FEATURES section)
- --dumpdir <path>            information_schema tables and sys views are dumped in CSV in this path
-
-=head1 OUTPUT OPTIONS
-
- --silent                    Don't output anything on screen
- --verbose                   Print out all options (default: no verbose, dbstat, idxstat, sysstat, tbstat, pfstat)
- --color                     Print output in color
- --nocolor                   Don't print output in color
- --noprettyicon              Print output with legacy tag [OK], [!!], [--], [CMD], ...
- --nogood                    Remove OK responses
- --nobad                     Remove negative/suggestion responses
- --noinfo                    Remove informational responses
- --debug                     Print debug information
- --experimental              Print experimental analysis (may fail)
- --nondedicated              Consider server is not dedicated to Db server usage only
- --noprocess                 Consider no other process is running
- --dbstat                    Print database information
- --nodbstat                  Don't print database information
- --tbstat                    Print table information
- --notbstat                  Don't print table information
- --colstat                   Print column information
- --nocolstat, --no-colstat   Don't print column information
- --idxstat                   Print index information
- --noidxstat                 Don't print index information
- --nostructstat              Don't print table structures information
- --pfstat                    Print Performance schema
- --nopfstat, --no-pfstat     Don't print Performance schema
- --plugininfo                Print Plugin information
- --noplugininfo              Don't print Plugin information
- --bannedports               Ports banned separated by comma (,)
- --server-log                Define specific error_log to analyze
- --maxportallowed            Number of open ports allowable on this host
- --buffers                   Print global and per-thread buffer values
- --max-password-checks       Max password checks from dictionary (default: 100)
+See C<mysqltuner --help> for a full list of available options and their categories.
 
 =head1 VERSION
 

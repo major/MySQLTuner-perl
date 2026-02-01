@@ -90,7 +90,18 @@ Beyond hard constraints, following established patterns ensures code durability,
 - The `/release-preflight` workflow MUST verify the existence of this file before allowing a release to proceed.
 - Omission of release artifacts is considered a regression in project governance.
 
+### 14. Artifact Hygiene (Workstation Abstraction)
+
+- File links in artifacts MUST be cleaned up to remove workstation-specific absolute paths.
+- Replace `file:///home/jmren/GIT_REPOS/` with `file:///` to ensure portability of documentation.
+
+### 15. Release Note Integrity
+
+- Release notes MUST be verified in `/release-preflight` to prevent omission on the remote repository.
+- Ensure `releases/v[VERSION].md` exists and is synchronized with the current release.
+
 ## ✅ Verification
 
 - Manual code review.
 - Automated audit via `build/test_envs.sh`.
+- Run `/compliance-sentinel` after any structural change.

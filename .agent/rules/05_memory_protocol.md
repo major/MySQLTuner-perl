@@ -8,18 +8,18 @@ category: governance
 
 ## **Contextual Consistency Protocols**
 
-1. **History Update:** Add new entries to the top of Changelog if the action is correct and tested.  
-Changelog is a file at root of this projet
-insure consistency between CURRENT_VERSION.txt
-MySQLtuner version inside mysqltuner.pl (begin of script this script and begin of pod doc =pod)
-Changelog last version
+1. **History Update:** Add new entries to the top of `Changelog` if the action is correct and tested.
 
-2. **Git Sync:** Consult git log \-n 15 to synchronize context.  
-3. **Rotation:** FIFO Rotation (Max 600 lines). Remove oldest entries beyond 600 lines.
+- Ensure consistency between `CURRENT_VERSION.txt`
+- Check MySQLTuner version inside `mysqltuner.pl` (header, internal variable, and POD documentation)
+- Match `Changelog` last version
 
-4. All changes must be added to last version in `Changelog`.
-5. No increment version if explicit git commit/tag/push via `/git-flow` or specific order from previous version hasn't been made.
-6. After Git tag and push, version should be managed by the Release Manager or via the `/git-flow` lifecycle. The agent MUST NOT increment version numbers autonomously.
+1. **Git Sync:** Consult `git log -n 15` to synchronize context.
+2. **Rotation:** FIFO Rotation (Max 600 lines). Remove oldest entries beyond 600 lines.
+
+3. All changes must be added to the latest version in `Changelog`.
+4. No version increment unless explicit git commit/tag/push via `/git-flow` or specific user order has been made.
+5. After Git tag and push, version management is handled by the Release Manager or via `/git-flow`. The agent MUST NOT increment version numbers autonomously.
 
 ### **History Entry example**
 

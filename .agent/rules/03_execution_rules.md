@@ -12,14 +12,17 @@ category: governance
 
 1. **SINGLE FILE:** Spliting `mysqltuner.pl` into modules is **strictly prohibited**.
 2. **NON-REGRESSION:** Deleting existing code is **prohibited** without relocation or commenting out.
-3. **NO BACKWARDS COMPATIBILITY BY DEFAULT:** Do not add backwards compatibility unless specifically requested; update all downstream consumers.
-4. **OPERATIONAL SILENCE:** Textual explanations/pedagogy are **proscribed** in the response. Only code blocks, commands, and technical results.
-5. **TDD MANDATORY:** Use a TDD approach. _Do not assume_ that your solution is correct. Instead, _validate your solution is correct_ by first creating a test case and running the test case to _prove_ the solution is working as intended.
-6. **WEB SEARCH:** Assume your world knowledge is out of date. Use your web search tool to find up-to-date docs and information.
-7. **VERSION CONSISTENCY:** Version numbers MUST be synchronized across `CURRENT_VERSION.txt`, `Changelog`, and all occurrences within `mysqltuner.pl` (Header, internal variable, and POD documentation) before any release. Use `/release-preflight` to verify.
-8. **CONVENTIONAL COMMITS:** All commit messages MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. Use `npm run commit` for interactive commit creation. Compliance is enforced via `commitlint` and Git hooks.
-9. **NO DIRECT COMMIT:** All changes MUST be committed via `npm run commit` or `git cz` to ensure metadata quality and automated changelog compatibility.
-10. **VERSION SUPPORT POLICY:** Automated test example generation (via `run-tests`) MUST only target "Supported" versions of MySQL and MariaDB as defined in `mysql_support.md` and `mariadb_support.md`.
+3. **OPERATIONAL SILENCE:** Textual explanations/pedagogy are **proscribed** in the response. Only code blocks, commands, and technical results.
+4. **TDD MANDATORY:** Use a TDD approach. _Do not assume_ that your solution is correct. Validate it by creating a test case and running it to _prove_ the solution works before final submission.
+5. **SAFE COMMANDS:** Always use absolute paths. Monitor every command for `exit code 0`. Non-zero exit codes must trigger immediate diagnostics.
+6. **CREDENTIAL HYGIENE:** NEVER hardcode credentials. Ensure metadata (reports/logs) does not leak sensitive info.
+7. **ARTIFACT ROTATION:** Keep the `brain/` directory lean. Rotate old plans/walkthroughs after integration.
+8. **WEB SEARCH:** Assume world knowledge is out of date. Use web search for up-to-date documentation.
+
+9. **VERSION CONSISTENCY:** Version numbers MUST be synchronized across `CURRENT_VERSION.txt`, `Changelog`, and all occurrences within `mysqltuner.pl` (Header, internal variable, and POD documentation) before any release. Use `/release-preflight` to verify.
+10. **CONVENTIONAL COMMITS:** All commit messages MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. Use `npm run commit` for interactive commit creation. Compliance is enforced via `commitlint` and Git hooks.
+11. **NO DIRECT COMMIT:** All changes MUST be committed via `npm run commit` or `git cz` to ensure metadata quality and automated changelog compatibility.
+12. **VERSION SUPPORT POLICY:** Automated test example generation (via `run-tests`) MUST only target "Supported" versions of MySQL and MariaDB as defined in `mysql_support.md` and `mariadb_support.md`.
 
 ### **4.2. Spec-Driven Development (SDD) Lifecycle**
 

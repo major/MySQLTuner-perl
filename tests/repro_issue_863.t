@@ -43,7 +43,7 @@ sub test_logic {
         if ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF'
             and $result{'Variables'}{'skip_name_resolve'} ne '0' )
         {
-            badprint "CPanel and Flex system: skip-name-resolve should be OFF";
+            badprint "cPanel/Flex system detected: skip-name-resolve should be disabled (OFF)";
             push( @generalrec,
 "cPanel recommends keeping skip-name-resolve disabled: https://support.cpanel.net/hc/en-us/articles/21664293830423"
             );
