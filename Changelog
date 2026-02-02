@@ -1,3 +1,7 @@
+2.8.36 2026-02-02
+
+- 
+
 2.8.35 2026-02-02
 
 - feat: modernize version check using `HTTP::Tiny` with robust fallback to `curl`/`wget` (PR #18 and #17).
