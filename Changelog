@@ -1,6 +1,7 @@
-2.8.34 2026-02-01
+2.8.34 2026-02-02
 
-- 
+- feat: modernize version check using `HTTP::Tiny` with robust fallback to `curl`/`wget` (PR #18).
+- test: add dedicated unit test `tests/test_version_regex.t` for version extraction verification.
 
 # MySQLTuner Changelog
 
