@@ -16,12 +16,27 @@ $valid_pages = [
     'faq' => 'docs/faq.md'
 ];
 
+// --- Diagnostic Header (to confirm PHP is active) ---
+header('X-Router: MySQLTuner-PHP-Router');
+
 $page = $_GET['p'] ?? 'home';
 
 // --- Robust Routing (Pretty URLs fallback) ---
 $request_uri = $_SERVER['REQUEST_URI'] ?? '/';
+$script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+$script_dir = dirname($script_name);
+
+// Clean up the path relative to the script's directory
 $path = parse_url($request_uri, PHP_URL_PATH);
+if (strpos($path, $script_dir) === 0) {
+    $path = substr($path, strlen($script_dir));
+}
 $path = trim($path, '/');
+
+// Skip index.php or index.html in path
+if ($path === 'index.php' || $path === 'index.html') {
+    $path = '';
+}
 
 if ($page === 'home' && !empty($path)) {
     // Check if the path directly matches a valid page

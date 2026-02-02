@@ -16,10 +16,9 @@ DirectoryIndex index.php index.html
     RewriteRule ^index\.php$ / [R=301,L]
 
     # 3. Handle Pretty URLs: map /pagename to index.php?p=pagename
-    # If the request is NOT a real directory and NOT a real file
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^([a-zA-Z0-9_-]+)/?$ index.php?p=$1 [L,QSA]
+    RewriteRule ^([^/]+)/?$ index.php?p=$1 [L,QSA]
 </IfModule>
 
 # Prevent access to .git and other sensitive files (Safety)

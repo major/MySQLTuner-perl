@@ -42,3 +42,5 @@ jobs:
           remote_path: ${{ secrets.IONOS_REMOTE_PATH }}/
           rsyncArgs: "--delete --exclude=.git --exclude=.github --exclude=.agent"
           sftpArgs: "-o ConnectTimeout=5"
+
+      # Note: IONOS might have cached DirectoryIndex. Explicitly check if index.html is gone.
