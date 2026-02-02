@@ -45,7 +45,7 @@ subtest 'percentage' => sub {
     is(main::percentage(1, 3), "33.33", "1/3 = 33.33");
     is(main::percentage(0, 100), "0.00", "0/100 = 0.00");
     # Scalar context for list return (100, 0)
-    is(scalar main::percentage(100, 0), "0", "Division by zero returns 0 in scalar context (buggy behavior but current reality)");
+    is(scalar main::percentage(100, 0), "100.00", "Division by zero returns 100.00 (correct behavior for idle servers)");
 };
 
 # 4. Test hr_num

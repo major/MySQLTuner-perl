@@ -1068,7 +1068,7 @@ sub percentage {
     my $total = shift;
     $total = 0 unless defined $total;
     $total = 0 if $total eq "NULL";
-    return 100, 00 if $total == 0;
+    return "100.00" if $total == 0;
     return sprintf( "%.2f", ( $value * 100 / $total ) );
 }
 
