@@ -91,7 +91,7 @@ our %CLI_METADATA = (
 
     # Performance and Reporting
     'skipsize'            => { type => '!', default => 0,  desc => "Don't enumerate tables and their sizes", cat => 'PERFORMANCE' },
-    'checkversion'        => { type => '!', default => 0,  desc => 'Check for updates to MySQLTuner', cat => 'PERFORMANCE' },
+    'checkversion'        => { type => '!', default => 1,  desc => 'Check for updates to MySQLTuner', cat => 'PERFORMANCE' },
     'updateversion'       => { type => '!', default => 0,  desc => 'Update MySQLTuner if newer version is available', cat => 'PERFORMANCE' },
     'forcemem'            => { type => '=i', default => 0,  desc => 'Amount of RAM installed in megabytes', placeholder => '<size>', cat => 'PERFORMANCE', validate => qr/^\d+$/ },
     'forceswap'           => { type => '=i', default => 0,  desc => 'Amount of swap memory configured in megabytes', placeholder => '<size>', cat => 'PERFORMANCE', validate => qr/^\d+$/ },
@@ -110,7 +110,7 @@ our %CLI_METADATA = (
 
     # Output Options
     'silent'              => { type => '!', default => 0,  desc => "Don't output anything on screen", cat => 'OUTPUT' },
-    'verbose|v'           => { type => '!', default => 0,  desc => 'Print out all options', cat => 'OUTPUT', implies => { checkversion => 0, dbstat => 1, tbstat => 1, idxstat => 1, sysstat => 1, buffers => 1, pfstat => 1, structstat => 1, myisamstat => 1, plugininfo => 1 } },
+    'verbose|v'           => { type => '!', default => 0,  desc => 'Print out all options', cat => 'OUTPUT', implies => { dbstat => 1, tbstat => 1, idxstat => 1, sysstat => 1, buffers => 1, pfstat => 1, structstat => 1, myisamstat => 1, plugininfo => 1 } },
     'color!'              => { type => '!', default => (-t STDOUT ? 1 : 0), desc => 'Print output in color', cat => 'OUTPUT' },
     'nobad'               => { type => '!', default => 0,  desc => 'Remove negative/suggestion responses', cat => 'OUTPUT' },
     'nogood'              => { type => '!', default => 0,  desc => 'Remove OK responses', cat => 'OUTPUT' },
