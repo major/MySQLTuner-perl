@@ -56,7 +56,7 @@ MySQLTuner нуждается в вас
 * Кластер Percona XtraDB (полная поддержка)
 * Репликация MySQL (частичная поддержка, нет тестовой среды)
 
-Спасибо [endoflife.date](endoflife.date)
+Спасибо [endoflife.date](https://endoflife.date)
 
 * См. [Поддерживаемые версии MariaDB](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mariadb_support.md).
 * См. [Поддерживаемые версии MySQL](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysql_support.md).
