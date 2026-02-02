@@ -806,63 +806,55 @@ sub validate_tuner_version {
         return;
     }
 
-    my $update;
     my $url =
-"https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/mysqltuner.pl";
-    my $httpcli = get_http_cli();
-    if ( $httpcli =~ /curl$/ ) {
-        debugprint "$httpcli is available.";
+'https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/mysqltuner.pl';
+    my $content;
 
-        debugprint
-"$httpcli -s -m 3 '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2";
-        if ($is_win) {
-            $update =
-              map  { my @f = split /"/; $f[1] }
-              grep { /my \$tunerversion/ }
-              execute_system_command("$httpcli -s -m 3 '$url' 2>$devnull");
-
+    # Try HTTP::Tiny if available (Core since 5.13.9)
+    if ( eval { require HTTP::Tiny; 1 } ) {
+        debugprint "Using HTTP::Tiny for version check";
+        my $http     = HTTP::Tiny->new( timeout => 3 );
+        my $response = $http->get($url);
+        if ( $response->{success} ) {
+            $content = $response->{content};
         }
         else {
-            $update =
-              execute_system_command(
-"$httpcli -s -m 3 '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2"
-              );
+            debugprint "HTTP::Tiny failed: $response->{status} $response->{reason}";
         }
-        chomp($update);
-        debugprint "VERSION: $update";
-
-        compare_tuner_version($update);
-        return;
     }
 
-    if ( $httpcli =~ /wget$/ ) {
-        debugprint "$httpcli is available.";
+    # Fallback to curl/wget if content is still empty or HTTP::Tiny not available
+    if ( !$content ) {
+        debugprint "Falling back to curl/wget for version check";
+        my $httpcli = get_http_cli();
+        if ($httpcli) {
+            my $cmd_line =
+              ( $httpcli =~ /curl$/ )
+              ? "$httpcli -sL $url"
+              : "$httpcli -q -O - $url";
+            $content = execute_system_command($cmd_line);
+        }
+    }
 
-        debugprint
-"$httpcli -q -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2";
-        if ($is_win) {
-            $update =
-              map  { my @f = split /"/; $f[1] }
-              grep { /my \$tunerversion/ }
-              execute_system_command(
-                "$httpcli -q -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull"
-              );
+    if ($content) {
+
+        # Robust regex for version extraction (handles my/our/local, spacing, and quotes)
+        if ( $content =~
+            /^\s*(?:our|my|local)\s+\$tunerversion\s*=\s*["']([\d.]+)["']\s*;/m
+          )
+        {
+            my $update = $1;
+            infoprint "VERSION: $update";
+            compare_tuner_version($update);
         }
         else {
-            $update =
-              execute_system_command(
-"$httpcli -q -e timestamping=off -t 1 -T 3 -O - '$url' 2>$devnull | grep 'my \$tunerversion'| cut -d\\\" -f2"
-              );
+            badprint "Cannot determine latest tuner version from fetched content";
         }
-        chomp($update);
-        compare_tuner_version($update);
-        return;
     }
-    debugprint "curl and wget are not available.";
-    infoprint "Unable to check for the latest MySQLTuner version";
-    infoprint
-"Using --pass and --password option is insecure during MySQLTuner execution (password disclosure)"
-      if ( defined( $opt{'pass'} ) );
+    else {
+        badprint "Failed to fetch tuner version information from $url";
+    }
+    return;
 }
 
 # Checks for updates to MySQLTuner
