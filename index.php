@@ -105,7 +105,7 @@ include 'includes/sidebar.php';
                         <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem;">MySQLTuner</span>
                     </div>
                     <div class="nav-actions">
-                        <a href="/overview" class="btn btn-outline">Docs</a>
+                        <a href="index.php?p=overview" class="btn btn-outline">Docs</a>
                         <a href="https://github.com/jmrenouard/MySQLTuner-perl" class="btn btn-primary">GitHub</a>
                     </div>
                 </nav>
@@ -121,8 +121,8 @@ include 'includes/sidebar.php';
                         delivered in a zero-dependency Perl script.
                     </p>
                     <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
-                        <a href="/overview" class="btn btn-primary">Start Optimizing</a>
-                        <a href="/usage" class="btn btn-outline">How it works</a>
+                        <a href="index.php?p=overview" class="btn btn-primary">Start Optimizing</a>
+                        <a href="index.php?p=usage" class="btn btn-outline">How it works</a>
                     </div>
                 </div>
             </header>
