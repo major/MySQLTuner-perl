@@ -8321,7 +8321,7 @@ sub mysql_innodb {
                 push(
                     @adjvars,
                     "innodb_log_file_size should be (="
-                      . hr_bytes_rnd(
+                      . hr_bytes(
                         (
                             defined $myvar{'innodb_buffer_pool_size'}
                               && $myvar{'innodb_buffer_pool_size'} ne ''
