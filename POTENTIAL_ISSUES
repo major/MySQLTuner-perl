@@ -48,3 +48,37 @@ Pre-existing anomalies found in examples/ directory:
 - [ ] **SQL Execution Failure (return code 256)**: Persistent across MySQL 8.x, 9.6 and Percona 8.0.
   - Found in: `examples/20260202_230352_mysql84/Standard/execution.log`, `examples/20260202_230050_mysql96/Standard/execution.log`.
   - Notes: Likely related to Performance Schema visibility or specific system table access in laboratory containers.
+
+## [2026-02-02 Audit] System Call & Core Perl Optimization
+
+### Systemic Findings
+
+The following external commands are currently used via `execute_system_command` but have native Core Perl equivalents (no external dependencies required). Migrating these will reduce fork overhead and improve portability.
+
+#### High Priority Replacements (Low Complexity)
+
+- [ ] **Command**: `whoami` (line 701)
+  - **Replacement**: `(getpwuid($<))[0]` or `POSIX::cuserid()`
+- [ ] **Command**: `env` / `printenv` (lines 1673, 1890, 1955)
+  - **Replacement**: Access the `%ENV` hash directly.
+- [ ] **Command**: `hostname` (line 3051)
+  - **Replacement**: `use Sys::Hostname; hostname();` (Core since Perl 5.6).
+- [ ] **Command**: `grep ... /proc/meminfo` (lines 1399, 1414, 3099)
+  - **Replacement**: Open `/proc/meminfo` and parse line-by-line (Core file handles).
+- [ ] **Command**: `grep -c ^processor /proc/cpuinfo` (line 949)
+  - **Replacement**: Open `/proc/cpuinfo` and count lines starting with `processor`.
+- [ ] **Command**: `which` (lines 1552, 1576)
+  - **Replacement**: Iterate through `split(/:/, $ENV{PATH})` and check file existence with `-x`.
+- [ ] **Command**: `getconf PAGESIZE` (line 2718)
+  - **Replacement**: `use POSIX; POSIX::sysconf(POSIX::_SC_PAGESIZE);`
+- [ ] **Command**: `uname` (lines 1108, 1395, 3044, 3049, 3117)
+  - **Replacement**: `use POSIX; POSIX::uname();` or `$^O`.
+
+#### Medium Priority Replacements (Environmental Specifics)
+
+- [ ] **Command**: `stty -echo` / `stty echo` (lines 1701, 1925)
+  - **Replacement**: Use `POSIX::Termios` for terminal attribute control (avoids `stty` binary dependency).
+- [ ] **Command**: `uptime` (line 3107)
+  - **Replacement**: Read `/proc/uptime` (Linux-only) or calculate via `$^T` (script start time) for script uptime. System uptime requires `POSIX` / `/proc`.
+- [ ] **Command**: `df` (lines 2790, 2791)
+  - **Replacement**: No cross-platform Core Perl replacement. Keep for now or use `statvfs` where available.
