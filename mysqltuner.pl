@@ -2200,7 +2200,7 @@ sub arr2hash {
     $sep = '\s' unless defined($sep);
     foreach my $line (@$harr) {
         next if ( $line =~ m/^\*\*\*\*\*\*\*/ );
-        $line =~ /([a-zA-Z_]*)\s*$sep\s*(.*)/;
+        $line =~ /([a-zA-Z0-9_\/]*)\s*$sep\s*(.*)/;
         $key         = $1;
         $val         = $2;
         $$href{$key} = $val;
@@ -8240,6 +8240,15 @@ sub mysql_innodb {
     if ( mysql_version_ge( 8, 0, 30 )
         && defined $myvar{'innodb_redo_log_capacity'} )
     {
+        # Recalculate ratio if needed (ensure accuracy for modern systems)
+        if ( defined $myvar{'innodb_buffer_pool_size'}
+            && $myvar{'innodb_buffer_pool_size'} > 0 )
+        {
+            $mycalc{'innodb_log_size_pct'} =
+              ( $myvar{'innodb_redo_log_capacity'} /
+                  $myvar{'innodb_buffer_pool_size'} ) * 100;
+        }
+
         # New recommendation logic for MySQL >= 8.0.30
         infoprint "InnoDB Redo Log Capacity is set to "
           . hr_bytes( $myvar{'innodb_redo_log_capacity'} );
@@ -8289,7 +8298,8 @@ sub mysql_innodb {
 "Server uptime is less than 1 hour. Cannot make a reliable recommendation for innodb_redo_log_capacity.";
         }
     }
-    else {
+    elsif ( !mysql_version_ge( 8, 0, 30 ) ) {
+
         # Keep existing logic for older versions
         if (   $mycalc{'innodb_log_size_pct'} < 20
             or $mycalc{'innodb_log_size_pct'} > 30 )
