@@ -2,7 +2,7 @@ name: Docker Publish
 
 on:
   push:
-    branches: ["master"]
+    tags: ["v*"]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -23,6 +23,33 @@ jobs:
       - name: Extract version from mysqltuner.pl
         id: version
         run: echo "VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')" >> $GITHUB_ENV
+
+      - name: Pre-publish validation
+        run: |
+          echo "Checking for critical files..."
+          CRITICAL_FILES=("mysqltuner.pl" "Dockerfile" "LICENSE" "vulnerabilities.csv" "basic_passwords.txt")
+          for file in "${CRITICAL_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "ERROR: Critical file missing: $file"
+              exit 1
+            fi
+            echo "✔ Found: $file"
+          done
+
+          echo "Checking for release notes: releases/v${{ env.VERSION }}.md..."
+          if [ ! -f "releases/v${{ env.VERSION }}.md" ]; then
+            echo "ERROR: Release notes missing: releases/v${{ env.VERSION }}.md"
+            exit 1
+          fi
+          echo "✔ Found release notes"
+
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "Checking tag consistency (Tag: $TAG vs Version: v${{ env.VERSION }})..."
+          if [ "v${{ env.VERSION }}" != "$TAG" ]; then
+            echo "ERROR: Tag $TAG does not match version in mysqltuner.pl (v${{ env.VERSION }})"
+            exit 1
+          fi
+          echo "✔ Tag matches script version"
 
       - name: Extract release notes
         id: release_notes

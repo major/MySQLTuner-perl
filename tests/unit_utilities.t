@@ -62,4 +62,22 @@ subtest 'human_size' => sub {
     is(main::human_size(1024*1024), "1.00 MB", "1 MB");
 };
 
+# 6. Test arr2hash
+subtest 'arr2hash' => sub {
+    my %hash = ();
+    my @input = (
+        "key1 value1",
+        "key_2\tvalue2",
+        "key_with_digits_3 value3",
+        "innodb_redo_log_capacity 15",
+        "VERSION 8.0.32"
+    );
+    main::arr2hash(\%hash, \@input);
+    is($hash{'key1'}, 'value1', "Simple key");
+    is($hash{'key_2'}, 'value2', "Key with underscore and tab");
+    is($hash{'key_with_digits_3'}, 'value3', "Key with digits and underscore");
+    is($hash{'innodb_redo_log_capacity'}, '15', "Real variable name");
+    is($hash{'VERSION'}, '8.0.32', "Uppercase key with digits");
+};
+
 done_testing();

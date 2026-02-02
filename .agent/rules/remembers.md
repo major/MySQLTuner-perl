@@ -1,3 +1,9 @@
+---
+trigger: "emerging_patterns"
+description: "Persistent memory for emerging patterns and session-specific dynamic rules"
+category: "governance"
+---
+
 # **🧠 REMEMBERS & DYNAMIC RULES**
 
 ## 🧠 Rationale
