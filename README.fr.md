@@ -56,7 +56,7 @@ Les résultats des tests sont disponibles ici uniquement pour les versions LTS 
 * Cluster Percona XtraDB (prise en charge complète)
 * Réplication MySQL (prise en charge partielle, pas d'environnement de test)
 
-Merci à [endoflife.date](endoflife.date)
+Merci à [endoflife.date](https://endoflife.date)
 
 * Reportez-vous aux [versions prises en charge de MariaDB](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mariadb_support.md).
 * Reportez-vous aux [versions prises en charge de MySQL](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysql_support.md).
