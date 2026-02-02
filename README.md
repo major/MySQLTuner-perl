@@ -56,7 +56,7 @@ Test result are available here for LTS only:
 * Percona XtraDB cluster (full support)
 * MySQL Replication (partial support, no test environment)
 
-Thanks to [endoflife.date](endoflife.date)
+Thanks to [endoflife.date](https://endoflife.date)
 
 * Refer to [MariaDB Supported versions](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mariadb_support.md).
 * Refer to [MySQL Supported versions](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysql_support.md).
