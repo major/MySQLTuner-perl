@@ -556,6 +556,7 @@ our %CLI_METADATA = (
 # Initialize %opt from metadata
 our %opt = map {
     my ($primary) = split /\|/, $_;
+    $primary =~ s/[!+=:].*$//;    # Strip modifiers (Getopt::Long compatibility)
     $primary => $CLI_METADATA{$_}->{default}
 } keys %CLI_METADATA;
 
@@ -576,8 +577,9 @@ sub parse_cli_args {
     my @getopt_args;
     Getopt::Long::Configure( "no_auto_abbrev", "no_ignore_case" );
     foreach my $opt_spec ( sort keys %CLI_METADATA ) {
-        my $type       = $CLI_METADATA{$opt_spec}->{type} // '';
-        my ($primary)  = split /\|/, $opt_spec;
+        my $type      = $CLI_METADATA{$opt_spec}->{type} // '';
+        my ($primary) = split /\|/, $opt_spec;
+        $primary =~ s/[!+=:].*$//;    # Strip modifiers
         my $final_spec = $opt_spec;
 
         # Only append type if it's not already part of the specification key

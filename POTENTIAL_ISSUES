@@ -29,19 +29,17 @@ Pre-existing anomalies found in examples/ directory:
   - examples/20260201_021550_mysql84/Standard/execution.log
   - examples/20260201_022737_mariadb118/Container/execution.log
   - examples/20260201_021043_percona80/Standard/execution.log
-- Perl Warnings (uninitialized value $opt{"colstat"}) found in:
-  - examples/20260201_020318_mariadb1011/Standard/execution.log
-  - examples/20260201_020318_mariadb1011/Dumpdir/execution.log
-  - examples/20260201_020318_mariadb1011/Container/execution.log
-  - examples/20260201_020318_mariadb1011/Schemadir/execution.log
+- [x] **Perl Warnings (uninitialized value $opt{"colstat"})**: Fixed by normalizing CLI metadata key extraction in `%opt` hash.
+  - Found in: `examples/20260201_020318_mariadb1011/Standard/execution.log` etc.
+  - Fix: Stripped `Getopt::Long` modifiers (`!`, `+`, `=`, `:`) during `%opt` initialization and CLI parsing.
 
 ## [2026-02-02 Audit] Release v2.8.35/v2.8.36
 
 ### Logic Anomalies
 
-- [ ] **Perl Warning ($opt{"colstat"})**: `Use of uninitialized value $opt{"colstat"}` in MariaDB 10.11 and 10.6.
+- [x] **Perl Warning ($opt{"colstat"})**: `Use of uninitialized value $opt{"colstat"}` in MariaDB 10.11 and 10.6.
   - Found in: `examples/20260202_231425_mariadb1011/Standard/execution.log`
-  - Status: Investigating if `colstat` should have a default in `CLI_METADATA`.
+  - Fix: Normalized CLI primary key extraction to strip modifiers. Verified with `tests/cli_mod_keys.t`.
 
 ### Environment/Lab Issues
 
