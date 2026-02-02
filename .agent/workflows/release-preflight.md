@@ -97,7 +97,15 @@ Audit project documentation for cleanliness and standard compliance.
 python3 build/md_lint.py --all
 ```
 
-## 6. Smoke Test
+## 6. Code Style Validation
+
+Ensure `mysqltuner.pl` is properly formatted.
+
+```bash
+make check-tidy
+```
+
+## 7. Smoke Test
 
 Run the primary test suite to ensure the build isn't broken.
 

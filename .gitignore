@@ -48,3 +48,5 @@ tmp_changelog
 mysqltuner.pl.bak
 0
 0/**
+experimental_run.log
+experimental_run_v2.log

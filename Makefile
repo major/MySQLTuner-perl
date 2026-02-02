@@ -12,6 +12,7 @@ help:
 	@echo "  generate_cve:      Generate vulnerabilities.csv"
 	@echo "  generate_features: Generate FEATURES.md"
 	@echo "  tidy:              Tidy mysqltuner.pl"
+	@echo "  check-tidy:        Check if mysqltuner.pl is tidy"
 	@echo "  installdep_debian: Install dependencies on Debian"
 	@echo "  increment_sub_version: Increment sub version"
 	@echo "  increment_minor_version: Increment minor version"
@@ -41,6 +42,9 @@ tidy:
 	perltidy -b ./mysqltuner.pl
 	git add ./mysqltuner.pl
 	git commit -m "Indenting mysqltuner at $(shell date --iso=seconds)"
+
+check-tidy:
+	perltidy -st mysqltuner.pl | diff -q - mysqltuner.pl
 
 generate_usage:
 	pod2markdown mysqltuner.pl >USAGE.md
