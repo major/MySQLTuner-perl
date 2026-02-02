@@ -34,3 +34,17 @@ Pre-existing anomalies found in examples/ directory:
   - examples/20260201_020318_mariadb1011/Dumpdir/execution.log
   - examples/20260201_020318_mariadb1011/Container/execution.log
   - examples/20260201_020318_mariadb1011/Schemadir/execution.log
+
+## [2026-02-02 Audit] Release v2.8.35/v2.8.36
+
+### Logic Anomalies
+
+- [ ] **Perl Warning ($opt{"colstat"})**: `Use of uninitialized value $opt{"colstat"}` in MariaDB 10.11 and 10.6.
+  - Found in: `examples/20260202_231425_mariadb1011/Standard/execution.log`
+  - Status: Investigating if `colstat` should have a default in `CLI_METADATA`.
+
+### Environment/Lab Issues
+
+- [ ] **SQL Execution Failure (return code 256)**: Persistent across MySQL 8.x, 9.6 and Percona 8.0.
+  - Found in: `examples/20260202_230352_mysql84/Standard/execution.log`, `examples/20260202_230050_mysql96/Standard/execution.log`.
+  - Notes: Likely related to Performance Schema visibility or specific system table access in laboratory containers.
