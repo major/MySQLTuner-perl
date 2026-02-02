@@ -3,10 +3,12 @@
 - feat: modernize version check using `HTTP::Tiny` with robust fallback to `curl`/`wget` (PR #18 and #17).
 - feat: integrate `perltidy` in `release-preflight` workflow and enforce script formatting (issue #19).
 - fix: resolve inaccurate `innodb_log_file_size` recommendations caused by integer rounding (issue #770).
+- fix: ensure percentage returns 100.00% instead of 0% on idle or fresh servers, preventing unwarranted `innodb_log_buffer_size` recommendations (issue #783).
 - docs: replace generic `SECURITY.md` template with project-specific policy and contact info (Issue #771, credit @bfontaine).
 - style: run `perltidy` on `mysqltuner.pl` to ensure code consistency.
 - test: add dedicated unit test `tests/test_version_regex.t` for version extraction verification.
 - test: add regression test `tests/issue_770.t` to verify `innodb_log_file_size` recommendation precision.
+- test: add regression test `tests/issue_783.t` to verify `innodb_log_buffer_size` recommendation on idle servers.
 
 # MySQLTuner Changelog
 
