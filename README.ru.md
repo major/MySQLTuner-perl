@@ -94,7 +94,31 @@ MySQLTuner нуждается в вас
 
 * Perl 5.6 или новее (с пакетом [perl-doc](https://metacpan.org/release/DAPM/perl-5.14.4/view/pod/perldoc.pod))
 * Операционная система на базе Unix/Linux (протестировано на Linux, вариантах BSD и вариантах Solaris)
-* Неограниченный доступ на чтение к серверу MySQL
+* Неограниченный доступ на чтение к серверу MySQL (см. Привилегии ниже)
+
+***ПРИВИЛЕГИИ***
+--
+
+Для запуска MySQLTuner со всеми функциями требуются следующие привилегии:
+
+**MySQL 8.0+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**MariaDB 10.5+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION MASTER ADMIN, SLAVE MONITOR ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**Старые версии**:
+
+```sql
+GRANT SELECT, PROCESS, EXECUTE, REPLICATION CLIENT, SHOW DATABASES, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
 Рекомендуется доступ root к ОС для MySQL < 5.1
 
 ***ПРЕДУПРЕЖДЕНИЕ***
@@ -498,15 +522,6 @@ $mysql_config_editor print
 user = someusername
 password = *****
 host = localhost
-```
-
-**Вопрос: какие минимальные привилегии необходимы конкретному пользователю mysqltuner в базе данных?**
-
-```bash
- mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
- SHOW DATABASES,SHOW VIEW
- ON *.*
- TO 'mysqltuner'@'localhost' identified by pwd1234;
 ```
 
 **Вопрос: это не работает в моей ОС! В чем дело?!**

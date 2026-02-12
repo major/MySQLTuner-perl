@@ -9565,7 +9565,7 @@ sub which {
 }
 
 sub dump_csv_files {
-    return if ( $opt{dumpdir} eq '' );
+    return if ( ( $opt{dumpdir} // '0' ) eq '0' or $opt{dumpdir} eq '' );
 
     subheaderprint "Dumping CSV files";
 

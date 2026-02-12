@@ -94,7 +94,31 @@ Merci à [endoflife.date](endoflife.date)
 
 * Perl 5.6 ou version ultérieure (avec le package [perl-doc](https://metacpan.org/release/DAPM/perl-5.14.4/view/pod/perldoc.pod))
 * Système d'exploitation basé sur Unix/Linux (testé sur Linux, les variantes BSD et les variantes Solaris)
-* Accès en lecture illimité au serveur MySQL
+* Accès en lecture illimité au serveur MySQL (voir Privilèges ci-dessous)
+
+***PRIVILÈGES***
+--
+
+Pour exécuter MySQLTuner avec toutes les fonctionnalités, les privilèges suivants sont requis :
+
+**MySQL 8.0+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**MariaDB 10.5+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION MASTER ADMIN, SLAVE MONITOR ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**Versions héritées (Legacy)**:
+
+```sql
+GRANT SELECT, PROCESS, EXECUTE, REPLICATION CLIENT, SHOW DATABASES, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
 Accès root au système d'exploitation recommandé pour MySQL < 5.1
 
 ***AVERTISSEMENT***
@@ -498,15 +522,6 @@ $mysql_config_editor print
 user = someusername
 password = *****
 host = localhost
-```
-
-**Question : Quels sont les privilèges minimums nécessaires à un utilisateur mysqltuner spécifique dans la base de données ?**
-
-```bash
- mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
- SHOW DATABASES,SHOW VIEW
- ON *.*
- TO 'mysqltuner'@'localhost' identified by pwd1234;
 ```
 
 **Question : Ça ne marche pas sur mon OS ! Qu'est-ce qui se passe ?!**

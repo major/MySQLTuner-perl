@@ -94,7 +94,31 @@ Unmaintenained stuff from MySQL or MariaDB
 
 * Perl 5.6 or later (with [perl-doc](https://metacpan.org/release/DAPM/perl-5.14.4/view/pod/perldoc.pod) package)
 * Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
-* Unrestricted read access to the MySQL server
+* Unrestricted read access to the MySQL server (see Privileges below)
+
+***PRIVILEGES***
+--
+
+To run MySQLTuner with all features, the following privileges are required:
+
+**MySQL 8.0+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**MariaDB 10.5+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION MASTER ADMIN, SLAVE MONITOR ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**Legacy versions**:
+
+```sql
+GRANT SELECT, PROCESS, EXECUTE, REPLICATION CLIENT, SHOW DATABASES, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
 OS root access recommended for MySQL < 5.1
 
 ***WARNING***
@@ -498,15 +522,6 @@ $mysql_config_editor print
 user = someusername
 password = *****
 host = localhost
-```
-
-**Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
-
-```bash
- mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
- SHOW DATABASES,SHOW VIEW
- ON *.*
- TO 'mysqltuner'@'localhost' identified by pwd1234;
 ```
 
 **Question: It's not working on my OS! What gives?!**

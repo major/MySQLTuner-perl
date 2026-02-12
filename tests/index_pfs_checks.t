@@ -14,11 +14,20 @@ our @secrec;
 our %opt;
 our %myvar;
 
-# Load the script first to get the subroutines
+use Cwd 'abs_path';
+
+# 1. Load the script logic
+my $script_dir = dirname(abs_path(__FILE__));
+my $script = abs_path(File::Spec->catfile($script_dir, '..', 'mysqltuner.pl'));
+
+# Suppress warnings from mysqltuner.pl initialization if any
+$SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
+
+# Load the script as a library
 {
     local @ARGV = (); # Empty ARGV for GetOptions
     no warnings 'redefine';
-    require './mysqltuner.pl';
+    require $script;
 }
 
 my @mock_output;

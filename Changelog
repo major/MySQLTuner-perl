@@ -1,6 +1,8 @@
 2.8.36 2026-02-02
 
-- 
+- fix: prevent creation of directory "0" when --dumpdir is not specified or set to 0 (Issue #20).
+- test: add reproduction test for Performance Schema disabled scenario (repro_pfs_disabled.t).
+- ci: fix Docker API mismatch in GitHub Actions by migrating to native services.
 
 2.8.35 2026-02-02
 

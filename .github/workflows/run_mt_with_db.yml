@@ -17,16 +17,19 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:${{ matrix.MYSQL_VERSION }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Setup MySQL Tuner repository
         uses: actions/checkout@v6
-
-      - name: Set up MySQL
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          mysql root password: "root"
-          mysql version: "${{ matrix.MYSQL_VERSION }}"
 
       - name: Injecting credentials
         run: |

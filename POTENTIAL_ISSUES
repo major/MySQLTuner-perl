@@ -13,6 +13,7 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - [ ] **Performance Schema Disabled**: `✘ Performance_schema should be activated.` reported during audit.
   - Found in: `examples/20260127_004622_mariadb114/Standard/execution.log`
   - Impact: Reduced diagnostic depth for performance metrics.
+  - Reproduce: `tests/repro_pfs_disabled.t`
   - **How to fix**:
     - **MySQL/MariaDB**: Add `performance_schema=ON` under `[mysqld]` in your `my.cnf` or `server.cnf` and restart the service.
     - **Cloud/Managed**: Enable via your cloud provider console (e.g., AWS Parameter Group, GCP Flags).
