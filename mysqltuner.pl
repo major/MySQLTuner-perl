@@ -2167,6 +2167,34 @@ sub select_table_columns_db {
     );
 }
 
+sub get_password_column_name {
+    my @mysql_user_columns = select_table_columns_db( 'mysql', 'user' );
+    my $pass_column        = '';
+    my $auth_column        = '';
+
+    if ( grep { /^authentication_string$/msx } @mysql_user_columns ) {
+        $auth_column = 'authentication_string';
+    }
+
+    # Case-insensitive match for Password/password
+    my @pass_matches = grep { lc($_) eq 'password' } @mysql_user_columns;
+    if (@pass_matches) {
+        $pass_column = $pass_matches[0];
+    }
+
+    if ( $auth_column && $pass_column ) {
+        return "IF(plugin='mysql_native_password', $auth_column, $pass_column)";
+    }
+    elsif ($auth_column) {
+        return $auth_column;
+    }
+    elsif ($pass_column) {
+        return $pass_column;
+    }
+
+    return '';
+}
+
 sub get_tuning_info {
     my @infoconn = select_array "\\s";
     my ( $tkey, $tval );
@@ -3359,36 +3387,11 @@ sub security_recommendations {
 
     infoprint "$myvar{'version_comment'} - $myvar{'version'}";
 
-    my $PASS_COLUMN_NAME = 'password';
+    my $PASS_COLUMN_NAME = get_password_column_name();
 
-    # New table schema available since mysql-5.7 and mariadb-10.2
-    # But need to be checked
-    if (
-        ( $myvar{'version'} =~ /5\.7/ )
-        or (
-            ( $myvar{'version'} =~ /10\.[2-5]\..*/ )
-            and (  ( $myvar{'version'} =~ /MariaDB/i )
-                or ( $myvar{'version_comment'} =~ /MariaDB/i ) )
-        )
-      )
-    {
-        my $result_pass = execute_system_command(
-"$mysqlcmd $mysqllogin -Bse \"SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'password'\" 2>>$devnull"
-        );
-        my $result_auth = execute_system_command(
-"$mysqlcmd $mysqllogin -Bse \"SELECT 1 FROM information_schema.columns WHERE TABLE_SCHEMA = 'mysql' AND TABLE_NAME = 'user' AND COLUMN_NAME = 'authentication_string'\" 2>>$devnull"
-        );
-        if ( $result_pass && $result_auth ) {
-            $PASS_COLUMN_NAME =
-"IF(plugin='mysql_native_password', authentication_string, password)";
-        }
-        elsif ($result_auth) {
-            $PASS_COLUMN_NAME = 'authentication_string';
-        }
-        elsif ( !$result_pass ) {
-            infoprint "Skipped due to none of known auth columns exists";
-            return;
-        }
+    if ( $PASS_COLUMN_NAME eq '' ) {
+        infoprint "Skipped due to none of known auth columns exists";
+        return;
     }
     debugprint "Password column = $PASS_COLUMN_NAME";
 

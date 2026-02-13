@@ -1,5 +1,8 @@
-2.8.36 2026-02-02
+2.8.36 2026-02-13
 
+- fix: robust, version-agnostic detection of password column in mysql.user via schema inspection (Issue #22).
+- fix: correct regression in tests/test_issue_875.t by updating database mocks.
+- test: add comprehensive test suite for password column detection (tests/repro_issue_22.t).
 - fix: prevent creation of directory "0" when --dumpdir is not specified or set to 0 (Issue #20).
 - test: add reproduction test for Performance Schema disabled scenario (repro_pfs_disabled.t).
 - ci: fix Docker API mismatch in GitHub Actions by migrating to native services.

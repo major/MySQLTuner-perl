@@ -43,7 +43,13 @@ my $mock_login_success = 0;
 
     # Mock select_one and select_array to avoid DB connection
     *main::select_one = sub { return 0; };
-    *main::select_array = sub { return (); };
+    *main::select_array = sub {
+        my ($sql) = @_;
+        if ($sql =~ /FROM information_schema\.COLUMNS WHERE TABLE_SCHEMA='mysql' AND TABLE_NAME='user'/) {
+            return ('Host', 'User', 'authentication_string');
+        }
+        return ();
+    };
 }
 
 sub has_output {
