@@ -17,7 +17,7 @@ This directory contains the project's technical constitution, specialized skills
 | [`03_execution_rules.md`](./rules/03_execution_rules.md) | Core project constitution and hard execution constraints. |
 | [`04_best_practices.md`](./rules/04_best_practices.md) | Technical best practices and recommended internal patterns. |
 | [`05_memory_protocol.md`](./rules/05_memory_protocol.md) | Protocols for maintaining contextual consistency and history. |
-| [`remembers.md`](./rules/remembers.md) | No description available. |
+| [`remembers.md`](./rules/remembers.md) | "Persistent memory for emerging patterns and session-specific dynamic rules" |
 
 
 ## Specialized Capabilities & Knowledge
@@ -55,4 +55,4 @@ This directory contains the project's technical constitution, specialized skills
 
 
 ---
-*Generated automatically by `/doc-sync` on Sun Feb  1 02:32:12 CET 2026*
+*Generated automatically by `/doc-sync` on Fri Feb 13 07:38:49 CET 2026*
