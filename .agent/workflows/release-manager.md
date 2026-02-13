@@ -35,7 +35,7 @@ Execute the industrial-grade test suite against multiple DB versions.
 
 ```bash
 # 3. Validating against all core versions
-make test-it
+make test-all
 ```
 
 ### 3. Artifact Generation
