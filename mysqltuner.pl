@@ -2211,6 +2211,56 @@ sub arr2hash {
     }
 }
 
+sub check_privileges {
+    debugprint "Checking database privileges...";
+    my @grants     = select_array("SHOW GRANTS FOR CURRENT_USER()");
+    my $all_grants = join( " ", @grants );
+
+    # If the user has ALL PRIVILEGES or SUPER, we assume they have enough
+    if ( $all_grants =~ /ALL PRIVILEGES/i || $all_grants =~ /SUPER/i ) {
+        debugprint "Current user has high-level privileges (ALL or SUPER).";
+        return;
+    }
+
+    my @required_privs =
+      ( 'SELECT', 'PROCESS', 'EXECUTE', 'SHOW DATABASES', 'SHOW VIEW' );
+
+    # Version-specific privileges
+    if ( mysql_version_ge( 8, 0 ) && $myvar{'version'} !~ /mariadb/i ) {
+        push( @required_privs, 'REPLICATION SLAVE', 'REPLICATION CLIENT' );
+    }
+    elsif ( $myvar{'version'} =~ /mariadb/i && mysql_version_ge( 10, 5 ) ) {
+        push( @required_privs,
+            'BINLOG MONITOR',
+            'REPLICATION MASTER ADMIN',
+            'SLAVE MONITOR' );
+
+# MariaDB 11+ might use REPLICA MONITOR instead of SLAVE MONITOR, but SLAVE MONITOR is usually still there as an alias
+    }
+    else {
+        push( @required_privs, 'REPLICATION CLIENT' );
+    }
+
+    my @missing_privs = ();
+    foreach my $priv (@required_privs) {
+
+        # Use word boundaries and case-insensitive matching
+        if ( $all_grants !~ /\b$priv\b/i ) {
+            push( @missing_privs, $priv );
+        }
+    }
+
+    if (@missing_privs) {
+        badprint "Current user is missing the following privileges: "
+          . join( ", ", @missing_privs );
+        badprint "Some checks may be skipped or provide incomplete results.";
+        infoprint "Refer to README.md for the minimum required privileges.";
+    }
+    else {
+        debugprint "Current user has all required privileges.";
+    }
+}
+
 sub get_all_vars {
 
     # We need to initiate at least one query so that our data is useable
@@ -2228,6 +2278,9 @@ sub get_all_vars {
     push( @mysqlvarlist, select_array("SHOW GLOBAL VARIABLES") );
     arr2hash( \%myvar, \@mysqlvarlist );
     $result{'Variables'} = \%myvar;
+
+    # Check privileges after we have version and variable information
+    check_privileges();
 
     my @mysqlstatlist = select_array("SHOW STATUS");
     push( @mysqlstatlist, select_array("SHOW GLOBAL STATUS") );
