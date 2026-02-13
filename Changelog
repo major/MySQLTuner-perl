@@ -4,6 +4,7 @@
 - fix: correct regression in tests/test_issue_875.t by updating database mocks.
 - test: add comprehensive test suite for password column detection (tests/repro_issue_22.t).
 - fix: prevent creation of directory "0" when --dumpdir is not specified or set to 0 (Issue #20).
+- docs: fix broken endoflife.date links in README files (Issue #877).
 - test: add reproduction test for Performance Schema disabled scenario (repro_pfs_disabled.t).
 - ci: fix Docker API mismatch in GitHub Actions by migrating to native services.
 
