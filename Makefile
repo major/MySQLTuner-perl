@@ -41,7 +41,7 @@ tidy:
 	dos2unix ./mysqltuner.pl
 	perltidy -b ./mysqltuner.pl
 	git add ./mysqltuner.pl
-	git commit -m "Indenting mysqltuner at $(shell date --iso=seconds)"
+	git commit -m "style: tidy mysqltuner.pl" || echo "No changes to commit"
 
 check-tidy:
 	perltidy -st mysqltuner.pl | diff -q - mysqltuner.pl
@@ -49,29 +49,29 @@ check-tidy:
 generate_usage:
 	pod2markdown mysqltuner.pl >USAGE.md
 	git add ./USAGE.md
-	git commit -m "Generate USAGE.md at $(shell date --iso=seconds)"
+	git commit -m "docs: generate USAGE.md" || echo "No changes to commit"
 
 generate_cve:
 	perl ./build/updateCVElist.pl
 	git add ./vulnerabilities.csv
-	git commit -m "Generate CVE list at $(shell date --iso=seconds)"
+	git commit -m "docs: generate vulnerabilities list" || echo "No changes to commit"
 
 generate_version_file:
 	rm -f CURRENT_VERSION.txt
 	grep "# mysqltuner.pl - Version" ./mysqltuner.pl | awk '{ print $$NF}' > CURRENT_VERSION.txt
 	git add ./CURRENT_VERSION.txt
-	git commit -m "Generate CURRENT_VERSION.txt at $(shell date --iso=seconds)"
+	git commit -m "chore: generate CURRENT_VERSION.txt" || echo "No changes to commit"
 
 generate_eof_files:
 	bash ./build/endoflife.sh mariadb 
 	bash ./build/endoflife.sh mysql
 	git add ./*_support.md
-	git commit -m "Generate End Of Life (endoflive.date) at $(shell date --iso=seconds)" || echo "No changes to commit"
+	git commit -m "docs: generate end-of-life status files" || echo "No changes to commit"
 
 generate_features:
 	perl ./build/genFeatures.sh
 	git add ./FEATURES.md
-	git commit -m "Generate FEATURES.md at $(shell date --iso=seconds)"
+	git commit -m "docs: generate FEATURES.md" || echo "No changes to commit"
 
 increment_sub_version:
 	@echo "Incrementing sub version from $(VERSION) to $(UPDATE_SUB_VERSION)"
