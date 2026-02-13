@@ -13,4 +13,4 @@ category: tool
 python3 build/doc_sync.py
 ```
 
-1. Review the updated summary in [.agent/README.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/README.md).
+1. Review the updated summary in [.agent/README.md](file://.agent/README.md).

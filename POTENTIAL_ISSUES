@@ -44,9 +44,10 @@ Pre-existing anomalies found in examples/ directory:
 
 ### Environment/Lab Issues
 
-- [ ] **SQL Execution Failure (return code 256)**: Persistent across MySQL 8.x, 9.6 and Percona 8.0.
+- [x] **SQL Execution Failure (return code 256)**: Persistent across MySQL 8.x, 9.6 and Percona 8.0.
   - Found in: `examples/20260202_230352_mysql84/Standard/execution.log`, `examples/20260202_230050_mysql96/Standard/execution.log`.
-  - Notes: Likely related to Performance Schema visibility or specific system table access in laboratory containers.
+  - Fix: Issue #22 (Robust password column detection).
+  - Reproduce: `tests/repro_issue_22.t`.
 
 ## [2026-02-02 Audit] System Call & Core Perl Optimization
 

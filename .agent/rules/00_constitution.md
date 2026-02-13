@@ -32,13 +32,13 @@ Make `mysqltuner.pl` the most stable, portable, and reliable performance tuning 
 
 This project follows a standardized governance structure:
 
-- **Tier 00**: [00_constitution.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/00_constitution.md) (Absolute Truth)
-- **Tier 01**: [01_objective.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/01_objective.md) (Identity & Mission)
-- **Tier 02**: [02_architecture.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/02_architecture.md) (Environment)
-- **Tier 03**: [03_execution_rules.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/03_execution_rules.md) (Constraints)
-- **Tier 04**: [04_best_practices.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/04_best_practices.md) (Implementation)
-- **Tier 05**: [05_memory_protocol.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/05_memory_protocol.md) (History)
-- **Dynamic**: [remembers.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/.agent/rules/remembers.md) (Session Buffer)
+- **Tier 00**: [00_constitution.md](file:///.agent/rules/00_constitution.md) (Absolute Truth)
+- **Tier 01**: [01_objective.md](file:///.agent/rules/01_objective.md) (Identity & Mission)
+- **Tier 02**: [02_architecture.md](file:///.agent/rules/02_architecture.md) (Environment)
+- **Tier 03**: [03_execution_rules.md](file:///.agent/rules/03_execution_rules.md) (Constraints)
+- **Tier 04**: [04_best_practices.md](file:///.agent/rules/04_best_practices.md) (Implementation)
+- **Tier 05**: [05_memory_protocol.md](file:///.agent/rules/05_memory_protocol.md) (History)
+- **Dynamic**: [remembers.md](file:///.agent/rules/remembers.md) (Session Buffer)
 
 ## ✅ Verification
 

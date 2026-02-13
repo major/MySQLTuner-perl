@@ -1,8 +1,12 @@
 2.8.36 2026-02-13
 
+- fix: migrate CI workflows to native GitHub services to resolve Docker API version mismatch.
+- fix: modernize release workflow using softprops/action-gh-release@v2.
+- fix: enhance Docker publishing with Buildx setup for reliable multi-platform builds.
 - fix: robust, version-agnostic detection of password column in mysql.user via schema inspection (Issue #22).
 - fix: correct regression in tests/test_issue_875.t by updating database mocks.
 - test: add comprehensive test suite for password column detection (tests/repro_issue_22.t).
+- test: add reproduction test for Performance Schema disabled diagnostic (tests/repro_pfs_disabled.t).
 - fix: prevent creation of directory "0" when --dumpdir is not specified or set to 0 (Issue #20).
 - docs: fix broken endoflife.date links in README files (Issue #877).
 - test: add reproduction test for Performance Schema disabled scenario (repro_pfs_disabled.t).

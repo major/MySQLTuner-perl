@@ -15,7 +15,7 @@ Ensure consistency across versioning artifacts before cutting a release.
 TXT_VER=$(cat CURRENT_VERSION.txt | tr -d '[:space:]')
 
 # 2. mysqltuner.pl internal variable
-SCRIPT_VAR_VER=$(grep "my \$tunerversion =" mysqltuner.pl | cut -d'"' -f2)
+SCRIPT_VAR_VER=$(grep "our \$tunerversion =" mysqltuner.pl | cut -d'"' -f2)
 
 # 3. mysqltuner.pl header version
 SCRIPT_HEAD_VER=$(grep "# mysqltuner.pl - Version" mysqltuner.pl | head -n 1 | awk '{print $NF}')

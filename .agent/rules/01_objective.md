@@ -34,5 +34,5 @@ $$DYNAMIC\_CONTEXT$$
 
 ## ✅ Verification
 
-* Review [task.md](file:///home/jmren/.gemini/antigravity/brain/2fa184f4-13e1-4c64-bf13-57b4addd2797/task.md) for current status.
+* Review [task.md](file:///brain/2fa184f4-13e1-4c64-bf13-57b4addd2797/task.md) for current status.
 * Periodic roadmap reviews during `/release-preflight`.
