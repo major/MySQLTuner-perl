@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.8.36 - MySQL High Performance Tuning Script
+    MySQLTuner 2.8.37 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -15,7 +15,7 @@ See `mysqltuner --help` for a full list of available options and their categorie
 
 # VERSION
 
-Version 2.8.36
+Version 2.8.37
 &#x3d;head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
