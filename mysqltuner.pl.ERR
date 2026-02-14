@@ -1,0 +1,12 @@
+Perltidy version is 20230309
+
+mysqltuner.pl: Begin Error Output Stream
+3973: expecting 'else' to follow one of 'if|elsif|unless|case|when'
+
+There is no previous '{' to match a '}' on line 3985
+3985: }
+      ^
+3985: Starting negative indentation
+3990: resetting level to 0 at sub check_storage_engines
+10079: To see 17 non-critical warnings rerun with -w
+10079: To save a full .LOG file rerun with -g

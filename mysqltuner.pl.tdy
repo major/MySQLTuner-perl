@@ -43,7 +43,7 @@ use 5.005;
 use strict;
 use warnings;
 
-
+use diagnostics;
 use POSIX;
 use File::Spec;
 use Getopt::Long;
@@ -1637,21 +1637,9 @@ sub mysql_setup {
         exit 1;
     }
 
-    # Gather defaults file options
-    my $defaults_options = '';
-    if ( ( $opt{'defaults-file'} // '0' ) ne '0' && -r $opt{'defaults-file'} ) {
-        $defaults_options = "--defaults-file=\"$opt{'defaults-file'}\"";
-        debugprint "Using defaults-file: $opt{'defaults-file'}";
-    }
-    elsif ( ( $opt{'defaults-extra-file'} // '0' ) ne '0' && -r $opt{'defaults-extra-file'} ) {
-        $defaults_options = "--defaults-extra-file=\"$opt{'defaults-extra-file'}\"";
-        debugprint "Using defaults-extra-file: $opt{'defaults-extra-file'}";
-    }
-
     # MySQL Client defaults
     $mysqlcmd =~ s/\n$//g;
-    my $mysqlclidefaults =
-      execute_system_command("$mysqlcmd $defaults_options --print-defaults");
+    my $mysqlclidefaults = execute_system_command("$mysqlcmd --print-defaults");
     debugprint "MySQL Client: $mysqlclidefaults";
     if ( $mysqlclidefaults =~ /auto-vertical-output/ ) {
         badprint
@@ -1743,12 +1731,12 @@ sub mysql_setup {
     if ( $opt{user} ne 0 || $opt{container} ) {
         my $username = $opt{user} ne 0 ? $opt{user} : "root";
         $mysqllogin =
-            "$defaults_options -u $username "
+            "-u $username "
           . ( ( $opt{pass} ne 0 ) ? "-p'$opt{pass}' " : " " )
           . $remotestring;
         my $loginstatus =
           execute_system_command(
-            "$mysqlcmd $mysqllogin -Nrs -e 'select \"mysqld is alive\";'");
+            "$mysqlcmd -Nrs -e 'select \"mysqld is alive\";' $mysqllogin");
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint "Logged in using credentials passed on the command line";
             return 1;
@@ -1853,13 +1841,39 @@ sub mysql_setup {
             exit 1;
         }
     }
-    elsif ( $defaults_options ne '' ) {
-        # defaults-file or defaults-extra-file
-        $mysqllogin  = "$defaults_options $remotestring";
+    elsif ( $opt{'defaults-file'} and -r "$opt{'defaults-file'}" ) {
+
+        # defaults-file
+        debugprint "defaults file detected: $opt{'defaults-file'}";
+        my $mysqlclidefaults =
+          execute_system_command("$mysqlcmd --print-defaults");
+        debugprint "MySQL Client Default File: $opt{'defaults-file'}";
+
+        $mysqllogin = "--defaults-file=" . $opt{'defaults-file'};
         my $loginstatus =
           execute_system_command("$mysqladmincmd $mysqllogin ping");
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint "Logged in using credentials from defaults file account.";
+            return 1;
+        }
+    }
+    elsif ( $opt{'defaults-extra-file'}
+        and -r "$opt{'defaults-extra-file'}" )
+    {
+
+        # defaults-extra-file
+        debugprint "defaults extra file detected: $opt{'defaults-extra-file'}";
+        my $mysqlclidefaults =
+          execute_system_command("$mysqlcmd --print-defaults");
+        debugprint
+          "MySQL Client Extra Default File: $opt{'defaults-extra-file'}";
+
+        $mysqllogin = "--defaults-extra-file=" . $opt{'defaults-extra-file'};
+        my $loginstatus =
+          execute_system_command("$mysqladmincmd $mysqllogin ping");
+        if ( $loginstatus =~ /mysqld is alive/ ) {
+            goodprint
+              "Logged in using credentials from extra defaults file account.";
             return 1;
         }
     }
@@ -1877,7 +1891,7 @@ sub mysql_setup {
         infoprint "Using mysql to check login";
         my $loginstatus =
           execute_system_command(
-"$mysqlcmd $defaults_options $remotestring -Nrs -e 'select \"mysqld is alive\"' --connect-timeout=3"
+"$mysqlcmd $remotestring -Nrs -e 'select \"mysqld is alive\"' --connect-timeout=3"
           );
 
         #}
@@ -1932,7 +1946,7 @@ sub mysql_setup {
             }
             chomp($password);
             chomp($name);
-            $mysqllogin = "$defaults_options -u $name ";
+            $mysqllogin = "-u $name";
 
             if ( length($password) > 0 ) {
                 if ($is_win) {
@@ -3038,8 +3052,7 @@ sub get_kernel_info {
             $result{'OS'}{'Config'}{$param} = $val;
         }
     }
-    $prefix = get_transport_prefix();
-    my $swappiness;
+    my $prefix = get_transport_prefix();
     if ( $prefix eq '' && -f "/proc/sys/vm/swappiness" ) {
         if ( open( my $fh, '<', "/proc/sys/vm/swappiness" ) ) {
             $swappiness = <$fh>;
@@ -3955,15 +3968,16 @@ sub check_architecture {
             $arch = 64;
             goodprint "Operating on 64-bit architecture";
         }
-        else {
-            $arch = 32;
-            if ( $physical_memory > 2147483648 ) {
-                badprint
+    }
+}
+    else {
+        $arch = 32;
+        if ( $physical_memory > 2147483648 ) {
+            badprint
 "Switch to 64-bit OS - MySQL cannot currently use all of your RAM";
-            }
-            else {
-                goodprint "Operating on 32-bit architecture with less than 2GB RAM";
-            }
+        }
+        else {
+            goodprint "Operating on 32-bit architecture with less than 2GB RAM";
         }
     }
     $result{'OS'}{'Architecture'} = "$arch bits";

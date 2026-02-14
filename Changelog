@@ -1,6 +1,12 @@
 2.8.37 2026-02-14
 
-- refactor: replace system calls (whoami, hostname, printenv) with native Core Perl functions.
+- refactor: replace massive system calls (awk, grep, uname, getconf, sysctl) with native Core Perl functions for Linux.
+- feat: implement native parsing for /proc/cpuinfo, /proc/meminfo, /proc/sys/vm/swappiness and /etc/resolv.conf.
+- refactor: optimize CPU core count, logical CPU detection, and OS memory setup for local environments.
+- refactor: use POSIX::uname and POSIX::sysconf for standardized system and architecture reporting.
+- fix: resolve MariaDB socket authentication regression and restore automatic credential discovery (Issue #875).
+- fix: remediate Prototype Pollution vulnerability in lodash (CVE-2021-23341) by forcing update to 4.17.23.
+- test: add reproduction test for authentication discovery chain (tests/issue_875_regression.t).
 - chore: bump version to 2.8.37.
 
 2.8.36 2026-02-13

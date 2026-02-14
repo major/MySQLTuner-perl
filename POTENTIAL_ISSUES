@@ -57,21 +57,21 @@ The following external commands are currently used via `execute_system_command` 
 
 #### High Priority Replacements (Low Complexity)
 
-- [ ] **Command**: `whoami` (line 701)
-  - **Replacement**: `(getpwuid($<))[0]` or `POSIX::cuserid()`
-- [ ] **Command**: `env` / `printenv` (lines 1673, 1890, 1955)
+- [x] **Command**: `whoami` (line 701)
+  - **Replacement**: `(getpwuid($<))[0]` (Native core Perl used).
+- [x] **Command**: `env` / `printenv` (lines 1673, 1890, 1955)
   - **Replacement**: Access the `%ENV` hash directly.
-- [ ] **Command**: `hostname` (line 3051)
+- [x] **Command**: `hostname` (line 3051)
   - **Replacement**: `use Sys::Hostname; hostname();` (Core since Perl 5.6).
-- [ ] **Command**: `grep ... /proc/meminfo` (lines 1399, 1414, 3099)
+- [x] **Command**: `grep ... /proc/meminfo` (lines 1399, 1414, 3099)
   - **Replacement**: Open `/proc/meminfo` and parse line-by-line (Core file handles).
-- [ ] **Command**: `grep -c ^processor /proc/cpuinfo` (line 949)
+- [x] **Command**: `grep -c ^processor /proc/cpuinfo` (line 949)
   - **Replacement**: Open `/proc/cpuinfo` and count lines starting with `processor`.
-- [ ] **Command**: `which` (lines 1552, 1576)
+- [x] **Command**: `which` (lines 1552, 1576)
   - **Replacement**: Iterate through `split(/:/, $ENV{PATH})` and check file existence with `-x`.
-- [ ] **Command**: `getconf PAGESIZE` (line 2718)
+- [x] **Command**: `getconf PAGESIZE` (line 2718)
   - **Replacement**: `use POSIX; POSIX::sysconf(POSIX::_SC_PAGESIZE);`
-- [ ] **Command**: `uname` (lines 1108, 1395, 3044, 3049, 3117)
+- [x] **Command**: `uname` (lines 1108, 1395, 3044, 3049, 3117)
   - **Replacement**: `use POSIX; POSIX::uname();` or `$^O`.
 
 #### Medium Priority Replacements (Environmental Specifics)
@@ -82,3 +82,7 @@ The following external commands are currently used via `execute_system_command` 
   - **Replacement**: Read `/proc/uptime` (Linux-only) or calculate via `$^T` (script start time) for script uptime. System uptime requires `POSIX` / `/proc`.
 - [ ] **Command**: `df` (lines 2790, 2791)
   - **Replacement**: No cross-platform Core Perl replacement. Keep for now or use `statvfs` where available.
+- [x] **Command**: `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo` (line 2981)
+  - **Replacement**: Native Perl parsing of `/proc/cpuinfo`.
+- [x] **Command**: `sysctl -n vm.swappiness` (line 3052)
+  - **Replacement**: Native Perl parsing of `/proc/sys/vm/swappiness`.
