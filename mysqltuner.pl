@@ -43,7 +43,6 @@ use 5.005;
 use strict;
 use warnings;
 
-
 use POSIX;
 use File::Spec;
 use Getopt::Long;
@@ -927,8 +926,8 @@ sub cpu_cores {
             my %cores;
             if ( open( my $proc_cpuinfo, '<', '/proc/cpuinfo' ) ) {
                 while (<$proc_cpuinfo>) {
-                    if ( /^physical id\s*:\s*(.*)/ ) { $cpus{$1} = 1; }
-                    if ( /^core id\s*:\s*(.*)/ )     { $cores{$1} = 1; }
+                    if (/^physical id\s*:\s*(.*)/) { $cpus{$1}  = 1; }
+                    if (/^core id\s*:\s*(.*)/)     { $cores{$1} = 1; }
                 }
                 close $proc_cpuinfo;
                 my $cntCPU = ( scalar keys %cpus ) * ( scalar keys %cores );
@@ -951,7 +950,7 @@ sub cpu_cores {
     if ($is_win) {
         my $cntCPU =
           execute_system_command(
-            'wmic cpu get NumberOfCores| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
+'wmic cpu get NumberOfCores| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
           );
         chomp $cntCPU;
         return $cntCPU + 0;
@@ -989,7 +988,7 @@ sub logical_cpu_cores {
     if ($is_win) {
         my $cntCPU =
           execute_system_command(
-            'wmic cpu get NumberOfLogicalProcessors| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
+'wmic cpu get NumberOfLogicalProcessors| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
           );
         chomp $cntCPU;
         return $cntCPU + 0;
@@ -1161,8 +1160,8 @@ sub os_setup {
         if ( $os =~ /Linux|CYGWIN/ ) {
             if ( $prefix eq '' && open( my $meminfo, '<', '/proc/meminfo' ) ) {
                 while (<$meminfo>) {
-                    if (/^MemTotal:\s+(\d+)/i)  { $physical_memory = $1 * 1024; }
-                    if (/^SwapTotal:\s+(\d+)/i) { $swap_memory     = $1 * 1024; }
+                    if (/^MemTotal:\s+(\d+)/i) { $physical_memory = $1 * 1024; }
+                    if (/^SwapTotal:\s+(\d+)/i) { $swap_memory = $1 * 1024; }
                 }
                 close $meminfo;
             }
@@ -1643,8 +1642,11 @@ sub mysql_setup {
         $defaults_options = "--defaults-file=\"$opt{'defaults-file'}\"";
         debugprint "Using defaults-file: $opt{'defaults-file'}";
     }
-    elsif ( ( $opt{'defaults-extra-file'} // '0' ) ne '0' && -r $opt{'defaults-extra-file'} ) {
-        $defaults_options = "--defaults-extra-file=\"$opt{'defaults-extra-file'}\"";
+    elsif ( ( $opt{'defaults-extra-file'} // '0' ) ne '0'
+        && -r $opt{'defaults-extra-file'} )
+    {
+        $defaults_options =
+          "--defaults-extra-file=\"$opt{'defaults-extra-file'}\"";
         debugprint "Using defaults-extra-file: $opt{'defaults-extra-file'}";
     }
 
@@ -1734,7 +1736,8 @@ sub mysql_setup {
         if (   ( $ENV{MARIADB_ROOT_PASSWORD} // '' ) ne ''
             || ( $ENV{MYSQL_ROOT_PASSWORD} // '' ) ne '' )
         {
-            $opt{pass} = $ENV{MARIADB_ROOT_PASSWORD} || $ENV{MYSQL_ROOT_PASSWORD};
+            $opt{pass} =
+              $ENV{MARIADB_ROOT_PASSWORD} || $ENV{MYSQL_ROOT_PASSWORD};
             debugprint "Detected password from container environment";
         }
     }
@@ -1854,8 +1857,9 @@ sub mysql_setup {
         }
     }
     elsif ( $defaults_options ne '' ) {
+
         # defaults-file or defaults-extra-file
-        $mysqllogin  = "$defaults_options $remotestring";
+        $mysqllogin = "$defaults_options $remotestring";
         my $loginstatus =
           execute_system_command("$mysqladmincmd $mysqllogin ping");
         if ( $loginstatus =~ /mysqld is alive/ ) {
@@ -2795,7 +2799,7 @@ sub get_process_memory {
             if ( $line =~ /^\d+\s+(\d+)/ ) {
                 my $rss_pages = $1;
 
-        # Get page size (default to 4096 if uncertain, but usually 4096 on Linux)
+       # Get page size (default to 4096 if uncertain, but usually 4096 on Linux)
                 my $pagesize = POSIX::sysconf(POSIX::_SC_PAGESIZE) || 4096;
                 debugprint "Memory for PID $pid from /proc: "
                   . ( $rss_pages * $pagesize );
@@ -2963,7 +2967,7 @@ sub is_virtual_machine {
         if ( $prefix eq '' && open( my $cpuinfo, '<', '/proc/cpuinfo' ) ) {
             my $isVm = 0;
             while (<$cpuinfo>) {
-                if ( /^flags.*\ hypervisor / ) { $isVm = 1; last; }
+                if (/^flags.*\ hypervisor /) { $isVm = 1; last; }
             }
             close $cpuinfo;
             return $isVm;
@@ -3150,16 +3154,22 @@ sub get_system_info {
     }
 
     $result{'OS'}{'Type'} =
-      $is_win ? 'Windows' : ( $prefix eq '' ? $sysname : execute_system_command('uname -o') );
+      $is_win
+      ? 'Windows'
+      : ( $prefix eq '' ? $sysname : execute_system_command('uname -o') );
     infoprint "Operating System Type : "
-      . ( $is_win ? 'Windows' : ( $prefix eq '' ? $sysname : execute_system_command('uname -o') ) );
+      . ( $is_win
+        ? 'Windows'
+        : ( $prefix eq '' ? $sysname : execute_system_command('uname -o') ) );
 
     $result{'OS'}{'Kernel'} =
       $is_win
       ? execute_system_command('ver')
       : ( $prefix eq '' ? $release : execute_system_command('uname -r') );
     infoprint "Kernel Release        : "
-      . ( $is_win ? execute_system_command('ver') : ( $prefix eq '' ? $release : execute_system_command('uname -r') ) );
+      . ( $is_win
+        ? execute_system_command('ver')
+        : ( $prefix eq '' ? $release : execute_system_command('uname -r') ) );
 
     $result{'OS'}{'Hostname'} =
       ( !$is_win && $prefix eq '' ) ? $nodename : Sys::Hostname::hostname();
@@ -3170,7 +3180,9 @@ sub get_system_info {
 'ipconfig |perl -ne "if (/IPv. Address/) {print s/^.*?([\\d\\.]*)\\s*$/$1/r; exit; }"'
       )
       : execute_system_command('hostname -I');
-    infoprint "Hostname              : " . ( ( !$is_win && $prefix eq '' ) ? $nodename : Sys::Hostname::hostname() );
+    infoprint "Hostname              : "
+      . (
+        ( !$is_win && $prefix eq '' ) ? $nodename : Sys::Hostname::hostname() );
     infoprint "Network Cards         : ";
 
     if ( which( "ip", $ENV{'PATH'} ) ) {
@@ -3179,7 +3191,10 @@ sub get_system_info {
     elsif ( which( "ifconfig", $ENV{'PATH'} ) ) {
         infocmd_tab "ifconfig| grep -A1 mtu";
     }
-    infoprint "Internal IP           : " . ( ( !$is_win && $prefix eq '' ) ? execute_system_command('hostname -I') : infocmd_one "hostname -I" );
+    infoprint "Internal IP           : "
+      . ( ( !$is_win && $prefix eq '' )
+        ? execute_system_command('hostname -I')
+        : infocmd_one "hostname -I" );
     if ( which( "ip", $ENV{'PATH'} ) ) {
         $result{'Network'}{'Internal Ip'} =
           execute_system_command('ip addr | grep -A1 mtu');
@@ -3197,7 +3212,8 @@ sub get_system_info {
             $ext_ip = infocmd_one "$httpcli -s -m 3 ipecho.net/plain";
         }
         elsif ( $httpcli =~ /wget$/ ) {
-            $ext_ip = infocmd_one "$httpcli -q -t 1 -T 3 -q -O - ipecho.net/plain";
+            $ext_ip =
+              infocmd_one "$httpcli -q -t 1 -T 3 -q -O - ipecho.net/plain";
         }
     }
     infoprint "External IP           : " . $ext_ip;
@@ -3215,7 +3231,8 @@ sub get_system_info {
         $ns_str = join( ', ', @ns_list );
     }
     else {
-        $ns_str = infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
+        $ns_str =
+          infocmd_one "grep 'nameserver' /etc/resolv.conf \| awk '{print \$2}'";
     }
     infoprint "Name Servers          : " . $ns_str;
 
@@ -3901,7 +3918,7 @@ sub check_architecture {
         $arch = $opt{defaultarch};
         return;
     }
-    elsif ( $is_win ) {
+    elsif ($is_win) {
         if ( execute_system_command('wmic os get osarchitecture') =~ /64/ ) {
             goodprint "Operating on 64-bit architecture";
             $arch = 64;
@@ -3910,7 +3927,8 @@ sub check_architecture {
     else {
         my ( $sysname, $nodename, $release, $version, $machine );
         if ( $prefix eq '' ) {
-            ( $sysname, $nodename, $release, $version, $machine ) = POSIX::uname();
+            ( $sysname, $nodename, $release, $version, $machine ) =
+              POSIX::uname();
         }
         else {
             $sysname = execute_system_command('uname');
@@ -3942,12 +3960,14 @@ sub check_architecture {
             }
         }
         elsif ( $sysname =~ /Darwin/ && $machine =~ /Power Macintosh/ ) {
-            # Darwin box.local 9.8.0 Darwin Kernel Version 9.8.0: Wed Jul 15 16:57:01 PDT 2009; root:xnu1228.15.4~1/RELEASE_PPC Power Macintosh
+
+# Darwin box.local 9.8.0 Darwin Kernel Version 9.8.0: Wed Jul 15 16:57:01 PDT 2009; root:xnu1228.15.4~1/RELEASE_PPC Power Macintosh
             $arch = 64;
             goodprint "Operating on 64-bit architecture";
         }
         elsif ( $sysname =~ /Darwin/ && $machine =~ /x86_64/ ) {
-            # Darwin gibas.local 12.6.0 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
+
+# Darwin gibas.local 12.6.0 Darwin Kernel Version 12.3.0: Sun Jan 6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
             $arch = 64;
             goodprint "Operating on 64-bit architecture";
         }
@@ -3962,7 +3982,8 @@ sub check_architecture {
 "Switch to 64-bit OS - MySQL cannot currently use all of your RAM";
             }
             else {
-                goodprint "Operating on 32-bit architecture with less than 2GB RAM";
+                goodprint
+                  "Operating on 32-bit architecture with less than 2GB RAM";
             }
         }
     }
