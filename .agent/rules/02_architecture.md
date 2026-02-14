@@ -1,12 +1,18 @@
 ---
 trigger: always_on
+description: Immutable project architecture and technology stack.
+category: governance
 ---
+# **3\. 🏗️ TECHNICAL ENVIRONMENT & ARCHITECTURE**
 
-## **3\. 🏗️ TECHNICAL ENVIRONMENT & ARCHITECTURE**
+## 🧠 Rationale
+
+Preserving the single-file architecture of `mysqltuner.pl` is a core technical constraint that ensures maximum portability and ease of deployment.
+
+## 🛠️ Implementation
 
 $$IMMUTABLE$$  
 Component Map:  
-Modification prohibited without explicit request.  
 
 | File/Folder | Functionality | Criticality |
 | :--- | :--- | :--- |
@@ -19,7 +25,12 @@ Modification prohibited without explicit request.
 
 **Technology Stack:**
 
-* **Language:** Perl (Core script)
-* **Testing:** Perl (prove, Test::More)
-* **Automation:** Makefile, Bash, Docker, Python, Per
-* **DBMS Compatibility:** MySQL, MariaDB, Percona, AWS, AWS Aurora, Docker, GCP, Azure
+- **Language:** Perl (Core script)
+- **Testing:** Perl (prove, Test::More)
+- **Automation:** Makefile, Bash, Docker, Python
+- **DBMS Compatibility:** MySQL, MariaDB, Percona, AWS, AWS Aurora, GCP, Azure
+
+## ✅ Verification
+
+- `/compliance-sentinel` must fail if `mysqltuner.pl` is split or if non-core dependencies are added.
+- All builds must pass via `make docker_build`.

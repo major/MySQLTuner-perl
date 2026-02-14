@@ -1,5 +1,7 @@
 ---
+trigger: explicit_call
 description: Transform a running production issue into a reproducible test case
+category: tool
 ---
 
 # Snapshot to Test Workflow

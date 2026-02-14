@@ -22,7 +22,7 @@
 
 <div class="d-flex align-items-start">
   <div class="nav flex-column nav-pills me-3 justify-content-rigth" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-    {% set sections = { "Recommendations": "bi bi-list-check", "Variables": "bi bi-list-check", "Status": "bi bi-list-check", "Calculations": "bi bi-list-check" } %}
+    {% set sections = { "Recommendations": "bi bi-list-check", "Modeling": "bi bi-layout-text-sidebar-reverse", "Variables": "bi bi-list-check", "Status": "bi bi-list-check", "Calculations": "bi bi-list-check" } %}
     {% for etab in sections %}
       <button class="nav-link{% if loop.index == 1 %} active{% endif %}" id="v-pills-{{ etab }}-tab" data-bs-toggle="pill" data-bs-target="#v-pills-{{ etab }}" type="button" role="tab" aria-controls="v-pills-{{ etab }}" aria-selected="true"><i class="{{ sections[etab] }}"></i>{{ etab }}</button>
     {% endfor %}
@@ -66,6 +66,44 @@
       </table>  
     </div>
     
+    <div class="tab-pane fade" id="v-pills-Modeling" role="tabpanel" aria-labelledby="v-pills-Modeling-tab">
+      <h3><i class="bi bi-layout-text-sidebar-reverse"></i>Modeling Analysis</h3>
+      <script>
+        function modFunction() {
+          var input, filter, table, tr, td, i, txtValue;
+          input = document.getElementById("modInput");
+          filter = input.value.toUpperCase();
+          table = document.getElementById("modTable");
+          tr = table.getElementsByTagName("tr");
+          for (i = 0; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[1];
+            if (td) {
+              txtValue = td.textContent || td.innerText;
+              if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+              } else {
+                tr[i].style.display = "none";
+              }
+            }
+          }
+        }
+      </script>
+      <table class="table" id="modTable">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Modeling Insights <input type="text" id="modInput" onkeyup="modFunction()" placeholder="Search for insights.." title="Type in a name"\></th>
+          </tr>
+        </thead>
+        <tbody class="results">{% for insight in Modeling %}
+          <tr>
+              <td> {{ loop.index }}</td>
+              <td> {{ insight }}</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+
     <div class="tab-pane fade" id="v-pills-Variables" role="tabpanel" aria-labelledby="v-pills-Variables-tab">
       <h3><i class="bi bi-list-check"></i>System variables</h3>
       <ul>

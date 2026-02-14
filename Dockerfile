@@ -23,11 +23,10 @@ COPY ./basic_passwords.txt /basic_passwords.txt
 COPY ./template_example.tpl /template.tpl
 
 #Problem with generateion of CVE files
-#COPY ./vulnerabilities.csv /vulnerabilities.txt
-#"--cvefile", "/vulnerabilities.txt", 
+COPY ./vulnerabilities.csv /vulnerabilities.txt
+
 ENTRYPOINT [ "perl", "/mysqltuner.pl", "--passwordfile", "/basic_passwords.txt",\
-  "--nosysstat", "--defaults-file", \
+  "--nosysstat", "--defaults-file", "--cvefile", "/vulnerabilities.txt", \
   "/defaults.cnf", "--dumpdir", "/results", "--outputfile", \
   "/results/mysqltuner.txt", "--template", "/template.tpl", \
-  "--reportfile", "/results/mysqltuner.html" ]
-CMD ["--verbose" ]
+  "--reportfile", "/results/mysqltuner.html" , "--verbose" ]

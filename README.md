@@ -56,7 +56,7 @@ Test result are available here for LTS only:
 * Percona XtraDB cluster (full support)
 * MySQL Replication (partial support, no test environment)
 
-Thanks to [endoflife.date](endoflife.date)
+Thanks to [endoflife.date](https://endoflife.date/)
 
 * Refer to [MariaDB Supported versions](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mariadb_support.md).
 * Refer to [MySQL Supported versions](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysql_support.md).
@@ -94,7 +94,31 @@ Unmaintenained stuff from MySQL or MariaDB
 
 * Perl 5.6 or later (with [perl-doc](https://metacpan.org/release/DAPM/perl-5.14.4/view/pod/perldoc.pod) package)
 * Unix/Linux based operating system (tested on Linux, BSD variants, and Solaris variants)
-* Unrestricted read access to the MySQL server
+* Unrestricted read access to the MySQL server (see Privileges below)
+
+***PRIVILEGES***
+--
+
+To run MySQLTuner with all features, the following privileges are required:
+
+**MySQL 8.0+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**MariaDB 10.5+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION MASTER ADMIN, SLAVE MONITOR ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**Legacy versions**:
+
+```sql
+GRANT SELECT, PROCESS, EXECUTE, REPLICATION CLIENT, SHOW DATABASES, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
 OS root access recommended for MySQL < 5.1
 
 ***WARNING***
@@ -437,11 +461,6 @@ While MySQL tuner itself will not make any changes to your server, blindly imple
 
 Always ensure you understand the implications of each suggestion before applying it to your server.
 
-**Question: Can I use MySQL tuner for optimizing other database systems like PostgreSQL or SQL Server ?**
-
-MySQL tuner is specifically designed for MySQL servers.
-To optimize other database systems, you would need to use tools designed for those systems, such as pgTune for PostgreSQL or SQL Server's built-in performance tools.
-
 **Question: Does MySQL tuner support MariaDB and Percona Server ?**
 
 Yes, MySQL tuner supports MariaDB and Percona Server since they are derivatives of MySQL and share a similar architecture. The script can analyze and provide recommendations for these systems as well.
@@ -462,15 +481,27 @@ Be cautious when implementing changes to ensure the stability and performance of
 
 If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
 
-**Question: Why does MySQLTuner keep asking me the login credentials for MySQL over and over?**
-
-The script will try its best to log in via any means possible.  It will check for ~/.my.cnf files, Plesk password files, and empty password root logins.  If none of those are available, then you'll be prompted for a password.  If you'd like the script to run in an automated fashion without user intervention, then create a .my.cnf file in your home directory which contains:
-
- [client]
- user=someusername
- password=thatuserspassword
-
 Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.
+
+**Question: I get "ERROR 1524 (HY000): Plugin 'unix_socket' is not loaded" even with unix_socket=OFF. How to fix?**
+
+This occurs because the MariaDB client attempts to use the `unix_socket` plugin by default when no user/password is provided.
+
+* **Solution 1 (Recommended):** Use a `~/.my.cnf` file as described above to provide explicit credentials.
+* **Solution 2:** Pass credentials directly: `perl mysqltuner.pl --user root --pass your_password`.
+
+**Question: How to securely re-enable `unix_socket` authentication?**
+
+If you decide to use `unix_socket` (which allows the OS `root` user to log in to MariaDB `root` without a password), follow these steps:
+
+1. Ensure the plugin is enabled in `/etc/my.cnf`: `unix_socket=ON` (or remove `OFF`).
+2. In MariaDB, set the authentication plugin for the root user:
+
+   ```sql
+   ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket;
+   ```
+
+3. Verify that the `auth_socket` or `unix_socket` plugin is ACTIVE in `SHOW PLUGINS`.
 
 **Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
 
@@ -491,15 +522,6 @@ $mysql_config_editor print
 user = someusername
 password = *****
 host = localhost
-```
-
-**Question: What's minimum privileges needed by a specific mysqltuner user in database ?**
-
-```bash
- mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
- SHOW DATABASES,SHOW VIEW
- ON *.*
- TO 'mysqltuner'@'localhost' identified by pwd1234;
 ```
 
 **Question: It's not working on my OS! What gives?!**
@@ -589,7 +611,6 @@ MySQLTuner and Vagrant
     mariadb                  10.3                47dff68107c4        12 days ago         343MB
     mariadb                  10.4                92495405fc36        12 days ago         356MB
     mysql                    5.6                 95e0fc47b096        2 weeks ago         257MB
-    mysql                    5.7                 383867b75fd2        2 weeks ago         373MB
     mysql                    8.0                 b8fd9553f1f0        2 weeks ago         445MB
     percona/percona-server   5.7                 ddd245ed3496        5 weeks ago         585MB
     percona/percona-server   5.6                 ed0a36e0cf1b        6 weeks ago         421MB
@@ -611,7 +632,6 @@ MySQLTuner and Vagrant
     3dda408c91b0        percona/percona-server:8.0   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:4306->3306/tcp   percona80
     600a4e7e9dcd        mysql:5.5                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3309->3306/tcp              mysql55
     4bbe54342e5d        mysql:5.6                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3308->3306/tcp              mysql56
-    a49783249a11        mysql:5.7                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:3307->3306/tcp   mysql57
     d985820667c2        mysql:8.0                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3306->3306/tcp, 33060/tcp   mysql 8    0
 
 Contributions welcome

@@ -1,6 +1,10 @@
 ---
+trigger: explicit_call
 description: Rollback a failed release (delete tags and revert commits)
+category: tool
 ---
+
+# Git Rollback Workflow
 
 1. **Delete Local and Remote Tag**
    - Identify the tag to remove from `CURRENT_VERSION.txt`.

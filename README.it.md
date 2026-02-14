@@ -56,7 +56,7 @@ I risultati dei test sono disponibili qui solo per LTS:
 * Cluster Percona XtraDB (supporto completo)
 * Replica MySQL (supporto parziale, nessun ambiente di test)
 
-Grazie a [endoflife.date](endoflife.date)
+Grazie a [endoflife.date](https://endoflife.date/)
 
 * Fare riferimento a [Versioni supportate di MariaDB](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mariadb_support.md).
 * Fare riferimento a [Versioni supportate di MySQL](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysql_support.md).
@@ -93,8 +93,32 @@ Cose non mantenute da MySQL o MariaDB
 ***REQUISITI MINIMI***
 
 * Perl 5.6 o successivo (con pacchetto [perl-doc](https://metacpan.org/release/DAPM/perl-5.14.4/view/pod/perldoc.pod))
-* Sistema operativo basato su Unix/Linux (testato su Linux, varianti BSD e varianti Solaris)
-* Accesso in lettura illimitato al server MySQL
+* Sistema operativo basato su Unix/Linux (testé su Linux, varianti BSD e varianti Solaris)
+* Accesso in lettura illimitato al server MySQL (vedi Privilegi di seguito)
+
+***PRIVILEGI***
+--
+
+Per eseguire MySQLTuner con tutte le funzionalità, sono richiesti i seguenti privilegi:
+
+**MySQL 8.0+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**MariaDB 10.5+**:
+
+```sql
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION MASTER ADMIN, SLAVE MONITOR ON *.* TO 'mysqltuner'@'localhost';
+```
+
+**Versioni legacy**:
+
+```sql
+GRANT SELECT, PROCESS, EXECUTE, REPLICATION CLIENT, SHOW DATABASES, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+```
+
 Accesso root al sistema operativo consigliato per MySQL < 5.1
 
 ***AVVERTIMENTO***
@@ -437,11 +461,6 @@ Sebbene MySQL tuner stesso non apporterà alcuna modifica al tuo server, l'imple
 
 Assicurati sempre di comprendere le implicazioni di ogni suggerimento prima di applicarlo al tuo server.
 
-**Domanda: posso usare MySQL tuner per ottimizzare altri sistemi di database come PostgreSQL o SQL Server?**
-
-MySQL tuner è progettato specificamente per i server MySQL.
-Per ottimizzare altri sistemi di database, sarebbe necessario utilizzare strumenti progettati per tali sistemi, come pgTune per PostgreSQL o gli strumenti di prestazione integrati di SQL Server.
-
 **Domanda: MySQL tuner supporta MariaDB e Percona Server?**
 
 Sì, MySQL tuner supporta MariaDB e Percona Server poiché sono derivati ​​di MySQL e condividono un'architettura simile. Lo script può analizzare e fornire raccomandazioni anche per questi sistemi.
@@ -462,15 +481,27 @@ Sii cauto quando implementi le modifiche per garantire la stabilità e le presta
 
 Se il tuo DBA prende costantemente il tuo parcheggio e ti ruba il pranzo dal frigorifero, allora potresti volerlo considerare, ma questa è una tua decisione.
 
-**Domanda: perché MySQLTuner continua a chiedermi le credenziali di accesso per MySQL più e più volte?**
+Una volta creato, assicurati che sia di proprietà del tuo utente e che la modalità del file sia 0600. Ciò dovrebbe impedire agli occhi indiscrets di ottenere le credenziali di accesso al database in condizioni normali.
 
-Lo script farà del suo meglio per accedere con ogni mezzo possibile. Verificherà i file ~/.my.cnf, i file delle password di Plesk e gli accessi root con password vuota. Se nessuno di questi è disponibile, ti verrà richiesta una password. Se desideri che lo script venga eseguito in modo automatizzato senza l'intervento dell'utente, crea un file .my.cnf nella tua home directory che contenga:
+**Domanda: ricevo "ERROR 1524 (HY000): Plugin 'unix_socket' is not loaded" anche con unix_socket=OFF. Come risolvere?**
 
- [client]
- user=someusername
- password=thatuserspassword
+Ciò accade perché il client MariaDB tenta di utilizzare il plugin `unix_socket` per impostazione predefinita quando non viene fornito alcun utente/password.
 
-Una volta creato, assicurati che sia di proprietà del tuo utente e che la modalità del file sia 0600. Ciò dovrebbe impedire agli occhi indiscreti di ottenere le credenziali di accesso al database in condizioni normali.
+* **Soluzione 1 (consigliata):** usa un file `~/.my.cnf` come descritto sopra per fornire credenziali esplicite.
+* **Soluzione 2:** passa le credenziali direttamente: `perl mysqltuner.pl --user root --pass vostra_password`.
+
+**Domanda: come riabilitare in modo sicuro l'autenticazione `unix_socket`?**
+
+Se decidi di utilizzare `unix_socket` (che consente all'utente `root` del sistema operativo di accedere a MariaDB `root` senza password), segui questi passaggi:
+
+1. Assicurati che il plugin sia abilitato in `/etc/my.cnf`: `unix_socket=ON` (o rimuovi `OFF`).
+2. In MariaDB, imposta il plugin di autenticazione per l'utente root:
+
+   ```sql
+   ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket;
+   ```
+
+3. Verifica che il plugin `auth_socket` o `unix_socket` sia `ACTIVE` in `SHOW PLUGINS`.
 
 **Domanda: c'è un altro modo per proteggere le credenziali sulle ultime distribuzioni di MySQL e MariaDB?**
 
@@ -491,15 +522,6 @@ $mysql_config_editor print
 user = someusername
 password = *****
 host = localhost
-```
-
-**Domanda: quali sono i privilegi minimi necessari per un utente specifico di mysqltuner nel database?**
-
-```bash
- mysql>GRANT SELECT, PROCESS,EXECUTE, REPLICATION CLIENT,
- SHOW DATABASES,SHOW VIEW
- ON *.*
- TO 'mysqltuner'@'localhost' identified by pwd1234;
 ```
 
 **Domanda: non funziona sul mio sistema operativo! Che succede?!**

@@ -1,0 +1,38 @@
+{
+  "name": "mysqltuner-perl",
+  "version": "1.0.0",
+  "description": "![MySQLTuner-perl](mtlogo2.png)",
+  "main": "index.js",
+  "directories": {
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "commit": "cz",
+    "lint:commit": "commitlint --from=HEAD~1",
+    "test": "prove tests/*.t",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmrenouard/MySQLTuner-perl.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jmrenouard/MySQLTuner-perl/issues"
+  },
+  "homepage": "https://github.com/jmrenouard/MySQLTuner-perl#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^20.3.1",
+    "@commitlint/config-conventional": "^20.3.1",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.7"
+  },
+  "overrides": {
+    "lodash": "4.17.23"
+  }
+}

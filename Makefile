@@ -12,52 +12,66 @@ help:
 	@echo "  generate_cve:      Generate vulnerabilities.csv"
 	@echo "  generate_features: Generate FEATURES.md"
 	@echo "  tidy:              Tidy mysqltuner.pl"
+	@echo "  check-tidy:        Check if mysqltuner.pl is tidy"
 	@echo "  installdep_debian: Install dependencies on Debian"
 	@echo "  increment_sub_version: Increment sub version"
 	@echo "  increment_minor_version: Increment minor version"
 	@echo "  increment_major_version: Increment major version"
 	@echo "  push:              Push to GitHub"
 	@echo "  vendor_setup:      Setup external test repositories (multi-db-docker-env, test_db)"
-	@echo "  test:              Run multi-version database tests (requires Docker)"
+	@echo "  test:              Run database lab tests (mysql84, mariadb1011, percona80)"
+	@echo "  test-all:          Run all database lab tests"
+	@echo "  test-container:    Run tests against a specific CONTAINER (e.g. CONTAINER=my_db)"
+	@echo "  audit:             Run audit on remote HOST (e.g. HOST=db-server.com)"
+	@echo "  audit-logs:        Run local audit on laboratory logs (examples/ directory)"
+	@echo "  unit-tests:        Run unit and regression tests in tests/ directory"
 	@echo "  clean_examples:    Cleanup examples directory (KEEP=n, default 5)"
+	@echo "  setup_commits:     Install Conventional Commits tools (Node.js)"
 
 
-installdep_debian:
+installdep_debian: setup_commits
 	sudo apt install -y cpanminus libfile-util-perl libpod-markdown-perl libwww-mechanize-gzip-perl perltidy dos2unix
 	curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
+
+setup_commits:
+	@echo "Installing Conventional Commits tools..."
+	npm install
 
 tidy:
 	dos2unix ./mysqltuner.pl
 	perltidy -b ./mysqltuner.pl
 	git add ./mysqltuner.pl
-	git commit -m "Indenting mysqltuner at $(shell date --iso=seconds)"
+	git commit -m "style: tidy mysqltuner.pl" || echo "No changes to commit"
+
+check-tidy:
+	perltidy -st mysqltuner.pl | diff -q - mysqltuner.pl
 
 generate_usage:
 	pod2markdown mysqltuner.pl >USAGE.md
 	git add ./USAGE.md
-	git commit -m "Generate USAGE.md at $(shell date --iso=seconds)"
+	git commit -m "docs: generate USAGE.md" || echo "No changes to commit"
 
 generate_cve:
 	perl ./build/updateCVElist.pl
 	git add ./vulnerabilities.csv
-	git commit -m "Generate CVE list at $(shell date --iso=seconds)"
+	git commit -m "docs: generate vulnerabilities list" || echo "No changes to commit"
 
 generate_version_file:
 	rm -f CURRENT_VERSION.txt
 	grep "# mysqltuner.pl - Version" ./mysqltuner.pl | awk '{ print $$NF}' > CURRENT_VERSION.txt
 	git add ./CURRENT_VERSION.txt
-	git commit -m "Generate CURRENT_VERSION.txt at $(shell date --iso=seconds)"
+	git commit -m "chore: generate CURRENT_VERSION.txt" || echo "No changes to commit"
 
 generate_eof_files:
 	bash ./build/endoflife.sh mariadb 
 	bash ./build/endoflife.sh mysql
 	git add ./*_support.md
-	git commit -m "Generate End Of Life (endoflive.date) at $(shell date --iso=seconds)" || echo "No changes to commit"
+	git commit -m "docs: generate end-of-life status files" || echo "No changes to commit"
 
 generate_features:
 	perl ./build/genFeatures.sh
 	git add ./FEATURES.md
-	git commit -m "Generate FEATURES.md at $(shell date --iso=seconds)"
+	git commit -m "docs: generate FEATURES.md" || echo "No changes to commit"
 
 increment_sub_version:
 	@echo "Incrementing sub version from $(VERSION) to $(UPDATE_SUB_VERSION)"
@@ -108,12 +122,36 @@ vendor_setup:
 	fi
 
 test: vendor_setup
-	@echo "Running MySQLTuner tests..."
+	@echo "Running MySQLTuner Lab Tests..."
 	bash build/test_envs.sh $(CONFIGS)
 
 test-all: vendor_setup
-	@echo "Running all MySQLTuner tests..."
+	@echo "Running all MySQLTuner Lab Tests..."
 	bash build/test_envs.sh
+
+test-container:
+	@echo "Running MySQLTuner against container: $(CONTAINER)..."
+	bash build/test_envs.sh -e "$(CONTAINER)"
+
+lab-up: vendor_setup
+	@echo "Starting Persistent MySQLTuner Lab..."
+	bash build/test_envs.sh --keep-alive $(CONFIGS)
+
+lab-down:
+	@echo "Stopping MySQLTuner Lab..."
+	cd vendor/multi-db-docker-env && make stop
+
+audit:
+	@echo "Running MySQLTuner Audit on host: $(HOST)..."
+	bash build/test_envs.sh -r "$(HOST)" -a
+
+audit-logs:
+	@echo "Running laboratory logs audit..."
+	perl build/audit_logs.pl --dir=examples --verbose
+
+unit-tests:
+	@echo "Running unit and regression tests..."
+	prove -r tests/
 
 clean_examples:
 	@echo "Cleaning up examples..."

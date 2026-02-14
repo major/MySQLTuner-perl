@@ -1,0 +1,85 @@
+# POTENTIAL ISSUES AUDIT
+
+This file records anomalies discovered during laboratory testing (Perl warnings, SQL errors, etc.).
+
+## [2026-01-27 00:32] Session Start (v2.8.31)
+
+### Logic Anomalies
+
+- [x] **SQL Check Syntax Error**: `sh: 1: Syntax error: "(" unexpected` during `select CONCAT(...) from sys.schema_redundant_indexes`.
+  - Found in: MySQL 8.x and Percona 8.x laboratory logs.
+  - Fix: Escaped double quotes in `select_array` and `select_array_with_headers` to ensure safe transport in container mode.
+- [x] **MariaDB LTS Stability**: Verified clean for 11.4, 10.11, 10.6.
+- [x] **Performance Schema Disabled**: `Performance_schema should be activated.` reported during audit. Verified fix in lab tests.
+  - **How to fix**:
+    - **MySQL/MariaDB**: Add `performance_schema=ON` under `[mysqld]` in your `my.cnf` or `server.cnf` and restart the service.
+    - **Cloud/Managed**: Enable via your cloud provider console (e.g., AWS Parameter Group, GCP Flags).
+    - **Verification**: Run `SHOW VARIABLES LIKE 'performance_schema';` (should be `ON`).
+
+### Environment/Lab Issues
+
+## [Bug #783 Audit] 2026-02-02
+
+Pre-existing anomalies found in examples/ directory:
+
+- SQL Execution Failure (return code 256) found in:
+  - examples/20260201_021412_mariadb118/Dumpdir/execution.log
+  - examples/20260201_021550_mysql84/Standard/execution.log
+  - examples/20260201_022737_mariadb118/Container/execution.log
+  - examples/20260201_021043_percona80/Standard/execution.log
+- [x] **Perl Warnings (uninitialized value $opt{"colstat"})**: Fixed by normalizing CLI metadata key extraction in `%opt` hash.
+  - Found in: `examples/20260201_020318_mariadb1011/Standard/execution.log` etc.
+  - Fix: Stripped `Getopt::Long` modifiers (`!`, `+`, `=`, `:`) during `%opt` initialization and CLI parsing.
+
+## [2026-02-02 Audit] Release v2.8.35/v2.8.36
+
+### Logic Anomalies
+
+- [x] **Perl Warning ($opt{"colstat"})**: `Use of uninitialized value $opt{"colstat"}` in MariaDB 10.11 and 10.6.
+  - Found in: `examples/20260202_231425_mariadb1011/Standard/execution.log`
+  - Fix: Normalized CLI primary key extraction to strip modifiers. Verified with `tests/cli_mod_keys.t`.
+
+### Environment/Lab Issues
+
+- [x] **SQL Execution Failure (return code 256)**: Persistent across MySQL 8.x, 9.6 and Percona 8.0.
+  - Found in: `examples/20260202_230352_mysql84/Standard/execution.log`, `examples/20260202_230050_mysql96/Standard/execution.log`.
+  - Fix: Issue #22 (Robust password column detection).
+  - Reproduce: `tests/repro_issue_22.t`.
+
+## [2026-02-02 Audit] System Call & Core Perl Optimization
+
+### Systemic Findings
+
+The following external commands are currently used via `execute_system_command` but have native Core Perl equivalents (no external dependencies required). Migrating these will reduce fork overhead and improve portability.
+
+#### High Priority Replacements (Low Complexity)
+
+- [x] **Command**: `whoami` (line 701)
+  - **Replacement**: `(getpwuid($<))[0]` (Native core Perl used).
+- [x] **Command**: `env` / `printenv` (lines 1673, 1890, 1955)
+  - **Replacement**: Access the `%ENV` hash directly.
+- [x] **Command**: `hostname` (line 3051)
+  - **Replacement**: `use Sys::Hostname; hostname();` (Core since Perl 5.6).
+- [x] **Command**: `grep ... /proc/meminfo` (lines 1399, 1414, 3099)
+  - **Replacement**: Open `/proc/meminfo` and parse line-by-line (Core file handles).
+- [x] **Command**: `grep -c ^processor /proc/cpuinfo` (line 949)
+  - **Replacement**: Open `/proc/cpuinfo` and count lines starting with `processor`.
+- [x] **Command**: `which` (lines 1552, 1576)
+  - **Replacement**: Iterate through `split(/:/, $ENV{PATH})` and check file existence with `-x`.
+- [x] **Command**: `getconf PAGESIZE` (line 2718)
+  - **Replacement**: `use POSIX; POSIX::sysconf(POSIX::_SC_PAGESIZE);`
+- [x] **Command**: `uname` (lines 1108, 1395, 3044, 3049, 3117)
+  - **Replacement**: `use POSIX; POSIX::uname();` or `$^O`.
+
+#### Medium Priority Replacements (Environmental Specifics)
+
+- [x] **Command**: `stty -echo` / `stty echo` (lines 1701, 1925)
+  - **Replacement**: Use `POSIX::Termios` for terminal attribute control (avoids `stty` binary dependency).
+- [x] **Command**: `uptime` (line 3107)
+  - **Replacement**: Read `/proc/uptime` (Linux-only) or calculate via `$^T` (script start time) for script uptime. System uptime requires `POSIX` / `/proc`.
+- [ ] **Command**: `df` (lines 2790, 2791)
+  - **Replacement**: No cross-platform Core Perl replacement. Keep for now or use `statvfs` where available.
+- [x] **Command**: `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo` (line 2981)
+  - **Replacement**: Native Perl parsing of `/proc/cpuinfo`.
+- [x] **Command**: `sysctl -n vm.swappiness` (line 3052)
+  - **Replacement**: Native Perl parsing of `/proc/sys/vm/swappiness`.

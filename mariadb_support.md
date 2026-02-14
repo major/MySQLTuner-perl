@@ -2,7 +2,6 @@
 
 | Version | End of Support Date | LTS | Status |
 |---------|------------------------|-----|--------|
-| 12.1 | 2026-02-18 | NO | Supported |
 | 12.0 | 2025-11-18 | NO | Outdated |
 | 11.8 | 2028-06-04 | YES | Supported |
 | 11.7 | 2025-05-12 | NO | Outdated |

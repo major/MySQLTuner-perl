@@ -2,7 +2,7 @@ name: Docker Publish
 
 on:
   push:
-    branches: [ "master" ]
+    tags: ["v*"]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -11,24 +11,69 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USER_LOGIN }}
-        password: ${{ secrets.DOCKER_USER_PASSWORD }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Extract version from mysqltuner.pl
-      id: version
-      run: echo "VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')" >> $GITHUB_ENV
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER_LOGIN }}
+          password: ${{ secrets.DOCKER_USER_PASSWORD }}
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        push: true
-        tags: |
-          jmrenouard/mysqltuner:latest
-          jmrenouard/mysqltuner:${{ env.VERSION }}
+      - name: Extract version from mysqltuner.pl
+        id: version
+        run: echo "VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')" >> $GITHUB_ENV
+
+      - name: Pre-publish validation
+        run: |
+          echo "Checking for critical files..."
+          CRITICAL_FILES=("mysqltuner.pl" "Dockerfile" "LICENSE" "vulnerabilities.csv" "basic_passwords.txt")
+          for file in "${CRITICAL_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "ERROR: Critical file missing: $file"
+              exit 1
+            fi
+            echo "✔ Found: $file"
+          done
+
+          echo "Checking for release notes: releases/v${{ env.VERSION }}.md..."
+          if [ ! -f "releases/v${{ env.VERSION }}.md" ]; then
+            echo "ERROR: Release notes missing: releases/v${{ env.VERSION }}.md"
+            exit 1
+          fi
+          echo "✔ Found release notes"
+
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "Checking tag consistency (Tag: $TAG vs Version: v${{ env.VERSION }})..."
+          if [ "v${{ env.VERSION }}" != "$TAG" ]; then
+            echo "ERROR: Tag $TAG does not match version in mysqltuner.pl (v${{ env.VERSION }})"
+            exit 1
+          fi
+          echo "✔ Tag matches script version"
+
+      - name: Extract release notes
+        id: release_notes
+        run: |
+          {
+            echo 'RELEASE_NOTES<<EOF'
+            cat "releases/v${{ env.VERSION }}.md"
+            echo 'EOF'
+          } >> $GITHUB_ENV
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            jmrenouard/mysqltuner:latest
+            jmrenouard/mysqltuner:${{ env.VERSION }}
+          labels: |
+            org.opencontainers.image.title=MySQLTuner
+            org.opencontainers.image.description=**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions. **MySQLTuner** supports ~300 indicators for MySQL/MariaDB/Percona Server in this latest version.
+            org.opencontainers.image.version=${{ env.VERSION }}
+            org.opencontainers.image.licenses=GPL-3.0
+            com.mysqltuner.release-notes=${{ env.RELEASE_NOTES }}

@@ -1,11 +1,10 @@
 ---
-description: /docker-clean
----
-
----
-
+trigger: explicit_call
 description: Reclaim disk space by removing unused containers and images
+category: tool
 ---
+
+# Docker Cleanup Workflow
 
 1. **Check Current Usage**:
    - See how much space Docker is using.

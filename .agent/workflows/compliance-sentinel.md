@@ -1,5 +1,7 @@
 ---
+trigger: explicit_call
 description: Automated audit to enforce project constitution rules
+category: governance
 ---
 
 # Compliance Sentinel
@@ -49,6 +51,22 @@ head -n 20 Changelog
 # - type: description
 ```
 
-## 5. Execution
+## 5. Dynamic Rules Compliance (remembers.md)
+
+Verify that laboratory logs are free of regressions and anomalies, and that any findings are recorded.
+
+```bash
+# 1. Run laboratory logs audit
+perl build/audit_logs.pl --dir=examples --verbose
+
+# 2. Verify POTENTIAL_ISSUES exists if anomalies found
+if [ -s POTENTIAL_ISSUES ]; then
+  echo "Audit check: POTENTIAL_ISSUES is documented."
+else
+  echo "WARNING: POTENTIAL_ISSUES is empty, ensure all audit findings are handled."
+fi
+```
+
+## 6. Execution
 
 Run these checks before any major commit or release.

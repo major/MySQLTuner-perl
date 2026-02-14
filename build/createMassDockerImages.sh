@@ -18,7 +18,6 @@ chmod 600 $HOME/.my.cnf
 
 [ -f "$input" ] || echo "
 3306;mysql80;/var/lib/mysql8;mysql:8.0
-3307;mysql57;/var/lib/mysql57;mysql:5.7
 3308;mysql56;/var/lib/mysql56;mysql:5.6
 3309;mysql55;/var/lib/mysql55;mysql:5.5
 

@@ -1,151 +1,147 @@
-2.8.28 2026-01-18
+2.8.38 2026-02-14
 
-- 
+- fix: prevent creation of unauthorized directory "0" when --dumpdir is not explicitly set or set to 0 (Issue #20).
+- fix: robust, version-agnostic detection of password column in mysql.user via schema inspection (Issue #22).
+- refactor: replace massive system calls (awk, grep, uname, getconf, sysctl) with native Core Perl functions for Linux.
+- feat: implement native parsing for /proc/cpuinfo, /proc/meminfo, /proc/sys/vm/swappiness and /etc/resolv.conf.
+- refactor: optimize CPU core count, logical CPU detection, and OS memory setup for local environments.
+- refactor: use POSIX::uname and POSIX::sysconf for standardized system and architecture reporting.
+- fix: resolve MariaDB socket authentication regression and restore automatic credential discovery (Issue #875).
+- fix: remediate Prototype Pollution vulnerability in lodash (CVE-2021-23341) by forcing update to 4.17.23.
+- test: add reproduction test for authentication discovery chain (tests/issue_875_regression.t).
+- test: add comprehensive test suite for password column detection (tests/repro_issue_22.t).
+- chore: bump version to 2.8.38.
 
-2.8.27 2026-01-18
+2.8.36 2026-02-13
 
-- refactor: replace massive raw backtick usage with execute_system_command wrapper for better security and compliance (Compliance Sentinel)
+- fix: migrate CI workflows to native GitHub services to resolve Docker API version mismatch.
+- fix: modernize release workflow using softprops/action-gh-release@v2.
+- fix: enhance Docker publishing with Buildx setup for reliable multi-platform builds.
+- fix: robust, version-agnostic detection of password column in mysql.user via schema inspection (Issue #22).
+- fix: correct regression in tests/test_issue_875.t by updating database mocks.
+- test: add comprehensive test suite for password column detection (tests/repro_issue_22.t).
+- test: add reproduction test for Performance Schema disabled diagnostic (tests/repro_pfs_disabled.t).
+- fix: prevent creation of directory "0" when --dumpdir is not specified or set to 0 (Issue #20).
+- docs: fix broken endoflife.date links in README files (Issue #877).
+- test: add reproduction test for Performance Schema disabled scenario (repro_pfs_disabled.t).
+- ci: fix Docker API mismatch in GitHub Actions by migrating to native services.
 
-2.8.26 2026-01-18
+2.8.35 2026-02-02
 
-- fix: inverted replication command logic causing wrong SQL on MySQL 8.0+/MariaDB 10.5+ (issue #553)
-- feat: add MySQL/MariaDB version detection to prevent version number conflicts in replication logic
-- test: add comprehensive test suite (test_issue_553.t) for replication command compatibility
-- chore: bump version to 2.8.26
+- feat: modernize version check using `HTTP::Tiny` with robust fallback to `curl`/`wget` (PR #18 and #17).
+- feat: integrate `perltidy` in `release-preflight` workflow and enforce script formatting (issue #19).
+- fix: resolve inaccurate `innodb_log_file_size` recommendations caused by integer rounding (issue #770).
+- fix: ensure percentage returns 100.00% instead of 0% on idle or fresh servers, preventing unwarranted `innodb_log_buffer_size` recommendations (issue #783).
+- docs: replace generic `SECURITY.md` template with project-specific policy and contact info (Issue #771, credit @bfontaine).
+- style: run `perltidy` on `mysqltuner.pl` to ensure code consistency.
+- test: add dedicated unit test `tests/test_version_regex.t` for version extraction verification.
+- test: add regression test `tests/issue_770.t` to verify `innodb_log_file_size` recommendation precision.
+- test: add regression test `tests/issue_783.t` to verify `innodb_log_buffer_size` recommendation on idle servers.
 
-2.8.24 2026-01-18
+# MySQLTuner Changelog
 
-- fix: improve MariaDB 11+ detection by checking version_comment (issue #869)
-- fix: handle innodb_buffer_pool_chunk_size=0 (autosize) in MariaDB 10.8+ (#869)
-- chore: bump version to 2.8.24
+2.8.33 2026-01-31
 
-2.8.23 2026-01-18
+- fix: improved cPanel/Flex detection and refined `skip-name-resolve` recommendation (issue #863).
+- test: add enhanced unit test `tests/issue_863_enhanced.t` for cPanel detection verification.
+- docs: consolidate project governance rules and resolve backwards compatibility contradiction (00_constitution.md, 03_execution_rules.md).
+- style: promote session-discovered rules to Tier 04 Best Practices and reset `remembers.md`.
 
-- feat: add --ignore-tables CLI option to filter specific tables from analysis (#749)
-- chore: bump version to 2.8.23
+- feat: add automated validation (regex/coderef) for CLI options like `--port` and `--defaultarch`.
+- feat: implement option implications (e.g., `--feature` implies `--verbose`) in metadata.
+- feat: add SSL/TLS security checks for missing configuration, insecure protocols (TLSv1.0, TLSv1.1), and secure transport enforcement.
+- feat: add automated detection of current session encryption status.
+- feat: add observability warning and explicit recommendation when `performance_schema` is disabled.
+- fix: resolve numeric comparison warnings and prevent full workstation path leakage in CLI output.
+- fix: resolve contradictory key_buffer_size recommendations by adding a usage threshold to the increase recommendation (issue #774).
+- test: add unit test `tests/cli_validation.t` for comprehensive option validation verification.
+- test: add unit test `tests/ssl_tls_validation.t` for comprehensive SSL/TLS verification.
+- test: add unit test `tests/pfs_observability.t` to verify `performance_schema` diagnostics.
+- test: add unit test `tests/issue_774.t` to verify key_buffer_size recommendation logic.
+- docs: cleanup MongoDB and PostgreSQL references from `ROADMAP.md` and README files.
+- refactor: implement metadata-driven CLI option parsing to centralize defaults, validation, and documentation.
 
-2.8.22 2026-01-18
+2.8.32 2026-01-30
 
-- feat: update all repository links from 'major' to 'jmrenouard' (issue #410)
-- docs: add Changelog information and Useful Links to all README files (issue #411)
-- feat: improve thread_pool_size recommendations based on logical CPU count (issue #404)
-- feat: suggest enabling thread pool for servers with max_connections >= 512 (issue #404)
-- fix: hide ThreadPool metrics when thread pool is not enabled to avoid noise (issue #404)
-- feat: add logical_cpu_cores function to accurately detect threads including HT
-- chore: bump version to 2.8.22
+- feat: remove `--skippassword` from test laboratory to enable security checks.
+- fix: resolve false positive weak password warnings on MariaDB socket authentication (issue #875) and prevent dictionary corruption by silencing `curl`/`wget` output.
+- test: add unit test [tests/test_issue_875.t](file:///tests/test_issue_875.t) to verify socket authentication detection.
+- style: enforce artifact path hygiene (hide absolute workstation paths) in agent-generated reports.
+- chore: rename release manager specification to a more generic name.
+- chore: update `multi-db-docker-env` and `test_db` vendors.
 
-2.8.21 2026-01-18
+2.8.31 2026-01-27
 
-- fix: remove contradictory query_cache_limit recommendation when disabling query cache (issue #671)
-- fix: cap join_buffer_size recommendation at 4MB and prefer index optimization (issue #671)
-- chore: bump version to 2.8.21
+- feat: add `--schemadir <path>` option to generate per-schema markdown documentation.
+- feat: support independent schema documentation generation without requiring `--dumpdir`.
+- feat: restructure specifications into `documentation/specifications/` (/hey-agent).
+- feat: add specification for Performance Schema Error Log analysis.
+- feat: add unused and redundant index checks via Performance Schema (sys schema) with recommendations and modeling findings.
+- feat: modernize CVE retrieval script `build/updateCVElist.pl` with NVD API 2.0 (JSON-based) (Fix #867).
+- feat: implement SQL modeling best practice checks (Primary Keys, Foreign Keys, Naming Conventions, Data Types).
+- feat: add MySQL 8.0+ specific modeling checks (JSON indexing, Invisible Indexes).
+- fix: resolve CLI option ambiguity and duplicate specification errors via unified Getopt::Long binding.
+- fix: resolve tab delimiter mismatch in `tests/sql_modeling.t` mock data.
+- fix: noisy system command failures when absolute paths are used for whitelisted commands (issue #874).
+- fix: resolve syntax error and Perl compilation warnings in `mysqltuner.pl`.
+- fix: ensure shell commands (pipes, redirections) work correctly in containers using `sh -c`.
+- test: add unit test `tests/schemadir.t` to verify schema documentation logic.
+- test: add unit test [tests/index_pfs_checks.t](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/tests/index_pfs_checks.t) for Performance Schema index verification.
+- test: add unit test [tests/sql_modeling.t](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/tests/sql_modeling.t) for comprehensive schema analysis verification.
+- ci: update `build/test_envs.sh` with `Schemadir` test scenario and fix logic ordering.
+- ci: establish formal "Advanced Test Log Auditing" protocol and anomaly tracking.
+- ci: enhance lab reports with integrated `execution.log` and collapsible panels for better readability.
+- ci: harden testing suite with rigorous return code checking across all test modes (lab, container, remote).
+- ci: improve laboratory error reporting to generate diagnostic reports even on startup failures.
+- ci: verify MySQL 8.0 integration post-CLI refactoring.
+- ci: reintroduce CVE analysis in Dockerfile with `--cvefile` support.
+- ci: cleanup all `examples/` and execute full LTS test suite (MySQL, MariaDB, Percona).
+- ci: update package.json test script and create remember workflow.
+- ci: consolidate testing laboratory scripts into unified [build/test_envs.sh](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/build/test_envs.sh) and update Makefile.
+- chore: uncomment examples directory in .gitignore.
+- chore: bump version to 2.8.31.
+- docs: formalize tracking of Makefile and build script changes
+- docs: formalize test and ci requirements in Changelog and rules
+- docs: update Changelog and relax rules for docs-only updates
+- chore: decommission MySQL 5.7 from testing laboratory and build scripts.
 
-2.8.20 2026-01-18
+2.8.30 2026-01-24
 
-- feat: add automated regression test for forcemem MB interpretation (issues #780, #810)
-- chore: bump version to 2.8.20
+- feat: auto-generate `raw_mysqltuner.txt` report in `dumps/` directory when using `--dumpdir`
+- feat: add InnoDB transaction isolation levels and metrics (active count, longest duration)
+- feat: add MariaDB innodb_snapshot_isolation detection and recommendation
+- feat: implement robust container transport support (--container)
+- feat: skip kernel tuning recommendations in container mode or when running in Docker
+- feat: dynamic MySQL/MariaDB client detection in containers/remote hosts
+- feat: automatic database password retrieval from container environment (MYSQL_ROOT_PASSWORD/MARIADB_ROOT_PASSWORD)
+- fix: incorrect skip-name-resolve recommendations for cPanel systems (issue #863)
+- docs: synchronize all README files with authentication mismatch troubleshooting guide
+- ci: enhance `build/test_envs.sh` to capture and link all infrastructure logs (Docker start, DB injection, container logs, inspect data) in HTML reports for full audit traceability
+- ci: make HTML reports self-sufficient by embedding logs directly and reordering sections
+- ci: implement tripartite testing scenarios (Standard, Container, Dumpdir) per configuration with horizontal scenario selector in HTML reports
+- ci: normalize HTML log panels with consistent Raw/Log links and improved UI layout
+- ci: harden laboratory execution script with rigorous return code checking and log portability (copy vs symlink)
+- ci: automate cleanup of `examples/` directory to keep only the 10 most recent results
+- ci: add `/examples-cleanup` workflow for manual laboratory maintenance
+- ci: implement automated technical release notes system via `build/release_gen.py` and `/release-notes-gen` workflow
+- ci: add automated `.agent/README.md` synchronization via `build/doc_sync.py` and `/doc-sync` workflow
+- test: add unit test tests/innodb_isolation.t for new transaction metrics
+- test: add regression test tests/repro_issue_863.t for cPanel name resolution logic
+- test: add unit test tests/test_issue_874.t to verify system command whitelisting and unix_socket logic
+- test: add unit test tests/issue_869.t to verify InnoDB chunk breakdown on MariaDB 11.4+ (issue #869)
+- test: validate MySQLTuner compatibility with MariaDB 11.8 (detected 11.8.5)
 
-2.8.18 2026-01-18
+2.8.29 2026-01-24
 
-- feat: add --max-password-checks option to limit dictionary checks (default: 100)
-- fix: ensure Machine type is reported as 'Container' when --container option is used
-- chore: bump version to 2.8.18
+- fix: synchronize all version occurrences in mysqltuner.pl and update release workflows (issue #15)
+- feat: add version consistency check to release-preflight and git-flow workflows
+- docs: update copyright years to 2026
+2.8.28 2026-01-22
 
-2.8.17 2026-01-18
+- feat: ajoute l'option --no-pfstat pour la partie performance schema
+- feat: ajoute l'option --no-colstat pour la partie colonne stat
+- fix: skip innodb_buffer_stats during sys schema dump to avoid performance issues
 
-- feat: implementation of issue #403 to check weak passwords on MySQL 8.0+ and flush hosts every 100 attempts
-- chore: bump version to 2.8.17
-
-2.8.16 2026-01-18
-
-- chore: bump version to 2.8.16
-
-2.8.15 2026-01-18
-
-- feat: update all GitHub links from 'major' to 'jmrenouard' organization
-- feat: refactor plugin information to filter ACTIVE status and display specific columns grouped by type
-- chore: bump version to 2.8.15
-
-2.8.13 2026-01-18
-
-- docs: add Useful Links section to all README files (English, French, Russian, Italian)
-- chore: bump version to 2.8.13
-
-2.8.12 2026-01-17
-
-- feat: update is_docker() to detect containerd and podman runtimes
-- chore: bump version to 2.8.12
-
-2.8.11 2026-01-17
-
-- docs: update INTERNALS.md with information about Cloud, SSH, Containers, and Plugins
-- chore: bump version to 2.8.11
-
-2.8.10 2026-01-17
-
-- feat: add dates and commands to log files in test_envs.sh
-- feat: add separators (=) at the end of log files in test_envs.sh
-- chore: synchronize version strings across script, POD, and version file
-
-2.8.9 2026-01-17
-
-- feat: improve container log detection by excluding proxy containers (traefik, haproxy, maxscale, proxy)
-- feat: prioritize database-related container names (mysql, mariadb, percona, db, database)
-- chore: bump version to 2.8.9
-
-2.8.8 2026-01-17
-
-- feat: add -d/--database parameter to test_envs.sh to tune specific databases
-- feat: add -c/--configs parameter to test_envs.sh for easier configuration selection
-- feat: add timestamps to major steps in test_envs.sh logs
-- feat: add execution header to test_envs.sh output showing the full command
-- chore: bump version to 2.8.8
-
-2.8.7 2026-01-17
-
-- docs: add standardized comment headers to all build shell scripts
-- chore: synchronize version strings across script, POD, and version file
-- fix: ensure version consistency between Changelog and CURRENT_VERSION.txt
-
-2.8.6 2026-01-17
-
-- feat: add Plugin Information section and --plugininfo flag (#794)
-- fix: memory calculation bug in system_recommendations (1.5GB check)
-- fix: ensure forcemem is correctly interpreted and displayed as MB in os_setup
-- chore: synchronize version strings across script, POD, and version file
-
-2.8.5 2026-01-17
-
-- fix: noisy sysctl errors for sunrpc parameters when kernel module is not loaded
-- fix: refactor get_kernel_info to handle missing sysctl parameters gracefully
-
-2.8.4 2026-01-17
-
-- fix: database injection failing to find dump files due to incorrect working directory
-- fix: ensure correct path handling for 'source' commands in employees.sql
-
-2.8.3 2026-01-17
-
-- feat: detect docker/podman environment and automatically grab logs from container if local log file is not found
-- feat: add --container option to manually specify a container for log retrieval
-
-2.8.2 2026-01-17
-
-- fix: system command failures (ping/ifconfig/redirection) on modern Linux (Ubuntu 22.04/WSL2)
-- feat: integrate external test dependencies (multi-db-docker-env, test_db) and automated employees database injection
-
-2.8.1 2026-01-17
-
-- fix: resilient memory checks with /proc fallback on Linux and silencing expected ps failures
-
-2.8.0 2026-01-17
-
-- Bump version to 2.8.0
-- enhance user hostname restriction checks
-- feat: Translate comments and messages in updateCVElist.py to English
-- chore: ignore VS Code workspace files
-- build: update Debian File::Util dependency installation
-- cleanup: MariaDB and MySQL support documentation (focus on LTS)
 2.8.27 2026-01-18
 
 - refactor: replace massive raw backtick usage with execute_system_command wrapper for better security and compliance (Compliance Sentinel)
