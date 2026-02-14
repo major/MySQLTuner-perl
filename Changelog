@@ -1,3 +1,8 @@
+2.8.37 2026-02-14
+
+- refactor: replace system calls (whoami, hostname, printenv) with native Core Perl functions.
+- chore: bump version to 2.8.37.
+
 2.8.36 2026-02-13
 
 - fix: migrate CI workflows to native GitHub services to resolve Docker API version mismatch.

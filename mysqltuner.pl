@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.36
+# mysqltuner.pl - Version 2.8.37
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -47,6 +47,7 @@ use diagnostics;
 use File::Spec;
 use Getopt::Long;
 use Pod::Usage;
+use Sys::Hostname;
 use File::Basename;
 use Cwd 'abs_path';
 
@@ -64,7 +65,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.8.36";
+our $tunerversion = "2.8.37";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 
 # Set defaults
@@ -700,8 +701,7 @@ sub setup_environment {
     $opt{nocolor} = 0 if ( ( $opt{color} // 0 ) == 1 );
 
     # Setting up the colors for the print styles
-    $me = execute_system_command('whoami');
-    $me =~ s/\n//g;
+    $me = ( getpwuid($<) )[0] // $ENV{USER} // $ENV{USERNAME} // 'unknown';
 
     if ($is_win) { $opt{nocolor} = 1; }
     $good = ( $opt{nocolor} == 0 ) ? "[\e[0;32mOK\e[0m]"  : "[OK]";
@@ -1889,7 +1889,7 @@ sub mysql_setup {
             my $userpath =
               $is_win
               ? ( $ENV{MARIADB_HOME} || $ENV{MYSQL_HOME} || $ENV{USERPROFILE} )
-              : execute_system_command("printenv HOME");
+              : ( $ENV{HOME} // '' );
             if ( length($userpath) > 0 ) {
                 chomp($userpath);
             }
@@ -1954,7 +1954,7 @@ sub mysql_setup {
                       ? ( $ENV{MARIADB_HOME}
                           || $ENV{MYSQL_HOME}
                           || $ENV{USERPROFILE} )
-                      : execute_system_command("printenv HOME");
+                      : ( $ENV{HOME} // '' );
                     chomp($userpath);
                     unless ( -e "$userpath/.my.cnf" ) {
                         print STDERR "";
@@ -3131,14 +3131,14 @@ sub get_system_info {
       ? execute_system_command('ver')
       : execute_system_command('uname -r');
     infoprint "Kernel Release        : " . infocmd_one "uname -r";
-    $result{'OS'}{'Hostname'} = execute_system_command('hostname');
+    $result{'OS'}{'Hostname'} = Sys::Hostname::hostname();
     $result{'Network'}{'Internal Ip'} =
       $is_win
       ? execute_system_command(
 'ipconfig |perl -ne "if (/IPv. Address/) {print s/^.*?([\\d\\.]*)\\s*$/$1/r; exit; }"'
       )
       : execute_system_command('hostname -I');
-    infoprint "Hostname              : " . infocmd_one "hostname";
+    infoprint "Hostname              : " . Sys::Hostname::hostname();
     infoprint "Network Cards         : ";
 
     if ( which( "ip", $ENV{'PATH'} ) ) {
@@ -9789,7 +9789,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.36 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.37 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -9804,7 +9804,7 @@ See C<mysqltuner --help> for a full list of available options and their categori
 
 =head1 VERSION
 
-Version 2.8.36
+Version 2.8.37
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
