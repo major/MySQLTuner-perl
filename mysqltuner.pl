@@ -4084,7 +4084,8 @@ sub check_storage_engines {
             }
         }
     }
-    while ( my ( $engine, $size ) = each(%enginestats) ) {
+    foreach my $engine ( sort keys %enginestats ) {
+        my $size = $enginestats{$engine};
         infoprint "Data in $engine tables: "
           . hr_bytes($size)
           . " (Tables: "
