@@ -8,7 +8,7 @@ We provide security updates for the following versions of MySQLTuner:
 
 | Version | Status                |
 | ------- | --------------------- |
-| v2.x    | Supported (v2.8.37)   |
+| v2.x    | Supported (v2.8.38)   |
 | < v2.x  | End of Life           |
 
 We strongly recommend that all users stay updated with the latest stable release available on [GitHub Releases](https://github.com/jmrenouard/MySQLTuner-perl/releases).

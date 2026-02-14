@@ -10,10 +10,7 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
   - Found in: MySQL 8.x and Percona 8.x laboratory logs.
   - Fix: Escaped double quotes in `select_array` and `select_array_with_headers` to ensure safe transport in container mode.
 - [x] **MariaDB LTS Stability**: Verified clean for 11.4, 10.11, 10.6.
-- [ ] **Performance Schema Disabled**: `✘ Performance_schema should be activated.` reported during audit.
-  - Found in: `examples/20260127_004622_mariadb114/Standard/execution.log`
-  - Impact: Reduced diagnostic depth for performance metrics.
-  - Reproduce: `tests/repro_pfs_disabled.t`
+- [x] **Performance Schema Disabled**: `Performance_schema should be activated.` reported during audit. Verified fix in lab tests.
   - **How to fix**:
     - **MySQL/MariaDB**: Add `performance_schema=ON` under `[mysqld]` in your `my.cnf` or `server.cnf` and restart the service.
     - **Cloud/Managed**: Enable via your cloud provider console (e.g., AWS Parameter Group, GCP Flags).
@@ -76,9 +73,9 @@ The following external commands are currently used via `execute_system_command` 
 
 #### Medium Priority Replacements (Environmental Specifics)
 
-- [ ] **Command**: `stty -echo` / `stty echo` (lines 1701, 1925)
+- [x] **Command**: `stty -echo` / `stty echo` (lines 1701, 1925)
   - **Replacement**: Use `POSIX::Termios` for terminal attribute control (avoids `stty` binary dependency).
-- [ ] **Command**: `uptime` (line 3107)
+- [x] **Command**: `uptime` (line 3107)
   - **Replacement**: Read `/proc/uptime` (Linux-only) or calculate via `$^T` (script start time) for script uptime. System uptime requires `POSIX` / `/proc`.
 - [ ] **Command**: `df` (lines 2790, 2791)
   - **Replacement**: No cross-platform Core Perl replacement. Keep for now or use `statvfs` where available.
