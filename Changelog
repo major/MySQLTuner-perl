@@ -1,7 +1,3 @@
-2.8.41 2026-02-15
-
-- 
-
 # MySQLTuner Changelog
 
 2.8.40 2026-02-15
@@ -55,8 +51,10 @@
 - test: add reproduction test for Performance Schema disabled diagnostic (tests/repro_pfs_disabled.t).
 - fix: prevent creation of directory "0" when --dumpdir is not specified or set to 0 (Issue #20).
 - docs: fix broken endoflife.date links in README files (Issue #877, credit @FabioPedretti).
+- docs: fix broken endoflife.date links in README files (Issue #877, credit @FabioPedretti).
 - test: add reproduction test for Performance Schema disabled scenario (repro_pfs_disabled.t).
 - ci: fix Docker API mismatch in GitHub Actions by migrating to native services.
+- feat: make Storage Engine Statistics output deterministic by @lewart3 (Issue #26).
 - feat: make Storage Engine Statistics output deterministic by @lewart3 (Issue #26).
 
 2.8.35 2026-02-02
