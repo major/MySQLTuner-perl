@@ -5406,7 +5406,8 @@ sub mysql_myisam {
             )
           )
         {
-            my $myisam_table_escape = $myisam_table =~ s/\|/\`/gr;
+            my $myisam_table_escape = $myisam_table;
+            $myisam_table_escape =~ s/\|/\`/g;
             $sql_mig =
 "${sql_mig}-- InnoDB migration for $myisam_table_escape\nALTER TABLE $myisam_table_escape ENGINE=InnoDB;\n\n";
             infoprint
@@ -9676,7 +9677,11 @@ sub which {
     my $prog_name   = shift;
     my $path_string = shift;
     my @path_array  = split /:/, $ENV{'PATH'};
-    if ($is_win) { @path_array = split /;/, $ENV{'PATH'} =~ s/\\/\//gr; }
+    if ($is_win) {
+        my $path_env = $ENV{'PATH'};
+        $path_env =~ s/\\/\//g;
+        @path_array = split /;/, $path_env;
+    }
 
     for my $path (@path_array) {
         if ($is_win) {
