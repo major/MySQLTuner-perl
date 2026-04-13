@@ -3,6 +3,7 @@
 [!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
 [![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
+[![MySQLTuner Version](https://img.shields.io/badge/version-2.8.41-blue.svg)](https://github.com/jmrenouard/MySQLTuner-perl/releases/tag/v2.8.41)
 [![Test Status](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Average time to resolve an issue")
 [![Percentage of open issues](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Percentage of issues still open")
@@ -110,13 +111,13 @@ To run MySQLTuner with all features, the following privileges are required:
 **MySQL 8.0+**:
 
 ```sql
-GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION REPLICA, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
 ```
 
 **MariaDB 10.5+**:
 
 ```sql
-GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION MASTER ADMIN, SLAVE MONITOR ON *.* TO 'mysqltuner'@'localhost';
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION SOURCE ADMIN, REPLICA MONITOR ON *.* TO 'mysqltuner'@'localhost';
 ```
 
 **Legacy versions**:

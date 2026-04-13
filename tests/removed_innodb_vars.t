@@ -14,6 +14,7 @@ $main::info = '[--]';
 $main::deb  = '[DG]';
 $main::end  = '';
 our %myvar;
+our %real_vars;
 our @generalrec;
 
 # Test 1: MariaDB 10.6 with removed vars
@@ -26,6 +27,7 @@ subtest 'MariaDB 10.6 Removed Variables' => sub {
         innodb_file_format => 'Antelope',
         innodb_large_prefix => 'ON',
     );
+    %main::real_vars = %main::myvar;
     main::check_removed_innodb_variables();
     ok(grep(/Remove 'innodb_file_format'/, @main::generalrec), 'MariaDB 10.6: innodb_file_format detected');
     ok(grep(/Remove 'innodb_large_prefix'/, @main::generalrec), 'MariaDB 10.6: innodb_large_prefix detected');
@@ -41,6 +43,7 @@ subtest 'MySQL 8.0 Removed Variables' => sub {
         innodb_locks_unsafe_for_binlog => '1',
         tx_isolation => 'REPEATABLE-READ',
     );
+    %main::real_vars = %main::myvar;
     main::check_removed_innodb_variables();
     ok(grep(/Remove 'innodb_locks_unsafe_for_binlog'/, @main::generalrec), 'MySQL 8.0: innodb_locks_unsafe_for_binlog detected');
     ok(grep(/Remove 'tx_isolation'/, @main::generalrec), 'MySQL 8.0: tx_isolation detected');
@@ -56,6 +59,7 @@ subtest 'MySQL 9.0 Removed Variables' => sub {
         innodb_log_file_size => '50331648',
         innodb_undo_tablespaces => '2',
     );
+    %main::real_vars = %main::myvar;
     main::check_removed_innodb_variables();
     ok(grep(/Remove 'innodb_log_file_size'/, @main::generalrec), 'MySQL 9.0: innodb_log_file_size detected');
     ok(grep(/Remove 'innodb_undo_tablespaces'/, @main::generalrec), 'MySQL 9.0: innodb_undo_tablespaces detected');
@@ -71,6 +75,7 @@ subtest 'MySQL 5.7 Legacy Variables' => sub {
         innodb_file_format => 'Barracuda',
         tx_isolation => 'REPEATABLE-READ',
     );
+    %main::real_vars = %main::myvar;
     main::check_removed_innodb_variables();
     is(scalar @main::generalrec, 0, 'MySQL 5.7: No warnings for legacy valid variables');
 };
@@ -84,8 +89,26 @@ subtest 'MariaDB 10.3 Legacy Variables' => sub {
         version_comment => 'mariadb.org binary distribution',
         innodb_file_format => 'Antelope',
     );
+    %main::real_vars = %main::myvar;
     main::check_removed_innodb_variables();
     is(scalar @main::generalrec, 0, 'MariaDB 10.3: No warnings for innodb_file_format (not removed yet)');
+};
+
+# Test 6: Internally injected variables should NOT trigger warnings (Issue #32)
+subtest 'Injected Variables (Issue #32)' => sub {
+    @main::generalrec = ();
+    %main::myvar = (
+        version => '10.11.3-MariaDB',
+        version_numbers => '10.11.3',
+        version_comment => 'mariadb.org binary distribution',
+        have_innodb => 'YES', # Injected
+        innodb_support_xa => 'ON', # Injected
+    );
+    %main::real_vars = (
+        version => '10.11.3-MariaDB',
+    );
+    main::check_removed_innodb_variables();
+    is(scalar @main::generalrec, 0, 'Injected variables (have_innodb, innodb_support_xa) do not trigger false warnings');
 };
 
 done_testing();

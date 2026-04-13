@@ -68,7 +68,7 @@ our $is_win = $^O eq 'MSWin32';
 # Set up a few variables for use in the script
 our $tunerversion = "2.8.41";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
-our ( %result, %myvar, %mystat, %mycalc, %myrepl, %myslaves, $dummyselect );
+our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas, $dummyselect );
 
 # Set defaults
 # Central metadata for CLI options
@@ -78,14 +78,14 @@ our %CLI_METADATA = (
     # Connection and Authentication
     'host' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Connect to a remote host to perform tests',
         placeholder => '<host>',
         cat         => 'CONNECTION'
     },
     'socket' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Use a different socket for a local connection',
         placeholder => '<path>',
         cat         => 'CONNECTION'
@@ -98,7 +98,7 @@ our %CLI_METADATA = (
     },
     'pipe_name' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Use a different pipe name for a local connection',
         placeholder => '<name>',
         cat         => 'CONNECTION'
@@ -113,84 +113,84 @@ our %CLI_METADATA = (
     },
     'user|u' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Username to use for authentication',
         placeholder => '<user>',
         cat         => 'CONNECTION'
     },
     'pass|p|password' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Password to use for authentication',
         placeholder => '<pass>',
         cat         => 'CONNECTION'
     },
     'userenv' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Env variable name for username',
         placeholder => '<envvar>',
         cat         => 'CONNECTION'
     },
     'passenv' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Env variable name for password',
         placeholder => '<envvar>',
         cat         => 'CONNECTION'
     },
     'ssl-ca' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to public key (SSL CA)',
         placeholder => '<path>',
         cat         => 'CONNECTION'
     },
     'mysqladmin' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to a custom mysqladmin executable',
         placeholder => '<path>',
         cat         => 'CONNECTION'
     },
     'mysqlcmd' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to a custom mysql executable',
         placeholder => '<path>',
         cat         => 'CONNECTION'
     },
     'defaults-file' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to a custom .my.cnf',
         placeholder => '<path>',
         cat         => 'CONNECTION'
     },
     'defaults-extra-file' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to an extra custom config file',
         placeholder => '<path>',
         cat         => 'CONNECTION'
     },
     'login-path' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Read options from the specified login path',
         placeholder => '<path>',
         cat         => 'CONNECTION'
     },
     'protocol' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Force TCP connection instead of socket',
         placeholder => 'tcp',
         cat         => 'CONNECTION'
     },
     'server-log' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to explicit log file (error_log)',
         placeholder => '<path>',
         cat         => 'CONNECTION'
@@ -213,7 +213,8 @@ our %CLI_METADATA = (
         type    => '!',
         default => 0,
         desc    => 'Update MySQLTuner if newer version is available',
-        cat     => 'PERFORMANCE'
+        cat     => 'PERFORMANCE',
+        implies => { checkversion => 1 }
     },
     'forcemem' => {
         type        => '=i',
@@ -239,21 +240,21 @@ our %CLI_METADATA = (
     },
     'passwordfile' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to a password file list',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
     'cvefile' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'CVE File for vulnerability checks',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
     'sysbench-file' => {
         type    => '=s',
-        default => '0',
+        default => undef,
         desc    =>
           'Path to a sysbench output file for performance metadata integration',
         placeholder => '<path>',
@@ -261,28 +262,28 @@ our %CLI_METADATA = (
     },
     'compare-file' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to a previous JSON result file for trend analysis',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
     'outputfile' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to a output txt file',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
     'reportfile' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to a report txt file',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
     'template' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to a template file',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
@@ -301,22 +302,21 @@ our %CLI_METADATA = (
     },
     'dumpdir' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to a directory where to dump information files',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
     'schemadir' => {
         type    => '=s',
-        default => '0',
-        desc    =>
-          'Path to a directory where to dump one markdown file per schema',
+        default     => undef,
+        desc        => 'Path to a directory where to dump one markdown file per schema',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
     'feature' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Run a specific feature',
         placeholder => '<feature>',
         cat         => 'PERFORMANCE',
@@ -486,42 +486,42 @@ our %CLI_METADATA = (
     },
     'ssh-host' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'The SSH host for cloud connections',
         placeholder => '<host>',
         cat         => 'CLOUD'
     },
     'ssh-user' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'The SSH user for cloud connections',
         placeholder => '<user>',
         cat         => 'CLOUD'
     },
     'ssh-password' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'The SSH password for cloud connections',
         placeholder => '<pass>',
         cat         => 'CLOUD'
     },
     'ssh-identity-file' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'The path to the SSH identity file',
         placeholder => '<path>',
         cat         => 'CLOUD'
     },
     'container' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Enable container mode with ID or name',
         placeholder => '<id>',
         cat         => 'CLOUD'
     },
     'server-log' => {
         type        => '=s',
-        default     => '0',
+        default     => undef,
         desc        => 'Path to explicit log file (error_log)',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
@@ -631,17 +631,14 @@ sub parse_cli_args {
         my $meta      = $CLI_METADATA{$opt_spec};
 
         # Implications (e.g., --feature implies --verbose)
-        if ( ( $opt{$primary} // '0' ) ne '0' && $meta->{implies} ) {
+        if ( $opt{$primary} && $meta->{implies} ) {
             while ( my ( $target, $value ) = each %{ $meta->{implies} } ) {
                 $opt{$target} = $value;
             }
         }
 
         # Validation (regex or coderef)
-        if (   defined $opt{$primary}
-            && ( $opt{$primary} // '0' ) ne '0'
-            && $meta->{validate} )
-        {
+        if ( $opt{$primary} && $meta->{validate} ) {
             my $val      = $opt{$primary};
             my $is_valid = 1;
             if ( ref $meta->{validate} eq 'Regexp' ) {
@@ -660,42 +657,42 @@ sub parse_cli_args {
 }
 
 sub setup_environment {
-    if ( defined $opt{'help'} && $opt{'help'} == 1 ) {
+    if ( $opt{'help'} ) {
         show_help();
     }
 
-    if ( defined $opt{'version'} && $opt{'version'} == 1 ) {
+    if ( $opt{'version'} ) {
         subheaderprint("MySQLTuner $tunerversion");
         exit(0);
     }
 
     $devnull = File::Spec->devnull();
     $basic_password_files =
-      ( $opt{passwordfile} eq "0" )
+      ( !$opt{passwordfile} )
       ? abs_path( dirname(__FILE__) ) . "/basic_passwords.txt"
       : abs_path( $opt{passwordfile} );
 
     # Username from envvar
-    if ( exists $opt{userenv} && exists $ENV{ $opt{userenv} // '' } ) {
-        $opt{user} = $ENV{ $opt{userenv} // '' };
+    if ( $opt{userenv} && $ENV{ $opt{userenv} } ) {
+        $opt{user} = $ENV{ $opt{userenv} };
     }
 
     # Related to password option
-    if ( exists $opt{passenv} && exists $ENV{ $opt{userenv} // '' } ) {
-        $opt{pass} = $ENV{ $opt{userenv} // '' };
+    if ( $opt{passenv} && $ENV{ $opt{passenv} } ) {
+        $opt{pass} = $ENV{ $opt{passenv} };
     }
     $opt{pass} = $opt{password}
-      if ( ( $opt{pass} // '0' ) eq '0' and ( $opt{password} // '0' ) ne '0' );
+      if ( !$opt{pass} and $opt{password} );
 
     # for RPM distributions
     $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
       unless -f "$basic_password_files";
 
-    $opt{dbgpattern} = '.*' if ( ( $opt{dbgpattern} // '' ) eq '' );
+    $opt{dbgpattern} = '.*' if ( !$opt{dbgpattern} );
 
     # check if we need to enable verbose mode
     $opt{noprettyicon} = 0 if ( $opt{noprettyicon} // 0 ) != 1;
-    $opt{nocolor}      = 1 if defined( $opt{outputfile} );
+    $opt{nocolor}      = 1 if $opt{outputfile};
     $opt{noprocess}    = 0
       if ( ( $opt{noprocess} // 0 ) == 1 );    # Don't print process information
     $opt{structstat} = 0
@@ -709,20 +706,20 @@ sub setup_environment {
 
     # Handle cvefile if it was not passed but exists locally
     $opt{cvefile} = './vulnerabilities.csv'
-      if ( ( !defined( $opt{cvefile} ) || $opt{cvefile} eq '' )
-        && -f './vulnerabilities.csv' );
+      if ( !$opt{cvefile} && -f './vulnerabilities.csv' );
 
-    $opt{'bannedports'} = '' unless defined( $opt{'bannedports'} );
+    $opt{'bannedports'} = '' unless $opt{'bannedports'};
     @banned_ports       = split ',', $opt{'bannedports'};
 
     $outputfile = undef;
-    $outputfile = abs_path( $opt{outputfile} ) unless $opt{outputfile} eq "0";
+    $outputfile = abs_path( $opt{outputfile} ) if $opt{outputfile};
 
     $fh = undef;
-    open( $fh, '>', $outputfile )
-      or die("Fail opening $outputfile")
-      if defined($outputfile);
-    $opt{nocolor} = 1 if defined($outputfile);
+    if ($outputfile) {
+        open( $fh, '>', $outputfile )
+          or die("Fail opening $outputfile");
+    }
+    $opt{nocolor} = 1 if $outputfile;
     $opt{nocolor} = 1 unless ( -t STDOUT );
 
     $opt{nocolor} = 0 if ( ( $opt{color} // 0 ) == 1 );
@@ -814,14 +811,8 @@ sub show_help {
 
             printf "  %-32s %s", $display, $meta->{desc};
 
- # Special case for defaults: Don't print if 0 or empty string unless meaningful
- # For booleans (type !), default 0 is expected and silent.
-            if (   defined $meta->{default}
-                && $meta->{default} ne '0'
-                && $meta->{default} ne ''
-                && $meta->{default} ne "0" )
-            {
-# For string/numeric defaults, use ne and != appropriately or just string compare since it's for display
+            # Special case for defaults: Don't print if undef or empty string
+            if ( defined $meta->{default} && $meta->{default} ne '' ) {
                 print " (default: $meta->{default})";
             }
             print "\n";
@@ -924,10 +915,10 @@ sub calculate_health_score {
     # Resilience (30pts)
     # Replication Lag
     if (   defined $myrepl{'Seconds_Behind_Source'}
-        || defined $myrepl{'Seconds_Behind_Master'} )
+        || defined $myrepl{'Seconds_Behind_Replica'} )
     {
         my $lag = $myrepl{'Seconds_Behind_Source'}
-          // $myrepl{'Seconds_Behind_Master'};
+          // $myrepl{'Seconds_Behind_Replica'};
         if    ( $lag < 1 )  { $details{'res_lag'} = 10; }
         elsif ( $lag < 60 ) { $details{'res_lag'} = 5; }
         else                { $details{'res_lag'} = 0; }
@@ -1035,24 +1026,24 @@ sub predictive_capacity_analysis {
 sub check_replication_advanced {
     return
       if !defined $myrepl{'Seconds_Behind_Source'}
-      && !defined $myrepl{'Seconds_Behind_Master'};
+      && !defined $myrepl{'Seconds_Behind_Replica'};
     subheaderprint "Cluster & Replication Intelligence";
 
     my $lag = $myrepl{'Seconds_Behind_Source'}
-      // $myrepl{'Seconds_Behind_Master'};
+      // $myrepl{'Seconds_Behind_Replica'};
 
     # Simple IO vs SQL thread bottleneck high-level check
-    my $slave_io_running = $myrepl{'Slave_IO_Running'}
-      // $myrepl{'Replica_IO_Running'} // '';
-    my $slave_sql_running = $myrepl{'Slave_SQL_Running'}
-      // $myrepl{'Replica_SQL_Running'} // '';
+    my $replica_io_running = $myrepl{'Replica_IO_Running'}
+      // $myrepl{'Slave_IO_Running'} // '';
+    my $replica_sql_running = $myrepl{'Replica_SQL_Running'}
+      // $myrepl{'Slave_SQL_Running'} // '';
 
     if ( $lag > 0 ) {
-        if ( $slave_io_running eq 'Yes' && $slave_sql_running eq 'Yes' ) {
+        if ( $replica_io_running eq 'Yes' && $replica_sql_running eq 'Yes' ) {
             infoprint
 "Replication lag analysis: Likely SQL-bound (applier thread bottleneck).";
         }
-        elsif ( $slave_io_running eq 'No' ) {
+        elsif ( $replica_io_running eq 'No' ) {
             badprint
 "Replication lag analysis: IO thread is stopped. Check network or source availability.";
             push_recommendation( 'res',
@@ -1125,7 +1116,7 @@ sub infoprintml {
 
 sub infoprintcmd {
     cmdprint "@_";
-    infoprintml( grep { $_ ne '' and $_ !~ /^\s*$/ } `@_ 2>&1` );
+    infoprintml( grep { /\S/ } `@_ 2>&1` );
 }
 
 sub subheaderprint {
@@ -1144,8 +1135,8 @@ sub infoprinthcmd {
 
 sub is_remote() {
     my $host = $opt{'host'};
-    return 1 if ( $opt{'cloud'} && ( $opt{'ssh-host'} // '0' ) ne '0' );
-    return 0 if ( ( $host // '0' ) eq '0' );
+    return 1 if ( $opt{'cloud'} && $opt{'ssh-host'} );
+    return 0 if ( !$host );
     return 0 if ( $host eq 'localhost' );
     return 0 if ( $host eq '127.0.0.1' );
     return 1;
@@ -1170,7 +1161,7 @@ sub is_docker() {
             defined $ENV{'container'}
             && $ENV{'container'} =~ /^(docker|podman|lxc)$/
         )
-        || ( defined $opt{'container'} && ( $opt{'container'} // '0' ) ne '0' )
+        || $opt{'container'}
       );
     return 0;
 }
@@ -1273,9 +1264,7 @@ sub logical_cpu_cores {
 # Calculates the parameter passed in bytes, then rounds it to one decimal place
 sub hr_bytes {
     my $num = shift;
-    return "0B" unless defined($num);
-    return "0B" if $num eq "NULL";
-    return "0B" if $num eq "";
+    return "0B" if !$num || $num eq "NULL";
 
     if ( $num >= ( 1024**3 ) ) {    # GB
         return sprintf( "%.1f", ( $num / ( 1024**3 ) ) ) . "G";
@@ -1294,7 +1283,7 @@ sub hr_bytes {
 # Calculates the parameter passed in bytes, then rounds it to a practical power-of-2 value in GB.
 sub hr_bytes_practical_rnd {
     my $num = shift;
-    return "0B" unless defined($num) and $num > 0;
+    return "0B" if !$num || $num < 0;
 
     my $gbs           = $num / ( 1024**3 );    # convert to GB
     my $power_of_2_gb = 1;
@@ -1307,8 +1296,7 @@ sub hr_bytes_practical_rnd {
 
 sub hr_raw {
     my $num = shift;
-    return "0" unless defined($num);
-    return "0" if $num eq "NULL";
+    return "0" if !$num || $num eq "NULL";
     if ( $num =~ /^(\d+)G$/ ) {
         return $1 * 1024 * 1024 * 1024;
     }
@@ -1327,8 +1315,7 @@ sub hr_raw {
 # Calculates the parameter passed in bytes, then rounds it to the nearest integer
 sub hr_bytes_rnd {
     my $num = shift;
-    return "0B" unless defined($num);
-    return "0B" if $num eq "NULL";
+    return "0B" if !$num || $num eq "NULL";
 
     if ( $num >= ( 1024**3 ) ) {    # GB
         return int( ( $num / ( 1024**3 ) ) ) . "G";
@@ -1365,9 +1352,7 @@ sub hr_num {
 sub percentage {
     my $value = shift;
     my $total = shift;
-    $total = 0 unless defined $total;
-    $total = 0 if $total eq "NULL";
-    return "100.00" if $total == 0;
+    return "100.00" if !$total || $total eq "NULL";
     return sprintf( "%.2f", ( $value * 100 / $total ) );
 }
 
@@ -1917,7 +1902,7 @@ sub get_ssh_prefix {
 }
 
 sub get_container_prefix {
-    return "" if ( $opt{'container'} // '0' ) eq '0' or $opt{'container'} eq '';
+    return "" if !$opt{'container'};
     my ( $engine, $name ) =
       $opt{'container'} =~ /^(docker|podman|kubectl):(.*)/
       ? ( $1, $2 )
@@ -1933,7 +1918,7 @@ sub get_container_prefix {
 
 sub get_transport_prefix {
     my $prefix = get_ssh_prefix();
-    return $prefix if $prefix ne '';
+    return $prefix if $prefix;
     return get_container_prefix();
 }
 
@@ -1944,10 +1929,10 @@ sub execute_system_command {
 
     # Avoid double transport if the command is already prefixed
     my $full_cmd = $command;
-    if ( $ssh_prefix ne '' && index( $command, $ssh_prefix ) != 0 ) {
+    if ( $ssh_prefix && index( $command, $ssh_prefix ) != 0 ) {
         $full_cmd = "$ssh_prefix '$command'";
     }
-    elsif ( $container_prefix ne ''
+    elsif ( $container_prefix
         && index( $command, $container_prefix ) != 0 )
     {
         $command =~ s/'/'\\''/g;
@@ -1956,6 +1941,9 @@ sub execute_system_command {
 
     debugprint "Executing system command: $full_cmd";
     my @output = `$full_cmd 2>&1`;
+
+    # Issue #887: Filter out SSL DISABLED boolean warning from MySQL client
+    @output = grep { !/boolean value 'DISABLED' wasn't recognized/ } @output;
 
     if ( $? != 0 ) {
 
@@ -1990,7 +1978,7 @@ sub mysql_setup {
         $mysqladmincmd = $opt{mysqladmin};
     }
     else {
-        if ( $transport_prefix ne '' ) {
+        if ($transport_prefix) {
             my $check = execute_system_command("which mariadb-admin");
             $mysqladmincmd =
               ( $check =~ /mariadb-admin/ ) ? "mariadb-admin" : "mysqladmin";
@@ -2003,7 +1991,7 @@ sub mysql_setup {
     }
     chomp($mysqladmincmd);
     if ( !$mysqladmincmd
-        || ( $transport_prefix eq '' && !-x $mysqladmincmd ) )
+        || ( !$transport_prefix && !-x $mysqladmincmd ) )
     {
         badprint
           "Couldn't find an executable mysqladmin/mariadb-admin command.";
@@ -2014,7 +2002,7 @@ sub mysql_setup {
         $mysqlcmd = $opt{mysqlcmd};
     }
     else {
-        if ( $transport_prefix ne '' ) {
+        if ($transport_prefix) {
             my $check = execute_system_command("which mariadb");
             $mysqlcmd = ( $check =~ /mariadb/ ) ? "mariadb" : "mysql";
         }
@@ -2025,14 +2013,14 @@ sub mysql_setup {
         }
     }
     chomp($mysqlcmd);
-    if ( !$mysqlcmd || ( $transport_prefix eq '' && !-x $mysqlcmd ) ) {
+    if ( !$mysqlcmd || ( !$transport_prefix && !-x $mysqlcmd ) ) {
         badprint "Couldn't find an executable mysql/mariadb command.";
         exit 1;
     }
 
     # Gather defaults file options
     my $defaults_options = '';
-    if ( ( $opt{'defaults-file'} // '0' ) ne '0' ) {
+    if ( $opt{'defaults-file'} ) {
         if ( -r $opt{'defaults-file'} ) {
             $defaults_options = "--defaults-file=\"$opt{'defaults-file'}\" ";
             debugprint "Using defaults-file: $opt{'defaults-file'}";
@@ -2043,7 +2031,7 @@ sub mysql_setup {
             exit 1;
         }
     }
-    if ( ( $opt{'defaults-extra-file'} // '0' ) ne '0' ) {
+    if ( $opt{'defaults-extra-file'} ) {
         if ( -r $opt{'defaults-extra-file'} ) {
             $defaults_options .=
               "--defaults-extra-file=\"$opt{'defaults-extra-file'}\" ";
@@ -2055,7 +2043,7 @@ sub mysql_setup {
             exit 1;
         }
     }
-    if ( ( $opt{'login-path'} // '0' ) ne '0' ) {
+    if ( $opt{'login-path'} ) {
         $defaults_options .= "--login-path=\"$opt{'login-path'}\" ";
         debugprint "Using login-path: $opt{'login-path'}";
     }
@@ -2074,8 +2062,8 @@ sub mysql_setup {
     debugprint "MySQL Client: $mysqlcmd";
 
     # Are we being asked to connect via a socket?
-    if ( $opt{socket} ne 0 ) {
-        if ( $opt{port} ne 0 ) {
+    if ( $opt{socket} ) {
+        if ( $opt{port} ) {
             $remotestring = " -S $opt{socket} -P $opt{port}";
         }
         else {
@@ -2084,8 +2072,8 @@ sub mysql_setup {
     }
 
     # Are we being asked to connect via a named pipe?
-    if ( $opt{pipe} ne 0 ) {
-        if ( $opt{pipe_name} ne 0 ) {
+    if ( $opt{pipe} ) {
+        if ( $opt{pipe_name} ) {
             $remotestring = " -W -S $opt{pipe_name}";
         }
         else {
@@ -2098,12 +2086,12 @@ sub mysql_setup {
     }
 
     # Are we being asked to connect to a remote server?
-    if ( $opt{host} ne 0 ) {
+    if ( $opt{host} ) {
         chomp( $opt{host} );
-        $opt{port} = ( $opt{port} eq 0 ) ? 3306 : $opt{port};
+        $opt{port} = ( !$opt{port} ) ? 3306 : $opt{port};
 
 # If we're doing a remote connection, but forcemem wasn't specified, we need to exit
-        if ( $opt{'forcemem'} eq 0 && is_remote eq 1 ) {
+        if ( !$opt{'forcemem'} && is_remote eq 1 ) {
             badprint "The --forcemem option is required for remote connections";
             badprint
               "Assuming RAM memory is 1Gb for simplify remote connection usage";
@@ -2111,7 +2099,7 @@ sub mysql_setup {
 
             #exit 1;
         }
-        if ( $opt{'forceswap'} eq 0 && is_remote eq 1 ) {
+        if ( !$opt{'forceswap'} && is_remote eq 1 ) {
             badprint
               "The --forceswap option is required for remote connections";
             badprint
@@ -2129,7 +2117,7 @@ sub mysql_setup {
         $opt{host} = '127.0.0.1';
     }
 
-    if ( $opt{'ssl-ca'} ne 0 ) {
+    if ( $opt{'ssl-ca'} ) {
         if ( -e -r -f $opt{'ssl-ca'} ) {
             $remotestring .= " --ssl-ca=$opt{'ssl-ca'}";
             infoprint
@@ -2142,7 +2130,7 @@ sub mysql_setup {
         }
     }
 
-    if ( $transport_prefix ne '' && ( $opt{pass} // '0' ) eq '0' ) {
+    if ( $transport_prefix && !$opt{pass} ) {
         if (   ( $ENV{MARIADB_ROOT_PASSWORD} // '' ) ne ''
             || ( $ENV{MYSQL_ROOT_PASSWORD} // '' ) ne '' )
         {
@@ -2153,16 +2141,16 @@ sub mysql_setup {
     }
 
 # Did we already get a username with or without password or login-path on the command line?
-    if (   $opt{user} ne 0
-        || $opt{pass} ne 0
+    if (   $opt{user}
+        || $opt{pass}
         || $opt{container}
-        || ( $opt{'login-path'} // '0' ) ne '0' )
+        || $opt{'login-path'} )
     {
-        my $username = $opt{user} ne 0 ? $opt{user} : "root";
+        my $username = $opt{user} ? $opt{user} : "root";
         $mysqllogin =
             "$defaults_options "
-          . ( ( $opt{user} ne 0 ) ? "-u $username "   : " " )
-          . ( ( $opt{pass} ne 0 ) ? "-p'$opt{pass}' " : " " )
+          . ( ( $opt{user} ) ? "-u $username "   : " " )
+          . ( ( $opt{pass} ) ? "-p'$opt{pass}' " : " " )
           . $remotestring;
         my $loginstatus =
           execute_system_command(
@@ -2725,7 +2713,8 @@ sub get_all_vars {
 
     my @mysqlvarlist = select_array("SHOW VARIABLES");
     push( @mysqlvarlist, select_array("SHOW GLOBAL VARIABLES") );
-    arr2hash( \%myvar, \@mysqlvarlist );
+    arr2hash( \%myvar,     \@mysqlvarlist );
+    arr2hash( \%real_vars, \@mysqlvarlist );
     $result{'Variables'} = \%myvar;
 
     # Check privileges after we have version and variable information
@@ -2796,9 +2785,8 @@ sub get_all_vars {
 
     #debugprint Dumper(@mysqlenginelist);
 
-    my @mysqlslave;
+    my @mysqlreplica;
 
-    # Issue #553: Fix replication command compatibility
     # MySQL 8.0.22+: SHOW REPLICA STATUS (deprecated: SHOW SLAVE STATUS)
     # MariaDB 10.5.1+: SHOW REPLICA STATUS (deprecated: SHOW SLAVE STATUS)
     # Older versions: SHOW SLAVE STATUS
@@ -2811,35 +2799,47 @@ sub get_all_vars {
       ( $myvar{'version'} =~ /mariadb/i && mysql_version_ge( 10, 5 ) );
 
     if ( $is_mysql8_plus or $is_mariadb105_plus ) {
-        @mysqlslave = select_array("SHOW REPLICA STATUS\\G");
+        @mysqlreplica = select_array("SHOW REPLICA STATUS\\G");
     }
     else {
-        @mysqlslave = select_array("SHOW SLAVE STATUS\\G");
+        @mysqlreplica = select_array("SHOW SLAVE STATUS\\G");
     }
-    arr2hash( \%myrepl, \@mysqlslave, ':' );
+    arr2hash( \%myrepl, \@mysqlreplica, ':' );
+
+    # Terminology mapping for internal consistency
+    $myrepl{'Seconds_Behind_Replica'} = $myrepl{'Seconds_Behind_Source'}
+      // $myrepl{'Seconds_Behind_Master'}
+      if !defined $myrepl{'Seconds_Behind_Replica'};
+    $myrepl{'Replica_IO_Running'} = $myrepl{'Replica_IO_Running'}
+      // $myrepl{'Slave_IO_Running'}
+      if !defined $myrepl{'Replica_IO_Running'};
+    $myrepl{'Replica_SQL_Running'} = $myrepl{'Replica_SQL_Running'}
+      // $myrepl{'Slave_SQL_Running'}
+      if !defined $myrepl{'Replica_SQL_Running'};
+
     $result{'Replication'}{'Status'} = \%myrepl;
 
-    # Issue #553: Fix slave/replica host listing commands
+    # Issue #553: Fix replica host listing commands
     # MySQL 8.0.22+: SHOW REPLICAS (deprecated: SHOW SLAVE HOSTS)
     # MariaDB 10.5.1+: SHOW REPLICA HOSTS (deprecated: SHOW SLAVE HOSTS)
     # Older versions: SHOW SLAVE HOSTS
-    my @mysqlslaves;
+    my @mysqlreplicas;
     if ($is_mysql8_plus) {
-        @mysqlslaves = select_array("SHOW REPLICAS");
+        @mysqlreplicas = select_array("SHOW REPLICAS");
     }
     elsif ($is_mariadb105_plus) {
-        @mysqlslaves = select_array("SHOW REPLICA HOSTS\\G");
+        @mysqlreplicas = select_array("SHOW REPLICA HOSTS\\G");
     }
     else {
-        @mysqlslaves = select_array("SHOW SLAVE HOSTS\\G");
+        @mysqlreplicas = select_array("SHOW SLAVE HOSTS\\G");
     }
 
     my @lineitems = ();
-    foreach my $line (@mysqlslaves) {
+    foreach my $line (@mysqlreplicas) {
         debugprint "L: $line ";
-        @lineitems                                        = split /\s+/, $line;
-        $myslaves{ $lineitems[0] }                        = $line;
-        $result{'Replication'}{'Slaves'}{ $lineitems[0] } = $lineitems[4];
+        @lineitems                                          = split /\s+/, $line;
+        $myreplicas{ $lineitems[0] }                        = $line;
+        $result{'Replication'}{'Replicas'}{ $lineitems[0] } = $lineitems[4];
     }
 
     # InnoDB Transaction Info
@@ -3846,7 +3846,7 @@ sub ssl_tls_recommendations {
     if ( $session_ssl =~ /Ssl_cipher\s+(.*)/ ) {
         my $cipher = $1;
         $cipher =~ s/^\s+|\s+$//g;
-        if ( $cipher eq "" || $cipher eq "NULL" || $cipher eq "0" ) {
+        if ( !$cipher || $cipher eq "NULL" || $cipher eq "0" ) {
             badprint "Current connection is NOT encrypted!";
             push_recommendation( 'Security',
 "Current connection is NOT encrypted! Consider using SSL for all connections."
@@ -3904,9 +3904,7 @@ sub ssl_tls_recommendations {
     }
 
     # Certificate presence and local audit
-    if (   ( $myvar{'ssl_cert'} || "" ) eq ""
-        && ( $myvar{'ssl_key'} || "" ) eq "" )
-    {
+    if ( !$myvar{'ssl_cert'} && !$myvar{'ssl_key'} ) {
         badprint "No SSL certificates configured (ssl_cert/ssl_key are empty)";
         push_recommendation( 'Security',
 "Configure SSL certificates (ssl_cert, ssl_key, ssl_ca) to enable encrypted connections."
@@ -3932,14 +3930,36 @@ sub check_local_certificates {
     );
 
     foreach my $cert (@certs) {
-        next unless defined $cert->{path} && $cert->{path} ne "";
+        next unless $cert->{path};
+
+        my $in_datadir = 0;
+        if ( $myvar{'datadir'} ) {
+            my $abs_path    = abs_path( $cert->{path} ) // $cert->{path};
+            my $abs_datadir = abs_path( $myvar{'datadir'} )
+              // $myvar{'datadir'};
+            if ( index( $abs_path, $abs_datadir ) == 0 ) {
+                $in_datadir = 1;
+            }
+        }
 
         if ( !my_file_exists( $cert->{path} ) ) {
-            badprint "$cert->{desc} file not found: $cert->{path}";
+            if ($in_datadir) {
+                infoprint
+"$cert->{desc} file not found or inaccessible in datadir (skipped): $cert->{path}";
+            }
+            else {
+                badprint "$cert->{desc} file not found: $cert->{path}";
+            }
             next;
         }
         if ( !my_file_readable( $cert->{path} ) ) {
-            badprint "$cert->{desc} file is not readable: $cert->{path}";
+            if ($in_datadir) {
+                infoprint
+"$cert->{desc} file is not readable in datadir (skipped): $cert->{path}";
+            }
+            else {
+                badprint "$cert->{desc} file is not readable: $cert->{path}";
+            }
             next;
         }
 
@@ -4120,7 +4140,7 @@ sub security_recommendations {
 
     my $PASS_COLUMN_NAME = get_password_column_name();
 
-    if ( $PASS_COLUMN_NAME eq '' ) {
+    if ( !$PASS_COLUMN_NAME ) {
         infoprint "Skipped due to none of known auth columns exists";
         return;
     }
@@ -4239,7 +4259,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     @mysqlstatlist = select_array
       "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
     if ( scalar(@mysqlstatlist) > 0 ) {
-        if ( $opt{dumpdir} ne '' && $opt{dumpdir} ne '0' ) {
+        if ( $opt{dumpdir} ) {
             select_csv_file(
                 "$opt{dumpdir}/user_with_general_wildcard.csv",
                 "SELECT user, host FROM mysql.user WHERE HOST='%'"
@@ -4389,18 +4409,18 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
 sub get_replication_status {
     subheaderprint "Replication Metrics";
     infoprint "Galera Synchronous replication: " . $myvar{'have_galera'};
-    if ( scalar( keys %myslaves ) == 0 ) {
-        infoprint "No replication slave(s) for this server.";
+    if ( scalar( keys %myreplicas ) == 0 ) {
+        infoprint "No replication replica(s) for this server.";
     }
     else {
-        infoprint "This server is acting as master for "
-          . scalar( keys %myslaves )
+        infoprint "This server is acting as source for "
+          . scalar( keys %myreplicas )
           . " server(s).";
     }
     infoprint "Binlog format: " . $myvar{'binlog_format'};
     infoprint "XA support enabled: " . $myvar{'innodb_support_xa'};
 
-    infoprint "Semi synchronous replication Master: "
+    infoprint "Semi synchronous replication Source: "
       . (
         (
                  defined( $myvar{'rpl_semi_sync_master_enabled'} )
@@ -4410,7 +4430,7 @@ sub get_replication_status {
               // $myvar{'rpl_semi_sync_source_enabled'} )
         : 'Not Activated'
       );
-    infoprint "Semi synchronous replication Slave: "
+    infoprint "Semi synchronous replication Replica: "
       . (
         (
                  defined( $myvar{'rpl_semi_sync_slave_enabled'} )
@@ -4420,7 +4440,7 @@ sub get_replication_status {
               // $myvar{'rpl_semi_sync_replica_enabled'} )
         : 'Not Activated'
       );
-    if ( scalar( keys %myrepl ) == 0 and scalar( keys %myslaves ) == 0 ) {
+    if ( scalar( keys %myrepl ) == 0 and scalar( keys %myreplicas ) == 0 ) {
         infoprint "This is a standalone server";
         return;
     }
@@ -4431,23 +4451,20 @@ sub get_replication_status {
     }
 
     $result{'Replication'}{'status'} = \%myrepl;
-    my ($io_running) = $myrepl{'Slave_IO_Running'}
-      // $myrepl{'Replica_IO_Running'};
+    my ($io_running) = $myrepl{'Replica_IO_Running'};
     debugprint "IO RUNNING: $io_running ";
-    my ($sql_running) = $myrepl{'Slave_SQL_Running'}
-      // $myrepl{'Replica_SQL_Running'};
+    my ($sql_running) = $myrepl{'Replica_SQL_Running'};
     debugprint "SQL RUNNING: $sql_running ";
 
-    my ($seconds_behind_master) = $myrepl{'Seconds_Behind_Master'}
-      // $myrepl{'Seconds_Behind_Source'};
-    $seconds_behind_master = 1000000 unless defined($seconds_behind_master);
-    debugprint "SECONDS : $seconds_behind_master ";
+    my ($seconds_behind_replica) = $myrepl{'Seconds_Behind_Replica'};
+    $seconds_behind_replica = 1000000 unless defined($seconds_behind_replica);
+    debugprint "SECONDS : $seconds_behind_replica ";
 
     if ( defined($io_running)
         and ( $io_running !~ /yes/i or $sql_running !~ /yes/i ) )
     {
         badprint
-          "This replication slave is not running but seems to be configured.";
+          "This replication replica is not running but seems to be configured.";
     }
     if (   defined($io_running)
         && $io_running  =~ /yes/i
@@ -4455,18 +4472,18 @@ sub get_replication_status {
     {
         if ( $myvar{'read_only'} eq 'OFF' ) {
             badprint
-"This replication slave is running with the read_only option disabled.";
+"This replication replica is running with the read_only option disabled.";
         }
         else {
             goodprint
-"This replication slave is running with the read_only option enabled.";
+"This replication replica is running with the read_only option enabled.";
         }
-        if ( $seconds_behind_master > 0 ) {
+        if ( $seconds_behind_replica > 0 ) {
             badprint
-"This replication slave is lagging and slave has $seconds_behind_master second(s) behind master host.";
+"This replication replica is lagging and has $seconds_behind_replica second(s) behind source host.";
         }
         else {
-            goodprint "This replication slave is up to date with master.";
+            goodprint "This replication replica is up to date with source.";
         }
     }
 
@@ -4495,7 +4512,7 @@ sub get_replication_status {
                 }
             }
             infoprint
-"Ensure binlog_format=ROW is set on the master for parallel replication to work effectively.";
+"Ensure binlog_format=ROW is set on the source for parallel replication to work effectively.";
         }
         else {
             badprint "Parallel replication is disabled.";
@@ -4754,11 +4771,11 @@ sub check_storage_engines {
             ( $engine, $size, $count, $dsize, $isize ) =
               $line =~ /([a-zA-Z_]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/;
             debugprint "Engine Found: $engine";
-            next unless ( defined($engine) or trim($engine) eq '' );
-            $size  = 0 unless ( defined($size)  or trim($engine) eq '' );
-            $isize = 0 unless ( defined($isize) or trim($engine) eq '' );
-            $dsize = 0 unless ( defined($dsize) or trim($engine) eq '' );
-            $count = 0 unless ( defined($count) or trim($engine) eq '' );
+            next unless defined $engine;
+            $size  //= 0;
+            $isize //= 0;
+            $dsize //= 0;
+            $count //= 0;
             $enginestats{$engine}                      = $size;
             $enginecount{$engine}                      = $count;
             $result{'Engine'}{$engine}{'Table Number'} = $count;
@@ -4780,7 +4797,7 @@ sub check_storage_engines {
 "SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
           ];
         $fragtables = scalar @{ $result{'Tables'}{'Fragmented tables'} };
-        if ( $opt{dumpdir} ne '' && $opt{dumpdir} ne '0' ) {
+        if ( $opt{dumpdir} ) {
             select_csv_file( "$opt{dumpdir}/fragmented_tables.csv",
 "SELECT TABLE_SCHEMA, TABLE_NAME, ENGINE, CAST(DATA_FREE AS SIGNED) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql') AND DATA_LENGTH/1024/1024>100 AND cast(DATA_FREE as signed)*100/(DATA_LENGTH+INDEX_LENGTH+cast(DATA_FREE as signed)) > 10 AND NOT ENGINE='MEMORY' $not_innodb"
             );
@@ -4959,7 +4976,7 @@ sub check_storage_engines {
 sub dump_into_file {
     my $file    = shift;
     my $content = shift;
-    if ( -d "$opt{dumpdir}" && $opt{dumpdir} ne '0' ) {
+    if ( -d "$opt{dumpdir}" && $opt{dumpdir} ) {
         $file = "$opt{dumpdir}/$file";
         open( FILE, ">$file" ) or die "Can't open $file: $!";
         print FILE $content;
@@ -5471,7 +5488,7 @@ sub mysql_stats {
     $result{'Galera'}{'GCache'}{'pretty_memory'} =
       hr_bytes_rnd( get_gcache_memory() );
 
-    if ( $opt{buffers} ne 0 ) {
+    if ( $opt{buffers} ) {
         infoprint "Global Buffers";
         infoprint " +-- Key Buffer: "
           . hr_bytes( $myvar{'key_buffer_size'} ) . "";
@@ -5639,7 +5656,7 @@ sub mysql_stats {
         || -r "/etc/cpupdate.conf" )
     {
         if (    $result{'Variables'}{'skip_name_resolve'} ne 'OFF'
-            and $result{'Variables'}{'skip_name_resolve'} ne '0' )
+            and $result{'Variables'}{'skip_name_resolve'} )
         {
             badprint
 "cPanel/Flex system detected: skip-name-resolve should be disabled (OFF)";
@@ -5768,7 +5785,7 @@ sub mysql_stats {
                   . ", or always use indexes with JOINs)" );
         }
         else {
-            push( @adjvars, "always use indexes with JOINs" );
+            push( @adjvars, "join_buffer_size (always use indexes with JOINs)" );
         }
         push(
             @generalrec,
@@ -6062,7 +6079,7 @@ sub mysql_stats {
     elsif ( $myvar{'concurrent_insert'} eq "OFF" ) {
         push( @generalrec, "Enable concurrent_insert by setting it to 'ON'" );
     }
-    elsif ( $myvar{'concurrent_insert'} eq 0 ) {
+    elsif ( !$myvar{'concurrent_insert'} ) {
         push( @generalrec, "Enable concurrent_insert by setting it to 1" );
     }
 }
@@ -8013,7 +8030,7 @@ sub trim {
 }
 
 sub get_wsrep_options {
-    return () unless defined $myvar{'wsrep_provider_options'};
+    return () unless $myvar{'wsrep_provider_options'};
 
     my @galera_options = split /;/, $myvar{'wsrep_provider_options'};
     @galera_options = remove_cr @galera_options;
@@ -8026,15 +8043,15 @@ sub get_wsrep_options {
 sub get_gcache_memory {
     my $gCacheMem = hr_raw( get_wsrep_option('gcache.size') );
 
-    return 0 unless defined $gCacheMem and $gCacheMem ne '';
+    return 0 unless $gCacheMem;
     return $gCacheMem;
 }
 
 sub get_wsrep_option {
     my $key = shift;
-    return '' unless defined $myvar{'wsrep_provider_options'};
+    return '' unless $myvar{'wsrep_provider_options'};
     my @galera_options = get_wsrep_options;
-    return '' unless scalar(@galera_options) > 0;
+    return '' unless @galera_options;
     my @memValues = grep /\s*$key =/, @galera_options;
     my $memValue  = $memValues[0];
     return 0 unless defined $memValue;
@@ -8636,23 +8653,23 @@ sub mariadb_galera {
 
     if ( $wsrep_threads_value > 1 ) {
         infoprint
-          "wsrep parallel slave can cause frequent inconsistency crash.";
+          "wsrep parallel replica can cause frequent inconsistency crash.";
         push @adjvars,
-"Set $wsrep_threads_var_name to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on slave";
+"Set $wsrep_threads_var_name to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on replica";
 
-        # check options for parallel slave
+        # check options for parallel replica
         if ( get_wsrep_option('wsrep_slave_FK_checks') eq "OFF" ) {
-            badprint "wsrep_slave_FK_checks is off with parallel slave";
+            badprint "wsrep_slave_FK_checks is off with parallel replica";
             push @adjvars,
-              "wsrep_slave_FK_checks should be ON when using parallel slave";
+              "wsrep_slave_FK_checks should be ON when using parallel replica";
         }
 
         # wsrep_slave_UK_checks seems useless in MySQL source code
         if ( $myvar{'innodb_autoinc_lock_mode'} != 2 ) {
             badprint
-              "innodb_autoinc_lock_mode is incorrect with parallel slave";
+              "innodb_autoinc_lock_mode is incorrect with parallel replica";
             push @adjvars,
-              "innodb_autoinc_lock_mode should be 2 when using parallel slave";
+              "innodb_autoinc_lock_mode should be 2 when using parallel replica";
         }
     }
 
@@ -8901,7 +8918,7 @@ sub mysql_innodb {
         $enginestats{'InnoDB'} = 0;
     }
 
-    if ( $opt{buffers} ne 0 ) {
+    if ( $opt{buffers} ) {
         infoprint "InnoDB Buffers";
         if ( defined $myvar{'innodb_buffer_pool_size'} ) {
             infoprint " +-- InnoDB Buffer Pool: "
@@ -9692,7 +9709,7 @@ sub check_removed_innodb_variables {
 
     foreach my $entry (@removed_vars) {
         my $var = $entry->{var};
-        if ( defined $myvar{$var}
+        if ( $real_vars{$var}
             && mysql_version_ge( @{ $entry->{removed} } ) )
         {
             badprint "InnoDB variable '$var' is removed in "
@@ -9813,7 +9830,7 @@ sub check_migration_advisor {
 
 sub historical_comparison {
     my $file = $opt{'compare-file'};
-    return if $file eq '0';
+    return if !$file;
 
     subheaderprint "Historical Trend Analysis";
     if ( !-e $file ) {
@@ -9878,7 +9895,7 @@ sub historical_comparison {
 
 sub process_sysbench_metrics {
     my $file = $opt{'sysbench-file'};
-    return if $file eq '0';
+    return if !$file;
 
     subheaderprint "Sysbench Performance Metrics";
     if ( !-e $file ) {
@@ -10393,7 +10410,7 @@ sub mysql_tables {
         infoprint "Database: " . $_ . "";
         if ( $opt{dumpdir} or $opt{schemadir} ) {
             $schema_doc         .= "## Database: $dbname\n\n";
-            $current_schema_doc .= "### Tables\n\n" if $opt{schemadir} ne '';
+            $current_schema_doc .= "### Tables\n\n" if $opt{schemadir};
         }
 
         my @dbtable = select_array(
@@ -10412,11 +10429,11 @@ sub mysql_tables {
                 $table_info .= "#### Indexes\n";
 
                 $schema_doc         .= $table_info;
-                $current_schema_doc .= $table_info if $opt{schemadir} ne '';
+                $current_schema_doc .= $table_info if $opt{schemadir};
 
                 $mermaid_er         .= "    $tbname {\n";
                 $current_mermaid_er .= "    $tbname {\n"
-                  if $opt{schemadir} ne '';
+                  if $opt{schemadir};
             }
 
             my $selIdxReq = <<"ENDSQL";
@@ -10438,7 +10455,7 @@ ENDSQL
                 if ( $opt{dumpdir} or $opt{schemadir} ) {
                     my $idx_info = "- **$info[0]**: $info[1] ($info[2])\n";
                     $schema_doc         .= $idx_info;
-                    $current_schema_doc .= $idx_info if $opt{schemadir} ne '';
+                    $current_schema_doc .= $idx_info if $opt{schemadir};
                 }
                 $found++;
             }
@@ -10447,7 +10464,7 @@ ENDSQL
                 if ( $opt{dumpdir} or $opt{schemadir} ) {
                     $schema_doc         .= "- *No indexes defined*\n";
                     $current_schema_doc .= "- *No indexes defined*\n"
-                      if $opt{schemadir} ne '';
+                      if $opt{schemadir};
                 }
                 push @generalrec,
                   "Add at least a primary key on table $dbname.$tbname";
@@ -10456,7 +10473,7 @@ ENDSQL
             if ( $opt{dumpdir} or $opt{schemadir} ) {
                 $schema_doc         .= "\n#### Columns\n";
                 $current_schema_doc .= "\n#### Columns\n"
-                  if $opt{schemadir} ne '';
+                  if $opt{schemadir};
             }
 
             my @tbcol = select_array(
@@ -10477,13 +10494,13 @@ ENDSQL
                 if ( $opt{dumpdir} or $opt{schemadir} ) {
                     my $col_info = "- **$_**: $current_type\n";
                     $schema_doc         .= $col_info;
-                    $current_schema_doc .= $col_info if $opt{schemadir} ne '';
+                    $current_schema_doc .= $col_info if $opt{schemadir};
 
                     my $mtype = $ctype;
                     $mtype =~ s/\(.*\)//g;    # Strip lengths for Mermaid
                     $mermaid_er         .= "        $mtype $_\n";
                     $current_mermaid_er .= "        $mtype $_\n"
-                      if $opt{schemadir} ne '';
+                      if $opt{schemadir};
                 }
                 if ( $opt{colstat} == 1 ) {
                     $optimal_type = select_str_g( "Optimal_fieldtype",
@@ -10521,10 +10538,10 @@ ENDSQL
             }
             if ( $opt{dumpdir} or $opt{schemadir} ) {
                 $schema_doc         .= "\n---\n\n";
-                $current_schema_doc .= "\n---\n\n" if $opt{schemadir} ne '';
+                $current_schema_doc .= "\n---\n\n" if $opt{schemadir};
 
                 $mermaid_er         .= "    }\n";
-                $current_mermaid_er .= "    }\n" if $opt{schemadir} ne '';
+                $current_mermaid_er .= "    }\n" if $opt{schemadir};
             }
         }
 
@@ -10545,7 +10562,7 @@ ENDSQL
             }
         }
     }
-    if ( $opt{dumpdir} ne '' && $opt{dumpdir} ne '0' ) {
+    if ( $opt{dumpdir} ) {
         $mermaid_er .= "```\n\n";
         $schema_doc .= $mermaid_er;
         my $doc_file = "$opt{dumpdir}/schema_documentation.md";
@@ -10807,13 +10824,13 @@ sub file2string {
     return join( '', file2array(@_) );
 }
 
-my $templateModel;
-if ( $opt{'template'} ne 0 ) {
-    $templateModel = file2string( $opt{'template'} );
-}
-else {
+sub get_template_model {
+    if ( $opt{'template'} ) {
+        return file2string( $opt{'template'} );
+    }
+
     # DEFAULT REPORT TEMPLATE
-    $templateModel = <<'END_TEMPLATE';
+    return <<'END_TEMPLATE';
 <!DOCTYPE html>
 <html>
 <head>
@@ -10837,7 +10854,7 @@ sub dump_result {
     #debugprint Dumper( \%result ) if ( $opt{'debug'} );
     debugprint "HTML REPORT: $opt{'reportfile'}";
 
-    if ( $opt{'reportfile'} ne 0 ) {
+    if ( $opt{'reportfile'} ) {
         eval { require Text::Template };
         eval { require JSON };
         if ($@) {
@@ -10857,7 +10874,7 @@ sub dump_result {
             $template = Text::Template->new(
                 TYPE       => 'STRING',
                 PREPEND    => q{;},
-                SOURCE     => $templateModel,
+                SOURCE     => get_template_model(),
                 DELIMITERS => [ '[%', '%]' ]
             ) or die "Couldn't construct template: $Text::Template::ERROR";
         }
@@ -10869,7 +10886,7 @@ sub dump_result {
         close $fh;
     }
 
-    if ( $opt{'json'} ne 0 ) {
+    if ( $opt{'json'} ) {
         eval { require JSON };
         if ($@) {
             print "$bad JSON Module is needed.\n";
@@ -10880,7 +10897,7 @@ sub dump_result {
         print $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
           ->encode( \%result );
 
-        if ( $opt{'outputfile'} ne 0 ) {
+        if ( $opt{'outputfile'} ) {
             unlink $opt{'outputfile'} if ( -e $opt{'outputfile'} );
             open my $fh, q(>), $opt{'outputfile'}
               or die
@@ -10917,7 +10934,7 @@ sub which {
 }
 
 sub dump_csv_files {
-    return if ( ( $opt{dumpdir} // '0' ) eq '0' or $opt{dumpdir} eq '' );
+    return if !$opt{dumpdir};
 
     subheaderprint "Dumping CSV files";
 
@@ -11300,3 +11317,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # cperl-indent-level: 8
 # perl-indent-level: 8
 # End:
+vel: 8
+# perl-indent-level: 8
+# End:
+
+nd:
+

@@ -247,14 +247,14 @@
 
 ## MySQLTuner replication checks
 
-- Is server replication configured as slave?
+- Is server replication configured as replica?
 - SQL replication thread running?
 - IO replication thread running?
-- Replication lag in seconds (Seconds_behind_master)
-- Is Slave configured in read only?
+- Replication lag in seconds (Seconds_behind_replica)
+- Is Replica configured in read only?
 - Replication type ROW, MIX, STMT
-- Replication Semisync master
-- Replication Semisync slave
+- Replication Semisync source
+- Replication Semisync replica
 - XA support activated
 - Replication started?
 

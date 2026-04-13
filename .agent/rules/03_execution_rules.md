@@ -70,6 +70,7 @@ To ensure quality and clarity in every development cycle, all non-trivial featur
 2. **Git Protocol:**
 
 - **STRICT PROHIBITION:** No `git commit`, `git push`, or `git tag` without using `/git-flow` or an explicit user order.
+- **BRANCHING MANDATORY:** ALL developments, features, bug fixes, and interventions MUST be done in a dedicated Git branch separated from `master`. Committing directly to the `master` branch is strictly prohibited.
 - **Conventional Commits:** Use `feat:`, `fix:`, `chore:`, `docs:`, `perf:`, `refactor:`, `style:`, `test:`, `ci:`. Breaking changes must be marked with `!` after type/scope or `BREAKING CHANGE:` in footer.
 - **Commit Validation:** Commits are automatically linted via `commitlint`. Non-compliant messages will be rejected by the pre-commit hook.
 - **History Documentation:** Use `npm run commit` to generate structured history.

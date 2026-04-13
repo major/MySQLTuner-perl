@@ -146,3 +146,15 @@ The following external commands are currently used via `execute_system_command` 
 
 - [x] **Unit Tests Stability**: 100% pass (53 files, 262 tests).
 - [x] **Regression Cleanliness**: No new `uninitialized value` or `Syntax error` found in Standard, Dumpdir, or Schemadir scenarios.
+
+## [2026-04-13 Audit] Development v2.8.41
+
+### [v2.8.41] Laboratory Verification
+
+- [x] **Older Perl Compatibility**: Verified that the script runs on Perl 5.6 and 5.8 without uninitialized value warnings or syntax errors.
+- [x] **Dependency Audit**: Renovate updates for Docker actions and softprops/action-gh-release verified in CI pipelines.
+- [x] **Idiomatic Boolean Refactoring**: Completed project-wide refactoring to use standard Perl Boolean practices (truthiness checks).
+  - Replaced `eq '0'`, `ne '0'`, `eq 0`, `ne 0`, `eq ""`, `ne ""` with truthy/falsy evaluations where appropriate.
+  - Refactored `%CLI_METADATA` defaults from `'0'` to `undef` for string/path options.
+  - Wrapped template reading logic in `get_template_model` to prevent `uninitialized value` warnings during `require`.
+  - Verified 100% test stability (262 tests passed).
