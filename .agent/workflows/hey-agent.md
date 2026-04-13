@@ -42,7 +42,7 @@ category: [governance | tool | skill]
 6. **Execution**: Apply changes using `replace_file_content` or `multi_replace`.
 7. **Synchronization**: Immediately update `03_execution_rules.md` (constraints) and `04_best_practices.md` if necessary.
 8. **Autolearning**: Update `remembers.md` as the session-level memory buffer.
-9. **Documentation Sync**: Execute `/doc-sync` to refresh the project's technical summary.
+9. **Documentation Sync**: Execute `/doc-sync` to refresh the project's technical summary. Ensure that any release publication (via `/git-flow`) uses all current release notes as the commit message.
 
 ## ✅ Verification
 

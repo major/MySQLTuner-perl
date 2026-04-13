@@ -49,6 +49,8 @@
 - Validate MySQL and MariaDB versions (EOL check)
 - Suggest 64-bit upgrade and architecture check
 - Analyze mysqld error log file (Local, Docker, Podman, Kubectl, Systemd)
+- Detect Cloud Environment (AWS, GCP, Azure, DigitalOcean)
+- Detect Infrastructure (Storage type, Hardware architecture)
 - Show parameters impacting performance during analysis
 - Show information about databases (option: --dbstat)
 - Show information about tables (option: --tbstat)
@@ -65,8 +67,11 @@
 - Print AriaDB stats
 - Print Galera cluster stats
 - Print replication info
+- Query Anti-Pattern Detection (Performance Schema digests)
 - Print Storage Engine specific stats (TokuDB, RocksDB, Spider, etc.)
 - Print Performance Schema stats
+- Sysbench result analysis (if provided)
+- Historical Trend Analysis (if comparison file provided)
 - Make recommendations based on stats
 - Close reportfile if needed
 - Dump result if debug is on
@@ -94,7 +99,8 @@
 
 ## MySQLTuner system checks
 
-* Check whether more than 2GB RAM present if on 32-bit OS
+- Check whether more than 2GB RAM present if on 32-bit OS
+
 - Check number of opened ports (warn when more than 9 ports opened)
 - Check 80, 8080, 443 and 8443 ports if warning is raised if they are opened
 - Check if some banned ports are not opened (option --bannedports separated by comma)
@@ -108,13 +114,15 @@
 
 ## MySQLTuner Server version checks
 
-* EOL MySQL version check
+- EOL MySQL version check
+
 - Currently MySQL < 5.1 are considered EOL
 - Using 5.5+ version of MySQL for performance issue (asynchronous IO)
 
 ## Mysql error log file analysis
 
-* Look for potential current error log file name
+- Look for potential current error log file name
+
 - Automatic detection for:
   - Docker containers
   - Podman containers
@@ -150,31 +158,32 @@
 
 ## MySQLTuner database information
 
-* Performance analysis parameter checks (metadata performance)
+- Performance analysis parameter checks (metadata performance)
+
 - Per database information
         * Tables number
-   - Rows number
-   - Total size
-   - Data size
-   - Percentage of data size
-   - Index size
-   - Percentage of index size
-    - Views number
-    - Triggers number
-    - Routines number
-    - Collation number
-    - Check that there is only one collation for all tables in database
-    - Check that there is only one collation for all table columns in database
-    - Check that there is only one storage engine per user database
+  - Rows number
+  - Total size
+  - Data size
+  - Percentage of data size
+  - Index size
+  - Percentage of index size
+  - Views number
+  - Triggers number
+  - Routines number
+  - Collation number
+  - Check that there is only one collation for all tables in database
+  - Check that there is only one collation for all table columns in database
+  - Check that there is only one storage engine per user database
 
 ## MySQLTuner index information
 
 - Top 10 worth selectivity index
 - Per index information
-   - Index Cardinality
-   - Index Selectivity
-   - Misc information about index definition
-   - Misc information about index size
+  - Index Cardinality
+  - Index Selectivity
+  - Misc information about index definition
+  - Misc information about index size
 
 ## MySQLTuner Connections information
 
@@ -212,10 +221,10 @@
 - Per Thread Buffer
   - Read Buffer
   - Read RND Buffer
-   - Sort Buffer
-   - Thread stack
-   - Join Buffer
-   - Binlog Cache Buffers size if activated
+  - Sort Buffer
+  - Thread stack
+  - Join Buffer
+  - Binlog Cache Buffers size if activated
 
 ## MySQLTuner query cache checks
 
@@ -295,13 +304,13 @@
 - wsrep_node_name is defined.
 - Check thet notification script wsrep_notify_cmd is defined
 - wsrep_cluster_status PRIMARY /NON PRIMARY.
-   - PRIMARY : Coherent cluster
-   - NO PRIMARY : cluster gets several states
+  - PRIMARY : Coherent cluster
+  - NO PRIMARY : cluster gets several states
 - wsrep_local_state_comment: Node state
-   - SYNCED (uptodate),
-   - DONOR (sending information to another node)
-   - Joiner (try to reach cluster group)
-   - SYNCED state able to read/write
+  - SYNCED (uptodate),
+  - DONOR (sending information to another node)
+  - Joiner (try to reach cluster group)
+  - SYNCED state able to read/write
 - wsrep_cluster_conf_id configuration level must be identical in all nodes
 - wsrep_slave_thread is between 3 or 4 times number of CPU core.
 - gcs.limit should be equal to wsrep_slave_threads * 5
@@ -469,3 +478,31 @@
 - **Kubectl**: Supports retrieving logs from Kubernetes pods.
 - **Systemd**: Supports retrieving logs from the systemd journal using `journalctl`.
 - **Explicit Container**: Can be specified using `--container <type>:<name>`.
+
+## MySQLTuner Infrastructure Awareness
+ 
+- **Storage Type**: Detects SSD/NVMe vs HDD by checking /sys/block/*/queue/rotational.
+- **Hardware Architecture**: Detects ARM64/Graviton vs x86_64.
+- tuning Adjustments: Suggestions for innodb_flush_neighbors and innodb_io_capacity based on storage type.
+ 
+## MySQLTuner Cloud Autodiscovery
+ 
+- **AWS**: Detects RDS/Aurora via @@version_comment and @@aurora_version.
+- **GCP**: Detects Cloud SQL via @@version_comment and @@cloudsql_instance_id.
+- **Azure**: Detects Flexible Server via @@version_comment.
+- **DigitalOcean**: Detects Managed MySQL via @@version_comment.
+ 
+## MySQLTuner Query Anti-Pattern Detection
+ 
+- **Full Scans**: Analyzes events_statements_summary_by_digest for queries with high no_index_used or no_good_index_used.
+- **Disk Temp Tables**: Identifies queries creating excessive internal disk-based temporary tables.
+ 
+## MySQLTuner Sysbench Integration
+ 
+- **Metrics**: Parses sysbench output for QPS, TPS, and latency (Avg/95th/Max).
+- **Comparison**: Includes baseline performance metrics in the final report.
+ 
+## MySQLTuner Historical Trend Analysis
+ 
+- **JSON Snapshots**: Ingests JSON output from previous runs via --compare-file.
+- **Comparisons**: Provides trends for QPS and Data Growth between snapshots.

@@ -34,6 +34,9 @@ subtest 'ssl_tls_recommendations' => sub {
     local *main::subheaderprint = sub { };
     local *main::push_recommendation = sub { shift; push @recommendations, $_[0] };
     
+    local *main::check_local_certificates = sub { };
+    local *main::check_remote_user_ssl = sub { };
+
     # Mock select_one for Ssl_cipher
     local *main::select_one = sub {
         my $query = shift;
@@ -94,11 +97,13 @@ subtest 'ssl_tls_recommendations' => sub {
     ok(grep(/Insecure TLS versions enabled/, @bad_prints), "Detects insecure TLS versions");
     is(scalar(@recommendations), 3, "Has 3 recommendations");
 
-    # Case 3: SSL Disabled
+    # Case 4: TLS 1.1 Only (Modern TLS failure)
     %main::myvar = (
-        'have_ssl' => 'DISABLED',
-        'ssl_cert' => '',
-        'ssl_key' => ''
+        'have_ssl' => 'YES',
+        'require_secure_transport' => 'ON',
+        'tls_version' => 'TLSv1.1',
+        'ssl_cert' => '/etc/mysql/cert.pem',
+        'ssl_key' => '/etc/mysql/key.pem'
     );
     @main::generalrec = ();
     @bad_prints = ();
@@ -106,9 +111,107 @@ subtest 'ssl_tls_recommendations' => sub {
     @recommendations = ();
     
     main::ssl_tls_recommendations();
+    ok(grep(/Insecure TLS versions enabled/, @bad_prints), "Detects TLS 1.1 as insecure");
+    ok(grep(/No modern TLS versions/, @bad_prints), "Detects lack of TLS 1.2+");
+};
+
+subtest 'check_local_certificates' => sub {
+    no warnings 'redefine';
+    my @bad_prints;
+    my @good_prints;
+    my @info_prints;
+    my @recommendations;
+    local *main::badprint = sub { push @bad_prints, $_[0] };
+    local *main::goodprint = sub { push @good_prints, $_[0] };
+    local *main::infoprint = sub { push @info_prints, $_[0] };
+    local *main::push_recommendation = sub { shift; push @recommendations, $_[0] };
+    local *main::is_remote = sub { 0 };
+    local *main::my_file_exists = sub { 1 };
+    local *main::my_file_readable = sub { 1 };
     
-    ok(grep(/SSL is DISABLED/, @bad_prints), "Detects SSL disabled");
-    ok(grep(/No SSL certificates configured/, @bad_prints), "Detects missing certs");
+    # Mock which for openssl and date
+    local *main::which = sub {
+        my ($cmd) = @_;
+        return 1 if $cmd eq 'openssl' || $cmd eq 'date';
+        return 0;
+    };
+
+    # Case 1: Expired cert
+    %main::myvar = (
+        'ssl_cert' => '/tmp/expired.pem',
+        'ssl_ca'   => '/tmp/ca.pem'
+    );
+    local *main::execute_system_command = sub {
+        my ($cmd) = @_;
+        if ($cmd =~ /openssl x509 -enddate/) {
+            return "notAfter=Jan 01 00:00:00 2020 GMT";
+        }
+        if ($cmd =~ /date -d/) {
+            return "-500"; # -500 days
+        }
+        return "";
+    };
+
+    @bad_prints = ();
+    @recommendations = ();
+    main::check_local_certificates();
+    ok(grep(/EXPIRED/, @bad_prints), "Detects expired certificate");
+    is(scalar(@recommendations), 2, "Recommendations for expired certs");
+
+    # Case 2: Valid cert
+    local *main::execute_system_command = sub {
+        my ($cmd) = @_;
+        if ($cmd =~ /openssl x509 -enddate/) {
+            return "notAfter=Jan 01 00:00:00 2030 GMT";
+        }
+        if ($cmd =~ /date -d/) {
+            return "1000"; # 1000 days
+        }
+        return "";
+    };
+    @bad_prints = ();
+    @good_prints = ();
+    main::check_local_certificates();
+    ok(grep(/is valid/, @good_prints), "Detects valid certificate");
+};
+
+subtest 'check_remote_user_ssl' => sub {
+    no warnings 'redefine';
+    my @bad_prints;
+    my @good_prints;
+    my @recommendations;
+    local *main::badprint = sub { push @bad_prints, $_[0] };
+    local *main::goodprint = sub { push @good_prints, $_[0] };
+    local *main::push_recommendation = sub { shift; push @recommendations, $_[0] };
+    local *main::mysql_version_ge = sub { 1 };
+    
+    # Mock MariaDB result
+    %main::myvar = ( 'version' => '10.5.0-MariaDB' );
+    local *main::select_array = sub {
+        my ($query) = @_;
+        if ($query =~ /global_priv/) {
+            return ("'remote_user'\@'%'");
+        }
+        return ();
+    };
+    
+    @bad_prints = ();
+    main::check_remote_user_ssl();
+    ok(grep(/users can connect remotely without SSL/, @bad_prints), "Detects remote user without SSL (MariaDB)");
+
+    # Mock MySQL result
+    %main::myvar = ( 'version' => '8.0.30' );
+    local *main::select_array = sub {
+        my ($query) = @_;
+        if ($query =~ /mysql.user/) {
+            return ("'mysql_user'\@'192.168.1.10'");
+        }
+        return ();
+    };
+    local *main::mysql_version_ge = sub { 1 };
+    @bad_prints = ();
+    main::check_remote_user_ssl();
+    ok(grep(/users can connect remotely without SSL/, @bad_prints), "Detects remote user without SSL (MySQL)");
 };
 
 done_testing();

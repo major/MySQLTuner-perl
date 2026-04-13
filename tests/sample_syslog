@@ -1,0 +1,2 @@
+Feb 14 14:00:00 server mysqld[123]: [ERROR] [MY-010119] [Server] Aborting
+Feb 14 14:00:01 server mariadb[124]: [Warning] Some warning

@@ -1,15 +1,43 @@
-2.8.38 2026-02-14
+# MySQLTuner Changelog
 
+2.8.40 2026-02-15
+
+- feat: overhaul InnoDB Redo Log Capacity logic to consider RAM size and workload writes.
+- feat: add support for `innodb_dedicated_server` detection in Redo Log diagnostics.
+- feat: implement multi-cloud autodiscovery for AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed), and DigitalOcean.
+- feat: add granular SSL/TLS security checks (certificate expiration, remote user SSL enforcement).
+- feat: add infrastructure-aware tuning (SSD/NVMe vs HDD detection and architecture reporting).
+- test: add comprehensive unit test suite for core logic coverage (InnoDB, MyISAM, Query Cache, Stats).
+- test: add dedicated unit test for cloud discovery logic (tests/cloud_discovery.t).
+- refactor: replace massive system calls (awk, grep, uname, getconf, sysctl) with native Core Perl functions for Linux.
+- fix: resolve MySQL 9.x compatibility issues and SQL execution regressions (RC 256).
+- chore: add Daniel Lewart(@lewart3) to contributors list.
+- chore: remediate Arbitrary File Write vulnerability in tmp (GHSA-52f5-9888-hmc6) by forcing update to 0.2.4+ via npm overrides.
+- chore: bump version to 2.8.40.
+
+2.8.39 2026-02-15
+
+- feat: implement authentication plugin security checks to detect insecure or deprecated plugins like mysql_native_password and sha256_password.
+- feat: add MySQL 9.x readiness diagnostics for eliminated authentication methods.
+- feat: update MariaDB recommendations to suggest ed25519 and unix_socket for enhanced security.
+- test: add integrated test suite for authentication plugin auditing (tests/auth_plugin_checks.t).
+- feat: detect removed InnoDB variables in MariaDB and MySQL and provide actionable recommendations.
+- test: add regression test for MariaDB and MySQL removed InnoDB variables (tests/removed_innodb_vars.t).
 - fix: prevent creation of unauthorized directory "0" when --dumpdir is not explicitly set or set to 0 (Issue #20).
 - fix: robust, version-agnostic detection of password column in mysql.user via schema inspection (Issue #22).
-- refactor: replace massive system calls (awk, grep, uname, getconf, sysctl) with native Core Perl functions for Linux.
-- feat: implement native parsing for /proc/cpuinfo, /proc/meminfo, /proc/sys/vm/swappiness and /etc/resolv.conf.
-- refactor: optimize CPU core count, logical CPU detection, and OS memory setup for local environments.
-- refactor: use POSIX::uname and POSIX::sysconf for standardized system and architecture reporting.
+- fix: refactor mysql_setup to correctly handle --defaults-file and --defaults-extra-file with credentials (Issue #605).
 - fix: resolve MariaDB socket authentication regression and restore automatic credential discovery (Issue #875).
 - fix: remediate Prototype Pollution vulnerability in lodash (CVE-2021-23341) by forcing update to 4.17.23.
+- refactor: replace massive system calls (awk, grep, uname, getconf, sysctl) with native Core Perl functions for Linux.
+- feat: implement native parsing for /proc/cpuinfo, /proc/meminfo, /proc/sys/vm/swappiness and /etc/resolv.conf.
+- feat: add support for --login-path in CLI metadata and mysql_setup for enhanced authentication flexibility.
+- refactor: optimize CPU core count, logical CPU detection, and OS memory setup for local environments.
+- refactor: use POSIX::uname and POSIX::sysconf for standardized system and architecture reporting.
 - test: add reproduction test for authentication discovery chain (tests/issue_875_regression.t).
 - test: add comprehensive test suite for password column detection (tests/repro_issue_22.t).
+- test: add reproduction test for credentials and defaults files handling (tests/repro_issue_605.t).
+- feat: add automatic detection of systemd journal and syslog fallbacks for MariaDB/MySQL logs (Issue #440).
+- test: add verification suite for syslog and systemd journal detection (tests/syslog_journal_detection.t).
 - chore: bump version to 2.8.38.
 
 2.8.36 2026-02-13
@@ -22,9 +50,12 @@
 - test: add comprehensive test suite for password column detection (tests/repro_issue_22.t).
 - test: add reproduction test for Performance Schema disabled diagnostic (tests/repro_pfs_disabled.t).
 - fix: prevent creation of directory "0" when --dumpdir is not specified or set to 0 (Issue #20).
-- docs: fix broken endoflife.date links in README files (Issue #877).
+- docs: fix broken endoflife.date links in README files (Issue #877, credit @FabioPedretti).
+- docs: fix broken endoflife.date links in README files (Issue #877, credit @FabioPedretti).
 - test: add reproduction test for Performance Schema disabled scenario (repro_pfs_disabled.t).
 - ci: fix Docker API mismatch in GitHub Actions by migrating to native services.
+- feat: make Storage Engine Statistics output deterministic by @lewart3 (Issue #26).
+- feat: make Storage Engine Statistics output deterministic by @lewart3 (Issue #26).
 
 2.8.35 2026-02-02
 
@@ -37,8 +68,6 @@
 - test: add dedicated unit test `tests/test_version_regex.t` for version extraction verification.
 - test: add regression test `tests/issue_770.t` to verify `innodb_log_file_size` recommendation precision.
 - test: add regression test `tests/issue_783.t` to verify `innodb_log_buffer_size` recommendation on idle servers.
-
-# MySQLTuner Changelog
 
 2.8.33 2026-01-31
 

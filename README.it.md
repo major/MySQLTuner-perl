@@ -10,7 +10,7 @@
 
 **MySQLTuner** è uno script scritto in Perl che consente di esaminare rapidamente un'installazione di MySQL e apportare modifiche per aumentare le prestazioni e la stabilità. Le variabili di configurazione correnti e i dati di stato vengono recuperati e presentati in un formato breve insieme ad alcuni suggerimenti di base sulle prestazioni.
 
-**MySQLTuner** supporta circa 300 indicatori per MySQL/MariaDB/Percona Server in quest'ultima versione.
+**MySQLTuner** supporta circa 300 indicatori e KPI (incluso il Weighted Health Score) per MySQL/MariaDB/Percona Server in quest'ultima versione.
 
 **MySQLTuner** è attivamente mantenuto e supporta molte configurazioni come [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), metriche del sistema operativo Linux, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
@@ -69,7 +69,12 @@ Grazie a [endoflife.date](https://endoflife.date/)
 
 ***AMBIENTI NON SUPPORTATI - È NECESSARIO AIUTO***
 
-* Il cloud based non è attualmente supportato (aiuto richiesto! Supporto richiesto per GCP, AWS, Azure)
+***Intelligenza Avanzata ed Ecosystem***
+
+* **Weighted Health Score KPI**: Valutazione complessiva della salute del database basata su prestazioni, sicurezza e resilienza.
+* **Smart Migration LTS Advisor**: Identificazione dei rischi durante la migrazione a versioni LTS moderne (MySQL 8.4/9.0+, MariaDB 11.x).
+* **Predictive Capacity Planning**: Analisi dell'headroom della memoria e previsione della crescita del disco.
+* **Cloud Discovery**: supporto nativo per AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed) e DigitalOcean.
 
 ***Motori di archiviazione non supportati: le PR sono benvenute***
 --

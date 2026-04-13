@@ -49,6 +49,35 @@ If connection fails, use these flags to diagnose:
 - `--dbgpattern='.*'`: Filters debug information with regex.
 - Verify `mysqlcmd` path if custom binaries are used: `--mysqlcmd=/usr/local/bin/mysql`.
 
+### 5. MariaDB InnoDB Variable Compatibility
+
+As MariaDB evolves, several InnoDB system variables have been removed or deprecated. `mysqltuner.pl` detects these to avoid legacy configuration overhead.
+
+| Parameter | Removed/Deprecated In | Note/Replacement |
+| :--- | :--- | :--- |
+| `have_innodb` | Removed 10.0 | Use `SHOW ENGINES` or `I_S.PLUGINS`. |
+| `innodb_adaptive_flushing_method` | Removed 10.0 | Replaced by MySQL 5.6 flushing logic. |
+| `innodb_checksums` | Removed 10.0 | Use `innodb_checksum_algorithm`. |
+| `innodb_stats_sample_pages` | Removed 10.5.0 | Use `innodb_stats_transient_sample_pages`. |
+| `innodb_file_format` / `_check` / `_max` | Removed 10.6.0 | Antelope and Barracuda are legacy concepts. |
+| `innodb_large_prefix` | Removed 10.6.0 | Always enabled in newer versions. |
+| `innodb_locks_unsafe_for_binlog` | Removed 10.6.0 | No longer supported. |
+| `innodb_prefix_index_cluster_optimization` | Deprecated 10.10 | Always enabled now. |
+
+### 6. MySQL InnoDB Variable Compatibility
+
+| Parameter | Removed/Deprecated In | Note/Replacement |
+| :--- | :--- | :--- |
+| `innodb_locks_unsafe_for_binlog` | Removed 8.0 | Use `READ COMMITTED` isolation level instead. |
+| `innodb_support_xa` | Removed 8.0 | XA support is now always enabled. |
+| `innodb_file_format` family | Removed 8.0 | `Barracuda` is the only supported format. |
+| `innodb_large_prefix` | Removed 8.0 | Always enabled for `Barracuda`. |
+| `tx_isolation` / `tx_read_only` | Removed 8.0 | Use `transaction_isolation` / `transaction_read_only`. |
+| `innodb_undo_logs` | Removed 8.0 | Replaced by `innodb_rollback_segments`. |
+| `innodb_undo_tablespaces` | Removed 9.0 | Managed automatically now. |
+| `innodb_log_file_size` | Removed 9.0 | Replaced by `innodb_redo_log_capacity`. |
+| `innodb_api_...` variables | Removed 8.4 | Memcached-related variables removed. |
+
 ## ✅ Verification
 
 - Run `perl mysqltuner.pl --help` to confirm availability of these options.

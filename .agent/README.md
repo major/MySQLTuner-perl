@@ -55,4 +55,4 @@ This directory contains the project's technical constitution, specialized skills
 
 
 ---
-*Generated automatically by `/doc-sync` on Sat Feb 14 11:35:52 CET 2026*
+*Generated automatically by `/doc-sync` on Sun Feb 15 22:45:08 CET 2026*

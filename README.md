@@ -10,7 +10,7 @@
 
 **MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
 
-**MySQLTuner** supports ~300 indicators for MySQL/MariaDB/Percona Server in this latest version.
+**MySQLTuner** supports ~300 indicators and KPIs (including Weighted Health Score) for MySQL/MariaDB/Percona Server in this latest version.
 
 **MySQLTuner** is actively maintained supporting many configurations such as [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
@@ -26,6 +26,7 @@ Useful Links
 * **Releases/Tags:** [https://github.com/jmrenouard/MySQLTuner-perl/tags](https://github.com/jmrenouard/MySQLTuner-perl/tags)
 * **Changelog:** [https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog)
 * **Docker Images:** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
+* **Useful References:** [Documentation/References](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/documentation/REFERENCES.md)
 
 MySQLTuner needs you
 ===
@@ -69,7 +70,12 @@ Thanks to [endoflife.date](https://endoflife.date/)
 
 ***UNSUPPORTED ENVIRONMENTS - NEED HELP WITH THAT***
 
-* Cloud based is not supported at this time (Help wanted! GCP, AWS, Azure support requested)
+***Advanced Intelligence & Ecosystem***
+
+* **Weighted Health Score KPI**: Overall database health assessment based on performance, security, and resilience.
+* **Smart Migration LTS Advisor**: Identification of risks when migrating to modern LTS versions (MySQL 8.4/9.0+, MariaDB 11.x).
+* **Predictive Capacity Planning**: Memory headroom analysis and disk growth forecasting.
+* **Cloud Discovery**: native support for AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed), and DigitalOcean.
 
 ***Unsupported storage engines: PRs welcome***
 --
@@ -352,6 +358,20 @@ perl mysqltuner.pl --debug
 
 ```bash
 perl mysqltuner.pl --checkversion --updateversion
+```
+
+**Usage:** Integrating Sysbench performance results
+
+```bash
+perl mysqltuner.pl --sysbench-file=/path/to/sysbench_output.txt
+```
+
+**Usage:** Historical Trend Analysis (compare with previous run)
+
+```bash
+perl mysqltuner.pl --json --outputfile=run1.json
+# ... some time later ...
+perl mysqltuner.pl --compare-file=run1.json
 ```
 
 Cloud Support

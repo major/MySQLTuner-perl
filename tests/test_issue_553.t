@@ -50,11 +50,11 @@ sub mysql_version_ge {
 
 # Fixed replication logic (from implementation plan)
 sub get_replication_status_fixed {
-    my $is_mysql8 = ( $myvar{'version'} =~ /^8\./ && $myvar{'version'} !~ /mariadb/i );
-    my $is_mariadb105 = ( $myvar{'version'} =~ /mariadb/i && mysql_version_ge( 10, 5 ) );
+    my $is_mysql8_plus = ( $myvar{'version'} !~ /mariadb/i && mysql_version_ge(8, 0, 22) );
+    my $is_mariadb105_plus = ( $myvar{'version'} =~ /mariadb/i && mysql_version_ge( 10, 5 ) );
     
     my @mysqlslave;
-    if ( $is_mysql8 or $is_mariadb105 ) {
+    if ( $is_mysql8_plus or $is_mariadb105_plus ) {
         @mysqlslave = select_array("SHOW REPLICA STATUS\\G");
     }
     else {
@@ -62,10 +62,10 @@ sub get_replication_status_fixed {
     }
 
     my @mysqlslaves;
-    if ( $is_mysql8 ) {
+    if ( $is_mysql8_plus ) {
         @mysqlslaves = select_array("SHOW REPLICAS");
     }
-    elsif ( $is_mariadb105 ) {
+    elsif ( $is_mariadb105_plus ) {
         @mysqlslaves = select_array("SHOW REPLICA HOSTS\\G");
     }
     else {
@@ -84,8 +84,8 @@ is($test_queries[1], "SHOW SLAVE HOSTS\\G", "MySQL 5.7: Should use SHOW SLAVE HO
 %myvar = ( version => '8.0.0' );
 @test_queries = ();
 get_replication_status_fixed();
-is($test_queries[0], "SHOW REPLICA STATUS\\G", "MySQL 8.0.0: Should use SHOW REPLICA STATUS");
-is($test_queries[1], "SHOW REPLICAS", "MySQL 8.0.0: Should use SHOW REPLICAS");
+is($test_queries[0], "SHOW SLAVE STATUS\\G", "MySQL 8.0.0: Should use SHOW SLAVE STATUS (prior to 8.0.22)");
+is($test_queries[1], "SHOW SLAVE HOSTS\\G", "MySQL 8.0.0: Should use SHOW SLAVE HOSTS (prior to 8.0.22)");
 
 # Test Case 3: MySQL 8.0.25
 %myvar = ( version => '8.0.25-0ubuntu0.20.04.1' );
@@ -100,6 +100,13 @@ is($test_queries[1], "SHOW REPLICAS", "MySQL 8.0.25: Should use SHOW REPLICAS");
 get_replication_status_fixed();
 is($test_queries[0], "SHOW REPLICA STATUS\\G", "MySQL 8.4.0: Should use SHOW REPLICA STATUS");
 is($test_queries[1], "SHOW REPLICAS", "MySQL 8.4.0: Should use SHOW REPLICAS");
+
+# Test Case 4b: MySQL 9.6.0 (future version)
+%myvar = ( version => '9.6.0' );
+@test_queries = ();
+get_replication_status_fixed();
+is($test_queries[0], "SHOW REPLICA STATUS\\G", "MySQL 9.6.0: Should use SHOW REPLICA STATUS");
+is($test_queries[1], "SHOW REPLICAS", "MySQL 9.6.0: Should use SHOW REPLICAS");
 
 # Test Case 5: MariaDB 10.4 (Legacy)
 %myvar = ( version => '10.4.21-MariaDB' );

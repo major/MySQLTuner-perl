@@ -33,6 +33,7 @@ To ensure quality and clarity in every development cycle, all non-trivial featur
 3. **Tasks (`/tasks`)**: Break down the plan into granular, ID-tracked tasks in `task.md`.
 4. **Implement**: Proceed with the code changes based on the approved plan and tasks.
 5. **Verify**: Validate the implementation through TDD and regression suites.
+6. **Roadmap Sync**: Update `ROADMAP.md` status (`[x]` or `[/]`) for the implemented features.
 
 ### **4.3. Coding Guidelines**
 
@@ -78,6 +79,7 @@ To ensure quality and clarity in every development cycle, all non-trivial featur
     - _Requirement_: Adding a new test MUST have a `test:` entry in the `@Changelog`.
     - _Requirement_: Changing test scripts or updating infrastructure MUST have a `ci:` entry in the `@Changelog`.
     - _Requirement_: Changing `Makefile` or files under `build/` MUST be traced in the `@Changelog` (usually via `ci:` or `chore:`).
+    - _Requirement_: All feature completions MUST be synchronized with `ROADMAP.md` before final PR/Commit.
     - _Ordering_: Changelog entries MUST be ordered by category: `chore`, `feat`, `fix`, `test`, `ci`, then others.
     - _Release Notes_: All release notes generated in `releases/` MUST follow the same category ordering in their "Executive Summary" section.
     - _Requirement_: The `/git-flow` workflow MUST always be preceded by a successful `/release-preflight` execution.

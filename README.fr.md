@@ -10,7 +10,7 @@
 
 **MySQLTuner** est un script écrit en Perl qui vous permet d'examiner rapidement une installation MySQL et de faire des ajustements pour augmenter les performances et la stabilité. Les variables de configuration actuelles et les données d'état sont récupérées et présentées dans un bref format avec quelques suggestions de performances de base.
 
-**MySQLTuner** prend en charge environ 300 indicateurs pour MySQL/MariaDB/Percona Server dans cette dernière version.
+**MySQLTuner** prend en charge environ 300 indicateurs et KPI (y compris le score de santé pondéré) pour MySQL/MariaDB/Percona Server dans cette dernière version.
 
 **MySQLTuner** est activement maintenu et prend en charge de nombreuses configurations telles que [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Schéma de performance](https://github.com/mysql/mysql-sys), les métriques du système d'exploitation Linux, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
@@ -69,7 +69,12 @@ Merci à [endoflife.date](https://endoflife.date/)
 
 ***ENVIRONNEMENTS NON PRIS EN CHARGE - BESOIN D'AIDE POUR CELA***
 
-* Le cloud n'est pas pris en charge pour le moment (aide souhaitée ! Prise en charge de GCP, AWS, Azure demandée)
+***Intelligence avancée et écosystème***
+
+* **Indicateur de score de santé pondéré (KPI)** : Évaluation globale de la santé de la base de données basée sur les performances, la sécurité et la résilience.
+* **Conseiller en migration intelligente LTS** : Identification des risques lors de la migration vers les versions LTS modernes (MySQL 8.4/9.0+, MariaDB 11.x).
+* **Planification prédictive des capacités** : Analyse de la marge de manœuvre de la mémoire et prévision de la croissance du disque.
+* **Découverte du Cloud** : prise en charge native d'AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed) et DigitalOcean.
 
 ***Moteurs de stockage non pris en charge : les PR sont les bienvenues***
 --

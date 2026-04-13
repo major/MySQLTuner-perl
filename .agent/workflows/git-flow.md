@@ -22,8 +22,11 @@ This workflow MUST be orchestrated by the **Release Manager**.
    - Commit all pending changes including `Changelog` updates for the current version.
 
    ```bash
+   # Extract content between the first version header and the next one
+   RELEASE_NOTES=$(awk "/^$CURRENT_VER/,/^([0-9]+\.[0-9]+\.[0-9]+)/ {if (\$0 !~ /^([0-9]+\.[0-9]+\.[0-9]+)/) print}" Changelog | sed '/^$/d')
+   COMMIT_MSG="feat: release $CURRENT_VER\n\n$RELEASE_NOTES"
    git add .
-   npm run commit  # Select 'feat' and enter "release $CURRENT_VER"
+   echo -e "$COMMIT_MSG" | git commit -F -
    ```
 
    // turbo

@@ -50,3 +50,12 @@ mysqltuner.pl.bak
 0/**
 experimental_run.log
 experimental_run_v2.log
+test_dump_84/**
+test_dump/**
+test_output.log
+tested_subs.txt
+untested_subs.txt
+execution_test.log
+all_subs.txt
+execution_84.log
+test_dump_84/ifs_COLLATION_CHARACTER_SET_APPLICABILITY.csv
