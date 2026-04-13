@@ -205,7 +205,7 @@ our %CLI_METADATA = (
     },
     'checkversion' => {
         type    => '!',
-        default => 1,
+        default => 0,
         desc    => 'Check for updates to MySQLTuner',
         cat     => 'PERFORMANCE'
     },
