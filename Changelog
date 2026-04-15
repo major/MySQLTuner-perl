@@ -23,6 +23,9 @@
 - feat: add recommendation for `table_open_cache_instances` based on CPU cores (#480).
 - feat: improve syslog and systemd journal detection for error logs (#440).
 - feat: initialize `$mysqllogin` to avoid uninitialized value warnings (#490).
+- fix: add truthiness guards to `mysql_innodb` and `mysql_stats` subroutines.
+- fix: improve `which` logic for better container/minimal environment support.
+- fix: enhance login failure reporting with detailed output.
 - chore: automated project maintenance and cleanup (extracted `RULES.md`, `MEMORY_DB.md`, `TESTS.md`).
 - ci: migrate maintenance script to GitHub Actions.
 - chore(deps): update docker/setup-buildx-action action to v4.

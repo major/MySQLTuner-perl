@@ -1,5 +1,8 @@
 name: Docker Publish
 
+permissions:
+  contents: read
+
 on:
   push:
     tags: ["v*"]

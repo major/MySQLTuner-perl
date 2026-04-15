@@ -2,6 +2,9 @@
 
 name: CI for MySQL Tuner for MySQL 5.7 and 8.0
 
+permissions:
+  contents: read
+
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the master branch

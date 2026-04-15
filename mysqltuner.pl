@@ -1949,7 +1949,7 @@ sub execute_system_command {
 
         # Be less verbose for commands that are expected to fail on some systems
         if ( $command !~
-/(?:^|\/)(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb|curl|wget)/
+/(?:^|\/)(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb|curl|wget|which)/
           )
         {
             badprint "System command failed: $command";
@@ -1980,7 +1980,8 @@ sub mysql_setup {
     }
     else {
         if ($transport_prefix) {
-            my $check = execute_system_command("which mariadb-admin");
+            my $check = execute_system_command(
+                "command -v mariadb-admin || command -v mysqladmin");
             $mysqladmincmd =
               ( $check =~ /mariadb-admin/ ) ? "mariadb-admin" : "mysqladmin";
         }
@@ -2004,7 +2005,8 @@ sub mysql_setup {
     }
     else {
         if ($transport_prefix) {
-            my $check = execute_system_command("which mariadb");
+            my $check =
+              execute_system_command("command -v mariadb || command -v mysql");
             $mysqlcmd = ( $check =~ /mariadb/ ) ? "mariadb" : "mysql";
         }
         else {
@@ -2159,6 +2161,10 @@ sub mysql_setup {
         if ( $loginstatus =~ /mysqld is alive/ ) {
             goodprint "Logged in using credentials passed on the command line";
             return 1;
+        }
+        else {
+            badprint "Attempted to use login credentials, but they were invalid.";
+            debugprint "Login failure output: $loginstatus";
         }
     }
 
@@ -2318,9 +2324,11 @@ sub mysql_setup {
                 exit 1;
             }
             my ( $name, $password );
+            $name     = "";
+            $password = "";
 
             # If --user is defined no need to ask for username
-            if ( $opt{user} ne 0 ) {
+            if ( $opt{user} ) {
                 $name = $opt{user};
             }
             else {
@@ -2329,7 +2337,7 @@ sub mysql_setup {
             }
 
             # If --pass is defined no need to ask for password
-            if ( $opt{pass} ne 0 ) {
+            if ( $opt{pass} ) {
                 $password = $opt{pass};
             }
             else {
@@ -4466,9 +4474,9 @@ sub get_replication_status {
 
     $result{'Replication'}{'status'} = \%myrepl;
     my ($io_running) = $myrepl{'Replica_IO_Running'};
-    debugprint "IO RUNNING: $io_running ";
+    debugprint "IO RUNNING: " . ( $io_running // 'undef' ) . " ";
     my ($sql_running) = $myrepl{'Replica_SQL_Running'};
-    debugprint "SQL RUNNING: $sql_running ";
+    debugprint "SQL RUNNING: " . ( $sql_running // 'undef' ) . " ";
 
     my ($seconds_behind_replica) = $myrepl{'Seconds_Behind_Replica'};
     $seconds_behind_replica = 1000000 unless defined($seconds_behind_replica);
@@ -5500,9 +5508,9 @@ sub mysql_stats {
     subheaderprint "Performance Metrics";
 
     # Show uptime, queries per second, connections, traffic stats
-    my $qps;
-    if ( $mystat{'Uptime'} > 0 ) {
-        $qps = sprintf( "%.3f", $mystat{'Questions'} / $mystat{'Uptime'} );
+    my $qps = 0;
+    if ( ( $mystat{'Uptime'} || 0 ) > 0 ) {
+        $qps = sprintf( "%.3f", ( $mystat{'Questions'} || 0 ) / $mystat{'Uptime'} );
     }
     push( @generalrec,
 "MySQL was started within the last 24 hours: recommendations may be inaccurate"
@@ -5595,40 +5603,40 @@ sub mysql_stats {
 
     if (   $arch
         && $arch == 32
-        && $mycalc{'max_used_memory'} > 2 * 1024 * 1024 * 1024 )
+        && ( $mycalc{'max_used_memory'} || 0 ) > 2 * 1024 * 1024 * 1024 )
     {
         badprint
           "Allocating > 2GB RAM on 32-bit systems can cause system instability";
         badprint "Maximum reached memory usage: "
           . hr_bytes( $mycalc{'max_used_memory'} )
-          . " ($mycalc{'pct_max_used_memory'}% of installed RAM)";
+          . " (" . ( $mycalc{'pct_max_used_memory'} // 0 ) . "% of installed RAM)";
     }
-    elsif ( $mycalc{'pct_max_used_memory'} > 85 ) {
+    elsif ( ( $mycalc{'pct_max_used_memory'} || 0 ) > 85 ) {
         badprint "Maximum reached memory usage: "
           . hr_bytes( $mycalc{'max_used_memory'} )
-          . " ($mycalc{'pct_max_used_memory'}% of installed RAM)";
+          . " (" . ( $mycalc{'pct_max_used_memory'} // 0 ) . "% of installed RAM)";
     }
     else {
         goodprint "Maximum reached memory usage: "
           . hr_bytes( $mycalc{'max_used_memory'} )
-          . " ($mycalc{'pct_max_used_memory'}% of installed RAM)";
+          . " (" . ( $mycalc{'pct_max_used_memory'} // 0 ) . "% of installed RAM)";
     }
 
-    if ( $mycalc{'pct_max_physical_memory'} > 85 ) {
+    if ( ( $mycalc{'pct_max_physical_memory'} || 0 ) > 85 ) {
         badprint "Maximum possible memory usage: "
           . hr_bytes( $mycalc{'max_peak_memory'} )
-          . " ($mycalc{'pct_max_physical_memory'}% of installed RAM)";
+          . " (" . ( $mycalc{'pct_max_physical_memory'} // 0 ) . "% of installed RAM)";
         push( @generalrec,
             "Reduce your overall MySQL memory footprint for system stability" );
     }
     else {
         goodprint "Maximum possible memory usage: "
           . hr_bytes( $mycalc{'max_peak_memory'} )
-          . " ($mycalc{'pct_max_physical_memory'}% of installed RAM)";
+          . " (" . ( $mycalc{'pct_max_physical_memory'} // 0 ) . "% of installed RAM)";
     }
 
-    if ( $physical_memory <
-        ( $mycalc{'max_peak_memory'} + get_other_process_memory() ) )
+    if ( ( $physical_memory || 0 ) <
+        ( ( $mycalc{'max_peak_memory'} || 0 ) + get_other_process_memory() ) )
     {
         if ( $opt{nondedicated} ) {
             infoprint "No warning with --nondedicated option";
@@ -5649,13 +5657,15 @@ sub mysql_stats {
     }
 
     # Slow queries
-    if ( $mycalc{'pct_slow_queries'} > 5 ) {
-        badprint "Slow queries: $mycalc{'pct_slow_queries'}% ("
+    if ( ( $mycalc{'pct_slow_queries'} || 0 ) > 5 ) {
+        badprint "Slow queries: "
+          . ( $mycalc{'pct_slow_queries'} // 0 ) . "% ("
           . hr_num( $mystat{'Slow_queries'} ) . "/"
           . hr_num( $mystat{'Questions'} ) . ")";
     }
     else {
-        goodprint "Slow queries: $mycalc{'pct_slow_queries'}% ("
+        goodprint "Slow queries: "
+          . ( $mycalc{'pct_slow_queries'} // 0 ) . "% ("
           . hr_num( $mystat{'Slow_queries'} ) . "/"
           . hr_num( $mystat{'Questions'} ) . ")";
     }
@@ -5670,33 +5680,33 @@ sub mysql_stats {
     }
 
     # Connections
-    if ( $mycalc{'pct_connections_used'} > 85 ) {
+    if ( ( $mycalc{'pct_connections_used'} || 0 ) > 85 ) {
         badprint
-"Highest connection usage: $mycalc{'pct_connections_used'}% ($mystat{'Max_used_connections'}/$myvar{'max_connections'})";
+"Highest connection usage: " . ( $mycalc{'pct_connections_used'} // 0 ) . "% (" . ( $mystat{'Max_used_connections'} // 0 ) . "/" . ( $myvar{'max_connections'} // 0 ) . ")";
         push( @adjvars,
-            "max_connections (> " . $myvar{'max_connections'} . ")" );
+            "max_connections (> " . ( $myvar{'max_connections'} // 0 ) . ")" );
         push( @adjvars,
-            "wait_timeout (< " . $myvar{'wait_timeout'} . ")",
-            "interactive_timeout (< " . $myvar{'interactive_timeout'} . ")" );
+            "wait_timeout (< " . ( $myvar{'wait_timeout'} // 0 ) . ")",
+            "interactive_timeout (< " . ( $myvar{'interactive_timeout'} // 0 ) . ")" );
         push( @generalrec,
 "Reduce or eliminate persistent connections to reduce connection usage"
         );
     }
     else {
         goodprint
-"Highest usage of available connections: $mycalc{'pct_connections_used'}% ($mystat{'Max_used_connections'}/$myvar{'max_connections'})";
+"Highest usage of available connections: " . ( $mycalc{'pct_connections_used'} // 0 ) . "% (" . ( $mystat{'Max_used_connections'} // 0 ) . "/" . ( $myvar{'max_connections'} // 0 ) . ")";
     }
 
     # Aborted Connections
-    if ( $mycalc{'pct_connections_aborted'} > 3 ) {
+    if ( ( $mycalc{'pct_connections_aborted'} || 0 ) > 3 ) {
         badprint
-"Aborted connections: $mycalc{'pct_connections_aborted'}% ($mystat{'Aborted_connects'}/$mystat{'Connections'})";
+"Aborted connections: " . ( $mycalc{'pct_connections_aborted'} // 0 ) . "% (" . ( $mystat{'Aborted_connects'} // 0 ) . "/" . ( $mystat{'Connections'} // 0 ) . ")";
         push( @generalrec,
             "Reduce or eliminate unclosed connections and network issues" );
     }
     else {
         goodprint
-"Aborted connections: $mycalc{'pct_connections_aborted'}% ($mystat{'Aborted_connects'}/$mystat{'Connections'})";
+"Aborted connections: " . ( $mycalc{'pct_connections_aborted'} // 0 ) . "% (" . ( $mystat{'Aborted_connects'} // 0 ) . "/" . ( $mystat{'Connections'} // 0 ) . ")";
     }
 
     # name resolution
@@ -9082,7 +9092,7 @@ sub mysql_innodb {
     }
 
     # InnoDB Buffer Pool Size
-    if ( $myvar{'innodb_file_per_table'} eq "ON" ) {
+    if ( ( $myvar{'innodb_file_per_table'} // '' ) eq "ON" ) {
         goodprint "InnoDB File per table is activated";
     }
     else {
@@ -9091,7 +9101,9 @@ sub mysql_innodb {
     }
 
     # InnoDB Buffer Pool Size
-    if ( $arch == 32 && $myvar{'innodb_buffer_pool_size'} > 4294967295 ) {
+    if (   ( $arch // 0 ) == 32
+        && ( $myvar{'innodb_buffer_pool_size'} // 0 ) > 4294967295 )
+    {
         badprint
           "InnoDB Buffer Pool size limit reached for 32 bits architecture: ("
           . hr_bytes(4294967295) . " )";
@@ -9100,14 +9112,16 @@ sub mysql_innodb {
               . hr_bytes(4294967295)
               . " for 32 bits architecture" );
     }
-    if ( $arch == 32 && $myvar{'innodb_buffer_pool_size'} < 4294967295 ) {
+    if (   ( $arch // 0 ) == 32
+        && ( $myvar{'innodb_buffer_pool_size'} // 0 ) < 4294967295 )
+    {
         goodprint "InnoDB Buffer Pool size ( "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " ) under limit for 32 bits architecture: ("
           . hr_bytes(4294967295) . ")";
     }
-    if (   $arch == 64
-        && $myvar{'innodb_buffer_pool_size'} > 18446744073709551615 )
+    if (   ( $arch // 0 ) == 64
+        && ( $myvar{'innodb_buffer_pool_size'} // 0 ) > 18446744073709551615 )
     {
         badprint "InnoDB Buffer Pool size limit("
           . hr_bytes(18446744073709551615)
@@ -9118,15 +9132,17 @@ sub mysql_innodb {
               . " for 64 bits architecture" );
     }
 
-    if (   $arch == 64
-        && $myvar{'innodb_buffer_pool_size'} < 18446744073709551615 )
+    if (   ( $arch // 0 ) == 64
+        && ( $myvar{'innodb_buffer_pool_size'} // 0 ) < 18446744073709551615 )
     {
         goodprint "InnoDB Buffer Pool size ( "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
           . " ) under limit for 64 bits architecture: ("
           . hr_bytes(18446744073709551615) . " )";
     }
-    if ( $myvar{'innodb_buffer_pool_size'} > $enginestats{'InnoDB'} ) {
+    if ( ( $myvar{'innodb_buffer_pool_size'} // 0 ) >
+        ( $enginestats{'InnoDB'} // 0 ) )
+    {
         goodprint "InnoDB buffer pool / data size: "
           . hr_bytes( $myvar{'innodb_buffer_pool_size'} ) . " / "
           . hr_bytes( $enginestats{'InnoDB'} ) . "";
@@ -10926,7 +10942,7 @@ END_TEMPLATE
 sub dump_result {
 
     #debugprint Dumper( \%result ) if ( $opt{'debug'} );
-    debugprint "HTML REPORT: $opt{'reportfile'}";
+    debugprint "HTML REPORT: " . ( $opt{'reportfile'} // 'undef' );
 
     if ( $opt{'reportfile'} ) {
         eval { require Text::Template };
@@ -11322,15 +11338,23 @@ Cole Turner
 
 =item *
 
-Major Hayden
+Daniel Lewart
 
 =item *
 
-Joe Ashcraft
+Jason Gill
 
 =item *
 
 Jean-Marie Renouard
+
+=item *
+
+Major Hayden
+
+=item *
+
+Matthew Montgomery
 
 =item *
 
@@ -11393,6 +11417,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # End:
 vel: 8
 # perl-indent-level: 8
+# End:
+
+nd:
+
+ndent-level: 8
 # End:
 
 nd:

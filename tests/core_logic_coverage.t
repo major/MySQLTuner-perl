@@ -104,7 +104,21 @@ subtest 'mysql_stats' => sub {
     );
     %main::mycalc = (
         'total_mysql_memory' => 512 * 1024 * 1024,
-        'pct_physical_memory' => 50
+        'pct_physical_memory' => 50,
+        'max_used_memory' => 256 * 1024 * 1024,
+        'pct_max_used_memory' => 25,
+        'max_peak_memory' => 512 * 1024 * 1024,
+        'pct_max_physical_memory' => 50,
+        'server_buffers' => 128 * 1024 * 1024,
+        'total_per_thread_buffers' => 384 * 1024 * 1024,
+        'pct_slow_queries' => 0,
+        'pct_connections_used' => 10,
+        'pct_connections_aborted' => 0,
+        'total_sorts' => 100,
+        'joins_without_indexes_per_day' => 0,
+        'thread_cache_hit_rate' => 99,
+        'pct_reads' => 90,
+        'pct_writes' => 10,
     );
 
     main::mysql_stats();
@@ -176,7 +190,23 @@ subtest 'mysql_query_cache' => sub {
     );
     %main::mycalc = (
         'query_cache_efficiency' => 40,
-        'query_cache_prunes_per_day' => 5
+        'query_cache_prunes_per_day' => 5,
+        'total_mysql_memory' => 512 * 1024 * 1024,
+        'pct_physical_memory' => 50,
+        'max_used_memory' => 256 * 1024 * 1024,
+        'pct_max_used_memory' => 25,
+        'max_peak_memory' => 512 * 1024 * 1024,
+        'pct_max_physical_memory' => 50,
+        'server_buffers' => 128 * 1024 * 1024,
+        'total_per_thread_buffers' => 384 * 1024 * 1024,
+        'pct_slow_queries' => 0,
+        'pct_connections_used' => 10,
+        'pct_connections_aborted' => 0,
+        'total_sorts' => 100,
+        'joins_without_indexes_per_day' => 0,
+        'thread_cache_hit_rate' => 99,
+        'pct_reads' => 90,
+        'pct_writes' => 10,
     );
 
     main::mysql_stats();

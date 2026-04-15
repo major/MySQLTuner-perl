@@ -2,6 +2,9 @@
 
 name: Compile MT examples for MariaDB
 
+permissions:
+  contents: write
+
 # Controls when the workflow will run
 on:
   # Allows you to run this workflow manually from the Actions tab

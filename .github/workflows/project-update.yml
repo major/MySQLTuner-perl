@@ -1,5 +1,8 @@
 name: Project Maintenance
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ master, main ]
