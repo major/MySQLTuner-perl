@@ -157,17 +157,31 @@ Tutti i controlli eseguiti da **MySQLTuner** sono documentati nella documentazio
 Download/Installazione
 --
 
+> **Nota:** I pacchetti delle distribuzioni Linux (ad esempio `apt install mysqltuner` su Ubuntu/Debian, `yum`/`dnf` su RHEL/CentOS/Fedora) spesso includono una versione molto più vecchia di MySQLTuner. Non esiste un repository ufficiale mantenuto dalle distribuzioni che segua l'ultima versione. Per ottenere sempre l'ultima versione, utilizza uno dei metodi di download diretto indicati di seguito.
+
 Scegli uno di questi metodi:
 
 1) Download diretto dello script (il metodo più semplice e breve):
 
 ```bash
-wget http://mysqltuner.pl/ -O mysqltuner.pl
+wget https://mysqltuner.pl/ -O mysqltuner.pl
 wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
 wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 ```
 
-1) È possibile scaricare l'intero repository utilizzando `git clone` o `git clone --depth 1 -b master` seguito dall'URL di clonazione sopra.
+2) È possibile scaricare l'intero repository utilizzando `git clone` o `git clone --depth 1 -b master` seguito dall'URL di clonazione sopra.
+
+```bash
+git clone --depth 1 -b master https://github.com/jmrenouard/MySQLTuner-perl.git
+```
+
+3) Su Apple macOS, installa tramite [Homebrew](https://brew.sh/):
+
+```bash
+brew install mysqltuner
+```
+
+4) Se ti trovi in un **ambiente isolato (air-gapped)** senza accesso diretto a Internet, scarica i file su un computer con accesso a Internet (o tramite un host proxy), quindi copia `mysqltuner.pl`, `basic_passwords.txt` e `vulnerabilities.csv` sul server di destinazione.
 
 Installazione facoltativa di Sysschema per MySQL 5.6
 --
@@ -574,6 +588,31 @@ Se il database ha troppe tabelle o tabelle molto grandi, usa questo:
 **Domanda: posso installare questo progetto usando homebrew su Apple Macintosh?**
 
 Sì! `brew install mysqltuner` può essere usato per installare questa applicazione usando [homebrew](https://brew.sh/) su Apple Macintosh.
+
+**Domanda: Ho installato MySQLTuner tramite il gestore pacchetti della mia distribuzione Linux (apt/yum/dnf). Come ottengo l'ultima versione?**
+
+Le distribuzioni Linux come Ubuntu, Debian, RHEL e CentOS spesso includono nei loro repository ufficiali una versione più vecchia di MySQLTuner. Ad esempio, Ubuntu 22.04 include la versione 1.7.17, mentre l'ultima versione rilasciata può essere significativamente più recente.
+
+Attualmente **non esiste un repository APT/YUM/DNF ufficiale** che segua l'ultima versione di MySQLTuner. Per ottenere l'ultima versione, usa uno di questi metodi:
+
+* **Download diretto (consigliato):**
+
+```bash
+wget https://mysqltuner.pl/ -O mysqltuner.pl
+wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
+wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
+chmod +x mysqltuner.pl
+```
+
+* **Git clone:**
+
+```bash
+git clone --depth 1 -b master https://github.com/jmrenouard/MySQLTuner-perl.git
+cd MySQLTuner-perl
+perl mysqltuner.pl
+```
+
+* **Ambienti isolati (air-gapped):** Se il tuo server non ha accesso diretto a Internet, scarica i file su un host con accesso a Internet (o tramite un proxy), quindi trasferisci `mysqltuner.pl`, `basic_passwords.txt` e `vulnerabilities.csv` al server di destinazione tramite `scp`, `rsync` o un altro metodo di trasferimento file.
 
 MySQLTuner e Vagrant
 --
