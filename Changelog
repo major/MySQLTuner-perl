@@ -18,6 +18,11 @@
 - fix: include `tmp_table_size` in per-thread memory calculation for better accuracy (#864).
 - fix: add retry mechanism for initial `SELECT VERSION()` query to improve connection resilience (#782).
 - fix: prevent `AUTO_INCREMENT` capacity false positives for empty tables (#37).
+- fix: refactor InnoDB Redo Log Capacity logic to be workload-based and avoid false positives (#714, #737, #777).
+- fix: add guards against division by zero in calculations for improved stability (#435).
+- feat: add recommendation for `table_open_cache_instances` based on CPU cores (#480).
+- feat: improve syslog and systemd journal detection for error logs (#440).
+- feat: initialize `$mysqllogin` to avoid uninitialized value warnings (#490).
 - chore: automated project maintenance and cleanup (extracted `RULES.md`, `MEMORY_DB.md`, `TESTS.md`).
 - ci: migrate maintenance script to GitHub Actions.
 - chore(deps): update docker/setup-buildx-action action to v4.

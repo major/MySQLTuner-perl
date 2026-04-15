@@ -61,20 +61,15 @@ subtest 'Issue 777 - Incorrect redo log capacity ratio' => sub {
     # Call the reporting subroutine
     main::mysql_innodb();
 
-    diag "Final innodb_log_size_pct: " . $main::mycalc{'innodb_log_size_pct'};
-    
     # VERIFICATION:
-    # 1. Ratio should be 25% (Calculated during mysql_innodb)
-    is($main::mycalc{'innodb_log_size_pct'}, 25, "Ratio correctly recalculated to 25%");
-
-    # 2. Should NOT have legacy "Ratio" warning because it's MySQL 8.0.32
+    # 1. Should NOT have legacy "Ratio" warning because it's MySQL 8.0.32
     ok(!grep({ /Ratio InnoDB redo log capacity/ } @mock_output), "Legacy ratio warning NOT emitted for modern MySQL");
     
-    # 3. Should have modern info print
+    # 2. Should have modern info print
     ok(grep({ /InnoDB Redo Log Capacity is set to 15.0G/ } @mock_output), "Modern redo log capacity info emitted");
 
-    # 4. Prove no more "0.15625%" is seen
-    ok(!grep({ /0\.15625/ } @mock_output), "No incorrect ratio reported");
+    # 3. Should mention uptime if less than 1 hour
+    ok(grep({ /Server uptime is less than 1 hour/ } @mock_output), "Workload logic deferred due to low uptime");
 };
 
 done_testing();

@@ -69,7 +69,8 @@ subtest 'Large RAM, Low Workload' => sub {
 
     main::mysql_innodb();
     
-    ok(grep(/innodb_redo_log_capacity \(>= 1.0G\)/, @main::adjvars), 'Suggested 1.0G instead of 16GB (25% of BP)');
+    # Workload is 500MB/h, Rounded to 1GB minimum since RAM > 8GB
+    ok(grep(/innodb_redo_log_capacity \(>= 1.0G\)/, @main::adjvars), 'Suggested 1.0G based on workload and RAM minimum');
 };
 
 # Test Case 3: Dedicated Server

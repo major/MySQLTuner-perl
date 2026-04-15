@@ -26,6 +26,10 @@ Migrated several external commands to native Core Perl to reduce fork overhead a
   - Resolved `AUTO_INCREMENT` capacity false positives for empty tables (#37).
   - Corrected `check_removed_innodb_variables` false positives for injected variables (#32).
   - Fixed `--defaults-file` usage to prevent dropping other connection options (#605).
+  - Refactored InnoDB Redo Log Capacity logic to be workload-based for modern MySQL (#714, #737, #777).
+  - Added recommendation for `table_open_cache_instances` based on CPU cores (#480).
+  - Improved connection resilience with retry mechanism and fixed uninitialized `$mysqllogin` (#782, #490).
+  - Added guards against division by zero in calculations for AWS Aurora compatibility (#435).
 - **v2.8.40**: Enhanced SSL/TLS security checks and cloud discovery (AWS RDS/Aurora, GCP, Azure).
 - **v2.8.38**: Fixed container startup failures in lab environments.
 - **v2.8.31**: Improved SQL check syntax for redundant index detection.

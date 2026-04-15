@@ -1970,6 +1970,7 @@ if ($is_win) {
 }
 
 sub mysql_setup {
+    $mysqllogin   = '';
     $doremote     = 0;
     $remotestring = '';
     my $transport_prefix = get_transport_prefix();
@@ -5105,20 +5106,36 @@ sub calculations {
       . $mycalc{'pct_max_physical_memory'} . "%";
 
     # Slow queries
-    $mycalc{'pct_slow_queries'} =
-      int( ( $mystat{'Slow_queries'} / $mystat{'Questions'} ) * 100 );
+    if ( $mystat{'Questions'} > 0 ) {
+        $mycalc{'pct_slow_queries'} =
+          int( ( $mystat{'Slow_queries'} / $mystat{'Questions'} ) * 100 );
+    }
+    else {
+        $mycalc{'pct_slow_queries'} = 0;
+    }
 
     # Connections
-    $mycalc{'pct_connections_used'} = int(
-        ( $mystat{'Max_used_connections'} / $myvar{'max_connections'} ) * 100 );
+    if ( $myvar{'max_connections'} > 0 ) {
+        $mycalc{'pct_connections_used'} = int(
+            ( $mystat{'Max_used_connections'} / $myvar{'max_connections'} ) *
+              100 );
+    }
+    else {
+        $mycalc{'pct_connections_used'} = 0;
+    }
     $mycalc{'pct_connections_used'} =
       ( $mycalc{'pct_connections_used'} > 100 )
       ? 100
       : $mycalc{'pct_connections_used'};
 
     # Aborted Connections
-    $mycalc{'pct_connections_aborted'} =
-      percentage( $mystat{'Aborted_connects'}, $mystat{'Connections'} );
+    if ( $mystat{'Connections'} > 0 ) {
+        $mycalc{'pct_connections_aborted'} =
+          percentage( $mystat{'Aborted_connects'}, $mystat{'Connections'} );
+    }
+    else {
+        $mycalc{'pct_connections_aborted'} = 0;
+    }
     debugprint "Aborted_connects: " . $mystat{'Aborted_connects'} . "";
     debugprint "Connections: " . $mystat{'Connections'} . "";
     debugprint "pct_connections_aborted: "
@@ -5239,13 +5256,20 @@ sub calculations {
         $mycalc{'query_cache_efficiency'} = 0;
     }
     elsif ( mysql_version_ge(4) ) {
-        $mycalc{'query_cache_efficiency'} = sprintf(
-            "%.1f",
-            (
-                $mystat{'Qcache_hits'} /
-                  ( $mystat{'Com_select'} + $mystat{'Qcache_hits'} )
-            ) * 100
-        );
+        if ( ( $mystat{'Com_select'} || 0 ) + ( $mystat{'Qcache_hits'} || 0 ) >
+            0 )
+        {
+            $mycalc{'query_cache_efficiency'} = sprintf(
+                "%.1f",
+                (
+                    $mystat{'Qcache_hits'} /
+                      ( $mystat{'Com_select'} + $mystat{'Qcache_hits'} )
+                ) * 100
+            );
+        }
+        else {
+            $mycalc{'query_cache_efficiency'} = 0;
+        }
         if ( $myvar{'query_cache_size'} ) {
             $mycalc{'pct_query_cache_used'} = sprintf(
                 "%.1f",
@@ -5254,18 +5278,24 @@ sub calculations {
                 ) * 100
             );
         }
-        if ( $mystat{'Qcache_lowmem_prunes'} == 0 ) {
+        if ( ( $mystat{'Qcache_lowmem_prunes'} || 0 ) == 0 ) {
             $mycalc{'query_cache_prunes_per_day'} = 0;
         }
         else {
-            $mycalc{'query_cache_prunes_per_day'} = int(
-                $mystat{'Qcache_lowmem_prunes'} / ( $mystat{'Uptime'} / 86400 )
-            );
+            if ( ( $mystat{'Uptime'} || 0 ) > 0 ) {
+                $mycalc{'query_cache_prunes_per_day'} = int(
+                    $mystat{'Qcache_lowmem_prunes'} /
+                      ( $mystat{'Uptime'} / 86400 ) );
+            }
+            else {
+                $mycalc{'query_cache_prunes_per_day'} = 0;
+            }
         }
     }
 
     # Sorting
-    $mycalc{'total_sorts'} = $mystat{'Sort_scan'} + $mystat{'Sort_range'};
+    $mycalc{'total_sorts'} =
+      ( $mystat{'Sort_scan'} || 0 ) + ( $mystat{'Sort_range'} || 0 );
     if ( $mycalc{'total_sorts'} > 0 ) {
         $mycalc{'pct_temp_sort_table'} = int(
             ( $mystat{'Sort_merge_passes'} / $mycalc{'total_sorts'} ) * 100 );
@@ -5273,9 +5303,15 @@ sub calculations {
 
     # Joins
     $mycalc{'joins_without_indexes'} =
-      $mystat{'Select_range_check'} + $mystat{'Select_full_join'};
-    $mycalc{'joins_without_indexes_per_day'} =
-      int( $mycalc{'joins_without_indexes'} / ( $mystat{'Uptime'} / 86400 ) );
+      ( $mystat{'Select_range_check'} || 0 ) +
+      ( $mystat{'Select_full_join'} || 0 );
+    if ( ( $mystat{'Uptime'} || 0 ) > 0 ) {
+        $mycalc{'joins_without_indexes_per_day'} = int(
+            $mycalc{'joins_without_indexes'} / ( $mystat{'Uptime'} / 86400 ) );
+    }
+    else {
+        $mycalc{'joins_without_indexes_per_day'} = 0;
+    }
 
     # Temporary tables
     if ( $mystat{'Created_tmp_tables'} > 0 ) {
@@ -5333,9 +5369,15 @@ sub calculations {
     }
 
     # Thread cache
-    $mycalc{'thread_cache_hit_rate'} =
-      int( 100 -
-          ( ( $mystat{'Threads_created'} / $mystat{'Connections'} ) * 100 ) );
+    if ( ( $mystat{'Connections'} || 0 ) > 0 ) {
+        $mycalc{'thread_cache_hit_rate'} =
+          int( 100 -
+              ( ( $mystat{'Threads_created'} / $mystat{'Connections'} ) * 100 )
+          );
+    }
+    else {
+        $mycalc{'thread_cache_hit_rate'} = 100;
+    }
 
     # Other
     if ( $mystat{'Connections'} > 0 ) {
@@ -5945,6 +5987,41 @@ sub mysql_stats {
 
             push( @adjvars,
                 $table_cache_var . " (> " . $myvar{$table_cache_var} . ")" );
+
+            # table_open_cache_instances recommendation (#480)
+            if (    mysql_version_ge( 5, 6, 6 )
+                and $myvar{'version'} !~ /mariadb/i
+                and defined $myvar{'table_open_cache_instances'} )
+            {
+                my $logical_cpus = logical_cpu_cores();
+                if ( $logical_cpus > 1 ) {
+                    my $recommended_instances =
+                      POSIX::ceil( $logical_cpus * 0.5 );
+
+                    # Cap at 16 (default for 8.0+)
+                    $recommended_instances = 16 if $recommended_instances > 16;
+                    if ( $myvar{'table_open_cache_instances'} <
+                        $recommended_instances )
+                    {
+                        badprint
+"table_open_cache_instances is set to $myvar{'table_open_cache_instances'} but $recommended_instances is recommended based on CPU cores.";
+                        push( @adjvars,
+                            "table_open_cache_instances (=$recommended_instances)"
+                        );
+                    }
+                }
+            }
+            elsif ( $myvar{'version'} =~ /mariadb/i
+                and mysql_version_ge( 10, 2, 2 ) )
+            {
+                if ( defined $myvar{'table_open_cache_instances'}
+                    and $myvar{'table_open_cache_instances'} > 0 )
+                {
+                    infoprint
+"MariaDB 10.2.2+ autosizes table_open_cache_instances. Current value is $myvar{'table_open_cache_instances'}.";
+                }
+            }
+
             push( @generalrec,
                     "Increase "
                   . $table_cache_var
@@ -9091,98 +9168,72 @@ sub mysql_innodb {
 # InnoDB Log File Size / InnoDB Redo Log Capacity Recommendations
 # For MySQL < 8.0.30, the recommendation is based on innodb_log_file_size and innodb_log_files_in_group.
 # For MySQL >= 8.0.30, innodb_redo_log_capacity replaces the old system.
-    if ( mysql_version_ge( 8, 0, 30 )
-        && defined $myvar{'innodb_redo_log_capacity'} )
-    {
-        # Recalculate ratio if needed (ensure accuracy for modern systems)
-        if ( defined $myvar{'innodb_buffer_pool_size'}
-            && $myvar{'innodb_buffer_pool_size'} > 0 )
-        {
-            $mycalc{'innodb_log_size_pct'} =
-              ( $myvar{'innodb_redo_log_capacity'} /
-                  $myvar{'innodb_buffer_pool_size'} ) * 100;
-        }
+    if ( mysql_version_ge( 8, 0, 30 ) ) {
+        if ( defined $myvar{'innodb_redo_log_capacity'} ) {
+            infoprint "InnoDB Redo Log Capacity is set to "
+              . hr_bytes( $myvar{'innodb_redo_log_capacity'} );
 
-        infoprint "InnoDB Redo Log Capacity is set to "
-          . hr_bytes( $myvar{'innodb_redo_log_capacity'} );
-
-        if ( defined $myvar{'innodb_dedicated_server'}
-            and $myvar{'innodb_dedicated_server'} eq 'ON' )
-        {
-            goodprint
+            if (    defined $myvar{'innodb_dedicated_server'}
+                and $myvar{'innodb_dedicated_server'} eq 'ON' )
+            {
+                goodprint
 "innodb_dedicated_server is ON. MySQL is managing Redo Log Capacity automatically.";
-        }
-        else {
-            my $innodb_os_log_written = $mystat{'Innodb_os_log_written'} || 0;
-            my $uptime                = $mystat{'Uptime'}                || 1;
-
-            if ( $uptime > 3600 ) {
-                my $hourly_rate = $innodb_os_log_written / ( $uptime / 3600 );
-                infoprint "Hourly InnoDB log write rate: "
-                  . hr_bytes($hourly_rate) . "/hour";
-
-                # Determine recommendation based on RAM and workload
-                my $recommended_bytes = $hourly_rate;
-                my $recommended_str   = "";
-
-                if ( $physical_memory < 2 * 1024 * 1024 * 1024 ) {
-
-                    # < 2GB RAM: Default to 100MB if workload is low
-                    $recommended_bytes = 100 * 1024 * 1024
-                      if $recommended_bytes < 100 * 1024 * 1024;
-
-                    # Round to 100MB
-                    $recommended_bytes =
-                      POSIX::ceil( $recommended_bytes / ( 100 * 1024 * 1024 ) )
-                      * ( 100 * 1024 * 1024 );
-                    $recommended_str = hr_bytes($recommended_bytes);
-                }
-                elsif ( $physical_memory < 8 * 1024 * 1024 * 1024 ) {
-
-                    # < 8GB RAM: Round to 100MB, max 1GB
-                    $recommended_bytes = 100 * 1024 * 1024
-                      if $recommended_bytes < 100 * 1024 * 1024;
-                    $recommended_bytes =
-                      POSIX::ceil( $recommended_bytes / ( 100 * 1024 * 1024 ) )
-                      * ( 100 * 1024 * 1024 );
-                    $recommended_bytes = 1 * 1024 * 1024 * 1024
-                      if $recommended_bytes > 1 * 1024 * 1024 * 1024;
-                    $recommended_str = hr_bytes($recommended_bytes);
-                }
-                else {
-                    # >= 8GB RAM: Round to 1GB, max 16GB
-                    $recommended_bytes = 1 * 1024 * 1024 * 1024
-                      if $recommended_bytes < 1 * 1024 * 1024 * 1024;
-                    $recommended_bytes =
-                      POSIX::ceil( $recommended_bytes / ( 1024 * 1024 * 1024 ) )
-                      * ( 1024 * 1024 * 1024 );
-                    $recommended_bytes = 16 * 1024 * 1024 * 1024
-                      if $recommended_bytes > 16 * 1024 * 1024 * 1024;
-                    $recommended_str = hr_bytes($recommended_bytes);
-                }
-
-                if ( $myvar{'innodb_redo_log_capacity'} <
-                    $recommended_bytes * 0.9 )
-                {    # 10% tolerance
-                    badprint
-"Your innodb_redo_log_capacity is smaller than the recommended $recommended_str based on your workload and RAM.";
-                    push( @adjvars,
-                        "innodb_redo_log_capacity (>= $recommended_str)" );
-                }
-                else {
-                    goodprint
-"Your innodb_redo_log_capacity is sized correctly for your workload ($recommended_str recommended).";
+                if ( defined $opt{'defaults-file'} || defined $opt{'defaults-extra-file'} ) {
+                    infoprint "If innodb_redo_log_capacity is manually set in config, consider removing it.";
                 }
             }
             else {
-                infoprint
-"Server uptime is less than 1 hour. Cannot make a reliable recommendation for innodb_redo_log_capacity.";
+                my $innodb_os_log_written = $mystat{'Innodb_os_log_written'} || 0;
+                my $uptime                = $mystat{'Uptime'}                || 1;
+
+                if ( $uptime > 3600 ) {
+                    my $hourly_rate = $innodb_os_log_written / ( $uptime / 3600 );
+                    infoprint "Hourly InnoDB log write rate: "
+                      . hr_bytes($hourly_rate) . "/hour";
+
+                    # Determine recommendation based on workload
+                    my $recommended_bytes = $hourly_rate;
+
+                    # Sensible minimum based on RAM
+                    my $min_bytes = 100 * 1024 * 1024;
+                    if ( $physical_memory > 8 * 1024 * 1024 * 1024 ) {
+                        $min_bytes = 1 * 1024 * 1024 * 1024;
+                    }
+                    $recommended_bytes = $min_bytes if $recommended_bytes < $min_bytes;
+
+                    # Cap at 16GB
+                    my $max_bytes = 16 * 1024 * 1024 * 1024;
+                    $recommended_bytes = $max_bytes if $recommended_bytes > $max_bytes;
+
+                    # Rounding
+                    if ( $recommended_bytes < 1024 * 1024 * 1024 ) {
+                        $recommended_bytes =
+                          POSIX::ceil( $recommended_bytes / ( 100 * 1024 * 1024 ) )
+                          * ( 100 * 1024 * 1024 );
+                    }
+                    else {
+                        $recommended_bytes =
+                          POSIX::ceil( $recommended_bytes / ( 1024 * 1024 * 1024 ) )
+                          * ( 1024 * 1024 * 1024 );
+                    }
+
+                    my $recommended_str = hr_bytes($recommended_bytes);
+                    if ( $myvar{'innodb_redo_log_capacity'} < $recommended_bytes * 0.9 ) {
+                        badprint "Your innodb_redo_log_capacity is smaller than the recommended $recommended_str based on your workload.";
+                        push @adjvars, "innodb_redo_log_capacity (>= $recommended_str)";
+                    }
+                    else {
+                        goodprint "Your innodb_redo_log_capacity is sized correctly for your workload ($recommended_str recommended).";
+                    }
+                }
+                else {
+                    infoprint "Server uptime is less than 1 hour. Cannot make a reliable recommendation for innodb_redo_log_capacity.";
+                }
             }
         }
     }
-    elsif ( !mysql_version_ge( 8, 0, 30 ) ) {
-
-        # Keep existing logic for older versions
+    else {
+        # MySQL < 8.0.30: logic based on 25% ratio of buffer pool
         if (   $mycalc{'innodb_log_size_pct'} < 20
             or $mycalc{'innodb_log_size_pct'} > 30 )
         {
