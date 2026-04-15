@@ -1,0 +1,41 @@
+name: Project Maintenance
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  update-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpod-markdown-perl libtemplate-perl perltidy dos2unix
+
+      - name: Generate USAGE.md
+        run: pod2markdown mysqltuner.pl > USAGE.md
+
+      - name: Tidy mysqltuner.pl
+        run: perltidy -b mysqltuner.pl
+
+      - name: Update CVE List
+        run: perl build/updateCVElist.pl
+
+      - name: Normalize line endings
+        run: dos2unix mysqltuner.pl
+
+      - name: Generate FEATURES.md
+        run: bash build/genFeatures.sh
+
+      - name: Commit and Push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add vulnerabilities.csv mysqltuner.pl USAGE.md FEATURES.md
+          git diff --staged --quiet || (git commit -m "chore: automated project metadata update" && git push)

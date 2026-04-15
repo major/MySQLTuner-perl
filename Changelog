@@ -13,6 +13,13 @@
 - refactor: replace "master"/"slave" terminology with "source"/"replica" for cultural sensitivity (#888).
 - fix: improve join_buffer_size recommendation formatting in Variables to Adjust (#881).
 - fix: suppress MySQL client warning regarding 'DISABLED' boolean value for SSL (#887).
+- fix: correctly handle `--defaults-file` and `--defaults-extra-file` without dropping options (#605).
+- fix: restore Debian maintenance account automatic login by using idiomatic boolean checks (#896).
+- fix: include `tmp_table_size` in per-thread memory calculation for better accuracy (#864).
+- fix: add retry mechanism for initial `SELECT VERSION()` query to improve connection resilience (#782).
+- fix: prevent `AUTO_INCREMENT` capacity false positives for empty tables (#37).
+- chore: automated project maintenance and cleanup (extracted `RULES.md`, `MEMORY_DB.md`, `TESTS.md`).
+- ci: migrate maintenance script to GitHub Actions.
 - chore(deps): update docker/setup-buildx-action action to v4.
 - chore(deps): update docker/build-push-action action to v7.
 - chore(deps): update docker/login-action action to v4.

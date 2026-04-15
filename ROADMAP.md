@@ -59,9 +59,10 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] Unified KPI (0-100) aggregating findings from Security, Performance, and Resilience.
   * [ ] Comparative scoring against previous runs or established industry baselines.
 * [/] **Predictive Capacity Planning**:
-  * [ ] Data growth forecasting based on binlog throughput and table statistics.
+  * [x] Data growth forecasting based on binlog throughput and table statistics.
   * [x] Memory headroom analysis for traffic peak forecasting.
-* [/] **Cluster & Replication Intelligence**:
+  * [x] AUTO_INCREMENT capacity near max value detection.
+* [x] **Cluster & Replication Intelligence**:
   * [x] Root cause analysis for replication lag (IO/SQL thread contention).
   * [ ] GTID consistency checks and multi-source replication tuning.
 * [/] **Security Hardening 2.0**:

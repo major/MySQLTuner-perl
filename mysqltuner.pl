@@ -2242,7 +2242,7 @@ sub mysql_setup {
     }
     elsif ( -r "/etc/mysql/debian.cnf"
         and $doremote == 0
-        and $opt{'defaults-file'} eq '' )
+        and !$opt{'defaults-file'} )
     {
 
         # We have a Debian maintenance account, use it
@@ -2260,7 +2260,7 @@ sub mysql_setup {
             exit 1;
         }
     }
-    elsif ( $defaults_options ne '' ) {
+    elsif ($defaults_options) {
 
         # defaults-file or defaults-extra-file
         $mysqllogin = "$defaults_options $remotestring";
@@ -2293,7 +2293,7 @@ sub mysql_setup {
         if ( $loginstatus =~ /mysqld is alive/ ) {
 
             # Login went just fine
-            $mysqllogin = " $remotestring ";
+            $mysqllogin = "$defaults_options $remotestring";
 
        # Did this go well because of a .my.cnf file or is there no password set?
             my $userpath =
@@ -2470,6 +2470,7 @@ sub select_one {
     debugprint "PERFORM: $req ";
     my $result =
       execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req\" 2>>$devnull");
+    chomp $result if defined $result;
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
@@ -2701,10 +2702,22 @@ sub check_privileges {
 sub get_all_vars {
 
     # We need to initiate at least one query so that our data is useable
-    $dummyselect = select_one "SELECT VERSION()";
+    # Issue #782: Add retry for initial connection check
+    my $retries = 3;
+    while ( $retries > 0 ) {
+        $dummyselect = select_one "SELECT VERSION()";
+        last if defined($dummyselect) && $dummyselect ne '';
+        $retries--;
+        if ( $retries > 0 ) {
+            infoprint "Retrying connection check ($retries attempts left)...";
+            sleep 1;
+        }
+    }
+
     if ( not defined($dummyselect) or $dummyselect eq "" ) {
         badprint
-          "You probably do not have enough privileges to run MySQLTuner ...";
+"Failed to connect to the database or insufficient privileges to run MySQLTuner.";
+        badprint "Please check your credentials and server status.";
         exit(256);
     }
     $dummyselect =~ s/(.*?)\-.*/$1/;
@@ -3504,7 +3517,7 @@ sub get_kernel_info {
             chomp $swappiness;
         }
     }
-    if ( !defined $swappiness || $swappiness eq '' ) {
+    if ( !defined $swappiness || !$swappiness ) {
         $swappiness = execute_system_command('sysctl -n vm.swappiness');
         chomp $swappiness;
     }
@@ -4942,11 +4955,11 @@ sub check_storage_engines {
         }
 
         if ( $db eq "information_schema" ) { next; }
-        my @ia = ( 0, 10 );
+        my @ia = ( 0, 4, 10 );
         if ( !mysql_version_ge( 4, 1 ) ) {
 
             # MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
-            @ia = ( 0, 9 );
+            @ia = ( 0, 4, 9 );
         }
         my $cmd = "SHOW TABLE STATUS FROM \\\`$db\\\`";
         if ($is_win) {
@@ -4959,9 +4972,15 @@ sub check_storage_engines {
 
     foreach my $db (@dbnames) {
         foreach my $tbl ( @{ $tblist{$db} } ) {
-            my ( $name, $autoincrement ) = @$tbl;
+            my ( $name, $rows, $autoincrement ) = @$tbl;
 
-            if ( $autoincrement =~ /^\d+?$/ ) {
+            if ( $autoincrement && $autoincrement =~ /^\d+?$/ ) {
+                # Issue #37: Skip tables where AUTO_INCREMENT is at default (never used) and table is empty
+                next if ( $autoincrement <= 1 && ( $rows // 0 ) == 0 );
+
+                # Issue #37: Guard against unresolved column max producing a false 100%
+                next unless defined $maxint && $maxint > 0;
+
                 my $percent = percentage( $autoincrement, $maxint );
                 $result{'PctAutoIncrement'}{"$db.$name"} = $percent;
                 if ( $percent >= 75 ) {
@@ -4995,6 +5014,12 @@ sub calculations {
     $myvar{'version'} =~ s/(.+)-.*?$/$1/;
 
     #infoprint "====>>>> MySQL version updated: $myvar{'version'}";
+    # Server-wide memory
+    $mycalc{'max_tmp_table_size'} =
+      ( $myvar{'tmp_table_size'} > $myvar{'max_heap_table_size'} )
+      ? $myvar{'max_heap_table_size'}
+      : $myvar{'tmp_table_size'};
+
     # Per-thread memory
     $mycalc{'per_thread_buffers'} = 0;
     $mycalc{'per_thread_buffers'} += $myvar{'read_buffer_size'}
@@ -5009,6 +5034,9 @@ sub calculations {
       if is_int( $myvar{'join_buffer_size'} );
     $mycalc{'per_thread_buffers'} += $myvar{'binlog_cache_size'}
       if is_int( $myvar{'binlog_cache_size'} );
+    $mycalc{'per_thread_buffers'} += $mycalc{'max_tmp_table_size'}
+      if is_int( $mycalc{'max_tmp_table_size'} );
+
     debugprint "per_thread_buffers: $mycalc{'per_thread_buffers'} ("
       . human_size( $mycalc{'per_thread_buffers'} ) . " )";
 
@@ -5023,13 +5051,7 @@ sub calculations {
     $mycalc{'max_total_per_thread_buffers'} =
       $mycalc{'per_thread_buffers'} * $mystat{'Max_used_connections'};
 
-    # Server-wide memory
-    $mycalc{'max_tmp_table_size'} =
-      ( $myvar{'tmp_table_size'} > $myvar{'max_heap_table_size'} )
-      ? $myvar{'max_heap_table_size'}
-      : $myvar{'tmp_table_size'};
-    $mycalc{'server_buffers'} =
-      $myvar{'key_buffer_size'} + $mycalc{'max_tmp_table_size'};
+    $mycalc{'server_buffers'} = $myvar{'key_buffer_size'};
     $mycalc{'server_buffers'} +=
       ( defined $myvar{'innodb_buffer_pool_size'} )
       ? $myvar{'innodb_buffer_pool_size'}
@@ -9709,7 +9731,8 @@ sub check_removed_innodb_variables {
 
     foreach my $entry (@removed_vars) {
         my $var = $entry->{var};
-        if ( $real_vars{$var}
+        if (   exists $real_vars{$var}
+            && $real_vars{$var} ne 'OFF'
             && mysql_version_ge( @{ $entry->{removed} } ) )
         {
             badprint "InnoDB variable '$var' is removed in "

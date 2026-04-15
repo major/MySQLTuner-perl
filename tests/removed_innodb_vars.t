@@ -111,4 +111,18 @@ subtest 'Injected Variables (Issue #32)' => sub {
     is(scalar @main::generalrec, 0, 'Injected variables (have_innodb, innodb_support_xa) do not trigger false warnings');
 };
 
+# Test 7: Variables set to 'OFF' should NOT trigger warnings (Issue #32)
+subtest 'Variables set to OFF (Issue #32)' => sub {
+    @main::generalrec = ();
+    %main::myvar = (
+        version => '10.11.3-MariaDB',
+        version_numbers => '10.11.3',
+        version_comment => 'mariadb.org binary distribution',
+        innodb_prefix_index_cluster_optimization => 'OFF',
+    );
+    %main::real_vars = %main::myvar;
+    main::check_removed_innodb_variables();
+    is(scalar @main::generalrec, 0, "Variables set to 'OFF' do not trigger false warnings");
+};
+
 done_testing();
