@@ -68,7 +68,8 @@ our $is_win = $^O eq 'MSWin32';
 # Set up a few variables for use in the script
 our $tunerversion = "2.8.41";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
-our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas, $dummyselect );
+our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
+    $dummyselect );
 
 # Set defaults
 # Central metadata for CLI options
@@ -309,8 +310,9 @@ our %CLI_METADATA = (
     },
     'schemadir' => {
         type    => '=s',
-        default     => undef,
-        desc        => 'Path to a directory where to dump one markdown file per schema',
+        default => undef,
+        desc    =>
+          'Path to a directory where to dump one markdown file per schema',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
@@ -2163,7 +2165,8 @@ sub mysql_setup {
             return 1;
         }
         else {
-            badprint "Attempted to use login credentials, but they were invalid.";
+            badprint
+              "Attempted to use login credentials, but they were invalid.";
             debugprint "Login failure output: $loginstatus";
         }
     }
@@ -2348,7 +2351,7 @@ sub mysql_setup {
                 system("stty echo >$devnull 2>&1");
             }
             $password = "" unless defined $password;
-            $name = "" unless defined $name;
+            $name     = "" unless defined $name;
             chomp($password);
             chomp($name);
             $mysqllogin = "$defaults_options -u $name ";
@@ -2861,7 +2864,7 @@ sub get_all_vars {
     my @lineitems = ();
     foreach my $line (@mysqlreplicas) {
         debugprint "L: $line ";
-        @lineitems                                          = split /\s+/, $line;
+        @lineitems = split /\s+/, $line;
         $myreplicas{ $lineitems[0] }                        = $line;
         $result{'Replication'}{'Replicas'}{ $lineitems[0] } = $lineitems[4];
     }
@@ -3851,7 +3854,7 @@ sub system_recommendations {
     }
     else {
         get_fs_info;
-        if ( !is_docker() && ($opt{'container'} // '') eq '' ) {
+        if ( !is_docker() && ( $opt{'container'} // '' ) eq '' ) {
             subheaderprint "Kernel Information Recommendations";
             get_kernel_info;
         }
@@ -4988,10 +4991,11 @@ sub check_storage_engines {
             my ( $name, $rows, $autoincrement ) = @$tbl;
 
             if ( $autoincrement && $autoincrement =~ /^\d+?$/ ) {
-                # Issue #37: Skip tables where AUTO_INCREMENT is at default (never used) and table is empty
+
+# Issue #37: Skip tables where AUTO_INCREMENT is at default (never used) and table is empty
                 next if ( $autoincrement <= 1 && ( $rows // 0 ) == 0 );
 
-                # Issue #37: Guard against unresolved column max producing a false 100%
+         # Issue #37: Guard against unresolved column max producing a false 100%
                 next unless defined $maxint && $maxint > 0;
 
                 my $percent = percentage( $autoincrement, $maxint );
@@ -5008,7 +5012,7 @@ sub check_storage_engines {
 sub dump_into_file {
     my $file    = shift;
     my $content = shift;
-    if ( defined($opt{dumpdir}) && $opt{dumpdir} ne '' && -d $opt{dumpdir} ) {
+    if ( defined( $opt{dumpdir} ) && $opt{dumpdir} ne '' && -d $opt{dumpdir} ) {
         $file = "$opt{dumpdir}/$file";
         open( FILE, ">$file" ) or die "Can't open $file: $!";
         print FILE $content;
@@ -5295,8 +5299,8 @@ sub calculations {
         }
         else {
             if ( ( $mystat{'Uptime'} || 0 ) > 0 ) {
-                $mycalc{'query_cache_prunes_per_day'} = int(
-                    $mystat{'Qcache_lowmem_prunes'} /
+                $mycalc{'query_cache_prunes_per_day'} =
+                  int( $mystat{'Qcache_lowmem_prunes'} /
                       ( $mystat{'Uptime'} / 86400 ) );
             }
             else {
@@ -5316,7 +5320,7 @@ sub calculations {
     # Joins
     $mycalc{'joins_without_indexes'} =
       ( $mystat{'Select_range_check'} || 0 ) +
-      ( $mystat{'Select_full_join'} || 0 );
+      ( $mystat{'Select_full_join'}   || 0 );
     if ( ( $mystat{'Uptime'} || 0 ) > 0 ) {
         $mycalc{'joins_without_indexes_per_day'} = int(
             $mycalc{'joins_without_indexes'} / ( $mystat{'Uptime'} / 86400 ) );
@@ -5382,10 +5386,11 @@ sub calculations {
 
     # Thread cache
     if ( ( $mystat{'Connections'} || 0 ) > 0 ) {
-        $mycalc{'thread_cache_hit_rate'} =
-          int( 100 -
-              ( ( $mystat{'Threads_created'} / $mystat{'Connections'} ) * 100 )
-          );
+        $mycalc{'thread_cache_hit_rate'} = int(
+            100 - (
+                ( $mystat{'Threads_created'} / $mystat{'Connections'} ) * 100
+            )
+        );
     }
     else {
         $mycalc{'thread_cache_hit_rate'} = 100;
@@ -5514,7 +5519,8 @@ sub mysql_stats {
     # Show uptime, queries per second, connections, traffic stats
     my $qps = 0;
     if ( ( $mystat{'Uptime'} || 0 ) > 0 ) {
-        $qps = sprintf( "%.3f", ( $mystat{'Questions'} || 0 ) / $mystat{'Uptime'} );
+        $qps =
+          sprintf( "%.3f", ( $mystat{'Questions'} || 0 ) / $mystat{'Uptime'} );
     }
     push( @generalrec,
 "MySQL was started within the last 24 hours: recommendations may be inaccurate"
@@ -5612,31 +5618,36 @@ sub mysql_stats {
         badprint
           "Allocating > 2GB RAM on 32-bit systems can cause system instability";
         badprint "Maximum reached memory usage: "
-          . hr_bytes( $mycalc{'max_used_memory'} )
-          . " (" . ( $mycalc{'pct_max_used_memory'} // 0 ) . "% of installed RAM)";
+          . hr_bytes( $mycalc{'max_used_memory'} ) . " ("
+          . ( $mycalc{'pct_max_used_memory'} // 0 )
+          . "% of installed RAM)";
     }
     elsif ( ( $mycalc{'pct_max_used_memory'} || 0 ) > 85 ) {
         badprint "Maximum reached memory usage: "
-          . hr_bytes( $mycalc{'max_used_memory'} )
-          . " (" . ( $mycalc{'pct_max_used_memory'} // 0 ) . "% of installed RAM)";
+          . hr_bytes( $mycalc{'max_used_memory'} ) . " ("
+          . ( $mycalc{'pct_max_used_memory'} // 0 )
+          . "% of installed RAM)";
     }
     else {
         goodprint "Maximum reached memory usage: "
-          . hr_bytes( $mycalc{'max_used_memory'} )
-          . " (" . ( $mycalc{'pct_max_used_memory'} // 0 ) . "% of installed RAM)";
+          . hr_bytes( $mycalc{'max_used_memory'} ) . " ("
+          . ( $mycalc{'pct_max_used_memory'} // 0 )
+          . "% of installed RAM)";
     }
 
     if ( ( $mycalc{'pct_max_physical_memory'} || 0 ) > 85 ) {
         badprint "Maximum possible memory usage: "
-          . hr_bytes( $mycalc{'max_peak_memory'} )
-          . " (" . ( $mycalc{'pct_max_physical_memory'} // 0 ) . "% of installed RAM)";
+          . hr_bytes( $mycalc{'max_peak_memory'} ) . " ("
+          . ( $mycalc{'pct_max_physical_memory'} // 0 )
+          . "% of installed RAM)";
         push( @generalrec,
             "Reduce your overall MySQL memory footprint for system stability" );
     }
     else {
         goodprint "Maximum possible memory usage: "
-          . hr_bytes( $mycalc{'max_peak_memory'} )
-          . " (" . ( $mycalc{'pct_max_physical_memory'} // 0 ) . "% of installed RAM)";
+          . hr_bytes( $mycalc{'max_peak_memory'} ) . " ("
+          . ( $mycalc{'pct_max_physical_memory'} // 0 )
+          . "% of installed RAM)";
     }
 
     if ( ( $physical_memory || 0 ) <
@@ -5685,32 +5696,42 @@ sub mysql_stats {
 
     # Connections
     if ( ( $mycalc{'pct_connections_used'} || 0 ) > 85 ) {
-        badprint
-"Highest connection usage: " . ( $mycalc{'pct_connections_used'} // 0 ) . "% (" . ( $mystat{'Max_used_connections'} // 0 ) . "/" . ( $myvar{'max_connections'} // 0 ) . ")";
+        badprint "Highest connection usage: "
+          . ( $mycalc{'pct_connections_used'} // 0 ) . "% ("
+          . ( $mystat{'Max_used_connections'} // 0 ) . "/"
+          . ( $myvar{'max_connections'}       // 0 ) . ")";
         push( @adjvars,
             "max_connections (> " . ( $myvar{'max_connections'} // 0 ) . ")" );
         push( @adjvars,
             "wait_timeout (< " . ( $myvar{'wait_timeout'} // 0 ) . ")",
-            "interactive_timeout (< " . ( $myvar{'interactive_timeout'} // 0 ) . ")" );
+            "interactive_timeout (< "
+              . ( $myvar{'interactive_timeout'} // 0 )
+              . ")" );
         push( @generalrec,
 "Reduce or eliminate persistent connections to reduce connection usage"
         );
     }
     else {
-        goodprint
-"Highest usage of available connections: " . ( $mycalc{'pct_connections_used'} // 0 ) . "% (" . ( $mystat{'Max_used_connections'} // 0 ) . "/" . ( $myvar{'max_connections'} // 0 ) . ")";
+        goodprint "Highest usage of available connections: "
+          . ( $mycalc{'pct_connections_used'} // 0 ) . "% ("
+          . ( $mystat{'Max_used_connections'} // 0 ) . "/"
+          . ( $myvar{'max_connections'}       // 0 ) . ")";
     }
 
     # Aborted Connections
     if ( ( $mycalc{'pct_connections_aborted'} || 0 ) > 3 ) {
-        badprint
-"Aborted connections: " . ( $mycalc{'pct_connections_aborted'} // 0 ) . "% (" . ( $mystat{'Aborted_connects'} // 0 ) . "/" . ( $mystat{'Connections'} // 0 ) . ")";
+        badprint "Aborted connections: "
+          . ( $mycalc{'pct_connections_aborted'} // 0 ) . "% ("
+          . ( $mystat{'Aborted_connects'}        // 0 ) . "/"
+          . ( $mystat{'Connections'}             // 0 ) . ")";
         push( @generalrec,
             "Reduce or eliminate unclosed connections and network issues" );
     }
     else {
-        goodprint
-"Aborted connections: " . ( $mycalc{'pct_connections_aborted'} // 0 ) . "% (" . ( $mystat{'Aborted_connects'} // 0 ) . "/" . ( $mystat{'Connections'} // 0 ) . ")";
+        goodprint "Aborted connections: "
+          . ( $mycalc{'pct_connections_aborted'} // 0 ) . "% ("
+          . ( $mystat{'Aborted_connects'}        // 0 ) . "/"
+          . ( $mystat{'Connections'}             // 0 ) . ")";
     }
 
     # name resolution
@@ -5863,7 +5884,8 @@ sub mysql_stats {
                   . ", or always use indexes with JOINs)" );
         }
         else {
-            push( @adjvars, "join_buffer_size (always use indexes with JOINs)" );
+            push( @adjvars,
+                "join_buffer_size (always use indexes with JOINs)" );
         }
         push(
             @generalrec,
@@ -6020,7 +6042,7 @@ sub mysql_stats {
                         badprint
 "table_open_cache_instances is set to $myvar{'table_open_cache_instances'} but $recommended_instances is recommended based on CPU cores.";
                         push( @adjvars,
-                            "table_open_cache_instances (=$recommended_instances)"
+"table_open_cache_instances (=$recommended_instances)"
                         );
                     }
                 }
@@ -8401,8 +8423,9 @@ sub mysql_80_modeling_checks {
     return unless mysql_version_ge( 8, 0 );
 
     my $is_mariadb = (
-             ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
-          or ( defined $myvar{'version_comment'} && $myvar{'version_comment'} =~ /MariaDB/i )
+        ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+          or ( defined $myvar{'version_comment'}
+            && $myvar{'version_comment'} =~ /MariaDB/i )
     );
     my $header =
       $is_mariadb
@@ -8782,7 +8805,7 @@ sub mariadb_galera {
             badprint
               "innodb_autoinc_lock_mode is incorrect with parallel replica";
             push @adjvars,
-              "innodb_autoinc_lock_mode should be 2 when using parallel replica";
+"innodb_autoinc_lock_mode should be 2 when using parallel replica";
         }
     }
 
@@ -9193,21 +9216,26 @@ sub mysql_innodb {
             infoprint "InnoDB Redo Log Capacity is set to "
               . hr_bytes( $myvar{'innodb_redo_log_capacity'} );
 
-            if (    defined $myvar{'innodb_dedicated_server'}
+            if ( defined $myvar{'innodb_dedicated_server'}
                 and $myvar{'innodb_dedicated_server'} eq 'ON' )
             {
                 goodprint
 "innodb_dedicated_server is ON. MySQL is managing Redo Log Capacity automatically.";
-                if ( defined $opt{'defaults-file'} || defined $opt{'defaults-extra-file'} ) {
-                    infoprint "If innodb_redo_log_capacity is manually set in config, consider removing it.";
+                if (   defined $opt{'defaults-file'}
+                    || defined $opt{'defaults-extra-file'} )
+                {
+                    infoprint
+"If innodb_redo_log_capacity is manually set in config, consider removing it.";
                 }
             }
             else {
-                my $innodb_os_log_written = $mystat{'Innodb_os_log_written'} || 0;
-                my $uptime                = $mystat{'Uptime'}                || 1;
+                my $innodb_os_log_written =
+                  $mystat{'Innodb_os_log_written'} || 0;
+                my $uptime = $mystat{'Uptime'} || 1;
 
                 if ( $uptime > 3600 ) {
-                    my $hourly_rate = $innodb_os_log_written / ( $uptime / 3600 );
+                    my $hourly_rate =
+                      $innodb_os_log_written / ( $uptime / 3600 );
                     infoprint "Hourly InnoDB log write rate: "
                       . hr_bytes($hourly_rate) . "/hour";
 
@@ -9219,35 +9247,45 @@ sub mysql_innodb {
                     if ( $physical_memory > 8 * 1024 * 1024 * 1024 ) {
                         $min_bytes = 1 * 1024 * 1024 * 1024;
                     }
-                    $recommended_bytes = $min_bytes if $recommended_bytes < $min_bytes;
+                    $recommended_bytes = $min_bytes
+                      if $recommended_bytes < $min_bytes;
 
                     # Cap at 16GB
                     my $max_bytes = 16 * 1024 * 1024 * 1024;
-                    $recommended_bytes = $max_bytes if $recommended_bytes > $max_bytes;
+                    $recommended_bytes = $max_bytes
+                      if $recommended_bytes > $max_bytes;
 
                     # Rounding
                     if ( $recommended_bytes < 1024 * 1024 * 1024 ) {
                         $recommended_bytes =
-                          POSIX::ceil( $recommended_bytes / ( 100 * 1024 * 1024 ) )
-                          * ( 100 * 1024 * 1024 );
+                          POSIX::ceil(
+                            $recommended_bytes / ( 100 * 1024 * 1024 ) ) *
+                          ( 100 * 1024 * 1024 );
                     }
                     else {
                         $recommended_bytes =
-                          POSIX::ceil( $recommended_bytes / ( 1024 * 1024 * 1024 ) )
-                          * ( 1024 * 1024 * 1024 );
+                          POSIX::ceil(
+                            $recommended_bytes / ( 1024 * 1024 * 1024 ) ) *
+                          ( 1024 * 1024 * 1024 );
                     }
 
                     my $recommended_str = hr_bytes($recommended_bytes);
-                    if ( $myvar{'innodb_redo_log_capacity'} < $recommended_bytes * 0.9 ) {
-                        badprint "Your innodb_redo_log_capacity is smaller than the recommended $recommended_str based on your workload.";
-                        push @adjvars, "innodb_redo_log_capacity (>= $recommended_str)";
+                    if ( $myvar{'innodb_redo_log_capacity'} <
+                        $recommended_bytes * 0.9 )
+                    {
+                        badprint
+"Your innodb_redo_log_capacity is smaller than the recommended $recommended_str based on your workload.";
+                        push @adjvars,
+                          "innodb_redo_log_capacity (>= $recommended_str)";
                     }
                     else {
-                        goodprint "Your innodb_redo_log_capacity is sized correctly for your workload ($recommended_str recommended).";
+                        goodprint
+"Your innodb_redo_log_capacity is sized correctly for your workload ($recommended_str recommended).";
                     }
                 }
                 else {
-                    infoprint "Server uptime is less than 1 hour. Cannot make a reliable recommendation for innodb_redo_log_capacity.";
+                    infoprint
+"Server uptime is less than 1 hour. Cannot make a reliable recommendation for innodb_redo_log_capacity.";
                 }
             }
         }
