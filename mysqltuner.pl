@@ -2347,6 +2347,8 @@ sub mysql_setup {
                 $password = <STDIN>;
                 system("stty echo >$devnull 2>&1");
             }
+            $password = "" unless defined $password;
+            $name = "" unless defined $name;
             chomp($password);
             chomp($name);
             $mysqllogin = "$defaults_options -u $name ";
@@ -3849,7 +3851,7 @@ sub system_recommendations {
     }
     else {
         get_fs_info;
-        if ( !is_docker() && $opt{'container'} eq '' ) {
+        if ( !is_docker() && ($opt{'container'} // '') eq '' ) {
             subheaderprint "Kernel Information Recommendations";
             get_kernel_info;
         }
@@ -4474,8 +4476,10 @@ sub get_replication_status {
 
     $result{'Replication'}{'status'} = \%myrepl;
     my ($io_running) = $myrepl{'Replica_IO_Running'};
+    $io_running = '' unless defined $io_running;
     debugprint "IO RUNNING: " . ( $io_running // 'undef' ) . " ";
     my ($sql_running) = $myrepl{'Replica_SQL_Running'};
+    $sql_running = '' unless defined $sql_running;
     debugprint "SQL RUNNING: " . ( $sql_running // 'undef' ) . " ";
 
     my ($seconds_behind_replica) = $myrepl{'Seconds_Behind_Replica'};
@@ -5004,7 +5008,7 @@ sub check_storage_engines {
 sub dump_into_file {
     my $file    = shift;
     my $content = shift;
-    if ( -d "$opt{dumpdir}" && $opt{dumpdir} ) {
+    if ( defined($opt{dumpdir}) && $opt{dumpdir} ne '' && -d $opt{dumpdir} ) {
         $file = "$opt{dumpdir}/$file";
         open( FILE, ">$file" ) or die "Can't open $file: $!";
         print FILE $content;
@@ -8397,8 +8401,8 @@ sub mysql_80_modeling_checks {
     return unless mysql_version_ge( 8, 0 );
 
     my $is_mariadb = (
-             ( $myvar{'version'} =~ /MariaDB/i )
-          or ( $myvar{'version_comment'} =~ /MariaDB/i )
+             ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+          or ( defined $myvar{'version_comment'} && $myvar{'version_comment'} =~ /MariaDB/i )
     );
     my $header =
       $is_mariadb

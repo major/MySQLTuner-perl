@@ -6,6 +6,7 @@ use Data::Dumper;
 
 # 1. Load MySQLTuner logic
 require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 
 # Mocking essential globals and subroutines
 $main::good = '[OK]';
@@ -20,7 +21,8 @@ our @generalrec;
 # Test 1: MariaDB 10.6 with removed vars
 subtest 'MariaDB 10.6 Removed Variables' => sub {
     @main::generalrec = ();
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '10.6.15-MariaDB',
         version_numbers => '10.6.15',
         version_comment => 'mariadb.org binary distribution',
@@ -36,7 +38,8 @@ subtest 'MariaDB 10.6 Removed Variables' => sub {
 # Test 2: MySQL 8.0 with removed vars
 subtest 'MySQL 8.0 Removed Variables' => sub {
     @main::generalrec = ();
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '8.0.35',
         version_numbers => '8.0.35',
         version_comment => 'MySQL Community Server - GPL',
@@ -52,7 +55,8 @@ subtest 'MySQL 8.0 Removed Variables' => sub {
 # Test 3: MySQL 9.0 with removed vars
 subtest 'MySQL 9.0 Removed Variables' => sub {
     @main::generalrec = ();
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '9.0.1',
         version_numbers => '9.0.1',
         version_comment => 'MySQL Community Server - GPL',
@@ -68,7 +72,8 @@ subtest 'MySQL 9.0 Removed Variables' => sub {
 # Test 4: MySQL 5.7 (Legacy) - should NOT warn for these vars
 subtest 'MySQL 5.7 Legacy Variables' => sub {
     @main::generalrec = ();
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '5.7.44',
         version_numbers => '5.7.44',
         version_comment => 'MySQL Community Server - GPL',
@@ -83,13 +88,19 @@ subtest 'MySQL 5.7 Legacy Variables' => sub {
 # Test 5: MariaDB 10.3 (Legacy) - should NOT warn for file_format (removed in 10.6)
 subtest 'MariaDB 10.3 Legacy Variables' => sub {
     @main::generalrec = ();
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '10.3.39-MariaDB',
         version_numbers => '10.3.39',
         version_comment => 'mariadb.org binary distribution',
         innodb_file_format => 'Antelope',
     );
-    %main::real_vars = %main::myvar;
+    %main::real_vars = (
+        version => '10.3.39-MariaDB',
+        version_numbers => '10.3.39',
+        version_comment => 'mariadb.org binary distribution',
+        innodb_file_format => 'Antelope',
+    );
     main::check_removed_innodb_variables();
     is(scalar @main::generalrec, 0, 'MariaDB 10.3: No warnings for innodb_file_format (not removed yet)');
 };
@@ -97,7 +108,8 @@ subtest 'MariaDB 10.3 Legacy Variables' => sub {
 # Test 6: Internally injected variables should NOT trigger warnings (Issue #32)
 subtest 'Injected Variables (Issue #32)' => sub {
     @main::generalrec = ();
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '10.11.3-MariaDB',
         version_numbers => '10.11.3',
         version_comment => 'mariadb.org binary distribution',
@@ -114,13 +126,19 @@ subtest 'Injected Variables (Issue #32)' => sub {
 # Test 7: Variables set to 'OFF' should NOT trigger warnings (Issue #32)
 subtest 'Variables set to OFF (Issue #32)' => sub {
     @main::generalrec = ();
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '10.11.3-MariaDB',
         version_numbers => '10.11.3',
         version_comment => 'mariadb.org binary distribution',
         innodb_prefix_index_cluster_optimization => 'OFF',
     );
-    %main::real_vars = %main::myvar;
+    %main::real_vars = (
+        version => '10.11.3-MariaDB',
+        version_numbers => '10.11.3',
+        version_comment => 'mariadb.org binary distribution',
+        innodb_prefix_index_cluster_optimization => 'OFF',
+    );
     main::check_removed_innodb_variables();
     is(scalar @main::generalrec, 0, "Variables set to 'OFF' do not trigger false warnings");
 };

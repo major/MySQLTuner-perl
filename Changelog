@@ -2,6 +2,8 @@
 
 2.8.41 2026-04-13
 
+- ci: enhance Quality Gate to strictly enforce zero-warning policy on GitHub Actions tests.
+- ci: implement dynamic CI test environment detection by wrapping configuration extraction.
 - fix: Restore compatibility with older Perl versions (by @jasongill).
 - feat: implement idiomatic Perl Boolean practices across the project (#34).
 - refactor: update CLI metadata to use `undef` as default for string/path options.

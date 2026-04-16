@@ -50,7 +50,12 @@ jobs:
 
       - name: Run help mode
         run: |
-          sudo perl ./mysqltuner.pl --help
+          set -o pipefail
+          sudo perl ./mysqltuner.pl --help 2>&1 | tee output.log
+          if grep -iE 'use of uninitialized value|warning' output.log; then
+            echo "Zero-Warning Quality Gate Failed: Warnings detected in test output!"
+            exit 1
+          fi
 
   test_with_empty_db:
     needs: test_help
@@ -84,4 +89,25 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run verbose mode
-        run: sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose
+        run: |
+          set -o pipefail
+          sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose 2>&1 | tee output.log
+          if grep -iE 'use of uninitialized value|warning' output.log; then
+            echo "Zero-Warning Quality Gate Failed: Warnings detected in test output!"
+            exit 1
+          fi
+
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup MySQL Tuner repository
+        uses: actions/checkout@v6
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          make unit-tests 2>&1 | tee test_output.log
+          if grep -iE 'use of uninitialized value|warning' test_output.log; then
+            echo "Zero-Warning Quality Gate Failed: Warnings detected in test output!"
+            exit 1
+          fi
