@@ -82,7 +82,8 @@ Beyond hard constraints, following established patterns ensures code durability,
 
 - Release workflows (via `/git-flow`) MUST force push tags to the origin at each release to ensure synchronization with GitHub.
 - The `/git-flow` workflow MUST always be preceded by a successful `/release-preflight` execution.
-- Only the Release Manager is authorized to decide when to increment version numbers, or incrementing occurs automatically after a `git-flow` commit.
+- Version incrementing MUST only happen upon an explicit request. Automatic version bumping is strictly prohibited.
+- The release delivery process MUST be executed strictly on a `vX.XX.XX` branch. No modifications to the main branch are allowed during release.
 
 ### 13. Release Artifact Integrity
 

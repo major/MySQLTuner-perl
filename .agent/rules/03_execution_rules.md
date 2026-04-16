@@ -71,6 +71,9 @@ To ensure quality and clarity in every development cycle, all non-trivial featur
 
 - **STRICT PROHIBITION:** No `git commit`, `git push`, or `git tag` without using `/git-flow` or an explicit user order.
 - **BRANCHING MANDATORY:** ALL developments, features, bug fixes, and interventions MUST be done in a dedicated Git branch separated from `master`. Committing directly to the `master` branch is strictly prohibited.
+- **RELEASE DELIVERY:** The release delivery process MUST always occur in a branch named `vX.XX.XX` (e.g., `v2.8.41`). Modifying the `main` branch directly is utterly prohibited.
+- **VERSION NUMBERS:** Changing version numbers automatically without an explicit user request is prohibited.
+- **RELEASE PROCESS:** The release process consists uniquely of pushing the version branch with the release notes as the content (commit message), *after* all verifications are successful.
 - **Conventional Commits:** Use `feat:`, `fix:`, `chore:`, `docs:`, `perf:`, `refactor:`, `style:`, `test:`, `ci:`. Breaking changes must be marked with `!` after type/scope or `BREAKING CHANGE:` in footer.
 - **Commit Validation:** Commits are automatically linted via `commitlint`. Non-compliant messages will be rejected by the pre-commit hook.
 - **History Documentation:** Use `npm run commit` to generate structured history.

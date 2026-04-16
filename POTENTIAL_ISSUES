@@ -158,3 +158,5 @@ The following external commands are currently used via `execute_system_command` 
   - Refactored `%CLI_METADATA` defaults from `'0'` to `undef` for string/path options.
   - Wrapped template reading logic in `get_template_model` to prevent `uninitialized value` warnings during `require`.
   - Verified 100% test stability (262 tests passed).
+- [x] **Zero-Warning Enforcement**: Fixed `removed_innodb_vars.t` mocking warnings and `mysql_80_modeling_checks` uninitialized values. Implemented strict Exit 1 policy on GitHub Actions CI.
+- [x] **Dynamic CI Discovery**: Created perl wrapper to dynamically parse `mysql_support.md` and `mariadb_support.md` allowing testing configurations to be uncoupled from the `Makefile`.
