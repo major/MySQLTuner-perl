@@ -5,6 +5,7 @@ use Test::More;
 
 # Mocking essentials to avoid dependencies
 require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 
 $main::good = '[OK]';
 $main::bad  = '[!!]';
@@ -20,28 +21,17 @@ our @adjvars;
 our @generalrec;
 our $physical_memory;
 
-sub reset_state {
-    %main::myvar = (
-        have_innodb => 'YES',
-        default_storage_engine => 'InnoDB',
-    );
-    %main::mystat = ();
-    %main::enginestats = ( InnoDB => 1024 * 1024 ); # Some dummy data
-    @main::adjvars = ();
-    @main::generalrec = ();
-    $main::physical_memory = 0;
-}
+
 
 # Test Case 1: Small RAM (< 2GB), low workload
 subtest 'Small RAM, Low Workload' => sub {
-    reset_state();
-    %main::myvar = (
-        %main::myvar,
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '8.0.35',
         innodb_redo_log_capacity => 100 * 1024 * 1024,
         innodb_buffer_pool_size => 128 * 1024 * 1024,
     );
-    %main::mystat = (
+    %main::mystat = ( %main::mystat, 
         Innodb_os_log_written => 10 * 1024 * 1024, # 10MB
         Uptime => 3601,
     );
@@ -54,14 +44,13 @@ subtest 'Small RAM, Low Workload' => sub {
 
 # Test Case 2: Large RAM, low workload (The "issue #714" case)
 subtest 'Large RAM, Low Workload' => sub {
-    reset_state();
-    %main::myvar = (
-        %main::myvar,
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '8.0.35',
         innodb_redo_log_capacity => 100 * 1024 * 1024,
         innodb_buffer_pool_size => 64 * 1024 * 1024 * 1024, # 64GB BP
     );
-    %main::mystat = (
+    %main::mystat = ( %main::mystat, 
         Innodb_os_log_written => 500 * 1024 * 1024, # 500MB
         Uptime => 3601,
     );
@@ -75,15 +64,14 @@ subtest 'Large RAM, Low Workload' => sub {
 
 # Test Case 3: Dedicated Server
 subtest 'Dedicated Server ON' => sub {
-    reset_state();
-    %main::myvar = (
-        %main::myvar,
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '8.0.35',
         innodb_dedicated_server => 'ON',
         innodb_redo_log_capacity => 16 * 1024 * 1024 * 1024,
         innodb_buffer_pool_size => 64 * 1024 * 1024 * 1024,
     );
-    %main::mystat = (
+    %main::mystat = ( %main::mystat, 
         Innodb_os_log_written => 500 * 1024 * 1024,
         Uptime => 3601,
     );
@@ -96,14 +84,13 @@ subtest 'Dedicated Server ON' => sub {
 
 # Test Case 4: High Workload
 subtest 'High Workload' => sub {
-    reset_state();
-    %main::myvar = (
-        %main::myvar,
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         version => '8.0.35',
         innodb_redo_log_capacity => 1 * 1024 * 1024 * 1024, # 1GB
         innodb_buffer_pool_size => 32 * 1024 * 1024 * 1024,
     );
-    %main::mystat = (
+    %main::mystat = ( %main::mystat, 
         Innodb_os_log_written => 10 * 1024 * 1024 * 1024, # 10GB written in 1h
         Uptime => 3601,
     );

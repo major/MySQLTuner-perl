@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use Test::More;
 
+require './tests/MySQLTuner/TestHelper.pm';
+
 # Test Case for Issue #869
 # Cannot calculate InnoDB Buffer Pool Chunk breakdown due to missing or zero values
 # Fix for MariaDB 11+ detection and InnoDB chunk breakdown

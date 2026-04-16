@@ -6,6 +6,7 @@ permissions:
 on:
   push:
     tags: ["v*"]
+    branches: ["v*"]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -26,9 +27,22 @@ jobs:
           username: ${{ secrets.DOCKER_USER_LOGIN }}
           password: ${{ secrets.DOCKER_USER_PASSWORD }}
 
-      - name: Extract version from mysqltuner.pl
+      - name: Extract version and tag logic
         id: version
-        run: echo "VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')" >> $GITHUB_ENV
+        run: |
+          VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            IS_PRERELEASE="false"
+          else
+            TAG_NAME=${GITHUB_REF#refs/heads/}
+            IS_PRERELEASE="true"
+          fi
+          
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
 
       - name: Pre-publish validation
         run: |
@@ -49,13 +63,16 @@ jobs:
           fi
           echo "✔ Found release notes"
 
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "Checking tag consistency (Tag: $TAG vs Version: v${{ env.VERSION }})..."
-          if [ "v${{ env.VERSION }}" != "$TAG" ]; then
-            echo "ERROR: Tag $TAG does not match version in mysqltuner.pl (v${{ env.VERSION }})"
-            exit 1
+          if [ "${{ env.IS_PRERELEASE }}" == "false" ]; then
+            echo "Checking tag consistency (Tag: ${{ env.TAG_NAME }} vs Version: v${{ env.VERSION }})..."
+            if [ "v${{ env.VERSION }}" != "${{ env.TAG_NAME }}" ]; then
+              echo "ERROR: Tag ${{ env.TAG_NAME }} does not match version in mysqltuner.pl (v${{ env.VERSION }})"
+              exit 1
+            fi
+            echo "✔ Tag matches script version"
+          else
+             echo "ℹ Skipping tag consistency check (not a tag push)"
           fi
-          echo "✔ Tag matches script version"
 
       - name: Extract release notes
         id: release_notes
@@ -66,14 +83,29 @@ jobs:
             echo 'EOF'
           } >> $GITHUB_ENV
 
+      - name: Prepare Docker Tags
+        id: docker_tags
+        run: |
+          TAGS="jmrenouard/mysqltuner:${{ env.VERSION }}"
+          if [ "${{ env.VERSION }}" != "${{ env.TAG_NAME }}" ]; then
+            TAGS="${TAGS}\njmrenouard/mysqltuner:${{ env.TAG_NAME }}"
+          fi
+          if [ "${{ env.IS_PRERELEASE }}" == "false" ]; then
+            TAGS="${TAGS}\njmrenouard/mysqltuner:latest"
+          fi
+          # Print multiline correctly for Github outputs / env
+          {
+            echo 'DOCKER_IMAGE_TAGS<<EOF'
+            echo -e "$TAGS"
+            echo 'EOF'
+          } >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
           context: .
           push: true
-          tags: |
-            jmrenouard/mysqltuner:latest
-            jmrenouard/mysqltuner:${{ env.VERSION }}
+          tags: ${{ env.DOCKER_IMAGE_TAGS }}
           labels: |
             org.opencontainers.image.title=MySQLTuner
             org.opencontainers.image.description=**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions. **MySQLTuner** supports ~300 indicators for MySQL/MariaDB/Percona Server in this latest version.

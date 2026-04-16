@@ -17,6 +17,7 @@ $main::devnull = File::Spec->devnull();
     local @ARGV = (); 
     no warnings 'redefine';
     require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 }
 
 my @mock_output;

@@ -56,7 +56,7 @@ find(
             if ($line =~ /Syntax error/i || $line =~ /unexpected/i) {
                 push @anomalies, { file => $file_path, line => $line_num, type => 'Syntax Anomaly', content => $line };
             }
-            if ($line =~ /uninitialized value/i || $line =~ /deprecated/i) {
+            if ( ($line =~ /uninitialized value/i || $line =~ /deprecated/i) && $line !~ /✔/ ) {
                 push @anomalies, { file => $file_path, line => $line_num, type => 'Perl Warning', content => $line };
             }
         }

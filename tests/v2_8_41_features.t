@@ -5,6 +5,7 @@ use Test::More;
 
 # Load MySQLTuner
 require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 
 # Force redefinition of essential subs
 no warnings 'redefine';
@@ -32,83 +33,11 @@ our %mycalc;
 our @adjvars;
 our @generalrec;
 
-sub reset_state {
-    @main::adjvars = ();
-    @main::generalrec = ();
-    $main::mysqllogin = "-u root";
-    $main::mysqlcmd = "mysql";
-    $main::mysqladmincmd = "mysqladmin";
-    $main::devnull = "/dev/null";
-    
-    %main::myvar = (
-        have_innodb => 'YES',
-        version => '8.0.35',
-        version_comment => 'MySQL Community Server (GPL)',
-        table_open_cache => 400,
-        table_open_cache_instances => 1,
-        max_connections => 151,
-        query_cache_size => 0,
-        thread_cache_size => 8,
-        aria_pagecache_buffer_size => 0,
-        key_buffer_size => 8 * 1024 * 1024,
-        innodb_buffer_pool_size => 128 * 1024 * 1024,
-        innodb_log_buffer_size => 8 * 1024 * 1024,
-        innodb_additional_mem_pool_size => 0,
-        innodb_file_per_table => 'ON',
-        log_bin => 'OFF',
-        concurrent_insert => 'AUTO',
-        open_files_limit => 1024,
-        long_query_time => 10,
-        hostname => 'localhost',
-        datadir => '/var/lib/mysql/',
-    );
-    %main::mystat = (
-        Questions => 100,
-        Uptime => 86400,
-        Max_used_connections => 10,
-        Connections => 100,
-        Aborted_connects => 0,
-        Key_read_requests => 100,
-        Key_reads => 0,
-        Key_write_requests => 100,
-        Key_writes => 0,
-        Qcache_hits => 0,
-        Com_select => 0,
-        Com_delete => 0,
-        Com_insert => 0,
-        Com_update => 0,
-        Com_replace => 0,
-        Sort_scan => 0,
-        Sort_range => 0,
-        Sort_merge_passes => 0,
-        Select_range_check => 0,
-        Select_full_join => 0,
-        Created_tmp_tables => 0,
-        Created_tmp_disk_tables => 0,
-        Opened_tables => 100,
-        Open_tables => 100,
-        Threads_cached => 5,
-        Threads_created => 1,
-        Table_locks_immediate => 100,
-        Table_locks_waited => 0,
-        Innodb_buffer_pool_reads => 0,
-        Innodb_buffer_pool_read_requests => 100,
-        Table_open_cache_hits => 100,
-        Table_open_cache_misses => 10,
-        Open_files => 50,
-    );
-    %main::mycalc = (
-        table_cache_hit_rate => 10, # Force low hit rate to trigger recommendation
-    );
-    $main::physical_memory = 16 * 1024 * 1024 * 1024;
-    $main::swap_memory = 2 * 1024 * 1024 * 1024;
-    $main::architecture = 64;
-    $main::doremote = 0;
-}
+
 
 # Test Task 4: table_open_cache_instances
 subtest 'table_open_cache_instances recommendation' => sub {
-    reset_state();
+    MySQLTuner::TestHelper::reset_state();
     
     no warnings 'redefine';
     local *main::logical_cpu_cores = sub { return 8 };
@@ -122,7 +51,7 @@ subtest 'table_open_cache_instances recommendation' => sub {
     
     ok(grep(/table_open_cache_instances \(=\s*4\)/, @main::adjvars), 'Suggested 4 instances for 8 CPU cores');
     
-    reset_state();
+    MySQLTuner::TestHelper::reset_state();
     $main::mycalc{'table_cache_hit_rate'} = 10;
     local *main::logical_cpu_cores = sub { return 64 };
     local *main::select_one = sub { 
@@ -136,7 +65,7 @@ subtest 'table_open_cache_instances recommendation' => sub {
 
 # Test Task 2: Guards against division by zero (AWS Aurora compatibility)
 subtest 'Division by zero guards' => sub {
-    reset_state();
+    MySQLTuner::TestHelper::reset_state();
     
     # Minimal stats that might cause division by zero if not guarded
     $main::mystat{'Questions'} = 100;

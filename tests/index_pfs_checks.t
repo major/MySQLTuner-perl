@@ -28,6 +28,7 @@ $SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
     local @ARGV = (); # Empty ARGV for GetOptions
     no warnings 'redefine';
     require $script;
+require './tests/MySQLTuner/TestHelper.pm';
 }
 
 my @mock_output;

@@ -20,6 +20,7 @@ use Cwd qw(abs_path);
 {
     local $SIG{__WARN__} = sub { };
     require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 }
 
 # 3. Setup Mock data after loading to ensure we overwrite anything defined in the script
@@ -27,7 +28,8 @@ use Cwd qw(abs_path);
     no warnings 'redefine';
     *main::select_user_dbs = sub { return ('db1', 'db2'); };
 
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'version' => '10.11.8-MariaDB',
     );
 

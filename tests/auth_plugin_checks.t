@@ -9,6 +9,7 @@ use Cwd 'abs_path';
 my $script_dir = dirname(abs_path(__FILE__));
 my $script = abs_path(File::Spec->catfile($script_dir, '..', 'mysqltuner.pl'));
 require $script;
+require './tests/MySQLTuner/TestHelper.pm';
 
 # Mocking necessary database calls and variables
 no warnings 'redefine';

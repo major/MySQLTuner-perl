@@ -6,6 +6,7 @@ use Data::Dumper;
 
 # 1. Load MySQLTuner logic
 require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 
 # Mocking essential globals
 $main::good = '[OK]';
@@ -22,9 +23,10 @@ our @adjvars;
 subtest 'Issue #881: join_buffer_size formatting' => sub {
     # Case 1: join_buffer_size < 4MB
     @main::adjvars = ();
-    %main::myvar = ( join_buffer_size => 256 * 1024 ); # 256KB
-    %main::mycalc = ( joins_without_indexes_per_day => 300, joins_without_indexes => 1000 );
-    %main::mystat = ();
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar,  join_buffer_size => 256 * 1024 ); # 256KB
+    %main::mycalc = ( %main::mycalc,  joins_without_indexes_per_day => 300, joins_without_indexes => 1000 );
+    %main::mystat = ( %main::mystat, );
     
     # We need to mock subheaderprint and badprint to avoid output during tests
     no warnings 'redefine';
