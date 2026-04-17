@@ -62,7 +62,7 @@ This workflow MUST be orchestrated by the **Release Manager**.
    - Push the current branch and the tag to the remote repository.
 
    ```bash
-   git push origin $CURRENT_BRANCH
-   git push origin v$CURRENT_VER
+   git push origin refs/heads/$CURRENT_BRANCH
+   git push origin refs/tags/v$CURRENT_VER
    ```
 
