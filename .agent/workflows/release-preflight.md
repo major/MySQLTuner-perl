@@ -27,7 +27,7 @@ SCRIPT_POD_NAME_VER=$(grep "MySQLTuner [0-9.]* - MySQL High Performance" mysqltu
 SCRIPT_POD_VER=$(grep "^Version [0-9.]*" mysqltuner.pl | awk '{print $2}')
 
 # 6. Changelog latest version
-LOG_VER=$(head -n 1 Changelog | awk '{print $1}')
+LOG_VER=$(grep "^[0-9]" Changelog | head -n 1 | awk '{print $1}')
 ```
 
 ## 2. Validate Consistency
@@ -85,7 +85,7 @@ Ensure all commits since the last release follow Conventional Commits.
 ```bash
 LAST_TAG=$(git describe --tags --abbrev=0)
 echo "Validating commits since $LAST_TAG..."
-npx commitlint --from=$LAST_TAG --to=HEAD
+npx commitlint --from="tags/$LAST_TAG" --to=HEAD
 ```
 
 ## 5. Markdown Integrity
