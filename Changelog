@@ -29,6 +29,7 @@
 - fix: add truthiness guards to `mysql_innodb` and `mysql_stats` subroutines.
 - fix: improve `which` logic for better container/minimal environment support.
 - fix: enhance login failure reporting with detailed output.
+- fix: handle Plesk Obsidian 18.0.76.5+ removing --show-password (#42).
 - chore: automated project maintenance and cleanup (extracted `RULES.md`, `MEMORY_DB.md`, `TESTS.md`).
 - ci: migrate maintenance script to GitHub Actions.
 - chore(deps): update docker/setup-buildx-action action to v4.

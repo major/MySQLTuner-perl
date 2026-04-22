@@ -2205,18 +2205,28 @@ sub mysql_setup {
     elsif ( -r "/etc/psa/.psa.shadow" and $doremote == 0 ) {
 
         # It's a Plesk box, use the available credentials
-        $mysqllogin =
-          "$defaults_options -u admin -p"
-          . execute_system_command("cat /etc/psa/.psa.shadow");
+        my $psa_pass = execute_system_command("cat /etc/psa/.psa.shadow");
+        chomp($psa_pass);
+        $psa_pass =~ s/'/'\\''/g;
+        $mysqllogin = "$defaults_options -u admin -p'$psa_pass'";
         my $loginstatus =
           execute_system_command("$mysqladmincmd $mysqllogin ping");
         unless ( $loginstatus =~ /mysqld is alive/ ) {
 
             # Plesk 10+
-            $mysqllogin =
-              "$defaults_options -u admin -p"
-              . execute_system_command(
+            my $plesk_pass = execute_system_command(
                 "/usr/local/psa/bin/admin --show-password");
+            chomp($plesk_pass);
+
+            # Plesk Obsidian 18.0.76.5+ no longer supports --show-password
+            if ($plesk_pass =~ /no longer supported/i || $plesk_pass =~ /--get-login-link/i) {
+                badprint
+"Attempted to use login credentials from Plesk and Plesk 10+, but they failed.";
+                exit 1;
+            }
+
+            $plesk_pass =~ s/'/'\\''/g;
+            $mysqllogin = "$defaults_options -u admin -p'$plesk_pass'";
             $loginstatus =
               execute_system_command("$mysqladmincmd $mysqllogin ping");
             unless ( $loginstatus =~ /mysqld is alive/ ) {
@@ -2241,7 +2251,8 @@ sub mysql_setup {
         $mysqlpass =~ s/passwd=//;
         $mysqlpass =~ s/[\r\n]//;
 
-        $mysqllogin = "$defaults_options -u $mysqluser -p$mysqlpass";
+        $mysqlpass =~ s/'/'\\''/g;
+        $mysqllogin = "$defaults_options -u $mysqluser -p'$mysqlpass'";
 
         my $loginstatus = execute_system_command("mysqladmin $mysqllogin ping");
         unless ( $loginstatus =~ /mysqld is alive/ ) {
