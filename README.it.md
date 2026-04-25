@@ -575,8 +575,8 @@ Connessione e autenticazione
 
 Poiché si sta utilizzando un host remoto, utilizzare i parametri per fornire i valori dal sistema operativo
 
- --forcemem <size>  Quantità di RAM installata in megabyte
- --forceswap <size> Quantità di memoria di swap configurata in megabyte
+ --forcemem <size>  Quantità di RAM installata (in megabyte o con unità, es. 15G, 1024M)
+ --forceswap <size> Quantità di memoria di swap configurata (in megabyte o con unità)
 
 * Potrebbe essere necessario contattare l'amministratore di sistema remoto per chiedere quanta RAM e swap si dispone
 

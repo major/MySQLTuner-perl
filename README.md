@@ -591,8 +591,8 @@ Connection and Authentication
 
 Since you are using a remote host, use parameters to supply values from the OS
 
- --forcemem <size>  Amount of RAM installed in megabytes
- --forceswap <size> Amount of swap memory configured in megabytes
+ --forcemem <size>  Amount of RAM installed (in megabytes or with units, e.g. 15G, 1024M)
+ --forceswap <size> Amount of swap memory configured (in megabytes or with units)
 
 * You may have to contact your remote SysAdmin to ask how much RAM and swap you have
 

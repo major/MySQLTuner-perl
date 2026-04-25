@@ -575,8 +575,8 @@ Connexion et authentification
 
 Étant donné que vous utilisez un hôte distant, utilisez des paramètres pour fournir des valeurs à partir du système d'exploitation
 
- --forcemem <size>  Quantité de RAM installée en mégaoctets
- --forceswap <size> Quantité de mémoire de pagination configurée en mégaoctets
+ --forcemem <size>  Quantité de RAM installée (en mégaoctets ou avec unités, ex. 15G, 1024M)
+ --forceswap <size> Quantité de mémoire de pagination configurée (en mégaoctets ou avec unités)
 
 * Vous devrez peut-être contacter votre administrateur système distant pour lui demander la quantité de RAM et de pagination dont vous disposez
 

@@ -218,20 +218,20 @@ our %CLI_METADATA = (
         implies => { checkversion => 1 }
     },
     'forcemem' => {
-        type        => '=i',
+        type        => '=s',
         default     => 0,
-        desc        => 'Amount of RAM installed in megabytes',
+        desc        => 'Amount of RAM installed in megabytes or with unit (e.g., 10G, 1024M, 128K, 12B)',
         placeholder => '<size>',
         cat         => 'PERFORMANCE',
-        validate    => qr/^\d+$/
+        validate    => qr/^\d+(?:\.\d+)?(?:[bBkKmMgGtTpP])?$/i
     },
     'forceswap' => {
-        type        => '=i',
+        type        => '=s',
         default     => 0,
-        desc        => 'Amount of swap memory configured in megabytes',
+        desc        => 'Amount of swap memory configured in megabytes or with unit (e.g., 10G, 1024M)',
         placeholder => '<size>',
         cat         => 'PERFORMANCE',
-        validate    => qr/^\d+$/
+        validate    => qr/^\d+(?:\.\d+)?(?:[bBkKmMgGtTpP])?$/i
     },
     'buffers' => {
         type    => '!',
@@ -658,6 +658,22 @@ sub parse_cli_args {
     }
 }
 
+sub parse_human_size_to_mb {
+    my ($val) = @_;
+    return 0 unless defined $val && $val ne '';
+    if ( $val =~ /^(\d+(?:\.\d+)?)([bBkKmMgGtTpP])?$/i ) {
+        my $num  = $1;
+        my $unit = uc( $2 || 'M' );
+        if ( $unit eq 'B' ) { return $num / 1048576; }
+        elsif ( $unit eq 'K' ) { return $num / 1024; }
+        elsif ( $unit eq 'M' ) { return $num; }
+        elsif ( $unit eq 'G' ) { return $num * 1024; }
+        elsif ( $unit eq 'T' ) { return $num * 1048576; }
+        elsif ( $unit eq 'P' ) { return $num * 1073741824; }
+    }
+    return $val;
+}
+
 sub setup_environment {
     if ( $opt{'help'} ) {
         show_help();
@@ -667,6 +683,9 @@ sub setup_environment {
         subheaderprint("MySQLTuner $tunerversion");
         exit(0);
     }
+
+    $opt{'forcemem'}  = parse_human_size_to_mb( $opt{'forcemem'} )  if $opt{'forcemem'};
+    $opt{'forceswap'} = parse_human_size_to_mb( $opt{'forceswap'} ) if $opt{'forceswap'};
 
     $devnull = File::Spec->devnull();
     $basic_password_files =
