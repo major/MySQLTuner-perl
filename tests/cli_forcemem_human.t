@@ -21,7 +21,7 @@ my @invalid_values = ('15X', 'G', '10.5.2M', 'abc');
 foreach my $val (@invalid_values) {
     my $output = `perl $script --forcemem $val --help 2>&1`;
     isnt($?, 0, "--forcemem $val should fail and return non-zero");
-    like($output, qr/Invalid value for --forcemem/, "--forcemem $val should show invalid value error");
+    like($output, qr/invalid for option forcemem/, "--forcemem $val should show invalid value error");
 }
 
 # Same for forceswap
@@ -34,7 +34,7 @@ foreach my $val (@valid_values) {
 foreach my $val (@invalid_values) {
     my $output = `perl $script --forceswap $val --help 2>&1`;
     isnt($?, 0, "--forceswap $val should fail and return non-zero");
-    like($output, qr/Invalid value for --forceswap/, "--forceswap $val should show invalid value error");
+    like($output, qr/invalid for option forceswap/, "--forceswap $val should show invalid value error");
 }
 
 done_testing();

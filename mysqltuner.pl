@@ -619,13 +619,18 @@ sub parse_cli_args {
         push @getopt_args, $final_spec => \$opt{$primary};
     }
 
-    GetOptions(@getopt_args)
-      or pod2usage(
-        -exitval  => 1,
-        -verbose  => 99,
-        -sections =>
-          [ "NAME", "IMPORTANT USAGE GUIDELINES", "OPTIONS", "VERSION" ]
-      );
+    my @errors;
+    {
+        local $SIG{__WARN__} = sub { push @errors, $_[0] };
+        unless ( GetOptions(@getopt_args) ) {
+            foreach my $err (@errors) {
+                chomp $err;
+                print STDERR "ERROR:  $err\n";
+            }
+            print STDERR "mysqltuner failed with errors\n";
+            exit 1;
+        }
+    }
 
     # Apply metadata-driven rules (Implications and Validation)
     foreach my $opt_spec ( keys %CLI_METADATA ) {
@@ -651,7 +656,8 @@ sub parse_cli_args {
             }
 
             unless ($is_valid) {
-                print "Error: Invalid value for --$primary: $val\n";
+                print STDERR "ERROR:  Value \"$val\" invalid for option $primary\n";
+                print STDERR "mysqltuner failed with errors\n";
                 exit 1;
             }
         }
