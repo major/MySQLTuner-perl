@@ -2449,18 +2449,26 @@ sub build_mysql_connection_command {
 # MySQL Request Array
 sub select_array {
     my $req = shift;
+    my $vertical = "";
+    if ($req =~ s/\\G$//) {
+        $vertical = "-E ";
+    }
     debugprint "PERFORM: $req ";
     my $req_escaped = $req;
     $req_escaped =~ s/"/\\"/g;
     my @result =
       execute_system_command(
-        "$mysqlcmd $mysqllogin -Bse \"$req_escaped\" 2>>$devnull");
+        "$mysqlcmd $mysqllogin $vertical-Bse \"$req_escaped\" 2>>$devnull");
     if ( $? != 0 ) {
+        if ($req eq '\s') {
+            debugprint "Command \\s is not supported by this client version. Ignoring.";
+            return ();
+        }
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         if ( $opt{debug} ) {
             debugprint execute_system_command(
-                "$mysqlcmd $mysqllogin -Bse \"$req_escaped\" 2>&1");
+                "$mysqlcmd $mysqllogin $vertical-Bse \"$req_escaped\" 2>&1");
         }
 
         #exit $?;
@@ -2557,15 +2565,21 @@ sub select_one_g {
     my $pattern = shift;
 
     my $req = shift;
+    my $vertical = "";
+    if ($req =~ s/\\G$//) {
+        $vertical = "-E ";
+    } else {
+        $vertical = "-E ";
+    }
     debugprint "PERFORM: $req ";
     my @result = execute_system_command(
-        "$mysqlcmd $mysqllogin -re \"$req\\G\" 2>>$devnull");
+        "$mysqlcmd $mysqllogin $vertical-re \"$req\" 2>>$devnull");
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         if ( $opt{debug} ) {
             debugprint execute_system_command(
-                "$mysqlcmd $mysqllogin -Bse \"$req\" 2>&1");
+                "$mysqlcmd $mysqllogin $vertical-re \"$req\" 2>&1");
         }
 
         #exit $?;

@@ -134,13 +134,14 @@ The following external commands are currently used via `execute_system_command` 
 
 ### 2026-02-15 Environment/Lab Issues
 
-- [ ] **Systemic Container Failure (Exit code 1)**: Consistent failure across all database versions in `--container` mode.
+- [x] **Systemic Container Failure (Exit code 1)**: Consistent failure across all database versions in `--container` mode.
   - Found in: `examples/20260215_*/Container/execution.log`.
   - Symptom: `OCI runtime exec failed: exec failed: unable to start container process: exec: "sh": executable file not found in $PATH`.
   - Context: `get_container_prefix` uses `sh -c` which seems to fail in current lab containers.
-- [ ] **Audit Tool False Positives**: `build/audit_logs.pl` flags success messages containing the word "deprecated" as Perl warnings.
+  - Fix: Verified as no longer reproducible in current `mysql96` lab tests; likely resolved upstream in container images.
+- [x] **Audit Tool False Positives**: `build/audit_logs.pl` flags success messages containing the word "deprecated" as Perl warnings.
   - Symptom: `✔ No users found using insecure or deprecated authentication plugins` is flagged.
-  - Fix Recommendation: Refine regex in `audit_logs.pl` to exclude lines starting with `✔`.
+  - Fix: Refined regex in `audit_logs.pl` to safely exclude lines starting with `✔` or `[OK]`.
 
 ### 2026-02-15 Quality Assurance
 
@@ -160,3 +161,9 @@ The following external commands are currently used via `execute_system_command` 
   - Verified 100% test stability (262 tests passed).
 - [x] **Zero-Warning Enforcement**: Fixed `removed_innodb_vars.t` mocking warnings and `mysql_80_modeling_checks` uninitialized values. Implemented strict Exit 1 policy on GitHub Actions CI.
 - [x] **Dynamic CI Discovery**: Created perl wrapper to dynamically parse `mysql_support.md` and `mariadb_support.md` allowing testing configurations to be uncoupled from the `Makefile`.
+
+### 2026-04-29 Environment/Lab Issues
+
+- [x] **SQL Execution Failure**: Discovered during audit.
+  - Found in: `examples/20260429_112608_mysql96/Container/execution.log` (Line 10 and 12).
+  - Fix: MySQL 9.x `mysql` client removed support for `\G` and `\s` in batch mode (`-e`). Replaced `\G` with `-E` flag natively in `select_array` and `select_one_g`. Skipped error prints for `\s` if it fails natively.
