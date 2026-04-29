@@ -2,6 +2,8 @@
 
 2.8.41 2026-04-13
 
+- fix: resolve SQL execution failure (return code 256) in MySQL 9.x containers by updating batch execution flags.
+- ci: refine audit_logs.pl to prevent false positive warnings on successful [OK] output.
 - feat: enhance --forcemem and --forceswap to support human-readable memory units (B, K, M, G, T, P).
 - ci: enhance Quality Gate to strictly enforce zero-warning policy on GitHub Actions tests.
 - ci: implement dynamic CI test environment detection by wrapping configuration extraction.
@@ -153,8 +155,8 @@
 - fix: resolve syntax error and Perl compilation warnings in `mysqltuner.pl`.
 - fix: ensure shell commands (pipes, redirections) work correctly in containers using `sh -c`.
 - test: add unit test `tests/schemadir.t` to verify schema documentation logic.
-- test: add unit test [tests/index_pfs_checks.t](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/tests/index_pfs_checks.t) for Performance Schema index verification.
-- test: add unit test [tests/sql_modeling.t](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/tests/sql_modeling.t) for comprehensive schema analysis verification.
+- test: add unit test [tests/index_pfs_checks.t](file:///tests/index_pfs_checks.t) for Performance Schema index verification.
+- test: add unit test [tests/sql_modeling.t](file:///tests/sql_modeling.t) for comprehensive schema analysis verification.
 - ci: update `build/test_envs.sh` with `Schemadir` test scenario and fix logic ordering.
 - ci: establish formal "Advanced Test Log Auditing" protocol and anomaly tracking.
 - ci: enhance lab reports with integrated `execution.log` and collapsible panels for better readability.
@@ -164,7 +166,7 @@
 - ci: reintroduce CVE analysis in Dockerfile with `--cvefile` support.
 - ci: cleanup all `examples/` and execute full LTS test suite (MySQL, MariaDB, Percona).
 - ci: update package.json test script and create remember workflow.
-- ci: consolidate testing laboratory scripts into unified [build/test_envs.sh](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/build/test_envs.sh) and update Makefile.
+- ci: consolidate testing laboratory scripts into unified [build/test_envs.sh](file:///build/test_envs.sh) and update Makefile.
 - chore: uncomment examples directory in .gitignore.
 - chore: bump version to 2.8.31.
 - docs: formalize tracking of Makefile and build script changes

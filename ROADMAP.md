@@ -23,9 +23,9 @@ To ensure consistency and high-density development, the following roles are defi
 
 ### Phase 1: Stabilization & Observability (v2.8.31 - v2.8.33) [COMPLETED]
 
-* [x] **[Metadata-Driven CLI Options](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/cli_metadata_refactor.md)**: Refactored option parsing to centralize defaults, validation, and documentation.
+* [x] **[Metadata-Driven CLI Options](file:///documentation/specifications/cli_metadata_refactor.md)**: Refactored option parsing to centralize defaults, validation, and documentation.
 * [x] **Enhanced SQL Modeling**: Expanded diagnostic checks for Foreign Key type mismatches, missing indexes, and schema sanitization.
-* [x] **[Structured Error Log Ingestion](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/error_log_pfs.md)**: Supported `performance_schema.error_log` for diagnostic ingestion (MySQL 8.0+).
+* [x] **[Structured Error Log Ingestion](file:///documentation/specifications/error_log_pfs.md)**: Supported `performance_schema.error_log` for diagnostic ingestion (MySQL 8.0+).
 * [x] **Refined Reporting**: Improved data richness in the "Modeling Analysis" tab.
 
 ### Phase 2: Advanced Diagnostics (v2.8.34 - v2.8.38) [COMPLETED]
@@ -34,7 +34,7 @@ To ensure consistency and high-density development, the following roles are defi
 | :--- | :--- |
 | **System Call Optimization** | [x] Replaced `awk`, `grep`, `hostname`, `uname`, `sysctl` with native Perl. |
 | **Native /proc Parsing** | [x] Implemented native parsing for `cpuinfo`, `meminfo`, `swappiness`. |
-| **[Index Audit 2.0](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/index_checks_pfs.md)** | [x] Integrated `performance_schema` for redundant/unused index detection. |
+| **[Index Audit 2.0](file:///documentation/specifications/index_checks_pfs.md)** | [x] Integrated `performance_schema` for redundant/unused index detection. |
 | **Observability Log Ingestion** | [x] Support for `syslog`, `journald`, and `performance_schema.error_log`. |
 | **Transactional Contention** | [x] Detect isolation levels and long-running transactions. |
 | **Buffer Pool Advisory** | [x] More granular analysis of InnoDB Redo Log Capacity based on RAM/Writes. |
@@ -42,15 +42,15 @@ To ensure consistency and high-density development, the following roles are defi
 ### Phase 3: Automation & Ecosystem [COMPLETED]
 
 * [x] **Infrastructure-Aware Tuning**: Detect storage types (NVMe/SSD) and hardware architectures (ARM64/Graviton).
-* [x] **[MySQL 9.x Full Compatibility](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/mysql_9_x_support.md)**: Support for removed variables and `mysql_native_password` elimination.
-* [x] **[Authentication Plugin Auditing](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/auth_plugin_security_checks.md)**: Detect insecure plugins (SHA-1 based `mysql_native_password`) and recommend migration paths (`caching_sha2_password`, `ed25519`).
+* [x] **[MySQL 9.x Full Compatibility](file:///documentation/specifications/mysql_9_x_support.md)**: Support for removed variables and `mysql_native_password` elimination.
+* [x] **[Authentication Plugin Auditing](file:///documentation/specifications/auth_plugin_security_checks.md)**: Detect insecure plugins (SHA-1 based `mysql_native_password`) and recommend migration paths (`caching_sha2_password`, `ed25519`).
 * [x] **Sysbench Metrics Integration**: Automated baseline capture and performance comparison within the report.
 * [x] **Multi-Cloud Autodiscovery**: Automated detection of RDS, GCP, and Azure specific performance flags and optimizations.
 * [x] **Query Anti-Pattern Detection**: Use `performance_schema` to identify non-SARGable queries and `SELECT *` abuse.
 * [/] **Modular Reporting Engine**: (In Progress) Refactor Jinja2 templates for dynamic section injection.
 * [/] **Historical Trend Analysis**: (Experimental) Allow the script to ingest previous run data to identify performance regressions.
 
-### [Phase 4: Advanced Intelligence & Ecosystem](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/roadmap_phase_iv_intelligence.md)
+### [Phase 4: Advanced Intelligence & Ecosystem](file:///documentation/specifications/roadmap_phase_iv_intelligence.md)
 
 * [/] **Smart Migration LTS Advisor**:
   * [x] Automated pre-upgrade risk reports (variable removal, deprecation notices).
@@ -72,7 +72,7 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] Interactive mode to simulate configuration changes.
   * [x] Generation of ready-to-use `SET GLOBAL` or `my.cnf` snippets.
 
-### Phase 5: Deep Engine Tuning & Safeguarding [([Specification](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/roadmap_phase_v_innodb.md))]
+### Phase 5: Deep Engine Tuning & Safeguarding [([Specification](file:///documentation/specifications/roadmap_phase_v_innodb.md))]
 
 * [ ] **InnoDB Internals 3.0**:
   * [/] **I/O Pressure & Flushing Advisor**: Combined analysis of `innodb_io_capacity`, `Innodb_buffer_pool_wait_free`, and adaptive flushing metrics to prevent I/O stalls.
@@ -86,7 +86,7 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **Read-Ahead & Change Buffer Optimization**: Dynamic recommendation to disable legacy features (`innodb_change_buffering`, `innodb_adaptive_hash_index`) based on workload patterns.
   * [ ] **Purge Lag Prevention**: Automated detected of purge lag (`Innodb_history_list_length`) and recommendation for `innodb_purge_threads` scaling.
 
-### [Phase 6: High Availability & InnoDB Cluster](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/roadmap_phase_vi_innodb_cluster.md)
+### [Phase 6: High Availability & InnoDB Cluster](file:///documentation/specifications/roadmap_phase_vi_innodb_cluster.md)
 
 * [ ] **Distributed Consistency & Performance**:
   * [ ] **Group Replication Health Audit**: Detailed analysis of `MEMBER_STATE`, `MEMBER_ROLE`, and `MEMBER_VERSION` via `performance_schema.replication_group_members`.
@@ -101,7 +101,7 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **Quorum Integrity Framework**: Alignment check for `unreachable_majority_timeout` and partition handling configurations.
   * [ ] **MTR (Multi-Threaded Replication) Scaling**: Dynamic advisory for `slave_parallel_workers` based on cluster apply lag.
 
-### [Phase 7: Modern Replication & GTID Mastery](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/roadmap_phase_vii_replication.md)
+### [Phase 7: Modern Replication & GTID Mastery](file:///documentation/specifications/roadmap_phase_vii_replication.md)
 
 * [ ] **Data Consistency & GTID Integrity**:
   * [ ] **GTID Gap Analysis**: Detection of non-contiguous global transaction identifiers and missing transactions across the replication chain.
@@ -115,7 +115,7 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **Semi-Sync Safety Check**: Dynamic analysis of semi-synchronous wait points (`AFTER_SYNC` vs `AFTER_COMMIT`) and fallback triggers.
   * [ ] **Multi-Source Channel Monitoring**: Full observability for multi-master and multi-channel replication topologies.
 
-### [Phase 8: Advanced Galera Cluster 4 & PXC 8.0](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/roadmap_phase_viii_galera.md)
+### [Phase 8: Advanced Galera Cluster 4 & PXC 8.0](file:///documentation/specifications/roadmap_phase_viii_galera.md)
 
 * [ ] **Synchronous Efficiency & Streaming**:
   * [ ] **Streaming Replication Audit**: Observability for large transaction fragments (`wsrep_streaming_log_writes`) and their I/O footprint (MariaDB 10.4+).
@@ -128,7 +128,7 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **Network Jitter Detection**: Monitoring of group communication latency (`wsrep_evs_repl_latency` statistics) and its impact on consistency.
   * [ ] **PXC Strict Mode Verification**: Consistency checks for Percona XtraDB Cluster specific security and performance enforcements.
 
-### [Phase 9: Data Integrity & Checksum Verification](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/roadmap_phase_ix_integrity.md)
+### [Phase 9: Data Integrity & Checksum Verification](file:///documentation/specifications/roadmap_phase_ix_integrity.md)
 
 * [ ] **Storage Engine Protection**:
   * [/] **InnoDB Page Integrity Audit**: Verification of `innodb_checksum_algorithm` strength (`full_crc32` for MariaDB 10.5+, `CRC32` for MySQL) and ensuring `innodb_checksums` is active.
@@ -148,7 +148,7 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Table Churn & Fragmentation Advisor**: Identification of tables with frequent DML that require periodic `OPTIMIZE TABLE`.
 * [ ] **Auto-Increment Exhaustion Audit**: Monitoring of large tables for potential auto-increment overflow (especially 32-bit integers).
 
-### [Phase 11: Advanced Log Parser & Lock Monitoring](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/roadmap_phase_xi_log_parser.md)
+### [Phase 11: Advanced Log Parser & Lock Monitoring](file:///documentation/specifications/roadmap_phase_xi_log_parser.md)
 
 * [ ] **Logging & Lock Instrumentation**:
   * [ ] **Deadlock Logging Audit**: Verification of `innodb_print_all_deadlocks` and `innodb_status_output` settings.
@@ -161,7 +161,7 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Correlation Engine (Experimental)**:
   * [ ] **Temporal Event Linking**: Logic to link error log timestamps with Performance Schema wait events or high CPU load detected during execution.
 
-### [Phase 12: Sectional Global Indicators & KPIs](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/roadmap_phase_xii_sectional_indicators.md)
+### [Phase 12: Sectional Global Indicators & KPIs](file:///documentation/specifications/roadmap_phase_xii_sectional_indicators.md)
 
 * [ ] **Unified Health Dashboard**:
   * [ ] **Sectional Health Scoring**: Implementation of a 0-100 KPI for each major diagnostic area (Storage Engine, Security, Replication, SQL Modeling).
@@ -172,7 +172,7 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Comparative Insights**:
   * [ ] **Historical Performance Deltas**: Sectional trend analysis identifying areas of performance regression or improvement based on previous run data.
 
-### [Phase 13: Export Optimization & Dumpdir Hardening](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/documentation/specifications/roadmap_phase_xiii_export_optimization.md)
+### [Phase 13: Export Optimization & Dumpdir Hardening](file:///documentation/specifications/roadmap_phase_xiii_export_optimization.md)
 
 * [ ] **Export Performance Safeguards**:
   * [ ] **Default Row Limit**: Implementation of a 50,000 rows default limit for all `dumpdir` exports to prevent database slowdowns.

@@ -1,7 +1,7 @@
 For project-specific context, please refer to:
-- [RULES.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/RULES.md): Core constitution, execution rules, and best practices.
-- [MEMORY_DB.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/MEMORY_DB.md): Project evolution, version history, and systemic findings.
-- [TESTS.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/TESTS.md): Comprehensive guide on unit and laboratory testing.
+- [RULES.md](file:///RULES.md): Core constitution, execution rules, and best practices.
+- [MEMORY_DB.md](file:///MEMORY_DB.md): Project evolution, version history, and systemic findings.
+- [TESTS.md](file:///TESTS.md): Comprehensive guide on unit and laboratory testing.
 
 ---
 

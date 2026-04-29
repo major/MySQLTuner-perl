@@ -19,7 +19,7 @@ category: governance
 7. **ARTIFACT ROTATION:** Keep the `brain/` directory lean. Rotate old plans/walkthroughs after integration.
 8. **WEB SEARCH:** Assume world knowledge is out of date. Use web search for up-to-date documentation.
 
-9. **VERSION CONSISTENCY:** Version numbers MUST be synchronized across `CURRENT_VERSION.txt`, `Changelog`, and all occurrences within `mysqltuner.pl` (Header, internal variable, and POD documentation) before any release. Use `/release-preflight` to verify.
+9. **VERSION CONSISTENCY:** Version numbers MUST be synchronized across `CURRENT_VERSION.txt`, `Changelog`, and all occurrences within `mysqltuner.pl` (Header, internal variable, and POD documentation) before any release.
 10. **CONVENTIONAL COMMITS:** All commit messages MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. Use `npm run commit` for interactive commit creation. Compliance is enforced via `commitlint` and Git hooks.
 11. **NO DIRECT COMMIT:** All changes MUST be committed via `npm run commit` or `git cz` to ensure metadata quality and automated changelog compatibility.
 12. **VERSION SUPPORT POLICY:** Automated test example generation (via `run-tests`) MUST only target "Supported" versions of MySQL and MariaDB as defined in `mysql_support.md` and `mariadb_support.md`.
@@ -61,19 +61,17 @@ To ensure quality and clarity in every development cycle, all non-trivial featur
 1. **NO CHATTER:** No intro or conclusion sentences.
 2. **CODE ONLY:** Use Search_block / replace_block format for files > 50 lines.
 3. **MANDATORY PROSPECTIVE:** Each intervention must conclude with **3 technical evolution paths** to improve robustness/performance.
-4. **Compliance Sentinel Mandatory**: The `/compliance-sentinel` workflow MUST be successful before any major commit or release, ensuring adherence to the core constitution and dynamic rules from `remembers.md`.
-5. **MEMORY UPDATE:** Include the JSON MEMORY_UPDATE_PROTOCOL block at the very end.
+4. **Compliance Sentinel Mandatory**: The `/compliance-sentinel` workflow MUST be successful before any major commit or release, ensuring adherence to the core constitution and dynamic rules from native memory (KIs).
+5. **NATIVE MEMORY UPDATE:** Periodically synthesize learned project patterns into Gemini Knowledge Items (KIs) using native memory protocols instead of flat files.
 
 ### **4.4. Development Workflow**
 
 1. **Validation by Proof:** All changes must be verifiable via `make test-*` or dedicated test scripts.
 2. **Git Protocol:**
 
-- **STRICT PROHIBITION:** No `git commit`, `git push`, or `git tag` without using `/git-flow` or an explicit user order.
+- **STRICT PROHIBITION:** No `git commit`, `git push`, or `git tag` without an explicit user order.
 - **BRANCHING MANDATORY:** ALL developments, features, bug fixes, and interventions MUST be done in a dedicated Git branch separated from `master`. Committing directly to the `master` branch is strictly prohibited.
-- **RELEASE DELIVERY:** The release delivery process MUST always occur in a branch named `vX.XX.XX` (e.g., `v2.8.41`). Modifying the `main` branch directly is utterly prohibited.
-- **VERSION NUMBERS:** Changing version numbers automatically without an explicit user request is prohibited.
-- **RELEASE PROCESS:** The release process consists uniquely of pushing the version branch with the release notes as the content (commit message), *after* all verifications are successful.
+- **UNIFIED RELEASE MANAGEMENT:** The entire release process (doc sync, testing, changelog generation, tagging, and branch creation) is now orchestrated exclusively by the `/release-manager` workflow. Do not run disjointed commands (`/git-flow`, `/release-preflight`, `/doc-sync`) manually.
 - **Conventional Commits:** Use `feat:`, `fix:`, `chore:`, `docs:`, `perf:`, `refactor:`, `style:`, `test:`, `ci:`. Breaking changes must be marked with `!` after type/scope or `BREAKING CHANGE:` in footer.
 - **Commit Validation:** Commits are automatically linted via `commitlint`. Non-compliant messages will be rejected by the pre-commit hook.
 - **History Documentation:** Use `npm run commit` to generate structured history.
@@ -86,5 +84,4 @@ To ensure quality and clarity in every development cycle, all non-trivial featur
     - _Requirement_: All feature completions MUST be synchronized with `ROADMAP.md` before final PR/Commit.
     - _Ordering_: Changelog entries MUST be ordered by category: `chore`, `feat`, `fix`, `test`, `ci`, then others.
     - _Release Notes_: All release notes generated in `releases/` MUST follow the same category ordering in their "Executive Summary" section.
-    - _Requirement_: The `/git-flow` workflow MUST always be preceded by a successful `/release-preflight` execution.
     - _Requirement_: Report files (HTML and logs) MUST NOT contain negative keywords (error, warning, fatal, failed) unless they are expected as part of a reproduction test case.
