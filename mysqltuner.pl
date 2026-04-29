@@ -218,17 +218,19 @@ our %CLI_METADATA = (
         implies => { checkversion => 1 }
     },
     'forcemem' => {
-        type        => '=s',
-        default     => 0,
-        desc        => 'Amount of RAM installed in megabytes or with unit (e.g., 10G, 1024M, 128K, 12B)',
+        type    => '=s',
+        default => 0,
+        desc    =>
+'Amount of RAM installed in megabytes or with unit (e.g., 10G, 1024M, 128K, 12B)',
         placeholder => '<size>',
         cat         => 'PERFORMANCE',
         validate    => qr/^\d+(?:\.\d+)?(?:[bBkKmMgGtTpP])?$/i
     },
     'forceswap' => {
-        type        => '=s',
-        default     => 0,
-        desc        => 'Amount of swap memory configured in megabytes or with unit (e.g., 10G, 1024M)',
+        type    => '=s',
+        default => 0,
+        desc    =>
+'Amount of swap memory configured in megabytes or with unit (e.g., 10G, 1024M)',
         placeholder => '<size>',
         cat         => 'PERFORMANCE',
         validate    => qr/^\d+(?:\.\d+)?(?:[bBkKmMgGtTpP])?$/i
@@ -656,7 +658,8 @@ sub parse_cli_args {
             }
 
             unless ($is_valid) {
-                print STDERR "ERROR:  Value \"$val\" invalid for option $primary\n";
+                print STDERR
+                  "ERROR:  Value \"$val\" invalid for option $primary\n";
                 print STDERR "mysqltuner failed with errors\n";
                 exit 1;
             }
@@ -670,7 +673,7 @@ sub parse_human_size_to_mb {
     if ( $val =~ /^(\d+(?:\.\d+)?)([bBkKmMgGtTpP])?$/i ) {
         my $num  = $1;
         my $unit = uc( $2 || 'M' );
-        if ( $unit eq 'B' ) { return $num / 1048576; }
+        if    ( $unit eq 'B' ) { return $num / 1048576; }
         elsif ( $unit eq 'K' ) { return $num / 1024; }
         elsif ( $unit eq 'M' ) { return $num; }
         elsif ( $unit eq 'G' ) { return $num * 1024; }
@@ -690,8 +693,10 @@ sub setup_environment {
         exit(0);
     }
 
-    $opt{'forcemem'}  = parse_human_size_to_mb( $opt{'forcemem'} )  if $opt{'forcemem'};
-    $opt{'forceswap'} = parse_human_size_to_mb( $opt{'forceswap'} ) if $opt{'forceswap'};
+    $opt{'forcemem'} = parse_human_size_to_mb( $opt{'forcemem'} )
+      if $opt{'forcemem'};
+    $opt{'forceswap'} = parse_human_size_to_mb( $opt{'forceswap'} )
+      if $opt{'forceswap'};
 
     $devnull = File::Spec->devnull();
     $basic_password_files =
@@ -2244,7 +2249,9 @@ sub mysql_setup {
             chomp($plesk_pass);
 
             # Plesk Obsidian 18.0.76.5+ no longer supports --show-password
-            if ($plesk_pass =~ /no longer supported/i || $plesk_pass =~ /--get-login-link/i) {
+            if (   $plesk_pass =~ /no longer supported/i
+                || $plesk_pass =~ /--get-login-link/i )
+            {
                 badprint
 "Attempted to use login credentials from Plesk and Plesk 10+, but they failed.";
                 exit 1;
@@ -2492,6 +2499,14 @@ sub select_array_with_headers {
 sub select_csv_file {
     my $tfile = shift;
     my $req   = shift;
+
+    if ( $req =~ /;\s*$/ ) {
+        $req =~ s/;$/ LIMIT 100000;/;
+    }
+    else {
+        $req .= " LIMIT 100000";
+    }
+
     debugprint "PERFORM: $req CSV into $tfile";
 
     #return;
@@ -11119,7 +11134,7 @@ sub dump_csv_files {
     infoprint("Auto-generating raw output file: $raw_output_file");
 
    # If outputfile is not already set, use raw_mysqltuner.txt as the main output
-    if ( $opt{outputfile} eq 0 ) {
+    if ( !$opt{outputfile} ) {
         $opt{outputfile} = $raw_output_file;
         my $outputfile_path = abs_path( $opt{outputfile} );
         open( $fh, '>', $outputfile_path )
@@ -11141,6 +11156,40 @@ sub dump_csv_files {
         my $target = abs_path( $opt{outputfile} );
         symlink( $target, $raw_output_file )
           or warn("Could not create symlink $raw_output_file -> $target: $!");
+    }
+
+    # Store schema of user databases
+    infoprint("Dumping user databases schemas");
+    my @user_dbs = select_user_dbs();
+    foreach my $db (@user_dbs) {
+        infoprint "Dumping schema of $db into $opt{dumpdir}";
+        my $dumpcmd = $mysqlcmd;
+        if ( $dumpcmd =~ /mariadb$/ ) {
+            my $mariadump = $dumpcmd;
+            $mariadump =~ s/mariadb$/mariadump/;
+            my $mariadb_dump = $dumpcmd;
+            $mariadb_dump =~ s/mariadb$/mariadb-dump/;
+
+            if ( -x $mariadump ) {
+                $dumpcmd = $mariadump;
+            }
+            elsif ( -x $mariadb_dump ) {
+                $dumpcmd = $mariadb_dump;
+            }
+            else {
+                my $check = execute_system_command(
+"command -v mariadump || command -v mariadb-dump || command -v mysqldump"
+                );
+                chomp($check);
+                $dumpcmd = $check || $mariadump;
+            }
+        }
+        else {
+            $dumpcmd =~ s/mysql$/mysqldump/;
+        }
+        my $cmd =
+"$dumpcmd $mysqllogin --no-data --databases \"$db\" > \"$opt{dumpdir}/schema_$db.sql\" 2>>$devnull";
+        execute_system_command($cmd);
     }
 
     # Store all sys schema in dumpdir if defined
@@ -11503,4 +11552,3 @@ ndent-level: 8
 # End:
 
 nd:
-
