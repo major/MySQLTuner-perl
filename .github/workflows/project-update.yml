@@ -19,7 +19,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libpod-markdown-perl libtemplate-perl perltidy dos2unix
+          sudo apt-get install -y libpod-markdown-perl libtemplate-perl perltidy dos2unix libwww-perl
 
       - name: Generate USAGE.md
         run: pod2markdown mysqltuner.pl > USAGE.md
