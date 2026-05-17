@@ -1982,6 +1982,8 @@ sub execute_system_command {
 
     # Issue #887: Filter out SSL DISABLED boolean warning from MySQL client
     @output = grep { !/boolean value 'DISABLED' wasn't recognized/ } @output;
+    # Filter out MySQL 5.6+ password warning from stderr captured in output
+    @output = grep { !/Using a password on the command line interface can be insecure/ } @output;
 
     if ( $? != 0 ) {
 
