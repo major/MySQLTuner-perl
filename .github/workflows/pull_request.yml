@@ -2,6 +2,9 @@
 
 name: CI for MySQL Tuner for MySQL 5.7 and 8.0
 
+permissions:
+  contents: read
+
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -47,7 +50,12 @@ jobs:
 
       - name: Run help mode
         run: |
-          sudo perl ./mysqltuner.pl --help
+          set -o pipefail
+          sudo perl ./mysqltuner.pl --help 2>&1 | tee output.log
+          if grep -E 'Use of uninitialized value' output.log; then
+            echo "Zero-Warning Quality Gate Failed: Uninitialized value warnings detected!"
+            exit 1
+          fi
 
   test_with_empty_db:
     needs: test_help
@@ -81,4 +89,21 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run verbose mode
-        run: sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose
+        run: |
+          set -o pipefail
+          sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose 2>&1 | tee output.log
+          if grep -E 'Use of uninitialized value' output.log; then
+            echo "Zero-Warning Quality Gate Failed: Uninitialized value warnings detected!"
+            exit 1
+          fi
+
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup MySQL Tuner repository
+        uses: actions/checkout@v6
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          make unit-tests

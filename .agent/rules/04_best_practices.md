@@ -80,14 +80,14 @@ Beyond hard constraints, following established patterns ensures code durability,
 
 ### 11. Release Integrity & Tagging
 
-- Release workflows (via `/git-flow`) MUST force push tags to the origin at each release to ensure synchronization with GitHub.
-- The `/git-flow` workflow MUST always be preceded by a successful `/release-preflight` execution.
-- Only the Release Manager is authorized to decide when to increment version numbers, or incrementing occurs automatically after a `git-flow` commit.
+- Release workflows MUST force push tags to the origin at each release to ensure synchronization with GitHub.
+- The entire release sequence (preflight, documentation sync, tagging, branch delivery) MUST be executed through the unified `/release-manager` workflow.
+- Version incrementing MUST only happen upon an explicit request. Automatic version bumping is strictly prohibited.
 
 ### 13. Release Artifact Integrity
 
 - Every release MUST be accompanied by a technical release note in `releases/v[VERSION].md`.
-- The `/release-preflight` workflow MUST verify the existence of this file before allowing a release to proceed.
+- The `/release-manager` workflow handles the generation and verification of this file automatically.
 - Omission of release artifacts is considered a regression in project governance.
 
 ### 14. Artifact Hygiene (Workstation Abstraction)
@@ -97,7 +97,7 @@ Beyond hard constraints, following established patterns ensures code durability,
 
 ### 15. Release Note Integrity
 
-- Release notes MUST be verified in `/release-preflight` to prevent omission on the remote repository.
+- Release notes MUST be verified during the `/release-manager` orchestration to prevent omission on the remote repository.
 - Ensure `releases/v[VERSION].md` exists and is synchronized with the current release.
 
 ## ✅ Verification

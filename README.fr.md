@@ -109,13 +109,13 @@ Pour exécuter MySQLTuner avec toutes les fonctionnalités, les privilèges suiv
 **MySQL 8.0+**:
 
 ```sql
-GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION REPLICA, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
 ```
 
 **MariaDB 10.5+**:
 
 ```sql
-GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION MASTER ADMIN, SLAVE MONITOR ON *.* TO 'mysqltuner'@'localhost';
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION SOURCE ADMIN, REPLICA MONITOR ON *.* TO 'mysqltuner'@'localhost';
 ```
 
 **Versions héritées (Legacy)**:
@@ -575,8 +575,8 @@ Connexion et authentification
 
 Étant donné que vous utilisez un hôte distant, utilisez des paramètres pour fournir des valeurs à partir du système d'exploitation
 
- --forcemem <size>  Quantité de RAM installée en mégaoctets
- --forceswap <size> Quantité de mémoire de pagination configurée en mégaoctets
+ --forcemem <size>  Quantité de RAM installée (en mégaoctets ou avec unités, ex. 15G, 1024M)
+ --forceswap <size> Quantité de mémoire de pagination configurée (en mégaoctets ou avec unités)
 
 * Vous devrez peut-être contacter votre administrateur système distant pour lui demander la quantité de RAM et de pagination dont vous disposez
 

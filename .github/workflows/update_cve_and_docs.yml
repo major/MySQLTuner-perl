@@ -2,6 +2,9 @@
 
 name: CVE and Docs update
 
+permissions:
+  contents: write
+
 # Controls when the workflow will run
 on:
   # Scheudle every sunday at 00:00

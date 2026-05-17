@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use Test::More;
 
+require './tests/MySQLTuner/TestHelper.pm';
+
 # Test for issue #553: Replication command compatibility
 # https://github.com/jmrenouard/MySQLTuner-perl/issues/553
 

@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use Test::More;
 
+require './tests/MySQLTuner/TestHelper.pm';
+
 # We will extract and test the logic of sub mysql_myisam
 # To avoid loading the whole script, we'll mock the globals it uses.
 
