@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.8.38 - MySQL High Performance Tuning Script
+    MySQLTuner 2.8.41 - MySQL High Performance Tuning Script
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -15,7 +15,7 @@ See `mysqltuner --help` for a full list of available options and their categorie
 
 # VERSION
 
-Version 2.8.38
+Version 2.8.41
 &#x3d;head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
@@ -64,9 +64,11 @@ Jean-Marie Renouard - jmrenouard@gmail.com
 - Isart Montane
 - Baptiste M.
 - Cole Turner
-- Major Hayden
-- Joe Ashcraft
+- Daniel Lewart
+- Jason Gill
 - Jean-Marie Renouard
+- Major Hayden
+- Matthew Montgomery
 - Stephan GroBberndt
 - Christian Loos
 - Long Radix

@@ -872,7 +872,7 @@ sub badprint {
 }
 
 sub debugprint {
-    prettyprint $deb. " " . $_[0] unless ( ($opt{debug} // 0) == 0 );
+    prettyprint $deb. " " . $_[0] unless ( ( $opt{debug} // 0 ) == 0 );
 }
 
 sub redwrap {
@@ -1384,13 +1384,15 @@ sub hr_num {
 sub percentage {
     my $value = shift;
     my $total = shift;
-    return "0.00" if !defined $value;
+    return "0.00"   if !defined $value;
     return "100.00" if !defined $total || $total eq "NULL";
+
     # Reject non-numeric divisor (prevents division by zero crash)
-    return "0.00" unless ($total =~ /^[+-]?\d*\.?\d+$/);
+    return "0.00" unless ( $total =~ /^[+-]?\d*\.?\d+$/ );
+
     # Legacy behavior: zero total returns 100.00 (idle server metrics)
     return "100.00" if $total == 0;
-    $value = 0 unless ($value =~ /^[+-]?\d*\.?\d+$/);
+    $value = 0 unless ( $value =~ /^[+-]?\d*\.?\d+$/ );
     return sprintf( "%.2f", ( $value * 100 / $total ) );
 }
 
@@ -1982,8 +1984,11 @@ sub execute_system_command {
 
     # Issue #887: Filter out SSL DISABLED boolean warning from MySQL client
     @output = grep { !/boolean value 'DISABLED' wasn't recognized/ } @output;
+
     # Filter out MySQL 5.6+ password warning from stderr captured in output
-    @output = grep { !/Using a password on the command line interface can be insecure/ } @output;
+    @output =
+      grep { !/Using a password on the command line interface can be insecure/ }
+      @output;
 
     if ( $? != 0 ) {
 
@@ -2456,9 +2461,9 @@ sub build_mysql_connection_command {
 
 # MySQL Request Array
 sub select_array {
-    my $req = shift;
+    my $req      = shift;
     my $vertical = "";
-    if ($req =~ s/\\G$//) {
+    if ( $req =~ s/\\G$// ) {
         $vertical = "-E ";
     }
     debugprint "PERFORM: $req ";
@@ -2468,8 +2473,9 @@ sub select_array {
       execute_system_command(
         "$mysqlcmd $mysqllogin $vertical-Bse \"$req_escaped\" 2>>$devnull");
     if ( $? != 0 ) {
-        if ($req eq '\s') {
-            debugprint "Command \\s is not supported by this client version. Ignoring.";
+        if ( $req eq '\s' ) {
+            debugprint
+              "Command \\s is not supported by this client version. Ignoring.";
             return ();
         }
         badprint "Failed to execute: $req";
@@ -2572,11 +2578,12 @@ sub select_one {
 sub select_one_g {
     my $pattern = shift;
 
-    my $req = shift;
+    my $req      = shift;
     my $vertical = "";
-    if ($req =~ s/\\G$//) {
+    if ( $req =~ s/\\G$// ) {
         $vertical = "-E ";
-    } else {
+    }
+    else {
         $vertical = "-E ";
     }
     debugprint "PERFORM: $req ";
@@ -9575,8 +9582,8 @@ sub mysql_innodb {
     }
 
     # InnoDB Read efficiency
-    if ( ($mystat{'Innodb_buffer_pool_reads'} // 0) >
-        ($mystat{'Innodb_buffer_pool_read_requests'} // 0) )
+    if ( ( $mystat{'Innodb_buffer_pool_reads'} // 0 ) >
+        ( $mystat{'Innodb_buffer_pool_read_requests'} // 0 ) )
     {
         infoprint
 "InnoDB Read buffer efficiency: metrics are not reliable (reads > read requests)";
@@ -9586,19 +9593,19 @@ sub mysql_innodb {
     {
         badprint "InnoDB Read buffer efficiency: "
           . $mycalc{'pct_read_efficiency'} . "% ("
-          . ($mystat{'Innodb_buffer_pool_read_requests'} // 0)
+          . ( $mystat{'Innodb_buffer_pool_read_requests'} // 0 )
           . " hits / "
-          . ( ($mystat{'Innodb_buffer_pool_reads'} // 0) +
-              ($mystat{'Innodb_buffer_pool_read_requests'} // 0) )
+          . ( ( $mystat{'Innodb_buffer_pool_reads'} // 0 ) +
+              ( $mystat{'Innodb_buffer_pool_read_requests'} // 0 ) )
           . " total)";
     }
     else {
         goodprint "InnoDB Read buffer efficiency: "
-          . ($mycalc{'pct_read_efficiency'} // 0) . "% ("
-          . ($mystat{'Innodb_buffer_pool_read_requests'} // 0)
+          . ( $mycalc{'pct_read_efficiency'}              // 0 ) . "% ("
+          . ( $mystat{'Innodb_buffer_pool_read_requests'} // 0 )
           . " hits / "
-          . ( ($mystat{'Innodb_buffer_pool_reads'} // 0) +
-              ($mystat{'Innodb_buffer_pool_read_requests'} // 0) )
+          . ( ( $mystat{'Innodb_buffer_pool_reads'} // 0 ) +
+              ( $mystat{'Innodb_buffer_pool_read_requests'} // 0 ) )
           . " total)";
     }
 
@@ -9672,12 +9679,14 @@ sub mysql_innodb {
     }
     else {
         goodprint "InnoDB log waits: "
-          . percentage( ($mystat{'Innodb_log_waits'} // 0),
-            ($mystat{'Innodb_log_writes'} // 0) )
+          . percentage(
+            ( $mystat{'Innodb_log_waits'}  // 0 ),
+            ( $mystat{'Innodb_log_writes'} // 0 )
+          )
           . "% ("
-          . ($mystat{'Innodb_log_waits'} // 0)
+          . ( $mystat{'Innodb_log_waits'} // 0 )
           . " waits / "
-          . ($mystat{'Innodb_log_writes'} // 0)
+          . ( $mystat{'Innodb_log_writes'} // 0 )
           . " writes)";
     }
 
