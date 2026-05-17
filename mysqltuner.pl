@@ -1384,7 +1384,13 @@ sub hr_num {
 sub percentage {
     my $value = shift;
     my $total = shift;
-    return "100.00" if !$total || $total eq "NULL";
+    return "0.00" if !defined $value;
+    return "100.00" if !defined $total || $total eq "NULL";
+    # Reject non-numeric divisor (prevents division by zero crash)
+    return "0.00" unless ($total =~ /^[+-]?\d*\.?\d+$/);
+    # Legacy behavior: zero total returns 100.00 (idle server metrics)
+    return "100.00" if $total == 0;
+    $value = 0 unless ($value =~ /^[+-]?\d*\.?\d+$/);
     return sprintf( "%.2f", ( $value * 100 / $total ) );
 }
 
