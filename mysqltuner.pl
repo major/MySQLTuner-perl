@@ -872,7 +872,7 @@ sub badprint {
 }
 
 sub debugprint {
-    prettyprint $deb. " " . $_[0] unless ( $opt{debug} == 0 );
+    prettyprint $deb. " " . $_[0] unless ( ($opt{debug} // 0) == 0 );
 }
 
 sub redwrap {
@@ -9567,8 +9567,8 @@ sub mysql_innodb {
     }
 
     # InnoDB Read efficiency
-    if ( $mystat{'Innodb_buffer_pool_reads'} >
-        $mystat{'Innodb_buffer_pool_read_requests'} )
+    if ( ($mystat{'Innodb_buffer_pool_reads'} // 0) >
+        ($mystat{'Innodb_buffer_pool_read_requests'} // 0) )
     {
         infoprint
 "InnoDB Read buffer efficiency: metrics are not reliable (reads > read requests)";
@@ -9578,19 +9578,19 @@ sub mysql_innodb {
     {
         badprint "InnoDB Read buffer efficiency: "
           . $mycalc{'pct_read_efficiency'} . "% ("
-          . $mystat{'Innodb_buffer_pool_read_requests'}
+          . ($mystat{'Innodb_buffer_pool_read_requests'} // 0)
           . " hits / "
-          . ( $mystat{'Innodb_buffer_pool_reads'} +
-              $mystat{'Innodb_buffer_pool_read_requests'} )
+          . ( ($mystat{'Innodb_buffer_pool_reads'} // 0) +
+              ($mystat{'Innodb_buffer_pool_read_requests'} // 0) )
           . " total)";
     }
     else {
         goodprint "InnoDB Read buffer efficiency: "
-          . $mycalc{'pct_read_efficiency'} . "% ("
-          . $mystat{'Innodb_buffer_pool_read_requests'}
+          . ($mycalc{'pct_read_efficiency'} // 0) . "% ("
+          . ($mystat{'Innodb_buffer_pool_read_requests'} // 0)
           . " hits / "
-          . ( $mystat{'Innodb_buffer_pool_reads'} +
-              $mystat{'Innodb_buffer_pool_read_requests'} )
+          . ( ($mystat{'Innodb_buffer_pool_reads'} // 0) +
+              ($mystat{'Innodb_buffer_pool_read_requests'} // 0) )
           . " total)";
     }
 
@@ -9664,12 +9664,12 @@ sub mysql_innodb {
     }
     else {
         goodprint "InnoDB log waits: "
-          . percentage( $mystat{'Innodb_log_waits'},
-            $mystat{'Innodb_log_writes'} )
+          . percentage( ($mystat{'Innodb_log_waits'} // 0),
+            ($mystat{'Innodb_log_writes'} // 0) )
           . "% ("
-          . $mystat{'Innodb_log_waits'}
+          . ($mystat{'Innodb_log_waits'} // 0)
           . " waits / "
-          . $mystat{'Innodb_log_writes'}
+          . ($mystat{'Innodb_log_writes'} // 0)
           . " writes)";
     }
 

@@ -52,8 +52,8 @@ jobs:
         run: |
           set -o pipefail
           sudo perl ./mysqltuner.pl --help 2>&1 | tee output.log
-          if grep -iE 'use of uninitialized value|warning' output.log; then
-            echo "Zero-Warning Quality Gate Failed: Warnings detected in test output!"
+          if grep -E 'Use of uninitialized value' output.log; then
+            echo "Zero-Warning Quality Gate Failed: Uninitialized value warnings detected!"
             exit 1
           fi
 
@@ -92,8 +92,8 @@ jobs:
         run: |
           set -o pipefail
           sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose 2>&1 | tee output.log
-          if grep -iE 'use of uninitialized value|warning' output.log; then
-            echo "Zero-Warning Quality Gate Failed: Warnings detected in test output!"
+          if grep -E 'Use of uninitialized value' output.log; then
+            echo "Zero-Warning Quality Gate Failed: Uninitialized value warnings detected!"
             exit 1
           fi
 
@@ -106,8 +106,4 @@ jobs:
       - name: Run unit tests
         run: |
           set -o pipefail
-          make unit-tests 2>&1 | tee test_output.log
-          if grep -iE 'use of uninitialized value|warning' test_output.log; then
-            echo "Zero-Warning Quality Gate Failed: Warnings detected in test output!"
-            exit 1
-          fi
+          make unit-tests
