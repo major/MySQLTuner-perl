@@ -1,5 +1,9 @@
 # MySQLTuner Changelog
 
+2.8.42 2026-05-17
+
+- chore: bump version to 2.8.42
+
 2.8.41 2026-05-17
 
 - fix: filter MySQL CLI password warning from execute_system_command output.

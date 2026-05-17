@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.41
+# mysqltuner.pl - Version 2.8.42
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -66,7 +66,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.8.41";
+our $tunerversion = "2.8.42";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -11341,7 +11341,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.41 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.42 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -11356,7 +11356,7 @@ See C<mysqltuner --help> for a full list of available options and their categori
 
 =head1 VERSION
 
-Version 2.8.41
+Version 2.8.42
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
