@@ -17,6 +17,7 @@ $SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
     local @ARGV = ();
     no warnings 'redefine';
     require $script;
+require './tests/MySQLTuner/TestHelper.pm';
 }
 
 # 2. Mocking environment
@@ -46,7 +47,8 @@ subtest 'table_definition_cache diagnostics' => sub {
     $main::mycalc{'table_cache_hit_rate'} = 50;
 
     # Test Case 1: Autosizing (-1)
-    %main::myvar = ( 'table_definition_cache' => -1 );
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar,  'table_definition_cache' => -1 );
     @infoprints = (); @badprints = (); @goodprints = ();
     {
         no warnings 'redefine';
@@ -59,7 +61,8 @@ subtest 'table_definition_cache diagnostics' => sub {
     ok(grep(/table_definition_cache \(-1\) is in autosizing mode/, @infoprints), "Detected autosizing mode");
 
     # Test Case 2: Under-sized
-    %main::myvar = ( 'table_definition_cache' => 50 );
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar,  'table_definition_cache' => 50 );
     @infoprints = (); @badprints = (); @goodprints = ();
     {
         no warnings 'redefine';
@@ -70,7 +73,8 @@ subtest 'table_definition_cache diagnostics' => sub {
     ok(grep(/table_definition_cache \(50\) > 100/, @main::adjvars), "Recommendation added correctly");
 
     # Test Case 3: Well-sized
-    %main::myvar = ( 'table_definition_cache' => 200 );
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar,  'table_definition_cache' => 200 );
     @infoprints = (); @badprints = (); @goodprints = ();
     @main::adjvars = ();
     {

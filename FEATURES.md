@@ -3,10 +3,15 @@ Features list for option: --feature (dev only)
 
 
 * build_mysql_connection_command
+* calculate_health_score
 * cloud_setup
 * cve_recommendations
+* detect_infrastructure
+* display_health_score
 * execute_system_command
 * execute_system_command;
+* generate_auto_fix_snippets
+* historical_comparison
 * log_file_recommendations
 * make_recommendations
 * mariadb_aria
@@ -17,7 +22,10 @@ Features list for option: --feature (dev only)
 * mariadb_threadpool
 * mariadb_tokudb
 * mariadb_xtradb
+* my_file_exists
+* my_file_readable
 * mysql_80_modeling_checks
+* mysql_cloud_discovery
 * mysql_databases
 * mysql_datatype_optimization
 * mysql_foreign_key_checks
@@ -36,6 +44,8 @@ Features list for option: --feature (dev only)
 * mysql_triggers
 * mysql_views
 * parse_cli_args
+* predictive_capacity_analysis
+* process_sysbench_metrics
 * push_recommendation
 * security_recommendations
 * setup_environment

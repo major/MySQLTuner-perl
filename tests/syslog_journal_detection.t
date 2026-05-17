@@ -10,6 +10,7 @@ use File::Spec;
 $main::opt{nocolor} = 1;
 $main::opt{nocolor} = 1;
 require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 
 # Initialize print styles usually set in setup_environment
 $main::good = '[OK]';
@@ -55,7 +56,8 @@ subtest 'syslog fallback in log_file_recommendations' => sub {
     close $fh;
     
     @main::generalrec = ();
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         log_error => $syslog_path,
         hostname => 'localhost',
         datadir => $tmpdir

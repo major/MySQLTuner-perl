@@ -68,7 +68,8 @@ sub mock_select_array {
 # 3. Load the script
 {
     local @ARGV = ('--help'); # Minimize impact
-    eval { require "./mysqltuner.pl"; };
+    eval { require "./mysqltuner.pl";
+require './tests/MySQLTuner/TestHelper.pm'; };
     # ignore EXIT_CALLED or other errors from the main part
 }
 

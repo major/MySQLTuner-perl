@@ -109,13 +109,13 @@ MySQLTuner нуждается в вас
 **MySQL 8.0+**:
 
 ```sql
-GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION REPLICA, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
 ```
 
 **MariaDB 10.5+**:
 
 ```sql
-GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION MASTER ADMIN, SLAVE MONITOR ON *.* TO 'mysqltuner'@'localhost';
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION SOURCE ADMIN, REPLICA MONITOR ON *.* TO 'mysqltuner'@'localhost';
 ```
 
 **Старые версии**:
@@ -575,8 +575,8 @@ host = localhost
 
 Поскольку вы используете удаленный хост, используйте параметры для предоставления значений из ОС
 
- --forcemem <size>  Объем установленной оперативной памяти в мегабайтах
- --forceswap <size> Объем настроенной памяти подкачки в мегабайтах
+ --forcemem <size>  Объем установленной оперативной памяти (в мегабайтах или с единицами измерения, например, 15G, 1024M)
+ --forceswap <size> Объем настроенной памяти подкачки (в мегабайтах или с единицами измерения)
 
 * Возможно, вам придется связаться с вашим удаленным системным администратором, чтобы спросить, сколько у вас ОЗУ и подкачки
 

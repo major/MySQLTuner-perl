@@ -127,7 +127,7 @@ test: vendor_setup
 
 test-all: vendor_setup
 	@echo "Running all MySQLTuner Lab Tests..."
-	bash build/test_envs.sh
+	bash build/test_envs.sh `perl build/get_supported_envs.pl`
 
 test-container:
 	@echo "Running MySQLTuner against container: $(CONTAINER)..."

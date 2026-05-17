@@ -13,6 +13,7 @@ $SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
 my $script_dir = dirname(abs_path(__FILE__));
 my $script = abs_path(File::Spec->catfile($script_dir, '..', 'mysqltuner.pl'));
 require $script;
+require './tests/MySQLTuner/TestHelper.pm';
 
 # Mock global variables
 our %myvar;
@@ -47,7 +48,8 @@ subtest 'ssl_tls_recommendations' => sub {
     };
 
     # Case 1: All Good
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'have_ssl' => 'YES',
         'require_secure_transport' => 'ON',
         'tls_version' => 'TLSv1.2,TLSv1.3',
@@ -68,7 +70,8 @@ subtest 'ssl_tls_recommendations' => sub {
     is(scalar(@recommendations), 0, "No recommendations in good case");
 
     # Case 2: Insecure Protocols and Not forced
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'have_ssl' => 'YES',
         'require_secure_transport' => 'OFF',
         'tls_version' => 'TLSv1.1,TLSv1.2',
@@ -98,7 +101,8 @@ subtest 'ssl_tls_recommendations' => sub {
     is(scalar(@recommendations), 3, "Has 3 recommendations");
 
     # Case 4: TLS 1.1 Only (Modern TLS failure)
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'have_ssl' => 'YES',
         'require_secure_transport' => 'ON',
         'tls_version' => 'TLSv1.1',
@@ -137,7 +141,8 @@ subtest 'check_local_certificates' => sub {
     };
 
     # Case 1: Expired cert
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'ssl_cert' => '/tmp/expired.pem',
         'ssl_ca'   => '/tmp/ca.pem'
     );
@@ -186,7 +191,8 @@ subtest 'check_remote_user_ssl' => sub {
     local *main::mysql_version_ge = sub { 1 };
     
     # Mock MariaDB result
-    %main::myvar = ( 'version' => '10.5.0-MariaDB' );
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar,  'version' => '10.5.0-MariaDB' );
     local *main::select_array = sub {
         my ($query) = @_;
         if ($query =~ /global_priv/) {
@@ -200,7 +206,8 @@ subtest 'check_remote_user_ssl' => sub {
     ok(grep(/users can connect remotely without SSL/, @bad_prints), "Detects remote user without SSL (MariaDB)");
 
     # Mock MySQL result
-    %main::myvar = ( 'version' => '8.0.30' );
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar,  'version' => '8.0.30' );
     local *main::select_array = sub {
         my ($query) = @_;
         if ($query =~ /mysql.user/) {

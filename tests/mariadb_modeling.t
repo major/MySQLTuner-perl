@@ -8,6 +8,7 @@ use Test::More;
     local @ARGV = (); 
     no warnings 'redefine';
     require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 }
 
 my @mock_output;
@@ -45,7 +46,8 @@ sub has_output {
 
 subtest 'MariaDB 10.x Modeling Checks' => sub {
     # 1. Setup MariaDB 10.11 Mock Environment
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'version' => '10.11.5-MariaDB',
     );
     @main::generalrec = ();
@@ -71,7 +73,8 @@ subtest 'MariaDB 10.x Modeling Checks' => sub {
 
 subtest 'MySQL 8.0 Modeling Checks (Regression)' => sub {
     # 1. Setup MySQL 8.0 Mock Environment
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'version' => '8.0.35',
     );
     @main::generalrec = ();

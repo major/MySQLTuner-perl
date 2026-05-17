@@ -38,7 +38,7 @@ This project follows a standardized governance structure:
 - **Tier 03**: [03_execution_rules.md](file:///.agent/rules/03_execution_rules.md) (Constraints)
 - **Tier 04**: [04_best_practices.md](file:///.agent/rules/04_best_practices.md) (Implementation)
 - **Tier 05**: [05_memory_protocol.md](file:///.agent/rules/05_memory_protocol.md) (History)
-- **Dynamic**: [remembers.md](file:///.agent/rules/remembers.md) (Session Buffer)
+- **Dynamic**: Native Gemini Knowledge Items (KIs) managed via Antigravity Memory Protocol.
 
 ## ✅ Verification
 

@@ -26,6 +26,7 @@ our $is_win = 0;
 }
 
 require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 
 # Test Case 1: MySQL 9.6 Replication Commands
 %myvar = ( 'version' => '9.6.0' );

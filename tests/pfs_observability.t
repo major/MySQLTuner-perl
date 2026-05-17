@@ -13,6 +13,7 @@ $SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
 my $script_dir = dirname(abs_path(__FILE__));
 my $script = abs_path(File::Spec->catfile($script_dir, '..', 'mysqltuner.pl'));
 require $script;
+require './tests/MySQLTuner/TestHelper.pm';
 
 # Mock global variables
 our %myvar;
@@ -37,7 +38,8 @@ subtest 'mysql_pfs_observability_warning' => sub {
     local *main::select_one = sub { return 0 };
     
     # CASE 1: Performance Schema is OFF
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'performance_schema' => 'OFF'
     );
     %main::opt = ( 'pfstat' => 1 );
@@ -52,7 +54,8 @@ subtest 'mysql_pfs_observability_warning' => sub {
     ok(grep(/performance_schema=ON/, @main::adjvars), "Found performance_schema=ON in adjvars");
 
     # CASE 2: Performance Schema is ON (should not show the warning)
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'performance_schema' => 'ON'
     );
     @main::generalrec = ();

@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use Test::More;
 
+require './tests/MySQLTuner/TestHelper.pm';
+
 # Mocking variables and functions from mysqltuner.pl
 our %myvar;
 our %mystat;

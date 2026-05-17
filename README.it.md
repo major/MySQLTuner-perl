@@ -109,13 +109,13 @@ Per eseguire MySQLTuner con tutte le funzionalità, sono richiesti i seguenti pr
 **MySQL 8.0+**:
 
 ```sql
-GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, REPLICATION REPLICA, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'mysqltuner'@'localhost';
 ```
 
 **MariaDB 10.5+**:
 
 ```sql
-GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION MASTER ADMIN, SLAVE MONITOR ON *.* TO 'mysqltuner'@'localhost';
+GRANT SELECT, PROCESS, SHOW DATABASES, EXECUTE, BINLOG MONITOR, SHOW VIEW, REPLICATION SOURCE ADMIN, REPLICA MONITOR ON *.* TO 'mysqltuner'@'localhost';
 ```
 
 **Versioni legacy**:
@@ -575,8 +575,8 @@ Connessione e autenticazione
 
 Poiché si sta utilizzando un host remoto, utilizzare i parametri per fornire i valori dal sistema operativo
 
- --forcemem <size>  Quantità di RAM installata in megabyte
- --forceswap <size> Quantità di memoria di swap configurata in megabyte
+ --forcemem <size>  Quantità di RAM installata (in megabyte o con unità, es. 15G, 1024M)
+ --forceswap <size> Quantità di memoria di swap configurata (in megabyte o con unità)
 
 * Potrebbe essere necessario contattare l'amministratore di sistema remoto per chiedere quanta RAM e swap si dispone
 

@@ -13,6 +13,7 @@ my $script_path = File::Spec->rel2abs(File::Spec->catfile(dirname(__FILE__), '..
     local @ARGV = ('--silent');
     package main;
     require $script_path;
+    require './tests/MySQLTuner/TestHelper.pm';
 }
 
 # 2. Mock Data for Phase 4 Verification

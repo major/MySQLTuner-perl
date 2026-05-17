@@ -10,6 +10,7 @@ use Cwd 'abs_path';
 my $script_dir = dirname(abs_path(__FILE__));
 my $script = abs_path(File::Spec->catfile($script_dir, '..', 'mysqltuner.pl'));
 require $script;
+require './tests/MySQLTuner/TestHelper.pm';
 
 # Mock global variables
 our %myvar;
@@ -30,13 +31,14 @@ subtest 'mariadb_galera' => sub {
     local *main::cpu_cores = sub { 4 };
 
     # Case 1: Galera enabled
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'have_galera' => 'YES',
         'wsrep_on' => 'ON',
         'wsrep_cluster_name' => 'my_cluster',
         'wsrep_provider_vendor' => 'Codership'
     );
-    %main::mystat = (
+    %main::mystat = ( %main::mystat, 
         'wsrep_local_state_comment' => 'Synced',
         'wsrep_cluster_size' => 3
     );
@@ -54,14 +56,15 @@ subtest 'mariadb_threadpool' => sub {
     local *main::logical_cpu_cores = sub { 8 };
 
     # Case 1: Thread pool enabled
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'version' => '10.5.0-MariaDB',
         'thread_handling' => 'pool-of-threads',
         'thread_pool_size' => 8,
         'thread_pool_max_threads' => 1000,
         'Max_used_connections' => 600
     );
-    %main::mystat = (
+    %main::mystat = ( %main::mystat, 
         'Max_used_connections' => 600
     );
     main::mariadb_threadpool();
@@ -78,16 +81,17 @@ subtest 'mariadb_aria' => sub {
     local *main::badprint = sub { };
     local *main::subheaderprint = sub { };
 
-    %main::myvar = (
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
         'have_aria' => 'YES',
         'aria_pagecache_buffer_size' => 128 * 1024 * 1024
     );
-    %main::mystat = (
+    %main::mystat = ( %main::mystat, 
         'Aria_pagecache_blocks_unused' => 1000,
         'Aria_pagecache_read_requests' => 10000,
         'Aria_pagecache_reads' => 100
     );
-    %main::mycalc = (
+    %main::mycalc = ( %main::mycalc, 
         'total_aria_indexes' => 64 * 1024 * 1024,
         'pct_aria_pagecache_used' => 50,
         'pct_aria_keys_from_mem' => 99

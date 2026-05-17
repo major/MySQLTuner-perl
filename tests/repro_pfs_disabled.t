@@ -13,6 +13,7 @@ my $script = abs_path(File::Spec->catfile($script_dir, '..', 'mysqltuner.pl'));
 # Suppress warnings from mysqltuner.pl initialization if any
 $SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
 require $script;
+require './tests/MySQLTuner/TestHelper.pm';
 
 # 2. Mock Data
 our (%myvar, %mystat, %opt, @generalrec, @adjvars);
