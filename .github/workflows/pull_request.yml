@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI for MySQL Tuner for MySQL 5.7 and 8.0
+name: CI
 
 permissions:
   contents: read
