@@ -11226,7 +11226,8 @@ sub dump_csv_files {
     # Store all sys schema in dumpdir if defined
     infoprint("Dumping sys schema");
     for my $sys_view ( select_array('use sys;show tables;') ) {
-        if ( $sys_view =~ /innodb_buffer_stats/ ) {
+        if ( $sys_view =~ /innodb_buffer_stats/ or 
+             $sys_view =~ /schema_table_statistics_with_buffer/ ) {
             infoprint("SKIPPING $sys_view");
             next;
         }
@@ -11241,7 +11242,13 @@ sub dump_csv_files {
     infoprint("Dumping information schema");
     for my $info_s_table ( select_array('use information_schema;show tables;') )
     {
-        next if $info_s_table =~ /INNODB_BUFFER_PAGE/;
+        if ( $info_s_table =~ /INNODB_BUFFER_PAGE/ or 
+             $info_s_table =~ /RDS_CONTROL_PERFORMANCE_INSIGHTS_STATUS/ or
+             $info_s_table =~ /RDS_METRICS_COUNTER/ or
+             $info_s_table =~ /RDS_METRICS_GAUGE/) {
+             infoprint("SKIPPING $info_s_table");
+             next;
+        }
         infoprint "Dumping $info_s_table into $opt{dumpdir}";
         select_csv_file(
             "$opt{dumpdir}/ifs_${info_s_table}.csv",
@@ -11254,7 +11261,10 @@ sub dump_csv_files {
     for
       my $info_pf_table ( select_array('use performance_schema;show tables;') )
     {
-        next if $info_pf_table =~ /^events_/;
+        if ( $info_pf_table =~ /^events_/ ) {
+            infoprint("SKIPPING $info_pf_table");
+            next;
+        }
         infoprint
           "Performance Schema Dumping $info_pf_table into $opt{dumpdir}";
         select_csv_file(
@@ -11576,10 +11586,3 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 vel: 8
 # perl-indent-level: 8
 # End:
-
-nd:
-
-ndent-level: 8
-# End:
-
-nd:
