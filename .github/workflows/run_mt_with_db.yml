@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Test with databases
+name: Test with database matrix
 
 permissions:
   contents: read
@@ -12,22 +12,63 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   run_mt_with_db:
+    name: ${{ matrix.vendor }} ${{ matrix.version }}
     strategy:
+      fail-fast: false
       matrix:
-        MYSQL_VERSION: [5.7, 8.0]
-    # The type of runner that the job will run on
+        include:
+          - vendor: MySQL
+            image: mysql
+            version: '5.7'
+            health_command: mysqladmin ping -h 127.0.0.1 -uroot -proot
+          - vendor: MySQL
+            image: mysql
+            version: '8.0'
+            health_command: mysqladmin ping -h 127.0.0.1 -uroot -proot
+          - vendor: MySQL
+            image: mysql
+            version: '8.4'
+            health_command: mysqladmin ping -h 127.0.0.1 -uroot -proot
+          - vendor: MySQL
+            image: mysql
+            version: '9.6'
+            health_command: mysqladmin ping -h 127.0.0.1 -uroot -proot
+          - vendor: MariaDB
+            image: mariadb
+            version: '10.6'
+            health_command: mariadb-admin ping -h 127.0.0.1 -uroot -proot
+          - vendor: MariaDB
+            image: mariadb
+            version: '10.11'
+            health_command: mariadb-admin ping -h 127.0.0.1 -uroot -proot
+          - vendor: MariaDB
+            image: mariadb
+            version: '11.4'
+            health_command: mariadb-admin ping -h 127.0.0.1 -uroot -proot
+          - vendor: MariaDB
+            image: mariadb
+            version: '11.8'
+            health_command: mariadb-admin ping -h 127.0.0.1 -uroot -proot
+          - vendor: MariaDB
+            image: mariadb
+            version: '12.2'
+            health_command: mariadb-admin ping -h 127.0.0.1 -uroot -proot
     runs-on: ubuntu-latest
 
     services:
       mysql:
-        image: mysql:${{ matrix.MYSQL_VERSION }}
+        image: ${{ matrix.image }}:${{ matrix.version }}
         env:
           MYSQL_ROOT_PASSWORD: root
+          MARIADB_ROOT_PASSWORD: root
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="${{ matrix.health_command }}"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -44,9 +85,7 @@ jobs:
 
       - name: Injecting test_db dataset
         run: |
-          sleep 5s
           cd test_db
-          netstat -ltpn
           mysql -e 'select version();'
           mysql -e 'CREATE DATABASE data;'
           mysql data< ./employees.sql
@@ -55,8 +94,20 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run help mode
-        run: perl ./mysqltuner.pl --help
+        run: |
+          set -o pipefail
+          perl ./mysqltuner.pl --help 2>&1 | tee output.log
+          if grep -E 'Use of uninitialized value' output.log; then
+            echo "Zero-Warning Quality Gate Failed: Uninitialized value warnings detected!"
+            exit 1
+          fi
 
       # Runs a single command using the runners shell
       - name: Run verbose mode
-        run: sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose
+        run: |
+          set -o pipefail
+          sudo perl ./mysqltuner.pl --user=root --pass=root --protocol tcp --verbose 2>&1 | tee output.log
+          if grep -E 'Use of uninitialized value' output.log; then
+            echo "Zero-Warning Quality Gate Failed: Uninitialized value warnings detected!"
+            exit 1
+          fi
