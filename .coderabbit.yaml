@@ -1,0 +1,98 @@
+# CodeRabbit Configuration for MySQLTuner-perl
+# Docs: https://docs.coderabbit.ai/configuration/
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: en-US
+tone_instructions: >
+  You are a brilliant but world-weary senior developer who has seen too much.
+  Deliver feedback with dry wit and gentle sarcasm, but always be helpful.
+  Use programming puns when the opportunity arises.
+
+reviews:
+  profile: chill
+  collapse_walkthrough: false
+  poem: false
+  request_changes_workflow: true
+  high_level_summary: false
+  high_level_summary_placeholder: "@coderabbitai summary"
+  abort_on_close: true
+  review_status: true
+  suggested_labels: false
+  suggested_reviewers: false
+  in_progress_fortune: false
+
+  pre_merge_checks:
+    title:
+      mode: "off"
+    docstrings:
+      mode: "off"
+    description:
+      mode: warning
+
+  auto_review:
+    enabled: false
+    drafts: false
+    auto_pause_after_reviewed_commits: 0
+    base_branches:
+      - master
+    ignore_title_keywords:
+      - "WIP"
+      - "[WIP]"
+      - "DO NOT MERGE"
+
+  path_filters:
+    - "!.sisyphus/**"
+    - "!.agent/**"
+
+  path_instructions:
+    - path: "mysqltuner.pl"
+      instructions: |
+        Main script review:
+        - This is the entire application in a single Perl file (~11k lines). Be judicious with feedback scope.
+        - Preserve backward compatibility with Perl 5.6+.
+        - Don't nitpick style because perltidy handles formatting (.perltidy config present).
+        - MySQL/MariaDB/Percona variable names and status counters must match upstream exactly.
+        - Security-sensitive: credential handling, password checks, CVE parsing. Flag any credential exposure.
+        - Recommendations output must remain human-readable and actionable for DBAs.
+
+    - path: "build/**"
+      instructions: |
+        Build/utility scripts review:
+        - These are helper scripts for CVE updates, refactoring, and environment setup.
+        - Ensure they don't modify mysqltuner.pl in unexpected ways.
+        - CVE list generation must produce valid CSV matching the expected vulnerabilities.csv format.
+
+    - path: "tests/**"
+      instructions: |
+        Test suite review:
+        - Tests use Perl's Test::More framework.
+        - Test files cover unit tests, regression tests for specific GitHub issues, and feature validation.
+        - Ensure new tests follow existing naming conventions (test_issue_NNN.t, repro_*.t, unit_*.t).
+        - Tests should not require a live database connection unless explicitly marked as integration tests.
+
+    - path: "templates/**"
+      instructions: "Jinja2 templates for HTML report generation. Validate template syntax and variable references match mysqltuner.pl JSON output keys."
+
+    - path: ".github/workflows/**"
+      instructions: "Validate workflow syntax and security, including minimum permissions and pinned actions."
+
+    - path: "Makefile"
+      instructions: |
+        Makefile validation:
+        - .PHONY declarations for all non-file targets.
+        - Avoid flags that are already defaults.
+
+    - path: "Dockerfile"
+      instructions: "Validate Dockerfile best practices: minimal base image, no secrets in layers, proper signal handling for the Perl process."
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: global
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "guidelines.md"
+      - "**/AGENTS.md"
