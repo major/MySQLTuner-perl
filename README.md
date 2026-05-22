@@ -223,7 +223,7 @@ By default, performance_schema is enabled and sysschema is installed on latest v
 
 By default, on MariaDB, performance schema is disabled (MariaDB<10.6).
 
-Consider activating performance schema across your my.cnf configuration file:
+Consider activating performance schema across your `my.cnf` configuration file:
 
 ```ini
 [mysqld]
@@ -289,7 +289,7 @@ $ cat /proc/sys/fs/aio-*
 2305
 ```
 
-For example, to set the aio-max-nr value, add the following line to the /etc/sysctl.conf file:
+For example, to set the aio-max-nr value, add the following line to the `/etc/sysctl.conf` file:
 
 ```bash
 fs.aio-max-nr = 1048576
@@ -314,11 +314,11 @@ Of course, you can add the execute bit (`chmod +x mysqltuner.pl`) so you can exe
 
 **Usage:** Minimal usage remotely
 
-In previous version, --forcemem shoud be set manually, in order to be able to run an MySQLTuner analysis
+In previous version, `--forcemem` shoud be set manually, in order to be able to run an MySQLTuner analysis
 
 Since 2.1.10, memory and swap are defined to 1Gb by default.
 
-If you want a more accurate value according to your remote server, feel free to setup --forcemem and --forceswap to real RAM value
+If you want a more accurate value according to your remote server, feel free to setup `--forcemem` and `--forceswap` to real RAM value
 
 ```bash
 perl mysqltuner.pl --host targetDNS_IP --user admin_user --pass admin_password
@@ -454,12 +454,16 @@ Follow instructions from Github repo
 
 **Using AHA Html report generation**
 
- perl mysqltuner.pl --verbose --color > reports.txt
- aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
+```bash
+perl mysqltuner.pl --verbose --color > reports.txt
+aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
+```
 
 or
 
- perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
+```bash
+perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
+```
 
 FAQ
 --
@@ -486,7 +490,7 @@ For optimal results, run the script after your server has been running for at le
 
 MySQL tuner provides output in the form of suggestions and warnings.
 
-Review each recommendation and consider implementing the changes in your MySQL configuration file (usually 'my.cnf' or 'my.ini').
+Review each recommendation and consider implementing the changes in your MySQL configuration file (usually `my.cnf` or `my.ini`).
 
 Be cautious when making changes and always backup your configuration file before making any modifications.
 
@@ -516,7 +520,7 @@ Be cautious when implementing changes to ensure the stability and performance of
 
 If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
 
-Once you create it, make sure it's owned by your user and the mode on the file is 0600.  This should prevent the prying eyes from getting your database login credentials under normal conditions.
+Once you create it, make sure it's owned by your user and the mode on the file is `0600`.  This should prevent the prying eyes from getting your database login credentials under normal conditions.
 
 **Question: I get "ERROR 1524 (HY000): Plugin 'unix_socket' is not loaded" even with unix_socket=OFF. How to fix?**
 
@@ -536,7 +540,7 @@ If you decide to use `unix_socket` (which allows the OS `root` user to log in to
    ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket;
    ```
 
-3. Verify that the `auth_socket` or `unix_socket` plugin is ACTIVE in `SHOW PLUGINS`.
+3. Verify that the `auth_socket` or `unix_socket` plugin is `ACTIVE` in `SHOW PLUGINS`.
 
 **Question: Is there another way to secure credentials on latest MySQL and MariaDB distributions ?**
 
@@ -568,12 +572,12 @@ These kinds of things are bound to happen. Here are the details I need from you 
 * Exact MySQL version
 * Where you obtained your MySQL version (OS package, source, etc)
 * The full text of the error
-* A copy of SHOW VARIABLES and SHOW GLOBAL STATUS output (if possible)
+* A copy of `SHOW VARIABLES` and `SHOW GLOBAL STATUS` output (if possible)
 
 **Question: How to perform CVE vulnerability checks?**
 
 * Download vulnerabilities.csv from this repository.
-* use option --cvefile to perform CVE checks
+* use option `--cvefile` to perform CVE checks
 
 **Question: How to use mysqltuner from a remote host?**
 Thanks to  [@rolandomysqldba](https://dba.stackexchange.com/users/877/rolandomysqldba)
@@ -582,24 +586,30 @@ Thanks to  [@rolandomysqldba](https://dba.stackexchange.com/users/877/rolandomys
 
 Connection and Authentication
 
+```
  --host <hostname> Connect to a remote host to perform tests (default: localhost)
  --socket <socket> Use a different socket for a local connection
  --port <port>     Port to use for connection (default: 3306)
  --user <username> Username to use for authentication
  --pass <password> Password to use for authentication
  --defaults-file <path> defaults file for credentials
+```
 
 Since you are using a remote host, use parameters to supply values from the OS
 
+```
  --forcemem <size>  Amount of RAM installed (in megabytes or with units, e.g. 15G, 1024M)
  --forceswap <size> Amount of swap memory configured (in megabytes or with units)
+```
 
 * You may have to contact your remote SysAdmin to ask how much RAM and swap you have
 
 If the database has too many tables, or very large table, use this:
 
+```
  --skipsize           Don't enumerate tables and their types/sizes (default: on)
                       (Recommended for servers with many tables)
+```
 
 **Question: Can I install this project using homebrew on Apple Macintosh?**
 
@@ -640,7 +650,7 @@ MySQLTuner and Vagrant
 **Vagrant File** is stored in Vagrant subdirectory.
 
 * Follow following step after vagrant installation:
-    $ vagrant up
+  * `$ vagrant up`
 
 **MySQLTuner** contains a Vagrant configurations for test purpose and development
 
@@ -648,14 +658,14 @@ MySQLTuner and Vagrant
   * <https://www.virtualbox.org/wiki/Downloads>
   * <https://www.vagrantup.com/downloads.html>
 * Clone repository
-  * git clone <https://github.com/jmrenouard/MySQLTuner-perl/.git>
+  * `git clone` <https://github.com/jmrenouard/MySQLTuner-perl/.git>
 * Install Vagrant plugins vagrant-hostmanager and  vagrant-vbguest
-  * vagrant plugin install vagrant-hostmanager
-  * vagrant plugin install vagrant-vbguest
+  * `vagrant plugin install vagrant-hostmanager`
+  * `vagrant plugin install vagrant-vbguest`
 * Add Fedora Core 30 box for official Fedora Download Website
-  * vagrant box add --name generic/fedora30
+  * `vagrant box add --name generic/fedora30`
 * Create a data directory
-  * mkdir data
+  * `mkdir data`
 
 ## setup test environments
 
