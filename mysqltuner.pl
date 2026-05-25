@@ -46,6 +46,7 @@ use warnings;
 
 use POSIX;
 use File::Spec;
+use File::Temp;
 use Getopt::Long;
 use Pod::Usage;
 use Sys::Hostname;
@@ -2196,11 +2197,15 @@ sub mysql_setup {
         || $opt{container}
         || $opt{'login-path'} )
     {
-        my $username = $opt{user} ? $opt{user} : "root";
+        my $username     = $opt{user} ? $opt{user} : "root";
+        my $escaped_pass = $opt{pass};
+        if ( defined $escaped_pass ) {
+            $escaped_pass =~ s/'/'\\''/g;
+        }
         $mysqllogin =
             "$defaults_options "
-          . ( ( $opt{user} ) ? "-u $username "   : " " )
-          . ( ( $opt{pass} ) ? "-p'$opt{pass}' " : " " )
+          . ( ( $opt{user} || $opt{pass} ) ? "-u $username "      : " " )
+          . ( ( $opt{pass} )               ? "-p'$escaped_pass' " : " " )
           . $remotestring;
         my $loginstatus =
           execute_system_command(
@@ -2419,7 +2424,9 @@ sub mysql_setup {
                     $mysqllogin .= " -p\"$password\"";
                 }
                 else {
-                    $mysqllogin .= " -p'$password'";
+                    my $escaped_password = $password;
+                    $escaped_password =~ s/'/'\\''/g;
+                    $mysqllogin .= " -p'$escaped_password'";
                 }
             }
             $mysqllogin .= $remotestring;
@@ -2832,8 +2839,13 @@ sub get_all_vars {
     my @mysqlstatlist = select_array("SHOW STATUS");
     push( @mysqlstatlist, select_array("SHOW GLOBAL STATUS") );
     arr2hash( \%mystat, \@mysqlstatlist );
-    adjust_aborted_connects();
-    $result{'Status'} = \%mystat;
+
+    my %mystat_raw = %mystat;
+    $result{'Status'} = \%mystat_raw;
+
+    my ( $aborted_adj, $conn_adj ) = adjust_aborted_connects();
+    $mystat{'Aborted_connects'} = $aborted_adj;
+    $mystat{'Connections'}      = $conn_adj;
     unless ( defined( $myvar{'innodb_support_xa'} ) ) {
         $myvar{'innodb_support_xa'} = 'ON';
     }
@@ -2996,24 +3008,38 @@ sub get_basic_passwords {
 }
 
 sub get_state_file_path {
-    my $tmpdir = $ENV{TEMP}   || $ENV{TMP} || '/tmp';
-    my $host   = $opt{host}   || 'localhost';
-    my $port   = $opt{port}   || '3306';
-    my $socket = $opt{socket} || '';
+    my $tmpdir    = $ENV{TEMP}       || $ENV{TMP} || '/tmp';
+    my $host      = $opt{host}       || 'localhost';
+    my $port      = $opt{port}       || '3306';
+    my $socket    = $opt{socket}     || '';
+    my $ssh_host  = $opt{'ssh-host'} || '';
+    my $container = $opt{container}  || '';
 
-    $host   =~ s/[^a-zA-Z0-9_\.-]/_/g;
-    $port   =~ s/[^a-zA-Z0-9_\.-]/_/g;
-    $socket =~ s/[^a-zA-Z0-9_\.-]/_/g;
+    $host      =~ s/[^a-zA-Z0-9_\.-]/_/g;
+    $port      =~ s/[^a-zA-Z0-9_\.-]/_/g;
+    $socket    =~ s/[^a-zA-Z0-9_\.-]/_/g;
+    $ssh_host  =~ s/[^a-zA-Z0-9_\.-]/_/g;
+    $container =~ s/[^a-zA-Z0-9_\.-]/_/g;
 
     my $filename = ".mysqltuner_${host}_${port}";
-    $filename .= "_${socket}" if $socket ne '';
+    $filename .= "_${socket}"              if $socket ne '';
+    $filename .= "_ssh_${ssh_host}"        if $ssh_host ne '';
+    $filename .= "_container_${container}" if $container ne '';
 
     return File::Spec->catfile( $tmpdir, $filename );
 }
 
 sub adjust_aborted_connects {
-    my $state_file = get_state_file_path();
-    return unless -f $state_file;
+    my $state_file           = get_state_file_path();
+    my $aborted_adjusted     = $mystat{'Aborted_connects'} // 0;
+    my $connections_adjusted = $mystat{'Connections'}      // 0;
+
+    return ( $aborted_adjusted, $connections_adjusted ) unless -f $state_file;
+    if ( -l $state_file ) {
+        debugprint
+          "State file is a symlink, skipping read to prevent symlink attack";
+        return ( $aborted_adjusted, $connections_adjusted );
+    }
 
     my $uptime = $mystat{'Uptime'} // 0;
 
@@ -3028,26 +3054,59 @@ sub adjust_aborted_connects {
 
             if ( $uptime >= $stored_uptime ) {
                 $previous_failed_attempts = $stored_attempts;
-                $mystat{'Aborted_connects'} -= $stored_attempts;
-                $mystat{'Connections'}      -= $stored_attempts;
+                $aborted_adjusted     -= $stored_attempts;
+                $connections_adjusted -= $stored_attempts;
 
-                $mystat{'Aborted_connects'} = 0
-                  if $mystat{'Aborted_connects'} < 0;
-                $mystat{'Connections'} = 0 if $mystat{'Connections'} < 0;
+                $aborted_adjusted     = 0 if $aborted_adjusted < 0;
+                $connections_adjusted = 0 if $connections_adjusted < 0;
             }
         }
     }
+    return ( $aborted_adjusted, $connections_adjusted );
 }
 
 sub save_aborted_connects_state {
     my $state_file = get_state_file_path();
-    my $uptime     = $mystat{'Uptime'} // 0;
+    if ( -l $state_file ) {
+        debugprint
+          "State file is a symlink, skipping write to prevent symlink attack";
+        return;
+    }
+
+    my $uptime = $mystat{'Uptime'} // 0;
     my $total_attempts =
       $previous_failed_attempts + $failed_connection_attempts;
 
-    if ( open( my $fh, '>', $state_file ) ) {
-        print $fh "$uptime:$total_attempts\n";
-        close($fh);
+    my $dir = dirname($state_file);
+    my ( $tmp_fh, $tmp_filename );
+    eval {
+        ( $tmp_fh, $tmp_filename ) = File::Temp::tempfile(
+            ".mysqltuner_tmp_XXXXXX",
+            DIR    => $dir,
+            UNLINK => 0
+        );
+    };
+    if ( $@ || !$tmp_fh ) {
+        debugprint "Failed to create temp file for state file: $@";
+        return;
+    }
+
+    chmod( 0600, $tmp_filename );
+
+    my $write_success = 0;
+    if ( print $tmp_fh "$uptime:$total_attempts\n" ) {
+        $write_success = 1;
+    }
+    close($tmp_fh);
+
+    if ($write_success) {
+        if ( !rename( $tmp_filename, $state_file ) ) {
+            debugprint "Failed to rename temp file to state file: $!";
+            unlink($tmp_filename);
+        }
+    }
+    else {
+        unlink($tmp_filename);
     }
 }
 
@@ -4552,7 +4611,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                                   );
                                 if ( $computed eq $target_hash ) {
                                     badprint
-"User '$user'\@'$host' is using weak password: $v (checked offline)";
+"User '$user'\@'$host' is using a weak password (checked offline)";
                                     push( @generalrec,
 "Set up a Secure Password for '$user'\@'$host' user."
                                     );
@@ -4608,7 +4667,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                                 );
                                 if ( $alive_res =~ /mysqld is alive/ ) {
                                     badprint
-"User '$target_user' is using weak password: $v";
+"User '$target_user' is using a weak password";
                                     push( @generalrec,
 "Set up a Secure Password for $target_user user."
                                     );
@@ -4672,7 +4731,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                             foreach my $line (@mysqlstatlist) {
                                 chomp($line);
                                 badprint "User '" . $line
-                                  . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
+                                  . "' is using a weak password (lower, upper or capitalize derivative version).";
                                 push( @generalrec,
 "Set up a Secure Password for $line user: SET PASSWORD FOR '"
                                       . ( split /@/, $line )[0] . "'\@'"
@@ -4694,7 +4753,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                             );
                             if ( $alive_res =~ /mysqld is alive/ ) {
                                 badprint
-"User '$target_user' is using weak password: $v";
+"User '$target_user' is using a weak password";
                                 push( @generalrec,
 "Set up a Secure Password for $target_user user."
                                 );
