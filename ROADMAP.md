@@ -68,8 +68,8 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Consolidated SQL Modeling & Naming Conventions**:
   * [x] Consolidated Primary Key naming, surrogate keys, table singular naming, and table/column casing checks into single-line counters in General recommendations.
   * [x] Implemented advanced dominant style detection and deviations audit for tables, views, indexes, and columns.
-* [ ] **CSV Export Enhancements**:
-  * [ ] Export naming convention deviations (tables, views, indexes, columns), primary key naming/surrogate key issues, missing foreign keys, JSON columns without virtual columns, and insecure authentication plugins to separate CSV files.
+* [x] **CSV Export Enhancements**:
+  * [x] Export naming convention deviations (tables, views, indexes, columns), primary key naming/surrogate key issues, missing foreign keys, JSON columns without virtual columns, and insecure authentication plugins to separate CSV files.
 * [/] **Security Hardening 2.0**:
   * [ ] Version-based CVE exposure detection (community-fed database).
   * [x] Advanced encryption-at-rest (TDE) and SSL/TLS cipher suite validation.
@@ -180,14 +180,14 @@ To ensure consistency and high-density development, the following roles are defi
 
 ### [Phase 13: Export Optimization & Dumpdir Hardening](file:///documentation/specifications/roadmap_phase_xiii_export_optimization.md)
 
-* [ ] **Export Performance Safeguards**:
-  * [ ] **Default Row Limit**: Implementation of a 50,000 rows default limit for all `dumpdir` exports to prevent database slowdowns.
-  * [ ] **Configurable Quotas**: Addition of `--dump-limit` option to allow user-defined row overrides.
-* [ ] **Metadata & Durability**:
-  * [ ] **Manifest Generation**: Automated generation of `manifest.json`/`metadata.txt` for better traceability of offline diagnostic snapshots.
+* [x] **Export Performance Safeguards**:
+  * [x] **Default Row Limit**: Implementation of a 50,000 rows default limit for all `dumpdir` exports to prevent database slowdowns.
+  * [x] **Configurable Quotas**: Addition of `--dump-limit` option to allow user-defined row overrides.
+* [/] **Metadata & Durability**:
+  * [x] **Manifest Generation**: Automated generation of `manifest.json`/`metadata.txt` for better traceability of offline diagnostic snapshots.
   * [ ] **I/O Latency Monitoring**: Real-time tracking of export duration per object with notices for slow disk subsystems.
-* [ ] **Compression & Efficiency**:
-  * [ ] **On-the-fly Compression**: Support for compressed `.gz` exports to minimize disk footprint in container/limited-storage environments.
+* [x] **Compression & Efficiency**:
+  * [x] **On-the-fly Compression**: Support for compressed `.gz` exports to minimize disk footprint in container/limited-storage environments.
 
 ## 🔮 Strategic Technical Evolutions
 

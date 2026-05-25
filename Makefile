@@ -73,6 +73,19 @@ generate_features:
 	git add ./FEATURES.md
 	git commit -m "docs: generate FEATURES.md" || echo "No changes to commit"
 
+release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "ERROR: VERSION is required. Usage: make release VERSION=X.XX.XX"; \
+		exit 1; \
+	fi
+	@OLD_VERSION=$$(cat CURRENT_VERSION.txt | tr -d '\n'); \
+	echo "Bumping version from $$OLD_VERSION to $(VERSION)..."; \
+	echo "$(VERSION)" > CURRENT_VERSION.txt; \
+	sed -i "s/$$OLD_VERSION/$(VERSION)/g" mysqltuner.pl README.md POTENTIAL_ISSUES.md MEMORY_DB.md Changelog; \
+	pod2markdown mysqltuner.pl > USAGE.md; \
+	python3 build/release_gen.py; \
+	echo "Version bumped to $(VERSION). USAGE.md and release notes generated."
+
 increment_sub_version:
 	@echo "Incrementing sub version from $(VERSION) to $(UPDATE_SUB_VERSION)"
 	sed -i "s/$(VERSION)/$(UPDATE_SUB_VERSION)/" mysqltuner.pl *.md .github/workflows/*.yml
@@ -128,6 +141,10 @@ test: vendor_setup
 test-all: vendor_setup
 	@echo "Running all MySQLTuner Lab Tests..."
 	bash build/test_envs.sh `perl build/get_supported_envs.pl`
+
+test-parallel: vendor_setup
+	@echo "Running MySQLTuner Parallel Lab Tests..."
+	bash build/parallel_test.sh
 
 test-container:
 	@echo "Running MySQLTuner against container: $(CONTAINER)..."
