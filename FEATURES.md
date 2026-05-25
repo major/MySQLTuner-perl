@@ -11,6 +11,7 @@ Features list for option: --feature (dev only)
 * display_health_score
 * execute_system_command
 * execute_system_command;
+* find_dominant_style
 * generate_auto_fix_snippets
 * historical_comparison
 * log_file_recommendations

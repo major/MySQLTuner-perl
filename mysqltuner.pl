@@ -4257,7 +4257,7 @@ sub check_auth_plugins {
       mysql_version_ge( 9, 0 ) && ( $myvar{'version'} !~ /MariaDB/i );
     my $is_mariadb = ( $myvar{'version'} =~ /MariaDB/i );
 
-    my $insecure_count = 0;
+    my $insecure_count        = 0;
     my $sha256_insecure_count = 0;
     foreach my $line (@mysqlstatlist) {
         my ( $user_host, $plugin ) = split( /\t/, $line );
@@ -4301,7 +4301,8 @@ sub check_auth_plugins {
         push @generalrec, $rec;
     }
     if ( $sha256_insecure_count > 0 ) {
-        push @generalrec, "Migrate to 'caching_sha2_password' for $sha256_insecure_count user(s) (using sha256_password)";
+        push @generalrec,
+"Migrate to 'caching_sha2_password' for $sha256_insecure_count user(s) (using sha256_password)";
     }
 
     if ( $insecure_count == 0 && $sha256_insecure_count == 0 ) {
@@ -8542,8 +8543,9 @@ WHERE t.TABLE_TYPE = 'BASE TABLE'
         if ( $column ne 'id' && $column ne "${table}_id" ) {
             badprint
 "Table $schema.$table: Primary key '$column' does not follow 'id' or '${table}_id' naming convention";
-            # push @generalrec,
-            # "Use 'id' or '${table}_id' for Primary Key naming in $schema.$table";
+
+         # push @generalrec,
+         # "Use 'id' or '${table}_id' for Primary Key naming in $schema.$table";
             push @modeling,
 "Table $schema.$table: Primary key '$column' does not follow naming convention (id or ${table}_id)";
             $pk_naming_issues_count++;
@@ -8568,8 +8570,9 @@ WHERE t.TABLE_TYPE = 'BASE TABLE'
             else {
                 badprint
 "Table $schema.$table: Primary key '$column' is not a recommended surrogate key (BIGINT UNSIGNED AUTO_INCREMENT)";
-                # push @generalrec,
-                # "Use BIGINT UNSIGNED AUTO_INCREMENT for Primary Keys in $schema.$table";
+
+      # push @generalrec,
+      # "Use BIGINT UNSIGNED AUTO_INCREMENT for Primary Keys in $schema.$table";
                 push @modeling,
 "Table $schema.$table: Primary key '$column' is not a recommended surrogate key (BIGINT UNSIGNED AUTO_INCREMENT)";
                 $bigint_pk_issues_count++;
@@ -8578,10 +8581,12 @@ WHERE t.TABLE_TYPE = 'BASE TABLE'
     }
 
     if ( $pk_naming_issues_count > 0 ) {
-        push @generalrec, "Use 'id' or '_<table>_id' for Primary Key naming in $pk_naming_issues_count table(s)";
+        push @generalrec,
+"Use 'id' or '_<table>_id' for Primary Key naming in $pk_naming_issues_count table(s)";
     }
     if ( $bigint_pk_issues_count > 0 ) {
-        push @generalrec, "Use BIGINT UNSIGNED AUTO_INCREMENT for Primary Keys in $bigint_pk_issues_count table(s)";
+        push @generalrec,
+"Use BIGINT UNSIGNED AUTO_INCREMENT for Primary Keys in $bigint_pk_issues_count table(s)";
     }
 
     # Large Tables (>1GB) without Secondary Indexes
@@ -8753,16 +8758,18 @@ sub mysql_80_modeling_checks {
         if ( scalar(@genCols) == 0 ) {
             infoprint
 "Table $schema.$table: JSON column '$column' detected without Virtual Generated Columns for indexing";
-            # push @generalrec,
-            # "Consider using Generated Columns to index frequently searched attributes in JSON column $schema.$table.$column";
+
+# push @generalrec,
+# "Consider using Generated Columns to index frequently searched attributes in JSON column $schema.$table.$column";
             push @modeling,
 "Table $schema.$table: JSON column '$column' detected without Virtual Generated Columns for indexing";
             $json_columns_without_virtual_count++;
             $modeling80Count++;
         }
     }
-    if ($json_columns_without_virtual_count > 0) {
-        push @generalrec, "Consider using Generated Columns to index frequently searched attributes in JSON column in $json_columns_without_virtual_count column(s)";
+    if ( $json_columns_without_virtual_count > 0 ) {
+        push @generalrec,
+"Consider using Generated Columns to index frequently searched attributes in JSON column in $json_columns_without_virtual_count column(s)";
     }
 
     # Invisible Indexes (MySQL: IS_VISIBLE='NO', MariaDB: IGNORED='YES')
@@ -8826,19 +8833,19 @@ sub get_compatible_styles {
     my ($name) = @_;
     return () unless defined $name && $name ne '';
     my @styles;
-    if ($name =~ /^[a-z0-9]+(?:_[a-z0-9]+)*$/) {
+    if ( $name =~ /^[a-z0-9]+(?:_[a-z0-9]+)*$/ ) {
         push @styles, 'snake_case';
     }
-    if ($name =~ /^[a-z0-9]+(?:[A-Z0-9][a-z0-9]*)*$/) {
+    if ( $name =~ /^[a-z0-9]+(?:[A-Z0-9][a-z0-9]*)*$/ ) {
         push @styles, 'camelCase';
     }
-    if ($name =~ /^[A-Z0-9][a-z0-9]*(?:[A-Z0-9][a-z0-9]*)*$/) {
+    if ( $name =~ /^[A-Z0-9][a-z0-9]*(?:[A-Z0-9][a-z0-9]*)*$/ ) {
         push @styles, 'PascalCase';
     }
-    if ($name =~ /^[a-z0-9]+(?:-[a-z0-9]+)*$/) {
+    if ( $name =~ /^[a-z0-9]+(?:-[a-z0-9]+)*$/ ) {
         push @styles, 'kebab-case';
     }
-    if ($name =~ /^[A-Z0-9]+(?:_[A-Z0-9]+)*$/) {
+    if ( $name =~ /^[A-Z0-9]+(?:_[A-Z0-9]+)*$/ ) {
         push @styles, 'UPPER_SNAKE_CASE';
     }
     return @styles;
@@ -8853,12 +8860,14 @@ sub find_dominant_style {
             $style_counts{$style}++;
         }
     }
-    my $dominant = 'snake_case'; # Default fallback
+    my $dominant  = 'snake_case';    # Default fallback
     my $max_count = 0;
-    foreach my $style (qw(snake_case camelCase PascalCase kebab-case UPPER_SNAKE_CASE)) {
-        if (($style_counts{$style} // 0) > $max_count) {
+    foreach my $style (
+        qw(snake_case camelCase PascalCase kebab-case UPPER_SNAKE_CASE))
+    {
+        if ( ( $style_counts{$style} // 0 ) > $max_count ) {
             $max_count = $style_counts{$style};
-            $dominant = $style;
+            $dominant  = $style;
         }
     }
     return $dominant;
@@ -8867,19 +8876,19 @@ sub find_dominant_style {
 sub mysql_naming_conventions {
     subheaderprint "Naming conventions analysis";
 
-    my $namingIssues = 0;
+    my $namingIssues              = 0;
     my $plural_table_issues_count = 0;
-    my $table_style_issues_count = 0;
-    my $view_style_issues_count = 0;
-    my $index_style_issues_count = 0;
+    my $table_style_issues_count  = 0;
+    my $view_style_issues_count   = 0;
+    my $index_style_issues_count  = 0;
     my $column_style_issues_count = 0;
 
     # Table Naming
     my @tables = select_array(
 "SELECT TABLE_SCHEMA, TABLE_NAME FROM information_schema.tables WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
     );
-    my @table_names = map { (split /\t/, $_)[1] // '' } @tables;
-    my $dominant_table_style = find_dominant_style(\@table_names);
+    my @table_names          = map { ( split /\t/, $_ )[1] // '' } @tables;
+    my $dominant_table_style = find_dominant_style( \@table_names );
 
     foreach my $t (@tables) {
         my ( $schema, $table ) = split /\t/, $t;
@@ -8892,6 +8901,7 @@ sub mysql_naming_conventions {
         {
             badprint
               "Table $schema.$table: Plural name detected (prefer singular)";
+
             # push @generalrec, "Use singular names for table $schema.$table";
             push @modeling,
               "Table $schema.$table: Plural name detected (prefer singular)";
@@ -8900,10 +8910,12 @@ sub mysql_naming_conventions {
         }
 
         # Casing check (detect CamelCase/PascalCase or other non-dominant)
-        my @compat = get_compatible_styles($table);
+        my @compat        = get_compatible_styles($table);
         my $is_compatible = grep { $_ eq $dominant_table_style } @compat;
-        if (!$is_compatible) {
-            badprint "Table $schema.$table: Non-${dominant_table_style} name detected";
+        if ( !$is_compatible ) {
+            badprint
+              "Table $schema.$table: Non-${dominant_table_style} name detected";
+
             # push @generalrec, "Use snake_case for table $schema.$table";
             push @modeling,
               "Table $schema.$table: Non-${dominant_table_style} name detected";
@@ -8916,19 +8928,21 @@ sub mysql_naming_conventions {
     my @views = select_array(
 "SELECT TABLE_SCHEMA, TABLE_NAME FROM information_schema.tables WHERE TABLE_TYPE = 'VIEW' AND TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
     );
-    my @view_names = map { (split /\t/, $_)[1] // '' } @views;
-    my $dominant_view_style = find_dominant_style(\@view_names);
+    my @view_names          = map { ( split /\t/, $_ )[1] // '' } @views;
+    my $dominant_view_style = find_dominant_style( \@view_names );
 
     foreach my $v (@views) {
         my ( $schema, $view ) = split /\t/, $v;
         $schema //= '';
-        $view  //= '';
+        $view   //= '';
 
-        my @compat = get_compatible_styles($view);
+        my @compat        = get_compatible_styles($view);
         my $is_compatible = grep { $_ eq $dominant_view_style } @compat;
-        if (!$is_compatible) {
-            badprint "View $schema.$view: Non-${dominant_view_style} name detected";
-            push @modeling, "View $schema.$view: Non-${dominant_view_style} name detected";
+        if ( !$is_compatible ) {
+            badprint
+              "View $schema.$view: Non-${dominant_view_style} name detected";
+            push @modeling,
+              "View $schema.$view: Non-${dominant_view_style} name detected";
             $view_style_issues_count++;
             $namingIssues++;
         }
@@ -8938,8 +8952,8 @@ sub mysql_naming_conventions {
     my @indexes = select_array(
 "SELECT DISTINCT TABLE_SCHEMA, TABLE_NAME, INDEX_NAME FROM information_schema.statistics WHERE INDEX_NAME != 'PRIMARY' AND TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
     );
-    my @index_names = map { (split /\t/, $_)[2] // '' } @indexes;
-    my $dominant_index_style = find_dominant_style(\@index_names);
+    my @index_names          = map { ( split /\t/, $_ )[2] // '' } @indexes;
+    my $dominant_index_style = find_dominant_style( \@index_names );
 
     foreach my $idx (@indexes) {
         my ( $schema, $table, $index ) = split /\t/, $idx;
@@ -8947,11 +8961,13 @@ sub mysql_naming_conventions {
         $table  //= '';
         $index  //= '';
 
-        my @compat = get_compatible_styles($index);
+        my @compat        = get_compatible_styles($index);
         my $is_compatible = grep { $_ eq $dominant_index_style } @compat;
-        if (!$is_compatible) {
-            badprint "Index $schema.$table.$index: Non-${dominant_index_style} name detected";
-            push @modeling, "Index $schema.$table.$index: Non-${dominant_index_style} name detected";
+        if ( !$is_compatible ) {
+            badprint
+"Index $schema.$table.$index: Non-${dominant_index_style} name detected";
+            push @modeling,
+"Index $schema.$table.$index: Non-${dominant_index_style} name detected";
             $index_style_issues_count++;
             $namingIssues++;
         }
@@ -8961,8 +8977,8 @@ sub mysql_naming_conventions {
     my @columns = select_array(
 "SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM information_schema.columns WHERE TABLE_SCHEMA NOT IN ('sys', 'mysql', 'performance_schema', 'information_schema')"
     );
-    my @column_names = map { (split /\t/, $_)[2] // '' } @columns;
-    my $dominant_column_style = find_dominant_style(\@column_names);
+    my @column_names          = map { ( split /\t/, $_ )[2] // '' } @columns;
+    my $dominant_column_style = find_dominant_style( \@column_names );
 
     foreach my $c (@columns) {
         my ( $schema, $table, $column, $datatype ) = split /\t/, $c;
@@ -8972,15 +8988,16 @@ sub mysql_naming_conventions {
         $datatype //= '';
 
         # Casing check
-        my @compat = get_compatible_styles($column);
+        my @compat        = get_compatible_styles($column);
         my $is_compatible = grep { $_ eq $dominant_column_style } @compat;
-        if (!$is_compatible) {
+        if ( !$is_compatible ) {
             badprint
-              "Column $schema.$table.$column: Non-${dominant_column_style} name detected";
+"Column $schema.$table.$column: Non-${dominant_column_style} name detected";
+
             # push @generalrec,
             #   "Use snake_case for column $schema.$table.$column";
             push @modeling,
-              "Column $schema.$table.$column: Non-${dominant_column_style} name detected";
+"Column $schema.$table.$column: Non-${dominant_column_style} name detected";
             $column_style_issues_count++;
             $namingIssues++;
         }
@@ -9010,20 +9027,25 @@ sub mysql_naming_conventions {
         }
     }
 
-    if ($plural_table_issues_count > 0) {
-        push @generalrec, "Use singular names for table in $plural_table_issues_count table(s)";
+    if ( $plural_table_issues_count > 0 ) {
+        push @generalrec,
+          "Use singular names for table in $plural_table_issues_count table(s)";
     }
-    if ($table_style_issues_count > 0) {
-        push @generalrec, "Use $dominant_table_style for table in $table_style_issues_count table(s)";
+    if ( $table_style_issues_count > 0 ) {
+        push @generalrec,
+"Use $dominant_table_style for table in $table_style_issues_count table(s)";
     }
-    if ($view_style_issues_count > 0) {
-        push @generalrec, "Use $dominant_view_style for view in $view_style_issues_count view(s)";
+    if ( $view_style_issues_count > 0 ) {
+        push @generalrec,
+"Use $dominant_view_style for view in $view_style_issues_count view(s)";
     }
-    if ($index_style_issues_count > 0) {
-        push @generalrec, "Use $dominant_index_style for index in $index_style_issues_count index(es)";
+    if ( $index_style_issues_count > 0 ) {
+        push @generalrec,
+"Use $dominant_index_style for index in $index_style_issues_count index(es)";
     }
-    if ($column_style_issues_count > 0) {
-        push @generalrec, "Use $dominant_column_style for column in $column_style_issues_count column(s)";
+    if ( $column_style_issues_count > 0 ) {
+        push @generalrec,
+"Use $dominant_column_style for column in $column_style_issues_count column(s)";
     }
 
     goodprint "No naming convention issues found" if $namingIssues == 0;
@@ -9055,6 +9077,7 @@ WHERE c.COLUMN_NAME LIKE '%_id'
 
         badprint
 "Column $schema.$table.$column ends in '_id' but has no FOREIGN KEY constraint";
+
         # push @generalrec,
         #   "Add FOREIGN KEY constraint to $schema.$table.$column";
         push @modeling,
@@ -9062,8 +9085,9 @@ WHERE c.COLUMN_NAME LIKE '%_id'
         $unconstrained_id_count++;
         $fkIssues++;
     }
-    if ($unconstrained_id_count > 0) {
-        push @generalrec, "Add FOREIGN KEY constraint to $unconstrained_id_count column(s)";
+    if ( $unconstrained_id_count > 0 ) {
+        push @generalrec,
+          "Add FOREIGN KEY constraint to $unconstrained_id_count column(s)";
     }
 
     # FK Actions
