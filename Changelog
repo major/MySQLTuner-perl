@@ -1,8 +1,11 @@
 # MySQLTuner Changelog
 
-2.8.42 2026-05-17
+2.8.42 2026-05-25
 
-- chore: bump version to 2.8.42
+- perf: optimize --dumpdir performance by excluding heavy RDS/Aurora and internal metrics.
+- fix: resolve fake aborted connections count increase during password strength checks (#900).
+- chore: bump version to 2.8.42.
+
 
 2.8.41 2026-05-17
 

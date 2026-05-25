@@ -19,6 +19,9 @@ Migrated several external commands to native Core Perl to reduce fork overhead a
 
 ### Recent Audits
 - **v2.8.42**: 
+  - Optimized `--dumpdir` analysis by skipping heavy views and AWS-specific metrics.
+  - Fixed fake aborted connections count increase when performing password strength checks (#900).
+- **v2.8.41**: 
   - Completed project-wide refactoring to use standard Perl Boolean practices.
   - Restored Debian maintenance account automatic login functionality (#896).
   - Improved memory calculation accuracy by including `tmp_table_size` in per-thread buffers (#864).
