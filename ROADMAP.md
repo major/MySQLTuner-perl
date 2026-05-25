@@ -197,7 +197,10 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Automated Changelog Formatting Verification**: Implement a Git pre-commit hook that automatically checks if the `Changelog` has been modified when changes of type `feat` or `fix` are detected, preventing commits without changelog documentation.
 * [ ] **Containerized Validation Runners**: Standardize local pre-flight checks by executing all verification steps (including unit tests and version consistency checks) inside a standardized, minimal Docker environment to avoid environmental differences between developer environments and CI.
 * [ ] **Interactive Release Orchestrator**: Create a script that automates the interactive selection of version bump categories (micro, minor, major), executes the version replacement across all 6 reference locations, and automatically runs the `release_gen.py` script to generate release notes in a single workflow step.
-
+* [ ] **Automated Release Notes Synchronization**: Create a script or Git hook that automatically extracts changes from the branch commits and populates the `Executive Summary` sections in both the `Changelog` and release notes to prevent manual synchronization omissions.
+* [ ] **Schema Validation for Release Artifacts**: Implement a CI step to parse and validate that markdown formats, issues referenced, and version definitions in the `releases/` directory are syntactically and logically correct before release tagging.
+* [ ] **Structured Roadmap Schema Validation**: Implement a markdown linter or schema validator specifically for the `ROADMAP.md` checklist syntax (verifying correct hyperlinks, file pathways, and category labels).
+* [ ] **Automated Status Checklist Sync**: Integrate a workflow script that automatically marks roadmap checklist items as completed (`[x]`) upon detection of related commit scopes (e.g. `feat(auth):` marking authentication items as done).
 
 ## 🤝 Contribution & Feedback
 

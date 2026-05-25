@@ -16,7 +16,9 @@ $main::devnull = File::Spec->devnull();
 {
     local @ARGV = ();
     no warnings 'redefine';
-    require './mysqltuner.pl';
+    my $script_dir = dirname(File::Spec->rel2abs(__FILE__));
+    my $script = File::Spec->catfile($script_dir, '..', 'mysqltuner.pl');
+    require $script;
 }
 
 # Mock functions
@@ -46,13 +48,22 @@ subtest 'get_state_file_path formatting' => sub {
     $main::opt{host} = '127.0.0.1';
     $main::opt{port} = 3306;
     $main::opt{socket} = undef;
+    $main::opt{'ssh-host'} = undef;
+    $main::opt{container} = undef;
     my $path = main::get_state_file_path();
-    like($path, qr/127\.0\.0\.1_3306/, 'Should format host and port in file path');
+    like($path, qr/127\.0\.0\.1_3306$/, 'Should format host and port in file path');
+
+    $main::opt{'ssh-host'} = 'ssh.example.com';
+    $main::opt{container} = 'my-container';
+    my $path_with_transport = main::get_state_file_path();
+    like($path_with_transport, qr/127\.0\.0\.1_3306_ssh_ssh\.example\.com_container_my-container$/, 'Should include sanitized ssh-host and container in path');
 };
 
 # 2. Test adjust_aborted_connects with simulated state
 subtest 'adjust_aborted_connects logic' => sub {
-    my $temp_state_file = File::Spec->catfile('tests', '.mysqltuner_test_state');
+    use File::Temp ();
+    my ($temp_fh, $temp_state_file) = File::Temp::tempfile(UNLINK => 1);
+    close($temp_fh);
     
     # Mock get_state_file_path to use our test state file
     no warnings 'redefine';
@@ -70,7 +81,7 @@ subtest 'adjust_aborted_connects logic' => sub {
     print $fh "100:620\n";
     close($fh);
 
-    main::adjust_aborted_connects();
+    ($main::mystat{'Aborted_connects'}, $main::mystat{'Connections'}) = main::adjust_aborted_connects();
 
     is($main::mystat{'Aborted_connects'}, 1000 - 620, 'Should subtract stored attempts from Aborted_connects');
     is($main::mystat{'Connections'}, 2000 - 620, 'Should subtract stored attempts from Connections');
@@ -89,22 +100,19 @@ subtest 'adjust_aborted_connects logic' => sub {
     print $fh "100:620\n";
     close($fh);
 
-    main::adjust_aborted_connects();
+    ($main::mystat{'Aborted_connects'}, $main::mystat{'Connections'}) = main::adjust_aborted_connects();
 
     is($main::mystat{'Aborted_connects'}, 10, 'Should not subtract stored attempts if server restarted');
     is($main::mystat{'Connections'}, 20, 'Should not subtract stored connections if server restarted');
     is($main::previous_failed_attempts, 0, 'previous_failed_attempts should remain 0');
-
-    # Cleanup
-    unlink($temp_state_file);
 };
 
 # 3. Test offline password check for mysql_native_password
 subtest 'offline password check logic' => sub {
-    my $pw_file = "tests/mock_passwords.txt";
-    open(my $fh, ">", $pw_file) or die $!;
-    print $fh "weakpassword123\n";
-    close($fh);
+    use File::Temp ();
+    my ($pw_fh, $pw_file) = File::Temp::tempfile(UNLINK => 1);
+    print $pw_fh "weakpassword123\n";
+    close($pw_fh);
 
     $main::basic_password_files = $pw_file;
     $main::myvar{'version'} = "8.0.25"; 
@@ -136,13 +144,82 @@ subtest 'offline password check logic' => sub {
 
     main::security_recommendations();
 
-    # Check if weak password was detected offline
-    my @found = grep { /User 'root'\@'hostname' is using weak password/ } @mock_output;
+    # Check if weak password was detected offline (without leaking password in message)
+    my @found = grep { /User 'root'\@'hostname' is using a weak password/ } @mock_output;
     ok(scalar(@found) > 0, 'Offline check detected weak native password');
     is($main::failed_connection_attempts, 3, 'Only 3 behavioral checks failed attempts should be recorded');
+};
 
-    # Cleanup
-    unlink($pw_file);
+# 4. Test security protections: symlinks, atomic writes, and password leaks
+subtest 'security protections checks' => sub {
+    # A. Ensure plaintext password is not leaked in mock outputs
+    my @leaked = grep { /weakpassword123/ } @mock_output;
+    is(scalar(@leaked), 0, 'Plaintext password should not be leaked in diagnostic messages');
+
+    # B. Symlink protection test
+    use File::Temp ();
+    my ($target_fh, $target_file) = File::Temp::tempfile(UNLINK => 1);
+    close($target_fh);
+
+    my $symlink_file = File::Spec->catfile(dirname($target_file), "mysqltuner_symlink_test_" . int(rand(100000)));
+    symlink($target_file, $symlink_file) or diag "Could not create symlink: $!";
+
+    if (-l $symlink_file) {
+        # Mock get_state_file_path to return the symlink
+        no warnings 'redefine';
+        local *main::get_state_file_path = sub { return $symlink_file; };
+
+        # Run adjust_aborted_connects
+        %main::mystat = (
+            'Uptime' => 500,
+            'Aborted_connects' => 1000,
+            'Connections' => 2000,
+        );
+        my ($ab_adj, $conn_adj) = main::adjust_aborted_connects();
+        is($ab_adj, 1000, 'adjust_aborted_connects should skip symlinks');
+
+        # Run save_aborted_connects_state
+        $main::failed_connection_attempts = 10;
+        main::save_aborted_connects_state();
+        
+        # Verify target file remained empty (did not write through symlink)
+        my $target_size = (stat($target_file))[7] // 0;
+        is($target_size, 0, 'save_aborted_connects_state should not write through symlink');
+        
+        unlink($symlink_file);
+    } else {
+        diag "Skipping symlink test: symlinks not supported on this OS";
+    }
+
+    # C. Atomic Write & Permissions check
+    my ($tmp_fh2, $test_state_file) = File::Temp::tempfile(UNLINK => 1);
+    close($tmp_fh2);
+    unlink($test_state_file); # ensure it doesn't exist yet
+
+    no warnings 'redefine';
+    local *main::get_state_file_path = sub { return $test_state_file; };
+
+    %main::mystat = ( 'Uptime' => 300 );
+    $main::previous_failed_attempts = 5;
+    $main::failed_connection_attempts = 15;
+
+    main::save_aborted_connects_state();
+
+    ok(-f $test_state_file, 'State file should be created');
+    if (-f $test_state_file) {
+        # Verify content
+        open(my $rfh, '<', $test_state_file);
+        my $content = <$rfh>;
+        close($rfh);
+        chomp($content) if defined $content;
+        is($content, "300:20", 'State file content should be uptime:total_attempts');
+
+        # Verify mode is 0600 (permission checks only on Unix-like OS)
+        if ($^O ne 'MSWin32') {
+            my $mode = (stat($test_state_file))[2];
+            is($mode & 07777, 0600, 'State file mode should be 0600');
+        }
+    }
 };
 
 done_testing();

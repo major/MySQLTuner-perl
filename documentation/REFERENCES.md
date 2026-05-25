@@ -32,7 +32,7 @@ This document contains a curated list of official documentation, engineering blo
 - **MySQL**: [Primary Key Optimization](https://dev.mysql.com/doc/refman/8.4/en/optimizing-primary-keys.html) - Surrogate keys, UUID indexing, and index traversal efficiency.
 - **MySQL**: [JSON Datatype Indexing](https://dev.mysql.com/doc/refman/8.4/en/create-table-secondary-indexes.html#json-column-indirect-index) - Secondary indexing via virtual generated columns.
 - **MariaDB**: [Invisible Indexes KB](https://mariadb.com/kb/en/invisible-indexes/) - Hiding indexes to test query planner changes.
-- **MySQLTuner-perl Specification**: [Naming Conventions & Style Compatibility](file:///documentation/AUTHENTICATION_PLUGINS.md) - Summary of naming styles.
+- **MySQLTuner-perl Specification**: [Naming Conventions & Style Compatibility](AUTHENTICATION_PLUGINS.md) - Summary of naming styles.
 
 ### 6. Replication, High Availability & Clustering
 - **MySQL**: [Group Replication & InnoDB Cluster](https://dev.mysql.com/doc/refman/8.4/en/mysql-innodb-cluster-introduction.html) - Multi-primary setups and flow control.

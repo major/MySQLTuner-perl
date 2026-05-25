@@ -45,7 +45,10 @@ subtest 'MySQL 8.0 - mysql_native_password deprecated' => sub {
     main::check_auth_plugins();
     
     ok(grep(/uses DEPRECATED plugin: mysql_native_password/, @badprints), 'Detected deprecated plugin on MySQL 8.0');
-    ok(grep(/Migrate to 'caching_sha2_password'/, $_), 'Recommendation for caching_sha2_password') for @main::secrec;
+    ok(scalar @main::secrec > 0, 'secrec has entries for deprecated plugin');
+    foreach my $s (@main::secrec) {
+        ok($s =~ /Migrate to 'caching_sha2_password'/, 'Recommendation for caching_sha2_password');
+    }
     is(scalar(grep { $_ eq "Migrate to 'caching_sha2_password' for 1 user(s)" } @main::generalrec), 1, 'Consolidated recommendation pushed to generalrec');
 };
 
@@ -88,7 +91,10 @@ subtest 'MariaDB 10.11 - mysql_native_password insecure' => sub {
     main::check_auth_plugins();
     
     ok(grep(/uses SHA-1 based insecure plugin: mysql_native_password/, @badprints), 'Detected insecure plugin on MariaDB');
-    ok(grep(/Migrate to 'ed25519' or 'unix_socket'/, $_), 'Recommendation for ed25519/unix_socket') for @main::secrec;
+    ok(scalar @main::secrec > 0, 'secrec has entries for insecure plugin');
+    foreach my $s (@main::secrec) {
+        ok($s =~ /Migrate to 'ed25519' or 'unix_socket'/, 'Recommendation for ed25519/unix_socket');
+    }
     is(scalar(grep { $_ eq "Migrate to 'ed25519' or 'unix_socket' for 1 user(s)" } @main::generalrec), 1, 'Consolidated recommendation pushed to generalrec');
 };
 
