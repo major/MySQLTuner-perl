@@ -95,6 +95,10 @@ subtest 'Primary Key Checks (Baseline + Advanced)' => sub {
     ok(has_output(qr/BAD: Table test_db.logs: UUID primary key 'log_uuid' is not optimized/), 'Non-optimized UUID detected');
     ok(has_output(qr/BAD: Table test_db.items: Primary key 'id' is not a recommended surrogate key/), 'Non-unsigned/auto_inc PK detected');
     ok(has_output(qr/BAD: Table test_db.big_table is large \(1073741825\) and has no secondary indexes/), 'Large table without secondary indexes detected');
+
+    # Consolidated generalrec checks
+    is(scalar(grep { $_ eq "Use 'id' or '_<table>_id' for Primary Key naming in 2 table(s)" } @main::generalrec), 1, 'Consolidated PK naming recommendation pushed');
+    is(scalar(grep { $_ eq "Use BIGINT UNSIGNED AUTO_INCREMENT for Primary Keys in 2 table(s)" } @main::generalrec), 1, 'Consolidated surrogate key recommendation pushed');
 };
 
 subtest 'Naming Convention Checks' => sub {
@@ -104,6 +108,14 @@ subtest 'Naming Convention Checks' => sub {
             "test_db\tusers",            # Plural (Bad)
             "test_db\torder_item",       # Snake + Singular (Good)
             "test_db\tOrderItem",        # camelCase (Bad)
+        ],
+        'tables.*TABLE_TYPE = \'VIEW\'' => [
+            "test_db\torder_view",       # snake_case (Good)
+            "test_db\tOrderView",        # camelCase (Bad)
+        ],
+        'statistics.*INDEX_NAME != \'PRIMARY\'' => [
+            "test_db\torder_item\tidx_shipped_at", # snake_case (Good)
+            "test_db\torder_item\tidxShippedAt",    # camelCase (Bad)
         ],
         'columns.*TABLE_SCHEMA NOT IN' => [
             "test_db\torder_item\tis_active\ttinyint(1)",  # Good boolean
@@ -115,15 +127,24 @@ subtest 'Naming Convention Checks' => sub {
     );
     @main::generalrec = ();
     @mock_output = ();
-    
+
     main::mysql_naming_conventions();
-    
+
     ok(has_output(qr/BAD: Table test_db.users: Plural name detected/), 'Plural table name detected');
     ok(has_output(qr/Table test_db.order_item: Plural name detected/) == 0, 'Singular table name ignored');
     ok(has_output(qr/BAD: Table test_db.OrderItem: Non-snake_case name detected/), 'camelCase table name detected');
+    ok(has_output(qr/BAD: View test_db.OrderView: Non-snake_case name detected/), 'camelCase view name detected');
+    ok(has_output(qr/BAD: Index test_db.order_item.idxShippedAt: Non-snake_case name detected/), 'camelCase index name detected');
     ok(has_output(qr/BAD: Column test_db.order_item.UserName: Non-snake_case name detected/), 'camelCase column name detected');
     ok(has_output(qr/INFO: Column test_db.order_item.active: Boolean-like column missing verbal prefix/), 'Missing boolean prefix detected');
     ok(has_output(qr/INFO: Column test_db.order_item.created: Date\/Time column missing explicit suffix/), 'Missing date suffix detected');
+
+    # General recommendations checks
+    is(scalar(grep { $_ eq "Use singular names for table in 1 table(s)" } @main::generalrec), 1, 'Consolidated table plural names recommendation pushed');
+    is(scalar(grep { $_ eq "Use snake_case for table in 1 table(s)" } @main::generalrec), 1, 'Consolidated table naming style recommendation pushed');
+    is(scalar(grep { $_ eq "Use snake_case for view in 1 view(s)" } @main::generalrec), 1, 'Consolidated view naming style recommendation pushed');
+    is(scalar(grep { $_ eq "Use snake_case for index in 1 index(es)" } @main::generalrec), 1, 'Consolidated index naming style recommendation pushed');
+    is(scalar(grep { $_ eq "Use snake_case for column in 1 column(s)" } @main::generalrec), 1, 'Consolidated column naming style recommendation pushed');
 };
 
 subtest 'Foreign Key Checks' => sub {
@@ -144,6 +165,9 @@ subtest 'Foreign Key Checks' => sub {
     
     ok(has_output(qr/BAD: Column test_db.orders.promo_id ends in '_id' but has no FOREIGN KEY/), 'Unconstrained _id column detected');
     ok(has_output(qr/INFO: Constraint on test_db.orders.user_id uses ON DELETE CASCADE/), 'CASCADE action detected');
+
+    # Consolidated check
+    is(scalar(grep { $_ eq "Add FOREIGN KEY constraint to 1 column(s)" } @main::generalrec), 1, 'Consolidated FK recommendation pushed');
 
     # FK Type Mismatch Test
     %mock_queries = (
@@ -204,6 +228,9 @@ subtest 'MySQL 8+ Specific Checks' => sub {
     
     ok(has_output(qr/INFO: Table test_db.products: JSON column 'attributes' detected without Virtual Generated Columns/), 'Unindexed JSON detected');
     ok(has_output(qr/INFO: Index test_db.users.idx_email_invisible is INVISIBLE/), 'Invisible index detected');
+
+    # Consolidated check
+    is(scalar(grep { $_ eq "Consider using Generated Columns to index frequently searched attributes in JSON column in 1 column(s)" } @main::generalrec), 1, 'Consolidated JSON column recommendation pushed');
 };
 
 subtest 'Data Type Optimization Checks' => sub {

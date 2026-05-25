@@ -65,9 +65,15 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Cluster & Replication Intelligence**:
   * [x] Root cause analysis for replication lag (IO/SQL thread contention).
   * [ ] GTID consistency checks and multi-source replication tuning.
+* [x] **Consolidated SQL Modeling & Naming Conventions**:
+  * [x] Consolidated Primary Key naming, surrogate keys, table singular naming, and table/column casing checks into single-line counters in General recommendations.
+  * [x] Implemented advanced dominant style detection and deviations audit for tables, views, indexes, and columns.
+* [ ] **CSV Export Enhancements**:
+  * [ ] Export naming convention deviations (tables, views, indexes, columns), primary key naming/surrogate key issues, missing foreign keys, JSON columns without virtual columns, and insecure authentication plugins to separate CSV files.
 * [/] **Security Hardening 2.0**:
   * [ ] Version-based CVE exposure detection (community-fed database).
   * [x] Advanced encryption-at-rest (TDE) and SSL/TLS cipher suite validation.
+  * [ ] **Extended Authentication Plugins Audit**: Verify password hashing methods against the extended plugins support matrix (including `mysql_native_password`, `mysql_old_password`, `sha256_password`, `caching_sha2_password`, `unix_socket`, `ed25519`, and the new MariaDB `parsec` plugin). See [AUTHENTICATION_PLUGINS.md](file:///documentation/AUTHENTICATION_PLUGINS.md).
 * [/] **Guided Auto-Fix Engine**:
   * [ ] Interactive mode to simulate configuration changes.
   * [x] Generation of ready-to-use `SET GLOBAL` or `my.cnf` snippets.
@@ -182,6 +188,16 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **I/O Latency Monitoring**: Real-time tracking of export duration per object with notices for slow disk subsystems.
 * [ ] **Compression & Efficiency**:
   * [ ] **On-the-fly Compression**: Support for compressed `.gz` exports to minimize disk footprint in container/limited-storage environments.
+
+## 🔮 Strategic Technical Evolutions
+
+* [ ] Set up a pipeline to automatically audit and verify reference link availability inside the repository documentation to prevent dead links.
+* [ ] Integrate standard documentation reference anchors dynamically within MySQLTuner CLI help screens and specific advisor output blocks.
+* [ ] Support localized versions of the reference documentation matching other translations of the script (e.g. Italian, French, Russian).
+* [ ] **Automated Changelog Formatting Verification**: Implement a Git pre-commit hook that automatically checks if the `Changelog` has been modified when changes of type `feat` or `fix` are detected, preventing commits without changelog documentation.
+* [ ] **Containerized Validation Runners**: Standardize local pre-flight checks by executing all verification steps (including unit tests and version consistency checks) inside a standardized, minimal Docker environment to avoid environmental differences between developer environments and CI.
+* [ ] **Interactive Release Orchestrator**: Create a script that automates the interactive selection of version bump categories (micro, minor, major), executes the version replacement across all 6 reference locations, and automatically runs the `release_gen.py` script to generate release notes in a single workflow step.
+
 
 ## 🤝 Contribution & Feedback
 
