@@ -11782,6 +11782,3 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # cperl-indent-level: 8
 # perl-indent-level: 8
 # End:
-vel: 8
-# perl-indent-level: 8
-# End:
