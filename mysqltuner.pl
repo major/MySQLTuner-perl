@@ -70,6 +70,8 @@ our $tunerversion = "2.8.42";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
+our $failed_connection_attempts = 0;
+our $previous_failed_attempts   = 0;
 
 # Set defaults
 # Central metadata for CLI options
@@ -2830,6 +2832,7 @@ sub get_all_vars {
     my @mysqlstatlist = select_array("SHOW STATUS");
     push( @mysqlstatlist, select_array("SHOW GLOBAL STATUS") );
     arr2hash( \%mystat, \@mysqlstatlist );
+    adjust_aborted_connects();
     $result{'Status'} = \%mystat;
     unless ( defined( $myvar{'innodb_support_xa'} ) ) {
         $myvar{'innodb_support_xa'} = 'ON';
@@ -2990,6 +2993,62 @@ sub get_file_contents {
 
 sub get_basic_passwords {
     return get_file_contents(shift);
+}
+
+sub get_state_file_path {
+    my $tmpdir = $ENV{TEMP}   || $ENV{TMP} || '/tmp';
+    my $host   = $opt{host}   || 'localhost';
+    my $port   = $opt{port}   || '3306';
+    my $socket = $opt{socket} || '';
+
+    $host   =~ s/[^a-zA-Z0-9_\.-]/_/g;
+    $port   =~ s/[^a-zA-Z0-9_\.-]/_/g;
+    $socket =~ s/[^a-zA-Z0-9_\.-]/_/g;
+
+    my $filename = ".mysqltuner_${host}_${port}";
+    $filename .= "_${socket}" if $socket ne '';
+
+    return File::Spec->catfile( $tmpdir, $filename );
+}
+
+sub adjust_aborted_connects {
+    my $state_file = get_state_file_path();
+    return unless -f $state_file;
+
+    my $uptime = $mystat{'Uptime'} // 0;
+
+    if ( open( my $fh, '<', $state_file ) ) {
+        my $line = <$fh>;
+        close($fh);
+        if ( defined $line ) {
+            chomp($line);
+            my ( $stored_uptime, $stored_attempts ) = split( ':', $line );
+            $stored_uptime   //= 0;
+            $stored_attempts //= 0;
+
+            if ( $uptime >= $stored_uptime ) {
+                $previous_failed_attempts = $stored_attempts;
+                $mystat{'Aborted_connects'} -= $stored_attempts;
+                $mystat{'Connections'}      -= $stored_attempts;
+
+                $mystat{'Aborted_connects'} = 0
+                  if $mystat{'Aborted_connects'} < 0;
+                $mystat{'Connections'} = 0 if $mystat{'Connections'} < 0;
+            }
+        }
+    }
+}
+
+sub save_aborted_connects_state {
+    my $state_file = get_state_file_path();
+    my $uptime     = $mystat{'Uptime'} // 0;
+    my $total_attempts =
+      $previous_failed_attempts + $failed_connection_attempts;
+
+    if ( open( my $fh, '>', $state_file ) ) {
+        print $fh "$uptime:$total_attempts\n";
+        close($fh);
+    }
 }
 
 sub get_log_file_real_path {
@@ -4420,87 +4479,224 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                 $skip_dict_check = 1;
                 last;
             }
+            else {
+                $failed_connection_attempts++;
+            }
         }
 
         unless ($skip_dict_check) {
-            foreach my $pass (@passwords) {
-                $nbInterPass++;
-                last if $nbInterPass > $opt{'max-password-checks'};
-                if ( $nbInterPass % 100 == 0 ) {
-                    if ( $myvar{'version'} !~ /mariadb/i
-                        && mysql_version_ge( 8, 0, 0 ) )
+
+            # Let's check if we can query user list and plugins
+            my @users_db;
+            if (
+                mysql_version_ge(8)
+                || ( $myvar{'version'} =~ /mariadb/i
+                    && mysql_version_ge( 10, 4 ) )
+              )
+            {
+                if ( $myvar{'version'} =~ /mariadb/i ) {
+                    @users_db = select_array(
+"SELECT user, host, JSON_VALUE(Priv, '\$.plugin'), JSON_VALUE(Priv, '\$.authentication_string') FROM mysql.global_priv WHERE user != ''"
+                    );
+                }
+                else {
+                    @users_db = select_array(
+"SELECT user, host, plugin, authentication_string FROM mysql.user WHERE user != ''"
+                    );
+                }
+            }
+
+            my $has_digest_sha      = eval { require Digest::SHA; 1; };
+            my $checked_target_user = 0;
+
+            if (@users_db) {
+
+ # We successfully read the user table. Check all native password users offline!
+                foreach my $user_line (@users_db) {
+                    my ( $user, $host, $plugin, $auth_string ) =
+                      split( /\t/, $user_line );
+                    next unless defined $user && $user ne '';
+                    $plugin      //= '';
+                    $auth_string //= '';
+
+                    if (
+                        $has_digest_sha
+                        && (   $plugin eq 'mysql_native_password'
+                            || $auth_string =~ /^\*[0-9A-F]{40}$/i )
+                      )
                     {
-                        if ( ( $myvar{'performance_schema'} // 'OFF' ) eq 'ON' )
+                        my $target_hash = uc($auth_string);
+                        my $found_weak  = 0;
+                        foreach my $pass (@passwords) {
+                            $pass =~ s/\s//g;
+                            chomp($pass);
+                            my @variants = ( $pass, uc($pass), ucfirst($pass) );
+                            foreach my $v (@variants) {
+                                my $computed = '*'
+                                  . uc(
+                                    Digest::SHA::sha1_hex(
+                                        Digest::SHA::sha1($v)
+                                    )
+                                  );
+                                if ( $computed eq $target_hash ) {
+                                    badprint
+"User '$user'\@'$host' is using weak password: $v (checked offline)";
+                                    push( @generalrec,
+"Set up a Secure Password for '$user'\@'$host' user."
+                                    );
+                                    $nbins++;
+                                    $found_weak = 1;
+                                    last;
+                                }
+                            }
+                            last if $found_weak;
+                        }
+                        if ( $user eq $target_user ) {
+                            $checked_target_user = 1;
+                        }
+                    }
+                    elsif ( $user eq $target_user ) {
+
+            # Non-native user (like caching_sha2_password), do connection checks
+                        my $found_weak = 0;
+                        foreach my $pass (@passwords) {
+                            $nbInterPass++;
+                            last if $nbInterPass > $opt{'max-password-checks'};
+                            if ( $nbInterPass % 100 == 0 ) {
+                                if ( $myvar{'version'} !~ /mariadb/i
+                                    && mysql_version_ge( 8, 0, 0 ) )
+                                {
+                                    if (
+                                        (
+                                            $myvar{'performance_schema'}
+                                            // 'OFF'
+                                        ) eq 'ON'
+                                      )
+                                    {
+                                        select_one(
+"TRUNCATE TABLE performance_schema.host_cache;"
+                                        );
+                                    }
+                                }
+                                else {
+                                    select_one("FLUSH HOSTS;");
+                                }
+                            }
+
+                            $pass =~ s/\s//g;
+                            $pass =~ s/\'/\\\'/g;
+                            chomp($pass);
+
+                            my @variants = ( $pass, uc($pass), ucfirst($pass) );
+                            foreach my $v (@variants) {
+                                my $check_login =
+                                  "$mysqllogin -u $target_user -p'$v'";
+                                my $alive_res = execute_system_command(
+"$mysqlcmd -Nrs -e 'select \"mysqld is alive\";' $check_login 2>$devnull"
+                                );
+                                if ( $alive_res =~ /mysqld is alive/ ) {
+                                    badprint
+"User '$target_user' is using weak password: $v";
+                                    push( @generalrec,
+"Set up a Secure Password for $target_user user."
+                                    );
+                                    $nbins++;
+                                    $found_weak = 1;
+                                    last;
+                                }
+                                else {
+                                    $failed_connection_attempts++;
+                                }
+                            }
+                            last if $found_weak;
+                        }
+                        $checked_target_user = 1;
+                    }
+                }
+            }
+
+# Fallback connection check if we couldn't query mysql.user or target user was not found/checked
+            if ( !$checked_target_user ) {
+                foreach my $pass (@passwords) {
+                    $nbInterPass++;
+                    last if $nbInterPass > $opt{'max-password-checks'};
+                    if ( $nbInterPass % 100 == 0 ) {
+                        if ( $myvar{'version'} !~ /mariadb/i
+                            && mysql_version_ge( 8, 0, 0 ) )
                         {
-                            select_one(
-                                "TRUNCATE TABLE performance_schema.host_cache;"
-                            );
+                            if ( ( $myvar{'performance_schema'} // 'OFF' ) eq
+                                'ON' )
+                            {
+                                select_one(
+"TRUNCATE TABLE performance_schema.host_cache;"
+                                );
+                            }
+                        }
+                        else {
+                            select_one("FLUSH HOSTS;");
+                        }
+                    }
+
+                    $pass =~ s/\s//g;
+                    $pass =~ s/\'/\\\'/g;
+                    chomp($pass);
+
+                    if ( !mysql_version_ge(8) ) {
+
+               # Looking for User with user/ uppercase /capitalise weak password
+                        @mysqlstatlist = select_array(
+"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = PASSWORD('"
+                              . $pass
+                              . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
+                              . $pass
+                              . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
+                              . $pass
+                              . "', 1)), SUBSTRING('"
+                              . $pass
+                              . "', 2, LENGTH('"
+                              . $pass
+                              . "'))))" );
+                        if (@mysqlstatlist) {
+                            foreach my $line (@mysqlstatlist) {
+                                chomp($line);
+                                badprint "User '" . $line
+                                  . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
+                                push( @generalrec,
+"Set up a Secure Password for $line user: SET PASSWORD FOR '"
+                                      . ( split /@/, $line )[0] . "'\@'"
+                                      . ( split /@/, $line )[1]
+                                      . "' = PASSWORD('secure_password');" );
+                                $nbins++;
+                            }
                         }
                     }
                     else {
-                        select_one("FLUSH HOSTS;");
-                    }
-                }
-
-                $pass =~ s/\s//g;
-                $pass =~ s/\'/\\\'/g;
-                chomp($pass);
-
-                if ( !mysql_version_ge(8) ) {
-
-               # Looking for User with user/ uppercase /capitalise weak password
-                    @mysqlstatlist =
-                      select_array
-"SELECT CONCAT(user, '\@', host) FROM mysql.user WHERE $PASS_COLUMN_NAME = PASSWORD('"
-                      . $pass
-                      . "') OR $PASS_COLUMN_NAME = PASSWORD(UPPER('"
-                      . $pass
-                      . "')) OR $PASS_COLUMN_NAME = PASSWORD(CONCAT(UPPER(LEFT('"
-                      . $pass
-                      . "', 1)), SUBSTRING('"
-                      . $pass
-                      . "', 2, LENGTH('"
-                      . $pass . "'))))";
-                    debugprint "There are "
-                      . scalar(@mysqlstatlist)
-                      . " items.";
-                    if (@mysqlstatlist) {
-                        foreach my $line (@mysqlstatlist) {
-                            chomp($line);
-                            badprint "User '" . $line
-                              . "' is using weak password: $pass in a lower, upper or capitalize derivative version.";
-
-                            push( @generalrec,
-"Set up a Secure Password for $line user: SET PASSWORD FOR '"
-                                  . ( split /@/, $line )[0] . "'\@'"
-                                  . ( split /@/, $line )[1]
-                                  . "' = PASSWORD('secure_password');" );
-                            $nbins++;
-                        }
-                    }
-                }
-                else {
-                    # New way to check basic password for MySQL 8.0+
-                    my $target_user = $opt{user} || 'root';
-                    my @variants    = ( $pass, uc($pass), ucfirst($pass) );
-                    foreach my $v (@variants) {
-                        my $check_login = "$mysqllogin -u $target_user -p'$v'";
-                        my $alive_res   = execute_system_command(
+                        # New way to check basic password for MySQL 8.0+
+                        my $found_weak = 0;
+                        my @variants   = ( $pass, uc($pass), ucfirst($pass) );
+                        foreach my $v (@variants) {
+                            my $check_login =
+                              "$mysqllogin -u $target_user -p'$v'";
+                            my $alive_res = execute_system_command(
 "$mysqlcmd -Nrs -e 'select \"mysqld is alive\";' $check_login 2>$devnull"
-                        );
-                        if ( $alive_res =~ /mysqld is alive/ ) {
-                            badprint
-                              "User '$target_user' is using weak password: $v";
-                            push( @generalrec,
-"Set up a Secure Password for $target_user user."
                             );
-                            $nbins++;
-                            last;
+                            if ( $alive_res =~ /mysqld is alive/ ) {
+                                badprint
+"User '$target_user' is using weak password: $v";
+                                push( @generalrec,
+"Set up a Secure Password for $target_user user."
+                                );
+                                $nbins++;
+                                $found_weak = 1;
+                                last;
+                            }
+                            else {
+                                $failed_connection_attempts++;
+                            }
                         }
+                        last if $found_weak;
                     }
                 }
-                debugprint "$nbInterPass / " . scalar(@passwords)
-                  if ( $nbInterPass % 1000 == 0 );
             }
         }
     }
@@ -4511,6 +4707,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
     }
 
     check_auth_plugins();
+    save_aborted_connects_state();
 }
 
 sub get_replication_status {
@@ -11226,8 +11423,9 @@ sub dump_csv_files {
     # Store all sys schema in dumpdir if defined
     infoprint("Dumping sys schema");
     for my $sys_view ( select_array('use sys;show tables;') ) {
-        if ( $sys_view =~ /innodb_buffer_stats/ or 
-             $sys_view =~ /schema_table_statistics_with_buffer/ ) {
+        if (   $sys_view =~ /innodb_buffer_stats/
+            or $sys_view =~ /schema_table_statistics_with_buffer/ )
+        {
             infoprint("SKIPPING $sys_view");
             next;
         }
@@ -11242,12 +11440,13 @@ sub dump_csv_files {
     infoprint("Dumping information schema");
     for my $info_s_table ( select_array('use information_schema;show tables;') )
     {
-        if ( $info_s_table =~ /INNODB_BUFFER_PAGE/ or 
-             $info_s_table =~ /RDS_CONTROL_PERFORMANCE_INSIGHTS_STATUS/ or
-             $info_s_table =~ /RDS_METRICS_COUNTER/ or
-             $info_s_table =~ /RDS_METRICS_GAUGE/) {
-             infoprint("SKIPPING $info_s_table");
-             next;
+        if (   $info_s_table =~ /INNODB_BUFFER_PAGE/
+            or $info_s_table =~ /RDS_CONTROL_PERFORMANCE_INSIGHTS_STATUS/
+            or $info_s_table =~ /RDS_METRICS_COUNTER/
+            or $info_s_table =~ /RDS_METRICS_GAUGE/ )
+        {
+            infoprint("SKIPPING $info_s_table");
+            next;
         }
         infoprint "Dumping $info_s_table into $opt{dumpdir}";
         select_csv_file(
