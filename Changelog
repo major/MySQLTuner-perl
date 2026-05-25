@@ -2,10 +2,11 @@
 
 2.8.42 2026-05-25
 
-- perf: optimize --dumpdir performance by excluding heavy RDS/Aurora and internal metrics.
-- fix: resolve fake aborted connections count increase during password strength checks (#900).
-- ci: optimize release notes generation to isolate branch changes.
 - chore: bump version to 2.8.42.
+- fix: resolve fake aborted connections count increase during password strength checks (#900).
+- fix: resolve EOF metadata corruption and duplicated configurations in Emacs block (#904).
+- ci: optimize release notes generation to isolate branch changes.
+- perf: optimize --dumpdir performance by excluding heavy RDS/Aurora and internal metrics.
 
 
 2.8.41 2026-05-17
