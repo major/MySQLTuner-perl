@@ -148,7 +148,7 @@ The following external commands are currently used via `execute_system_command` 
 - [x] **Unit Tests Stability**: 100% pass (53 files, 262 tests).
 - [x] **Regression Cleanliness**: No new `uninitialized value` or `Syntax error` found in Standard, Dumpdir, or Schemadir scenarios.
 
-## [2026-04-13 Audit] Development v2.8.41
+## [2026-05-17 Audit] Development v2.8.41
 
 ### [v2.8.41] Laboratory Verification
 
@@ -167,3 +167,12 @@ The following external commands are currently used via `execute_system_command` 
 - [x] **SQL Execution Failure**: Discovered during audit.
   - Found in: `examples/20260429_112608_mysql96/Container/execution.log` (Line 10 and 12).
   - Fix: MySQL 9.x `mysql` client removed support for `\G` and `\s` in batch mode (`-e`). Replaced `\G` with `-E` flag natively in `select_array` and `select_one_g`. Skipped error prints for `\s` if it fails natively.
+
+## [2026-05-25 Audit] Development v2.8.42
+
+### [v2.8.42] Laboratory Verification
+
+- [x] **Unit Tests Stability**: 100% pass (54 files, 265 tests).
+- [x] **Aborted Connections Counter Fix**: Verified via unit tests (`tests/test_issue_900.t`) that the fake aborted connections increase during password strength checking is successfully prevented.
+- [x] **Dumpdir Exclusions**: Verified that heavy tables/views are successfully skipped to avoid query timeouts.
+

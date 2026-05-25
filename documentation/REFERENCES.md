@@ -1,66 +1,77 @@
-# MySQL, MariaDB and Percona References
+# MySQL, MariaDB, and Percona Reference Library
 
-This document provides a curated list of official documentations, specialized blogs, and expert resources for MySQL, MariaDB, and Percona Server.
+This document contains a curated list of official documentation, engineering blogs, and expert deep-dives for MySQL, MariaDB, and Percona Server. It serves as a solid baseline for all database performance tuning, security hardening, and SQL modeling practices implemented in MySQLTuner-perl.
 
-## 🏛️ Official Documentations by Theme
+---
 
-### 🚀 Optimization & Performance Tuning
-- **MySQL**: [Optimization Chapter](https://dev.mysql.com/doc/refman/8.4/en/optimization.html) (SQL, Data, I/O, Memory)
-- **MariaDB**: [Optimization and Tuning KB](https://mariadb.com/kb/en/optimization-and-tuning/)
-- **Percona**: [MySQL Performance Optimization Basics](https://www.percona.com/blog/mysql-performance-optimization-basics-2024/)
-- **Percona**: [PMM (Monitoring & Management) Documentation](https://www.percona.com/doc/percona-monitoring-and-management/latest/index.html)
+## 🏛️ Official Documentations by Topic
 
-### 🛡️ Security & Access Control
-- **MySQL**: [Security Chapter](https://dev.mysql.com/doc/refman/8.4/en/security.html) (Access Control, SSL/TLS)
-- **MariaDB**: [User and Server Security KB](https://mariadb.com/kb/en/user-server-security/)
-- **Percona**: [Security Best Practices for MySQL](https://www.percona.com/blog/mysql-security-best-practices-2024/)
-- **MySQL**: [Password Validation Plugin](https://dev.mysql.com/doc/refman/8.4/en/password-validation.html)
+### 1. Memory Management & Connection Tuning
+- **MySQL**: [Memory Usage Tuning](https://dev.mysql.com/doc/refman/8.4/en/memory-use.html) - Understanding global vs. per-thread buffers.
+- **MySQL**: [How MySQL Uses Memory](https://dev.mysql.com/doc/refman/8.4/en/memory-use.html) - Detailed breakdown of join buffers, sort buffers, and thread caches.
+- **MySQL**: [Thread Cache Tuning](https://dev.mysql.com/doc/refman/8.4/en/connection-threads.html) - Optimizing connection management and thread reuse.
+- **MariaDB**: [Connection & Thread Cache KB](https://mariadb.com/kb/en/thread-cached-variables/) - Thread pooling and system variables.
 
-### ⚙️ Administration & Configuration
-- **MySQL**: [Server Administration](https://dev.mysql.com/doc/refman/8.4/en/admin-scripts.html)
-- **MariaDB**: [Server System Variables](https://mariadb.com/kb/en/server-system-variables/)
-- **Percona**: [Percona Server Configuration](https://www.percona.com/doc/percona-server/latest/configuration.html)
-- **MySQL**: [Status Variables](https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html)
+### 2. Table Cache & File Descriptors
+- **MySQL**: [Table Cache Configuration](https://dev.mysql.com/doc/refman/8.4/en/table-cache.html) - Tuning `table_open_cache` and `table_definition_cache`.
+- **MySQL**: [How MySQL Opens and Closes Tables](https://dev.mysql.com/doc/refman/8.4/en/table-cache.html) - Diagnostic details for file descriptor exhaustion.
+- **MariaDB**: [Table Design and Performance KB](https://mariadb.com/kb/en/table-cache/) - Optimizing file usage.
 
-### 💾 Backup, Restore & Disaster Recovery
-- **MySQL**: [Backup and Recovery Guide](https://dev.mysql.com/doc/refman/8.4/en/backup-and-recovery.html)
-- **MariaDB**: [Backup and Restore KB](https://mariadb.com/kb/en/backup-and-restore-overview/)
-- **Percona**: [Percona XtraBackup Documentation](https://www.percona.com/doc/percona-xtrabackup/latest/index.html)
-- **MySQL**: [MySQL Enterprise Backup (MEB)](https://dev.mysql.com/doc/mysql-enterprise-backup/en/)
+### 3. Temporary Tables & Performance Schema
+- **MySQL**: [Internal Temporary Table Use](https://dev.mysql.com/doc/refman/8.4/en/internal-temporary-tables.html) - Memory vs. disk tmp tables (`tmp_table_size`, `max_heap_table_size`).
+- **MySQL**: [Performance Schema Startup Configuration](https://dev.mysql.com/doc/refman/8.4/en/performance-schema-startup-configuration.html) - Enabling wait events and query statistics.
+- **MariaDB**: [Memory Storage Engine KB](https://mariadb.com/kb/en/memory-storage-engine/) - Dynamic memory allocations.
 
-### ⛓️ High Availability, Replication & Clustering
-- **MySQL**: [Replication Guide](https://dev.mysql.com/doc/refman/8.4/en/replication.html) (Asynchronous, Semi-sync, GTID)
-- **MySQL**: [InnoDB Cluster / Group Replication](https://dev.mysql.com/doc/refman/8.4/en/mysql-innodb-cluster-introduction.html)
-- **MariaDB**: [Replication KB](https://mariadb.com/kb/en/replication/)
-- **MariaDB**: [Galera Cluster Documentation](https://mariadb.com/kb/en/galera-cluster/)
-- **Percona**: [Percona XtraDB Cluster (PXC)](https://www.percona.com/doc/percona-xtradb-cluster/8.0/index.html)
+### 4. Storage Engine Architecture & Metrics
+- **MySQL**: [InnoDB Performance & Tuning](https://dev.mysql.com/doc/refman/8.4/en/innodb-performance.html) - Redo log capacity, flushing algorithms, buffer pools.
+- **MySQL**: [MyISAM Key Buffer Tuning](https://dev.mysql.com/doc/refman/8.4/en/myisam-key-cache.html) - In-memory indexing configurations for MyISAM.
+- **MariaDB**: [Aria Storage Engine KB](https://mariadb.com/kb/en/aria-storage-engine/) - Checking page caches and crash recovery.
+- **Percona**: [MyRocks Engine Documentation](https://www.percona.com/doc/percona-server/8.0/myrocks/index.html) - Log-structured merge-tree (LSM) storage tuning.
 
-### 🏗️ Storage Engines & Architecture
-- **MySQL**: [Alternative Storage Engines](https://dev.mysql.com/doc/refman/8.4/en/storage-engines.html)
-- **MariaDB**: [Storage Engines KB](https://mariadb.com/kb/en/storage-engines/)
-- **Percona**: [XtraDB (Enhanced InnoDB)](https://www.percona.com/doc/percona-server/8.0/innodb/xtradb.html)
-- **Percona**: [MyRocks Documentation](https://www.percona.com/doc/percona-server/8.0/myrocks/index.html)
+### 5. SQL Modeling & Schema Design
+- **MySQL**: [Primary Key Optimization](https://dev.mysql.com/doc/refman/8.4/en/optimizing-primary-keys.html) - Surrogate keys, UUID indexing, and index traversal efficiency.
+- **MySQL**: [JSON Datatype Indexing](https://dev.mysql.com/doc/refman/8.4/en/create-table-secondary-indexes.html#json-column-indirect-index) - Secondary indexing via virtual generated columns.
+- **MariaDB**: [Invisible Indexes KB](https://mariadb.com/kb/en/invisible-indexes/) - Hiding indexes to test query planner changes.
+- **MySQLTuner-perl Specification**: [Naming Conventions & Style Compatibility](file:///documentation/AUTHENTICATION_PLUGINS.md) - Summary of naming styles.
 
-## 🏎️ Product Blogs & Engineering
+### 6. Replication, High Availability & Clustering
+- **MySQL**: [Group Replication & InnoDB Cluster](https://dev.mysql.com/doc/refman/8.4/en/mysql-innodb-cluster-introduction.html) - Multi-primary setups and flow control.
+- **MySQL**: [GTID Replication Guide](https://dev.mysql.com/doc/refman/8.4/en/replication-gtids.html) - Ensuring transactional consistency.
+- **MariaDB**: [Galera Cluster Flow Control KB](https://mariadb.com/kb/en/galera-cluster-flow-control-variables/) - Managing queue sizes and replica threads.
+- **Percona**: [Percona XtraDB Cluster (PXC) Guide](https://www.percona.com/doc/percona-xtradb-cluster/8.0/index.html) - High availability synchronous replication.
 
-- [MySQL Server Blog](https://dev.mysql.com/blog/) - News from the MySQL Team (Oracle)
-- [MariaDB Foundation Blog](https://mariadb.org/blog/) - Development updates and foundation news
-- [Percona Database Performance Blog](https://www.percona.com/blog/) - Deep dives into performance and troubleshooting
+### 7. Security, Authentication & Access Control
+- **MySQL**: [Authentication Plugins Reference](https://dev.mysql.com/doc/refman/8.4/en/authentication-plugins.html) - Cryptographic hashing algorithms and client validation.
+- **MySQL**: [caching_sha2_password Transition Guide](https://dev.mysql.com/doc/refman/8.0/en/caching-sha2-pluggable-authentication.html) - Migration from historical SHA-1 plugins.
+- **MariaDB**: [User Security & Authentication KB](https://mariadb.com/kb/en/user-server-security/) - Socket, Ed25519, and PARSEC plugin specifications.
+- **Percona**: [MySQL Security Hardening Checklist](https://www.percona.com/blog/mysql-security-best-practices-2024/) - Auditing privileges, anonymous accounts, and SSL/TLS cipher suites.
 
-## � Deep Dive Subsections (Expert Articles)
+---
 
-### InnoDB Internals
-- [InnoDB Flushing Mechanisms](https://www.percona.com/blog/2020/01/22/innodb-flushing-in-mysql-8-0-explained/)
-- [Dynamic Redo Log Capacity](https://lefred.be/content/mysql-8-0-30-dynamic-innodb-redo-log-capacity/)
-- [Primary Key Optimization](https://lefred.be/content/mysql-innodb-primary-keys/)
+## 🏎️ Engineering & Product Blogs
 
-### Advanced Clusters
-- [Galera Advanced Tuning](https://galeracluster.com/library/training/tutorials/galera-tuning.html)
-- [MySQL Shell AdminAPI](https://dev.mysql.com/doc/mysql-shell/8.4/en/admin-api.html)
-- [MySQL Router Bootstrapping](https://dev.mysql.com/doc/mysql-router/8.4/en/mysql-router-deploying-bootstrapping.html)
+- [MySQL Server Engineering Blog](https://dev.mysql.com/blog/) - Direct insights from the Oracle MySQL development team.
+- [MariaDB Foundation Blog](https://mariadb.org/blog/) - Technical developments and ecosystem announcements.
+- [Percona Performance Blog](https://www.percona.com/blog/) - Deep dives, benchmark reports, and operational troubleshooting guides.
 
-## 👨‍� Community Experts
+---
 
-- [lefred.be](https://lefred.be/) - Frédéric Descamps (MySQL Performance)
-- [jfg-mysql.blogspot.com](http://jfg-mysql.blogspot.com/) - Jean-François Gagné (MySQL Internals)
-- [dasini.net](https://dasini.net/blog/) - Olivier Dasini (MySQL Expert Diary)
+## 🔬 Deep Dive Expert Articles
+
+### InnoDB Internals & Performance
+- [InnoDB Flushing Mechanisms Explained](https://www.percona.com/blog/2020/01/22/innodb-flushing-in-mysql-8-0-explained/) - Adaptive flushing under write pressure.
+- [Dynamic Redo Log Capacity (MySQL 8.0.30+)](https://lefred.be/content/mysql-8-0-30-dynamic-innodb-redo-log-capacity/) - Sizing redo log capacity without server restarts.
+- [Primary Key Optimization Guidelines](https://lefred.be/content/mysql-innodb-primary-keys/) - Real-world comparison of surrogate vs. composite PKs.
+
+### Advanced Clusters & Galera
+- [Galera Advanced Performance Tuning](https://galeracluster.com/library/training/tutorials/galera-tuning.html) - Troubleshooting brute-force aborts and certification delays.
+- [MySQL Shell AdminAPI Mastery](https://dev.mysql.com/doc/mysql-shell/8.4/en/admin-api.html) - Managing sandbox and production InnoDB Clusters.
+- [MySQL Router Bootstrapping & Routing](https://dev.mysql.com/doc/mysql-router/8.4/en/mysql-router-deploying-bootstrapping.html) - High availability client redirection.
+
+---
+
+## 👨‍💻 Community Databases & Experts
+
+- [lefred.be](https://lefred.be/) - Frédéric Descamps (MySQL Evangelist, InnoDB and backup performance).
+- [jfg-mysql.blogspot.com](http://jfg-mysql.blogspot.com/) - Jean-François Gagné (Deep dives into replication lag and Performance Schema wait events).
+- [dasini.net](https://dasini.net/blog/) - Olivier Dasini (MySQL certification roadmap and enterprise setups).

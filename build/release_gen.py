@@ -40,6 +40,25 @@ def get_changelog_blocks():
 
 def get_git_commits(version):
     try:
+        # Check current branch
+        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stderr=subprocess.DEVNULL).decode().strip()
+        
+        # Determine if we can compare with master
+        has_master = False
+        for ref in ['master', 'origin/master']:
+            try:
+                subprocess.check_call(['git', 'rev-parse', '--verify', ref], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                has_master = ref
+                break
+            except subprocess.CalledProcessError:
+                continue
+                
+        if has_master and branch != 'master':
+            # We are on a branch, get commits between master (or origin/master) and HEAD
+            commits = subprocess.check_output(['git', 'log', f'{has_master}..HEAD', '--pretty=format:- %s (%h)']).decode().strip()
+            if commits:
+                return commits
+
         tag = f"v{version}"
         # Find the previous tag if it exists
         try:
@@ -47,7 +66,13 @@ def get_git_commits(version):
             commits = subprocess.check_output(['git', 'log', f'{prev_tag}..{tag}', '--pretty=format:- %s (%h)']).decode().strip()
             return commits if commits else "No new commits recorded."
         except:
-            return "Initial release or no previous tag found."
+            # Maybe the tag doesn't exist yet, try HEAD instead of tag
+            try:
+                prev_tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0'], stderr=subprocess.DEVNULL).decode().strip()
+                commits = subprocess.check_output(['git', 'log', f'{prev_tag}..HEAD', '--pretty=format:- %s (%h)']).decode().strip()
+                return commits if commits else "No new commits recorded."
+            except:
+                return "Initial release or no previous tag found."
     except Exception:
         return "Commit history unavailable."
 
@@ -91,13 +116,17 @@ def analyze_tech_details(version):
         
         # Previous version code
         try:
-            prev_tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0', f'{tag}^'], stderr=subprocess.DEVNULL).decode().strip()
+            try:
+                prev_tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0', f'{tag}^'], stderr=subprocess.DEVNULL).decode().strip()
+            except:
+                prev_tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0'], stderr=subprocess.DEVNULL).decode().strip()
+            
             old_code = subprocess.check_output(['git', 'show', f'{prev_tag}:mysqltuner.pl']).decode()
             old_opts = get_cli_options(old_code)
             old_indicators = analyze_indicators(old_code)
             old_names = extract_diagnostic_names(old_code)
         except:
-            # Fallback to empty if no previous tag
+            # Fallback to empty if no previous tag at all
             old_opts = set()
             old_indicators = {'good':0, 'bad':0, 'info':0, 'total':0}
             old_names = {'good': set(), 'bad': set(), 'info': set()}

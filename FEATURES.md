@@ -2,6 +2,7 @@ Features list for option: --feature (dev only)
 ---
 
 
+* adjust_aborted_connects
 * build_mysql_connection_command
 * calculate_health_score
 * cloud_setup
@@ -47,6 +48,7 @@ Features list for option: --feature (dev only)
 * predictive_capacity_analysis
 * process_sysbench_metrics
 * push_recommendation
+* save_aborted_connects_state
 * security_recommendations
 * setup_environment
 * show_help
