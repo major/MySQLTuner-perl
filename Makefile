@@ -168,7 +168,7 @@ audit-logs:
 
 unit-tests:
 	@echo "Running unit and regression tests..."
-	prove -r tests/
+	perl ./build/audit_tests.pl
 
 clean_examples:
 	@echo "Cleaning up examples..."

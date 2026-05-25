@@ -52,7 +52,7 @@ Validate your changes locally using both unit tests and multi-database lab testi
     ```bash
     make unit-tests
     # or
-    prove -r tests/
+    prove -r tests/ # (or perl build/audit_tests.pl)
     ```
 2.  **Laboratory Tests (Docker)**:
     Ensure code executes correctly across multiple database versions (MySQL, MariaDB, Percona Server):

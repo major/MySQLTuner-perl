@@ -80,7 +80,7 @@ The following external commands are currently used via `execute_system_command` 
   - **Replacement**: Use `POSIX::Termios` for terminal attribute control (avoids `stty` binary dependency).
 - [x] **Command**: `uptime` (line 3107)
   - **Replacement**: Read `/proc/uptime` (Linux-only) or calculate via `$^T` (script start time) for script uptime. System uptime requires `POSIX` / `/proc`.
-- [ ] **Command**: `df` (lines 2790, 2791)
+- [x] **Command**: `df` (lines 2790, 2791)
   - **Replacement**: No cross-platform Core Perl replacement. Keep for now or use `statvfs` where available.
 - [x] **Command**: `grep -Ec '^flags.*\ hypervisor\ ' /proc/cpuinfo` (line 2981)
   - **Replacement**: Native Perl parsing of `/proc/cpuinfo`.

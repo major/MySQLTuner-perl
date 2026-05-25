@@ -7,7 +7,7 @@ The project uses `Test::More` for unit testing. All tests are located in the `te
 ```bash
 make unit-tests
 # OR
-prove -r tests/
+perl build/audit_tests.pl
 ```
 
 ## Laboratory Tests (Docker)

@@ -439,15 +439,39 @@ generate_report() {
     </section>"
 
     # Table of Produced Files
-    local files_html=""
+    local main_files_html=""
+    local ps_files_html=""
+    local ifs_files_html=""
+    local sys_files_html=""
+
     add_file_row() {
         local path=$1; local label=$2; local desc=$3
-        if [ -f "$target_dir/$path" ]; then
-            files_html+="<tr>
-                <td class='px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-400'>$label</td>
-                <td class='px-6 py-4 text-sm text-gray-300'>$desc</td>
-                <td class='px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-400'><a href='$path' class='hover:underline text-blue-400'>$(basename "$path")</a></td>
-            </tr>"
+        local full_path="$target_dir/$path"
+        if [ ! -f "$full_path" ]; then
+            # Check relative to base if not absolute
+            full_path="$path"
+        fi
+        [ -f "$full_path" ] || return
+        
+        local row="<tr>
+            <td class='px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-400'>
+                <a href='$path' class='hover:underline flex flex-col'>
+                    <span>$label</span>
+                    <span class='text-[10px] text-gray-500 font-mono mt-0.5'>$(basename "$path")</span>
+                </a>
+            </td>
+            <td class='px-6 py-4 text-sm text-gray-300'>$desc</td>
+        </tr>"
+
+        local base=$(basename "$path")
+        if [[ "$base" =~ ^ps_ ]]; then
+            ps_files_html+="$row"
+        elif [[ "$base" =~ ^ifs_ ]]; then
+            ifs_files_html+="$row"
+        elif [[ "$base" =~ ^sys ]]; then
+            sys_files_html+="$row"
+        else
+            main_files_html+="$row"
         fi
     }
 
@@ -459,9 +483,148 @@ generate_report() {
     add_file_row "container_logs.log" "Container Runtime Logs" "Standard output/error logs queried from the database container."
     add_file_row "container_inspect.json" "Container Metadata" "JSON metadata details retrieved from docker inspect."
 
+    # Helper subroutine get_dynamic_desc in Perl
+    local perl_desc_sub='
+             sub get_dynamic_desc {
+                 my ($f) = @_;
+                 my $base = File::Basename::basename($f);
+                 if (!-e $f) {
+                     return "Snapshot file.";
+                 }
+                 
+                 my $desc = "Snapshot file.";
+                 if ($base =~ /^naming_convention_deviations\.csv(?:\.gz)?$/) {
+                     $desc = "List of database schema tables and columns that violate naming conventions (e.g. plural names, case issues).";
+                 }
+                 elsif ($base =~ /^primary_key_issues\.csv(?:\.gz)?$/) {
+                     $desc = "Audit report highlighting tables with missing, misnamed, or suboptimal surrogate primary keys.";
+                 }
+                 elsif ($base =~ /^missing_foreign_keys\.csv(?:\.gz)?$/) {
+                     $desc = "List of table columns whose names suggest they should be foreign keys, but no foreign key constraints exist.";
+                 }
+                 elsif ($base =~ /^json_columns_without_virtual\.csv(?:\.gz)?$/) {
+                     $desc = "Audit of JSON columns in the database that do not have associated virtual generated columns for indexing.";
+                 }
+                 elsif ($base =~ /^insecure_authentication_plugins\.csv(?:\.gz)?$/) {
+                     $desc = "List of database user accounts configured with legacy or insecure authentication plugins.";
+                 }
+                 elsif ($base =~ /^ssl_issues\.csv(?:\.gz)?$/) {
+                     $desc = "Security report detailing active SSL/TLS vulnerabilities or missing secure configurations.";
+                 }
+                 elsif ($base =~ /^user_with_general_wildcard\.csv(?:\.gz)?$/) {
+                     $desc = "Accounts configured with a general wildcard host ('%'), which presents security risks.";
+                 }
+                 elsif ($base =~ /^columns_utf8\.csv(?:\.gz)?$/) {
+                     $desc = "Inventory of table columns that correctly use UTF-8/UTF8MB4 character sets.";
+                 }
+                 elsif ($base =~ /^columns_non_utf8\.csv(?:\.gz)?$/) {
+                     $desc = "Audit list of columns using legacy or non-UTF-8 character encodings (e.g. latin1).";
+                 }
+                 elsif ($base =~ /^fulltext_columns\.csv(?:\.gz)?$/) {
+                     $desc = "List of columns that have full-text indexes configured.";
+                 }
+                 elsif ($base =~ /^non_mysqld_processes\.csv(?:\.gz)?$/) {
+                     $desc = "List of running system processes not related to mysqld that are consuming CPU/RAM resources.";
+                 }
+                 elsif ($base =~ /^fragmented_tables\.csv(?:\.gz)?$/) {
+                     $desc = "Tables with fragmented data space.";
+                 }
+                 elsif ($base =~ /^tables_non_innodb\.csv(?:\.gz)?$/) {
+                     $desc = "Audit of database tables utilizing storage engines other than InnoDB.";
+                 }
+                 elsif ($base =~ /^tables_without_primary_keys\.csv(?:\.gz)?$/) {
+                     $desc = "Audit list of tables lacking a primary key constraint.";
+                 }
+                 elsif ($base =~ /^raw_mysqltuner\.txt$/) {
+                     $desc = "Plain text unformatted output captured from MySQLTuner execution.";
+                 }
+                 elsif ($base =~ /^ifs_(.*)\.csv(?:\.gz)?$/) {
+                     my $table = $1;
+                     $desc = "Information Schema table dump for INFORMATION_SCHEMA.$table.";
+                 }
+                 elsif ($base =~ /^ps_(.*)\.csv(?:\.gz)?$/) {
+                     my $table = $1;
+                     $desc = "Performance Schema table dump for performance_schema.$table.";
+                 }
+                 elsif ($base =~ /^sys_x\$(.*)\.csv(?:\.gz)?$/) {
+                     my $table = $1;
+                     $desc = "Sys Schema raw/unformatted table view for sys.x$$table.";
+                 }
+                 elsif ($base =~ /^sys_(.*)\.csv(?:\.gz)?$/) {
+                     my $table = $1;
+                     $desc = "Sys Schema table view for sys.$table.";
+                 }
+                 elsif ($base =~ /\.sql(?:\.gz)?$/) {
+                     if (-z $f) {
+                         $desc = "SQL database schema script.";
+                     } else {
+                         my @tables;
+                         my $fh;
+                         if ($f =~ /\.gz$/) {
+                             open($fh, "gzip -dc \x27$f\x27 |") or $desc = "SQL script.";
+                         } else {
+                             open($fh, "<", $f) or $desc = "SQL script.";
+                         }
+                         if (defined $fh) {
+                             my $lines_read = 0;
+                             while (my $line = <$fh>) {
+                                 if ($line =~ /CREATE TABLE\s+[`\x27\"]?(\w+)[`\x27\"]?/i) {
+                                     push @tables, $1;
+                                 }
+                                 $lines_read++;
+                                 last if @tables >= 5 || $lines_read > 500;
+                             }
+                             close($fh);
+                             if (@tables) {
+                                 my $t_list = join(", ", @tables);
+                                 $desc = "SQL DDL schema definitions for tables: <strong>$t_list</strong>" . (scalar(@tables) >= 5 ? "..." : "") . ".";
+                             } else {
+                                 $desc = "SQL database schema script.";
+                             }
+                         }
+                     }
+                 }
+                 elsif ($base =~ /\.md$/) {
+                     if (-z $f) {
+                         $desc = "Markdown documentation.";
+                     } else {
+                         my $fh;
+                         if (open($fh, "<", $f)) {
+                             my $header = <$fh>;
+                             close($fh);
+                             if ($header) {
+                                 chomp($header);
+                                 $header =~ s/^#+\s*//;
+                                 $desc = "Markdown documentation: <strong>$header</strong>.";
+                             } else {
+                                 $desc = "Markdown documentation.";
+                             }
+                         } else {
+                             $desc = "Markdown documentation.";
+                         }
+                     }
+                 }
+                 elsif ($base =~ /\.txt$/) {
+                     $desc = "Configuration or metric metadata log.";
+                 }
+                 
+                 if (-z $f) {
+                     if ($base =~ /\.csv(?:\.gz)?$/) {
+                         $desc .= " (Empty - no issues/records detected)";
+                     } else {
+                         $desc .= " (Empty)";
+                     }
+                 }
+                 
+                 return $desc;
+             }
+    '
+
     # Dynamically find and list all files in dumps/ if it exists
     if [ -d "$target_dir/dumps" ]; then
-        files_html+=$(perl -MFile::Basename -e '
+        while IFS='|' read -r rel_path label desc; do
+            add_file_row "$rel_path" "$label" "$desc"
+        done < <(perl -MFile::Basename -e '
             my $dir = shift;
             opendir(my $dh, $dir) or return;
             my @files = sort grep { -f "$dir/$_" } readdir($dh);
@@ -484,110 +647,16 @@ generate_report() {
                 }
                 
                 my $desc = get_dynamic_desc($file);
-                
-                print "<tr>\n";
-                print "    <td class=\x27px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-400\x27>$label</td>\n";
-                print "    <td class=\x27px-6 py-4 text-sm text-gray-300\x27>$desc</td>\n";
-                print "    <td class=\x27px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-400\x27><a href=\x27$rel_path\x27 class=\x27hover:underline text-blue-400\x27>$base</a></td>\n";
-                print "</tr>\n";
+                print "$rel_path|$label|$desc\n";
             }
-            
-            sub get_dynamic_desc {
-                my ($f) = @_;
-                my $fh;
-                if ($f =~ /\.gz$/) {
-                    open($fh, "gzip -dc \x27$f\x27 |") or return "Compressed snapshot file.";
-                } else {
-                    open($fh, "<", $f) or return "Snapshot file.";
-                }
-                my $header = <$fh>;
-                unless ($header) {
-                    close($fh);
-                    return "Empty file.";
-                }
-                chomp($header);
-                $header =~ s/\r//g;
-                
-                my @rows;
-                while (my $row = <$fh>) {
-                    chomp($row);
-                    $row =~ s/\r//g;
-                    push @rows, $row if $row =~ /\S/;
-                    last if @rows >= 4;
-                }
-                close($fh);
-                
-                if ($f =~ /\.csv(?:\.gz)?$/) {
-                    my @cols = split(/,/, $header);
-                    my $col_limit = scalar(@cols) > 6 ? 6 : scalar(@cols);
-                    my $col_desc = join(", ", @cols[0..$col_limit-1]);
-                    $col_desc .= "..." if scalar(@cols) > 6;
-                    
-                    my $d = "CSV database dump containing columns: <strong>$col_desc</strong>.";
-                    if (@rows) {
-                        $d .= " <span class=\x27text-xs text-gray-400\x27>Sample rows:</span><ul class=\x27list-disc list-inside text-xs text-gray-400 mt-1\x27>";
-                        for my $r (@rows) {
-                            my @vals = split(/,/, $r);
-                            my $val_limit = scalar(@vals) > 6 ? 6 : scalar(@vals);
-                            my $val_str = join(", ", @vals[0..$val_limit-1]);
-                            $val_str .= "..." if scalar(@vals) > 6;
-                            $d .= "<li>$val_str</li>";
-                        }
-                        $d .= "</ul>";
-                    }
-                    return $d;
-                } elsif ($f =~ /\.sql(?:\.gz)?$/) {
-                    my @tables;
-                    my $lines_read = 0;
-                    if ($f =~ /\.gz$/) {
-                        open($fh, "gzip -dc \x27$f\x27 |") or return "SQL script.";
-                    } else {
-                        open($fh, "<", $f) or return "SQL script.";
-                    }
-                    while (my $line = <$fh>) {
-                        if ($line =~ /CREATE TABLE\s+[`\x27\"]?(\w+)[`\x27\"]?/i) {
-                            push @tables, $1;
-                        }
-                        $lines_read++;
-                        last if @tables >= 5 || $lines_read > 500;
-                    }
-                    close($fh);
-                    if (@tables) {
-                        my $t_list = join(", ", @tables);
-                        return "SQL DDL schema definitions for tables: <strong>$t_list</strong>" . (scalar(@tables) >= 5 ? "..." : "") . ".";
-                    }
-                    return "SQL database schema script.";
-                } elsif ($f =~ /\.md$/) {
-                    my $title = $header;
-                    $title =~ s/^#+\s*//;
-                    my $d = "Markdown documentation: <strong>$title</strong>.";
-                    if (@rows) {
-                        my $summary = join(" ", @rows);
-                        if (length($summary) > 120) {
-                            $summary = substr($summary, 0, 117) . "...";
-                        }
-                        $d .= " <span class=\x27text-xs text-gray-400\x27>Preview:</span> <span class=\x27text-xs text-gray-400 italic\x27>\"$summary\"</span>";
-                    }
-                    return $d;
-                } elsif ($f =~ /\.txt$/) {
-                    my $d = "Text metadata file starting with: <em>\"$header\"</em>.";
-                    if (@rows) {
-                        my $summary = join(" ", @rows);
-                        if (length($summary) > 120) {
-                            $summary = substr($summary, 0, 117) . "...";
-                        }
-                        $d .= " <span class=\x27text-xs text-gray-400 italic\x27>\"$summary\"</span>";
-                    }
-                    return $d;
-                }
-                return "Snapshot artifact file.";
-            }
-        ' "$target_dir/dumps")
+            '"$perl_desc_sub" "$target_dir/dumps")
     fi
 
     # Dynamically find and list all files in schemas/ if it exists
     if [ -d "$target_dir/schemas" ]; then
-        files_html+=$(perl -MFile::Basename -e '
+        while IFS='|' read -r rel_path label desc; do
+            add_file_row "$rel_path" "$label" "$desc"
+        done < <(perl -MFile::Basename -e '
             my $dir = shift;
             opendir(my $dh, $dir) or return;
             my @files = sort grep { -f "$dir/$_" } readdir($dh);
@@ -599,128 +668,44 @@ generate_report() {
                 my $label = "Schema Layout: $base";
                 
                 my $desc = get_dynamic_desc($file);
-                
-                print "<tr>\n";
-                print "    <td class=\x27px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-400\x27>$label</td>\n";
-                print "    <td class=\x27px-6 py-4 text-sm text-gray-300\x27>$desc</td>\n";
-                print "    <td class=\x27px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-400\x27><a href=\x27$rel_path\x27 class=\x27hover:underline text-blue-400\x27>$base</a></td>\n";
-                print "</tr>\n";
+                print "$rel_path|$label|$desc\n";
             }
-            
-            sub get_dynamic_desc {
-                my ($f) = @_;
-                my $fh;
-                if ($f =~ /\.gz$/) {
-                    open($fh, "gzip -dc \x27$f\x27 |") or return "Compressed snapshot file.";
-                } else {
-                    open($fh, "<", $f) or return "Snapshot file.";
-                }
-                my $header = <$fh>;
-                unless ($header) {
-                    close($fh);
-                    return "Empty file.";
-                }
-                chomp($header);
-                $header =~ s/\r//g;
-                
-                my @rows;
-                while (my $row = <$fh>) {
-                    chomp($row);
-                    $row =~ s/\r//g;
-                    push @rows, $row if $row =~ /\S/;
-                    last if @rows >= 4;
-                }
-                close($fh);
-                
-                if ($f =~ /\.csv(?:\.gz)?$/) {
-                    my @cols = split(/,/, $header);
-                    my $col_limit = scalar(@cols) > 6 ? 6 : scalar(@cols);
-                    my $col_desc = join(", ", @cols[0..$col_limit-1]);
-                    $col_desc .= "..." if scalar(@cols) > 6;
-                    
-                    my $d = "CSV database dump containing columns: <strong>$col_desc</strong>.";
-                    if (@rows) {
-                        $d .= " <span class=\x27text-xs text-gray-400\x27>Sample rows:</span><ul class=\x27list-disc list-inside text-xs text-gray-400 mt-1\x27>";
-                        for my $r (@rows) {
-                            my @vals = split(/,/, $r);
-                            my $val_limit = scalar(@vals) > 6 ? 6 : scalar(@vals);
-                            my $val_str = join(", ", @vals[0..$val_limit-1]);
-                            $val_str .= "..." if scalar(@vals) > 6;
-                            $d .= "<li>$val_str</li>";
-                        }
-                        $d .= "</ul>";
-                    }
-                    return $d;
-                } elsif ($f =~ /\.sql(?:\.gz)?$/) {
-                    my @tables;
-                    my $lines_read = 0;
-                    if ($f =~ /\.gz$/) {
-                        open($fh, "gzip -dc \x27$f\x27 |") or return "SQL script.";
-                    } else {
-                        open($fh, "<", $f) or return "SQL script.";
-                    }
-                    while (my $line = <$fh>) {
-                        if ($line =~ /CREATE TABLE\s+[`\x27\"]?(\w+)[`\x27\"]?/i) {
-                            push @tables, $1;
-                        }
-                        $lines_read++;
-                        last if @tables >= 5 || $lines_read > 500;
-                    }
-                    close($fh);
-                    if (@tables) {
-                        my $t_list = join(", ", @tables);
-                        return "SQL DDL schema definitions for tables: <strong>$t_list</strong>" . (scalar(@tables) >= 5 ? "..." : "") . ".";
-                    }
-                    return "SQL database schema script.";
-                } elsif ($f =~ /\.md$/) {
-                    my $title = $header;
-                    $title =~ s/^#+\s*//;
-                    my $d = "Markdown documentation: <strong>$title</strong>.";
-                    if (@rows) {
-                        my $summary = join(" ", @rows);
-                        if (length($summary) > 120) {
-                            $summary = substr($summary, 0, 117) . "...";
-                        }
-                        $d .= " <span class=\x27text-xs text-gray-400\x27>Preview:</span> <span class=\x27text-xs text-gray-400 italic\x27>\"$summary\"</span>";
-                    }
-                    return $d;
-                } elsif ($f =~ /\.txt$/) {
-                    my $d = "Text metadata file starting with: <em>\"$header\"</em>.";
-                    if (@rows) {
-                        my $summary = join(" ", @rows);
-                        if (length($summary) > 120) {
-                            $summary = substr($summary, 0, 117) . "...";
-                        }
-                        $d .= " <span class=\x27text-xs text-gray-400 italic\x27>\"$summary\"</span>";
-                    }
-                    return $d;
-                }
-                return "Snapshot artifact file.";
-            }
-        ' "$target_dir/schemas")
+            '"$perl_desc_sub" "$target_dir/schemas")
     fi
 
-    local produced_files_panel="<section class='bg-gray-800 rounded-xl border border-gray-700 shadow-xl overflow-hidden mb-8'>
-        <div class='bg-gray-700 px-6 py-4 flex justify-between items-center'>
-            <h2 class='text-lg font-semibold flex items-center'>
-                <i class='fas fa-file-alt mr-3 text-yellow-400'></i>Produced Files &amp; Artifacts
-            </h2>
-        </div>
-        <div class='p-6 overflow-x-auto'>
-            <table class='min-w-full divide-y divide-gray-700'>
-                <thead class='bg-gray-900/50'>
-                    <tr>
-                        <th scope='col' class='px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider'>Name</th>
-                        <th scope='col' class='px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider'>Description</th>
-                        <th scope='col' class='px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider'>Link (Relative)</th>
-                    </tr>
-                </thead>
-                <tbody class='divide-y divide-gray-700 bg-gray-800/40'>
-                    $files_html
-                </tbody>
-            </table>
-        </div>
-    </section>"
+    # Helper function to render a table panel
+    render_table_panel() {
+        local title=$1; local icon=$2; local color=$3; local content=$4
+        [ -z "$content" ] && return
+        
+        echo "<section class='bg-gray-800 rounded-xl border border-gray-700 shadow-xl overflow-hidden mb-8'>
+            <div class='bg-gray-700 px-6 py-4 flex justify-between items-center'>
+                <h2 class='text-lg font-semibold flex items-center'>
+                    <i class='fas $icon mr-3 $color'></i>$title
+                </h2>
+            </div>
+            <div class='p-6 overflow-x-auto'>
+                <table class='min-w-full divide-y divide-gray-700'>
+                    <thead class='bg-gray-900/50'>
+                        <tr>
+                            <th scope='col' class='px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider'>Artifact / File</th>
+                            <th scope='col' class='px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider'>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody class='divide-y divide-gray-700 bg-gray-800/40'>
+                        $content
+                    </tbody>
+                </table>
+            </div>
+        </section>"
+    }
+
+    local main_table=$(render_table_panel "General Logs &amp; Artifacts" "fa-file-alt" "text-yellow-400" "$main_files_html")
+    local ps_table=$(render_table_panel "Performance Schema Files" "fa-tachometer-alt" "text-orange-400" "$ps_files_html")
+    local ifs_table=$(render_table_panel "Information Schema Files" "fa-info-circle" "text-blue-400" "$ifs_files_html")
+    local sys_table=$(render_table_panel "Sys Schema Files" "fa-cogs" "text-green-400" "$sys_files_html")
+    
+    local produced_files_panel="${main_table}${ps_table}${ifs_table}${sys_table}"
 
     cat <<EOF > "$target_dir/report.html"
 <!DOCTYPE html>
@@ -1022,6 +1007,7 @@ $repro_cmds"
     log_step "Stopping container..."
     if [ "$KEEP_ALIVE" = false ]; then
         make stop >> "$root_target_dir/docker_start.log" 2>&1
+        sleep 5
     else
         log_step "KEEP ALIVE: Container remains running."
         echo "KEEP ALIVE: Container left running for manual debugging." >> "$root_target_dir/docker_start.log"

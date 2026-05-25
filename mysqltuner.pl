@@ -878,19 +878,23 @@ sub prettyprint {
 }
 
 sub goodprint {
-    prettyprint $good. " " . $_[0] unless ( $opt{nogood} == 1 );
+    my $prefix = $good // '[OK]';
+    prettyprint $prefix. " " . $_[0] unless ( $opt{nogood} == 1 );
 }
 
 sub infoprint {
-    prettyprint $info. " " . $_[0] unless ( $opt{noinfo} == 1 );
+    my $prefix = $info // '[--]';
+    prettyprint $prefix. " " . $_[0] unless ( $opt{noinfo} == 1 );
 }
 
 sub badprint {
-    prettyprint $bad. " " . $_[0] unless ( $opt{nobad} == 1 );
+    my $prefix = $bad // '[!!]';
+    prettyprint $prefix. " " . $_[0] unless ( $opt{nobad} == 1 );
 }
 
 sub debugprint {
-    prettyprint $deb. " " . $_[0] unless ( ( $opt{debug} // 0 ) == 0 );
+    my $prefix = $deb // '[DG]';
+    prettyprint $prefix. " " . $_[0] unless ( ( $opt{debug} // 0 ) == 0 );
 }
 
 sub redwrap {
@@ -1002,6 +1006,17 @@ sub calculate_health_score {
 
 sub display_health_score {
     my $score = $mycalc{'WeightedHealthScore'} // 0;
+    my $details = $result{'HealthScoreDetails'} // {};
+
+    my $perf_score = ( $details->{'perf_bp'} // 5 ) +
+                     ( $details->{'perf_temp'} // 5 ) +
+                     ( $details->{'perf_thread'} // 5 ) +
+                     ( $details->{'perf_conn'} // 5 );
+    my $sec_score = $details->{'sec_total'} // 30;
+    my $res_score = ( $details->{'res_lag'} // 10 ) +
+                    ( $details->{'res_logs'} // 10 ) +
+                    ( $details->{'res_meta'} // 10 );
+
     my $color =
       $score > 80 ? "\e[0;32m" : ( $score > 50 ? "\e[0;33m" : "\e[0;31m" );
     my $end_c = "\e[0m";
@@ -1013,6 +1028,10 @@ sub display_health_score {
 
     subheaderprint "Health Score KPI";
     prettyprint "Overall Weighted Health Score: $color$score/100$end_c";
+    prettyprint "    - Performance: $perf_score/40";
+    prettyprint "    - Security:    $sec_score/30";
+    prettyprint "    - Resilience:  $res_score/30";
+    prettyprint "";
 
     if ( $score < 70 ) {
         badprint
@@ -4864,8 +4883,8 @@ sub check_auth_plugins {
     }
 
     if ( $obsolete_count > 0 ) {
-        push @generalrec,
-"Migrate $obsolete_count user(s) from obsolete/very weak plugin mysql_old_password";
+        push_recommendation( 'Security',
+"Migrate $obsolete_count user(s) from obsolete/very weak plugin mysql_old_password" );
     }
     if ( $insecure_count > $obsolete_count ) {
         my $diff = $insecure_count - $obsolete_count;
@@ -4873,11 +4892,11 @@ sub check_auth_plugins {
           $is_mariadb
           ? "Migrate to 'ed25519', 'parsec' or 'unix_socket' for $diff user(s)"
           : "Migrate to 'caching_sha2_password' for $diff user(s)";
-        push @generalrec, $rec;
+        push_recommendation( 'Security', $rec );
     }
     if ( $sha256_insecure_count > 0 ) {
-        push @generalrec,
-"Migrate to 'caching_sha2_password' for $sha256_insecure_count user(s) (using sha256_password)";
+        push_recommendation( 'Security',
+"Migrate to 'caching_sha2_password' for $sha256_insecure_count user(s) (using sha256_password)" );
     }
 
     if ( $insecure_count == 0 && $sha256_insecure_count == 0 ) {

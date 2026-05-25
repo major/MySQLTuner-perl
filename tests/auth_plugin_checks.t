@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use File::Spec;
@@ -25,7 +26,12 @@ my @recommendations;
 *main::infoprint = sub { };
 *main::debugprint = sub { };
 *main::subheaderprint = sub { };
-*main::push_recommendation = sub { push @recommendations, { type => $_[0], msg => $_[1] } };
+*main::push_recommendation = sub {
+    my ($cat, $msg) = @_;
+    push @main::generalrec, $msg;
+    push @main::secrec,     $msg if $cat =~ /sec/i;
+    push @recommendations, { type => $cat, msg => $msg };
+};
 
 our %myvar;
 *main::mysql_version_ge = sub {

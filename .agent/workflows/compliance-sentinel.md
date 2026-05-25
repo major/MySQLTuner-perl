@@ -60,13 +60,32 @@ Verify that laboratory logs are free of regressions and anomalies, and that any 
 perl build/audit_logs.pl --dir=examples --verbose
 
 # 2. Verify POTENTIAL_ISSUES exists if anomalies found
-if [ -s POTENTIAL_ISSUES ]; then
-  echo "Audit check: POTENTIAL_ISSUES is documented."
+if [ -s POTENTIAL_ISSUES.md ]; then
+  echo "Audit check: POTENTIAL_ISSUES.md is documented."
 else
-  echo "WARNING: POTENTIAL_ISSUES is empty, ensure all audit findings are handled."
+  echo "WARNING: POTENTIAL_ISSUES.md is empty, ensure all audit findings are handled."
 fi
 ```
 
-## 6. Execution
+## 6. Core Check: Historical Release Notes Immutability
+
+Ensure no historical release notes files have been modified.
+
+```bash
+current_version=$(cat CURRENT_VERSION.txt | tr -d '\n')
+base_ref="origin/master"
+if ! git rev-parse --verify $base_ref >/dev/null 2>&1; then
+  base_ref="master"
+fi
+for file in $(git diff --name-only $base_ref...HEAD -- releases/); do
+  if [ -f "$file" ] && [ "$file" != "releases/v$current_version.md" ]; then
+    echo "FAIL: Historical release notes modified: $file. Only releases/v$current_version.md can be updated."
+    exit 1
+  fi
+done
+```
+
+## 7. Execution
 
 Run these checks before any major commit or release.
+

@@ -7,8 +7,8 @@ This document outlines the strategic direction and future development plans for 
 To ensure consistency and high-density development, the following roles are defined for roadmap orchestration:
 
 * **Owner**: [Jean-Marie Renouard](https://github.com/jmrenouard) (@jmrenouard) - Ultimate authority on the project, constitution, and core mission.
-* **Product Manager**: **Antigravity (AI Agent)** - Responsible for backlog management, specification design, and execution tracking of the roadmap items.
 * **Release Manager**: **Antigravity (AI Agent)** - Responsible for technical validation, testing orchestration, and unified release cycle execution.
+* **Product Manager**: **Antigravity (AI Agent)** - Responsible for backlog management, specification design, and execution tracking of the roadmap items.
 
 ## 🌟 Strategic Pillars
 
@@ -64,7 +64,7 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] AUTO_INCREMENT capacity near max value detection.
 * [x] **Cluster & Replication Intelligence**:
   * [x] Root cause analysis for replication lag (IO/SQL thread contention).
-  * [ ] GTID consistency checks and multi-source replication tuning.
+  * [x] GTID consistency checks and multi-source replication tuning.
 * [x] **Consolidated SQL Modeling & Naming Conventions**:
   * [x] Consolidated Primary Key naming, surrogate keys, table singular naming, and table/column casing checks into single-line counters in General recommendations.
   * [x] Implemented advanced dominant style detection and deviations audit for tables, views, indexes, and columns.
@@ -73,7 +73,7 @@ To ensure consistency and high-density development, the following roles are defi
 * [/] **Security Hardening 2.0**:
   * [ ] Version-based CVE exposure detection (community-fed database).
   * [x] Advanced encryption-at-rest (TDE) and SSL/TLS cipher suite validation.
-  * [ ] **Extended Authentication Plugins Audit**: Verify password hashing methods against the extended plugins support matrix (including `mysql_native_password`, `mysql_old_password`, `sha256_password`, `caching_sha2_password`, `unix_socket`, `ed25519`, and the new MariaDB `parsec` plugin). See [AUTHENTICATION_PLUGINS.md](file:///documentation/AUTHENTICATION_PLUGINS.md).
+  * [x] **Extended Authentication Plugins Audit**: Verify password hashing methods against the extended plugins support matrix (including `mysql_native_password`, `mysql_old_password`, `sha256_password`, `caching_sha2_password`, `unix_socket`, `ed25519`, and the new MariaDB `parsec` plugin). See [AUTHENTICATION_PLUGINS.md](file:///documentation/AUTHENTICATION_PLUGINS.md).
 * [/] **Guided Auto-Fix Engine**:
   * [ ] Interactive mode to simulate configuration changes.
   * [x] Generation of ready-to-use `SET GLOBAL` or `my.cnf` snippets.
@@ -183,9 +183,9 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Export Performance Safeguards**:
   * [x] **Default Row Limit**: Implementation of a 50,000 rows default limit for all `dumpdir` exports to prevent database slowdowns.
   * [x] **Configurable Quotas**: Addition of `--dump-limit` option to allow user-defined row overrides.
-* [/] **Metadata & Durability**:
+* [x] **Metadata & Durability**:
   * [x] **Manifest Generation**: Automated generation of `manifest.json`/`metadata.txt` for better traceability of offline diagnostic snapshots.
-  * [ ] **I/O Latency Monitoring**: Real-time tracking of export duration per object with notices for slow disk subsystems.
+  * [x] **I/O Latency Monitoring**: Real-time tracking of export duration per object with notices for slow disk subsystems.
 * [x] **Compression & Efficiency**:
   * [x] **On-the-fly Compression**: Support for compressed `.gz` exports to minimize disk footprint in container/limited-storage environments.
 
