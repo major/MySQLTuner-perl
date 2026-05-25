@@ -3,10 +3,17 @@
 2.8.42 2026-05-25
 
 - chore: bump version to 2.8.42.
+- fix: resolve invalid login credentials error by defaulting to root when only --pass is set and escaping single quotes in passwords (#781).
 - fix: resolve fake aborted connections count increase during password strength checks (#900).
 - fix: resolve EOF metadata corruption and duplicated configurations in Emacs block (#904).
+- fix: prevent plaintext password leakage in weak password diagnostic messages.
+- fix: implement symlink verification and atomic writes for aborted connects state file protection.
+- fix: append transport-specific host and container identifiers in state file path to prevent collisions.
+- test: strengthen authentication plugin checks and add verification suite for state file protections.
 - ci: optimize release notes generation to isolate branch changes.
 - perf: optimize --dumpdir performance by excluding heavy RDS/Aurora and internal metrics.
+- docs: improve authentication plugins algorithm labels and resolve absolute documentation links.
+- refactor: catch explicit exception classes in build/release_gen.py to prevent masking system signals.
 
 
 2.8.41 2026-05-17

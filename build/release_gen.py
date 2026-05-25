@@ -65,13 +65,13 @@ def get_git_commits(version):
             prev_tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0', f'{tag}^'], stderr=subprocess.DEVNULL).decode().strip()
             commits = subprocess.check_output(['git', 'log', f'{prev_tag}..{tag}', '--pretty=format:- %s (%h)']).decode().strip()
             return commits if commits else "No new commits recorded."
-        except:
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError):
             # Maybe the tag doesn't exist yet, try HEAD instead of tag
             try:
                 prev_tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0'], stderr=subprocess.DEVNULL).decode().strip()
                 commits = subprocess.check_output(['git', 'log', f'{prev_tag}..HEAD', '--pretty=format:- %s (%h)']).decode().strip()
                 return commits if commits else "No new commits recorded."
-            except:
+            except (subprocess.CalledProcessError, FileNotFoundError, OSError):
                 return "Initial release or no previous tag found."
     except Exception:
         return "Commit history unavailable."
@@ -118,14 +118,14 @@ def analyze_tech_details(version):
         try:
             try:
                 prev_tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0', f'{tag}^'], stderr=subprocess.DEVNULL).decode().strip()
-            except:
+            except (subprocess.CalledProcessError, FileNotFoundError, OSError):
                 prev_tag = subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0'], stderr=subprocess.DEVNULL).decode().strip()
             
             old_code = subprocess.check_output(['git', 'show', f'{prev_tag}:mysqltuner.pl']).decode()
             old_opts = get_cli_options(old_code)
             old_indicators = analyze_indicators(old_code)
             old_names = extract_diagnostic_names(old_code)
-        except:
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError):
             # Fallback to empty if no previous tag at all
             old_opts = set()
             old_indicators = {'good':0, 'bad':0, 'info':0, 'total':0}
