@@ -144,7 +144,7 @@ test-all: vendor_setup
 
 test-parallel: vendor_setup
 	@echo "Running MySQLTuner Parallel Lab Tests..."
-	bash build/parallel_test.sh
+	bash build/parallel_test.sh && $(MAKE) clean_examples KEEP=10
 
 test-container:
 	@echo "Running MySQLTuner against container: $(CONTAINER)..."

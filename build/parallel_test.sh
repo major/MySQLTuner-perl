@@ -67,6 +67,8 @@ for config in $CONFIGS; do
     docker run -d \
         --name "mysqltuner-parallel-$config" \
         -p "$port:3306" \
+        --cpus="1.0" \
+        --memory="1024m" \
         -e MYSQL_ROOT_PASSWORD=mysqltuner_test \
         -e MARIADB_ROOT_PASSWORD=mysqltuner_test \
         -e MYSQL_ROOT_HOST="%" \
@@ -140,12 +142,31 @@ wait
 
 # Audit logs for failures
 echo "🔍 Running log checker..."
-perl build/audit_logs.pl --dir "$EXAMPLES_DIR"
-exit_code=$?
+TAP_FILE="$EXAMPLES_DIR/${DATE_TAG}_parallel_test.tap"
+echo "1..$(echo $CONFIGS | wc -w)" > "$TAP_FILE"
+idx=1
+overall_success=true
+for config in $CONFIGS; do
+    target_dir="$EXAMPLES_DIR/${DATE_TAG}_$config"
+    perl build/audit_logs.pl --dir "$target_dir" >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "ok $idx - $config" >> "$TAP_FILE"
+        echo "ok $idx - $config"
+    else
+        echo "not ok $idx - $config" >> "$TAP_FILE"
+        echo "not ok $idx - $config"
+        overall_success=false
+    fi
+    idx=$((idx + 1))
+done
 
-if [ $exit_code -eq 0 ]; then
+echo "📝 Compiled TAP Report written to $TAP_FILE"
+
+if [ "$overall_success" = "true" ]; then
+    exit_code=0
     echo "🎉 Parallel test execution completed successfully with no anomalies!"
 else
+    exit_code=1
     echo "❌ Anomalies/failures detected during test validation!"
 fi
 
