@@ -4,14 +4,14 @@
 
 [![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
 [![MySQLTuner Version](https://img.shields.io/badge/version-2.8.43-blue.svg)](https://github.com/jmrenouard/MySQLTuner-perl/releases/tag/v2.8.43)
-[![Test Status](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
+[![Test Status](https://github.com/jmrenouard/MySQLTuner-perl/workflows/Test/badge.svg)](https://github.com/jmrenouard/MySQLTuner-perl/actions)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Average time to resolve an issue")
 [![Percentage of open issues](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Percentage of issues still open")
 [![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions.
 
-**MySQLTuner** supports ~300 indicators and KPIs (including Weighted Health Score) for MySQL/MariaDB/Percona Server in this latest version.
+**MySQLTuner** supports ~400 indicators and KPIs (including Weighted Health Score) for MySQL/MariaDB/Percona Server in this latest version.
 
 **MySQLTuner** is actively maintained supporting many configurations such as [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Performance schema](https://github.com/mysql/mysql-sys), Linux OS metrics, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
@@ -40,7 +40,7 @@ MySQLTuner needs you
 * Paid support for LightPath here: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
 * Paid support for Releem available here: [Releem App](https://releem.com/)
 
-![Anurag's GitHub stats](https://github-readme-stats.vercel.app/api?username=anuraghazra&show_icons=true&theme=radical)
+![jmrenouard's GitHub stats](https://github-readme-stats.vercel.app/api?username=jmrenouard&show_icons=true&theme=radical)
 
 ## Stargazers over time
 
