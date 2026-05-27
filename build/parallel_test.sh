@@ -44,16 +44,20 @@ for config in $CONFIGS; do
     config_ports[$config]=$port
     
     image="mysql:8.0"
-    case "$config" in
-        mysql96) image="mysql:9.6" ;;
-        mysql84) image="mysql:8.4" ;;
-        mysql80) image="mysql:8.0" ;;
-        mariadb118) image="mariadb:11.8" ;;
-        mariadb114) image="mariadb:11.4" ;;
-        mariadb1011) image="mariadb:10.11" ;;
-        mariadb106) image="mariadb:10.6" ;;
-        percona80) image="percona/percona-server:8.0" ;;
-    esac
+    if [[ "$config" =~ ^mysql([0-9]+)$ ]]; then
+        ver="${BASH_REMATCH[1]}"
+        image="mysql:${ver:0:1}.${ver:1}"
+    elif [[ "$config" =~ ^mariadb([0-9]+)$ ]]; then
+        ver="${BASH_REMATCH[1]}"
+        if [[ "${ver:0:1}" == "5" ]]; then
+            image="mariadb:${ver:0:1}.${ver:1}"
+        else
+            image="mariadb:${ver:0:2}.${ver:2}"
+        fi
+    elif [[ "$config" =~ ^percona([0-9]+)$ ]]; then
+        ver="${BASH_REMATCH[1]}"
+        image="percona/percona-server:${ver:0:1}.${ver:1}"
+    fi
     config_images[$config]=$image
     idx=$((idx + 1))
 done

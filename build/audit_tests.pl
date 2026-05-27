@@ -7,6 +7,86 @@ use warnings;
 # Purpose: Run prove and scan its output for subtle Perl warnings, typos, and syntax errors.
 
 my $cmd = $ARGV[0] || $ENV{AUDIT_TEST_CMD} || 'prove -r tests/';
+
+# --- Phase 1: Compile-time syntax check and static analysis ---
+print "Performing compile-time syntax checks...\n";
+my @files_to_check = (
+    'mysqltuner.pl',
+    'tests/MySQLTuner/TestHelper.pm',
+    glob("tests/*.t")
+);
+
+my @syntax_errors;
+my @syntax_warnings;
+
+foreach my $file (@files_to_check) {
+    next unless -f $file;
+    open(my $ch, '-|', "perl -I. -Itests -wc \"$file\" 2>&1") or do {
+        push @syntax_errors, { file => $file, content => "Failed to execute perl -wc: $!" };
+        next;
+    };
+    
+    my $has_error = 0;
+    while (my $line = <$ch>) {
+        chomp $line;
+        next if $line =~ /syntax OK$/;
+        
+        if ($line =~ /syntax error|Compilation failed|Can't locate|Undefined subroutine/i) {
+            push @syntax_errors, { file => $file, content => $line };
+            $has_error = 1;
+        }
+        elsif ($line =~ /possible typo|redefined|prototype mismatch|masks earlier declaration|redeclared/i) {
+            # Skip known compile-time warning categories that are normal for test mocks
+            next;
+        }
+        else {
+            push @syntax_warnings, { file => $file, content => $line };
+        }
+    }
+    close($ch);
+    
+    my $exit_val = $? >> 8;
+    if ($exit_val != 0 && !$has_error) {
+        push @syntax_errors, { file => $file, content => "Compile check failed with exit code $exit_val" };
+    }
+}
+
+if (@syntax_errors) {
+    print "\n[!] Compile Check Failed: Found " . scalar(@syntax_errors) . " compile-time syntax errors/failures:\n";
+    foreach my $err (@syntax_errors) {
+        printf("  - %s: %s\n", $err->{file}, $err->{content});
+    }
+    exit 1;
+}
+
+if (@syntax_warnings) {
+    my %warnings_by_file;
+    foreach my $warn (@syntax_warnings) {
+        push @{$warnings_by_file{$warn->{file}}}, $warn->{content};
+    }
+
+    print "\n[!] Compile Check Warnings: Detected " . scalar(@syntax_warnings) . " compile-time warnings/typos:\n";
+    foreach my $file (sort keys %warnings_by_file) {
+        my $count = scalar(@{$warnings_by_file{$file}});
+        print "  - $file: $count warnings\n";
+        
+        my $display_limit = 3;
+        my $displayed = 0;
+        foreach my $content (@{$warnings_by_file{$file}}) {
+            print "    * $content\n";
+            $displayed++;
+            if ($displayed >= $display_limit && $count > $display_limit) {
+                print "    * ... and " . ($count - $display_limit) . " more warnings\n";
+                last;
+            }
+        }
+    }
+    print "\n";
+} else {
+    print "[OK] Compile Check: All files parsed cleanly.\n\n";
+}
+
+# --- Phase 2: Run test suite and audit runtime output ---
 print "Executing test suite: $cmd\n";
 
 open(my $ph, '-|', "$cmd 2>&1") or die "Failed to execute: $cmd: $!";
