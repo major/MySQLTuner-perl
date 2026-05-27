@@ -1,5 +1,14 @@
 # MySQLTuner Changelog
 
+2.8.44 2026-05-27
+
+- chore: implement compliance check script to enforce zero-dependency and single-file design.
+- chore: implement post-checkout Git hook to automatically verify version consistency on checkout.
+- feat: re-implement HTML report option (--reportfile) removing CPAN Text::Template dependency (#791).
+- test: add unit test for HTML report generation logic.
+- ci: configure CI workflows to trigger on all branches and execute compliance checks.
+- docs: enhance release-manager workflow with branch lifecycle and checkout hook instructions.
+
 2.8.43 2026-05-25
 
 - chore: bump version to 2.8.43.

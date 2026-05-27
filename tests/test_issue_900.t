@@ -223,4 +223,48 @@ subtest 'security protections checks' => sub {
     }
 };
 
+# 5. Test replication standalone detection (issue #900)
+subtest 'replication standalone detection' => sub {
+    @mock_output = ();
+    %main::myvar = (
+        'version' => '10.5.15-MariaDB',
+        'have_galera' => 'NO',
+        'binlog_format' => 'MIXED',
+        'innodb_support_xa' => 'ON',
+    );
+    
+    # Simulate empty SHOW REPLICA STATUS / SHOW SLAVE STATUS returning empty array
+    my @mysqlreplica = ();
+    %main::myrepl = ();
+    main::arr2hash( \%main::myrepl, \@mysqlreplica, ':' );
+
+    # Run the terminology mapping logic (the one wrapped in the fix)
+    if ( scalar( keys %main::myrepl ) > 0 ) {
+        $main::myrepl{'Seconds_Behind_Replica'} = $main::myrepl{'Seconds_Behind_Source'}
+          // $main::myrepl{'Seconds_Behind_Master'}
+          if !defined $main::myrepl{'Seconds_Behind_Replica'};
+        $main::myrepl{'Replica_IO_Running'} = $main::myrepl{'Replica_IO_Running'}
+          // $main::myrepl{'Slave_IO_Running'}
+          if !defined $main::myrepl{'Replica_IO_Running'};
+        $main::myrepl{'Replica_SQL_Running'} = $main::myrepl{'Replica_SQL_Running'}
+          // $main::myrepl{'Slave_SQL_Running'}
+          if !defined $main::myrepl{'Replica_SQL_Running'};
+    }
+
+    %main::myreplicas = ();
+
+    # Execute replication status analysis
+    main::get_replication_status();
+
+    # Assertions
+    my @standalone_found = grep { /This is a standalone server/ } @mock_output;
+    ok(scalar(@standalone_found) > 0, 'Should detect standalone server when replication is empty');
+
+    my @bad_found = grep { /This replication replica is not running/ } @mock_output;
+    is(scalar(@bad_found), 0, 'Should not output replica not running warnings on standalone server');
+
+    my @parallel_found = grep { /Parallel replication/ } @mock_output;
+    is(scalar(@parallel_found), 0, 'Should not output parallel replication warnings on standalone server');
+};
+
 done_testing();

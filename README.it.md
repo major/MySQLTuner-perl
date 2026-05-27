@@ -372,13 +372,11 @@ perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 ```
 
-**Utilizzo:** utilizzo del modello per personalizzare il file di reporting in base alla sintassi di [Text::Template](https://metacpan.org/pod/Text::Template).
+**Utilizzo:** Genera un report HTML autonomo (integrato, non richiede moduli CPAN o esterni)
 
 ```bash
-perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
+perl mysqltuner.pl --reportfile=mysqltuner.html
 ```
-
-**Importante**: il modulo [Text::Template](https://metacpan.org/pod/Text::Template) è obbligatorio per le opzioni `--reportfile` e/o `--template`, perché questo modulo è necessario per generare un output appropriato basato su un modello di testo.
 
 **Utilizzo:** dump di tutte le viste information_schema e sysschema come file csv nella sottodirectory dei risultati
 
@@ -469,65 +467,30 @@ MySQLTuner ora ha un supporto sperimentale per i servizi MySQL basati su cloud.
 * `--ssh-password <password>`: la password SSH per le connessioni cloud.
 * `--ssh-identity-file <path>`: il percorso del file di identità SSH per le connessioni cloud.
 
-Report HTML basati su Python Jinja2
+Report HTML e punteggio di salute ponderato
 --
 
-La generazione di HTML si basa su Python/Jinja2
+MySQLTuner calcola dinamicamente un **Weighted Health Score KPI** (valutazione complessiva della salute del database su una scala da 0 a 100) basato su tre categorie:
 
-**Procedura di generazione di HTML**
+1. **Prestazioni (max 40 punti)**: Valutazione dell'efficienza di lettura del pool di buffer, percentuale di tabelle temporanee su disco, tasso di hit della cache dei thread e utilizzo delle connessioni.
+2. **Sicurezza (max 30 punti)**: Valutazione della configurazione degli account utente, password deboli (controllate offline), crittografia della sessione SSL/TLS e utilizzo del plugin di autenticazione.
+3. **Resilienza (max 30 punti)**: Valutazione dello stato e del ritardo della replica, configurazione dei log e anomalie di modellazione dello schema.
 
-* Genera il report di mysqltuner.pl utilizzando il formato JSON (--json)
-* Genera il report HTML utilizzando gli strumenti j2 di Python
+**Generazione del report HTML**
 
-**I modelli Jinja2 si trovano nella sottodirectory dei modelli**
-
-Un esempio di base si chiama basic.html.j2
-
-**Installazione di Python j2**
+È possibile generare un report HTML autonomo direttamente con:
 
 ```bash
-python -mvenv j2
-source ./j2/bin/activate
-(j2) pip install j2
+perl mysqltuner.pl --reportfile=mysqltuner.html
 ```
 
-**Utilizzo della generazione di report HTML**
+Questa funzionalità è integrata nativamente in puro Perl e ha **zero dipendenze esterne** (non sono richiesti moduli CPAN o pacchetti Python). Il report generato fornisce una dashboard interattiva con tema scuro che mostra:
+- Indicatore del punteggio di salute generale
+- Dettaglio metriche KPI (Prestazioni, Sicurezza, Resilienza)
+- Elenchi di raccomandazioni categorizzate (Generale, Variabili da regolare, Modellazione del database, Sicurezza, Sistema)
+- Registro completo e comprimibile dell'output della console
 
-```bash
-perl mysqltuner.pl --verbose --json > reports.json
-cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
-```
 
-o
-
-```bash
-perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
-```
-
-Report HTML basati su AHA
---
-
-La generazione di HTML si basa su AHA
-
-**Procedura di generazione di HTML**
-
-* Genera il report di mysqltuner.pl utilizzando i report di testo standard
-* Genera il report HTML utilizzando aha
-
-**Installazione di Aha**
-
-Segui le istruzioni dal repository di Github
-
-[Repository principale di GitHub AHA](https://github.com/theZiz/aha)
-
-**Utilizzo della generazione di report HTML AHA**
-
- perl mysqltuner.pl --verbose --color > reports.txt
- aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
-
-o
-
- perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
 
 FAQ
 --

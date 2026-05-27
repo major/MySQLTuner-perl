@@ -75,7 +75,7 @@ To ensure consistency and high-density development, the following roles are defi
 * [/] **Guided Auto-Fix Engine**:
   * [ ] Interactive mode to simulate configuration changes.
   * [x] Generation of ready-to-use `SET GLOBAL` or `my.cnf` snippets.
-* [/] **Modular Reporting Engine**: (In Progress) Refactor Jinja2 templates for dynamic section injection.
+* [x] **Modular Reporting Engine**: Re-implemented native HTML report generation (--reportfile) using built-in layout, removing external template engine dependencies.
 * [/] **Historical Trend Analysis**: (Experimental) Allow the script to ingest previous run data to identify performance regressions.
 
 ---

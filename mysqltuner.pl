@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.43
+# mysqltuner.pl - Version 2.8.44
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.8.43";
+our $tunerversion = "2.8.44";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -282,16 +282,9 @@ our %CLI_METADATA = (
         cat         => 'PERFORMANCE'
     },
     'reportfile' => {
-        type        => '=s',
+        type        => ':s',
         default     => undef,
-        desc        => 'Path to a report txt file',
-        placeholder => '<path>',
-        cat         => 'PERFORMANCE'
-    },
-    'template' => {
-        type        => '=s',
-        default     => undef,
-        desc        => 'Path to a template file',
+        desc        => 'Path to a HTML report file',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
@@ -617,7 +610,7 @@ our (
     @banned_ports,  @dblist,               $physical_memory,
     $swap_memory,   $duflags,              $xargsflags,
     $architecture,  $storage_type,         $cloud_type,
-    $is_cloud,      %old_result
+    $is_cloud,      %old_result,           @raw_output_lines
 );
 
 # Gather the options from the command line
@@ -765,6 +758,7 @@ sub setup_environment {
     $outputfile = abs_path( $opt{outputfile} ) if $opt{outputfile};
 
     $fh = undef;
+    @raw_output_lines = ();
     if ($outputfile) {
         open( $fh, '>', $outputfile )
           or die("Fail opening $outputfile");
@@ -875,6 +869,9 @@ sub show_help {
 sub prettyprint {
     print $_[0] . "\n" unless ( $opt{'silent'} or $opt{'json'} );
     print $fh $_[0] . "\n" if defined($fh);
+    my $plain_text = $_[0] // '';
+    $plain_text =~ s/\e\[[0-9;]*[mK]//g;
+    push @raw_output_lines, $plain_text;
 }
 
 sub goodprint {
@@ -2927,7 +2924,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.8.43' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.8.44' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -2943,7 +2940,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.8.43' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.8.44' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -3353,15 +3350,17 @@ sub get_all_vars {
     arr2hash( \%myrepl, \@mysqlreplica, ':' );
 
     # Terminology mapping for internal consistency
-    $myrepl{'Seconds_Behind_Replica'} = $myrepl{'Seconds_Behind_Source'}
-      // $myrepl{'Seconds_Behind_Master'}
-      if !defined $myrepl{'Seconds_Behind_Replica'};
-    $myrepl{'Replica_IO_Running'} = $myrepl{'Replica_IO_Running'}
-      // $myrepl{'Slave_IO_Running'}
-      if !defined $myrepl{'Replica_IO_Running'};
-    $myrepl{'Replica_SQL_Running'} = $myrepl{'Replica_SQL_Running'}
-      // $myrepl{'Slave_SQL_Running'}
-      if !defined $myrepl{'Replica_SQL_Running'};
+    if ( scalar( keys %myrepl ) > 0 ) {
+        $myrepl{'Seconds_Behind_Replica'} = $myrepl{'Seconds_Behind_Source'}
+          // $myrepl{'Seconds_Behind_Master'}
+          if !defined $myrepl{'Seconds_Behind_Replica'};
+        $myrepl{'Replica_IO_Running'} = $myrepl{'Replica_IO_Running'}
+          // $myrepl{'Slave_IO_Running'}
+          if !defined $myrepl{'Replica_IO_Running'};
+        $myrepl{'Replica_SQL_Running'} = $myrepl{'Replica_SQL_Running'}
+          // $myrepl{'Slave_SQL_Running'}
+          if !defined $myrepl{'Replica_SQL_Running'};
+    }
 
     $result{'Replication'}{'Status'} = \%myrepl;
 
@@ -4178,8 +4177,9 @@ sub get_kernel_info {
         badprint
           "Swappiness is > 10, please consider having a value lower than 10";
         push @generalrec, "setup swappiness lower or equal to 10";
-        push @adjvars,
-'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness) or vm.swappiness=10 in /etc/sysctl.conf';
+        my $rec = 'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness) or vm.swappiness=10 in /etc/sysctl.conf';
+        push @adjvars, $rec;
+        push @sysrec,  $rec;
     }
     else {
         infoprint "Swappiness is < 10.";
@@ -4194,8 +4194,9 @@ sub get_kernel_info {
             badprint
 "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
             push @generalrec, "setup Initial TCP slot entries greater than 100";
-            push @adjvars,
-'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)  or sunrpc.tcp_slot_table_entries=128 in /etc/sysctl.conf';
+            my $rec = 'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)  or sunrpc.tcp_slot_table_entries=128 in /etc/sysctl.conf';
+            push @adjvars, $rec;
+            push @sysrec,  $rec;
         }
         else {
             infoprint "TCP slot entries is > 100.";
@@ -4207,8 +4208,9 @@ sub get_kernel_info {
             badprint
 "Max running total of the number of max. events is < 1M, please consider having a value greater than 1M";
             push @generalrec, "setup Max running number events greater than 1M";
-            push @adjvars,
-'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr) or fs.aio-max-nr=1048576 in /etc/sysctl.conf';
+            my $rec = 'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr) or fs.aio-max-nr=1048576 in /etc/sysctl.conf';
+            push @adjvars, $rec;
+            push @sysrec,  $rec;
         }
         else {
             infoprint "Max Number of AIO events is > 1M.";
@@ -4220,8 +4222,9 @@ sub get_kernel_info {
 "Max running total of the number of file open request is < 1M, please consider having a value greater than 1M";
             push @generalrec,
               "setup running number of open request greater than 1M";
-            push @adjvars,
-'fs.aio-nr > 1M (echo 1048576 > /proc/sys/fs/nr_open) or fs.nr_open=1048576 in /etc/sysctl.conf';
+            my $rec = 'fs.aio-nr > 1M (echo 1048576 > /proc/sys/fs/nr_open) or fs.nr_open=1048576 in /etc/sysctl.conf';
+            push @adjvars, $rec;
+            push @sysrec,  $rec;
         }
         else {
             infoprint "Max Number of open file requests is > 1M.";
@@ -4438,6 +4441,9 @@ sub system_recommendations {
               . hr_bytes_rnd($physical_memory) . ")";
             push( @generalrec,
 "Consider stopping or dedicate server for additional process other than mysqld."
+            );
+            push( @sysrec,
+"Consider stopping or dedicate server for additional process other than mysqld (other processes use " . percentage( $omem, $physical_memory ) . "% of RAM)."
             );
             push( @adjvars,
 "DON'T APPLY SETTINGS BECAUSE THERE ARE TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCUR!"
@@ -12102,29 +12108,38 @@ sub file2string {
     return join( '', file2array(@_) );
 }
 
-sub get_template_model {
-    if ( $opt{'template'} ) {
-        return file2string( $opt{'template'} );
+sub escape_html {
+    my $str = shift // '';
+    $str =~ s/&/&amp;/g;
+    $str =~ s/</&lt;/g;
+    $str =~ s/>/&gt;/g;
+    $str =~ s/"/&quot;/g;
+    $str =~ s/'/&#39;/g;
+    return $str;
+}
+
+sub format_recommendation_item {
+    my $item = shift;
+    if ( ref($item) eq 'HASH' ) {
+        if ( defined $item->{type} ) {
+            if ( $item->{type} eq 'unused_index' ) {
+                my $schema = $item->{schema} // '';
+                my $table  = $item->{table}  // '';
+                my $index  = $item->{index}  // '';
+                return "Unused index: $schema.$table ($index)";
+            }
+            elsif ( $item->{type} eq 'redundant_index' ) {
+                my $schema    = $item->{schema} // '';
+                my $table     = $item->{table}  // '';
+                my $index     = $item->{index}  // '';
+                my $dominant  = $item->{dominant_index} // '';
+                my $sql       = $item->{sql}    // '';
+                return "Redundant index: $schema.$table ($index) redundant of $dominant (suggested SQL: $sql)";
+            }
+        }
+        return join( ', ', map { "$_: " . ( $item->{$_} // '' ) } sort keys %$item );
     }
-
-    # DEFAULT REPORT TEMPLATE
-    return <<'END_TEMPLATE';
-<!DOCTYPE html>
-<html>
-<head>
-  <title>MySQLTuner Report</title>
-  <meta charset="UTF-8">
-</head>
-<body>
-
-<h1>Result output</h1>
-<pre>
-{$data}
-</pre>
-
-</body>
-</html>
-END_TEMPLATE
+    return $item // '';
 }
 
 sub dump_result {
@@ -12132,36 +12147,273 @@ sub dump_result {
     #debugprint Dumper( \%result ) if ( $opt{'debug'} );
     debugprint "HTML REPORT: " . ( $opt{'reportfile'} // 'undef' );
 
-    if ( $opt{'reportfile'} ) {
-        eval { require Text::Template };
-        eval { require JSON };
-        if ($@) {
-            badprint "Text::Template Module is needed.";
-            die "Text::Template Module is needed.";
+    if ( defined $opt{'reportfile'} ) {
+        # Check if reportfile option was empty/boolean (e.g. from --reportfile)
+        if ( $opt{'reportfile'} eq '' || $opt{'reportfile'} eq '1' ) {
+            $opt{'reportfile'} = 'mysqltuner.html';
         }
+        
+        my $score = $mycalc{'WeightedHealthScore'} // $result{'HealthScore'} // 0;
+        my $details = $result{'HealthScoreDetails'} // {};
+        my $perf_score =
+          ( $details->{'perf_bp'}     // 5 ) +
+          ( $details->{'perf_temp'}   // 5 ) +
+          ( $details->{'perf_thread'} // 5 ) +
+          ( $details->{'perf_conn'}   // 5 );
+        my $sec_score = $details->{'sec_total'} // 30;
+        my $res_score =
+          ( $details->{'res_lag'}  // 10 ) +
+          ( $details->{'res_logs'} // 10 ) +
+          ( $details->{'res_meta'} // 10 );
 
-        my $json      = JSON->new->allow_nonref;
-        my $json_text = $json->pretty->encode( \%result );
-        my %vars      = (
-            'data'  => \%result,
-            'debug' => $json_text,
-        );
-        my $template;
-        {
-            no warnings 'once';
-            $template = Text::Template->new(
-                TYPE       => 'STRING',
-                PREPEND    => q{;},
-                SOURCE     => get_template_model(),
-                DELIMITERS => [ '[%', '%]' ]
-            ) or die "Couldn't construct template: $Text::Template::ERROR";
+        # Render lists
+        my $general_rec_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-blue-400 mr-2.5 font-bold'>•</span><span>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @generalrec) 
+            || "<li class='text-slate-400 italic py-2'>No general recommendations.</li>";
+
+        my $adjvars_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-amber-400 mr-2.5 font-bold'>•</span><span class='font-mono'>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @adjvars)
+            || "<li class='text-slate-400 italic py-2'>No variable adjustments required.</li>";
+
+        my $modeling_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-cyan-400 mr-2.5 font-bold'>•</span><span>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @modeling)
+            || "<li class='text-slate-400 italic py-2'>No database modeling findings.</li>";
+
+        my $secrec_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-rose-400 mr-2.5 font-bold'>•</span><span>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @secrec)
+            || "<li class='text-slate-400 italic py-2'>No security concerns identified.</li>";
+
+        my $sysrec_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-emerald-400 mr-2.5 font-bold'>•</span><span>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @sysrec)
+            || "<li class='text-slate-400 italic py-2'>No OS or system modifications suggested.</li>";
+
+        # Build raw output HTML
+        my $raw_output_html = join("\n", map { escape_html($_) } @raw_output_lines);
+
+        # Determine health score color class
+        my $score_color_class = $score > 80 ? 'text-emerald-400' : ($score > 50 ? 'text-amber-400' : 'text-rose-500');
+        my $score_bg_class = $score > 80 ? 'bg-emerald-500/10 border-emerald-500/30' : ($score > 50 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-rose-500/10 border-rose-500/30');
+
+        # Timestamp
+        my $timestamp = scalar localtime;
+        my $db_ver = escape_html($myvar{'version'});
+        my $db_comment = escape_html($myvar{'version_comment'} // 'N/A');
+
+        my $circle_offset = 264 - (264 * $score / 100);
+        my $badge_text = $score >= 90 ? 'Excellent Health' : ($score >= 70 ? 'Good Health' : 'Action Required');
+        my $perf_width = int($perf_score * 100 / 40);
+        my $sec_width = int($sec_score * 100 / 30);
+        my $res_width = int($res_score * 100 / 30);
+
+        # HTML Content template
+        my $html_content = <<"HTML";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQLTuner Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
         }
+        pre, code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-blue-500/30 selection:text-blue-200">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        
+        <!-- Header -->
+        <header class="bg-slate-900/60 border border-slate-800/80 backdrop-blur-md rounded-2xl p-6 mb-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 bg-clip-text text-transparent tracking-tight">MySQLTuner Audit Report</h1>
+                <p class="text-slate-400 mt-1.5 text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span><i class="fas fa-database text-blue-400 mr-1.5"></i>$db_ver ($db_comment)</span>
+                    <span class="text-slate-700">•</span>
+                    <span><i class="fas fa-tools text-indigo-400 mr-1.5"></i>Tuner $tunerversion</span>
+                </p>
+            </div>
+            <div class="text-left md:text-right border-t md:border-t-0 border-slate-800/80 pt-4 md:pt-0 w-full md:w-auto">
+                <div class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Generated On</div>
+                <div class="text-sm font-medium text-slate-300 mt-0.5">$timestamp</div>
+            </div>
+        </header>
 
-        open my $fh, q(>), $opt{'reportfile'}
-          or die
-"Unable to open $opt{'reportfile'} in write mode. please check permissions for this file or directory";
-        $template->fill_in( HASH => \%vars, OUTPUT => $fh );
-        close $fh;
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            
+            <!-- Sidebar: Health Score Details -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Health Score Meter -->
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center text-center">
+                    <h2 class="text-lg font-bold text-slate-400 mb-6 flex items-center gap-2"><i class="fas fa-heartbeat text-rose-500"></i>Overall Health Score</h2>
+                    
+                    <!-- Circular Score Gauge -->
+                    <div class="relative w-40 h-40 flex items-center justify-center mb-6">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-slate-800" fill="transparent" />
+                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="$score_color_class" fill="transparent"
+                                    stroke-dasharray="264" stroke-dashoffset="$circle_offset" />
+                        </svg>
+                        <div class="absolute flex flex-col items-center">
+                            <span class="text-4xl font-extrabold tracking-tight">$score</span>
+                            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-0.5">out of 100</span>
+                        </div>
+                    </div>
+
+                    <!-- Health Badge -->
+                    <div class="px-4 py-1.5 rounded-full text-xs font-bold border $score_bg_class $score_color_class">
+                        $badge_text
+                    </div>
+                </div>
+
+                <!-- KPI Scores Breakdown -->
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Category Scores</h3>
+                    
+                    <!-- Performance -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-medium">
+                            <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-bolt text-amber-400 w-4"></i>Performance</span>
+                            <span class="font-mono text-slate-400">$perf_score / 40</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="bg-amber-400 h-2 rounded-full" style="width: $perf_width%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Security -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-medium">
+                            <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-user-shield text-rose-500 w-4"></i>Security</span>
+                            <span class="font-mono text-slate-400">$sec_score / 30</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="bg-rose-500 h-2 rounded-full" style="width: $sec_width%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Resilience -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-medium">
+                            <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-shield-virus text-emerald-400 w-4"></i>Resilience</span>
+                            <span class="font-mono text-slate-400">$res_score / 30</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="bg-emerald-400 h-2 rounded-full" style="width: $res_width%"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Content Area: Recommendations lists -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- General Recommendations Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-list-alt text-blue-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">General Recommendations</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $general_rec_html
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Variables to Adjust Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-sliders-h text-amber-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Variables to Adjust</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $adjvars_html
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Database Modeling & Schema Findings Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-project-diagram text-cyan-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Database Modeling Findings</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $modeling_html
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Security Recommendations Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-user-shield text-rose-500 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Security Findings</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $secrec_html
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- System & OS Recommendations Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-server text-emerald-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">System &amp; OS Recommendations</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $sysrec_html
+                        </ul>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+
+        <!-- Raw Console Output Panel -->
+        <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+            <details class="group">
+                <summary class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex justify-between items-center cursor-pointer list-none select-none">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-chevron-right text-slate-500 transition-transform group-open:rotate-90"></i>
+                        <i class="fas fa-terminal text-blue-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Full Console Output Trace</h2>
+                    </div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 group-open:hidden">Show Logs</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 hidden group-open:inline">Hide Logs</span>
+                </summary>
+                <div class="p-6 bg-slate-950 border-t border-slate-900/80">
+                    <pre class="text-xs leading-relaxed text-slate-400 font-mono overflow-x-auto max-h-[500px] overflow-y-auto whitespace-pre-wrap">$raw_output_html</pre>
+                </div>
+            </details>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-600 text-xs border-t border-slate-900 pt-8 mt-12">
+            <p>Generated dynamically by MySQLTuner.pl | Zero External Dependencies</p>
+            <p class="mt-1.5">&copy; 2006-2026 Major Hayden &amp; Jean-Marie Renouard</p>
+        </footer>
+
+    </div>
+</body>
+</html>
+HTML
+
+        open my $rfh, '>', $opt{'reportfile'}
+          or die "Unable to open $opt{'reportfile'} in write mode: $!";
+        print $rfh $html_content;
+        close $rfh;
+        goodprint "HTML Report successfully generated: " . $opt{'reportfile'};
     }
 
     if ( $opt{'json'} ) {
@@ -12447,7 +12699,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.43 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.44 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -12462,7 +12714,7 @@ See C<mysqltuner --help> for a full list of available options and their categori
 
 =head1 VERSION
 
-Version 2.8.43
+Version 2.8.44
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.

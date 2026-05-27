@@ -372,13 +372,11 @@ perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 ```
 
-**Использование:** использование шаблона для настройки файла отчета на основе синтаксиса [Text::Template](https://metacpan.org/pod/Text::Template).
+**Использование:** Создание автономного HTML-отчета (встроенная функция, не требует внешних модулей или библиотек CPAN)
 
 ```bash
-perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
+perl mysqltuner.pl --reportfile=mysqltuner.html
 ```
-
-**Важно**: модуль [Text::Template](https://metacpan.org/pod/Text::Template) является обязательным для опций `--reportfile` и/или `--template`, поскольку этот модуль необходим для создания соответствующего вывода на основе текстового шаблона.
 
 **Использование:** выгрузка всех представлений information_schema и sysschema в виде файла csv в подкаталог results
 
@@ -469,65 +467,30 @@ MySQLTuner теперь имеет экспериментальную подде
 * `--ssh-password <password>`: пароль SSH для облачных подключений.
 * `--ssh-identity-file <path>`: путь к файлу идентификации SSH для облачных подключений.
 
-Отчеты в формате HTML на основе Python Jinja2
+HTML-отчет и взвешенный показатель здоровья
 --
 
-Генерация HTML основана на Python/Jinja2
+MySQLTuner динамически рассчитывает **средневзвешенный показатель здоровья (KPI)** (общая оценка состояния базы данных по шкале от 0 до 100) на основе трех категорий:
 
-**Процедура генерации HTML**
+1. **Производительность (макс. 40 очков)**: Оценка эффективности чтения буферного пула, соотношения временных таблиц на диске, коэффициента кэширования потоков и загрузки соединений.
+2. **Безопасность (макс. 30 очков)**: Оценка конфигурации учетных записей пользователей, надежности паролей (проверяется офлайн), шифрования сессий SSL/TLS и использования плагинов аутентификации.
+3. **Отказоустойчивость (макс. 30 очков)**: Оценка состояния и отставания репликации, настроек логирования и результатов моделирования схемы.
 
-* Сгенерируйте отчет mysqltuner.pl в формате JSON (--json)
-* Сгенерируйте отчет в формате HTML с помощью инструментов Python j2
+**Создание HTML-отчета**
 
-**Шаблоны Jinja2 находятся в подкаталоге templates**
-
-Базовый пример называется basic.html.j2
-
-**Установка Python j2**
+Вы можете сгенерировать автономный HTML-отчет напрямую с помощью команды:
 
 ```bash
-python -mvenv j2
-source ./j2/bin/activate
-(j2) pip install j2
+perl mysqltuner.pl --reportfile=mysqltuner.html
 ```
 
-**Использование генерации отчетов в формате HTML**
+Эта функция полностью реализована на чистом Perl и имеет **нулевую зависимость от внешних библиотек** (не требуются модули CPAN или пакеты Python). Созданный отчет представляет собой интерактивную панель управления в темных тонах, отображающую:
+- Индикатор общей оценки здоровья (Weighted Health Score)
+- Подробный обзор показателей KPI (Производительность, Безопасность, Отказоустойчивость)
+- Категоризированные списки рекомендаций (Общие рекомендации, Изменение настроек, Моделирование структуры данных, Безопасность, Системные параметры)
+- Сворачиваемый лог полной консольной трассировки
 
-```bash
-perl mysqltuner.pl --verbose --json > reports.json
-cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
-```
 
-или
-
-```bash
-perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
-```
-
-Отчеты в формате HTML на основе AHA
---
-
-Генерация HTML основана на AHA
-
-**Процедура генерации HTML**
-
-* Сгенерируйте отчет mysqltuner.pl, используя стандартные текстовые отчеты
-* Сгенерируйте отчет в формате HTML с помощью aha
-
-**Установка Aha**
-
-Следуйте инструкциям из репозитория Github
-
-[Основной репозиторий GitHub AHA](https://github.com/theZiz/aha)
-
-**Использование генерации отчетов в формате HTML AHA**
-
- perl mysqltuner.pl --verbose --color > reports.txt
- aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
-
-или
-
- perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
 
 Часто задаваемые вопросы
 --
