@@ -74,4 +74,22 @@ subtest 'CVE Recommendation Logic' => sub {
     unlink($cve_file);
 };
 
+subtest 'Validate MySQL Version LTS support' => sub {
+    # Test case 1: MySQL 9.6 should be supported LTS
+    @main::generalrec = ();
+    @mock_output = ();
+    $main::myvar{'version'} = "9.6.0";
+    main::validate_mysql_version();
+    ok(has_output(qr/GOOD: Currently running supported MySQL\/MariaDB version 9\.6\.0\(LTS\)/), 'MySQL 9.6.0 is recognized as supported LTS');
+    is(scalar(@main::generalrec), 0, 'No warning messages added for 9.6.0');
+
+    # Test case 2: MySQL 9.5 should be EOL/unsupported
+    @main::generalrec = ();
+    @mock_output = ();
+    $main::myvar{'version'} = "9.5.0";
+    main::validate_mysql_version();
+    ok(has_output(qr/BAD: Your MySQL version 9\.5\.0 is EOL software/), 'MySQL 9.5.0 is recognized as EOL/unsupported');
+    ok(grep { /You are using an unsupported version/ } @main::generalrec, 'Warning message added for 9.5.0');
+};
+
 done_testing();

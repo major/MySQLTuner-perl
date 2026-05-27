@@ -88,9 +88,9 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] Add definedness guards to `mysql_version_ge()`, `mysql_version_le()`, `mysql_version_eq()` to prevent 74 uninitialized value warnings.
   * [ ] Guard `$mycalc{'innodb_log_size_pct'}` and `$myvar{'innodb_log_file_size'}` before use in InnoDB analysis.
   * [ ] Guard `$myvar{'version_comment'}` in MariaDB detection path.
-* [ ] **Version Validation Updates**:
-  * [ ] Add MySQL 9.6 to `validate_mysql_version()` supported LTS list.
-  * [ ] Remove MySQL 9.5 (now Outdated) from the LTS list.
+* [x] **Version Validation Updates**:
+  * [x] Add MySQL 9.6 to `validate_mysql_version()` supported LTS list.
+  * [x] Remove MySQL 9.5 (now Outdated) from the LTS list.
 * [ ] **Test Coverage Expansion**:
   * [ ] Achieve ≥80% subroutine test coverage (currently ~55%, 74 of 165 uncovered).
   * [ ] Priority coverage: `check_architecture`, `system_recommendations`, `mysql_indexes`, `mysql_views`, `mysql_routines`, `mysql_triggers`, `make_recommendations`.
