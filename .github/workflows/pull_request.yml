@@ -107,6 +107,10 @@ jobs:
         run: |
           perl build/check_compliance.pl
 
+      - name: Run EOL dates synchronization check
+        run: |
+          perl build/sync_eol_dates.pl
+
       - name: Run unit tests
         run: |
           set -o pipefail

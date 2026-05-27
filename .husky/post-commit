@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Check if mysqltuner.pl was modified in the latest commit
+if git diff-tree -r --name-only --no-commit-id HEAD | grep -q "^mysqltuner.pl$"; then
+  echo "Husky [post-commit]: mysqltuner.pl was modified. Triggering USAGE.md regeneration..."
+  make generate_usage
+fi
