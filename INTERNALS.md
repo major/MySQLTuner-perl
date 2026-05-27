@@ -13,6 +13,8 @@
 - [Mysql error log file analysis](#mysql-error-log-file-analysis)
 - [MySQL Storage engine general information](#mysql-storage-engine-general-information)
 - [MySQLTuner security checks](#mysqltuner-security-checks)
+- [MySQLTuner SSL/TLS security checks](#mysqltuner-ssltls-security-checks)
+- [MySQLTuner authentication plugin auditing](#mysqltuner-authentication-plugin-auditing)
 - [MySQLTuner CVE vulnerabilities detection](#mysqltuner-cve-vulnerabilities-detection)
 - [MySQLTuner database information](#mysqltuner-database-information)
 - [MySQLTuner index information](#mysqltuner-index-information)
@@ -35,8 +37,23 @@
 - [MySQLTuner RocksDb information](#mysqltuner-rocksdb-information)
 - [MySQLTuner Thread pool information](#mysqltuner-thread-pool-information)
 - [MySQLTuner performance schema and sysschema information](#mysqltuner-performance-schema-and-sysschema-information)
+- [MySQLTuner Table Structure Analysis](#mysqltuner-table-structure-analysis)
+- [MySQLTuner Naming Conventions Analysis](#mysqltuner-naming-conventions-analysis)
+- [MySQLTuner Foreign Key Analysis](#mysqltuner-foreign-key-analysis)
+- [MySQLTuner MySQL 8.0+ / MariaDB Modeling Checks](#mysqltuner-mysql-80--mariadb-modeling-checks)
+- [MySQLTuner Data Type Optimization](#mysqltuner-data-type-optimization)
+- [MySQLTuner Schema Sanitization](#mysqltuner-schema-sanitization)
 - [MySQLTuner Cloud and SSH integration](#mysqltuner-cloud-and-ssh-integration)
+- [MySQLTuner Cloud Autodiscovery](#mysqltuner-cloud-autodiscovery)
+- [MySQLTuner Infrastructure Awareness](#mysqltuner-infrastructure-awareness)
 - [MySQLTuner Container and Systemd log integration](#mysqltuner-container-and-systemd-log-integration)
+- [MySQLTuner Weighted Health Score](#mysqltuner-weighted-health-score)
+- [MySQLTuner Predictive Capacity Analysis](#mysqltuner-predictive-capacity-analysis)
+- [MySQLTuner Guided Auto-Fix Engine](#mysqltuner-guided-auto-fix-engine)
+- [MySQLTuner Query Anti-Pattern Detection](#mysqltuner-query-anti-pattern-detection)
+- [MySQLTuner Sysbench Integration](#mysqltuner-sysbench-integration)
+- [MySQLTuner Historical Trend Analysis](#mysqltuner-historical-trend-analysis)
+- [MySQLTuner Aborted Connections Management](#mysqltuner-aborted-connections-management)
 
 ## MySQLTuner steps
 
@@ -54,11 +71,14 @@
 - Show parameters impacting performance during analysis
 - Show information about databases (option: --dbstat)
 - Show information about tables (option: --tbstat)
+- Show information about columns (option: --colstat)
 - Show information about indexes (option: --idxstat)
 - Show information about views, triggers, and routines
 - Show information about plugins (option: --plugininfo)
 - Show enabled storage engines
-- Display some security recommendations
+- Display security recommendations
+- Display SSL/TLS security audit
+- Display authentication plugin audit
 - CVE vulnerabilities detection
 - Calculate everything we need
 - Print the server stats
@@ -66,12 +86,21 @@
 - Print InnoDB stats
 - Print AriaDB stats
 - Print Galera cluster stats
-- Print replication info
+- Print replication info (Source/Replica, GTID, Semi-sync)
 - Query Anti-Pattern Detection (Performance Schema digests)
 - Print Storage Engine specific stats (TokuDB, RocksDB, Spider, etc.)
 - Print Performance Schema stats
-- Sysbench result analysis (if provided)
-- Historical Trend Analysis (if comparison file provided)
+- Table structure analysis (option: --structstat)
+- Naming conventions analysis (option: --structstat)
+- Foreign key analysis (option: --structstat)
+- MySQL 8.0+ / MariaDB modeling checks (option: --structstat)
+- Data type optimization analysis (option: --structstat)
+- Schema sanitization checks (option: --structstat)
+- Weighted Health Score KPI calculation and display
+- Predictive Capacity Analysis (memory headroom, disk growth)
+- Sysbench result analysis (if provided via --sysbench-file)
+- Historical Trend Analysis (if comparison file provided via --compare-file)
+- Guided Auto-Fix Snippets generation
 - Make recommendations based on stats
 - Close reportfile if needed
 - Dump result if debug is on
@@ -114,10 +143,10 @@
 
 ## MySQLTuner Server version checks
 
-- EOL MySQL version check
-
-- Currently MySQL < 5.1 are considered EOL
+- EOL MySQL and MariaDB version check
+- Currently MySQL < 5.5 and MariaDB < 10.6 are considered EOL
 - Using 5.5+ version of MySQL for performance issue (asynchronous IO)
+- MySQL 9.x readiness: detection of removed variables and eliminated authentication methods
 
 ## Mysql error log file analysis
 
@@ -150,6 +179,36 @@
 - Weak password check (possibly using cracklib later?)
 - Using basic_passwords.txt as password database
 - Password list checks can be avoided (option: --skippassword)
+- Max password checks configurable (option: --max-password-checks, default: 100)
+
+## MySQLTuner SSL/TLS security checks
+
+- Current session encryption status (Ssl_cipher check)
+- Global SSL support (have_ssl variable)
+- `require_secure_transport` enforcement (MySQL 5.7+, MariaDB 10.5+)
+- TLS version audit:
+  - Warn if TLSv1.0 or TLSv1.1 are enabled (insecure)
+  - Verify TLSv1.2 or TLSv1.3 are available
+- SSL certificate presence and local audit:
+  - Certificate file existence and permissions
+  - Certificate expiration date check
+- Remote user SSL enforcement:
+  - Check if remote users (`%` host) require SSL
+- CSV export of SSL issues (with --dumpdir)
+
+## MySQLTuner authentication plugin auditing
+
+- Detection of insecure authentication plugins:
+  - `mysql_native_password` (SHA-1 based, deprecated in MySQL 8.0+)
+  - `mysql_old_password` (legacy, insecure)
+  - `sha256_password` (deprecated in favor of `caching_sha2_password`)
+- MySQL 9.x readiness diagnostics:
+  - Eliminated authentication methods detection
+  - Migration path recommendations
+- MariaDB-specific recommendations:
+  - Suggest `ed25519` for modern password authentication
+  - Suggest `unix_socket` for local root authentication
+- Extended plugins support matrix (see [AUTHENTICATION_PLUGINS.md](documentation/AUTHENTICATION_PLUGINS.md))
 
 ## MySQLTuner CVE vulnerabilities detection
 
@@ -483,7 +542,7 @@
  
 - **Storage Type**: Detects SSD/NVMe vs HDD by checking /sys/block/*/queue/rotational.
 - **Hardware Architecture**: Detects ARM64/Graviton vs x86_64.
-- tuning Adjustments: Suggestions for innodb_flush_neighbors and innodb_io_capacity based on storage type.
+- **Tuning Adjustments**: Suggestions for innodb_flush_neighbors and innodb_io_capacity based on storage type.
  
 ## MySQLTuner Cloud Autodiscovery
  
@@ -506,3 +565,127 @@
  
 - **JSON Snapshots**: Ingests JSON output from previous runs via --compare-file.
 - **Comparisons**: Provides trends for QPS and Data Growth between snapshots.
+
+## MySQLTuner Table Structure Analysis
+
+Activated with `--structstat` or `--verbose`.
+
+- Tables without primary keys detection
+- Primary Key naming convention checks:
+  - Expected: `id` or `<table_name>_id`
+  - Deviations flagged and counted
+- Surrogate key type validation:
+  - Recommended: `BIGINT UNSIGNED AUTO_INCREMENT`
+  - UUID optimization: recommend `BINARY(16)` instead of `VARCHAR`
+- Large tables (>1GB) without secondary indexes
+- Foreign Key data type mismatches between referencing and referenced columns
+- Non-InnoDB tables detection (recommend migration to InnoDB)
+- Non-UTF8 columns detection (character set and collation audit)
+- FULLTEXT columns inventory
+- CSV export of findings (with --dumpdir):
+  - `tables_without_primary_keys.csv`
+  - `primary_key_issues.csv`
+  - `tables_non_innodb.csv`
+  - `columns_non_utf8.csv`
+  - `columns_utf8.csv`
+  - `fulltext_columns.csv`
+
+## MySQLTuner Naming Conventions Analysis
+
+Activated with `--structstat` or `--verbose`.
+
+- Automatic dominant style detection across the codebase:
+  - Supported styles: `snake_case`, `camelCase`, `PascalCase`, `kebab-case`, `UPPER_SNAKE_CASE`
+- Table naming checks:
+  - Plural name detection (prefer singular table names)
+  - Casing consistency vs dominant style
+- View naming consistency checks
+- Index naming consistency checks
+- Column naming checks:
+  - Casing consistency vs dominant style
+  - Boolean column prefix convention (`is_`, `has_`, `was_`, `had_`)
+  - Date/Time column suffix convention (`_at`, `_date`, `_time`)
+- CSV export: `naming_convention_deviations.csv` (with --dumpdir)
+
+## MySQLTuner Foreign Key Analysis
+
+Activated with `--structstat` or `--verbose`.
+
+- Unconstrained `_id` columns: columns ending in `_id` that lack a FOREIGN KEY constraint
+- FK actions audit: warns when `ON DELETE CASCADE` is used (potential data loss risk)
+- FK type mismatches: data type differences between FK column and referenced column
+- CSV export: `missing_foreign_keys.csv` (with --dumpdir)
+
+## MySQLTuner MySQL 8.0+ / MariaDB Modeling Checks
+
+Requires MySQL 8.0+ or MariaDB 10.x+.
+
+- JSON column indexability:
+  - Detects JSON columns without Virtual Generated Columns for indexing
+  - Recommends creating generated columns for frequently searched JSON attributes
+- Invisible indexes detection:
+  - MySQL: `IS_VISIBLE = 'NO'`
+  - MariaDB: `IGNORED = 'YES'`
+- CHECK constraints inventory (MySQL 8.0.16+)
+- CSV export: `json_columns_without_virtual.csv` (with --dumpdir)
+
+## MySQLTuner Data Type Optimization
+
+Activated with `--structstat` or `--verbose`.
+
+- NULLability audit: warns when more than 20 columns have `IS_NULLABLE = 'YES'`
+- Recommends using `NOT NULL` where possible for better performance and index efficiency
+
+## MySQLTuner Schema Sanitization
+
+Activated with `--structstat` or `--verbose`.
+
+- Empty schemas detection (no tables and no views)
+- View-only schemas detection (views but no base tables)
+
+## MySQLTuner Weighted Health Score
+
+- Unified KPI aggregating findings across three dimensions:
+  - **Performance (40 points)**:
+    - Buffer Pool hit rate (10pts): >99% = 10, >95% = 5, else 0
+    - Temp tables on disk (10pts): <10% = 10, <25% = 5, else 0
+    - Thread cache hit rate (10pts): >90% = 10, >50% = 5, else 0
+    - Connection usage (10pts): <80% = 10, else 0
+  - **Security (30 points)**:
+    - Deducted for anonymous users, empty passwords, users without host restriction
+    - Deducted for insecure authentication plugins
+    - Deducted for missing SSL configuration
+  - **Resilience (30 points)**:
+    - Replication lag (10pts)
+    - Error log health (10pts)
+    - Metadata consistency (10pts)
+- Color-coded display: Green (>80), Yellow (>50), Red (≤50)
+- Stored in JSON output as `WeightedHealthScore` and `HealthScoreDetails`
+
+## MySQLTuner Predictive Capacity Analysis
+
+- **Memory Headroom**:
+  - Calculates theoretical peak memory usage vs available RAM+Swap
+  - Alerts when peak memory exceeds available resources (OOM risk)
+  - Reports headroom percentage of physical RAM
+- **Disk Growth Forecasting**:
+  - Estimates daily data growth based on current total data size and server uptime
+  - Requires minimum 24 hours of uptime for reliable estimation
+- Results stored in JSON: `Capacity.Memory.Peak`, `Capacity.Memory.Headroom`, `Capacity.Disk.DailyGrowth`
+
+## MySQLTuner Guided Auto-Fix Engine
+
+- Generates ready-to-apply SQL snippets from variable adjustment recommendations:
+  - **SET GLOBAL statements**: Immediate application without restart
+  - **[mysqld] configuration block**: For persistent my.cnf changes
+- Only generated when variable adjustments are recommended
+- Suppressed in `--silent` and `--json` modes
+
+## MySQLTuner Aborted Connections Management
+
+- Tracks aborted connections state across runs to avoid false positives
+- State file protection:
+  - Symlink verification before read/write
+  - Atomic writes to prevent corruption
+  - Transport-specific host and container identifiers in state file path to prevent collisions
+- Adjusts the aborted connections count to subtract connections caused by MySQLTuner's own password strength checks

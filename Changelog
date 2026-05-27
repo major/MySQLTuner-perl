@@ -19,6 +19,7 @@
 - test: strengthen authentication plugin checks and add verification suite for state file protections.
 - test: add comprehensive test suite for weighted health score and score breakdowns.
 - ci: optimize release notes generation to isolate branch changes.
+- docs: complete documentation refresh synchronizing README.md, INTERNALS.md, USAGE.md, and all translated READMEs with v2.8.43 script capabilities.
 - docs: improve authentication plugins algorithm labels and resolve absolute documentation links.
 - perf: optimize --dumpdir performance by excluding heavy RDS/Aurora and internal metrics.
 - refactor: catch explicit exception classes in build/release_gen.py to prevent masking system signals.
