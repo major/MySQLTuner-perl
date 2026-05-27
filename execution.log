@@ -32,3 +32,5 @@
 [2026-05-28 00:48:41] [DRY-RUN] [OK] Simulated update on Changelog matches version schema and compiles cleanly.
 [2026-05-28 00:48:41] [DRY-RUN] [OK] Simulated path for new release notes: /home/jmren/GIT_REPOS/MySQLTuner-perl/build/../releases/v2.8.45.md
 [2026-05-28 00:48:41] [DRY-RUN] Dry-run validation completed successfully. All files matches version schemas.
+[2026-05-28 00:50:06] [MAKE] Starting generate_usage...
+[2026-05-28 00:50:41] [MAKE] Finished generate_usage.
