@@ -1,6 +1,6 @@
 # MySQLTuner-perl Version Memory
 
-## Current Version: 2.8.42
+## Current Version: 2.8.43
 
 ## Project Evolution & Systemic Findings
 
@@ -18,9 +18,12 @@ Migrated several external commands to native Core Perl to reduce fork overhead a
 - `uptime` -> `/proc/uptime` parsing or `$^T` calculation
 
 ### Recent Audits
-- **v2.8.42**: 
-  - Optimized `--dumpdir` analysis by skipping heavy views and AWS-specific metrics.
-  - Fixed fake aborted connections count increase when performing password strength checks (#900).
+- **v2.8.43**: 
+  - Added `--compress-dump` and `--dump-limit` options for schema exports.
+  - Exported deviations (naming conventions, foreign keys) to CSV and created manifest files.
+  - Prevented fake aborted connections count increase during password checking (#900).
+  - Resolved invalid credentials login errors, prevented plaintext password leakage, and protected connection state files.
+- **v2.8.42**: Empty project metadata release.
 - **v2.8.41**: 
   - Completed project-wide refactoring to use standard Perl Boolean practices.
   - Restored Debian maintenance account automatic login functionality (#896).

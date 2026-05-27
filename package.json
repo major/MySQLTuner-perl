@@ -10,7 +10,7 @@
   "scripts": {
     "commit": "cz",
     "lint:commit": "commitlint --from=HEAD~1",
-    "test": "prove tests/*.t",
+    "test": "perl ./build/audit_tests.pl",
     "prepare": "husky"
   },
   "repository": {

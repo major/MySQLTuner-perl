@@ -3,14 +3,14 @@
 [!["Offrez-nous un café"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
 [![État du projet](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
-[![État des tests](https://github.com/anuraghazra/github-readme-stats/workflows/Test/badge.svg)](https://github.com/anuraghazra/github-readme-stats/)
+[![État des tests](https://github.com/jmrenouard/MySQLTuner-perl/workflows/Test/badge.svg)](https://github.com/jmrenouard/MySQLTuner-perl/actions)
 [![Temps moyen de résolution d'un problème](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Temps moyen de résolution d'un problème")
 [![Pourcentage de problèmes ouverts](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Pourcentage de problèmes encore ouverts")
 [![Licence GPL](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** est un script écrit en Perl qui vous permet d'examiner rapidement une installation MySQL et de faire des ajustements pour augmenter les performances et la stabilité. Les variables de configuration actuelles et les données d'état sont récupérées et présentées dans un bref format avec quelques suggestions de performances de base.
 
-**MySQLTuner** prend en charge environ 300 indicateurs et KPI (y compris le score de santé pondéré) pour MySQL/MariaDB/Percona Server dans cette dernière version.
+**MySQLTuner** prend en charge environ 900+ indicateurs, KPI et recommandations (y compris le score de santé pondéré, la planification prédictive des capacités et l'audit SSL/TLS) pour MySQL/MariaDB/Percona Server dans cette dernière version.
 
 **MySQLTuner** est activement maintenu et prend en charge de nombreuses configurations telles que [Galera Cluster](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [Schéma de performance](https://github.com/mysql/mysql-sys), les métriques du système d'exploitation Linux, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
@@ -38,7 +38,7 @@ MySQLTuner a besoin de vous
 * Support payant pour LightPath ici : [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
 * Support payant pour Releem disponible ici : [Application Releem](https://releem.com/)
 
-![Statistiques GitHub d'Anurag](https://github-readme-stats.vercel.app/api?username=anuraghazra&show_icons=true&theme=radical)
+![Statistiques GitHub de jmrenouard](https://github-readme-stats.vercel.app/api?username=jmrenouard&show_icons=true&theme=radical)
 
 ## Stargazers au fil du temps
 
@@ -71,10 +71,19 @@ Merci à [endoflife.date](https://endoflife.date/)
 
 ***Intelligence avancée et écosystème***
 
-* **Indicateur de score de santé pondéré (KPI)** : Évaluation globale de la santé de la base de données basée sur les performances, la sécurité et la résilience.
-* **Conseiller en migration intelligente LTS** : Identification des risques lors de la migration vers les versions LTS modernes (MySQL 8.4/9.0+, MariaDB 11.x).
-* **Planification prédictive des capacités** : Analyse de la marge de manœuvre de la mémoire et prévision de la croissance du disque.
-* **Découverte du Cloud** : prise en charge native d'AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed) et DigitalOcean.
+* **Indicateur de score de santé pondéré (KPI)** : Évaluation globale de la santé de la base de données (0-100) basée sur les performances (40pts), la sécurité (30pts) et la résilience (30pts).
+* **Conseiller en migration intelligente LTS** : Identification des risques lors de la migration vers les versions LTS modernes (MySQL 8.4/9.0+, MariaDB 11.x), incluant les variables supprimées et les méthodes d'authentification dépréciées.
+* **Planification prédictive des capacités** : Analyse de la marge de manœuvre mémoire (pic vs RAM+Swap disponible), prévision de la croissance disque, et détection de la capacité AUTO_INCREMENT proche du maximum.
+* **Découverte automatique du Cloud** : Prise en charge native d'AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed) et DigitalOcean. Détection automatique via `@@version_comment` et variables spécifiques au fournisseur.
+* **Tuning adaptatif à l'infrastructure** : Détection des types de stockage SSD/NVMe vs HDD et des architectures ARM64/Graviton vs x86_64. Ajustement des recommandations pour `innodb_flush_neighbors` et `innodb_io_capacity`.
+* **Audit de sécurité SSL/TLS** : Vérification du chiffrement de session, audit des versions TLS (alerte sur TLSv1.0/1.1), expiration des certificats, application de `require_secure_transport`, et vérification SSL des utilisateurs distants.
+* **Audit des plugins d'authentification** : Détection des plugins non sécurisés (`mysql_native_password`, `sha256_password`), diagnostic de compatibilité MySQL 9.x, et recommandations MariaDB `ed25519`/`unix_socket`.
+* **Modélisation de schéma et conventions de nommage** : Analyse complète de la structure des tables (PK manquantes, types de clés de substitution, conformité UTF-8, tables non-InnoDB), audit des conventions de nommage (cohérence snake_case/camelCase, détection du pluriel, préfixes de colonnes booléennes/dates), et analyse des clés étrangères (colonnes `_id` non contraintes, incohérences de types, audit CASCADE).
+* **Modélisation MySQL 8.0+ / MariaDB** : Indexabilité des colonnes JSON (colonnes virtuelles générées), index invisibles, contraintes CHECK.
+* **Moteur Auto-Fix guidé** : Génération d'instructions `SET GLOBAL` SQL prêtes à l'emploi et de blocs de configuration `[mysqld]` à partir des recommandations d'ajustement de variables.
+* **Analyse de tendances historiques** : Ingestion de sorties JSON de runs précédents via `--compare-file` pour suivre les tendances QPS et de croissance des données.
+* **Intégration Sysbench** : Analyse de la sortie sysbench pour les métriques QPS, TPS et latence (Moy/95e/Max) via `--sysbench-file`.
+* **Intégration logs Container et Systemd** : Détection automatique des logs depuis Docker, Podman, Kubectl/Kubernetes et le journal Systemd.
 
 ***Moteurs de stockage non pris en charge : les PR sont les bienvenues***
 --
@@ -153,6 +162,22 @@ Que vérifie exactement MySQLTuner ?
 --
 
 Toutes les vérifications effectuées par **MySQLTuner** sont documentées dans la documentation [MySQLTuner Internals](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
+
+**MySQLTuner** analyse les domaines suivants :
+
+* **Système et OS** : RAM, swap, ports ouverts, paramètres noyau, charge, points de montage, cartes réseau
+* **Version du serveur** : Détection EOL, architecture, recommandations 64 bits
+* **Logs d'erreur** : Fichiers locaux, conteneurs Docker/Podman, pods Kubernetes, journal Systemd
+* **Cloud et Infrastructure** : AWS RDS/Aurora, GCP, Azure, DigitalOcean ; SSD/NVMe vs HDD ; ARM64/x86_64
+* **Moteurs de stockage** : InnoDB (buffer pool, redo log, chunk size), MyISAM, Aria, Galera, TokuDB, RocksDB
+* **Sécurité** : Utilisateurs anonymes, mots de passe faibles, audit SSL/TLS, plugins d'authentification, vulnérabilités CVE
+* **Connexions** : Pourcentages d'utilisation, connexions abandonnées, cache de threads
+* **Performance** : Tri/jointures/tables temporaires, buffers globaux, cache de requêtes, requêtes lentes, utilisation mémoire
+* **Réplication** : État Source/Réplica, retard, GTID, semi-sync, multi-source
+* **Performance Schema** : Top utilisateurs/hôtes/requêtes, latence IO, verrouillages, index inutilisés, index redondants
+* **Modélisation de schéma** : Analyse des clés primaires, conventions de nommage, clés étrangères, types de données, conformité UTF-8, indexabilité JSON
+* **Prédictif** : Marge mémoire, prévision de croissance disque, capacité AUTO_INCREMENT
+* **Score de santé** : KPI pondéré (0-100) agrégant les résultats Performance, Sécurité et Résilience
 
 Téléchargement/Installation
 --
@@ -372,6 +397,73 @@ perl mysqltuner.pl --debug
 ```bash
 perl mysqltuner.pl --checkversion --updateversion
 ```
+
+**Utilisation :** Intégration des résultats de performance Sysbench
+
+```bash
+perl mysqltuner.pl --sysbench-file=/chemin/vers/sortie_sysbench.txt
+```
+
+**Utilisation :** Analyse de tendances historiques (comparaison avec un run précédent)
+
+```bash
+perl mysqltuner.pl --json --outputfile=run1.json
+# ... quelque temps plus tard ...
+perl mysqltuner.pl --compare-file=run1.json
+```
+
+**Utilisation :** Exporter un fichier Markdown par schéma (documentation de schéma)
+
+```bash
+perl mysqltuner.pl --verbose --schemadir=./schemas
+```
+
+**Utilisation :** Export de données avec limite de lignes et compression gzip
+
+```bash
+perl mysqltuner.pl --verbose --dumpdir=./result --dump-limit=10000 --compress-dump
+```
+
+**Utilisation :** Mode conteneur (analyser une base de données dans Docker)
+
+```bash
+perl mysqltuner.pl --verbose --container docker:nom_du_conteneur_mysql
+```
+
+**Utilisation :** Analyse de structure de table et conventions de nommage
+
+```bash
+perl mysqltuner.pl --structstat
+```
+
+**Utilisation :** Filtrer la sortie (afficher uniquement les problèmes)
+
+```bash
+perl mysqltuner.pl --nogood --noinfo
+```
+
+**Utilisation :** Sortie JSON (pour l'automatisation et les pipelines de reporting)
+
+```bash
+perl mysqltuner.pl --json --outputfile=report.json
+perl mysqltuner.pl --prettyjson
+```
+
+**Utilisation :** Mode serveur non dédié (hébergement partagé)
+
+```bash
+perl mysqltuner.pl --nondedicated
+```
+
+**Utilisation :** Utiliser des identifiants via des variables d'environnement
+
+```bash
+export MYSQL_USER=mysqltuner
+export MYSQL_PASS=secret
+perl mysqltuner.pl --userenv=MYSQL_USER --passenv=MYSQL_PASS
+```
+
+Pour une liste complète de toutes les options disponibles, exécutez `perl mysqltuner.pl --help` ou consultez la documentation [USAGE.md](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/USAGE.md).
 
 Prise en charge du cloud
 --
@@ -604,7 +696,7 @@ wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/vulnera
 chmod +x mysqltuner.pl
 ```
 
-* **Git clone :**
+* **Git clone :**
 
 ```bash
 git clone --depth 1 -b master https://github.com/jmrenouard/MySQLTuner-perl.git
@@ -612,73 +704,35 @@ cd MySQLTuner-perl
 perl mysqltuner.pl
 ```
 
-* **Environnements isolés (air-gapped) :** Si votre serveur ne dispose pas d'un accès direct à Internet, téléchargez les fichiers ci-dessus sur un hôte disposant d'un accès Internet (ou via un proxy), puis transférez `mysqltuner.pl`, `basic_passwords.txt` et `vulnerabilities.csv` sur le serveur cible via `scp`, `rsync` ou toute autre méthode de transfert de fichiers.
+* **Environnements isolés (air-gapped) :** Si votre serveur ne dispose pas d'un accès direct à Internet, téléchargez les fichiers ci-dessus sur un hôte disposant d'un accès Internet (ou via un proxy), puis transférez `mysqltuner.pl`, `basic_passwords.txt` et `vulnerabilities.csv` sur le serveur cible via `scp`, `rsync` ou toute autre méthode de transfert de fichiers.
 
-MySQLTuner et Vagrant
+MySQLTuner et Vagrant (Héritage)
 --
 
-**MySQLTuner** contient les configurations Vagrant suivantes :
-
-* Fedora Core 30 / Docker
+> **Note :** L'environnement de test basé sur Vagrant est considéré comme héritage. Pour les tests modernes, utilisez la suite de tests basée sur Docker via `make test-it` ou `build/test_envs.sh`.
 
 **Le fichier Vagrant** est stocké dans le sous-répertoire Vagrant.
 
-* Suivez les étapes suivantes après l'installation de Vagrant :
-    $ vagrant up
+## Configuration des environnements de test Docker
 
-**MySQLTuner** contient une configuration Vagrant à des fins de test et de développement
+MySQLTuner inclut une infrastructure de test basée sur Docker pour la validation multi-versions :
 
-* Installez VirtualBox et Vagrant
-  * <https://www.virtualbox.org/wiki/Downloads>
-  * <https://www.vagrantup.com/downloads.html>
-* Clonez le dépôt
-  * git clone <https://github.com/jmrenouard/MySQLTuner-perl/.git>
-* Installez les plugins Vagrant vagrant-hostmanager et vagrant-vbguest
-  * vagrant plugin install vagrant-hostmanager
-  * vagrant plugin install vagrant-vbguest
-* Ajoutez la boîte Fedora Core 30 depuis le site de téléchargement officiel de Fedora
-  * vagrant box add --name generic/fedora30
-* Créez un répertoire de données
-  * mkdir data
+```bash
+# Créer et démarrer tous les conteneurs de test
+sh build/createTestEnvs.sh
 
-## configurer les environnements de test
+# Charger les aides d'environnement
+source build/bashrc
 
-    $ sh build/createTestEnvs.sh
+# Se connecter à une base de données spécifique
+mysql_percona80 sakila
+```
 
-    $ source build/bashrc
-    $ mysql_percona80 sakila
-    sakila> ...
+**Cibles de test prises en charge** (reportez-vous à [support MariaDB](mariadb_support.md) et [support MySQL](mysql_support.md) pour la matrice de compatibilité actuelle) :
 
-    $ docker images
-    mariadb                  10.1                fc612450e1f1        12 days ago         352MB
-    mariadb                  10.2                027b7c57b8c6        12 days ago         340MB
-    mariadb                  10.3                47dff68107c4        12 days ago         343MB
-    mariadb                  10.4                92495405fc36        12 days ago         356MB
-    mysql                    5.6                 95e0fc47b096        2 weeks ago         257MB
-    mysql                    5.7                 383867b75fd2        2 weeks ago         373MB
-    mysql                    8.0                 b8fd9553f1f0        2 weeks ago         445MB
-    percona/percona-server   5.7                 ddd245ed3496        5 weeks ago         585MB
-    percona/percona-server   5.6                 ed0a36e0cf1b        6 weeks ago         421MB
-    percona/percona-server   8.0                 390ae97d57c6        6 weeks ago         697MB
-    mariadb                  5.5                 c7bf316a4325        4 months ago        352MB
-    mariadb                  10.0                d1bde56970c6        4 months ago        353MB
-    mysql                    5.5                 d404d78aa797        4 months ago        205MB
-
-    $ docker ps
-    CONTAINER ID        IMAGE                        COMMAND                  CREATED             STATUS              PORTS                               NAMES
-    da2be9b050c9        mariadb:5.5                  "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5311->3306/tcp              mariadb55
-    5deca25d5ac8        mariadb:10.0                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5310->3306/tcp              mariadb100
-    73aaeb37e2c2        mariadb:10.1                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5309->3306/tcp              mariadb101
-    72ffa77e01ec        mariadb:10.2                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5308->3306/tcp              mariadb102
-    f5996f2041df        mariadb:10.3                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5307->3306/tcp              mariadb103
-    4890c52372bb        mariadb:10.4                 "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:5306->3306/tcp              mariadb104
-    6b9dc078e921        percona/percona-server:5.6   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          0.0.0.0:4308->3306/tcp              percona56
-    3a4c7c826d4c        percona/percona-server:5.7   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          0.0.0.0:4307->3306/tcp              percona57
-    3dda408c91b0        percona/percona-server:8.0   "/docker-entrypoint.…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:4306->3306/tcp   percona80
-    600a4e7e9dcd        mysql:5.5                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3309->3306/tcp              mysql55
-    4bbe54342e5d        mysql:5.6                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3308->3306/tcp              mysql56
-    a49783249a11        mysql:5.7                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          33060/tcp, 0.0.0.0:3307->3306/tcp   mysql57
-    d985820667c2        mysql:8.0                    "docker-entrypoint.s…"   7 hours ago         Up 7 hours          0.0.0.0:3306->3306/tcp, 33060/tcp   mysql 8    0
+* MySQL 8.0, 8.4, 9.x
+* MariaDB 10.6, 10.11, 11.4, 11.8
+* Percona Server 8.0
 
 Les contributions sont les bienvenues
 --

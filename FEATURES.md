@@ -58,3 +58,4 @@ Features list for option: --feature (dev only)
 * system_recommendations
 * validate_mysql_version
 * validate_tuner_version
+* write_manifest_files

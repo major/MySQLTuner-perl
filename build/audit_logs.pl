@@ -30,7 +30,7 @@ print "Auditing laboratory results in '$directory'...\n";
 
 find(
     sub {
-        return unless $_ eq 'execution.log';
+        return unless $_ eq 'execution.log' || $_ eq 'mysqltuner_output.txt';
         my $file_path = $File::Find::name;
         
         if ($verbose) {
@@ -56,7 +56,7 @@ find(
             if ($line =~ /Syntax error/i || $line =~ /unexpected/i) {
                 push @anomalies, { file => $file_path, line => $line_num, type => 'Syntax Anomaly', content => $line };
             }
-            if ( ($line =~ /uninitialized value/i || $line =~ /deprecated/i) && $line !~ /(?:✔|\[OK\])/ ) {
+            if ( ($line =~ /uninitialized value/i || $line =~ /deprecated/i) && $line !~ /(?:✔|\[OK\])/ && $line !~ /uses DEPRECATED/ && $line !~ /uses DISABLED/ ) {
                 push @anomalies, { file => $file_path, line => $line_num, type => 'Perl Warning', content => $line };
             }
         }

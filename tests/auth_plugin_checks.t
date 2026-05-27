@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use File::Spec;
@@ -25,7 +26,12 @@ my @recommendations;
 *main::infoprint = sub { };
 *main::debugprint = sub { };
 *main::subheaderprint = sub { };
-*main::push_recommendation = sub { push @recommendations, { type => $_[0], msg => $_[1] } };
+*main::push_recommendation = sub {
+    my ($cat, $msg) = @_;
+    push @main::generalrec, $msg;
+    push @main::secrec,     $msg if $cat =~ /sec/i;
+    push @recommendations, { type => $cat, msg => $msg };
+};
 
 our %myvar;
 *main::mysql_version_ge = sub {
@@ -44,7 +50,7 @@ subtest 'MySQL 8.0 - mysql_native_password deprecated' => sub {
     
     main::check_auth_plugins();
     
-    ok(grep(/uses DEPRECATED plugin: mysql_native_password/, @badprints), 'Detected deprecated plugin on MySQL 8.0');
+    ok(grep(/uses DEPRECATED\/INSECURE plugin: mysql_native_password/, @badprints), 'Detected deprecated plugin on MySQL 8.0');
     ok(scalar @main::secrec > 0, 'secrec has entries for deprecated plugin');
     foreach my $s (@main::secrec) {
         ok($s =~ /Migrate to 'caching_sha2_password'/, 'Recommendation for caching_sha2_password');
@@ -62,7 +68,7 @@ subtest 'MySQL 8.4 - mysql_native_password disabled by default' => sub {
     
     main::check_auth_plugins();
     
-    ok(grep(/uses DISABLED BY DEFAULT plugin: mysql_native_password/, @badprints), 'Detected disabled by default plugin on MySQL 8.4');
+    ok(grep(/uses DISABLED BY DEFAULT\/INSECURE plugin: mysql_native_password/, @badprints), 'Detected disabled by default plugin on MySQL 8.4');
     is(scalar(grep { $_ eq "Migrate to 'caching_sha2_password' for 1 user(s)" } @main::generalrec), 1, 'Consolidated recommendation pushed to generalrec');
 };
 
@@ -76,7 +82,7 @@ subtest 'MySQL 9.0 - mysql_native_password removed' => sub {
     
     main::check_auth_plugins();
     
-    ok(grep(/uses REMOVED plugin: mysql_native_password/, @badprints), 'Detected removed plugin on MySQL 9.0');
+    ok(grep(/uses REMOVED\/INSECURE plugin: mysql_native_password/, @badprints), 'Detected removed plugin on MySQL 9.0');
     is(scalar(grep { $_ eq "Migrate to 'caching_sha2_password' for 1 user(s)" } @main::generalrec), 1, 'Consolidated recommendation pushed to generalrec');
 };
 
@@ -93,9 +99,9 @@ subtest 'MariaDB 10.11 - mysql_native_password insecure' => sub {
     ok(grep(/uses SHA-1 based insecure plugin: mysql_native_password/, @badprints), 'Detected insecure plugin on MariaDB');
     ok(scalar @main::secrec > 0, 'secrec has entries for insecure plugin');
     foreach my $s (@main::secrec) {
-        ok($s =~ /Migrate to 'ed25519' or 'unix_socket'/, 'Recommendation for ed25519/unix_socket');
+        ok($s =~ /Migrate to 'ed25519', 'parsec' or 'unix_socket'/, 'Recommendation for ed25519/parsec/unix_socket');
     }
-    is(scalar(grep { $_ eq "Migrate to 'ed25519' or 'unix_socket' for 1 user(s)" } @main::generalrec), 1, 'Consolidated recommendation pushed to generalrec');
+    is(scalar(grep { $_ eq "Migrate to 'ed25519', 'parsec' or 'unix_socket' for 1 user(s)" } @main::generalrec), 1, 'Consolidated recommendation pushed to generalrec');
 };
 
 subtest 'No insecure plugins' => sub {

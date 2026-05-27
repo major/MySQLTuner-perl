@@ -14,7 +14,7 @@ sub parse_support_file {
     open my $fh, '<', $file or die "Cannot open $file: $!\n";
     while (my $line = <$fh>) {
         # Format: | 8.4 | Supported | 2024-04-30 | 2032-04-30 |
-        if ($line =~ /\|\s*([\d\.]+)\s*\|\s*Supported\s*\|/) {
+        if ($line =~ /\|\s*([\d\.]+)\s*\|[^|]*\|[^|]*\|\s*Supported\s*\|/) {
             my $version = $1;
             $version =~ s/\.//g; # Remove dots (e.g. 8.4 -> 84, 10.11 -> 1011)
             push @configs, "$prefix$version";
