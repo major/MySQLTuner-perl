@@ -75,21 +75,29 @@ subtest 'CVE Recommendation Logic' => sub {
 };
 
 subtest 'Validate MySQL Version LTS support' => sub {
-    # Test case 1: MySQL 9.6 should be supported LTS
-    @main::generalrec = ();
-    @mock_output = ();
-    $main::myvar{'version'} = "9.6.0";
-    main::validate_mysql_version();
-    ok(has_output(qr/GOOD: Currently running supported MySQL\/MariaDB version 9\.6\.0\(LTS\)/), 'MySQL 9.6.0 is recognized as supported LTS');
-    is(scalar(@main::generalrec), 0, 'No warning messages added for 9.6.0');
+    my @cases = (
+        { version => "9.7.0", lts => 1, desc => "MySQL 9.7.0 is recognized as supported LTS" },
+        { version => "9.6.0", lts => 0, desc => "MySQL 9.6.0 is recognized as EOL/unsupported" },
+        { version => "9.5.0", lts => 0, desc => "MySQL 9.5.0 is recognized as EOL/unsupported" },
+        { version => "8.0.35", lts => 1, desc => "MySQL 8.0.35 is recognized as supported LTS (8.0 matches)" },
+        { version => "8.4.1", lts => 1, desc => "MySQL 8.4.1 is recognized as supported LTS (8.4 matches)" },
+        { version => "11.4.2", lts => 1, desc => "MariaDB 11.4.2 is recognized as supported LTS (11.4 matches)" },
+    );
 
-    # Test case 2: MySQL 9.5 should be EOL/unsupported
-    @main::generalrec = ();
-    @mock_output = ();
-    $main::myvar{'version'} = "9.5.0";
-    main::validate_mysql_version();
-    ok(has_output(qr/BAD: Your MySQL version 9\.5\.0 is EOL software/), 'MySQL 9.5.0 is recognized as EOL/unsupported');
-    ok(grep { /You are using an unsupported version/ } @main::generalrec, 'Warning message added for 9.5.0');
+    for my $case (@cases) {
+        @main::generalrec = ();
+        @mock_output = ();
+        $main::myvar{'version'} = $case->{version};
+        main::validate_mysql_version();
+
+        if ($case->{lts}) {
+            ok(has_output(qr/GOOD: Currently running supported MySQL\/MariaDB version \Q$case->{version}\E/), "$case->{version} is recognized as supported");
+            is(scalar(@main::generalrec), 0, "No warning messages added for $case->{version}");
+        } else {
+            ok(has_output(qr/BAD: Your MySQL version \Q$case->{version}\E is EOL software/), "$case->{version} is recognized as EOL/unsupported");
+            ok(grep { /You are using an unsupported version/ } @main::generalrec, "Warning message added for $case->{version}");
+        }
+    }
 };
 
 done_testing();

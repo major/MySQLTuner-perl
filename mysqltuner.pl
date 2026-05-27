@@ -5452,16 +5452,18 @@ sub get_replication_status {
 # https://endoflife.date/mysql
 # https://endoflife.date/mariadb
 sub validate_mysql_version {
+    return unless defined $myvar{'version'};
     ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
+    $mysqlvermajor ||= 0;
     $mysqlverminor ||= 0;
     $mysqlvermicro ||= 0;
 
     prettyprint " ";
 
-    if (   mysql_version_eq( 8, 0 )
+    if (   mysql_version_eq( 8,  0 )
         or mysql_version_eq( 8,  4 )
-        or mysql_version_eq( 9,  6 )
+        or mysql_version_eq( 9,  7 )
         or mysql_version_eq( 10, 6 )
         or mysql_version_eq( 10, 11 )
         or mysql_version_eq( 11, 4 )
@@ -5487,50 +5489,60 @@ sub validate_mysql_version {
 # Checks if MySQL version is equal to (major, minor, micro)
 sub mysql_version_eq {
     my ( $maj, $min, $mic ) = @_;
-    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+    return 0 unless defined $myvar{'version'};
+    my ( $v_maj, $v_min, $v_mic ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
+    $v_maj //= 0;
+    $v_min //= 0;
+    $v_mic //= 0;
 
-    return int($mysqlvermajor) == int($maj)
+    return int($v_maj) == int($maj)
       if ( !defined($min) && !defined($mic) );
-    return int($mysqlvermajor) == int($maj) && int($mysqlverminor) == int($min)
+    return int($v_maj) == int($maj) && int($v_min) == int($min)
       if ( !defined($mic) );
-    return ( int($mysqlvermajor) == int($maj)
-          && int($mysqlverminor) == int($min)
-          && int($mysqlvermicro) == int($mic) );
+    return ( int($v_maj) == int($maj)
+          && int($v_min) == int($min)
+          && int($v_mic) == int($mic) );
 }
 
 # Checks if MySQL version is greater than equal to (major, minor, micro)
 sub mysql_version_ge {
     my ( $maj, $min, $mic ) = @_;
+    return 0 unless defined $myvar{'version'};
     $min ||= 0;
     $mic ||= 0;
-    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+    my ( $v_maj, $v_min, $v_mic ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
+    $v_maj //= 0;
+    $v_min //= 0;
+    $v_mic //= 0;
 
     return
-         int($mysqlvermajor) > int($maj)
-      || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) > int($min) )
-      || ( int($mysqlvermajor) == int($maj)
-        && int($mysqlverminor) == int($min)
-        && int($mysqlvermicro) >= int($mic) );
+         int($v_maj) > int($maj)
+      || ( int($v_maj) == int($maj) && int($v_min) > int($min) )
+      || ( int($v_maj) == int($maj)
+        && int($v_min) == int($min)
+        && int($v_mic) >= int($mic) );
 }
 
 # Checks if MySQL version is lower than equal to (major, minor, micro)
 sub mysql_version_le {
     my ( $maj, $min, $mic ) = @_;
+    return 0 unless defined $myvar{'version'};
     $min ||= 0;
     $mic ||= 0;
-    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
-
-    #infoprint "MySQL version: $mysqlvermajor.$mysqlverminor.$mysqlvermicro";
+    my ( $v_maj, $v_min, $v_mic ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
+    $v_maj //= 0;
+    $v_min //= 0;
+    $v_mic //= 0;
 
     return
-         int($mysqlvermajor) < int($maj)
-      || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) < int($min) )
-      || ( int($mysqlvermajor) == int($maj)
-        && int($mysqlverminor) == int($min)
-        && int($mysqlvermicro) <= int($mic) );
+         int($v_maj) < int($maj)
+      || ( int($v_maj) == int($maj) && int($v_min) < int($min) )
+      || ( int($v_maj) == int($maj)
+        && int($v_min) == int($min)
+        && int($v_mic) <= int($mic) );
 }
 
 # Checks for 32-bit boxes with more than 2GB of RAM
@@ -5968,8 +5980,9 @@ sub calculations {
         exit 2;
     }
 
-    #infoprint "====>>>> MySQL version: $myvar{'version'}";
-    $myvar{'version'} =~ s/(.+)-.*?$/$1/;
+    if ( defined $myvar{'version'} ) {
+        $myvar{'version'} =~ s/(.+)-.*?$/$1/;
+    }
 
     #infoprint "====>>>> MySQL version updated: $myvar{'version'}";
     # Server-wide memory
