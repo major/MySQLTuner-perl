@@ -1,40 +1,51 @@
 # MySQLTuner Changelog
 
-2.8.42 2026-05-25
+2.8.43 2026-05-25
 
-- chore: bump version to 2.8.42.
+- chore: bump version to 2.8.43.
+- feat: add --compress-dump option to compress SQL schema dumps using gzip.
+- feat: add --dump-limit option to limit row extraction count for CSV dumps.
+- feat: export naming convention deviations and missing foreign keys to CSV files.
+- feat: write schema export manifest files to track dumped files.
+- feat: add unified health score breakdown to CLI output and HTML laboratory reports.
+- feat: implement test output auditor script to scan test results for Perl execution errors and runtime warnings.
 - fix: resolve invalid login credentials error by defaulting to root when only --pass is set and escaping single quotes in passwords (#781).
 - fix: resolve fake aborted connections count increase during password strength checks (#900).
 - fix: resolve EOF metadata corruption and duplicated configurations in Emacs block (#904).
 - fix: prevent plaintext password leakage in weak password diagnostic messages.
 - fix: implement symlink verification and atomic writes for aborted connects state file protection.
 - fix: append transport-specific host and container identifiers in state file path to prevent collisions.
+- fix: correct authentication plugin checks mock implementation in unit tests to prevent health score deduction bypass.
 - test: strengthen authentication plugin checks and add verification suite for state file protections.
+- test: add comprehensive test suite for weighted health score and score breakdowns.
 - ci: optimize release notes generation to isolate branch changes.
-- perf: optimize --dumpdir performance by excluding heavy RDS/Aurora and internal metrics.
+- docs: complete documentation refresh synchronizing README.md, INTERNALS.md, USAGE.md, and all translated READMEs with v2.8.43 script capabilities.
 - docs: improve authentication plugins algorithm labels and resolve absolute documentation links.
+- perf: optimize --dumpdir performance by excluding heavy RDS/Aurora and internal metrics.
 - refactor: catch explicit exception classes in build/release_gen.py to prevent masking system signals.
+- refactor: replace generic file preview logic with explicit descriptive labeling for database audit artifacts.
+- refactor: html report to get better information about each version.
+
+2.8.42 2026-05-17
+
+- chore: automated project metadata update (empty release).
 
 
 2.8.41 2026-05-17
 
+- feat: enhance --forcemem and --forceswap to support human-readable memory units (B, K, M, G, T, P).
+- feat: implement idiomatic Perl Boolean practices across the project (#34).
+- feat: add recommendation for `table_open_cache_instances` based on CPU cores (#480).
+- feat: improve syslog and systemd journal detection for error logs (#440).
+- feat: initialize `$mysqllogin` to avoid uninitialized value warnings (#490).
 - fix: filter MySQL CLI password warning from execute_system_command output.
 - fix: prevent division by zero crash in percentage() with non-numeric values.
 - fix: resolve SQL execution failure (return code 256) in MySQL 9.x containers by updating batch execution flags.
-- ci: refine audit_logs.pl to prevent false positive warnings on successful [OK] output.
-- feat: enhance --forcemem and --forceswap to support human-readable memory units (B, K, M, G, T, P).
-- ci: enhance Quality Gate to strictly enforce zero-warning policy on GitHub Actions tests.
-- ci: implement dynamic CI test environment detection by wrapping configuration extraction.
-- ci: refactor GitHub Actions release and prerelease workflows to support dynamic versions and checksum generation.
 - fix: Restore compatibility with older Perl versions (by @jasongill).
-- feat: implement idiomatic Perl Boolean practices across the project (#34).
-- refactor: update CLI metadata to use `undef` as default for string/path options.
-- refactor: replace non-idiomatic `eq '0'`, `ne 0`, etc., with standard truthiness checks.
 - fix: wrap template loading in `get_template_model()` to avoid `uninitialized value` warnings during `require`.
 - fix: allow `--updateversion` to work on hosts without `mysql`/`mariadb` installed (#36).
 - fix: skip local SSL certificate warnings if they are in an inaccessible `datadir` (#33).
 - fix: correct false positives in `check_removed_innodb_variables` by distinguishing real server variables from internal ones (#32).
-- refactor: replace "master"/"slave" terminology with "source"/"replica" for cultural sensitivity (#888).
 - fix: improve join_buffer_size recommendation formatting in Variables to Adjust (#881).
 - fix: suppress MySQL client warning regarding 'DISABLED' boolean value for SSL (#887).
 - fix: correctly handle `--defaults-file` and `--defaults-extra-file` without dropping options (#605).
@@ -44,15 +55,19 @@
 - fix: prevent `AUTO_INCREMENT` capacity false positives for empty tables (#37).
 - fix: refactor InnoDB Redo Log Capacity logic to be workload-based and avoid false positives (#714, #737, #777).
 - fix: add guards against division by zero in calculations for improved stability (#435).
-- feat: add recommendation for `table_open_cache_instances` based on CPU cores (#480).
-- feat: improve syslog and systemd journal detection for error logs (#440).
-- feat: initialize `$mysqllogin` to avoid uninitialized value warnings (#490).
 - fix: add truthiness guards to `mysql_innodb` and `mysql_stats` subroutines.
 - fix: improve `which` logic for better container/minimal environment support.
 - fix: enhance login failure reporting with detailed output.
 - fix: handle Plesk Obsidian 18.0.76.5+ removing --show-password (#42).
-- chore: automated project maintenance and cleanup (extracted `RULES.md`, `MEMORY_DB.md`, `TESTS.md`).
+- ci: refine audit_logs.pl to prevent false positive warnings on successful [OK] output.
+- ci: enhance Quality Gate to strictly enforce zero-warning policy on GitHub Actions tests.
+- ci: implement dynamic CI test environment detection by wrapping configuration extraction.
+- ci: refactor GitHub Actions release and prerelease workflows to support dynamic versions and checksum generation.
 - ci: migrate maintenance script to GitHub Actions.
+- refactor: update CLI metadata to use `undef` as default for string/path options.
+- refactor: replace non-idiomatic `eq '0'`, `ne 0`, etc., with standard truthiness checks.
+- refactor: replace "master"/"slave" terminology with "source"/"replica" for cultural sensitivity (#888).
+- chore: automated project maintenance and cleanup (extracted `RULES.md`, `MEMORY_DB.md`, `TESTS.md`).
 - chore(deps): update docker/setup-buildx-action action to v4.
 - chore(deps): update docker/build-push-action action to v7.
 - chore(deps): update docker/login-action action to v4.

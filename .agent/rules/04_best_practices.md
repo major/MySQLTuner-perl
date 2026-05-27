@@ -99,6 +99,7 @@ Beyond hard constraints, following established patterns ensures code durability,
 
 - Release notes MUST be verified during the `/release-manager` orchestration to prevent omission on the remote repository.
 - Ensure `releases/v[VERSION].md` exists and is synchronized with the current release.
+- **STRICT PROHIBITION**: Never modify or update the release notes of previous versions (`releases/v[OLD_VERSION].md`). Only update or edit the release notes corresponding to the current release version.
 
 ## ✅ Verification
 

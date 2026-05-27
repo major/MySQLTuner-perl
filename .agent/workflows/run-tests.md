@@ -21,8 +21,8 @@ Execute the standard Perl test suite to verify core logic.
 // turbo
 
 ```bash
-# Using prove
-prove -r tests/
+# Using the test auditor script
+perl build/audit_tests.pl
 
 # OR via Makefile
 make unit-tests

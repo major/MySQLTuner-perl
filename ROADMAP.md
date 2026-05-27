@@ -7,8 +7,8 @@ This document outlines the strategic direction and future development plans for 
 To ensure consistency and high-density development, the following roles are defined for roadmap orchestration:
 
 * **Owner**: [Jean-Marie Renouard](https://github.com/jmrenouard) (@jmrenouard) - Ultimate authority on the project, constitution, and core mission.
-* **Product Manager**: **Antigravity (AI Agent)** - Responsible for backlog management, specification design, and execution tracking of the roadmap items.
 * **Release Manager**: **Antigravity (AI Agent)** - Responsible for technical validation, testing orchestration, and unified release cycle execution.
+* **Product Manager**: **Antigravity (AI Agent)** - Responsible for backlog management, specification design, and execution tracking of the roadmap items.
 
 ## 🌟 Strategic Pillars
 
@@ -47,10 +47,8 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Sysbench Metrics Integration**: Automated baseline capture and performance comparison within the report.
 * [x] **Multi-Cloud Autodiscovery**: Automated detection of RDS, GCP, and Azure specific performance flags and optimizations.
 * [x] **Query Anti-Pattern Detection**: Use `performance_schema` to identify non-SARGable queries and `SELECT *` abuse.
-* [/] **Modular Reporting Engine**: (In Progress) Refactor Jinja2 templates for dynamic section injection.
-* [/] **Historical Trend Analysis**: (Experimental) Allow the script to ingest previous run data to identify performance regressions.
 
-### [Phase 4: Advanced Intelligence & Ecosystem](file:///documentation/specifications/roadmap_phase_iv_intelligence.md)
+### [Phase 4: Advanced Intelligence & Ecosystem](file:///documentation/specifications/roadmap_phase_iv_intelligence.md) [IN PROGRESS]
 
 * [/] **Smart Migration LTS Advisor**:
   * [x] Automated pre-upgrade risk reports (variable removal, deprecation notices).
@@ -64,24 +62,50 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] AUTO_INCREMENT capacity near max value detection.
 * [x] **Cluster & Replication Intelligence**:
   * [x] Root cause analysis for replication lag (IO/SQL thread contention).
-  * [ ] GTID consistency checks and multi-source replication tuning.
+  * [x] GTID consistency checks and multi-source replication tuning.
 * [x] **Consolidated SQL Modeling & Naming Conventions**:
   * [x] Consolidated Primary Key naming, surrogate keys, table singular naming, and table/column casing checks into single-line counters in General recommendations.
   * [x] Implemented advanced dominant style detection and deviations audit for tables, views, indexes, and columns.
-* [ ] **CSV Export Enhancements**:
-  * [ ] Export naming convention deviations (tables, views, indexes, columns), primary key naming/surrogate key issues, missing foreign keys, JSON columns without virtual columns, and insecure authentication plugins to separate CSV files.
+* [x] **CSV Export Enhancements**:
+  * [x] Export naming convention deviations (tables, views, indexes, columns), primary key naming/surrogate key issues, missing foreign keys, JSON columns without virtual columns, and insecure authentication plugins to separate CSV files.
 * [/] **Security Hardening 2.0**:
   * [ ] Version-based CVE exposure detection (community-fed database).
   * [x] Advanced encryption-at-rest (TDE) and SSL/TLS cipher suite validation.
-  * [ ] **Extended Authentication Plugins Audit**: Verify password hashing methods against the extended plugins support matrix (including `mysql_native_password`, `mysql_old_password`, `sha256_password`, `caching_sha2_password`, `unix_socket`, `ed25519`, and the new MariaDB `parsec` plugin). See [AUTHENTICATION_PLUGINS.md](file:///documentation/AUTHENTICATION_PLUGINS.md).
+  * [x] **Extended Authentication Plugins Audit**: Verify password hashing methods against the extended plugins support matrix (including `mysql_native_password`, `mysql_old_password`, `sha256_password`, `caching_sha2_password`, `unix_socket`, `ed25519`, and the new MariaDB `parsec` plugin). See [AUTHENTICATION_PLUGINS.md](file:///documentation/AUTHENTICATION_PLUGINS.md).
 * [/] **Guided Auto-Fix Engine**:
   * [ ] Interactive mode to simulate configuration changes.
   * [x] Generation of ready-to-use `SET GLOBAL` or `my.cnf` snippets.
+* [/] **Modular Reporting Engine**: (In Progress) Refactor Jinja2 templates for dynamic section injection.
+* [/] **Historical Trend Analysis**: (Experimental) Allow the script to ingest previous run data to identify performance regressions.
 
-### Phase 5: Deep Engine Tuning & Safeguarding [([Specification](file:///documentation/specifications/roadmap_phase_v_innodb.md))]
+---
+
+### Phase 5: Code Quality & Regression Hardening [NEW — PRIORITY]
+
+> Derived from the test campaign analysis on v2.8.43. Addresses critical code quality issues identified during the 5-iteration test audit.
+
+* [ ] **Perl Warning Elimination**:
+  * [ ] Add definedness guards to `mysql_version_ge()`, `mysql_version_le()`, `mysql_version_eq()` to prevent 74 uninitialized value warnings.
+  * [ ] Guard `$mycalc{'innodb_log_size_pct'}` and `$myvar{'innodb_log_file_size'}` before use in InnoDB analysis.
+  * [ ] Guard `$myvar{'version_comment'}` in MariaDB detection path.
+* [ ] **Version Validation Updates**:
+  * [ ] Add MySQL 9.6 to `validate_mysql_version()` supported LTS list.
+  * [ ] Remove MySQL 9.5 (now Outdated) from the LTS list.
+* [ ] **Test Coverage Expansion**:
+  * [ ] Achieve ≥80% subroutine test coverage (currently ~55%, 74 of 165 uncovered).
+  * [ ] Priority coverage: `check_architecture`, `system_recommendations`, `mysql_indexes`, `mysql_views`, `mysql_routines`, `mysql_triggers`, `make_recommendations`.
+  * [ ] Add tests for `dump_result`, `close_outputfile`, `get_template_model`.
+* [ ] **Version Comparison Optimization**:
+  * [ ] Cache parsed version components instead of re-parsing `$myvar{'version'}` on every call to `mysql_version_ge/le/eq`.
+
+---
+
+### [Phase 6: Deep Engine Tuning & Safeguarding](file:///documentation/specifications/roadmap_phase_v_innodb.md) [NOT STARTED]
+
+> Previously Phase 5. Renumbered for logical sequencing after inserting Code Quality phase.
 
 * [ ] **InnoDB Internals 3.0**:
-  * [/] **I/O Pressure & Flushing Advisor**: Combined analysis of `innodb_io_capacity`, `Innodb_buffer_pool_wait_free`, and adaptive flushing metrics to prevent I/O stalls.
+  * [ ] **I/O Pressure & Flushing Advisor**: Combined analysis of `innodb_io_capacity`, `Innodb_buffer_pool_wait_free`, and adaptive flushing metrics to prevent I/O stalls. *(Basic SSD check exists, full advisory missing)*
   * [ ] **Read-Ahead Efficiency Audit**: Measure `Innodb_buffer_pool_read_ahead_evicted` vs `Innodb_buffer_pool_read_ahead` to optimize `innodb_read_ahead_threshold`.
   * [ ] **Deadlock & Contention Analytics**: Historic deadlock tracking via `performance_schema` with specific table-level contention reports.
   * [ ] **Modern Storage Alignment**: Deep audit of `innodb_doublewrite_pages` alignment (128 for MySQL 8.4+), `innodb_use_fdatasync` for syscall reduction, and `innodb_flush_method`.
@@ -92,7 +116,9 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **Read-Ahead & Change Buffer Optimization**: Dynamic recommendation to disable legacy features (`innodb_change_buffering`, `innodb_adaptive_hash_index`) based on workload patterns.
   * [ ] **Purge Lag Prevention**: Automated detected of purge lag (`Innodb_history_list_length`) and recommendation for `innodb_purge_threads` scaling.
 
-### [Phase 6: High Availability & InnoDB Cluster](file:///documentation/specifications/roadmap_phase_vi_innodb_cluster.md)
+### [Phase 7: High Availability & InnoDB Cluster](file:///documentation/specifications/roadmap_phase_vi_innodb_cluster.md) [NOT STARTED]
+
+> Previously Phase 6. No code implementation exists yet.
 
 * [ ] **Distributed Consistency & Performance**:
   * [ ] **Group Replication Health Audit**: Detailed analysis of `MEMBER_STATE`, `MEMBER_ROLE`, and `MEMBER_VERSION` via `performance_schema.replication_group_members`.
@@ -107,10 +133,12 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **Quorum Integrity Framework**: Alignment check for `unreachable_majority_timeout` and partition handling configurations.
   * [ ] **MTR (Multi-Threaded Replication) Scaling**: Dynamic advisory for `slave_parallel_workers` based on cluster apply lag.
 
-### [Phase 7: Modern Replication & GTID Mastery](file:///documentation/specifications/roadmap_phase_vii_replication.md)
+### [Phase 8: Modern Replication & GTID Mastery](file:///documentation/specifications/roadmap_phase_vii_replication.md) [PARTIAL]
 
-* [ ] **Data Consistency & GTID Integrity**:
-  * [ ] **GTID Gap Analysis**: Detection of non-contiguous global transaction identifiers and missing transactions across the replication chain.
+> Previously Phase 7. Basic GTID checks exist (7 references). Parallel/compression/semi-sync are missing.
+
+* [/] **Data Consistency & GTID Integrity**:
+  * [/] **GTID Gap Analysis**: Detection of non-contiguous global transaction identifiers and missing transactions across the replication chain. *(Basic GTID mode checks exist)*
   * [ ] **Consistency Enforcement Audit**: Verification of `enforce_gtid_consistency`, `gtid_mode=ON`, and `binlog_format=ROW` for all nodes.
 * [ ] **Throughput & Parallelism Optimization**:
   * [ ] **Parallel Applier (MTR) Tuning**: Advanced monitoring of worker thread saturation and busy-wait distribution.
@@ -121,7 +149,9 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **Semi-Sync Safety Check**: Dynamic analysis of semi-synchronous wait points (`AFTER_SYNC` vs `AFTER_COMMIT`) and fallback triggers.
   * [ ] **Multi-Source Channel Monitoring**: Full observability for multi-master and multi-channel replication topologies.
 
-### [Phase 8: Advanced Galera Cluster 4 & PXC 8.0](file:///documentation/specifications/roadmap_phase_viii_galera.md)
+### [Phase 9: Advanced Galera Cluster 4 & PXC 8.0](file:///documentation/specifications/roadmap_phase_viii_galera.md) [PARTIAL]
+
+> Previously Phase 8. Foundation exists (106 wsrep + 51 galera references). Advanced diagnostics missing.
 
 * [ ] **Synchronous Efficiency & Streaming**:
   * [ ] **Streaming Replication Audit**: Observability for large transaction fragments (`wsrep_streaming_log_writes`) and their I/O footprint (MariaDB 10.4+).
@@ -134,10 +164,12 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **Network Jitter Detection**: Monitoring of group communication latency (`wsrep_evs_repl_latency` statistics) and its impact on consistency.
   * [ ] **PXC Strict Mode Verification**: Consistency checks for Percona XtraDB Cluster specific security and performance enforcements.
 
-### [Phase 9: Data Integrity & Checksum Verification](file:///documentation/specifications/roadmap_phase_ix_integrity.md)
+### [Phase 10: Data Integrity & Checksum Verification](file:///documentation/specifications/roadmap_phase_ix_integrity.md) [PARTIAL]
 
-* [ ] **Storage Engine Protection**:
-  * [/] **InnoDB Page Integrity Audit**: Verification of `innodb_checksum_algorithm` strength (`full_crc32` for MariaDB 10.5+, `CRC32` for MySQL) and ensuring `innodb_checksums` is active.
+> Previously Phase 9. Basic checksum algorithm checks exist (5 refs each). Binlog/doublewrite missing.
+
+* [/] **Storage Engine Protection**:
+  * [/] **InnoDB Page Integrity Audit**: Verification of `innodb_checksum_algorithm` strength (`full_crc32` for MariaDB 10.5+, `CRC32` for MySQL) and ensuring `innodb_checksums` is active. *(Basic implementation exists)*
   * [ ] **Redo Log Safety Check**: Monitoring of `innodb_log_checksums` to prevent undetected recovery from corrupted logs.
   * [ ] **Doublewrite Consistency**: Alignment check between doublewrite buffer activity and storage atomic write capabilities.
 * [ ] **Replication Pipeline Validation**:
@@ -145,16 +177,20 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] **End-to-End Verification Audit**: Analysis of `source_verify_checksum` and `replica_sql_verify_checksum` settings.
   * [ ] **Relay Log Hardening**: Verification of checksum validation before transaction application on replicas.
 
-### Phase 10: Workload Analysis & Traffic Profiling
+### Phase 11: Workload Analysis & Traffic Profiling [NOT STARTED]
+
+> Previously Phase 10.
 
 * [ ] **Query Performance Profiling**:
-* [ ] **Wait Event Fingerprinting**: Aggregation of `performance_schema` wait events to identify the primary database bottleneck (CPU, disk, lock, network).
-* [ ] **Workload Characterization**: Automated classification of the database as Read-Heavy, Write-Heavy, or Mixed based on I/O ratios.
+  * [ ] **Wait Event Fingerprinting**: Aggregation of `performance_schema` wait events to identify the primary database bottleneck (CPU, disk, lock, network).
+  * [ ] **Workload Characterization**: Automated classification of the database as Read-Heavy, Write-Heavy, or Mixed based on I/O ratios.
 * [ ] **Metadata & Object Lifecycle**:
-* [ ] **Table Churn & Fragmentation Advisor**: Identification of tables with frequent DML that require periodic `OPTIMIZE TABLE`.
-* [ ] **Auto-Increment Exhaustion Audit**: Monitoring of large tables for potential auto-increment overflow (especially 32-bit integers).
+  * [ ] **Table Churn & Fragmentation Advisor**: Identification of tables with frequent DML that require periodic `OPTIMIZE TABLE`.
+  * [ ] **Auto-Increment Exhaustion Audit**: Monitoring of large tables for potential auto-increment overflow (especially 32-bit integers).
 
-### [Phase 11: Advanced Log Parser & Lock Monitoring](file:///documentation/specifications/roadmap_phase_xi_log_parser.md)
+### [Phase 12: Advanced Log Parser & Lock Monitoring](file:///documentation/specifications/roadmap_phase_xi_log_parser.md) [NOT STARTED]
+
+> Previously Phase 11.
 
 * [ ] **Logging & Lock Instrumentation**:
   * [ ] **Deadlock Logging Audit**: Verification of `innodb_print_all_deadlocks` and `innodb_status_output` settings.
@@ -167,7 +203,9 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Correlation Engine (Experimental)**:
   * [ ] **Temporal Event Linking**: Logic to link error log timestamps with Performance Schema wait events or high CPU load detected during execution.
 
-### [Phase 12: Sectional Global Indicators & KPIs](file:///documentation/specifications/roadmap_phase_xii_sectional_indicators.md)
+### [Phase 13: Sectional Global Indicators & KPIs](file:///documentation/specifications/roadmap_phase_xii_sectional_indicators.md) [NOT STARTED]
+
+> Previously Phase 12.
 
 * [ ] **Unified Health Dashboard**:
   * [ ] **Sectional Health Scoring**: Implementation of a 0-100 KPI for each major diagnostic area (Storage Engine, Security, Replication, SQL Modeling).
@@ -178,16 +216,18 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Comparative Insights**:
   * [ ] **Historical Performance Deltas**: Sectional trend analysis identifying areas of performance regression or improvement based on previous run data.
 
-### [Phase 13: Export Optimization & Dumpdir Hardening](file:///documentation/specifications/roadmap_phase_xiii_export_optimization.md)
+### [Phase 14: Export Optimization & Dumpdir Hardening](file:///documentation/specifications/roadmap_phase_xiii_export_optimization.md) [COMPLETED]
 
-* [ ] **Export Performance Safeguards**:
-  * [ ] **Default Row Limit**: Implementation of a 50,000 rows default limit for all `dumpdir` exports to prevent database slowdowns.
-  * [ ] **Configurable Quotas**: Addition of `--dump-limit` option to allow user-defined row overrides.
-* [ ] **Metadata & Durability**:
-  * [ ] **Manifest Generation**: Automated generation of `manifest.json`/`metadata.txt` for better traceability of offline diagnostic snapshots.
-  * [ ] **I/O Latency Monitoring**: Real-time tracking of export duration per object with notices for slow disk subsystems.
-* [ ] **Compression & Efficiency**:
-  * [ ] **On-the-fly Compression**: Support for compressed `.gz` exports to minimize disk footprint in container/limited-storage environments.
+> Previously Phase 13.
+
+* [x] **Export Performance Safeguards**:
+  * [x] **Default Row Limit**: Implementation of a 50,000 rows default limit for all `dumpdir` exports to prevent database slowdowns.
+  * [x] **Configurable Quotas**: Addition of `--dump-limit` option to allow user-defined row overrides.
+* [x] **Metadata & Durability**:
+  * [x] **Manifest Generation**: Automated generation of `manifest.json`/`metadata.txt` for better traceability of offline diagnostic snapshots.
+  * [x] **I/O Latency Monitoring**: Real-time tracking of export duration per object with notices for slow disk subsystems.
+* [x] **Compression & Efficiency**:
+  * [x] **On-the-fly Compression**: Support for compressed `.gz` exports to minimize disk footprint in container/limited-storage environments.
 
 ## 🔮 Strategic Technical Evolutions
 
