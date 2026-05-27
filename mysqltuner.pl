@@ -1005,17 +1005,19 @@ sub calculate_health_score {
 }
 
 sub display_health_score {
-    my $score = $mycalc{'WeightedHealthScore'} // 0;
-    my $details = $result{'HealthScoreDetails'} // {};
+    my $score   = $mycalc{'WeightedHealthScore'} // 0;
+    my $details = $result{'HealthScoreDetails'}  // {};
 
-    my $perf_score = ( $details->{'perf_bp'} // 5 ) +
-                     ( $details->{'perf_temp'} // 5 ) +
-                     ( $details->{'perf_thread'} // 5 ) +
-                     ( $details->{'perf_conn'} // 5 );
+    my $perf_score =
+      ( $details->{'perf_bp'}     // 5 ) +
+      ( $details->{'perf_temp'}   // 5 ) +
+      ( $details->{'perf_thread'} // 5 ) +
+      ( $details->{'perf_conn'}   // 5 );
     my $sec_score = $details->{'sec_total'} // 30;
-    my $res_score = ( $details->{'res_lag'} // 10 ) +
-                    ( $details->{'res_logs'} // 10 ) +
-                    ( $details->{'res_meta'} // 10 );
+    my $res_score =
+      ( $details->{'res_lag'}  // 10 ) +
+      ( $details->{'res_logs'} // 10 ) +
+      ( $details->{'res_meta'} // 10 );
 
     my $color =
       $score > 80 ? "\e[0;32m" : ( $score > 50 ? "\e[0;33m" : "\e[0;31m" );
@@ -4884,7 +4886,8 @@ sub check_auth_plugins {
 
     if ( $obsolete_count > 0 ) {
         push_recommendation( 'Security',
-"Migrate $obsolete_count user(s) from obsolete/very weak plugin mysql_old_password" );
+"Migrate $obsolete_count user(s) from obsolete/very weak plugin mysql_old_password"
+        );
     }
     if ( $insecure_count > $obsolete_count ) {
         my $diff = $insecure_count - $obsolete_count;
@@ -4896,7 +4899,8 @@ sub check_auth_plugins {
     }
     if ( $sha256_insecure_count > 0 ) {
         push_recommendation( 'Security',
-"Migrate to 'caching_sha2_password' for $sha256_insecure_count user(s) (using sha256_password)" );
+"Migrate to 'caching_sha2_password' for $sha256_insecure_count user(s) (using sha256_password)"
+        );
     }
 
     if ( $insecure_count == 0 && $sha256_insecure_count == 0 ) {
