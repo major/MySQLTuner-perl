@@ -757,7 +757,7 @@ sub setup_environment {
     $outputfile = undef;
     $outputfile = abs_path( $opt{outputfile} ) if $opt{outputfile};
 
-    $fh = undef;
+    $fh               = undef;
     @raw_output_lines = ();
     if ($outputfile) {
         open( $fh, '>', $outputfile )
@@ -1668,6 +1668,34 @@ sub percentage {
     return "100.00" if $total == 0;
     $value = 0 unless ( $value =~ /^[+-]?\d*\.?\d+$/ );
     return sprintf( "%.2f", ( $value * 100 / $total ) );
+}
+
+# Get maximum value for standard MySQL integer types
+sub get_type_max {
+    my ( $data_type, $col_type ) = @_;
+    $data_type = lc( $data_type // '' );
+    $col_type  = lc( $col_type  // '' );
+
+    my $is_unsigned = ( $col_type =~ /unsigned/ ) ? 1 : 0;
+
+    if ( $data_type eq 'tinyint' ) {
+        return $is_unsigned ? 255 : 127;
+    }
+    elsif ( $data_type eq 'smallint' ) {
+        return $is_unsigned ? 65535 : 32767;
+    }
+    elsif ( $data_type eq 'mediumint' ) {
+        return $is_unsigned ? 16777215 : 8388607;
+    }
+    elsif ( $data_type eq 'int' || $data_type eq 'integer' ) {
+        return $is_unsigned ? 4294967295 : 2147483647;
+    }
+    elsif ( $data_type eq 'bigint' ) {
+        return $is_unsigned ? "18446744073709551615" : "9223372036854775807";
+    }
+
+    # Default fallback to 64-bit unsigned maximum
+    return "18446744073709551615";
 }
 
 # Calculates uptime to display in a human-readable form
@@ -4177,7 +4205,8 @@ sub get_kernel_info {
         badprint
           "Swappiness is > 10, please consider having a value lower than 10";
         push @generalrec, "setup swappiness lower or equal to 10";
-        my $rec = 'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness) or vm.swappiness=10 in /etc/sysctl.conf';
+        my $rec =
+'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness) or vm.swappiness=10 in /etc/sysctl.conf';
         push @adjvars, $rec;
         push @sysrec,  $rec;
     }
@@ -4194,7 +4223,8 @@ sub get_kernel_info {
             badprint
 "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
             push @generalrec, "setup Initial TCP slot entries greater than 100";
-            my $rec = 'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)  or sunrpc.tcp_slot_table_entries=128 in /etc/sysctl.conf';
+            my $rec =
+'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)  or sunrpc.tcp_slot_table_entries=128 in /etc/sysctl.conf';
             push @adjvars, $rec;
             push @sysrec,  $rec;
         }
@@ -4208,7 +4238,8 @@ sub get_kernel_info {
             badprint
 "Max running total of the number of max. events is < 1M, please consider having a value greater than 1M";
             push @generalrec, "setup Max running number events greater than 1M";
-            my $rec = 'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr) or fs.aio-max-nr=1048576 in /etc/sysctl.conf';
+            my $rec =
+'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr) or fs.aio-max-nr=1048576 in /etc/sysctl.conf';
             push @adjvars, $rec;
             push @sysrec,  $rec;
         }
@@ -4222,7 +4253,8 @@ sub get_kernel_info {
 "Max running total of the number of file open request is < 1M, please consider having a value greater than 1M";
             push @generalrec,
               "setup running number of open request greater than 1M";
-            my $rec = 'fs.aio-nr > 1M (echo 1048576 > /proc/sys/fs/nr_open) or fs.nr_open=1048576 in /etc/sysctl.conf';
+            my $rec =
+'fs.aio-nr > 1M (echo 1048576 > /proc/sys/fs/nr_open) or fs.nr_open=1048576 in /etc/sysctl.conf';
             push @adjvars, $rec;
             push @sysrec,  $rec;
         }
@@ -4443,8 +4475,9 @@ sub system_recommendations {
 "Consider stopping or dedicate server for additional process other than mysqld."
             );
             push( @sysrec,
-"Consider stopping or dedicate server for additional process other than mysqld (other processes use " . percentage( $omem, $physical_memory ) . "% of RAM)."
-            );
+"Consider stopping or dedicate server for additional process other than mysqld (other processes use "
+                  . percentage( $omem, $physical_memory )
+                  . "% of RAM)." );
             push( @adjvars,
 "DON'T APPLY SETTINGS BECAUSE THERE ARE TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCUR!"
             );
@@ -5461,7 +5494,7 @@ sub validate_mysql_version {
 
     prettyprint " ";
 
-    if (   mysql_version_eq( 8,  0 )
+    if (   mysql_version_eq( 8, 0 )
         or mysql_version_eq( 8,  4 )
         or mysql_version_eq( 9,  7 )
         or mysql_version_eq( 10, 6 )
@@ -5866,53 +5899,91 @@ sub check_storage_engines {
     }
 
     # Auto increments
-    my %tblist;
-
-    # Find the maximum integer
     my $maxint = select_one "SELECT ~0";
     $result{'MaxInt'} = $maxint;
 
-# Now we use a database list, and loop through it to get storage engine stats for tables
-    foreach my $db (@dblist) {
-        chomp($db);
-
-        if ( !$tblist{$db} ) {
-            $tblist{$db} = ();
+    if ( mysql_version_ge( 5, 0 ) ) {
+        my $ignore_tables_sql = "";
+        if ( $opt{'ignore-tables'} ) {
+            my @ignored = split /,/, $opt{'ignore-tables'};
+            $ignore_tables_sql =
+              " AND t.TABLE_NAME NOT IN ('" . join( "','", @ignored ) . "')";
         }
+        my @auto_increment_results = select_array(
+"SELECT t.TABLE_SCHEMA, t.TABLE_NAME, t.TABLE_ROWS, t.AUTO_INCREMENT, c.DATA_TYPE, c.COLUMN_TYPE "
+              . "FROM information_schema.TABLES t "
+              . "JOIN information_schema.COLUMNS c ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME "
+              . "WHERE t.TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql', 'sys') "
+              . "AND t.AUTO_INCREMENT IS NOT NULL "
+              . "AND c.EXTRA LIKE '%auto_increment%'$ignore_tables_sql;" );
 
-        if ( $db eq "information_schema" ) { next; }
-        my @ia = ( 0, 4, 10 );
-        if ( !mysql_version_ge( 4, 1 ) ) {
-
-            # MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
-            @ia = ( 0, 4, 9 );
-        }
-        my $cmd = "SHOW TABLE STATUS FROM \\\`$db\\\`";
-        if ($is_win) {
-            $cmd = "SHOW TABLE STATUS FROM \`$db\`";
-        }
-        push( @{ $tblist{$db} }, map { [ (split)[@ia] ] } select_array $cmd );
-    }
-
-    my @dbnames = keys %tblist;
-
-    foreach my $db (@dbnames) {
-        foreach my $tbl ( @{ $tblist{$db} } ) {
-            my ( $name, $rows, $autoincrement ) = @$tbl;
-
-            if ( $autoincrement && $autoincrement =~ /^\d+?$/ ) {
+        foreach my $line (@auto_increment_results) {
+            my ( $db, $name, $rows, $autoincrement, $data_type, $col_type ) =
+              split /\t/, $line;
+            next unless defined $autoincrement && $autoincrement =~ /^\d+?$/;
 
 # Issue #37: Skip tables where AUTO_INCREMENT is at default (never used) and table is empty
-                next if ( $autoincrement <= 1 && ( $rows // 0 ) == 0 );
+            next if ( $autoincrement <= 1 && ( $rows // 0 ) == 0 );
+
+            my $limit = get_type_max( $data_type, $col_type );
+            next unless defined $limit && $limit > 0;
+
+            my $percent = percentage( $autoincrement, $limit );
+            $result{'PctAutoIncrement'}{"$db.$name"} = $percent;
+            if ( $percent >= 75 ) {
+                badprint
+"Table '$db.$name' has an autoincrement value near max capacity ($percent%)";
+            }
+        }
+    }
+    else {
+        my %tblist;
+
+# Now we use a database list, and loop through it to get storage engine stats for tables
+        foreach my $db (@dblist) {
+            chomp($db);
+
+            if ( !$tblist{$db} ) {
+                $tblist{$db} = ();
+            }
+
+            if ( $db eq "information_schema" ) { next; }
+            my @ia = ( 0, 4, 10 );
+            if ( !mysql_version_ge( 4, 1 ) ) {
+
+                # MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
+                @ia = ( 0, 4, 9 );
+            }
+            my $cmd = "SHOW TABLE STATUS FROM \\\`$db\\\`";
+            if ($is_win) {
+                $cmd = "SHOW TABLE STATUS FROM \`$db\`";
+            }
+            push(
+                @{ $tblist{$db} },
+                map { [ (split)[@ia] ] } select_array $cmd
+            );
+        }
+
+        my @dbnames = keys %tblist;
+
+        foreach my $db (@dbnames) {
+            foreach my $tbl ( @{ $tblist{$db} } ) {
+                my ( $name, $rows, $autoincrement ) = @$tbl;
+
+                if ( $autoincrement && $autoincrement =~ /^\d+?$/ ) {
+
+# Issue #37: Skip tables where AUTO_INCREMENT is at default (never used) and table is empty
+                    next if ( $autoincrement <= 1 && ( $rows // 0 ) == 0 );
 
          # Issue #37: Guard against unresolved column max producing a false 100%
-                next unless defined $maxint && $maxint > 0;
+                    next unless defined $maxint && $maxint > 0;
 
-                my $percent = percentage( $autoincrement, $maxint );
-                $result{'PctAutoIncrement'}{"$db.$name"} = $percent;
-                if ( $percent >= 75 ) {
-                    badprint
+                    my $percent = percentage( $autoincrement, $maxint );
+                    $result{'PctAutoIncrement'}{"$db.$name"} = $percent;
+                    if ( $percent >= 75 ) {
+                        badprint
 "Table '$db.$name' has an autoincrement value near max capacity ($percent%)";
+                    }
                 }
             }
         }
@@ -12142,15 +12213,17 @@ sub format_recommendation_item {
                 return "Unused index: $schema.$table ($index)";
             }
             elsif ( $item->{type} eq 'redundant_index' ) {
-                my $schema    = $item->{schema} // '';
-                my $table     = $item->{table}  // '';
-                my $index     = $item->{index}  // '';
-                my $dominant  = $item->{dominant_index} // '';
-                my $sql       = $item->{sql}    // '';
-                return "Redundant index: $schema.$table ($index) redundant of $dominant (suggested SQL: $sql)";
+                my $schema   = $item->{schema}         // '';
+                my $table    = $item->{table}          // '';
+                my $index    = $item->{index}          // '';
+                my $dominant = $item->{dominant_index} // '';
+                my $sql      = $item->{sql}            // '';
+                return
+"Redundant index: $schema.$table ($index) redundant of $dominant (suggested SQL: $sql)";
             }
         }
-        return join( ', ', map { "$_: " . ( $item->{$_} // '' ) } sort keys %$item );
+        return
+          join( ', ', map { "$_: " . ( $item->{$_} // '' ) } sort keys %$item );
     }
     return $item // '';
 }
@@ -12161,12 +12234,14 @@ sub dump_result {
     debugprint "HTML REPORT: " . ( $opt{'reportfile'} // 'undef' );
 
     if ( defined $opt{'reportfile'} ) {
+
         # Check if reportfile option was empty/boolean (e.g. from --reportfile)
         if ( $opt{'reportfile'} eq '' || $opt{'reportfile'} eq '1' ) {
             $opt{'reportfile'} = 'mysqltuner.html';
         }
-        
-        my $score = $mycalc{'WeightedHealthScore'} // $result{'HealthScore'} // 0;
+
+        my $score = $mycalc{'WeightedHealthScore'} // $result{'HealthScore'}
+          // 0;
         my $details = $result{'HealthScoreDetails'} // {};
         my $perf_score =
           ( $details->{'perf_bp'}     // 5 ) +
@@ -12180,38 +12255,83 @@ sub dump_result {
           ( $details->{'res_meta'} // 10 );
 
         # Render lists
-        my $general_rec_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-blue-400 mr-2.5 font-bold'>•</span><span>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @generalrec) 
-            || "<li class='text-slate-400 italic py-2'>No general recommendations.</li>";
+        my $general_rec_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-blue-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @generalrec
+          )
+          || "<li class='text-slate-400 italic py-2'>No general recommendations.</li>";
 
-        my $adjvars_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-amber-400 mr-2.5 font-bold'>•</span><span class='font-mono'>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @adjvars)
-            || "<li class='text-slate-400 italic py-2'>No variable adjustments required.</li>";
+        my $adjvars_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-amber-400 mr-2.5 font-bold'>•</span><span class='font-mono'>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @adjvars
+          )
+          || "<li class='text-slate-400 italic py-2'>No variable adjustments required.</li>";
 
-        my $modeling_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-cyan-400 mr-2.5 font-bold'>•</span><span>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @modeling)
-            || "<li class='text-slate-400 italic py-2'>No database modeling findings.</li>";
+        my $modeling_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-cyan-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @modeling
+          )
+          || "<li class='text-slate-400 italic py-2'>No database modeling findings.</li>";
 
-        my $secrec_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-rose-400 mr-2.5 font-bold'>•</span><span>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @secrec)
-            || "<li class='text-slate-400 italic py-2'>No security concerns identified.</li>";
+        my $secrec_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-rose-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @secrec
+          )
+          || "<li class='text-slate-400 italic py-2'>No security concerns identified.</li>";
 
-        my $sysrec_html = join("\n", map { "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-emerald-400 mr-2.5 font-bold'>•</span><span>" . escape_html(format_recommendation_item($_)) . "</span></li>" } @sysrec)
-            || "<li class='text-slate-400 italic py-2'>No OS or system modifications suggested.</li>";
+        my $sysrec_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-emerald-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @sysrec
+          )
+          || "<li class='text-slate-400 italic py-2'>No OS or system modifications suggested.</li>";
 
         # Build raw output HTML
-        my $raw_output_html = join("\n", map { escape_html($_) } @raw_output_lines);
+        my $raw_output_html =
+          join( "\n", map { escape_html($_) } @raw_output_lines );
 
         # Determine health score color class
-        my $score_color_class = $score > 80 ? 'text-emerald-400' : ($score > 50 ? 'text-amber-400' : 'text-rose-500');
-        my $score_bg_class = $score > 80 ? 'bg-emerald-500/10 border-emerald-500/30' : ($score > 50 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-rose-500/10 border-rose-500/30');
+        my $score_color_class =
+          $score > 80
+          ? 'text-emerald-400'
+          : ( $score > 50 ? 'text-amber-400' : 'text-rose-500' );
+        my $score_bg_class =
+          $score > 80 ? 'bg-emerald-500/10 border-emerald-500/30'
+          : ( $score > 50 ? 'bg-amber-500/10 border-amber-500/30'
+            : 'bg-rose-500/10 border-rose-500/30' );
 
         # Timestamp
-        my $timestamp = scalar localtime;
-        my $db_ver = escape_html($myvar{'version'});
-        my $db_comment = escape_html($myvar{'version_comment'} // 'N/A');
+        my $timestamp  = scalar localtime;
+        my $db_ver     = escape_html( $myvar{'version'} );
+        my $db_comment = escape_html( $myvar{'version_comment'} // 'N/A' );
 
-        my $circle_offset = 264 - (264 * $score / 100);
-        my $badge_text = $score >= 90 ? 'Excellent Health' : ($score >= 70 ? 'Good Health' : 'Action Required');
-        my $perf_width = int($perf_score * 100 / 40);
-        my $sec_width = int($sec_score * 100 / 30);
-        my $res_width = int($res_score * 100 / 30);
+        my $circle_offset = 264 - ( 264 * $score / 100 );
+        my $badge_text =
+          $score >= 90
+          ? 'Excellent Health'
+          : ( $score >= 70 ? 'Good Health' : 'Action Required' );
+        my $perf_width = int( $perf_score * 100 / 40 );
+        my $sec_width  = int( $sec_score * 100 / 30 );
+        my $res_width  = int( $res_score * 100 / 30 );
 
         # HTML Content template
         my $html_content = <<"HTML";

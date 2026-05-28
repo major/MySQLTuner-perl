@@ -9,6 +9,7 @@ help:
 	@echo "Usage: make <target>"
 	@echo "  help:              Show this help"
 	@echo "  generate_usage:    Generate USAGE.md"
+	@echo "  generate_release_notes: Regenerate releases/v[VERSION].md notes file"
 	@echo "  generate_cve:      Generate vulnerabilities.csv"
 	@echo "  generate_features: Generate FEATURES.md"
 	@echo "  tidy:              Tidy mysqltuner.pl"
@@ -95,6 +96,14 @@ release:
 	pod2markdown mysqltuner.pl > USAGE.md; \
 	python3 build/release_gen.py; \
 	echo "Version bumped to $(VERSION). USAGE.md and release notes generated."
+
+generate_release_notes:
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_release_notes..." >> execution.log
+	python3 build/release_gen.py
+	git add ./releases/
+	git commit -m "docs: regenerate release notes" || echo "No changes to commit"
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_release_notes." >> execution.log
+
 
 increment_sub_version:
 	@echo "Incrementing sub version from $(VERSION) to $(UPDATE_SUB_VERSION)"

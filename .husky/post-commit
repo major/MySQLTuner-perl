@@ -5,3 +5,10 @@ if git diff-tree -r --name-only --no-commit-id HEAD | grep -q "^mysqltuner.pl$";
   echo "Husky [post-commit]: mysqltuner.pl was modified. Triggering USAGE.md regeneration..."
   make generate_usage
 fi
+
+# Check if Changelog was modified in the latest commit
+if git diff-tree -r --name-only --no-commit-id HEAD | grep -q "^Changelog$"; then
+  echo "Husky [post-commit]: Changelog was modified. Triggering release notes regeneration..."
+  make generate_release_notes
+fi
+
