@@ -208,6 +208,18 @@ brew install mysqltuner
 
 4) Si vous êtes dans un **environnement isolé (air-gapped)** sans accès direct à Internet, téléchargez les fichiers sur une machine disposant d'un accès Internet (ou via un hôte proxy), puis copiez `mysqltuner.pl`, `basic_passwords.txt` et `vulnerabilities.csv` sur votre serveur cible.
 
+5) Docker : Récupérez et lancez le conteneur Docker officiel (les tags de Docker Hub sont disponibles sur [jmrenouard/mysqltuner tags](https://hub.docker.com/r/jmrenouard/mysqltuner/tags?name=latest)) :
+
+```bash
+docker pull jmrenouard/mysqltuner:latest
+docker run --rm -it jmrenouard/mysqltuner --host <database_host> --user <username> --pass <password>
+```
+
+### Emplacement des versions (Releases)
+
+* Les notes de version officielles et l'historique sont documentés dans le dossier [releases/](releases/) de ce dépôt (par exemple, [releases/v2.8.44.md](releases/v2.8.44.md)).
+* Les tags de version Git et les archives sources téléchargeables sont disponibles sur [GitHub Releases](https://github.com/jmrenouard/MySQLTuner-perl/releases).
+
 Installation facultative de Sysschema pour MySQL 5.6
 --
 
