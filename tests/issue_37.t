@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 no warnings 'once';
+no warnings 'once';
 
 use Test::More tests => 1;
 use File::Basename;

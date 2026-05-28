@@ -25,7 +25,8 @@ help:
 	@echo "  test-container:    Run tests against a specific CONTAINER (e.g. CONTAINER=my_db)"
 	@echo "  audit:             Run audit on remote HOST (e.g. HOST=db-server.com)"
 	@echo "  audit-logs:        Run local audit on laboratory logs (examples/ directory)"
-	@echo "  unit-tests:        Run unit and regression tests in tests/ directory"
+	@echo "  unit-tests:        Run unit and regression tests in tests/ directory (clean output)"
+	@echo "  unit-tests-debug:  Run unit tests with verbose debug information"
 	@echo "  clean_examples:    Cleanup examples directory (KEEP=n, default 5)"
 	@echo "  setup_commits:     Install Conventional Commits tools (Node.js)"
 
@@ -188,6 +189,10 @@ audit-logs:
 unit-tests:
 	@echo "Running unit and regression tests..."
 	perl ./build/audit_tests.pl
+
+unit-tests-debug:
+	@echo "Running unit and regression tests (debug mode)..."
+	perl ./build/audit_tests.pl --debug
 
 clean_examples:
 	@echo "Cleaning up examples..."

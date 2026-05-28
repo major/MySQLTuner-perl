@@ -1,13 +1,11 @@
 use strict;
 use warnings;
 no warnings 'once';
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use File::Spec;
 use Cwd 'abs_path';
-
-# Suppress warnings from mysqltuner.pl initialization if any
-$SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
 
 # Load mysqltuner.pl as a library
 my $script_dir = dirname(abs_path(__FILE__));
@@ -129,7 +127,7 @@ subtest 'check_local_certificates' => sub {
     local *main::goodprint = sub { push @good_prints, $_[0] };
     local *main::infoprint = sub { push @info_prints, $_[0] };
     local *main::push_recommendation = sub { shift; push @recommendations, $_[0] };
-    local *main::is_remote = sub { 0 };
+    local *main::is_remote = sub () { 0 };
     local *main::my_file_exists = sub { 1 };
     local *main::my_file_readable = sub { 1 };
     

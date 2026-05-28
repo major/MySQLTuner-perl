@@ -2,13 +2,11 @@
 use strict;
 use warnings;
 no warnings 'once';
+no warnings 'once';
 use Test::More tests => 1;
 use File::Basename;
 use File::Spec;
 use Cwd 'abs_path';
-
-# Suppress warnings from mysqltuner.pl initialization if any
-$SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
 
 # Load mysqltuner.pl as a library
 my $script_dir = dirname(abs_path(__FILE__));
@@ -31,7 +29,7 @@ subtest 'Issue #33: Skip cert warnings if in inaccessible datadir' => sub {
     local *main::badprint = sub { push @bad_prints, $_[0] };
     local *main::goodprint = sub { push @good_prints, $_[0] };
     local *main::infoprint = sub { push @info_prints, $_[0] };
-    local *main::is_remote = sub { 0 };
+    local *main::is_remote = sub () { 0 };
     
     # 1. Case: Certs are in datadir and do not exist / are inaccessible
     MySQLTuner::TestHelper::reset_state();

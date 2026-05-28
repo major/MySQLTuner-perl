@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use File::Spec;
@@ -10,16 +11,22 @@ my $script = File::Spec->rel2abs(File::Spec->catfile(dirname(__FILE__), '..', 'm
 # Mocking and loading mysqltuner.pl
 {
     local @ARGV = ();
+    require $script;
+}
+
+{
     no warnings 'redefine';
     no warnings 'once';
     *main::badprint = sub { print "BAD: $_[0]\n" };
     *main::goodprint = sub { print "GOOD: $_[0]\n" };
     *main::debugprint = sub { print "DEBUG: $_[0]\n" };
     *main::infoprint = sub { print "INFO: $_[0]\n" };
-    *main::which = sub { return "/bin/sh" };
-    *main::is_remote = sub { return 0 };
-    
-    require $script;
+    *main::which = sub {
+        my ($cmd) = @_;
+        return "/bin/sh" if $cmd =~ /mysql|mariadb/;
+        return undef;
+    };
+    *main::is_remote = sub () { return 0 };
 }
 
 my @commands_executed;

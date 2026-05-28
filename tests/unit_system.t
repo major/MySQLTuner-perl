@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Temp qw(tempdir);
 use File::Spec;
@@ -218,7 +219,7 @@ subtest 'Check Architecture' => sub {
     # Case A: Remote / SSH
     {
         no warnings 'redefine';
-        local *main::is_remote = sub { return 1 };
+        local *main::is_remote = sub () { return 1 };
         local *main::get_transport_prefix = sub { return "" };
         %main::opt = ( defaultarch => 64 );
         @mock_output = ();
@@ -231,7 +232,7 @@ subtest 'Check Architecture' => sub {
     # Case B: Windows 64-bit
     {
         no warnings 'redefine';
-        local *main::is_remote = sub { return 0 };
+        local *main::is_remote = sub () { return 0 };
         local *main::get_transport_prefix = sub { return "" };
         local *main::execute_system_command = sub {
             my ($cmd) = @_;
@@ -250,7 +251,7 @@ subtest 'Check Architecture' => sub {
     # Case C: Unix uname machine match 64-bit
     {
         no warnings 'redefine';
-        local *main::is_remote = sub { return 0 };
+        local *main::is_remote = sub () { return 0 };
         local *main::get_transport_prefix = sub { return "" };
         local *POSIX::uname = sub {
             return ("Linux", "localhost", "5.15.0", "release", "x86_64");
@@ -265,7 +266,7 @@ subtest 'Check Architecture' => sub {
     # Case D: Unix SunOS 64-bit
     {
         no warnings 'redefine';
-        local *main::is_remote = sub { return 0 };
+        local *main::is_remote = sub () { return 0 };
         local *main::get_transport_prefix = sub { return "" };
         local *POSIX::uname = sub {
             return ("SunOS", "localhost", "5.11", "release", "i386");
@@ -286,7 +287,7 @@ subtest 'Check Architecture' => sub {
     # Case E: Unix AIX 64-bit
     {
         no warnings 'redefine';
-        local *main::is_remote = sub { return 0 };
+        local *main::is_remote = sub () { return 0 };
         local *main::get_transport_prefix = sub { return "" };
         local *POSIX::uname = sub {
             return ("AIX", "localhost", "7.1", "release", "powerpc");
@@ -307,7 +308,7 @@ subtest 'Check Architecture' => sub {
     # Case F: 32-bit warning path (> 2GB physical memory)
     {
         no warnings 'redefine';
-        local *main::is_remote = sub { return 0 };
+        local *main::is_remote = sub () { return 0 };
         local *main::get_transport_prefix = sub { return "" };
         local *POSIX::uname = sub {
             return ("Linux", "localhost", "5.15.0", "release", "i386");
@@ -323,7 +324,7 @@ subtest 'Check Architecture' => sub {
     # Case G: 32-bit ok path (<= 2GB physical memory)
     {
         no warnings 'redefine';
-        local *main::is_remote = sub { return 0 };
+        local *main::is_remote = sub () { return 0 };
         local *main::get_transport_prefix = sub { return "" };
         local *POSIX::uname = sub {
             return ("Linux", "localhost", "5.15.0", "release", "i386");

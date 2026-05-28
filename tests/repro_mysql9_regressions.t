@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use POSIX;
@@ -12,21 +13,17 @@ our %result;
 our %opt = ( 'max-password-checks' => 100 );
 our $is_win = 0;
 
-# Require the script but we need to mock some environment parts first
-# To avoid execution of the main block, we can't just require it if it has top-level meat.
-# However, we can mock the functions it calls.
+require './mysqltuner.pl';
+require './tests/MySQLTuner/TestHelper.pm';
 
 {
     no warnings 'redefine';
-    sub infoprint {}
-    sub goodprint {}
-    sub badprint {}
-    sub debugprint {}
-    sub get_transport_prefix { return ''; }
+    *main::infoprint = sub {};
+    *main::goodprint = sub {};
+    *main::badprint = sub {};
+    *main::debugprint = sub {};
+    *main::get_transport_prefix = sub { return ''; };
 }
-
-require './mysqltuner.pl';
-require './tests/MySQLTuner/TestHelper.pm';
 
 # Test Case 1: MySQL 9.6 Replication Commands
 %myvar = ( 'version' => '9.6.0' );

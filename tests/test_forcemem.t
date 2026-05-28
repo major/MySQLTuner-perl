@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 
 # Mocking variables from mysqltuner.pl

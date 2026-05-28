@@ -6,7 +6,28 @@ use warnings;
 # MySQLTuner Test Output Auditor
 # Purpose: Run prove and scan its output for subtle Perl warnings, typos, and syntax errors.
 
-my $cmd = $ARGV[0] || $ENV{AUDIT_TEST_CMD} || 'prove -r tests/';
+my $quiet = 1;
+my $debug = 0;
+my @filtered_args;
+foreach my $arg (@ARGV) {
+    if ($arg eq '--quiet') {
+        $quiet = 1;
+    }
+    elsif ($arg eq '--debug' || $arg eq '--verbose') {
+        $quiet = 0;
+        $debug = 1;
+    }
+    elsif ($arg eq '--no-quiet') {
+        $quiet = 0;
+    }
+    else {
+        push @filtered_args, $arg;
+    }
+}
+my $cmd = $filtered_args[0] || $ENV{AUDIT_TEST_CMD};
+if (!$cmd) {
+    $cmd = $debug ? 'prove -rv tests/' : 'prove -r tests/';
+}
 
 # --- Phase 1: Compile-time syntax check and static analysis ---
 print "Performing compile-time syntax checks...\n";
@@ -96,7 +117,6 @@ my @warnings;
 my $line_num = 0;
 
 while (my $line = <$ph>) {
-    print $line; # Output in real-time
     $line_num++;
 
     # Scan for Perl warnings and errors
@@ -135,6 +155,10 @@ while (my $line = <$ph>) {
     }
     elsif ($line =~ /Dubious, test returned/i || $line =~ /Failed test/i) {
         push @anomalies, { type => 'Test Failure', content => $line, line => $line_num };
+    }
+
+    if (!($quiet && $line =~ /^\s*#/)) {
+        print $line; # Output in real-time
     }
 }
 close($ph);

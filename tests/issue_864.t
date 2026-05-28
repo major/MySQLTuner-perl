@@ -2,14 +2,12 @@
 use strict;
 use warnings;
 no warnings 'once';
+no warnings 'once';
 
 use Test::More tests => 1;
 use File::Basename;
 use File::Spec;
 use Cwd 'abs_path';
-
-# Suppress warnings from mysqltuner.pl initialization and calculations if any
-$SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined|uninitialized/ };
 
 # Load mysqltuner.pl as a library
 my $script_dir = dirname(abs_path(__FILE__));
@@ -42,7 +40,7 @@ subtest 'Issue #864: per-thread memory buffer calculations' => sub {
     local *main::execute_system_command = sub { return "" };
     local *main::get_pf_memory = sub { return 0 };
     local *main::get_gcache_memory = sub { return 0 };
-    local *main::is_remote = sub { return 0 };
+    local *main::is_remote = sub () { return 0 };
     local *main::mysql_cloud_discovery = sub { return "none" };
 
     $main::physical_memory = 32 * 1024 * 1024 * 1024;

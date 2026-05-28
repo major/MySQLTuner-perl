@@ -7,8 +7,10 @@
 - feat: develop LTS API auto-bumping utility with GitHub Actions integration.
 - feat: develop version bump dry-run simulation script and post-commit Git hook for automated doc sync.
 - feat: re-implement HTML report option (--reportfile) removing CPAN Text::Template dependency (#791).
+- feat: make unit-tests target quiet/clean by default in Makefile, and add unit-tests-debug target for verbose debugging.
 - fix: resolve false positive AUTO_INCREMENT near max capacity warning on BIGINT UNSIGNED columns with low row count by checking type-specific limits using information_schema (#913).
 - fix: refactor version parsing regexes in mysql_version_eq() and helper functions to prevent uninitialized value warnings.
+- fix: resolve compile-time and runtime warnings in unit tests, mock override ordering, and definedness checks.
 - docs: enhance release-manager workflow with branch lifecycle and checkout hook instructions.
 - ci: configure CI workflows to trigger on all branches and execute compliance checks.
 - ci: add EOL date check step to CI workflow.

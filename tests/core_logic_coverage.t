@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 no warnings 'once';
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use File::Spec;
@@ -235,7 +236,7 @@ subtest 'calculations' => sub {
     local *main::execute_system_command = sub { return "" };
     local *main::get_pf_memory = sub { return 0 };
     local *main::get_gcache_memory = sub { return 0 };
-    local *main::is_remote = sub { return 0 };
+    local *main::is_remote = sub () { return 0 };
     local *main::mysql_cloud_discovery = sub { return "none" };
 
     local $main::physical_memory = 32 * 1024 * 1024 * 1024;
