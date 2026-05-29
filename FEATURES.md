@@ -9,9 +9,11 @@ Features list for option: --feature (dev only)
 * cve_recommendations
 * detect_infrastructure
 * display_health_score
+* escape_html
 * execute_system_command
 * execute_system_command;
 * find_dominant_style
+* format_recommendation_item
 * generate_auto_fix_snippets
 * historical_comparison
 * log_file_recommendations

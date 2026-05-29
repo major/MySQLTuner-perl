@@ -2780,12 +2780,13 @@ sub select_array {
     debugprint "PERFORM: $req ";
     my $req_escaped = $req;
     $req_escaped =~ s/"/\\"/g;
-    my $mcmd = $mysqlcmd // 'mysql';
+    my $mcmd   = $mysqlcmd   // 'mysql';
     my $mlogin = $mysqllogin // '';
-    my $dnull = $devnull // '/dev/null';
+    my $dnull  = $devnull    // '/dev/null';
     my @result =
       execute_system_command(
         "$mcmd $mlogin $vertical-Bse \"$req_escaped\" 2>>$dnull");
+
     if ( $? != 0 ) {
         if ( $req eq '\s' ) {
             debugprint
@@ -3016,9 +3017,9 @@ sub human_size {
 sub select_one {
     my $req = shift;
     debugprint "PERFORM: $req ";
-    my $mcmd = $mysqlcmd // 'mysql';
+    my $mcmd   = $mysqlcmd   // 'mysql';
     my $mlogin = $mysqllogin // '';
-    my $dnull = $devnull // '/dev/null';
+    my $dnull  = $devnull    // '/dev/null';
     my $result =
       execute_system_command("$mcmd $mlogin -Bse \"$req\" 2>>$dnull");
     chomp $result if defined $result;
@@ -4288,7 +4289,7 @@ sub get_system_info {
     }
 
     $result{'Network'}{'Connected'} = 'NO';
-    my $dnull = $devnull // ($is_win ? 'NUL' : '/dev/null');
+    my $dnull = $devnull // ( $is_win ? 'NUL' : '/dev/null' );
     if ($is_win) {
         execute_system_command("ping -n 1 ipecho.net > $dnull 2>&1")
           if which( "ping", $ENV{'PATH'} );
@@ -6190,11 +6191,12 @@ sub calculations {
       . $mycalc{'pct_connections_aborted'} . "";
 
     # Key buffers
-    if ( mysql_version_ge( 4, 1 )
+    if (   mysql_version_ge( 4, 1 )
         && defined $myvar{'key_buffer_size'}
         && $myvar{'key_buffer_size'} > 0
         && defined $mystat{'Key_blocks_unused'}
-        && defined $myvar{'key_cache_block_size'} ) {
+        && defined $myvar{'key_cache_block_size'} )
+    {
         $mycalc{'pct_key_buffer_used'} = sprintf(
             "%.1f",
             (
@@ -6211,7 +6213,9 @@ sub calculations {
         $mycalc{'pct_key_buffer_used'} = 0;
     }
 
-    if ( defined $mystat{'Key_read_requests'} and $mystat{'Key_read_requests'} > 0 ) {
+    if ( defined $mystat{'Key_read_requests'}
+        and $mystat{'Key_read_requests'} > 0 )
+    {
         $mycalc{'pct_keys_from_mem'} = sprintf(
             "%.1f",
             (
@@ -6244,7 +6248,9 @@ sub calculations {
         $mycalc{'pct_aria_keys_from_mem'} = 0;
     }
 
-    if ( defined $mystat{'Key_write_requests'} and $mystat{'Key_write_requests'} > 0 ) {
+    if ( defined $mystat{'Key_write_requests'}
+        and $mystat{'Key_write_requests'} > 0 )
+    {
         $mycalc{'pct_wkeys_from_mem'} = sprintf( "%.1f",
             ( ( $mystat{'Key_writes'} / $mystat{'Key_write_requests'} ) * 100 )
         );
@@ -6384,7 +6390,8 @@ sub calculations {
     if ( defined $mystat{'Opened_tables'} and $mystat{'Opened_tables'} > 0 ) {
         if ( not defined( $mystat{'Table_open_cache_hits'} ) ) {
             $mycalc{'table_cache_hit_rate'} =
-              int( ( $mystat{'Open_tables'} // 0 ) * 100 / $mystat{'Opened_tables'} );
+              int( ( $mystat{'Open_tables'} // 0 ) * 100 /
+                  $mystat{'Opened_tables'} );
         }
         else {
             $mycalc{'table_cache_hit_rate'} = int(
@@ -6400,9 +6407,11 @@ sub calculations {
     }
 
     # Open files
-    if ( defined $myvar{'open_files_limit'} and $myvar{'open_files_limit'} > 0 ) {
+    if ( defined $myvar{'open_files_limit'} and $myvar{'open_files_limit'} > 0 )
+    {
         $mycalc{'pct_files_open'} =
-          int( ( $mystat{'Open_files'} // 0 ) * 100 / $myvar{'open_files_limit'} );
+          int(
+            ( $mystat{'Open_files'} // 0 ) * 100 / $myvar{'open_files_limit'} );
     }
 
     # Table locks
@@ -6424,7 +6433,9 @@ sub calculations {
     if ( ( $mystat{'Connections'} || 0 ) > 0 ) {
         $mycalc{'thread_cache_hit_rate'} = int(
             100 - (
-                ( ( $mystat{'Threads_created'} // 0 ) / $mystat{'Connections'} ) * 100
+                (
+                    ( $mystat{'Threads_created'} // 0 ) / $mystat{'Connections'}
+                ) * 100
             )
         );
     }
@@ -6435,7 +6446,9 @@ sub calculations {
     # Other
     if ( ( $mystat{'Connections'} // 0 ) > 0 ) {
         $mycalc{'pct_aborted_connections'} =
-          int( ( ( $mystat{'Aborted_connects'} // 0 ) / $mystat{'Connections'} ) * 100 );
+          int(
+            ( ( $mystat{'Aborted_connects'} // 0 ) / $mystat{'Connections'} ) *
+              100 );
     }
     if ( ( $mystat{'Questions'} // 0 ) > 0 ) {
         $mycalc{'total_reads'} = $mystat{'Com_select'} // 0;
@@ -6542,10 +6555,11 @@ sub calculations {
       if ( $opt{experimental} );
 
     # Binlog Cache
-    if ( defined $myvar{'log_bin'}
+    if (    defined $myvar{'log_bin'}
         and $myvar{'log_bin'} ne 'OFF'
         and defined $mystat{'Binlog_cache_use'}
-        and defined $mystat{'Binlog_cache_disk_use'} ) {
+        and defined $mystat{'Binlog_cache_disk_use'} )
+    {
         $mycalc{'pct_binlog_cache'} = percentage(
             $mystat{'Binlog_cache_use'} - $mystat{'Binlog_cache_disk_use'},
             $mystat{'Binlog_cache_use'} );
@@ -10085,14 +10099,17 @@ sub mariadb_galera {
 "Flow control fraction seems to be OK (wsrep_flow_control_paused <= 0.02)";
     }
 
-    if ( defined $myvar{'binlog_format'} and $myvar{'binlog_format'} ne 'ROW' ) {
+    if ( defined $myvar{'binlog_format'} and $myvar{'binlog_format'} ne 'ROW' )
+    {
         badprint "Binlog format should be in ROW mode.";
         push @adjvars, "binlog_format = ROW";
     }
     else {
         goodprint "Binlog format is in ROW mode.";
     }
-    if ( defined $myvar{'innodb_flush_log_at_trx_commit'} and $myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
+    if ( defined $myvar{'innodb_flush_log_at_trx_commit'}
+        and $myvar{'innodb_flush_log_at_trx_commit'} != 0 )
+    {
         badprint "InnoDB flush log at each commit should be disabled.";
         push @adjvars, "innodb_flush_log_at_trx_commit = 0";
     }
@@ -10232,26 +10249,34 @@ sub mariadb_galera {
     else {
         badprint "Cluster is not consistent and ready";
     }
-    if ( defined $mystat{'wsrep_local_state_uuid'}
+    if (    defined $mystat{'wsrep_local_state_uuid'}
         and defined $mystat{'wsrep_cluster_state_uuid'}
-        and $mystat{'wsrep_local_state_uuid'} eq $mystat{'wsrep_cluster_state_uuid'} )
+        and $mystat{'wsrep_local_state_uuid'} eq
+        $mystat{'wsrep_cluster_state_uuid'} )
     {
         goodprint "Node and whole cluster at the same level: "
           . $mystat{'wsrep_cluster_state_uuid'};
     }
     else {
         badprint "Node and whole cluster not the same level";
-        infoprint "Node    state uuid: " . ( $mystat{'wsrep_local_state_uuid'} // '' );
-        infoprint "Cluster state uuid: " . ( $mystat{'wsrep_cluster_state_uuid'} // '' );
+        infoprint "Node    state uuid: "
+          . ( $mystat{'wsrep_local_state_uuid'} // '' );
+        infoprint "Cluster state uuid: "
+          . ( $mystat{'wsrep_cluster_state_uuid'} // '' );
     }
-    if ( defined $mystat{'wsrep_local_state_comment'} and $mystat{'wsrep_local_state_comment'} eq 'Synced' ) {
+    if ( defined $mystat{'wsrep_local_state_comment'}
+        and $mystat{'wsrep_local_state_comment'} eq 'Synced' )
+    {
         goodprint "Node is synced with whole cluster.";
     }
     else {
         badprint "Node is not synced";
-        infoprint "Node State : " . ( $mystat{'wsrep_local_state_comment'} // '' );
+        infoprint "Node State : "
+          . ( $mystat{'wsrep_local_state_comment'} // '' );
     }
-    if ( defined $mystat{'wsrep_local_cert_failures'} and $mystat{'wsrep_local_cert_failures'} == 0 ) {
+    if ( defined $mystat{'wsrep_local_cert_failures'}
+        and $mystat{'wsrep_local_cert_failures'} == 0 )
+    {
         goodprint "There is no certification failures detected.";
     }
     else {
@@ -10541,8 +10566,11 @@ sub mysql_innodb {
     }
     else {
         # MySQL < 8.0.30: logic based on 25% ratio of buffer pool
-        if (   defined $mycalc{'innodb_log_size_pct'}
-            and ( $mycalc{'innodb_log_size_pct'} < 20 or $mycalc{'innodb_log_size_pct'} > 30 ) )
+        if (
+            defined $mycalc{'innodb_log_size_pct'}
+            and (  $mycalc{'innodb_log_size_pct'} < 20
+                or $mycalc{'innodb_log_size_pct'} > 30 )
+          )
         {
             if ( defined $myvar{'innodb_redo_log_capacity'} ) {
                 badprint
@@ -10563,9 +10591,9 @@ sub mysql_innodb {
             else {
                 badprint
                   "Ratio InnoDB log file size / InnoDB Buffer pool size ("
-                  . ( $mycalc{'innodb_log_size_pct'} // 0 ) . "%): "
-                  . hr_bytes( $myvar{'innodb_log_file_size'} // 0 ) . " * "
-                  . ( $myvar{'innodb_log_files_in_group'} // 0 ) . " / "
+                  . ( $mycalc{'innodb_log_size_pct'}            // 0 ) . "%): "
+                  . hr_bytes( $myvar{'innodb_log_file_size'}    // 0 ) . " * "
+                  . ( $myvar{'innodb_log_files_in_group'}       // 0 ) . " / "
                   . hr_bytes( $myvar{'innodb_buffer_pool_size'} // 0 )
                   . " should be equal to 25%";
                 push(
@@ -10611,8 +10639,8 @@ sub mysql_innodb {
                 );
                 goodprint
                   "Ratio InnoDB log file size / InnoDB Buffer pool size: "
-                  . hr_bytes( $myvar{'innodb_log_file_size'} // 0 ) . " * "
-                  . ( $myvar{'innodb_log_files_in_group'} // 0 ) . "/"
+                  . hr_bytes( $myvar{'innodb_log_file_size'}    // 0 ) . " * "
+                  . ( $myvar{'innodb_log_files_in_group'}       // 0 ) . "/"
                   . hr_bytes( $myvar{'innodb_buffer_pool_size'} // 0 )
                   . " should be equal to 25%";
             }
@@ -10684,8 +10712,9 @@ sub mysql_innodb {
     # InnoDB Used Buffer Pool Size vs CHUNK size
     if (
         (
-               ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
-            or ( defined $myvar{'version_comment'} && $myvar{'version_comment'} =~ /MariaDB/i )
+            ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+            or ( defined $myvar{'version_comment'}
+                && $myvar{'version_comment'} =~ /MariaDB/i )
         )
         and mysql_version_ge( 10, 8 )
         and defined( $myvar{'innodb_buffer_pool_chunk_size'} )
@@ -11833,13 +11862,13 @@ ENDSQL
             my @tbidx = select_array($selIdxReq);
             my $found = 0;
             foreach my $idx (@tbidx) {
-                my @info = split /\s/, $idx;
+                my @info     = split /\s/, $idx;
                 my $idx_name = $info[0] // '';
                 my $idx_cols = $info[1] // '';
                 my $idx_type = $info[2] // '';
                 next if $idx_name eq 'NULL';
                 infoprint
-                  "     +-- Index $idx_name - Cols: $idx_cols - Type: $idx_type";
+"     +-- Index $idx_name - Cols: $idx_cols - Type: $idx_type";
                 if ( $opt{dumpdir} or $opt{schemadir} ) {
                     my $idx_info = "- **$idx_name**: $idx_cols ($idx_type)\n";
                     $schema_doc         .= $idx_info;
@@ -12336,8 +12365,10 @@ sub dump_result {
           : ( $score > 50 ? 'text-amber-400' : 'text-rose-500' );
         my $score_bg_class =
           $score > 80 ? 'bg-emerald-500/10 border-emerald-500/30'
-          : ( $score > 50 ? 'bg-amber-500/10 border-amber-500/30'
-            : 'bg-rose-500/10 border-rose-500/30' );
+          : (
+            $score > 50 ? 'bg-amber-500/10 border-amber-500/30'
+            : 'bg-rose-500/10 border-rose-500/30'
+          );
 
         # Timestamp
         my $timestamp  = scalar localtime;
