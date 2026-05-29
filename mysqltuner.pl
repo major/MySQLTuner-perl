@@ -4102,7 +4102,7 @@ sub get_fs_info_win {
 sub merge_hash {
     my $h1     = shift;
     my $h2     = shift;
-    my %result = {};
+    my %result = ();
     foreach my $substanceref ( $h1, $h2 ) {
         while ( my ( $k, $v ) = each %$substanceref ) {
             next if ( exists $result{$k} );
@@ -11227,7 +11227,8 @@ sub historical_comparison {
         return;
     }
 
-    if ( !open( my $fh, '<', $file ) ) {
+    my $fh;
+    if ( !open( $fh, '<', $file ) ) {
         badprint "Unable to open comparison file: $file";
         return;
     }
@@ -11286,7 +11287,8 @@ sub process_sysbench_metrics {
         return;
     }
 
-    if ( !open( my $fh, '<', $file ) ) {
+    my $fh;
+    if ( !open( $fh, '<', $file ) ) {
         badprint "Unable to open sysbench file: $file";
         return;
     }
