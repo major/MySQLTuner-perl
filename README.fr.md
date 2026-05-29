@@ -208,6 +208,18 @@ brew install mysqltuner
 
 4) Si vous êtes dans un **environnement isolé (air-gapped)** sans accès direct à Internet, téléchargez les fichiers sur une machine disposant d'un accès Internet (ou via un hôte proxy), puis copiez `mysqltuner.pl`, `basic_passwords.txt` et `vulnerabilities.csv` sur votre serveur cible.
 
+5) Docker : Récupérez et lancez le conteneur Docker officiel (les tags de Docker Hub sont disponibles sur [jmrenouard/mysqltuner tags](https://hub.docker.com/r/jmrenouard/mysqltuner/tags?name=latest)) :
+
+```bash
+docker pull jmrenouard/mysqltuner:latest
+docker run --rm -it jmrenouard/mysqltuner --host <database_host> --user <username> --pass <password>
+```
+
+### Emplacement des versions (Releases)
+
+* Les notes de version officielles et l'historique sont documentés dans le dossier [releases/](releases/) de ce dépôt (par exemple, [releases/v2.8.44.md](releases/v2.8.44.md)).
+* Les tags de version Git et les archives sources téléchargeables sont disponibles sur [GitHub Releases](https://github.com/jmrenouard/MySQLTuner-perl/releases).
+
 Installation facultative de Sysschema pour MySQL 5.6
 --
 
@@ -372,13 +384,11 @@ perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 ```
 
-**Utilisation :** Utilisation d'un modèle pour personnaliser votre fichier de rapport basé sur la syntaxe [Text::Template](https://metacpan.org/pod/Text::Template).
+**Utilisation :** Générer un rapport HTML autonome (intégré, ne nécessite aucun module CPAN ou externe)
 
 ```bash
-perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
+perl mysqltuner.pl --reportfile=mysqltuner.html
 ```
-
-**Important** : le module [Text::Template](https://metacpan.org/pod/Text::Template) est obligatoire pour les options `--reportfile` et/ou `--template`, car ce module est nécessaire pour générer une sortie appropriée basée sur un modèle de texte.
 
 **Utilisation :** Vidage de toutes les vues information_schema et sysschema sous forme de fichier csv dans le sous-répertoire des résultats
 
@@ -477,65 +487,30 @@ MySQLTuner dispose désormais d'une prise en charge expérimentale des services 
 * `--ssh-password <password>` : le mot de passe SSH pour les connexions cloud.
 * `--ssh-identity-file <path>` : le chemin d'accès au fichier d'identité SSH pour les connexions cloud.
 
-Rapports HTML basés sur Python Jinja2
+Rapport HTML et score de santé pondéré
 --
 
-La génération de HTML est basée sur Python/Jinja2
+MySQLTuner calcule dynamiquement un **score de santé pondéré (KPI)** (évaluation globale de la santé de la base de données sur une échelle de 0 à 100) basé sur trois catégories :
 
-**Procédure de génération de HTML**
+1. **Performances (40 points max)** : Évaluation de l'efficacité de lecture du pool de tampons, du pourcentage de tables temporaires sur disque, du taux d'utilisation du cache de threads et de la limite de connexions.
+2. **Sécurité (30 points max)** : Évaluation de la configuration des comptes utilisateurs, des mots de passe faibles (vérifiés hors ligne), du chiffrement des sessions SSL/TLS et de l'utilisation des plugins d'authentification.
+3. **Résilience (30 points max)** : Évaluation de l'état et de la latence de la réplication, de la configuration des logs et des anomalies de modélisation de schéma.
 
-* Générer le rapport mysqltuner.pl au format JSON (--json)
-* Générer un rapport HTML à l'aide des outils Python j2
+**Génération du rapport HTML**
 
-**Les modèles Jinja2 se trouvent dans le sous-répertoire des modèles**
-
-Un exemple de base s'appelle basic.html.j2
-
-**Installation de Python j2**
+Vous pouvez générer un rapport HTML autonome directement avec :
 
 ```bash
-python -mvenv j2
-source ./j2/bin/activate
-(j2) pip install j2
+perl mysqltuner.pl --reportfile=mysqltuner.html
 ```
 
-**Utilisation de la génération de rapports HTML**
+Cette fonctionnalité est intégrée nativement en Perl pur et possède **zéro dépendance externe** (aucun module CPAN ou paquet Python n'est requis). Le rapport généré fournit un tableau de bord interactif sur thème sombre affichant :
+- Une jauge de score de santé globale
+- Un aperçu détaillé des métriques KPI (Performances, Sécurité, Résilience)
+- Des listes de recommandations catégorisées (Général, Variables à ajuster, Modélisation de base de données, Sécurité, Système)
+- Un journal complet et rétractable de la sortie console
 
-```bash
-perl mysqltuner.pl --verbose --json > reports.json
-cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
-```
 
-ou
-
-```bash
-perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
-```
-
-Rapports HTML basés sur AHA
---
-
-La génération de HTML est basée sur AHA
-
-**Procédure de génération de HTML**
-
-* Générer le rapport mysqltuner.pl à l'aide de rapports texte standard
-* Générer un rapport HTML à l'aide d'aha
-
-**Installation d'Aha**
-
-Suivez les instructions du dépôt Github
-
-[Dépôt principal de GitHub AHA](https://github.com/theZiz/aha)
-
-**Utilisation de la génération de rapports HTML AHA**
-
- perl mysqltuner.pl --verbose --color > reports.txt
- aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
-
-ou
-
- perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
 
 FAQ
 --

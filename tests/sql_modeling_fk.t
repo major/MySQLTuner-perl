@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use Cwd 'abs_path';

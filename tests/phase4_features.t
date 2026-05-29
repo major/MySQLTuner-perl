@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use File::Spec;
@@ -102,7 +103,7 @@ ok(scalar(@migration_findings) > 0, "Migration advisor should find risks (sql_mo
 # --- Test 3: Capacity Planning ---
 main::predictive_capacity_analysis();
 ok(exists $main::result{'Capacity'}{'Memory'}{'Headroom'}, "Capacity analysis should set memory headroom");
-ok($main::result{'Capacity'}{'Disk'}{'DailyGrowth'} == 0, "Disk growth mocked at 0 due to no database metadata in this simple mock");
+ok(($main::result{'Capacity'}{'Disk'}{'DailyGrowth'} // 0) == 0, "Disk growth mocked at 0 due to no database metadata in this simple mock");
 
 # --- Test 4: Replication Advanced ---
 @main::generalrec = ();

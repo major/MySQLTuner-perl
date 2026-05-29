@@ -37,18 +37,48 @@ Generate technical documents for the new version.
 1. Draft comprehensive release notes in `releases/v[VERSION].md` summarizing changes from `@Changelog`.
 2. Format using Conventional Commits classification.
 
-### 4. Git-Flow Execution
+### 4. Branch Creation & Lifecycle Management
 
-If all previous steps pass (Exit Code 0), proceed with the formal release.
-1. Ensure you are on a release branch `vX.XX.XX`.
-2. Commit all changes including documentation and release notes via `npm run commit` or `git cz`.
-3. Merge branch back to `master`.
-4. Tag the release on `master` with the new version.
-5. Force push tags and `master` to origin.
+All development and release operations follow a strict branch isolation protocol:
+1. **Feature/Bugfix Branches**: Create a dedicated branch from `master` named `feat/[name]`, `fix/[name]`, or `chore/[name]`.
+   ```bash
+   git checkout -b feat/my-new-feature
+   ```
+2. **Release Branches**: When preparing a release, create a release branch named `vX.XX.XX` (e.g., `v2.8.44`) from `master`.
+   ```bash
+   git checkout -b v2.8.44
+   ```
+   *Note: Upon checkout, the post-checkout hook automatically runs `tests/version_consistency.t` to verify version files are in sync.*
+3. **Development Cycle**: Develop features, bug fixes, or chores, committing them using Conventional Commits via `npm run commit` or `git cz`.
+
+### 5. Git-Flow & Release Execution
+
+Once the release branch is ready and all compliance checks pass:
+1. Run `make release VERSION=X.XX.XX` to automatically bump the version in all source files, regenerate `USAGE.md`, and generate release notes.
+2. Verify compliance locally by running `perl build/check_compliance.pl`.
+3. Commit all generated release artifacts (e.g. `releases/vX.XX.XX.md`, updated `mysqltuner.pl`, `CURRENT_VERSION.txt`, `Changelog`) using `npm run commit`.
+4. Merge the release branch back into `master`.
+   ```bash
+   git checkout master
+   git merge --no-ff vX.XX.XX
+   ```
+5. Tag the release on `master`:
+   ```bash
+   git tag -a vX.XX.XX -m "Release vX.XX.XX"
+   ```
+6. Push changes and tags to origin:
+   ```bash
+   git push origin master --tags
+   ```
+7. Clean up the local release branch:
+   ```bash
+   git branch -d vX.XX.XX
+   ```
 
 ## ✅ Verification
 
 - Tests pass successfully across all supported versions.
 - Release notes exist in `releases/v[VERSION].md`.
 - Git history correctly reflects semantic versions and tags.
+
 

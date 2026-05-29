@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 
 # Load the script first to get the subroutines
@@ -72,6 +73,32 @@ subtest 'CVE Recommendation Logic' => sub {
 
     # Cleanup
     unlink($cve_file);
+};
+
+subtest 'Validate MySQL Version LTS support' => sub {
+    my @cases = (
+        { version => "9.7.0", lts => 1, desc => "MySQL 9.7.0 is recognized as supported LTS" },
+        { version => "9.6.0", lts => 0, desc => "MySQL 9.6.0 is recognized as EOL/unsupported" },
+        { version => "9.5.0", lts => 0, desc => "MySQL 9.5.0 is recognized as EOL/unsupported" },
+        { version => "8.0.35", lts => 1, desc => "MySQL 8.0.35 is recognized as supported LTS (8.0 matches)" },
+        { version => "8.4.1", lts => 1, desc => "MySQL 8.4.1 is recognized as supported LTS (8.4 matches)" },
+        { version => "11.4.2", lts => 1, desc => "MariaDB 11.4.2 is recognized as supported LTS (11.4 matches)" },
+    );
+
+    for my $case (@cases) {
+        @main::generalrec = ();
+        @mock_output = ();
+        $main::myvar{'version'} = $case->{version};
+        main::validate_mysql_version();
+
+        if ($case->{lts}) {
+            ok(has_output(qr/GOOD: Currently running supported MySQL\/MariaDB version \Q$case->{version}\E/), "$case->{version} is recognized as supported");
+            is(scalar(@main::generalrec), 0, "No warning messages added for $case->{version}");
+        } else {
+            ok(has_output(qr/BAD: Your MySQL version \Q$case->{version}\E is EOL software/), "$case->{version} is recognized as EOL/unsupported");
+            ok(grep { /You are using an unsupported version/ } @main::generalrec, "Warning message added for $case->{version}");
+        }
+    }
 };
 
 done_testing();

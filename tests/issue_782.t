@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 no warnings 'once';
+no warnings 'once';
 
 my $exit_val;
 BEGIN {

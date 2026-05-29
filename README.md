@@ -3,7 +3,7 @@
 [!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
 [![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
-[![MySQLTuner Version](https://img.shields.io/badge/version-2.8.43-blue.svg)](https://github.com/jmrenouard/MySQLTuner-perl/releases/tag/v2.8.43)
+[![MySQLTuner Version](https://img.shields.io/badge/version-2.8.44-blue.svg)](https://github.com/jmrenouard/MySQLTuner-perl/releases/tag/v2.8.44)
 [![Test Status](https://github.com/jmrenouard/MySQLTuner-perl/workflows/Test/badge.svg)](https://github.com/jmrenouard/MySQLTuner-perl/actions)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Average time to resolve an issue")
 [![Percentage of open issues](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Percentage of issues still open")
@@ -210,6 +210,18 @@ brew install mysqltuner
 
 4) If you are in an **air-gapped environment** without direct internet access, download the files on a machine that has internet access (or via a proxy host), then copy `mysqltuner.pl`, `basic_passwords.txt`, and `vulnerabilities.csv` to your target server.
 
+5) Docker: Pull and run the official Docker container (Docker hub tags are available at [jmrenouard/mysqltuner tags](https://hub.docker.com/r/jmrenouard/mysqltuner/tags?name=latest)):
+
+```bash
+docker pull jmrenouard/mysqltuner:latest
+docker run --rm -it jmrenouard/mysqltuner --host <database_host> --user <username> --pass <password>
+```
+
+### Releases Location
+
+* Official release notes and history are documented in the [releases/](releases/) directory of this repository (e.g., [releases/v2.8.44.md](releases/v2.8.44.md)).
+* Git release tags and downloadable source tarballs are available on [GitHub Releases](https://github.com/jmrenouard/MySQLTuner-perl/releases).
+
 Optional Sysschema installation for MySQL 5.6
 --
 
@@ -374,13 +386,11 @@ perl mysqltuner.pl --outputfile /tmp/result_mysqltuner.txt
 perl mysqltuner.pl --silent --outputfile /tmp/result_mysqltuner.txt
 ```
 
-**Usage:** Using template model to customize your reporting file based on [Text::Template](https://metacpan.org/pod/Text::Template) syntax.
+**Usage:** Generate a standalone HTML report file (built-in, requires no CPAN or external modules)
 
 ```bash
-perl mysqltuner.pl --silent --reportfile /tmp/result_mysqltuner.txt --template=/tmp/mymodel.tmpl
+perl mysqltuner.pl --reportfile=mysqltuner.html
 ```
-
-**Important**: [Text::Template](https://metacpan.org/pod/Text::Template) module is mandatory for `--reportfile` and/or `--template` options, because this module is needed to generate appropriate output based on a text template.
 
 **Usage:** Dumping all information_schema and sysschema views as csv file into results subdirectory
 
@@ -485,69 +495,30 @@ MySQLTuner now has experimental support for cloud-based MySQL services.
 * `--ssh-password <password>`: The SSH password for cloud connections.
 * `--ssh-identity-file <path>`: The path to the SSH identity file for cloud connections.
 
-HTML reports based on  Python Jinja2
+HTML Report & Weighted Health Score
 --
 
-HTML generation is based on Python/Jinja2
+MySQLTuner calculates a **Weighted Health Score KPI** (overall database health assessment on a scale of 0 to 100) dynamically based on three categories:
 
-**HTML generation Procedure**
+1. **Performance (40 points max)**: Evaluation of buffer pool read efficiency, disk temporary tables ratio, thread cache hit rate, and connection utilization.
+2. **Security (30 points max)**: Evaluation of user account configurations, weak passwords (checked offline), SSL/TLS session encryption, and authentication plugin usage.
+3. **Resilience (30 points max)**: Evaluation of replication status and lag, log setups, and database modeling findings.
 
-* Generate mysqltuner.pl report using JSON format (--json)
-* Generate HTML report using j2 python tools
+**Generating the HTML Report**
 
-**Jinja2 Templates are located under templates sub directory**
-
-A basic example is called basic.html.j2
-
-**Installation Python j2**
+You can generate a standalone HTML report directly with:
 
 ```bash
-python -mvenv j2
-source ./j2/bin/activate
-(j2) pip install j2
+perl mysqltuner.pl --reportfile=mysqltuner.html
 ```
 
-**Using Html report generation**
+This feature is built natively in pure Perl and has **zero external dependencies** (no CPAN modules or Python packages are required). The generated report provides an interactive dark-themed dashboard displaying:
+- Overall Health Score gauge
+- Detailed KPI metrics breakdown (Performance, Security, Resilience)
+- Categorized recommendations lists (General, Variables to Adjust, Database Modeling, Security, System)
+- Collapsible full console output log
 
-```bash
-perl mysqltuner.pl --verbose --json > reports.json
-cat reports.json  j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
-```
 
-or
-
-```bash
-perl mysqltuner.pl --verbose --json | j2 -f json MySQLTuner-perl/templates/basic.html.j2 > variables.html
-```
-
-HTML reports based on AHA
---
-
-HTML generation is based on AHA
-
-**HTML generation Procedure**
-
-* Generate mysqltuner.pl report using standard text reports
-* Generate HTML report using aha
-
-**Installation Aha**
-
-Follow instructions from Github repo
-
-[GitHub AHA main repository](https://github.com/theZiz/aha)
-
-**Using AHA Html report generation**
-
-```bash
-perl mysqltuner.pl --verbose --color > reports.txt
-aha --black --title "MySQLTuner" -f "reports.txt" > "reports.html"
-```
-
-or
-
-```bash
-perl mysqltuner.pl --verbose --color | aha --black --title "MySQLTuner" > reports.html
-```
 
 FAQ
 --
