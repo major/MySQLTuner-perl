@@ -7,11 +7,11 @@ permissions:
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
+  # Triggers the workflow on push or pull request events for all branches
   push:
-    branches: [master]
+    branches: ['**']
   pull_request:
-    branches: [master]
+    branches: ['**']
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -102,6 +102,14 @@ jobs:
     steps:
       - name: Setup MySQL Tuner repository
         uses: actions/checkout@v6
+
+      - name: Run compliance checks
+        run: |
+          perl build/check_compliance.pl
+
+      - name: Run EOL dates synchronization check
+        run: |
+          perl build/sync_eol_dates.pl
 
       - name: Run unit tests
         run: |

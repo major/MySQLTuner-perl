@@ -1,4 +1,5 @@
-import requests
+import urllib.request
+import urllib.error
 import json
 import csv
 import zipfile
@@ -98,16 +99,20 @@ for year in years_to_process:
     print(f"--- Processing year {year} ---")
     print(f"Downloading from {url}...")
     
+    req = urllib.request.Request(
+        url,
+        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    )
     try:
-        response = requests.get(url, timeout=60, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'})
-        response.raise_for_status()
-    except requests.RequestException as e:
+        with urllib.request.urlopen(req, timeout=60) as response:
+            content = response.read()
+    except urllib.error.URLError as e:
         print(f"Error downloading for {year} : {e}")
         continue
 
     print("Extracting and parsing JSON...")
     try:
-        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+        with zipfile.ZipFile(io.BytesIO(content)) as z:
             json_filename = [name for name in z.namelist() if name.endswith('.json')][0]
             with z.open(json_filename) as f:
                 data = json.load(f)

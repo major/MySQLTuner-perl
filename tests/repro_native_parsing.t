@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use File::Spec;
@@ -34,13 +35,6 @@ $SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /redefined/ };
     require $script;
 }
 
-# 3. Mocking environment
-our %opt;
-our %result;
-our @generalrec;
-my @infoprints;
-my @badprints;
-my @goodprints;
 
 {
     no warnings 'redefine';

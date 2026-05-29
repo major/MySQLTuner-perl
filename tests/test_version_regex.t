@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 
 # Mocking HTTP::Tiny for testing validate_tuner_version logic

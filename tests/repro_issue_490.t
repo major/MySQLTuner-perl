@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Temp qw(tempfile);
 use File::Basename;

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Run version consistency check on branch change (3rd param is 1)
+if [ "$3" = "1" ]; then
+  echo "Checking version consistency after branch checkout..."
+  perl tests/version_consistency.t
+fi

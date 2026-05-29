@@ -20,7 +20,6 @@ RUN apt clean all
 WORKDIR /
 COPY ./mysqltuner.pl /mysqltuner.pl 
 COPY ./basic_passwords.txt /basic_passwords.txt
-COPY ./template_example.tpl /template.tpl
 
 #Problem with generateion of CVE files
 COPY ./vulnerabilities.csv /vulnerabilities.txt
@@ -28,5 +27,5 @@ COPY ./vulnerabilities.csv /vulnerabilities.txt
 ENTRYPOINT [ "perl", "/mysqltuner.pl", "--passwordfile", "/basic_passwords.txt",\
   "--nosysstat", "--defaults-file", "--cvefile", "/vulnerabilities.txt", \
   "/defaults.cnf", "--dumpdir", "/results", "--outputfile", \
-  "/results/mysqltuner.txt", "--template", "/template.tpl", \
+  "/results/mysqltuner.txt", \
   "--reportfile", "/results/mysqltuner.html" , "--verbose" ]

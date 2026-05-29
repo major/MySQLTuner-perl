@@ -1,5 +1,35 @@
 # MySQLTuner Changelog
 
+2.8.44 2026-05-27
+
+- feat: develop automated end-of-life (EOL) date synchronization check script to audit LTS versions in CI.
+- feat: develop automated specification consistency auditor and Spec-to-Test Mapping Matrix.
+- feat: develop LTS API auto-bumping utility with GitHub Actions integration.
+- feat: develop version bump dry-run simulation script and post-commit Git hook for automated doc sync.
+- feat: re-implement HTML report option (--reportfile) removing CPAN Text::Template dependency (#791).
+- feat: make unit-tests target quiet/clean by default in Makefile, and add unit-tests-debug target for verbose debugging.
+- fix: resolve false positive AUTO_INCREMENT near max capacity warning on BIGINT UNSIGNED columns with low row count by checking type-specific limits using information_schema (#913).
+- fix: refactor version parsing regexes in mysql_version_eq() and helper functions to prevent uninitialized value warnings.
+- fix: resolve compile-time and runtime warnings in unit tests, mock override ordering, and definedness checks.
+- fix: fix $fh scoping bug in process_sysbench_metrics where file handle was declared inside if(!open) guard and went out of scope before read loop.
+- fix: fix $fh scoping bug in historical_comparison (same pattern as process_sysbench_metrics).
+- fix: fix hash initialization bug in merge_hash (my %result = {} changed to my %result = ()).
+- docs: enhance release-manager workflow with branch lifecycle and checkout hook instructions.
+- docs: add Docker installation instructions (docker pull/run) and release location to all README files (EN, FR, IT, RU).
+- ci: configure CI workflows to trigger on all branches and execute compliance checks.
+- ci: add EOL date check step to CI workflow.
+- test: add unit test for type-specific auto_increment capacity warnings.
+- test: update issue_37.t to support new information_schema query format.
+- test: add unit test for HTML report generation logic.
+- test: expand unit tests with parameterized test matrix covering supported/outdated versions across major versions 5, 8, 9, 10, and 11.
+- test: add unit_system.t to verify architecture, transport, and formatting helpers, increasing test coverage to 61%.
+- test: add unit_coverage_boost.t covering 12 pure utility functions (trim, escape_html, hr_bytes, merge_hash, etc.).
+- test: add unit_coverage_boost2.t covering 17 I/O, MariaDB engine, and print wrapper functions (redwrap, file2array, mariadb_tokudb, etc.).
+- test: add unit_coverage_boost3.t with deep-mocked tests for 22 diagnostic subroutines (mysql_plugins, mysql_indexes, system_recommendations, check_query_anti_patterns, process_sysbench_metrics, etc.).
+- test: improve subroutine coverage from 55% to 92% (154 out of 167 subroutines).
+- chore: implement compliance check script to enforce zero-dependency and single-file design.
+- chore: implement post-checkout Git hook to automatically verify version consistency on checkout.
+
 2.8.43 2026-05-25
 
 - chore: bump version to 2.8.43.

@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 no warnings 'once';
+no warnings 'once';
 
 # We must override exit before loading mysqltuner.pl if we want it to be global
 my $exit_val;

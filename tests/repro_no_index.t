@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 use File::Basename;
 use File::Spec;
@@ -21,7 +22,7 @@ $SIG{__WARN__} = sub { print STDERR $_[0] unless $_[0] =~ /redefined/ };
 # 2. Mocking environment
 no warnings 'redefine';
 *main::infoprint = sub { }; 
-*main::badprint = sub { push @main::badprints, $_[0]; warn "BADPRINT: $_[0]\n"; };
+*main::badprint = sub { push @main::badprints, $_[0]; };
 *main::goodprint = sub { }; 
 *main::subheaderprint = sub { };
 

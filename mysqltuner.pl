@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.43
+# mysqltuner.pl - Version 2.8.44
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.8.43";
+our $tunerversion = "2.8.44";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -282,16 +282,9 @@ our %CLI_METADATA = (
         cat         => 'PERFORMANCE'
     },
     'reportfile' => {
-        type        => '=s',
+        type        => ':s',
         default     => undef,
-        desc        => 'Path to a report txt file',
-        placeholder => '<path>',
-        cat         => 'PERFORMANCE'
-    },
-    'template' => {
-        type        => '=s',
-        default     => undef,
-        desc        => 'Path to a template file',
+        desc        => 'Path to a HTML report file',
         placeholder => '<path>',
         cat         => 'PERFORMANCE'
     },
@@ -617,7 +610,7 @@ our (
     @banned_ports,  @dblist,               $physical_memory,
     $swap_memory,   $duflags,              $xargsflags,
     $architecture,  $storage_type,         $cloud_type,
-    $is_cloud,      %old_result
+    $is_cloud,      %old_result,           @raw_output_lines
 );
 
 # Gather the options from the command line
@@ -764,7 +757,8 @@ sub setup_environment {
     $outputfile = undef;
     $outputfile = abs_path( $opt{outputfile} ) if $opt{outputfile};
 
-    $fh = undef;
+    $fh               = undef;
+    @raw_output_lines = ();
     if ($outputfile) {
         open( $fh, '>', $outputfile )
           or die("Fail opening $outputfile");
@@ -875,6 +869,9 @@ sub show_help {
 sub prettyprint {
     print $_[0] . "\n" unless ( $opt{'silent'} or $opt{'json'} );
     print $fh $_[0] . "\n" if defined($fh);
+    my $plain_text = $_[0] // '';
+    $plain_text =~ s/\e\[[0-9;]*[mK]//g;
+    push @raw_output_lines, $plain_text;
 }
 
 sub goodprint {
@@ -1671,6 +1668,34 @@ sub percentage {
     return "100.00" if $total == 0;
     $value = 0 unless ( $value =~ /^[+-]?\d*\.?\d+$/ );
     return sprintf( "%.2f", ( $value * 100 / $total ) );
+}
+
+# Get maximum value for standard MySQL integer types
+sub get_type_max {
+    my ( $data_type, $col_type ) = @_;
+    $data_type = lc( $data_type // '' );
+    $col_type  = lc( $col_type  // '' );
+
+    my $is_unsigned = ( $col_type =~ /unsigned/ ) ? 1 : 0;
+
+    if ( $data_type eq 'tinyint' ) {
+        return $is_unsigned ? 255 : 127;
+    }
+    elsif ( $data_type eq 'smallint' ) {
+        return $is_unsigned ? 65535 : 32767;
+    }
+    elsif ( $data_type eq 'mediumint' ) {
+        return $is_unsigned ? 16777215 : 8388607;
+    }
+    elsif ( $data_type eq 'int' || $data_type eq 'integer' ) {
+        return $is_unsigned ? 4294967295 : 2147483647;
+    }
+    elsif ( $data_type eq 'bigint' ) {
+        return $is_unsigned ? "18446744073709551615" : "9223372036854775807";
+    }
+
+    # Default fallback to 64-bit unsigned maximum
+    return "18446744073709551615";
 }
 
 # Calculates uptime to display in a human-readable form
@@ -2497,7 +2522,7 @@ sub mysql_setup {
     }
 
     my $svcprop = which( "svcprop", $ENV{'PATH'} );
-    if ( substr( $svcprop, 0, 1 ) =~ "/" ) {
+    if ( $svcprop && substr( $svcprop, 0, 1 ) =~ "/" ) {
 
         # We are on solaris
         (
@@ -2755,9 +2780,12 @@ sub select_array {
     debugprint "PERFORM: $req ";
     my $req_escaped = $req;
     $req_escaped =~ s/"/\\"/g;
+    my $mcmd = $mysqlcmd // 'mysql';
+    my $mlogin = $mysqllogin // '';
+    my $dnull = $devnull // '/dev/null';
     my @result =
       execute_system_command(
-        "$mysqlcmd $mysqllogin $vertical-Bse \"$req_escaped\" 2>>$devnull");
+        "$mcmd $mlogin $vertical-Bse \"$req_escaped\" 2>>$dnull");
     if ( $? != 0 ) {
         if ( $req eq '\s' ) {
             debugprint
@@ -2768,7 +2796,7 @@ sub select_array {
         badprint "FAIL Execute SQL / return code: $?";
         if ( $opt{debug} ) {
             debugprint execute_system_command(
-                "$mysqlcmd $mysqllogin $vertical-Bse \"$req_escaped\" 2>&1");
+                "$mcmd $mlogin $vertical-Bse \"$req_escaped\" 2>&1");
         }
 
         #exit $?;
@@ -2927,7 +2955,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.8.43' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.8.44' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -2943,7 +2971,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.8.43' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.8.44' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -2988,15 +3016,18 @@ sub human_size {
 sub select_one {
     my $req = shift;
     debugprint "PERFORM: $req ";
+    my $mcmd = $mysqlcmd // 'mysql';
+    my $mlogin = $mysqllogin // '';
+    my $dnull = $devnull // '/dev/null';
     my $result =
-      execute_system_command("$mysqlcmd $mysqllogin -Bse \"$req\" 2>>$devnull");
+      execute_system_command("$mcmd $mlogin -Bse \"$req\" 2>>$dnull");
     chomp $result if defined $result;
     if ( $? != 0 ) {
         badprint "Failed to execute: $req";
         badprint "FAIL Execute SQL / return code: $?";
         if ( $opt{debug} ) {
             debugprint execute_system_command(
-                "$mysqlcmd $mysqllogin -Bse \"$req\" 2>&1");
+                "$mcmd $mlogin -Bse \"$req\" 2>&1");
         }
 
         #exit $?;
@@ -3353,15 +3384,17 @@ sub get_all_vars {
     arr2hash( \%myrepl, \@mysqlreplica, ':' );
 
     # Terminology mapping for internal consistency
-    $myrepl{'Seconds_Behind_Replica'} = $myrepl{'Seconds_Behind_Source'}
-      // $myrepl{'Seconds_Behind_Master'}
-      if !defined $myrepl{'Seconds_Behind_Replica'};
-    $myrepl{'Replica_IO_Running'} = $myrepl{'Replica_IO_Running'}
-      // $myrepl{'Slave_IO_Running'}
-      if !defined $myrepl{'Replica_IO_Running'};
-    $myrepl{'Replica_SQL_Running'} = $myrepl{'Replica_SQL_Running'}
-      // $myrepl{'Slave_SQL_Running'}
-      if !defined $myrepl{'Replica_SQL_Running'};
+    if ( scalar( keys %myrepl ) > 0 ) {
+        $myrepl{'Seconds_Behind_Replica'} = $myrepl{'Seconds_Behind_Source'}
+          // $myrepl{'Seconds_Behind_Master'}
+          if !defined $myrepl{'Seconds_Behind_Replica'};
+        $myrepl{'Replica_IO_Running'} = $myrepl{'Replica_IO_Running'}
+          // $myrepl{'Slave_IO_Running'}
+          if !defined $myrepl{'Replica_IO_Running'};
+        $myrepl{'Replica_SQL_Running'} = $myrepl{'Replica_SQL_Running'}
+          // $myrepl{'Slave_SQL_Running'}
+          if !defined $myrepl{'Replica_SQL_Running'};
+    }
 
     $result{'Replication'}{'Status'} = \%myrepl;
 
@@ -4069,7 +4102,7 @@ sub get_fs_info_win {
 sub merge_hash {
     my $h1     = shift;
     my $h2     = shift;
-    my %result = {};
+    my %result = ();
     foreach my $substanceref ( $h1, $h2 ) {
         while ( my ( $k, $v ) = each %$substanceref ) {
             next if ( exists $result{$k} );
@@ -4178,8 +4211,10 @@ sub get_kernel_info {
         badprint
           "Swappiness is > 10, please consider having a value lower than 10";
         push @generalrec, "setup swappiness lower or equal to 10";
-        push @adjvars,
+        my $rec =
 'vm.swappiness <= 10 (echo 10 > /proc/sys/vm/swappiness) or vm.swappiness=10 in /etc/sysctl.conf';
+        push @adjvars, $rec;
+        push @sysrec,  $rec;
     }
     else {
         infoprint "Swappiness is < 10.";
@@ -4194,8 +4229,10 @@ sub get_kernel_info {
             badprint
 "Initial TCP slot entries is < 1M, please consider having a value greater than 100";
             push @generalrec, "setup Initial TCP slot entries greater than 100";
-            push @adjvars,
+            my $rec =
 'sunrpc.tcp_slot_table_entries > 100 (echo 128 > /proc/sys/sunrpc/tcp_slot_table_entries)  or sunrpc.tcp_slot_table_entries=128 in /etc/sysctl.conf';
+            push @adjvars, $rec;
+            push @sysrec,  $rec;
         }
         else {
             infoprint "TCP slot entries is > 100.";
@@ -4207,8 +4244,10 @@ sub get_kernel_info {
             badprint
 "Max running total of the number of max. events is < 1M, please consider having a value greater than 1M";
             push @generalrec, "setup Max running number events greater than 1M";
-            push @adjvars,
+            my $rec =
 'fs.aio-max-nr > 1M (echo 1048576 > /proc/sys/fs/aio-max-nr) or fs.aio-max-nr=1048576 in /etc/sysctl.conf';
+            push @adjvars, $rec;
+            push @sysrec,  $rec;
         }
         else {
             infoprint "Max Number of AIO events is > 1M.";
@@ -4220,8 +4259,10 @@ sub get_kernel_info {
 "Max running total of the number of file open request is < 1M, please consider having a value greater than 1M";
             push @generalrec,
               "setup running number of open request greater than 1M";
-            push @adjvars,
+            my $rec =
 'fs.aio-nr > 1M (echo 1048576 > /proc/sys/fs/nr_open) or fs.nr_open=1048576 in /etc/sysctl.conf';
+            push @adjvars, $rec;
+            push @sysrec,  $rec;
         }
         else {
             infoprint "Max Number of open file requests is > 1M.";
@@ -4247,12 +4288,13 @@ sub get_system_info {
     }
 
     $result{'Network'}{'Connected'} = 'NO';
+    my $dnull = $devnull // ($is_win ? 'NUL' : '/dev/null');
     if ($is_win) {
-        execute_system_command("ping -n 1 ipecho.net > $devnull 2>&1")
+        execute_system_command("ping -n 1 ipecho.net > $dnull 2>&1")
           if which( "ping", $ENV{'PATH'} );
     }
     else {
-        execute_system_command("ping -c 1 ipecho.net > $devnull 2>&1")
+        execute_system_command("ping -c 1 ipecho.net > $dnull 2>&1")
           if which( "ping", $ENV{'PATH'} );
     }
     my $isConnected = $?;
@@ -4439,6 +4481,10 @@ sub system_recommendations {
             push( @generalrec,
 "Consider stopping or dedicate server for additional process other than mysqld."
             );
+            push( @sysrec,
+"Consider stopping or dedicate server for additional process other than mysqld (other processes use "
+                  . percentage( $omem, $physical_memory )
+                  . "% of RAM)." );
             push( @adjvars,
 "DON'T APPLY SETTINGS BECAUSE THERE ARE TOO MANY PROCESSES RUNNING ON THIS SERVER. OOM KILL CAN OCCUR!"
             );
@@ -5446,8 +5492,10 @@ sub get_replication_status {
 # https://endoflife.date/mysql
 # https://endoflife.date/mariadb
 sub validate_mysql_version {
+    return unless defined $myvar{'version'};
     ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
+    $mysqlvermajor ||= 0;
     $mysqlverminor ||= 0;
     $mysqlvermicro ||= 0;
 
@@ -5455,7 +5503,7 @@ sub validate_mysql_version {
 
     if (   mysql_version_eq( 8, 0 )
         or mysql_version_eq( 8,  4 )
-        or mysql_version_eq( 9,  5 )
+        or mysql_version_eq( 9,  7 )
         or mysql_version_eq( 10, 6 )
         or mysql_version_eq( 10, 11 )
         or mysql_version_eq( 11, 4 )
@@ -5481,50 +5529,60 @@ sub validate_mysql_version {
 # Checks if MySQL version is equal to (major, minor, micro)
 sub mysql_version_eq {
     my ( $maj, $min, $mic ) = @_;
-    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+    return 0 unless defined $myvar{'version'};
+    my ( $v_maj, $v_min, $v_mic ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
+    $v_maj //= 0;
+    $v_min //= 0;
+    $v_mic //= 0;
 
-    return int($mysqlvermajor) == int($maj)
+    return int($v_maj) == int($maj)
       if ( !defined($min) && !defined($mic) );
-    return int($mysqlvermajor) == int($maj) && int($mysqlverminor) == int($min)
+    return int($v_maj) == int($maj) && int($v_min) == int($min)
       if ( !defined($mic) );
-    return ( int($mysqlvermajor) == int($maj)
-          && int($mysqlverminor) == int($min)
-          && int($mysqlvermicro) == int($mic) );
+    return ( int($v_maj) == int($maj)
+          && int($v_min) == int($min)
+          && int($v_mic) == int($mic) );
 }
 
 # Checks if MySQL version is greater than equal to (major, minor, micro)
 sub mysql_version_ge {
     my ( $maj, $min, $mic ) = @_;
+    return 0 unless defined $myvar{'version'};
     $min ||= 0;
     $mic ||= 0;
-    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
+    my ( $v_maj, $v_min, $v_mic ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
+    $v_maj //= 0;
+    $v_min //= 0;
+    $v_mic //= 0;
 
     return
-         int($mysqlvermajor) > int($maj)
-      || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) > int($min) )
-      || ( int($mysqlvermajor) == int($maj)
-        && int($mysqlverminor) == int($min)
-        && int($mysqlvermicro) >= int($mic) );
+         int($v_maj) > int($maj)
+      || ( int($v_maj) == int($maj) && int($v_min) > int($min) )
+      || ( int($v_maj) == int($maj)
+        && int($v_min) == int($min)
+        && int($v_mic) >= int($mic) );
 }
 
 # Checks if MySQL version is lower than equal to (major, minor, micro)
 sub mysql_version_le {
     my ( $maj, $min, $mic ) = @_;
+    return 0 unless defined $myvar{'version'};
     $min ||= 0;
     $mic ||= 0;
-    my ( $mysqlvermajor, $mysqlverminor, $mysqlvermicro ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+)|)(?:\.(\d+)|)/;
-
-    #infoprint "MySQL version: $mysqlvermajor.$mysqlverminor.$mysqlvermicro";
+    my ( $v_maj, $v_min, $v_mic ) =
+      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
+    $v_maj //= 0;
+    $v_min //= 0;
+    $v_mic //= 0;
 
     return
-         int($mysqlvermajor) < int($maj)
-      || ( int($mysqlvermajor) == int($maj) && int($mysqlverminor) < int($min) )
-      || ( int($mysqlvermajor) == int($maj)
-        && int($mysqlverminor) == int($min)
-        && int($mysqlvermicro) <= int($mic) );
+         int($v_maj) < int($maj)
+      || ( int($v_maj) == int($maj) && int($v_min) < int($min) )
+      || ( int($v_maj) == int($maj)
+        && int($v_min) == int($min)
+        && int($v_mic) <= int($mic) );
 }
 
 # Checks for 32-bit boxes with more than 2GB of RAM
@@ -5848,53 +5906,91 @@ sub check_storage_engines {
     }
 
     # Auto increments
-    my %tblist;
-
-    # Find the maximum integer
     my $maxint = select_one "SELECT ~0";
     $result{'MaxInt'} = $maxint;
 
-# Now we use a database list, and loop through it to get storage engine stats for tables
-    foreach my $db (@dblist) {
-        chomp($db);
-
-        if ( !$tblist{$db} ) {
-            $tblist{$db} = ();
+    if ( mysql_version_ge( 5, 0 ) ) {
+        my $ignore_tables_sql = "";
+        if ( $opt{'ignore-tables'} ) {
+            my @ignored = split /,/, $opt{'ignore-tables'};
+            $ignore_tables_sql =
+              " AND t.TABLE_NAME NOT IN ('" . join( "','", @ignored ) . "')";
         }
+        my @auto_increment_results = select_array(
+"SELECT t.TABLE_SCHEMA, t.TABLE_NAME, t.TABLE_ROWS, t.AUTO_INCREMENT, c.DATA_TYPE, c.COLUMN_TYPE "
+              . "FROM information_schema.TABLES t "
+              . "JOIN information_schema.COLUMNS c ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME "
+              . "WHERE t.TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql', 'sys') "
+              . "AND t.AUTO_INCREMENT IS NOT NULL "
+              . "AND c.EXTRA LIKE '%auto_increment%'$ignore_tables_sql;" );
 
-        if ( $db eq "information_schema" ) { next; }
-        my @ia = ( 0, 4, 10 );
-        if ( !mysql_version_ge( 4, 1 ) ) {
-
-            # MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
-            @ia = ( 0, 4, 9 );
-        }
-        my $cmd = "SHOW TABLE STATUS FROM \\\`$db\\\`";
-        if ($is_win) {
-            $cmd = "SHOW TABLE STATUS FROM \`$db\`";
-        }
-        push( @{ $tblist{$db} }, map { [ (split)[@ia] ] } select_array $cmd );
-    }
-
-    my @dbnames = keys %tblist;
-
-    foreach my $db (@dbnames) {
-        foreach my $tbl ( @{ $tblist{$db} } ) {
-            my ( $name, $rows, $autoincrement ) = @$tbl;
-
-            if ( $autoincrement && $autoincrement =~ /^\d+?$/ ) {
+        foreach my $line (@auto_increment_results) {
+            my ( $db, $name, $rows, $autoincrement, $data_type, $col_type ) =
+              split /\t/, $line;
+            next unless defined $autoincrement && $autoincrement =~ /^\d+?$/;
 
 # Issue #37: Skip tables where AUTO_INCREMENT is at default (never used) and table is empty
-                next if ( $autoincrement <= 1 && ( $rows // 0 ) == 0 );
+            next if ( $autoincrement <= 1 && ( $rows // 0 ) == 0 );
+
+            my $limit = get_type_max( $data_type, $col_type );
+            next unless defined $limit && $limit > 0;
+
+            my $percent = percentage( $autoincrement, $limit );
+            $result{'PctAutoIncrement'}{"$db.$name"} = $percent;
+            if ( $percent >= 75 ) {
+                badprint
+"Table '$db.$name' has an autoincrement value near max capacity ($percent%)";
+            }
+        }
+    }
+    else {
+        my %tblist;
+
+# Now we use a database list, and loop through it to get storage engine stats for tables
+        foreach my $db (@dblist) {
+            chomp($db);
+
+            if ( !$tblist{$db} ) {
+                $tblist{$db} = ();
+            }
+
+            if ( $db eq "information_schema" ) { next; }
+            my @ia = ( 0, 4, 10 );
+            if ( !mysql_version_ge( 4, 1 ) ) {
+
+                # MySQL 3.23/4.0 keeps Data_Length in the 5th (0-based) column
+                @ia = ( 0, 4, 9 );
+            }
+            my $cmd = "SHOW TABLE STATUS FROM \\\`$db\\\`";
+            if ($is_win) {
+                $cmd = "SHOW TABLE STATUS FROM \`$db\`";
+            }
+            push(
+                @{ $tblist{$db} },
+                map { [ (split)[@ia] ] } select_array $cmd
+            );
+        }
+
+        my @dbnames = keys %tblist;
+
+        foreach my $db (@dbnames) {
+            foreach my $tbl ( @{ $tblist{$db} } ) {
+                my ( $name, $rows, $autoincrement ) = @$tbl;
+
+                if ( $autoincrement && $autoincrement =~ /^\d+?$/ ) {
+
+# Issue #37: Skip tables where AUTO_INCREMENT is at default (never used) and table is empty
+                    next if ( $autoincrement <= 1 && ( $rows // 0 ) == 0 );
 
          # Issue #37: Guard against unresolved column max producing a false 100%
-                next unless defined $maxint && $maxint > 0;
+                    next unless defined $maxint && $maxint > 0;
 
-                my $percent = percentage( $autoincrement, $maxint );
-                $result{'PctAutoIncrement'}{"$db.$name"} = $percent;
-                if ( $percent >= 75 ) {
-                    badprint
+                    my $percent = percentage( $autoincrement, $maxint );
+                    $result{'PctAutoIncrement'}{"$db.$name"} = $percent;
+                    if ( $percent >= 75 ) {
+                        badprint
 "Table '$db.$name' has an autoincrement value near max capacity ($percent%)";
+                    }
                 }
             }
         }
@@ -5962,8 +6058,9 @@ sub calculations {
         exit 2;
     }
 
-    #infoprint "====>>>> MySQL version: $myvar{'version'}";
-    $myvar{'version'} =~ s/(.+)-.*?$/$1/;
+    if ( defined $myvar{'version'} ) {
+        $myvar{'version'} =~ s/(.+)-.*?$/$1/;
+    }
 
     #infoprint "====>>>> MySQL version updated: $myvar{'version'}";
     # Server-wide memory
@@ -6093,7 +6190,11 @@ sub calculations {
       . $mycalc{'pct_connections_aborted'} . "";
 
     # Key buffers
-    if ( mysql_version_ge( 4, 1 ) && $myvar{'key_buffer_size'} > 0 ) {
+    if ( mysql_version_ge( 4, 1 )
+        && defined $myvar{'key_buffer_size'}
+        && $myvar{'key_buffer_size'} > 0
+        && defined $mystat{'Key_blocks_unused'}
+        && defined $myvar{'key_cache_block_size'} ) {
         $mycalc{'pct_key_buffer_used'} = sprintf(
             "%.1f",
             (
@@ -6110,7 +6211,7 @@ sub calculations {
         $mycalc{'pct_key_buffer_used'} = 0;
     }
 
-    if ( $mystat{'Key_read_requests'} > 0 ) {
+    if ( defined $mystat{'Key_read_requests'} and $mystat{'Key_read_requests'} > 0 ) {
         $mycalc{'pct_keys_from_mem'} = sprintf(
             "%.1f",
             (
@@ -6124,8 +6225,8 @@ sub calculations {
     else {
         $mycalc{'pct_keys_from_mem'} = 0;
     }
-    if ( defined $mystat{'Aria_pagecache_read_requests'}
-        && $mystat{'Aria_pagecache_read_requests'} > 0 )
+    if ( defined( $mystat{'Aria_pagecache_read_requests'} )
+        and $mystat{'Aria_pagecache_read_requests'} > 0 )
     {
         $mycalc{'pct_aria_keys_from_mem'} = sprintf(
             "%.1f",
@@ -6143,7 +6244,7 @@ sub calculations {
         $mycalc{'pct_aria_keys_from_mem'} = 0;
     }
 
-    if ( $mystat{'Key_write_requests'} > 0 ) {
+    if ( defined $mystat{'Key_write_requests'} and $mystat{'Key_write_requests'} > 0 ) {
         $mycalc{'pct_wkeys_from_mem'} = sprintf( "%.1f",
             ( ( $mystat{'Key_writes'} / $mystat{'Key_write_requests'} ) * 100 )
         );
@@ -6152,7 +6253,7 @@ sub calculations {
         $mycalc{'pct_wkeys_from_mem'} = 0;
     }
 
-    if ( $doremote eq 0 and !mysql_version_ge(5) ) {
+    if ( defined $doremote and $doremote eq 0 and !mysql_version_ge(5) ) {
         if ($is_win) {
             my $size = 0;
             my @allfiles =
@@ -6265,8 +6366,8 @@ sub calculations {
     }
 
     # Temporary tables
-    if ( $mystat{'Created_tmp_tables'} > 0 ) {
-        if ( $mystat{'Created_tmp_disk_tables'} > 0 ) {
+    if ( ( $mystat{'Created_tmp_tables'} // 0 ) > 0 ) {
+        if ( ( $mystat{'Created_tmp_disk_tables'} // 0 ) > 0 ) {
             $mycalc{'pct_temp_disk'} = int(
                 (
                     $mystat{'Created_tmp_disk_tables'} /
@@ -6280,10 +6381,10 @@ sub calculations {
     }
 
     # Table cache
-    if ( $mystat{'Opened_tables'} > 0 ) {
+    if ( defined $mystat{'Opened_tables'} and $mystat{'Opened_tables'} > 0 ) {
         if ( not defined( $mystat{'Table_open_cache_hits'} ) ) {
             $mycalc{'table_cache_hit_rate'} =
-              int( $mystat{'Open_tables'} * 100 / $mystat{'Opened_tables'} );
+              int( ( $mystat{'Open_tables'} // 0 ) * 100 / $mystat{'Opened_tables'} );
         }
         else {
             $mycalc{'table_cache_hit_rate'} = int(
@@ -6299,9 +6400,9 @@ sub calculations {
     }
 
     # Open files
-    if ( $myvar{'open_files_limit'} > 0 ) {
+    if ( defined $myvar{'open_files_limit'} and $myvar{'open_files_limit'} > 0 ) {
         $mycalc{'pct_files_open'} =
-          int( $mystat{'Open_files'} * 100 / $myvar{'open_files_limit'} );
+          int( ( $mystat{'Open_files'} // 0 ) * 100 / $myvar{'open_files_limit'} );
     }
 
     # Table locks
@@ -6323,7 +6424,7 @@ sub calculations {
     if ( ( $mystat{'Connections'} || 0 ) > 0 ) {
         $mycalc{'thread_cache_hit_rate'} = int(
             100 - (
-                ( $mystat{'Threads_created'} / $mystat{'Connections'} ) * 100
+                ( ( $mystat{'Threads_created'} // 0 ) / $mystat{'Connections'} ) * 100
             )
         );
     }
@@ -6332,17 +6433,17 @@ sub calculations {
     }
 
     # Other
-    if ( $mystat{'Connections'} > 0 ) {
+    if ( ( $mystat{'Connections'} // 0 ) > 0 ) {
         $mycalc{'pct_aborted_connections'} =
-          int( ( $mystat{'Aborted_connects'} / $mystat{'Connections'} ) * 100 );
+          int( ( ( $mystat{'Aborted_connects'} // 0 ) / $mystat{'Connections'} ) * 100 );
     }
-    if ( $mystat{'Questions'} > 0 ) {
-        $mycalc{'total_reads'} = $mystat{'Com_select'};
+    if ( ( $mystat{'Questions'} // 0 ) > 0 ) {
+        $mycalc{'total_reads'} = $mystat{'Com_select'} // 0;
         $mycalc{'total_writes'} =
-          $mystat{'Com_delete'} +
-          $mystat{'Com_insert'} +
-          $mystat{'Com_update'} +
-          $mystat{'Com_replace'};
+          ( $mystat{'Com_delete'}  // 0 ) +
+          ( $mystat{'Com_insert'}  // 0 ) +
+          ( $mystat{'Com_update'}  // 0 ) +
+          ( $mystat{'Com_replace'} // 0 );
         if ( $mycalc{'total_reads'} == 0 ) {
             $mycalc{'pct_reads'}  = 0;
             $mycalc{'pct_writes'} = 100;
@@ -6366,7 +6467,7 @@ sub calculations {
 
     $myvar{"innodb_buffer_pool_instances"} = 1
       unless defined( $myvar{'innodb_buffer_pool_instances'} );
-    if ( $myvar{'have_innodb'} eq "YES" ) {
+    if ( defined $myvar{'have_innodb'} and $myvar{'have_innodb'} eq "YES" ) {
         if ( defined $myvar{'innodb_redo_log_capacity'} ) {
             $mycalc{'innodb_log_size_pct'} =
               ( $myvar{'innodb_redo_log_capacity'} /
@@ -6441,7 +6542,10 @@ sub calculations {
       if ( $opt{experimental} );
 
     # Binlog Cache
-    if ( $myvar{'log_bin'} ne 'OFF' ) {
+    if ( defined $myvar{'log_bin'}
+        and $myvar{'log_bin'} ne 'OFF'
+        and defined $mystat{'Binlog_cache_use'}
+        and defined $mystat{'Binlog_cache_disk_use'} ) {
         $mycalc{'pct_binlog_cache'} = percentage(
             $mystat{'Binlog_cache_use'} - $mystat{'Binlog_cache_disk_use'},
             $mystat{'Binlog_cache_use'} );
@@ -9981,14 +10085,14 @@ sub mariadb_galera {
 "Flow control fraction seems to be OK (wsrep_flow_control_paused <= 0.02)";
     }
 
-    if ( $myvar{'binlog_format'} ne 'ROW' ) {
+    if ( defined $myvar{'binlog_format'} and $myvar{'binlog_format'} ne 'ROW' ) {
         badprint "Binlog format should be in ROW mode.";
         push @adjvars, "binlog_format = ROW";
     }
     else {
         goodprint "Binlog format is in ROW mode.";
     }
-    if ( $myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
+    if ( defined $myvar{'innodb_flush_log_at_trx_commit'} and $myvar{'innodb_flush_log_at_trx_commit'} != 0 ) {
         badprint "InnoDB flush log at each commit should be disabled.";
         push @adjvars, "innodb_flush_log_at_trx_commit = 0";
     }
@@ -10119,7 +10223,7 @@ sub mariadb_galera {
     else {
         badprint "Node is not ready";
     }
-    infoprint "Cluster status :" . $mystat{'wsrep_cluster_status'};
+    infoprint "Cluster status :" . ( $mystat{'wsrep_cluster_status'} // '' );
     if ( defined( $mystat{'wsrep_cluster_status'} )
         and $mystat{'wsrep_cluster_status'} eq "Primary" )
     {
@@ -10128,30 +10232,31 @@ sub mariadb_galera {
     else {
         badprint "Cluster is not consistent and ready";
     }
-    if ( $mystat{'wsrep_local_state_uuid'} eq
-        $mystat{'wsrep_cluster_state_uuid'} )
+    if ( defined $mystat{'wsrep_local_state_uuid'}
+        and defined $mystat{'wsrep_cluster_state_uuid'}
+        and $mystat{'wsrep_local_state_uuid'} eq $mystat{'wsrep_cluster_state_uuid'} )
     {
         goodprint "Node and whole cluster at the same level: "
           . $mystat{'wsrep_cluster_state_uuid'};
     }
     else {
         badprint "Node and whole cluster not the same level";
-        infoprint "Node    state uuid: " . $mystat{'wsrep_local_state_uuid'};
-        infoprint "Cluster state uuid: " . $mystat{'wsrep_cluster_state_uuid'};
+        infoprint "Node    state uuid: " . ( $mystat{'wsrep_local_state_uuid'} // '' );
+        infoprint "Cluster state uuid: " . ( $mystat{'wsrep_cluster_state_uuid'} // '' );
     }
-    if ( $mystat{'wsrep_local_state_comment'} eq 'Synced' ) {
+    if ( defined $mystat{'wsrep_local_state_comment'} and $mystat{'wsrep_local_state_comment'} eq 'Synced' ) {
         goodprint "Node is synced with whole cluster.";
     }
     else {
         badprint "Node is not synced";
-        infoprint "Node State : " . $mystat{'wsrep_local_state_comment'};
+        infoprint "Node State : " . ( $mystat{'wsrep_local_state_comment'} // '' );
     }
-    if ( $mystat{'wsrep_local_cert_failures'} == 0 ) {
+    if ( defined $mystat{'wsrep_local_cert_failures'} and $mystat{'wsrep_local_cert_failures'} == 0 ) {
         goodprint "There is no certification failures detected.";
     }
     else {
         badprint "There is "
-          . $mystat{'wsrep_local_cert_failures'}
+          . ( $mystat{'wsrep_local_cert_failures'} // 0 )
           . " certification failure(s)detected.";
     }
 
@@ -10436,13 +10541,13 @@ sub mysql_innodb {
     }
     else {
         # MySQL < 8.0.30: logic based on 25% ratio of buffer pool
-        if (   $mycalc{'innodb_log_size_pct'} < 20
-            or $mycalc{'innodb_log_size_pct'} > 30 )
+        if (   defined $mycalc{'innodb_log_size_pct'}
+            and ( $mycalc{'innodb_log_size_pct'} < 20 or $mycalc{'innodb_log_size_pct'} > 30 ) )
         {
             if ( defined $myvar{'innodb_redo_log_capacity'} ) {
                 badprint
                   "Ratio InnoDB redo log capacity / InnoDB Buffer pool size ("
-                  . $mycalc{'innodb_log_size_pct'} . "%): "
+                  . ( $mycalc{'innodb_log_size_pct'} // 0 ) . "%): "
                   . hr_bytes( $myvar{'innodb_redo_log_capacity'} ) . " / "
                   . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
                   . " should be equal to 25%";
@@ -10458,10 +10563,10 @@ sub mysql_innodb {
             else {
                 badprint
                   "Ratio InnoDB log file size / InnoDB Buffer pool size ("
-                  . $mycalc{'innodb_log_size_pct'} . "%): "
-                  . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
-                  . $myvar{'innodb_log_files_in_group'} . " / "
-                  . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+                  . ( $mycalc{'innodb_log_size_pct'} // 0 ) . "%): "
+                  . hr_bytes( $myvar{'innodb_log_file_size'} // 0 ) . " * "
+                  . ( $myvar{'innodb_log_files_in_group'} // 0 ) . " / "
+                  . hr_bytes( $myvar{'innodb_buffer_pool_size'} // 0 )
                   . " should be equal to 25%";
                 push(
                     @adjvars,
@@ -10506,9 +10611,9 @@ sub mysql_innodb {
                 );
                 goodprint
                   "Ratio InnoDB log file size / InnoDB Buffer pool size: "
-                  . hr_bytes( $myvar{'innodb_log_file_size'} ) . " * "
-                  . $myvar{'innodb_log_files_in_group'} . "/"
-                  . hr_bytes( $myvar{'innodb_buffer_pool_size'} )
+                  . hr_bytes( $myvar{'innodb_log_file_size'} // 0 ) . " * "
+                  . ( $myvar{'innodb_log_files_in_group'} // 0 ) . "/"
+                  . hr_bytes( $myvar{'innodb_buffer_pool_size'} // 0 )
                   . " should be equal to 25%";
             }
         }
@@ -10579,8 +10684,8 @@ sub mysql_innodb {
     # InnoDB Used Buffer Pool Size vs CHUNK size
     if (
         (
-               ( $myvar{'version'} =~ /MariaDB/i )
-            or ( $myvar{'version_comment'} =~ /MariaDB/i )
+               ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+            or ( defined $myvar{'version_comment'} && $myvar{'version_comment'} =~ /MariaDB/i )
         )
         and mysql_version_ge( 10, 8 )
         and defined( $myvar{'innodb_buffer_pool_chunk_size'} )
@@ -11122,7 +11227,8 @@ sub historical_comparison {
         return;
     }
 
-    if ( !open( my $fh, '<', $file ) ) {
+    my $fh;
+    if ( !open( $fh, '<', $file ) ) {
         badprint "Unable to open comparison file: $file";
         return;
     }
@@ -11181,7 +11287,8 @@ sub process_sysbench_metrics {
         return;
     }
 
-    if ( !open( my $fh, '<', $file ) ) {
+    my $fh;
+    if ( !open( $fh, '<', $file ) ) {
         badprint "Unable to open sysbench file: $file";
         return;
     }
@@ -11727,11 +11834,14 @@ ENDSQL
             my $found = 0;
             foreach my $idx (@tbidx) {
                 my @info = split /\s/, $idx;
-                next if $info[0] eq 'NULL';
+                my $idx_name = $info[0] // '';
+                my $idx_cols = $info[1] // '';
+                my $idx_type = $info[2] // '';
+                next if $idx_name eq 'NULL';
                 infoprint
-                  "     +-- Index $info[0] - Cols: $info[1] - Type: $info[2]";
+                  "     +-- Index $idx_name - Cols: $idx_cols - Type: $idx_type";
                 if ( $opt{dumpdir} or $opt{schemadir} ) {
-                    my $idx_info = "- **$info[0]**: $info[1] ($info[2])\n";
+                    my $idx_info = "- **$idx_name**: $idx_cols ($idx_type)\n";
                     $schema_doc         .= $idx_info;
                     $current_schema_doc .= $idx_info if $opt{schemadir};
                 }
@@ -12102,29 +12212,40 @@ sub file2string {
     return join( '', file2array(@_) );
 }
 
-sub get_template_model {
-    if ( $opt{'template'} ) {
-        return file2string( $opt{'template'} );
+sub escape_html {
+    my $str = shift // '';
+    $str =~ s/&/&amp;/g;
+    $str =~ s/</&lt;/g;
+    $str =~ s/>/&gt;/g;
+    $str =~ s/"/&quot;/g;
+    $str =~ s/'/&#39;/g;
+    return $str;
+}
+
+sub format_recommendation_item {
+    my $item = shift;
+    if ( ref($item) eq 'HASH' ) {
+        if ( defined $item->{type} ) {
+            if ( $item->{type} eq 'unused_index' ) {
+                my $schema = $item->{schema} // '';
+                my $table  = $item->{table}  // '';
+                my $index  = $item->{index}  // '';
+                return "Unused index: $schema.$table ($index)";
+            }
+            elsif ( $item->{type} eq 'redundant_index' ) {
+                my $schema   = $item->{schema}         // '';
+                my $table    = $item->{table}          // '';
+                my $index    = $item->{index}          // '';
+                my $dominant = $item->{dominant_index} // '';
+                my $sql      = $item->{sql}            // '';
+                return
+"Redundant index: $schema.$table ($index) redundant of $dominant (suggested SQL: $sql)";
+            }
+        }
+        return
+          join( ', ', map { "$_: " . ( $item->{$_} // '' ) } sort keys %$item );
     }
-
-    # DEFAULT REPORT TEMPLATE
-    return <<'END_TEMPLATE';
-<!DOCTYPE html>
-<html>
-<head>
-  <title>MySQLTuner Report</title>
-  <meta charset="UTF-8">
-</head>
-<body>
-
-<h1>Result output</h1>
-<pre>
-{$data}
-</pre>
-
-</body>
-</html>
-END_TEMPLATE
+    return $item // '';
 }
 
 sub dump_result {
@@ -12132,36 +12253,320 @@ sub dump_result {
     #debugprint Dumper( \%result ) if ( $opt{'debug'} );
     debugprint "HTML REPORT: " . ( $opt{'reportfile'} // 'undef' );
 
-    if ( $opt{'reportfile'} ) {
-        eval { require Text::Template };
-        eval { require JSON };
-        if ($@) {
-            badprint "Text::Template Module is needed.";
-            die "Text::Template Module is needed.";
+    if ( defined $opt{'reportfile'} ) {
+
+        # Check if reportfile option was empty/boolean (e.g. from --reportfile)
+        if ( $opt{'reportfile'} eq '' || $opt{'reportfile'} eq '1' ) {
+            $opt{'reportfile'} = 'mysqltuner.html';
         }
 
-        my $json      = JSON->new->allow_nonref;
-        my $json_text = $json->pretty->encode( \%result );
-        my %vars      = (
-            'data'  => \%result,
-            'debug' => $json_text,
-        );
-        my $template;
-        {
-            no warnings 'once';
-            $template = Text::Template->new(
-                TYPE       => 'STRING',
-                PREPEND    => q{;},
-                SOURCE     => get_template_model(),
-                DELIMITERS => [ '[%', '%]' ]
-            ) or die "Couldn't construct template: $Text::Template::ERROR";
-        }
+        my $score = $mycalc{'WeightedHealthScore'} // $result{'HealthScore'}
+          // 0;
+        my $details = $result{'HealthScoreDetails'} // {};
+        my $perf_score =
+          ( $details->{'perf_bp'}     // 5 ) +
+          ( $details->{'perf_temp'}   // 5 ) +
+          ( $details->{'perf_thread'} // 5 ) +
+          ( $details->{'perf_conn'}   // 5 );
+        my $sec_score = $details->{'sec_total'} // 30;
+        my $res_score =
+          ( $details->{'res_lag'}  // 10 ) +
+          ( $details->{'res_logs'} // 10 ) +
+          ( $details->{'res_meta'} // 10 );
 
-        open my $fh, q(>), $opt{'reportfile'}
-          or die
-"Unable to open $opt{'reportfile'} in write mode. please check permissions for this file or directory";
-        $template->fill_in( HASH => \%vars, OUTPUT => $fh );
-        close $fh;
+        # Render lists
+        my $general_rec_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-blue-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @generalrec
+          )
+          || "<li class='text-slate-400 italic py-2'>No general recommendations.</li>";
+
+        my $adjvars_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-amber-400 mr-2.5 font-bold'>•</span><span class='font-mono'>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @adjvars
+          )
+          || "<li class='text-slate-400 italic py-2'>No variable adjustments required.</li>";
+
+        my $modeling_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-cyan-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @modeling
+          )
+          || "<li class='text-slate-400 italic py-2'>No database modeling findings.</li>";
+
+        my $secrec_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-rose-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @secrec
+          )
+          || "<li class='text-slate-400 italic py-2'>No security concerns identified.</li>";
+
+        my $sysrec_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-emerald-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @sysrec
+          )
+          || "<li class='text-slate-400 italic py-2'>No OS or system modifications suggested.</li>";
+
+        # Build raw output HTML
+        my $raw_output_html =
+          join( "\n", map { escape_html($_) } @raw_output_lines );
+
+        # Determine health score color class
+        my $score_color_class =
+          $score > 80
+          ? 'text-emerald-400'
+          : ( $score > 50 ? 'text-amber-400' : 'text-rose-500' );
+        my $score_bg_class =
+          $score > 80 ? 'bg-emerald-500/10 border-emerald-500/30'
+          : ( $score > 50 ? 'bg-amber-500/10 border-amber-500/30'
+            : 'bg-rose-500/10 border-rose-500/30' );
+
+        # Timestamp
+        my $timestamp  = scalar localtime;
+        my $db_ver     = escape_html( $myvar{'version'} );
+        my $db_comment = escape_html( $myvar{'version_comment'} // 'N/A' );
+
+        my $circle_offset = 264 - ( 264 * $score / 100 );
+        my $badge_text =
+          $score >= 90
+          ? 'Excellent Health'
+          : ( $score >= 70 ? 'Good Health' : 'Action Required' );
+        my $perf_width = int( $perf_score * 100 / 40 );
+        my $sec_width  = int( $sec_score * 100 / 30 );
+        my $res_width  = int( $res_score * 100 / 30 );
+
+        # HTML Content template
+        my $html_content = <<"HTML";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQLTuner Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        pre, code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-blue-500/30 selection:text-blue-200">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        
+        <!-- Header -->
+        <header class="bg-slate-900/60 border border-slate-800/80 backdrop-blur-md rounded-2xl p-6 mb-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 bg-clip-text text-transparent tracking-tight">MySQLTuner Audit Report</h1>
+                <p class="text-slate-400 mt-1.5 text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span><i class="fas fa-database text-blue-400 mr-1.5"></i>$db_ver ($db_comment)</span>
+                    <span class="text-slate-700">•</span>
+                    <span><i class="fas fa-tools text-indigo-400 mr-1.5"></i>Tuner $tunerversion</span>
+                </p>
+            </div>
+            <div class="text-left md:text-right border-t md:border-t-0 border-slate-800/80 pt-4 md:pt-0 w-full md:w-auto">
+                <div class="text-xs text-slate-500 uppercase font-semibold tracking-wider">Generated On</div>
+                <div class="text-sm font-medium text-slate-300 mt-0.5">$timestamp</div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            
+            <!-- Sidebar: Health Score Details -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Health Score Meter -->
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center text-center">
+                    <h2 class="text-lg font-bold text-slate-400 mb-6 flex items-center gap-2"><i class="fas fa-heartbeat text-rose-500"></i>Overall Health Score</h2>
+                    
+                    <!-- Circular Score Gauge -->
+                    <div class="relative w-40 h-40 flex items-center justify-center mb-6">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-slate-800" fill="transparent" />
+                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="$score_color_class" fill="transparent"
+                                    stroke-dasharray="264" stroke-dashoffset="$circle_offset" />
+                        </svg>
+                        <div class="absolute flex flex-col items-center">
+                            <span class="text-4xl font-extrabold tracking-tight">$score</span>
+                            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-0.5">out of 100</span>
+                        </div>
+                    </div>
+
+                    <!-- Health Badge -->
+                    <div class="px-4 py-1.5 rounded-full text-xs font-bold border $score_bg_class $score_color_class">
+                        $badge_text
+                    </div>
+                </div>
+
+                <!-- KPI Scores Breakdown -->
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Category Scores</h3>
+                    
+                    <!-- Performance -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-medium">
+                            <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-bolt text-amber-400 w-4"></i>Performance</span>
+                            <span class="font-mono text-slate-400">$perf_score / 40</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="bg-amber-400 h-2 rounded-full" style="width: $perf_width%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Security -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-medium">
+                            <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-user-shield text-rose-500 w-4"></i>Security</span>
+                            <span class="font-mono text-slate-400">$sec_score / 30</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="bg-rose-500 h-2 rounded-full" style="width: $sec_width%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Resilience -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-medium">
+                            <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-shield-virus text-emerald-400 w-4"></i>Resilience</span>
+                            <span class="font-mono text-slate-400">$res_score / 30</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="bg-emerald-400 h-2 rounded-full" style="width: $res_width%"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Content Area: Recommendations lists -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- General Recommendations Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-list-alt text-blue-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">General Recommendations</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $general_rec_html
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Variables to Adjust Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-sliders-h text-amber-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Variables to Adjust</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $adjvars_html
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Database Modeling & Schema Findings Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-project-diagram text-cyan-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Database Modeling Findings</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $modeling_html
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Security Recommendations Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-user-shield text-rose-500 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Security Findings</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $secrec_html
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- System & OS Recommendations Panel -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                        <i class="fas fa-server text-emerald-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">System &amp; OS Recommendations</h2>
+                    </div>
+                    <div class="p-6">
+                        <ul class="text-sm text-slate-300 space-y-1">
+                            $sysrec_html
+                        </ul>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+
+        <!-- Raw Console Output Panel -->
+        <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+            <details class="group">
+                <summary class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex justify-between items-center cursor-pointer list-none select-none">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-chevron-right text-slate-500 transition-transform group-open:rotate-90"></i>
+                        <i class="fas fa-terminal text-blue-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Full Console Output Trace</h2>
+                    </div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 group-open:hidden">Show Logs</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 hidden group-open:inline">Hide Logs</span>
+                </summary>
+                <div class="p-6 bg-slate-950 border-t border-slate-900/80">
+                    <pre class="text-xs leading-relaxed text-slate-400 font-mono overflow-x-auto max-h-[500px] overflow-y-auto whitespace-pre-wrap">$raw_output_html</pre>
+                </div>
+            </details>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-600 text-xs border-t border-slate-900 pt-8 mt-12">
+            <p>Generated dynamically by MySQLTuner.pl | Zero External Dependencies</p>
+            <p class="mt-1.5">&copy; 2006-2026 Major Hayden &amp; Jean-Marie Renouard</p>
+        </footer>
+
+    </div>
+</body>
+</html>
+HTML
+
+        open my $rfh, '>', $opt{'reportfile'}
+          or die "Unable to open $opt{'reportfile'} in write mode: $!";
+        print $rfh $html_content;
+        close $rfh;
+        goodprint "HTML Report successfully generated: " . $opt{'reportfile'};
     }
 
     if ( $opt{'json'} ) {
@@ -12447,7 +12852,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.43 - MySQL High Performance Tuning Script
+ MySQLTuner 2.8.44 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -12462,7 +12867,7 @@ See C<mysqltuner --help> for a full list of available options and their categori
 
 =head1 VERSION
 
-Version 2.8.43
+Version 2.8.44
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.

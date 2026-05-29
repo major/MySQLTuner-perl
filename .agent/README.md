@@ -35,8 +35,10 @@ This directory contains the project's technical constitution, specialized skills
 | File | Description |
 | :--- | :--- |
 | [`compliance-sentinel.md`](./workflows/compliance-sentinel.md) | Automated audit to enforce project constitution rules |
+| [`doc-sync.md`](./workflows/doc-sync.md) | Synchronize .agent/README.md with current Rules, Skills, and Workflows |
 | [`docker-clean.md`](./workflows/docker-clean.md) | Reclaim disk space by removing unused containers and images |
 | [`examples-cleanup.md`](./workflows/examples-cleanup.md) | Maintain only the 10 most recent results in the examples directory |
+| [`git-flow.md`](./workflows/git-flow.md) | Automate git-flow release process |
 | [`git-rollback.md`](./workflows/git-rollback.md) | Rollback a failed release (delete tags and revert commits) |
 | [`hey-agent.md`](./workflows/hey-agent.md) | Unified management for Rules, Skills, and Workflows. |
 | [`lab-down.md`](./workflows/lab-down.md) | Stops and cleans up the database laboratory. |
@@ -44,6 +46,8 @@ This directory contains the project's technical constitution, specialized skills
 | [`markdown-lint.md`](./workflows/markdown-lint.md) | Check markdown content for cleanliness and project standard compliance (AFF, keywords, links) |
 | [`plan.md`](./workflows/plan.md) | Create or update an implementation plan (implementation_plan.md) |
 | [`release-manager.md`](./workflows/release-manager.md) | Unified orchestrator for the complete release lifecycle |
+| [`release-notes-gen.md`](./workflows/release-notes-gen.md) | Generate detailed technical release notes for the current version |
+| [`release-preflight.md`](./workflows/release-preflight.md) | Pre-flight checks before triggering a git-flow release |
 | [`run-tests.md`](./workflows/run-tests.md) | Comprehensive test suite execution (Unit, Regression, and Multi-DB) |
 | [`snapshot-to-test.md`](./workflows/snapshot-to-test.md) | Transform a running production issue into a reproducible test case |
 | [`specify.md`](./workflows/specify.md) | Create or update a feature specification (specification.md) |
@@ -51,4 +55,4 @@ This directory contains the project's technical constitution, specialized skills
 
 
 ---
-*Generated automatically by `/doc-sync` on Thu Apr 16 17:03:00 CEST 2026*
+*Generated automatically by `/doc-sync` on Thu May 29 06:05:00 CEST 2026*

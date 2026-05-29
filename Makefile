@@ -9,6 +9,7 @@ help:
 	@echo "Usage: make <target>"
 	@echo "  help:              Show this help"
 	@echo "  generate_usage:    Generate USAGE.md"
+	@echo "  generate_release_notes: Regenerate releases/v[VERSION].md notes file"
 	@echo "  generate_cve:      Generate vulnerabilities.csv"
 	@echo "  generate_features: Generate FEATURES.md"
 	@echo "  tidy:              Tidy mysqltuner.pl"
@@ -24,7 +25,8 @@ help:
 	@echo "  test-container:    Run tests against a specific CONTAINER (e.g. CONTAINER=my_db)"
 	@echo "  audit:             Run audit on remote HOST (e.g. HOST=db-server.com)"
 	@echo "  audit-logs:        Run local audit on laboratory logs (examples/ directory)"
-	@echo "  unit-tests:        Run unit and regression tests in tests/ directory"
+	@echo "  unit-tests:        Run unit and regression tests in tests/ directory (clean output)"
+	@echo "  unit-tests-debug:  Run unit tests with verbose debug information"
 	@echo "  clean_examples:    Cleanup examples directory (KEEP=n, default 5)"
 	@echo "  setup_commits:     Install Conventional Commits tools (Node.js)"
 
@@ -47,31 +49,41 @@ check-tidy:
 	perltidy -st mysqltuner.pl | diff -q - mysqltuner.pl
 
 generate_usage:
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_usage..." >> execution.log
 	pod2markdown mysqltuner.pl >USAGE.md
 	git add ./USAGE.md
 	git commit -m "docs: generate USAGE.md" || echo "No changes to commit"
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_usage." >> execution.log
 
 generate_cve:
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_cve..." >> execution.log
 	perl ./build/updateCVElist.pl
 	git add ./vulnerabilities.csv
 	git commit -m "docs: generate vulnerabilities list" || echo "No changes to commit"
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_cve." >> execution.log
 
 generate_version_file:
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_version_file..." >> execution.log
 	rm -f CURRENT_VERSION.txt
 	grep "# mysqltuner.pl - Version" ./mysqltuner.pl | awk '{ print $$NF}' > CURRENT_VERSION.txt
 	git add ./CURRENT_VERSION.txt
 	git commit -m "chore: generate CURRENT_VERSION.txt" || echo "No changes to commit"
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_version_file." >> execution.log
 
 generate_eof_files:
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_eof_files..." >> execution.log
 	bash ./build/endoflife.sh mariadb 
 	bash ./build/endoflife.sh mysql
 	git add ./*_support.md
 	git commit -m "docs: generate end-of-life status files" || echo "No changes to commit"
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_eof_files." >> execution.log
 
 generate_features:
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_features..." >> execution.log
 	perl ./build/genFeatures.sh
 	git add ./FEATURES.md
 	git commit -m "docs: generate FEATURES.md" || echo "No changes to commit"
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_features." >> execution.log
 
 release:
 	@if [ -z "$(VERSION)" ]; then \
@@ -85,6 +97,14 @@ release:
 	pod2markdown mysqltuner.pl > USAGE.md; \
 	python3 build/release_gen.py; \
 	echo "Version bumped to $(VERSION). USAGE.md and release notes generated."
+
+generate_release_notes:
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_release_notes..." >> execution.log
+	python3 build/release_gen.py
+	git add ./releases/
+	git commit -m "docs: regenerate release notes" || echo "No changes to commit"
+	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_release_notes." >> execution.log
+
 
 increment_sub_version:
 	@echo "Incrementing sub version from $(VERSION) to $(UPDATE_SUB_VERSION)"
@@ -169,6 +189,10 @@ audit-logs:
 unit-tests:
 	@echo "Running unit and regression tests..."
 	perl ./build/audit_tests.pl
+
+unit-tests-debug:
+	@echo "Running unit and regression tests (debug mode)..."
+	perl ./build/audit_tests.pl --debug
 
 clean_examples:
 	@echo "Cleaning up examples..."

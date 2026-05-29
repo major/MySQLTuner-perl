@@ -38,7 +38,13 @@ def get_changelog_blocks():
         }
     return blocks
 
-def get_git_commits(version):
+def get_git_commits(version, custom_range=None):
+    if custom_range:
+        try:
+            commits = subprocess.check_output(['git', 'log', custom_range, '--pretty=format:- %s (%h)']).decode().strip()
+            return commits if commits else "No new commits recorded in specified range."
+        except Exception:
+            return f"Commit history unavailable for range {custom_range}."
     try:
         # Check current branch
         branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stderr=subprocess.DEVNULL).decode().strip()
@@ -75,6 +81,7 @@ def get_git_commits(version):
                 return "Initial release or no previous tag found."
     except Exception:
         return "Commit history unavailable."
+
 
 def get_cli_options(content):
     # Match strings inside %opt hash or %CLI_METADATA: "option" => value or 'option' => value
@@ -183,11 +190,60 @@ def sort_changelog_lines(changelog_text):
     
     return header + '\n'.join(sorted_body)
 
-def generate_version_note(version, block):
+def parse_git_commits(commits_text):
+    categories = ['feat', 'fix', 'docs', 'ci', 'test', 'chore']
+    grouped = {cat: [] for cat in categories}
+    others = []
+    breaking = []
+    
+    for line in commits_text.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Strip leading '- ' or '*' and trailing hash info
+        clean_line = re.sub(r'^[-\*\s]+', '', line)
+        
+        # Match conventional commit type: "type(scope): description" or "type: description"
+        # Also handle "type!: description" or "type(scope)!: description" for breaking changes
+        match = re.match(r'^(\w+)(?:\(([^)]+)\))?(!)?:\s*(.*)', clean_line)
+        if match:
+            c_type = match.group(1).lower()
+            scope = match.group(2)
+            is_breaking = match.group(3) is not None
+            desc = match.group(4)
+            
+            # Format nicely
+            scope_str = f"({scope})" if scope else ""
+            formatted = f"- {c_type}{scope_str}: {desc}"
+            
+            if is_breaking or "breaking change" in desc.lower():
+                breaking.append(formatted)
+            
+            if c_type in grouped:
+                grouped[c_type].append(formatted)
+            else:
+                others.append(formatted)
+        else:
+            others.append(line)
+            
+    return grouped, others, breaking
+
+def generate_version_note(version, block, custom_range=None):
     date = block['date']
     changelog = sort_changelog_lines(block['summary'])
-    commits = get_git_commits(version)
+    commits = get_git_commits(version, custom_range)
     tech_data = analyze_tech_details(version)
+
+    
+    grouped_commits, other_commits, breaking_commits = parse_git_commits(commits)
+    
+    # Build commits-based summary
+    summary_lines = []
+    for cat in ['feat', 'fix', 'docs', 'ci', 'test', 'chore']:
+        summary_lines.extend(grouped_commits[cat])
+    summary_lines.extend(other_commits)
+    commits_summary = "\n".join(summary_lines) if summary_lines else "No commits recorded."
     
     os.makedirs(RELEASES_DIR, exist_ok=True)
     filename = os.path.join(RELEASES_DIR, f'v{version}.md')
@@ -197,7 +253,13 @@ def generate_version_note(version, block):
         f.write(f"**Date**: {date}\n\n")
         
         f.write("## 📝 Executive Summary\n\n")
-        f.write(f"```text\n{changelog}\n```\n\n")
+        # Use changelog if it's non-empty and has more than just version header.
+        # Otherwise, fallback to commits_summary.
+        cleaned_changelog = re.sub(r'^\d+\.\d+\.\d+\s+\d{4}-\d{2}-\d{2}\s*', '', changelog).strip()
+        if cleaned_changelog:
+            f.write(f"```text\n{changelog}\n```\n\n")
+        else:
+            f.write(f"```text\n{version} {date}\n\n{commits_summary}\n```\n\n")
         
         if tech_data:
             f.write("## 📈 Diagnostic Growth Indicators\n\n")
@@ -225,6 +287,12 @@ def generate_version_note(version, block):
         f.write(f"{commits}\n\n")
         
         f.write("## ⚙️ Technical Evolutions\n\n")
+        if breaking_commits:
+            f.write("### 🚨 BREAKING CHANGES\n")
+            for item in breaking_commits:
+                f.write(f"{item}\n")
+            f.write("\n")
+            
         if tech_data:
             if tech_data['added_opts']:
                 f.write("### ➕ CLI Options Added\n")
@@ -238,13 +306,16 @@ def generate_version_note(version, block):
                     f.write(f"- `--{opt}`\n")
                 f.write("\n")
             
-            if not tech_data['added_opts'] and not tech_data['removed_opts'] and not any(tech_data['new_diagnostics'].values()):
+            if not tech_data['added_opts'] and not tech_data['removed_opts'] and not any(tech_data['new_diagnostics'].values()) and not breaking_commits:
                 f.write("*Internal logic hardening (no interface or diagnostic changes).*\n\n")
+        elif not breaking_commits:
+            f.write("*Internal logic hardening (no interface or diagnostic changes).*\n\n")
         
         f.write("## ✅ Laboratory Verification Results\n\n")
         f.write("- [x] Automated TDD suite passed.\n")
         f.write("- [x] Multi-DB version laboratory execution validated.\n")
         f.write("- [x] Performance indicator delta analysis completed.\n")
+
         
     print(f"Generated: {filename}")
 
@@ -254,6 +325,7 @@ def version_to_tuple(v):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MySQLTuner Release Notes Generator')
     parser.add_argument('--since', type=str, help='Generate release notes for versions since this version (e.g. 2.8.0)')
+    parser.add_argument('--range', type=str, help='Custom git revision range for commit log (e.g. master..HEAD)')
     args = parser.parse_args()
 
     blocks = get_changelog_blocks()
@@ -264,10 +336,11 @@ if __name__ == "__main__":
         since_tuple = version_to_tuple(args.since)
         for v in sorted_versions:
             if version_to_tuple(v) >= since_tuple:
-                generate_version_note(v, blocks[v])
+                generate_version_note(v, blocks[v], args.range)
     else:
         version = get_current_version()
         if version in blocks:
-            generate_version_note(version, blocks[version])
+            generate_version_note(version, blocks[version], args.range)
         else:
             print(f"Error: Version {version} not found in Changelog.")
+

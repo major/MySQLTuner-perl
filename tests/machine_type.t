@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 
 # Mocking the logic that will be in mysqltuner.pl

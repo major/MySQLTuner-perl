@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+no warnings 'once';
 use Test::More;
 
 # Load MySQLTuner
@@ -84,7 +85,7 @@ subtest 'Division by zero guards' => sub {
     local *main::get_gcache_memory = sub { return 0 };
     local *main::select_one = sub { return 0 };
     local *main::mysql_cloud_discovery = sub { return "none" };
-    local *main::is_remote = sub { return 0 };
+    local *main::is_remote = sub () { return 0 };
 
     eval { main::calculations(); };
     ok(!$@, 'calculations() did not crash with zero stats') or diag("Crashed with: $@");
@@ -97,7 +98,7 @@ subtest '$mysqllogin initialization' => sub {
     no warnings 'redefine';
     local *main::get_transport_prefix = sub { return 'ssh ...' }; 
     local %main::opt = ( 'user' => 'root', 'pass' => 'secret' ); 
-    local *main::is_remote = sub { return 0 };
+    local *main::is_remote = sub () { return 0 };
     
     eval { main::mysql_setup(); };
     ok(defined($main::mysqllogin), '$mysqllogin is defined after mysql_setup');
