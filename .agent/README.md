@@ -1,8 +1,3 @@
----
-trigger: always_on
-description: Overview of project governance, skills, and workflows
-category: governance
----
 # .agent - Project Governance & Artificial Intelligence Intelligence
 
 This directory contains the project's technical constitution, specialized skills, and operational workflows used by AI agents.
@@ -16,8 +11,6 @@ This directory contains the project's technical constitution, specialized skills
 | [`02_architecture.md`](./rules/02_architecture.md) | Immutable project architecture and technology stack. |
 | [`03_execution_rules.md`](./rules/03_execution_rules.md) | Core project constitution and hard execution constraints. |
 | [`04_best_practices.md`](./rules/04_best_practices.md) | Technical best practices and recommended internal patterns. |
-| [`05_memory_protocol.md`](./rules/05_memory_protocol.md) | Protocols for maintaining contextual consistency and history. |
-| [`remembers.md`](./rules/remembers.md) | "Persistent memory for emerging patterns and session-specific dynamic rules" |
 
 
 ## Specialized Capabilities & Knowledge
@@ -45,7 +38,7 @@ This directory contains the project's technical constitution, specialized skills
 | [`lab-up.md`](./workflows/lab-up.md) | Starts a persistent database laboratory and injects data. |
 | [`markdown-lint.md`](./workflows/markdown-lint.md) | Check markdown content for cleanliness and project standard compliance (AFF, keywords, links) |
 | [`plan.md`](./workflows/plan.md) | Create or update an implementation plan (implementation_plan.md) |
-| [`release-manager.md`](./workflows/release-manager.md) | Unified orchestrator for the complete release lifecycle |
+| [`release-manager.md`](./workflows/release-manager.md) | High-level release orchestrator for the Release Manager role |
 | [`release-notes-gen.md`](./workflows/release-notes-gen.md) | Generate detailed technical release notes for the current version |
 | [`release-preflight.md`](./workflows/release-preflight.md) | Pre-flight checks before triggering a git-flow release |
 | [`run-tests.md`](./workflows/run-tests.md) | Comprehensive test suite execution (Unit, Regression, and Multi-DB) |
@@ -55,4 +48,4 @@ This directory contains the project's technical constitution, specialized skills
 
 
 ---
-*Generated automatically by `/doc-sync` on Thu May 29 06:05:00 CEST 2026*
+*Generated automatically by `/doc-sync` on Tue Jun  2 00:00:06 CEST 2026*
