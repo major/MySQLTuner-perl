@@ -25,7 +25,7 @@ COPY ./basic_passwords.txt /basic_passwords.txt
 COPY ./vulnerabilities.csv /vulnerabilities.txt
 
 ENTRYPOINT [ "perl", "/mysqltuner.pl", "--passwordfile", "/basic_passwords.txt",\
-  "--nosysstat", "--defaults-file", "--cvefile", "/vulnerabilities.txt", \
-  "/defaults.cnf", "--dumpdir", "/results", "--outputfile", \
+  "--nosysstat", "--defaults-file", "/defaults.cnf", "--cvefile", "/vulnerabilities.txt", \
+  "--dumpdir", "/results", "--outputfile", \
   "/results/mysqltuner.txt", \
   "--reportfile", "/results/mysqltuner.html" , "--verbose" ]
