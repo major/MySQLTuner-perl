@@ -6064,7 +6064,7 @@ sub calculations {
     }
 
     my $is_mariadb = ( $myvar{'version'} // '' ) =~ /mariadb/i
-                  || ( $myvar{'version_comment'} // '' ) =~ /mariadb/i;
+      || ( $myvar{'version_comment'} // '' ) =~ /mariadb/i;
 
     if ( defined $myvar{'version'} ) {
         $myvar{'version'} =~ s/(.+)-.*?$/$1/;
@@ -6106,22 +6106,35 @@ sub calculations {
         $per_thread_buffers_without_tmp -= $mycalc{'max_tmp_table_size'};
     }
 
-    my $internal_tmp_engine = $myvar{'internal_tmp_mem_storage_engine'} // 'TempTable';
+    my $internal_tmp_engine = $myvar{'internal_tmp_mem_storage_engine'}
+      // 'TempTable';
 
-    if ( defined $myvar{'temptable_max_ram'}
+    if (   defined $myvar{'temptable_max_ram'}
         && is_int( $myvar{'temptable_max_ram'} )
         && !$is_mariadb
         && $internal_tmp_engine eq 'TempTable' )
     {
-        my $total_tmp_connections = $per_thread_buffers_without_tmp * $myvar{'max_connections'};
-        my $max_tmp_limit = ( $mycalc{'max_tmp_table_size'} // 0 ) * $myvar{'max_connections'};
-        my $actual_tmp_ram = ( $myvar{'temptable_max_ram'} < $max_tmp_limit ) ? $myvar{'temptable_max_ram'} : $max_tmp_limit;
-        $mycalc{'total_per_thread_buffers'} = $total_tmp_connections + $actual_tmp_ram;
+        my $total_tmp_connections =
+          $per_thread_buffers_without_tmp * $myvar{'max_connections'};
+        my $max_tmp_limit =
+          ( $mycalc{'max_tmp_table_size'} // 0 ) * $myvar{'max_connections'};
+        my $actual_tmp_ram =
+          ( $myvar{'temptable_max_ram'} < $max_tmp_limit )
+          ? $myvar{'temptable_max_ram'}
+          : $max_tmp_limit;
+        $mycalc{'total_per_thread_buffers'} =
+          $total_tmp_connections + $actual_tmp_ram;
 
-        my $total_tmp_used_connections = $per_thread_buffers_without_tmp * $mystat{'Max_used_connections'};
-        my $max_tmp_used_limit = ( $mycalc{'max_tmp_table_size'} // 0 ) * $mystat{'Max_used_connections'};
-        my $actual_tmp_used_ram = ( $myvar{'temptable_max_ram'} < $max_tmp_used_limit ) ? $myvar{'temptable_max_ram'} : $max_tmp_used_limit;
-        $mycalc{'max_total_per_thread_buffers'} = $total_tmp_used_connections + $actual_tmp_used_ram;
+        my $total_tmp_used_connections =
+          $per_thread_buffers_without_tmp * $mystat{'Max_used_connections'};
+        my $max_tmp_used_limit = ( $mycalc{'max_tmp_table_size'} // 0 ) *
+          $mystat{'Max_used_connections'};
+        my $actual_tmp_used_ram =
+          ( $myvar{'temptable_max_ram'} < $max_tmp_used_limit )
+          ? $myvar{'temptable_max_ram'}
+          : $max_tmp_used_limit;
+        $mycalc{'max_total_per_thread_buffers'} =
+          $total_tmp_used_connections + $actual_tmp_used_ram;
     }
     else {
         $mycalc{'total_per_thread_buffers'} =
@@ -7038,7 +7051,7 @@ sub mysql_stats {
     }
 
     # TempTable mmap disk space check
-    if ( defined $myvar{'temptable_max_mmap'}
+    if (   defined $myvar{'temptable_max_mmap'}
         && is_int( $myvar{'temptable_max_mmap'} )
         && $myvar{'temptable_max_mmap'} > 0 )
     {
@@ -7053,10 +7066,13 @@ sub mysql_stats {
                 my $escaped_tmpdir = $first_tmpdir;
                 $escaped_tmpdir =~ s/'/'\\''/g;
                 my @df_lines =
-                  execute_system_command("$df_bin -P '$escaped_tmpdir' 2>/dev/null");
+                  execute_system_command(
+                    "$df_bin -P '$escaped_tmpdir' 2>/dev/null");
                 if ( scalar(@df_lines) >= 2 ) {
                     my $df_data = $df_lines[1];
-                    if ( $df_data =~ /\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)%\s+(.*)$/ ) {
+                    if ( $df_data =~
+                        /\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)%\s+(.*)$/ )
+                    {
                         my $available_bytes = $3 * 1024;
                         if ( $myvar{'temptable_max_mmap'} > $available_bytes ) {
                             badprint "temptable_max_mmap ("
@@ -7659,9 +7675,12 @@ sub mysql_pfs {
 
     # System databases excluded from schema-aware PFS queries
     # Ref: Client feedback - filter system noise from statement analysis
-    my $sys_db_filter_db = "(db IS NULL OR db NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'))";
-    my $sys_db_filter_ts = "(table_schema IS NULL OR table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'))";
-    my $sys_db_filter_os = "(object_schema IS NULL OR object_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'))";
+    my $sys_db_filter_db =
+"(db IS NULL OR db NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'))";
+    my $sys_db_filter_ts =
+"(table_schema IS NULL OR table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'))";
+    my $sys_db_filter_os =
+"(object_schema IS NULL OR object_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'))";
 
     # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
@@ -11056,63 +11075,72 @@ sub mysql_innodb {
     # Index/Data Ratio Check for tables > 50k rows
     subheaderprint "InnoDB Index/Data Ratio Check";
     my @ratio_tables = select_array(
-        "SELECT TABLE_SCHEMA, TABLE_NAME, DATA_LENGTH, INDEX_LENGTH, TABLE_ROWS " .
-        "FROM information_schema.TABLES " .
-        "WHERE ENGINE='InnoDB' AND TABLE_ROWS > 50000 " .
-        "AND TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql', 'sys')"
+"SELECT TABLE_SCHEMA, TABLE_NAME, DATA_LENGTH, INDEX_LENGTH, TABLE_ROWS "
+          . "FROM information_schema.TABLES "
+          . "WHERE ENGINE='InnoDB' AND TABLE_ROWS > 50000 "
+          . "AND TABLE_SCHEMA NOT IN ('information_schema', 'performance_schema', 'mysql', 'sys')"
     );
 
     my $under_indexed_count = 0;
-    my $over_indexed_count = 0;
+    my $over_indexed_count  = 0;
     my $total_ratio_checked = 0;
-    my @csv_rows = ("\"Database\",\"Table\",\"Ratio\",\"Data Size\",\"Index Size\",\"Status\",\"Rows\"");
+    my @csv_rows            = (
+"\"Database\",\"Table\",\"Ratio\",\"Data Size\",\"Index Size\",\"Status\",\"Rows\""
+    );
 
     foreach my $row (@ratio_tables) {
-        my ($schema, $name, $data_len, $index_len, $rows) = split(/\t/, $row);
+        my ( $schema, $name, $data_len, $index_len, $rows ) =
+          split( /\t/, $row );
         next unless defined $schema && defined $name;
         $total_ratio_checked++;
-        $data_len //= 0;
+        $data_len  //= 0;
         $index_len //= 0;
-        $rows //= 0;
-        
+        $rows      //= 0;
+
         my $ratio = 0;
-        if ($data_len > 0) {
-            $ratio = sprintf("%.2f", $index_len / $data_len);
+        if ( $data_len > 0 ) {
+            $ratio = sprintf( "%.2f", $index_len / $data_len );
         }
 
         my $status = "Ideal";
-        if ($ratio < 0.30) {
+        if ( $ratio < 0.30 ) {
             $status = "Under-indexed";
             $under_indexed_count++;
-        } elsif ($ratio > 0.60) {
+        }
+        elsif ( $ratio > 0.60 ) {
             $status = "Over-indexed";
             $over_indexed_count++;
         }
 
-        push @csv_rows, sprintf(
-            "\"%s\",\"%s\",%.2f,%d,%d,\"%s\",%d",
-            $schema, $name, $ratio, $data_len, $index_len, $status, $rows
-        );
+        push @csv_rows,
+          sprintf( "\"%s\",\"%s\",%.2f,%d,%d,\"%s\",%d",
+            $schema, $name, $ratio, $data_len, $index_len, $status, $rows );
     }
 
-    if ($total_ratio_checked > 0) {
-        infoprint "Checked InnoDB tables with > 50,000 rows: $total_ratio_checked";
-        if ($under_indexed_count > 0) {
+    if ( $total_ratio_checked > 0 ) {
+        infoprint
+          "Checked InnoDB tables with > 50,000 rows: $total_ratio_checked";
+        if ( $under_indexed_count > 0 ) {
             badprint "Under-indexed tables (ratio < 0.3): $under_indexed_count";
         }
-        if ($over_indexed_count > 0) {
+        if ( $over_indexed_count > 0 ) {
             badprint "Over-indexed tables (ratio > 0.6): $over_indexed_count";
         }
-        if ($under_indexed_count == 0 && $over_indexed_count == 0) {
-            goodprint "All checked InnoDB tables have an ideal index/data ratio (between 0.3 and 0.6)";
+        if ( $under_indexed_count == 0 && $over_indexed_count == 0 ) {
+            goodprint
+"All checked InnoDB tables have an ideal index/data ratio (between 0.3 and 0.6)";
         }
-        
+
         if ( defined $opt{dumpdir} ) {
-            dump_into_file( "table_indexes_potential_issues.csv", join("\n", @csv_rows) );
-            infoprint "Dumped index ratio analysis to: $opt{dumpdir}/table_indexes_potential_issues.csv";
+            dump_into_file( "table_indexes_potential_issues.csv",
+                join( "\n", @csv_rows ) );
+            infoprint
+"Dumped index ratio analysis to: $opt{dumpdir}/table_indexes_potential_issues.csv";
         }
-    } else {
-        infoprint "No InnoDB tables with > 50,000 rows found to calculate index/data ratios.";
+    }
+    else {
+        infoprint
+"No InnoDB tables with > 50,000 rows found to calculate index/data ratios.";
     }
 
     $result{'Calculations'} = {%mycalc};
@@ -12894,9 +12922,6 @@ sub dump_csv_files {
         };
     }
 
-    # Store all sys schema in dumpdir if defined
-    infoprint("Dumping sys schema");
-
     # Lookup: sys views with a schema-filterable column
     # Ref: Client feedback - exclude system databases from dumpdir exports
     my %sys_schema_filter_cols = (
@@ -12937,7 +12962,8 @@ sub dump_csv_files {
         'x$ps_schema_table_statistics_io'               => 'table_schema',
         'x$schema_flattened_keys'                       => 'table_schema',
     );
-    my $sys_excl_list = "'mysql','information_schema','performance_schema','sys'";
+    my $sys_excl_list =
+      "'mysql','information_schema','performance_schema','sys'";
 
     for my $sys_view ( select_array('use sys;show tables;') ) {
         if (   $sys_view =~ /innodb_buffer_stats/
@@ -12950,11 +12976,19 @@ sub dump_csv_files {
         infoprint "Dumping $sys_view into $opt{dumpdir}";
         my $sys_view_table = $sys_view;
         $sys_view_table =~ s/\$/\\\$/g;
-        my $query = 'use sys; select * from sys.\`' . $sys_view_table . '\`';
+
+        # Unfiltered export
+        my $query_unfiltered =
+          'use sys; select * from sys.\`' . $sys_view_table . '\`';
+        select_csv_file( "$opt{dumpdir}/sys_$sys_view.csv", $query_unfiltered );
+
+        # Filtered export
         if ( my $col = $sys_schema_filter_cols{$sys_view} ) {
-            $query .= " WHERE ($col IS NULL OR $col NOT IN ($sys_excl_list))";
+            my $query_filtered = $query_unfiltered
+              . " WHERE ($col IS NULL OR $col NOT IN ($sys_excl_list))";
+            select_csv_file( "$opt{dumpdir}/sys_${sys_view}_filtered.csv",
+                $query_filtered );
         }
-        select_csv_file( "$opt{dumpdir}/sys_$sys_view.csv", $query );
     }
 
     # Store all information schema in dumpdir if defined

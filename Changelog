@@ -1,7 +1,8 @@
 # MySQLTuner Changelog
 
-2.8.45 2026-06-01
+2.8.45 2026-06-04
 
+- feat: export both complete (unfiltered) and filtered CSV files for sys views in dumpdir.
 - feat: filter system databases from PFS/sys schema analysis queries and dumpdir exports.
 - feat: integrate temptable_max_ram into per-thread buffer memory calculations.
 - feat: bypass temptable_max_ram logic if internal_tmp_mem_storage_engine is set to MEMORY or if the engine is MariaDB.
@@ -10,6 +11,7 @@
 - fix: normalize dollar sign escaping in SQL queries to prevent syntax errors and shell interpolation failures.
 - fix: skip x$ps_schema_table_statistics_io views in dumpdir schema exports to prevent execution failures on newer MariaDB releases.
 - chore: restore doc_sync.py utility script and run doc synchronization.
+- test: update unit tests to verify both filtered and unfiltered dumpdir exports.
 - test: add unit tests for system database filtering logic.
 - test: add unit tests for temptable memory limit calculations.
 - test: add unit test for index/data ratio calculation logic.
