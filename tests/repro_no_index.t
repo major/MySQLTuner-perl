@@ -29,9 +29,9 @@ no warnings 'redefine';
 *main::select_array = sub {
     my $q = $_[0];
     if ($q =~ /SELECT DISTINCT TABLE_SCHEMA/i) { return ('test_db'); }
-    if ($q =~ /SELECT TABLE_NAME FROM information_schema.TABLES/i) { return ('test_table'); }
+    if ($q =~ /SELECT TABLE_NAME.* FROM information_schema.TABLES/i) { return ("test_table\tInnoDB"); }
     if ($q =~ /statistics/i) { return (); } # No indexes
-    if ($q =~ /information_schema.COLUMNS/i) { return ('id'); }
+    if ($q =~ /information_schema.COLUMNS/i) { return ("id\tint(11)\tNO"); }
     return ();
 };
 

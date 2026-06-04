@@ -11999,14 +11999,13 @@ sub mysql_tables {
         }
 
         my @dbtable = select_array(
-"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbname' AND TABLE_TYPE='BASE TABLE'$ignore_tables_sql ORDER BY TABLE_NAME"
+"SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA='$dbname' AND TABLE_TYPE='BASE TABLE'$ignore_tables_sql ORDER BY TABLE_NAME"
         );
-        foreach (@dbtable) {
-            my $tbname = $_;
+        foreach my $table_info (@dbtable) {
+            my ( $tbname, $engine ) = split /\t/, $table_info;
+            next unless defined $tbname;
+            $engine //= '';
             infoprint " +-- TABLE: $tbname";
-            my $engine = select_one(
-"SELECT ENGINE FROM information_schema.tables where TABLE_schema='$dbname' AND TABLE_NAME='$tbname'"
-            );
             infoprint "     +-- TYPE: $engine";
             if ( $opt{dumpdir} or $opt{schemadir} ) {
                 my $table_info = "### Table: $tbname\n";
@@ -12065,34 +12064,32 @@ ENDSQL
             }
 
             my @tbcol = select_array(
-"SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname'"
+"SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname' ORDER BY ORDINAL_POSITION"
             );
-            foreach (@tbcol) {
-                my $ctype = select_one(
-"SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname' AND COLUMN_NAME='$_' "
-                );
-                my $isnull = select_one(
-"SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$tbname' AND COLUMN_NAME='$_' "
-                );
+            foreach my $col_info (@tbcol) {
+                my ( $col_name, $ctype, $isnull ) = split /\t/, $col_info;
+                next unless defined $col_name;
+                $ctype  //= '';
+                $isnull //= '';
 
                 my $current_type =
                   uc($ctype) . ( $isnull eq 'NO' ? " NOT NULL" : " NULL" );
                 my $optimal_type = '';
-                infoprint "     +-- Column $tbname.$_: $current_type";
+                infoprint "     +-- Column $tbname.$col_name: $current_type";
                 if ( $opt{dumpdir} or $opt{schemadir} ) {
-                    my $col_info = "- **$_**: $current_type\n";
+                    my $col_info = "- **$col_name**: $current_type\n";
                     $schema_doc         .= $col_info;
                     $current_schema_doc .= $col_info if $opt{schemadir};
 
                     my $mtype = $ctype;
                     $mtype =~ s/\(.*\)//g;    # Strip lengths for Mermaid
-                    $mermaid_er         .= "        $mtype $_\n";
-                    $current_mermaid_er .= "        $mtype $_\n"
+                    $mermaid_er         .= "        $mtype $col_name\n";
+                    $current_mermaid_er .= "        $mtype $col_name\n"
                       if $opt{schemadir};
                 }
                 if ( $opt{colstat} == 1 ) {
                     $optimal_type = select_str_g( "Optimal_fieldtype",
-"SELECT \\`$_\\` FROM \\`$dbname\\`.\\`$tbname\\` PROCEDURE ANALYSE(100000)"
+"SELECT \`$col_name\` FROM \`$dbname\`.\`$tbname\` PROCEDURE ANALYSE(100000)"
                       )
                       unless ( mysql_version_ge(8)
                         and not mysql_version_eq(10) );
@@ -12114,14 +12111,14 @@ ENDSQL
                     infoprint "     +-- Optimal Fieldtype: $optimal_type ";
                     if ( $optimal_type !~ /.*ENUM\(.*/ ) {
                         badprint
-"Consider changing type for column $_ in table $dbname.$tbname";
+"Consider changing type for column $col_name in table $dbname.$tbname";
                         push( @generalrec,
-"ALTER TABLE \`$dbname\`.\`$tbname\` MODIFY \`$_\` $optimal_type;"
+"ALTER TABLE \`$dbname\`.\`$tbname\` MODIFY \`$col_name\` $optimal_type;"
                         );
                     }
                 }
                 else {
-                    goodprint "$dbname.$tbname ($_) type: $current_type";
+                    goodprint "$dbname.$tbname ($col_name) type: $current_type";
                 }
             }
             if ( $opt{dumpdir} or $opt{schemadir} ) {

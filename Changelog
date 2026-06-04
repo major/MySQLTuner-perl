@@ -2,6 +2,7 @@
 
 2.8.45 2026-06-04
 
+- chore: restore doc_sync.py utility script and run doc synchronization.
 - feat: export both complete (unfiltered) and filtered CSV files for sys views in dumpdir.
 - feat: filter system databases from PFS/sys schema analysis queries and dumpdir exports.
 - feat: integrate temptable_max_ram into per-thread buffer memory calculations.
@@ -10,7 +11,8 @@
 - feat: add InnoDB index/data ratio check and CSV dump for tables > 50,000 rows.
 - fix: normalize dollar sign escaping in SQL queries to prevent syntax errors and shell interpolation failures.
 - fix: skip x$ps_schema_table_statistics_io views in dumpdir schema exports to prevent execution failures on newer MariaDB releases.
-- chore: restore doc_sync.py utility script and run doc synchronization.
+- perf: optimize column exploration in mysql_tables by fetching engine and column details in bulk (reducing queries from 2N+3 to 2 per table).
+- test: update schemadir.t and repro_no_index.t mocks to match the bulk queries.
 - test: update unit tests to verify both filtered and unfiltered dumpdir exports.
 - test: add unit tests for system database filtering logic.
 - test: add unit tests for temptable memory limit calculations.
