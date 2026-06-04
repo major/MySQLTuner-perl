@@ -36,8 +36,8 @@ else
     echo "✔ Found release notes for v$VERSION"
 fi
 
-# If GITHUB_REF is set (simulating GHA), check tag consistency
-if [ -n "$GITHUB_REF" ]; then
+# If GITHUB_REF is set to a tag (simulating GHA), check tag consistency
+if [[ "$GITHUB_REF" =~ ^refs/tags/ ]]; then
     TAG=${GITHUB_REF#refs/tags/}
     echo "Simulating GHA environment with tag: $TAG"
     if [ "v$VERSION" != "$TAG" ]; then
