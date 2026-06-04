@@ -48,4 +48,4 @@ This directory contains the project's technical constitution, specialized skills
 
 
 ---
-*Generated automatically by `/doc-sync` on Tue Jun  2 00:00:06 CEST 2026*
+*Generated automatically by `/doc-sync` on 2026-06-04 06:47:10*

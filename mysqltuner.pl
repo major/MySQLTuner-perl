@@ -6063,6 +6063,9 @@ sub calculations {
         exit 2;
     }
 
+    my $is_mariadb = ( $myvar{'version'} // '' ) =~ /mariadb/i
+                  || ( $myvar{'version_comment'} // '' ) =~ /mariadb/i;
+
     if ( defined $myvar{'version'} ) {
         $myvar{'version'} =~ s/(.+)-.*?$/$1/;
     }
@@ -6103,7 +6106,13 @@ sub calculations {
         $per_thread_buffers_without_tmp -= $mycalc{'max_tmp_table_size'};
     }
 
-    if ( defined $myvar{'temptable_max_ram'} && is_int( $myvar{'temptable_max_ram'} ) ) {
+    my $internal_tmp_engine = $myvar{'internal_tmp_mem_storage_engine'} // 'TempTable';
+
+    if ( defined $myvar{'temptable_max_ram'}
+        && is_int( $myvar{'temptable_max_ram'} )
+        && !$is_mariadb
+        && $internal_tmp_engine eq 'TempTable' )
+    {
         my $total_tmp_connections = $per_thread_buffers_without_tmp * $myvar{'max_connections'};
         my $max_tmp_limit = ( $mycalc{'max_tmp_table_size'} // 0 ) * $myvar{'max_connections'};
         my $actual_tmp_ram = ( $myvar{'temptable_max_ram'} < $max_tmp_limit ) ? $myvar{'temptable_max_ram'} : $max_tmp_limit;
@@ -7028,6 +7037,48 @@ sub mysql_stats {
         goodprint "No tmp tables created on disk";
     }
 
+    # TempTable mmap disk space check
+    if ( defined $myvar{'temptable_max_mmap'}
+        && is_int( $myvar{'temptable_max_mmap'} )
+        && $myvar{'temptable_max_mmap'} > 0 )
+    {
+        my $tmpdir       = $myvar{'tmpdir'} // '';
+        my @tmpdirs      = split( /[:;]/, $tmpdir );
+        my $first_tmpdir = $tmpdirs[0] || '/tmp';
+
+        # Only run df check locally
+        if ( !is_remote() && !$is_win ) {
+            my $df_bin = which('df');
+            if ($df_bin) {
+                my $escaped_tmpdir = $first_tmpdir;
+                $escaped_tmpdir =~ s/'/'\\''/g;
+                my @df_lines =
+                  execute_system_command("$df_bin -P '$escaped_tmpdir' 2>/dev/null");
+                if ( scalar(@df_lines) >= 2 ) {
+                    my $df_data = $df_lines[1];
+                    if ( $df_data =~ /\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)%\s+(.*)$/ ) {
+                        my $available_bytes = $3 * 1024;
+                        if ( $myvar{'temptable_max_mmap'} > $available_bytes ) {
+                            badprint "temptable_max_mmap ("
+                              . hr_bytes( $myvar{'temptable_max_mmap'} )
+                              . ") is greater than available disk space on $first_tmpdir ("
+                              . hr_bytes($available_bytes) . ")";
+                            push( @generalrec,
+"Reduce temptable_max_mmap or free up disk space in $first_tmpdir to avoid TempTable engine failures."
+                            );
+                        }
+                        else {
+                            goodprint "temptable_max_mmap ("
+                              . hr_bytes( $myvar{'temptable_max_mmap'} )
+                              . ") is compatible with available disk space on $first_tmpdir ("
+                              . hr_bytes($available_bytes) . ")";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     # Thread cache
     if ( defined( $myvar{'have_threadpool'} )
         and $myvar{'have_threadpool'} eq 'YES' )
@@ -7608,9 +7659,9 @@ sub mysql_pfs {
 
     # System databases excluded from schema-aware PFS queries
     # Ref: Client feedback - filter system noise from statement analysis
-    my $sys_db_filter_db = "db NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')";
-    my $sys_db_filter_ts = "table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')";
-    my $sys_db_filter_os = "object_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')";
+    my $sys_db_filter_db = "(db IS NULL OR db NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'))";
+    my $sys_db_filter_ts = "(table_schema IS NULL OR table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'))";
+    my $sys_db_filter_os = "(object_schema IS NULL OR object_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'))";
 
     # Top user per connection
     subheaderprint "Performance schema: Top 5 user per connection";
@@ -11017,7 +11068,7 @@ sub mysql_innodb {
     my @csv_rows = ("\"Database\",\"Table\",\"Ratio\",\"Data Size\",\"Index Size\",\"Status\",\"Rows\"");
 
     foreach my $row (@ratio_tables) {
-        my ($schema, $name, $data_len, $index_len, $rows) = split(/\|/, $row);
+        my ($schema, $name, $data_len, $index_len, $rows) = split(/\t/, $row);
         next unless defined $schema && defined $name;
         $total_ratio_checked++;
         $data_len //= 0;
@@ -11475,7 +11526,7 @@ sub check_query_anti_patterns {
 "SELECT digest_text, count_star, sum_no_index_used, sum_no_good_index_used "
           . "FROM performance_schema.events_statements_summary_by_digest "
           . "WHERE (sum_no_index_used > 0 OR sum_no_good_index_used > 0) "
-          . "AND SCHEMA_NAME NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys') "
+          . "AND (SCHEMA_NAME IS NULL OR SCHEMA_NAME NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')) "
           . "ORDER BY sum_no_index_used DESC LIMIT 5" );
 
     if (@full_scans) {
@@ -11503,7 +11554,7 @@ sub check_query_anti_patterns {
             "SELECT digest_text, count_star, sum_created_tmp_disk_tables "
           . "FROM performance_schema.events_statements_summary_by_digest "
           . "WHERE sum_created_tmp_disk_tables > 0 "
-          . "AND SCHEMA_NAME NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys') "
+          . "AND (SCHEMA_NAME IS NULL OR SCHEMA_NAME NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')) "
           . "ORDER BY sum_created_tmp_disk_tables DESC LIMIT 5" );
 
     if (@disk_tmp) {
@@ -12901,7 +12952,7 @@ sub dump_csv_files {
         $sys_view_table =~ s/\$/\\\$/g;
         my $query = 'use sys; select * from sys.\`' . $sys_view_table . '\`';
         if ( my $col = $sys_schema_filter_cols{$sys_view} ) {
-            $query .= " WHERE $col NOT IN ($sys_excl_list)";
+            $query .= " WHERE ($col IS NULL OR $col NOT IN ($sys_excl_list))";
         }
         select_csv_file( "$opt{dumpdir}/sys_$sys_view.csv", $query );
     }

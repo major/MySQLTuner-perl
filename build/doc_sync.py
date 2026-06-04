@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import os
 import re
+from datetime import datetime
 
 PROJECT_ROOT = os.getcwd()
 AGENT_DIR = os.path.join(PROJECT_ROOT, '.agent')
 README_PATH = os.path.join(AGENT_DIR, 'README.md')
 
-def parse_aff(file_path):
+def parse_markdown_metadata(file_path):
     try:
         with open(file_path, 'r') as f:
             content = f.read()
@@ -48,16 +49,16 @@ def generate_readme():
                 # Handle skill folders (SKILL.md inside)
                 skill_path = os.path.join(folder_path, filename, 'SKILL.md')
                 if os.path.exists(skill_path):
-                    title, desc = parse_aff(skill_path)
+                    _, desc = parse_markdown_metadata(skill_path)
                     output.append(f"| [`{filename}/`](./{folder}/{filename}/SKILL.md) | {desc} |")
                 continue
                 
-            title, desc = parse_aff(os.path.join(folder_path, filename))
+            _, desc = parse_markdown_metadata(os.path.join(folder_path, filename))
             output.append(f"| [`{filename}`](./{folder}/{filename}) | {desc} |")
         
         output.append("\n")
     
-    output.append("---\n*Generated automatically by `/doc-sync` on " + os.popen('date').read().strip() + "*")
+    output.append("---\n*Generated automatically by `/doc-sync` on " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "*")
     
     with open(README_PATH, 'w') as f:
         f.write("\n".join(output))

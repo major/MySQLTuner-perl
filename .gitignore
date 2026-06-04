@@ -62,3 +62,4 @@ test_dump_84/ifs_COLLATION_CHARACTER_SET_APPLICABILITY.csv
 __pycache__/
 *.pyc
 execution.log
+execution.log
