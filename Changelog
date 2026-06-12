@@ -1,5 +1,29 @@
 # MySQLTuner Changelog
 
+2.8.45 2026-06-04
+
+- chore: restore doc_sync.py utility script and run doc synchronization.
+- feat: export both complete (unfiltered) and filtered CSV files for sys views in dumpdir.
+- feat: filter system databases from PFS/sys schema analysis queries and dumpdir exports.
+- feat: integrate temptable_max_ram into per-thread buffer memory calculations.
+- feat: bypass temptable_max_ram logic if internal_tmp_mem_storage_engine is set to MEMORY or if the engine is MariaDB.
+- feat: verify temptable_max_mmap against available disk space in tmpdir.
+- feat: add InnoDB index/data ratio check and CSV dump for tables > 50,000 rows.
+- feat: display Host/RAM info and Database Uptime in system_recommendations() under remote or cloud modes.
+- feat: display database server uptime in all configurations inside get_system_info() and system_recommendations().
+- fix: normalize dollar sign escaping in SQL queries to prevent syntax errors and shell interpolation failures.
+- fix: skip x$ps_schema_table_statistics_io views in dumpdir schema exports to prevent execution failures on newer MariaDB releases.
+- perf: optimize column exploration in mysql_tables by fetching engine and column details in bulk (reducing queries from 2N+3 to 2 per table).
+- test: update schemadir.t and repro_no_index.t mocks to match the bulk queries.
+- test: update unit tests to verify both filtered and unfiltered dumpdir exports.
+- test: add unit tests for system database filtering logic.
+- test: add unit tests for temptable memory limit calculations.
+- test: add unit test for index/data ratio calculation logic.
+- test: add unit tests for temptable_max_mmap disk space checks, MEMORY engine bypass, and MariaDB bypass.
+- test: add complementary subtest for non-binding temptable_max_ram scenario to tests/issue_864.t.
+- test: add unit tests for compliance checks, doc synchronization, and release files verification.
+- test: add unit test for remote/cloud host recap in tests/unit_coverage_boost3.t.
+
 2.8.44 2026-05-27
 
 - feat: develop automated end-of-life (EOL) date synchronization check script to audit LTS versions in CI.

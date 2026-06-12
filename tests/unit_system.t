@@ -183,7 +183,7 @@ subtest 'Write Manifest Files' => sub {
         }
     );
 
-    $main::tunerversion = '2.8.44';
+    $main::tunerversion = '2.8.45';
     $main::myvar{'hostname'} = 'tuner-host';
     $main::myvar{'version'} = '8.0.35';
 
@@ -198,7 +198,7 @@ subtest 'Write Manifest Files' => sub {
     my $manifest_content = do { local $/; <$mfh> };
     close $mfh;
 
-    like($manifest_content, qr/"version": "2.8.44"/, 'manifest contains version');
+    like($manifest_content, qr/"version": "2.8.45"/, 'manifest contains version');
     like($manifest_content, qr/"total_files": 2/, 'manifest contains total files');
     like($manifest_content, qr/employees_dump.sql/, 'manifest lists file 1');
     like($manifest_content, qr/salaries_dump.sql.gz/, 'manifest lists file 2');

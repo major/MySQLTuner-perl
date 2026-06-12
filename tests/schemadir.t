@@ -35,8 +35,8 @@ require './tests/MySQLTuner/TestHelper.pm';
     );
 
     my %mock_queries = (
-        "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='db1' AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME" => ['table1'],
-        "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA='db2' AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME" => ['table2'],
+        "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA='db1' AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME" => ["table1\tInnoDB"],
+        "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA='db2' AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME" => ["table2\tInnoDB"],
     );
 
     *main::select_array = sub {
@@ -49,14 +49,11 @@ require './tests/MySQLTuner/TestHelper.pm';
         
         # Match index query
         if ($clean_q =~ /information_schema\.statistics/i) {
-             return ('PRIMARY;id;BTREE'); # Fixed delimiter to semicolon based on script usage (line 7889/8246 etc?? no wait)
-             # Wait, mysql_tables line 8257: my @info = split /\s/, $idx;
-             # So results should be space separated or tab separated?
-             # My mock used space in previous run? No, tab? 'PRIMARY	id	BTREE'
+             return ('PRIMARY;id;BTREE'); # Fixed delimiter to semicolon based on script usage
         }
         # Match columns query
         if ($clean_q =~ /information_schema\.COLUMNS/i && $clean_q =~ /COLUMN_NAME/i) {
-             return ('id');
+             return ("id\tint(11)\tNO");
         }
 
         foreach my $mq (keys %mock_queries) {
