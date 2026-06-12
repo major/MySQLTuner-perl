@@ -22,10 +22,10 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Setup MySQL Tuner repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Set up MySQL
-        uses: shogo82148/actions-setup-mysql@v1
+        uses: shogo82148/actions-setup-mysql@c80f44ab210a360ef966c5b9f48a2ae21123b533 # v1
         with:
           distribution: 'mysql'
           root-password: "root"
@@ -67,7 +67,7 @@ jobs:
           git add ./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }}/* || true
 
       - name: Run the Action Commit
-        uses: devops-infra/action-commit-push@master
+        uses: devops-infra/action-commit-push@f066ea8e19660de57d3d3a4a0b9d294ea2612e20 # master
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           add_timestamp: true
