@@ -4422,13 +4422,50 @@ sub get_system_info {
     infoprint "System Uptime         : ";
     infocmd_tab "uptime";
     $result{'OS'}{'Uptime'} = execute_system_command('uptime');
+    if ( defined $mystat{'Uptime'} && $mystat{'Uptime'} > 0 ) {
+        infoprint "Database Uptime       : " . pretty_uptime($mystat{'Uptime'});
+    }
 }
 
 sub system_recommendations {
     if ( is_remote eq 1 || $is_cloud ) {
+        subheaderprint "System Linux Recommendations";
         infoprint
           "Skipping local system checks on remote host or cloud instance ("
           . ( $cloud_type // 'unknown' ) . ")";
+        
+        my $mtype = $is_cloud ? "Cloud instance (" . ( $cloud_type // 'unknown' ) . ")" : "Remote host";
+        infoprint "Machine type          : $mtype";
+        
+        my $host = $myvar{'hostname'} // $opt{'host'} // 'Unknown';
+        infoprint "Host Name             : $host";
+        
+        my $os = $myvar{'version_compile_os'} // 'Unknown';
+        infoprint "Operating System Type : $os";
+        
+        my $arch = $myvar{'version_compile_machine'} // 'Unknown';
+        infoprint "CPU Architecture      : $arch";
+        
+        my $ram_str = $physical_memory ? hr_bytes($physical_memory) : "Unknown (Use --forcemem to specify)";
+        infoprint "Physical Memory (RAM) : $ram_str";
+        
+        if ( defined $mystat{'Uptime'} && $mystat{'Uptime'} > 0 ) {
+            infoprint "Database Uptime       : " . pretty_uptime($mystat{'Uptime'});
+        } else {
+            infoprint "Database Uptime       : Unknown";
+        }
+        
+        # If physical memory is set, we can run some basic memory size checks
+        if ( $physical_memory ) {
+            if ( $physical_memory >= 1.5 * 1024 * 1024 * 1024 ) {
+                goodprint "There is at least 1.5 Gb of RAM dedicated to Linux server.";
+            }
+            else {
+                badprint "There is less than 1,5 Gb of RAM, consider dedicated 1 Gb for your Linux server";
+                push_recommendation( 'System',
+                    "Consider increasing 1,5 / 2 Gb of RAM for your Linux server" );
+            }
+        }
         return;
     }
     return if ( $opt{sysstat} == 0 );
@@ -4477,7 +4514,6 @@ sub system_recommendations {
               . hr_bytes_rnd($physical_memory) . ")";
         }
         else {
-
             badprint
 "Other user process except mysqld used more than 15% of total physical memory "
               . percentage( $omem, $physical_memory ) . "% ("

@@ -300,6 +300,30 @@ subtest 'system_recommendations - remote skip' => sub {
     ok(grep({ /Skipping local system checks/ } @mock_output), "Skips for remote host");
 };
 
+subtest 'system_recommendations - remote host recap' => sub {
+    reset_mocks();
+    $main::is_cloud = 1;
+    $main::cloud_type = 'AWS RDS';
+    $main::myvar{'hostname'} = 'my-rds-db';
+    $main::myvar{'version_compile_os'} = 'Linux';
+    $main::myvar{'version_compile_machine'} = 'x86_64';
+    $main::physical_memory = 8589934592; # 8 GB
+    $main::mystat{'Uptime'} = 86400; # 1 day
+    {
+        no warnings 'redefine';
+        local *main::is_remote = sub { return 1; };
+        main::system_recommendations();
+    }
+    ok(grep({ /Skipping local system checks/ } @mock_output), "Skips local checks message shown");
+    ok(grep({ /Machine type.*Cloud instance \(AWS RDS\)/ } @mock_output), "Machine type shown");
+    ok(grep({ /Host Name.*my-rds-db/ } @mock_output), "Host name shown");
+    ok(grep({ /Operating System Type.*Linux/ } @mock_output), "Operating system shown");
+    ok(grep({ /CPU Architecture.*x86_64/ } @mock_output), "CPU Architecture shown");
+    ok(grep({ /Physical Memory \(RAM\).*8.0G/ } @mock_output), "RAM shown");
+    ok(grep({ /Database Uptime.*1d 0h 0m/ } @mock_output), "Database Uptime shown");
+    ok(grep({ /There is at least 1.5 Gb/ } @mock_output), "Physical RAM check run");
+};
+
 subtest 'system_recommendations - sysstat disabled' => sub {
     reset_mocks();
     $main::opt{sysstat} = 0;
