@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Run LTS auto-bumper utility
         run: |
@@ -37,7 +37,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.git_status.outputs.changes_detected == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6
         with:
           commit-message: "chore: automatically update supported database LTS versions"
           branch: lts-auto-update
