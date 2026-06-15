@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.8.45
+# mysqltuner.pl - Version 2.9.0
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.8.45";
+our $tunerversion = "2.9.0";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -298,6 +298,12 @@ our %CLI_METADATA = (
         type    => '!',
         default => 0,
         desc    => 'Print result as JSON formatted string',
+        cat     => 'PERFORMANCE'
+    },
+    'yaml' => {
+        type    => '!',
+        default => 0,
+        desc    => 'Print result as YAML string',
         cat     => 'PERFORMANCE'
     },
     'dumpdir' => {
@@ -867,7 +873,8 @@ sub show_help {
 }
 
 sub prettyprint {
-    print $_[0] . "\n" unless ( $opt{'silent'} or $opt{'json'} );
+    print $_[0] . "\n"
+      unless ( $opt{'silent'} or $opt{'json'} or $opt{'yaml'} );
     print $fh $_[0] . "\n" if defined($fh);
     my $plain_text = $_[0] // '';
     $plain_text =~ s/\e\[[0-9;]*[mK]//g;
@@ -1390,7 +1397,7 @@ sub check_security_2_0 {
 }
 
 sub generate_auto_fix_snippets {
-    return if $opt{'silent'} || $opt{'json'};
+    return if $opt{'silent'} || $opt{'json'} || $opt{'yaml'};
     subheaderprint "Guided Auto-Fix Snippets";
 
     if ( @adjvars > 0 ) {
@@ -1996,7 +2003,7 @@ sub get_http_cli {
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
     if ( $opt{'checkversion'} eq 0 ) {
-        print "\n" unless ( $opt{'silent'} or $opt{'json'} );
+        print "\n" unless ( $opt{'silent'} or $opt{'json'} or $opt{'yaml'} );
         infoprint "Skipped version check for MySQLTuner script";
         return;
     }
@@ -2058,7 +2065,7 @@ sub validate_tuner_version {
 sub update_tuner_version {
     if ( $opt{'updateversion'} eq 0 ) {
         badprint "Skipped version update for MySQLTuner script";
-        print "\n" unless ( $opt{'silent'} or $opt{'json'} );
+        print "\n" unless ( $opt{'silent'} or $opt{'json'} or $opt{'yaml'} );
         return;
     }
 
@@ -2960,7 +2967,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.8.45' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.9.0' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -2976,7 +2983,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.8.45' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.9.0' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -5016,7 +5023,8 @@ sub check_auth_plugins {
 sub security_recommendations {
     subheaderprint "Security Recommendations";
 
-    infoprint "$myvar{'version_comment'} - $myvar{'version'}";
+    infoprint( ( $myvar{'version_comment'} // 'N/A' ) . " - "
+          . ( $myvar{'version'} // 'N/A' ) );
 
     my $PASS_COLUMN_NAME = get_password_column_name();
 
@@ -5508,8 +5516,8 @@ sub get_replication_status {
     }
 
     # Parallel replication checks (MariaDB specific)
-    if (   ( $myvar{'version'} =~ /MariaDB/i )
-        or ( $myvar{'version_comment'} =~ /MariaDB/i ) )
+    if (   ( ( $myvar{'version'} // '' ) =~ /MariaDB/i )
+        or ( ( $myvar{'version_comment'} // '' ) =~ /MariaDB/i ) )
     {
         my $parallel_threads = $myvar{'slave_parallel_threads'}
           // $myvar{'replica_parallel_threads'} // 0;
@@ -5580,15 +5588,33 @@ sub validate_mysql_version {
     }
 }
 
+my $cached_version_str;
+my ( $cached_v_maj, $cached_v_min, $cached_v_mic );
+
+sub _parse_version {
+    my $ver = $myvar{'version'} // '';
+    if ( !defined $cached_version_str || $cached_version_str ne $ver ) {
+        $cached_version_str = $ver;
+        if ( $ver =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/ ) {
+            $cached_v_maj = $1 // 0;
+            $cached_v_min = $2 // 0;
+            $cached_v_mic = $3 // 0;
+        }
+        else {
+            $cached_v_maj = 0;
+            $cached_v_min = 0;
+            $cached_v_mic = 0;
+        }
+    }
+    return ( $cached_v_maj, $cached_v_min, $cached_v_mic );
+}
+
 # Checks if MySQL version is equal to (major, minor, micro)
 sub mysql_version_eq {
     my ( $maj, $min, $mic ) = @_;
     return 0 unless defined $myvar{'version'};
-    my ( $v_maj, $v_min, $v_mic ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
-    $v_maj //= 0;
-    $v_min //= 0;
-    $v_mic //= 0;
+    $maj //= 0;
+    my ( $v_maj, $v_min, $v_mic ) = _parse_version();
 
     return int($v_maj) == int($maj)
       if ( !defined($min) && !defined($mic) );
@@ -5603,13 +5629,10 @@ sub mysql_version_eq {
 sub mysql_version_ge {
     my ( $maj, $min, $mic ) = @_;
     return 0 unless defined $myvar{'version'};
-    $min ||= 0;
-    $mic ||= 0;
-    my ( $v_maj, $v_min, $v_mic ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
-    $v_maj //= 0;
-    $v_min //= 0;
-    $v_mic //= 0;
+    $maj //= 0;
+    $min //= 0;
+    $mic //= 0;
+    my ( $v_maj, $v_min, $v_mic ) = _parse_version();
 
     return
          int($v_maj) > int($maj)
@@ -5623,13 +5646,10 @@ sub mysql_version_ge {
 sub mysql_version_le {
     my ( $maj, $min, $mic ) = @_;
     return 0 unless defined $myvar{'version'};
-    $min ||= 0;
-    $mic ||= 0;
-    my ( $v_maj, $v_min, $v_mic ) =
-      $myvar{'version'} =~ /^(\d+)(?:\.(\d+))?(?:\.(\d+))?/;
-    $v_maj //= 0;
-    $v_min //= 0;
-    $v_mic //= 0;
+    $maj //= 0;
+    $min //= 0;
+    $mic //= 0;
+    my ( $v_maj, $v_min, $v_mic ) = _parse_version();
 
     return
          int($v_maj) < int($maj)
@@ -10503,20 +10523,22 @@ sub mysql_innodb {
                 infoprint " +-- InnoDB Log File Size: "
                   . hr_bytes( $myvar{'innodb_log_file_size'} );
             }
-            if ( defined $myvar{'innodb_log_files_in_group'} ) {
+            if (   defined $myvar{'innodb_log_files_in_group'}
+                && defined $myvar{'innodb_log_file_size'} )
+            {
                 infoprint " +-- InnoDB Log File In Group: "
                   . $myvar{'innodb_log_files_in_group'};
                 infoprint " +-- InnoDB Total Log File Size: "
                   . hr_bytes( $myvar{'innodb_log_files_in_group'} *
                       $myvar{'innodb_log_file_size'} )
                   . "("
-                  . $mycalc{'innodb_log_size_pct'}
+                  . ( $mycalc{'innodb_log_size_pct'} // 0 )
                   . " % of buffer pool)";
             }
-            else {
+            elsif ( defined $myvar{'innodb_log_file_size'} ) {
                 infoprint " +-- InnoDB Total Log File Size: "
                   . hr_bytes( $myvar{'innodb_log_file_size'} ) . "("
-                  . $mycalc{'innodb_log_size_pct'}
+                  . ( $mycalc{'innodb_log_size_pct'} // 0 )
                   . " % of buffer pool)";
             }
         }
@@ -11509,6 +11531,14 @@ sub historical_comparison {
         );
     }
 
+    # Compare Health Score
+    if ( defined $result{'HealthScore'} && defined $old->{'HealthScore'} ) {
+        my $diff  = $result{'HealthScore'} - $old->{'HealthScore'};
+        my $trend = ( $diff > 0 ) ? "+" : "";
+        infoprint sprintf( "Health Score Trend: %d -> %d (%s%d)",
+            $old->{'HealthScore'}, $result{'HealthScore'}, $trend, $diff );
+    }
+
     # 2. Compare Total Data Size
     if (   defined $result{'Stats'}{'Total Data Size'}
         && defined $old->{'Stats'}{'Total Data Size'} )
@@ -11654,8 +11684,8 @@ sub check_query_anti_patterns {
 sub mariadb_query_cache_info {
     subheaderprint "Query Cache Information";
 
-    unless ( ( $myvar{'version'} =~ /MariaDB/i )
-        or ( $myvar{'version_comment'} =~ /MariaDB/i ) )
+    unless ( ( ( $myvar{'version'} // '' ) =~ /MariaDB/i )
+        or ( ( $myvar{'version_comment'} // '' ) =~ /MariaDB/i ) )
     {
         infoprint
           "Not a MariaDB server. Skipping Query Cache Info plugin check.";
@@ -11821,7 +11851,7 @@ sub mysql_databases {
     $result{'Databases'}{'All databases'}{'Index Pct'} =
       percentage( $totaldbinfo[2], $totaldbinfo[3] ) . "%";
     $result{'Databases'}{'All databases'}{'Total Size'} = $totaldbinfo[3];
-    print "\n" unless ( $opt{'silent'} or $opt{'json'} );
+    print "\n" unless ( $opt{'silent'} or $opt{'json'} or $opt{'yaml'} );
     my $nbViews  = 0;
     my $nbTables = 0;
 
@@ -12494,6 +12524,63 @@ sub format_recommendation_item {
     return $item // '';
 }
 
+sub _to_yaml {
+    my ( $data, $indent ) = @_;
+    $indent //= 0;
+    my $spaces = '  ' x $indent;
+    my $output = '';
+
+    if ( !defined $data ) {
+        return "~\n";
+    }
+    elsif ( ref $data eq 'HASH' ) {
+        $output .= "\n" if $indent > 0;
+        foreach my $key ( sort keys %$data ) {
+            my $val = $data->{$key};
+            $output .= $spaces . $key . ":";
+            if ( ref $val ) {
+                $output .= _to_yaml( $val, $indent + 1 );
+            }
+            else {
+                my $v = $val // '';
+                if ( $v =~ /[:\#\n\'\"]/ or $v eq '' ) {
+                    $v =~ s/'/''/g;
+                    $v = "'$v'";
+                }
+                $output .= " $v\n";
+            }
+        }
+    }
+    elsif ( ref $data eq 'ARRAY' ) {
+        $output .= "\n" if $indent > 0;
+        foreach my $item (@$data) {
+            $output .= $spaces . "-";
+            if ( ref $item ) {
+                my $inner = _to_yaml( $item, $indent + 1 );
+                $inner =~ s/^\n\s*//;
+                $output .= " " . $inner;
+            }
+            else {
+                my $v = $item // '';
+                if ( $v =~ /[:\#\n\'\"]/ or $v eq '' ) {
+                    $v =~ s/'/''/g;
+                    $v = "'$v'";
+                }
+                $output .= " $v\n";
+            }
+        }
+    }
+    else {
+        my $v = $data;
+        if ( $v =~ /[:\#\n\'\"]/ or $v eq '' ) {
+            $v =~ s/'/''/g;
+            $v = "'$v'";
+        }
+        $output .= "$v\n";
+    }
+    return $output;
+}
+
 sub dump_result {
 
     #debugprint Dumper( \%result ) if ( $opt{'debug'} );
@@ -12838,6 +12925,20 @@ HTML
             close $fh;
         }
     }
+
+    if ( $opt{'yaml'} ) {
+        my $yaml_str = _to_yaml( \%result );
+        print $yaml_str;
+
+        if ( $opt{'outputfile'} ) {
+            unlink $opt{'outputfile'} if ( -e $opt{'outputfile'} );
+            open my $fh, q(>), $opt{'outputfile'}
+              or die
+"Unable to open $opt{'outputfile'} in write mode. please check permissions for this file or directory";
+            print $fh $yaml_str;
+            close $fh;
+        }
+    }
 }
 
 sub which {
@@ -13153,7 +13254,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.8.45 - MySQL High Performance Tuning Script
+ MySQLTuner 2.9.0 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -13168,7 +13269,7 @@ See C<mysqltuner --help> for a full list of available options and their categori
 
 =head1 VERSION
 
-Version 2.8.45
+Version 2.9.0
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
@@ -13337,6 +13438,10 @@ Christian Loos
 =item *
 
 Long Radix
+
+=item *
+
+derZ-dev
 
 =back
 

@@ -2,13 +2,13 @@
 
 This file records anomalies discovered during laboratory testing (Perl warnings, SQL errors, etc.).
 
-## [2026-05-29 Audit] Status Refresh v2.8.44
+## [2026-06-16 Audit] Status Refresh v2.9.0
 
 ### Unit Test Results
 
 - **Status**: ✅ ALL PASS
-- **Files**: 72 test files
-- **Assertions**: 362 tests
+- **Files**: 81 test files
+- **Assertions**: 462 tests
 - **Perl Syntax**: Clean (`perl -cw mysqltuner.pl` — no warnings)
 
 ### Test Coverage Analysis
@@ -70,6 +70,7 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - **Source**: Each call to `mysql_version_ge()`, `mysql_version_le()`, `mysql_version_eq()` re-parses `$myvar{'version'}` via regex
 - **Impact**: Redundant computation — called 100+ times across the script
 - **Severity**: 🟢 LOW — performance impact minimal but code duplication
+- **Status**: [x] **FIXED** — Implemented version parsing caching via `_parse_version()`.
 
 #### PI-009: MariaDB 10.6 Approaching EOL
 - **Source**: [mariadb_support.md](file:///mariadb_support.md)

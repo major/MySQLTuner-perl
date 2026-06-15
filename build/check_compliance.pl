@@ -139,7 +139,8 @@ my %ALLOWED_SCOPES = map { $_ => 1 } (
     'versions', 'report',   'security',     'cve',
     'options',  'lab',      'container',    'refactor',
     'style',    'releases', 'dependencies', 'cli',
-    'auth',     'main',     'metadata'
+    'auth',     'main',     'metadata',     'deps',
+    'system'
 );
 
 # Lint Changelog structure and scopes for the current version block

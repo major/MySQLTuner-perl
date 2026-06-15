@@ -48,15 +48,15 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Multi-Cloud Autodiscovery**: Automated detection of RDS, GCP, and Azure specific performance flags and optimizations.
 * [x] **Query Anti-Pattern Detection**: Use `performance_schema` to identify non-SARGable queries and `SELECT *` abuse.
 
-### [Phase 4: Advanced Intelligence & Ecosystem](file:///documentation/specifications/roadmap_phase_iv_intelligence.md) [IN PROGRESS]
+### [Phase 4: Advanced Intelligence & Ecosystem](file:///documentation/specifications/roadmap_phase_iv_intelligence.md) [COMPLETED]
 
-* [/] **Smart Migration LTS Advisor**:
+* [x] **Smart Migration LTS Advisor**:
   * [x] Automated pre-upgrade risk reports (variable removal, deprecation notices).
-  * [ ] Compatibility audit for SQL modes, character sets, and version-specific engine changes.
+  * [x] Compatibility audit for SQL modes, character sets, and version-specific engine changes.
 * [x] **Weighted Health Score**:
   * [x] Unified KPI (0-100) aggregating findings from Security, Performance, and Resilience.
-  * [ ] Comparative scoring against previous runs or established industry baselines.
-* [/] **Predictive Capacity Planning**:
+  * [x] Comparative scoring against previous runs or established industry baselines.
+* [x] **Predictive Capacity Planning**:
   * [x] Data growth forecasting based on binlog throughput and table statistics.
   * [x] Memory headroom analysis for traffic peak forecasting.
   * [x] AUTO_INCREMENT capacity near max value detection.
@@ -68,35 +68,37 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] Implemented advanced dominant style detection and deviations audit for tables, views, indexes, and columns.
 * [x] **CSV Export Enhancements**:
   * [x] Export naming convention deviations (tables, views, indexes, columns), primary key naming/surrogate key issues, missing foreign keys, JSON columns without virtual columns, and insecure authentication plugins to separate CSV files.
-* [/] **Security Hardening 2.0**:
-  * [ ] Version-based CVE exposure detection (community-fed database).
+* [x] **Security Hardening 2.0**:
+  * [x] Version-based CVE exposure detection (community-fed database).
   * [x] Advanced encryption-at-rest (TDE) and SSL/TLS cipher suite validation.
   * [x] **Extended Authentication Plugins Audit**: Verify password hashing methods against the extended plugins support matrix (including `mysql_native_password`, `mysql_old_password`, `sha256_password`, `caching_sha2_password`, `unix_socket`, `ed25519`, and the new MariaDB `parsec` plugin). See [AUTHENTICATION_PLUGINS.md](file:///documentation/AUTHENTICATION_PLUGINS.md).
-* [/] **Guided Auto-Fix Engine**:
-  * [ ] Interactive mode to simulate configuration changes.
+* [x] **Guided Auto-Fix Engine**:
+  * [x] Interactive mode to simulate configuration changes.
   * [x] Generation of ready-to-use `SET GLOBAL` or `my.cnf` snippets.
 * [x] **Modular Reporting Engine**: Re-implemented native HTML report generation (--reportfile) using built-in layout, removing external template engine dependencies.
-* [/] **Historical Trend Analysis**: (Experimental) Allow the script to ingest previous run data to identify performance regressions.
+* [x] **Complete HTML Report Finalization**: Finalize a complete HTML report file beginning in v2.8.45.
+* [x] **Historical Trend & Comparison Analysis**: Support historical comparison of database diagnostics and performance metrics over time.
+* [x] **Agent-Ready Output**: Create an agent-ready output format (JSON/YAML) so that MySQLTuner can be easily integrated and used by AI agents.
 
 ---
 
-### Phase 5: Code Quality & Regression Hardening [NEW — PRIORITY]
+### Phase 5: Code Quality & Regression Hardening [COMPLETED]
 
 > Derived from the test campaign analysis on v2.8.43. Addresses critical code quality issues identified during the 5-iteration test audit.
 
-* [ ] **Perl Warning Elimination**:
-  * [ ] Add definedness guards to `mysql_version_ge()`, `mysql_version_le()`, `mysql_version_eq()` to prevent 74 uninitialized value warnings.
-  * [ ] Guard `$mycalc{'innodb_log_size_pct'}` and `$myvar{'innodb_log_file_size'}` before use in InnoDB analysis.
-  * [ ] Guard `$myvar{'version_comment'}` in MariaDB detection path.
+* [x] **Perl Warning Elimination**:
+  * [x] Add definedness guards to `mysql_version_ge()`, `mysql_version_le()`, `mysql_version_eq()` to prevent 74 uninitialized value warnings.
+  * [x] Guard `$mycalc{'innodb_log_size_pct'}` and `$myvar{'innodb_log_file_size'}` before use in InnoDB analysis.
+  * [x] Guard `$myvar{'version_comment'}` in MariaDB detection path.
 * [x] **Version Validation Updates**:
   * [x] Add MySQL 9.6 to `validate_mysql_version()` supported LTS list.
   * [x] Remove MySQL 9.5 (now Outdated) from the LTS list.
-* [ ] **Test Coverage Expansion**:
-  * [ ] Achieve ≥80% subroutine test coverage (currently ~55%, 74 of 165 uncovered).
-  * [ ] Priority coverage: `check_architecture`, `system_recommendations`, `mysql_indexes`, `mysql_views`, `mysql_routines`, `mysql_triggers`, `make_recommendations`.
-  * [ ] Add tests for `dump_result`, `close_outputfile`, `get_template_model`.
-* [ ] **Version Comparison Optimization**:
-  * [ ] Cache parsed version components instead of re-parsing `$myvar{'version'}` on every call to `mysql_version_ge/le/eq`.
+* [x] **Test Coverage Expansion**:
+  * [x] Achieve ≥80% subroutine test coverage (reached ~92%, only 13 of 167 system/IO-heavy subroutines uncovered).
+  * [x] Priority coverage: `check_architecture`, `system_recommendations`, `mysql_indexes`, `mysql_views`, `mysql_routines`, `mysql_triggers`, `make_recommendations`.
+  * [x] Add tests for `dump_result` and `close_outputfile` (`get_template_model` obsoleted and removed).
+* [x] **Version Comparison Optimization**:
+  * [x] Cache parsed version components instead of re-parsing `$myvar{'version'}` on every call to `mysql_version_ge/le/eq`.
 
 ---
 
