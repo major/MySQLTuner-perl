@@ -1006,6 +1006,160 @@ sub calculate_health_score {
     $result{'HealthScore'}         = $score;
     $result{'HealthScoreDetails'}  = \%details;
     $mycalc{'WeightedHealthScore'} = $score;
+
+    calculate_sectional_health_scores();
+}
+
+sub calculate_sectional_health_scores {
+    # 1. General Statistics KPI
+    my $gen_score = 100;
+    
+    my $uptime = $mystat{'Uptime'} // 0;
+    if ($uptime < 86400) {
+        $gen_score -= 20;
+    }
+    
+    my @load = get_load_average();
+    if (@load) {
+        my $load_1 = $load[0] // 0;
+        my $cpu_cores = $mycalc{'physical_cpu_cores'} // $mycalc{'cpu_cores'} // 1;
+        if ($cpu_cores > 0 && ($load_1 / $cpu_cores) > 1.0) {
+            $gen_score -= 20;
+        }
+    }
+    
+    if ( grep { /swappiness/i } @generalrec ) {
+        $gen_score -= 20;
+    }
+    
+    my $other_mem = get_other_process_memory() // 0;
+    if ( ( $physical_memory // 0 ) > 0 && ($other_mem / $physical_memory) > 0.3 ) {
+        $gen_score -= 20;
+    }
+    $gen_score = 0 if $gen_score < 0;
+
+    # 2. Storage Engine KPI
+    my $storage_score = 100;
+    
+    my $read_eff = $mycalc{'pct_read_efficiency'} // 100;
+    if ($read_eff < 95) {
+        $storage_score -= 25;
+    }
+    
+    my $temp_disk = $mycalc{'pct_temp_disk'} // 0;
+    if ($temp_disk > 25) {
+        $storage_score -= 25;
+    }
+    
+    my $table_hit = $mycalc{'table_cache_hit_rate'} // 100;
+    if ($table_hit < 50) {
+        $storage_score -= 25;
+    }
+    
+    my $redo_adjust = grep { /innodb_log_file_size/i || /innodb_redo_log_capacity/i } @adjvars;
+    if ($redo_adjust) {
+        $storage_score -= 25;
+    }
+    $storage_score = 0 if $storage_score < 0;
+
+    # 3. Security & Compliance KPI
+    my $sec_score = 100;
+    $sec_score -= scalar(@secrec) * 15;
+    $sec_score = 0 if $sec_score < 0;
+
+    # 4. Replication & HA KPI
+    my $repl_score = 100;
+    if ( %myrepl ) {
+        my $lag = $myrepl{'Seconds_Behind_Source'} // $myrepl{'Seconds_Behind_Replica'};
+        if (defined $lag && $lag > 60) {
+            $repl_score -= 40;
+        }
+        my $io_run = $myrepl{'Replica_IO_Running'} // $myrepl{'Slave_IO_Running'} // 'Yes';
+        my $sql_run = $myrepl{'Replica_SQL_Running'} // $myrepl{'Slave_SQL_Running'} // 'Yes';
+        if ($io_run =~ /No/i || $sql_run =~ /No/i) {
+            $repl_score -= 35;
+        }
+        my $gtid = $myvar{'gtid_mode'} // 'OFF';
+        if ($gtid =~ /OFF/i) {
+            $repl_score -= 25;
+        }
+    }
+    $repl_score = 0 if $repl_score < 0;
+
+    # 5. SQL Modeling KPI
+    my $model_score = 100;
+    $model_score -= scalar(@modeling) * 10;
+    $model_score = 0 if $model_score < 0;
+
+    $result{'SectionalHealthScore'}{'General'}     = int($gen_score);
+    $result{'SectionalHealthScore'}{'Storage'}     = int($storage_score);
+    $result{'SectionalHealthScore'}{'Security'}    = int($sec_score);
+    $result{'SectionalHealthScore'}{'Replication'} = int($repl_score);
+    $result{'SectionalHealthScore'}{'Modeling'}    = int($model_score);
+
+    # Calculate Resource Saturation Heatmap
+    my $cpu_sat = 0;
+    if (@load) {
+        my $load_1 = $load[0] // 0;
+        my $cpu_cores = $mycalc{'physical_cpu_cores'} // $mycalc{'cpu_cores'} // 1;
+        $cpu_sat = ($cpu_cores > 0) ? ($load_1 / $cpu_cores) * 100 : 0;
+        $cpu_sat = 100 if $cpu_sat > 100;
+    }
+
+    my $mem_sat = $mycalc{'pct_max_physical_memory'} // 0;
+    $mem_sat =~ s/%//g;
+    $mem_sat = 100 if $mem_sat > 100;
+
+    my $conn_sat = $mycalc{'pct_connections_used'} // 0;
+    $conn_sat =~ s/%//g;
+    $conn_sat = 100 if $conn_sat > 100;
+
+    my $read_eff_val = $mycalc{'pct_read_efficiency'} // 100;
+    my $disk_read_pressure = 100 - $read_eff_val;
+    my $scaled_read_pressure = $disk_read_pressure * 20;
+    my $temp_disk_val = $mycalc{'pct_temp_disk'} // 0;
+    my $io_sat = ($scaled_read_pressure > $temp_disk_val) ? $scaled_read_pressure : $temp_disk_val;
+    $io_sat = 100 if $io_sat > 100;
+
+    $result{'ResourceSaturation'}{'CPU'}         = int($cpu_sat);
+    $result{'ResourceSaturation'}{'Memory'}      = int($mem_sat);
+    $result{'ResourceSaturation'}{'Connections'} = int($conn_sat);
+    $result{'ResourceSaturation'}{'IO'}          = int($io_sat);
+
+    # Calculate Throughput Efficiency Index
+    my $qps_val = ( ( $mystat{'Uptime'} || 0 ) > 0 ) ? ( $mystat{'Questions'} || 0 ) / $mystat{'Uptime'} : 0;
+    my $logical_reads_sec = ( $uptime > 0 ) ? ( $mystat{'Innodb_buffer_pool_read_requests'} // 0 ) / $uptime : 0;
+    my $tei = ( $logical_reads_sec > 0 ) ? ( $qps_val / $logical_reads_sec ) : 0;
+    
+    $result{'ThroughputEfficiency'}{'QPS'}             = sprintf("%.3f", $qps_val) + 0;
+    $result{'ThroughputEfficiency'}{'LogicalReadsSec'} = sprintf("%.3f", $logical_reads_sec) + 0;
+    $result{'ThroughputEfficiency'}{'Index'}           = sprintf("%.5f", $tei) + 0;
+}
+
+sub get_top_findings {
+    my $list_ref = shift;
+    my @items = ();
+    foreach my $it (@$list_ref) {
+        push @items, format_recommendation_item($it);
+    }
+    
+    my @scored = ();
+    foreach my $item (@items) {
+        my $score = 1;
+        if ($item =~ /(dangerously high|insecure|vulnerability|CVE|not running|aborted|unencrypted|anonymous|remove|risk|critical|warning|incorrect|mismatch)/i) {
+            $score = 2;
+        }
+        push @scored, { text => $item, score => $score };
+    }
+    
+    my @sorted = sort { $b->{score} <=> $a->{score} } @scored;
+    
+    my @res = ();
+    for (my $i = 0; $i < 3 && $i < @sorted; $i++) {
+        my $badge = ($sorted[$i]->{score} == 2) ? 'Critical' : 'Finding';
+        push @res, { text => $sorted[$i]->{text}, badge => $badge };
+    }
+    return @res;
 }
 
 sub display_health_score {
@@ -3998,6 +4152,20 @@ sub get_other_process_memory {
 
     $cached_other_process_memory = $totalMemOther;
     return $totalMemOther;
+}
+
+sub get_load_average {
+    if ( -f "/proc/loadavg" ) {
+        my $content = file2string("/proc/loadavg") // '';
+        if ( $content =~ /^([\d.]+)\s+([\d.]+)\s+([\d.]+)/ ) {
+            return ( $1, $2, $3 );
+        }
+    }
+    my $uptime_output = execute_system_command("uptime") // '';
+    if ( $uptime_output =~ /load average(?:s)?:?\s+([\d.]+),?\s+([\d.]+),?\s+([\d.]+)/i ) {
+        return ( $1, $2, $3 );
+    }
+    return ();
 }
 
 sub get_os_release {
@@ -11512,8 +11680,9 @@ sub historical_comparison {
         return;
     }
 
-    infoprint "Comparing current results with snapshot from: "
-      . ( $old->{'General'}{'Date'} // 'unknown' );
+    my $snapshot_date = $old->{'General'}{'Date'} // 'unknown';
+    infoprint "Comparing current results with snapshot from: " . $snapshot_date;
+    $result{'Trends'}{'SnapshotDate'} = $snapshot_date;
 
     # 1. Compare QPS
     if ( defined $result{'Stats'}{'QPS'} && defined $old->{'Stats'}{'QPS'} ) {
@@ -11523,20 +11692,24 @@ sub historical_comparison {
           ? ( $diff / $old->{'Stats'}{'QPS'} ) * 100
           : 0;
         my $trend = ( $diff >= 0 ) ? "+" : "";
-        infoprint sprintf(
+        my $qps_trend = sprintf(
             "QPS Trend: %.2f -> %.2f (%s%.2f%%)",
             $old->{'Stats'}{'QPS'},
             $result{'Stats'}{'QPS'},
             $trend, $pct
         );
+        infoprint $qps_trend;
+        $result{'Trends'}{'QPS'} = $qps_trend;
     }
 
     # Compare Health Score
     if ( defined $result{'HealthScore'} && defined $old->{'HealthScore'} ) {
         my $diff  = $result{'HealthScore'} - $old->{'HealthScore'};
         my $trend = ( $diff > 0 ) ? "+" : "";
-        infoprint sprintf( "Health Score Trend: %d -> %d (%s%d)",
+        my $score_trend = sprintf( "Health Score Trend: %d -> %d (%s%d)",
             $old->{'HealthScore'}, $result{'HealthScore'}, $trend, $diff );
+        infoprint $score_trend;
+        $result{'Trends'}{'HealthScore'} = $score_trend;
     }
 
     # 2. Compare Total Data Size
@@ -11545,10 +11718,25 @@ sub historical_comparison {
     {
         my $diff = $result{'Stats'}{'Total Data Size'} -
           $old->{'Stats'}{'Total Data Size'};
-        infoprint "Data Growth: "
+        my $size_trend = "Data Growth: "
           . hr_bytes( $old->{'Stats'}{'Total Data Size'} ) . " -> "
           . hr_bytes( $result{'Stats'}{'Total Data Size'} ) . " ("
           . hr_bytes($diff) . ")";
+        infoprint $size_trend;
+        $result{'Trends'}{'TotalDataSize'} = $size_trend;
+    }
+
+    # Compare sectional scores
+    foreach my $sec ('General', 'Storage', 'Security', 'Replication', 'Modeling') {
+        if (defined $result{'SectionalHealthScore'}{$sec} && defined $old->{'SectionalHealthScore'}{$sec}) {
+            my $diff = $result{'SectionalHealthScore'}{$sec} - $old->{'SectionalHealthScore'}{$sec};
+            my $trend = ($diff > 0) ? "+" : "";
+            $result{'Trends'}{'Sectional'}{$sec} = sprintf("%d -> %d (%s%d)",
+                $old->{'SectionalHealthScore'}{$sec},
+                $result{'SectionalHealthScore'}{$sec},
+                $trend, $diff
+            );
+        }
     }
 
     push @adjvars, "Historical comparison performed against " . basename($file);
@@ -12662,6 +12850,97 @@ sub dump_result {
         my $raw_output_html =
           join( "\n", map { escape_html($_) } @raw_output_lines );
 
+        # Phase 13: Calculate Sectional Health Score variables
+        my $kpi_gen  = $result{'SectionalHealthScore'}{'General'} // 100;
+        my $kpi_stor = $result{'SectionalHealthScore'}{'Storage'} // 100;
+        my $kpi_sec  = $result{'SectionalHealthScore'}{'Security'} // 100;
+        my $kpi_repl = $result{'SectionalHealthScore'}{'Replication'} // 100;
+        my $kpi_mode = $result{'SectionalHealthScore'}{'Modeling'} // 100;
+
+        # Prioritized Top Findings lists
+        my @general_top     = get_top_findings(\@generalrec);
+        my @storage_top     = get_top_findings(\@adjvars);
+        my @security_top    = get_top_findings(\@secrec);
+        my @repl_recs = grep { /(replica|sla[v]e|gtid|replication|binlog|relay)/i } @generalrec;
+        my @replication_top = get_top_findings(\@repl_recs);
+        my @modeling_top    = get_top_findings(\@modeling);
+
+        my $format_top_findings = sub {
+            my ($title, $findings_ref) = @_;
+            my @findings = @$findings_ref;
+            if (!@findings) {
+                return "<div class='bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex flex-col justify-between h-full'>"
+                     . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center mb-3'><span>$title</span><span class='text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20'>🟢 Optimal</span></h4>"
+                     . "<p class='text-xs text-slate-500 italic py-2'>No critical issues or recommendations detected in this area.</p>"
+                     . "</div>";
+            }
+            my $items_html = '';
+            foreach my $f (@findings) {
+                my $badge_color = ($f->{badge} eq 'Critical') ? 'text-rose-400 bg-rose-500/10 border-rose-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+                $items_html .= "<li class='flex items-start gap-2 py-1.5 border-b border-slate-800/30 last:border-0'>"
+                             . "<span class='text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded border $badge_color shrink-0'>" . $f->{badge} . "</span>"
+                             . "<span class='text-xs text-slate-300 break-words'>" . escape_html($f->{text}) . "</span>"
+                             . "</li>";
+            }
+            return "<div class='bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex flex-col justify-between h-full'>"
+                 . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center mb-3'><span>$title</span><span class='text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20'>⚠️ Action Required</span></h4>"
+                 . "<ul class='space-y-1'>$items_html</ul>"
+                 . "</div>";
+        };
+
+        my $gen_findings_html   = $format_top_findings->('General Stats', \@general_top);
+        my $store_findings_html  = $format_top_findings->('Storage & Performance', \@storage_top);
+        my $sec_findings_html    = $format_top_findings->('Security & Compliance', \@security_top);
+        my $repl_findings_html   = $format_top_findings->('Replication & HA', \@replication_top);
+        my $model_findings_html  = $format_top_findings->('SQL Modeling', \@modeling_top);
+
+        # Throughput Efficiency Index
+        my $tei_qps   = $result{'ThroughputEfficiency'}{'QPS'} // 0.0;
+        my $tei_reads = $result{'ThroughputEfficiency'}{'LogicalReadsSec'} // 0.0;
+        my $tei_index = $result{'ThroughputEfficiency'}{'Index'} // 0.00000;
+
+        # Resource Saturation Heatmap
+        my $sat_cpu  = $result{'ResourceSaturation'}{'CPU'} // 0;
+        my $sat_mem  = $result{'ResourceSaturation'}{'Memory'} // 0;
+        my $sat_conn = $result{'ResourceSaturation'}{'Connections'} // 0;
+        my $sat_io   = $result{'ResourceSaturation'}{'IO'} // 0;
+
+        my $get_sat_color = sub {
+            my $val = shift;
+            return $val > 85 ? 'bg-rose-500' : ($val > 60 ? 'bg-amber-400' : 'bg-emerald-500');
+        };
+        my $cpu_color  = $get_sat_color->($sat_cpu);
+        my $mem_color  = $get_sat_color->($sat_mem);
+        my $conn_color = $get_sat_color->($sat_conn);
+        my $io_color   = $get_sat_color->($sat_io);
+
+        # Historical Trend Deltas
+        my $historical_deltas_html = '';
+        if (defined $result{'Trends'}) {
+            my $qps_delta   = $result{'Trends'}{'QPS'} // 'N/A';
+            my $score_delta = $result{'Trends'}{'HealthScore'} // 'N/A';
+            my $size_delta  = $result{'Trends'}{'TotalDataSize'} // 'N/A';
+            my $sec_deltas  = '';
+            foreach my $sec ('General', 'Storage', 'Security', 'Replication', 'Modeling') {
+                my $d = $result{'Trends'}{'Sectional'}{$sec} // 'N/A';
+                $sec_deltas .= "<div class='text-xs text-slate-400'><span class='font-semibold'>$sec:</span> $d</div>";
+            }
+            $historical_deltas_html = <<"HTML";
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-history text-indigo-400 mr-2"></i>Historical Performance Deltas</h3>
+                    <div class="space-y-3">
+                        <div class="text-xs text-slate-400"><span class="font-semibold">QPS:</span> $qps_delta</div>
+                        <div class="text-xs text-slate-400"><span class="font-semibold">Health Score:</span> $score_delta</div>
+                        <div class="text-xs text-slate-400"><span class="font-semibold">Data Size:</span> $size_delta</div>
+                        <div class="border-t border-slate-800/60 pt-3 mt-3">
+                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Sectional Score Trends</h4>
+                            $sec_deltas
+                        </div>
+                    </div>
+                </div>
+HTML
+        }
+
         # Determine health score color class
         my $score_color_class =
           $score > 80
@@ -12794,10 +13073,149 @@ sub dump_result {
                     </div>
                 </div>
 
+                $historical_deltas_html
             </div>
 
             <!-- Content Area: Recommendations lists -->
             <div class="lg:col-span-2 space-y-6">
+
+                <!-- Unified Health Dashboard (Phase 13) -->
+                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden p-6 space-y-6">
+                    <div class="border-b border-slate-800/80 pb-4 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-slate-200 flex items-center gap-2"><i class="fas fa-chart-line text-indigo-400"></i>Sectional Indicators &amp; KPIs Dashboard</h2>
+                        <span class="text-xs text-slate-500 uppercase tracking-widest font-bold">Phase 13 Unified View</span>
+                    </div>
+
+                    <!-- 1. Sectional Health Scores -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                        <!-- General -->
+                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">General Stats</span>
+                            <span class="text-xl font-extrabold text-blue-400 block mb-2">$kpi_gen%</span>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                <div class="bg-blue-400 h-1.5 rounded-full" style="width: $kpi_gen%"></div>
+                            </div>
+                        </div>
+                        <!-- Storage -->
+                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Storage &amp; Perf</span>
+                            <span class="text-xl font-extrabold text-amber-400 block mb-2">$kpi_stor%</span>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                <div class="bg-amber-400 h-1.5 rounded-full" style="width: $kpi_stor%"></div>
+                            </div>
+                        </div>
+                        <!-- Security -->
+                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Security</span>
+                            <span class="text-xl font-extrabold text-rose-500 block mb-2">$kpi_sec%</span>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                <div class="bg-rose-500 h-1.5 rounded-full" style="width: $kpi_sec%"></div>
+                            </div>
+                        </div>
+                        <!-- Replication -->
+                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Replication &amp; HA</span>
+                            <span class="text-xl font-extrabold text-emerald-400 block mb-2">$kpi_repl%</span>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                <div class="bg-emerald-400 h-1.5 rounded-full" style="width: $kpi_repl%"></div>
+                            </div>
+                        </div>
+                        <!-- Modeling -->
+                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">SQL Modeling</span>
+                            <span class="text-xl font-extrabold text-cyan-400 block mb-2">$kpi_mode%</span>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                <div class="bg-cyan-400 h-1.5 rounded-full" style="width: $kpi_mode%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Heatmap & TEI Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                        <!-- Heatmap -->
+                        <div class="bg-slate-950/20 border border-slate-850 rounded-xl p-4 space-y-3">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fas fa-fire text-amber-500"></i>Resource Saturation Heatmap</h3>
+                            <!-- CPU -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] font-medium">
+                                    <span class="text-slate-400">CPU Load Saturation</span>
+                                    <span class="font-mono text-slate-300">$sat_cpu%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="$cpu_color h-1.5 rounded-full" style="width: $sat_cpu%"></div>
+                                </div>
+                            </div>
+                            <!-- Memory -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] font-medium">
+                                    <span class="text-slate-400">Memory Saturation</span>
+                                    <span class="font-mono text-slate-300">$sat_mem%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="$mem_color h-1.5 rounded-full" style="width: $sat_mem%"></div>
+                                </div>
+                            </div>
+                            <!-- Connections -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] font-medium">
+                                    <span class="text-slate-400">Connections Saturation</span>
+                                    <span class="font-mono text-slate-300">$sat_conn%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="$conn_color h-1.5 rounded-full" style="width: $sat_conn%"></div>
+                                </div>
+                            </div>
+                            <!-- Disk I/O -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] font-medium">
+                                    <span class="text-slate-400">Disk I/O Pressure</span>
+                                    <span class="font-mono text-slate-300">$sat_io%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="$io_color h-1.5 rounded-full" style="width: $sat_io%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TEI -->
+                        <div class="bg-slate-950/20 border border-slate-850 rounded-xl p-4 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5"><i class="fas fa-gauge-high text-cyan-400"></i>Throughput Efficiency Index</h3>
+                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                    <div>
+                                        <span class="text-[10px] text-slate-500 uppercase font-semibold block">Logical Work</span>
+                                        <span class="text-sm font-bold text-slate-300">$tei_qps QPS</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-slate-500 uppercase font-semibold block">Buffer Logical Reads</span>
+                                        <span class="text-sm font-bold text-slate-300">$tei_reads/s</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="border-t border-slate-800/80 pt-3 mt-3">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <span class="text-[10px] text-slate-500 uppercase font-semibold block">Efficiency Ratio</span>
+                                        <span class="text-xs text-slate-400">Queries completed per logical page read</span>
+                                    </div>
+                                    <span class="text-lg font-extrabold text-cyan-400 font-mono">$tei_index</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Top Findings Summary -->
+                    <div class="pt-2">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5"><i class="fas fa-clipboard-list text-indigo-400"></i>Prioritized Executive Summary Findings</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            $gen_findings_html
+                            $store_findings_html
+                            $sec_findings_html
+                            $repl_findings_html
+                            $model_findings_html
+                        </div>
+                    </div>
+                </section>
 
                 <!-- General Recommendations Panel -->
                 <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">

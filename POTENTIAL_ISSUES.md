@@ -115,12 +115,13 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - Binlog checksum, doublewrite consistency: NOT implemented
 - **Status**: Phase 9 partially implemented
 
-#### PI-016: ROADMAP Phases 10-12 — Not started
+#### PI-016: ROADMAP Phases 11-12 — Not started
 - Workload Analysis & Traffic Profiling: Not implemented
 - Advanced Log Parser & Lock Monitoring: Not implemented
-- Sectional Global Indicators: Not implemented
 
-#### PI-017: ROADMAP Phase 13 (Export Optimization) — COMPLETED ✅
+#### PI-017: ROADMAP Phase 13 (Sectional Global Indicators) — COMPLETED ✅
+
+#### PI-018: ROADMAP Phase 14 (Export Optimization) — COMPLETED ✅
 
 ---
 
