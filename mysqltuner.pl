@@ -6114,6 +6114,7 @@ sub calculations {
 
     my $is_mariadb = ( $myvar{'version'} // '' ) =~ /mariadb/i
       || ( $myvar{'version_comment'} // '' ) =~ /mariadb/i;
+    $mycalc{'is_mariadb'} = $is_mariadb ? 1 : 0;
 
     if ( defined $myvar{'version'} ) {
         $myvar{'version'} =~ s/(.+)-.*?$/$1/;
@@ -6410,13 +6411,26 @@ sub calculations {
         if ( ( $mystat{'Com_select'} || 0 ) + ( $mystat{'Qcache_hits'} || 0 ) >
             0 )
         {
-            $mycalc{'query_cache_efficiency'} = sprintf(
-                "%.1f",
-                (
-                    $mystat{'Qcache_hits'} /
-                      ( $mystat{'Com_select'} + $mystat{'Qcache_hits'} )
-                ) * 100
-            );
+            # On MariaDB, Com_select already includes Qcache_hits, so use
+            # Qcache_hits / Com_select instead of Qcache_hits / (Com_select + Qcache_hits)
+            if ( $is_mariadb && ( $mystat{'Com_select'} || 0 ) > 0 )
+            {
+                $mycalc{'query_cache_efficiency'} = sprintf(
+                    "%.1f",
+                    (
+                        $mystat{'Qcache_hits'} / $mystat{'Com_select'}
+                    ) * 100
+                );
+            }
+            else {
+                $mycalc{'query_cache_efficiency'} = sprintf(
+                    "%.1f",
+                    (
+                        $mystat{'Qcache_hits'} /
+                          ( $mystat{'Com_select'} + $mystat{'Qcache_hits'} )
+                    ) * 100
+                );
+            }
         }
         else {
             $mycalc{'query_cache_efficiency'} = 0;
@@ -6949,7 +6963,11 @@ sub mysql_stats {
               "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
               . hr_num( $mystat{'Qcache_hits'} )
               . " cached / "
-              . hr_num( $mystat{'Qcache_hits'} + $mystat{'Com_select'} )
+              . hr_num(
+                $mycalc{'is_mariadb'}
+                ? $mystat{'Com_select'}
+                : $mystat{'Qcache_hits'} + $mystat{'Com_select'}
+              )
               . " selects)";
             badprint
               "Query cache may be disabled by default due to mutex contention.";
@@ -6961,7 +6979,11 @@ sub mysql_stats {
               "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
               . hr_num( $mystat{'Qcache_hits'} )
               . " cached / "
-              . hr_num( $mystat{'Qcache_hits'} + $mystat{'Com_select'} )
+              . hr_num(
+                $mycalc{'is_mariadb'}
+                ? $mystat{'Com_select'}
+                : $mystat{'Qcache_hits'} + $mystat{'Com_select'}
+              )
               . " selects)";
             if ( $mycalc{'query_cache_prunes_per_day'} > 98 ) {
                 badprint
