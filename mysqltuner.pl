@@ -72,6 +72,7 @@ our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
 our %exported_manifest;
+our ( $tuner_start_time, $current_section_name, $current_section_start, @section_timings );
 our $failed_connection_attempts = 0;
 our $previous_failed_attempts   = 0;
 
@@ -1587,12 +1588,74 @@ sub infoprintcmd {
 }
 
 sub subheaderprint {
+    my $name = $_[0];
+    my $now = eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    if ( defined $current_section_name && $opt{'verbose'} ) {
+        my $elapsed = $now - $current_section_start;
+        push @section_timings, [ $current_section_name, $elapsed ];
+        infoprint sprintf("%s execution time: %.3fs", $current_section_name, $elapsed);
+    }
+    $current_section_name = $name;
+    $current_section_start = $now;
+
     my $tln = 100;
     my $sln = 8;
     my $ln  = length("@_") + 2;
 
     prettyprint " ";
     prettyprint "-" x $sln . " @_ " . "-" x ( $tln - $ln - $sln );
+}
+
+sub stop_section_timing {
+    my $now = eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    if ( defined $current_section_name && $opt{'verbose'} ) {
+        my $elapsed = $now - $current_section_start;
+        push @section_timings, [ $current_section_name, $elapsed ];
+        infoprint sprintf("%s execution time: %.3fs", $current_section_name, $elapsed);
+    }
+    $current_section_name = undef;
+}
+
+sub print_execution_timings {
+    return unless $opt{'verbose'};
+
+    stop_section_timing();
+
+    my $total_now = eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    my $total_elapsed = $total_now - $tuner_start_time;
+
+    subheaderprint "Execution Times";
+    foreach my $timing (@section_timings) {
+        my ( $name, $elapsed ) = @$timing;
+        my $pct = $total_elapsed > 0 ? ( $elapsed / $total_elapsed ) * 100 : 0;
+        infoprint sprintf( "%-50s: %.3fs (%.1f%%)", $name, $elapsed, $pct );
+    }
+    infoprint sprintf( "Total Execution Time: %.3fs", $total_elapsed );
+}
+
+sub print_audit_snapshot_summary {
+    subheaderprint "Audit Snapshot Summary";
+
+    my $host = $opt{'host'} || 'localhost';
+    if ( $opt{'port'} ) {
+        $host .= ":$opt{'port'}";
+    }
+
+    my $db_user = select_one("SELECT CURRENT_USER()") || $opt{'user'} || 'unknown';
+
+    my $ram_str = defined($physical_memory) ? hr_bytes($physical_memory) : 'unknown';
+    my $swap_str = defined($swap_memory) ? hr_bytes($swap_memory) : 'unknown';
+
+    my $db_ver = $myvar{'version'} // 'unknown';
+    my $uptime_str = defined($mystat{'Uptime'}) ? pretty_uptime($mystat{'Uptime'}) : 'unknown';
+
+    infoprint "MySQLTuner Version : $tunerversion";
+    infoprint "Server Connection  : $host";
+    infoprint "Database User      : $db_user";
+    infoprint "Database Version   : $db_ver";
+    infoprint "System Physical RAM: $ram_str";
+    infoprint "System Swap Memory : $swap_str";
+    infoprint "Database Uptime    : $uptime_str";
 }
 
 sub infoprinthcmd {
@@ -13599,6 +13662,7 @@ sub dump_csv_files {
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 if ( !caller ) {
+    $tuner_start_time = eval { require Time::HiRes; Time::HiRes::time(); } || time();
     parse_cli_args;       # Parse CLI arguments
     setup_environment;    # Initialize variables and handle early exits
     headerprint;          # Header Print
@@ -13609,9 +13673,9 @@ if ( !caller ) {
     debugprint "MySQL FINAL Client : $mysqlcmd $mysqllogin";
     debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
 
-    dump_csv_files;            # dump csv files
     os_setup;                  # Set up some OS variables
     get_all_vars;              # Toss variables/status into hashes
+    print_audit_snapshot_summary;  # Summary of the audit snapshot
     mysql_cloud_discovery;     # Auto-discover cloud environment
     get_tuning_info;           # Get information about the tuning connection
     calculations;              # Calculate everything we need
@@ -13625,7 +13689,9 @@ if ( !caller ) {
             subheaderprint "Running feature: $feature";
             $feature->();
         }
+        dump_csv_files;            # dump csv files
         make_recommendations;
+        print_execution_timings();
         goodprint "Terminated successfully";
         exit(0);
     }
@@ -13653,8 +13719,10 @@ if ( !caller ) {
         $section->();
     }
 
+    dump_csv_files;            # dump csv files
     make_recommendations;    # Make recommendations based on stats
     dump_result;             # Dump result if debug is on
+    print_execution_timings();
     goodprint "Terminated successfully";
     close_outputfile;        # Close reportfile if needed
 
