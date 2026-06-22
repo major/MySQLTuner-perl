@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Set up MySQL
-        uses: shogo82148/actions-setup-mysql@c80f44ab210a360ef966c5b9f48a2ae21123b533 # v1
+        uses: shogo82148/actions-setup-mysql@076e636c45996ec8cb1a455c65f9f5364aeebd8a # v1
         with:
           distribution: 'mariadb'
           root-password: "root"
