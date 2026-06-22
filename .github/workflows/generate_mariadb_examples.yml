@@ -67,7 +67,7 @@ jobs:
           git add ./examples/github/result/mariadb/${{ matrix.MARIADB_VERSION }}/* || true
 
       - name: Run the Action Commit
-        uses: devops-infra/action-commit-push@f066ea8e19660de57d3d3a4a0b9d294ea2612e20 # master
+        uses: devops-infra/action-commit-push@fa0c793b27578a6f16c2cf02c416a0d69fac58c9 # master
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           add_timestamp: true
