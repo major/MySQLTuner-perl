@@ -58,7 +58,7 @@ def generate_readme():
         
         output.append("\n")
     
-    output.append("---\n*Generated automatically by `/doc-sync` on " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "*")
+    output.append("---\n*Generated automatically by `/doc-sync`*")
     
     with open(README_PATH, 'w') as f:
         f.write("\n".join(output))
