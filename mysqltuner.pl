@@ -72,7 +72,10 @@ our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
 our %exported_manifest;
-our ( $tuner_start_time, $current_section_name, $current_section_start, @section_timings );
+our (
+    $tuner_start_time,      $current_section_name,
+    $current_section_start, @section_timings
+);
 our $failed_connection_attempts = 0;
 our $previous_failed_attempts   = 0;
 
@@ -1012,52 +1015,57 @@ sub calculate_health_score {
 }
 
 sub calculate_sectional_health_scores {
+
     # 1. General Statistics KPI
     my $gen_score = 100;
-    
+
     my $uptime = $mystat{'Uptime'} // 0;
-    if ($uptime < 86400) {
+    if ( $uptime < 86400 ) {
         $gen_score -= 20;
     }
-    
+
     my @load = get_load_average();
     if (@load) {
-        my $load_1 = $load[0] // 0;
-        my $cpu_cores = $mycalc{'physical_cpu_cores'} // $mycalc{'cpu_cores'} // 1;
-        if ($cpu_cores > 0 && ($load_1 / $cpu_cores) > 1.0) {
+        my $load_1    = $load[0]                      // 0;
+        my $cpu_cores = $mycalc{'physical_cpu_cores'} // $mycalc{'cpu_cores'}
+          // 1;
+        if ( $cpu_cores > 0 && ( $load_1 / $cpu_cores ) > 1.0 ) {
             $gen_score -= 20;
         }
     }
-    
+
     if ( grep { /swappiness/i } @generalrec ) {
         $gen_score -= 20;
     }
-    
+
     my $other_mem = get_other_process_memory() // 0;
-    if ( ( $physical_memory // 0 ) > 0 && ($other_mem / $physical_memory) > 0.3 ) {
+    if (   ( $physical_memory // 0 ) > 0
+        && ( $other_mem / $physical_memory ) > 0.3 )
+    {
         $gen_score -= 20;
     }
     $gen_score = 0 if $gen_score < 0;
 
     # 2. Storage Engine KPI
     my $storage_score = 100;
-    
+
     my $read_eff = $mycalc{'pct_read_efficiency'} // 100;
-    if ($read_eff < 95) {
+    if ( $read_eff < 95 ) {
         $storage_score -= 25;
     }
-    
+
     my $temp_disk = $mycalc{'pct_temp_disk'} // 0;
-    if ($temp_disk > 25) {
+    if ( $temp_disk > 25 ) {
         $storage_score -= 25;
     }
-    
+
     my $table_hit = $mycalc{'table_cache_hit_rate'} // 100;
-    if ($table_hit < 50) {
+    if ( $table_hit < 50 ) {
         $storage_score -= 25;
     }
-    
-    my $redo_adjust = grep { /innodb_log_file_size/i || /innodb_redo_log_capacity/i } @adjvars;
+
+    my $redo_adjust =
+      grep { /innodb_log_file_size/i || /innodb_redo_log_capacity/i } @adjvars;
     if ($redo_adjust) {
         $storage_score -= 25;
     }
@@ -1070,18 +1078,21 @@ sub calculate_sectional_health_scores {
 
     # 4. Replication & HA KPI
     my $repl_score = 100;
-    if ( %myrepl ) {
-        my $lag = $myrepl{'Seconds_Behind_Source'} // $myrepl{'Seconds_Behind_Replica'};
-        if (defined $lag && $lag > 60) {
+    if (%myrepl) {
+        my $lag = $myrepl{'Seconds_Behind_Source'}
+          // $myrepl{'Seconds_Behind_Replica'};
+        if ( defined $lag && $lag > 60 ) {
             $repl_score -= 40;
         }
-        my $io_run = $myrepl{'Replica_IO_Running'} // $myrepl{'Slave_IO_Running'} // 'Yes';
-        my $sql_run = $myrepl{'Replica_SQL_Running'} // $myrepl{'Slave_SQL_Running'} // 'Yes';
-        if ($io_run =~ /No/i || $sql_run =~ /No/i) {
+        my $io_run = $myrepl{'Replica_IO_Running'}
+          // $myrepl{'Slave_IO_Running'} // 'Yes';
+        my $sql_run = $myrepl{'Replica_SQL_Running'}
+          // $myrepl{'Slave_SQL_Running'} // 'Yes';
+        if ( $io_run =~ /No/i || $sql_run =~ /No/i ) {
             $repl_score -= 35;
         }
         my $gtid = $myvar{'gtid_mode'} // 'OFF';
-        if ($gtid =~ /OFF/i) {
+        if ( $gtid =~ /OFF/i ) {
             $repl_score -= 25;
         }
     }
@@ -1101,9 +1112,10 @@ sub calculate_sectional_health_scores {
     # Calculate Resource Saturation Heatmap
     my $cpu_sat = 0;
     if (@load) {
-        my $load_1 = $load[0] // 0;
-        my $cpu_cores = $mycalc{'physical_cpu_cores'} // $mycalc{'cpu_cores'} // 1;
-        $cpu_sat = ($cpu_cores > 0) ? ($load_1 / $cpu_cores) * 100 : 0;
+        my $load_1    = $load[0]                      // 0;
+        my $cpu_cores = $mycalc{'physical_cpu_cores'} // $mycalc{'cpu_cores'}
+          // 1;
+        $cpu_sat = ( $cpu_cores > 0 ) ? ( $load_1 / $cpu_cores ) * 100 : 0;
         $cpu_sat = 100 if $cpu_sat > 100;
     }
 
@@ -1115,11 +1127,14 @@ sub calculate_sectional_health_scores {
     $conn_sat =~ s/%//g;
     $conn_sat = 100 if $conn_sat > 100;
 
-    my $read_eff_val = $mycalc{'pct_read_efficiency'} // 100;
-    my $disk_read_pressure = 100 - $read_eff_val;
+    my $read_eff_val         = $mycalc{'pct_read_efficiency'} // 100;
+    my $disk_read_pressure   = 100 - $read_eff_val;
     my $scaled_read_pressure = $disk_read_pressure * 20;
-    my $temp_disk_val = $mycalc{'pct_temp_disk'} // 0;
-    my $io_sat = ($scaled_read_pressure > $temp_disk_val) ? $scaled_read_pressure : $temp_disk_val;
+    my $temp_disk_val        = $mycalc{'pct_temp_disk'} // 0;
+    my $io_sat =
+      ( $scaled_read_pressure > $temp_disk_val )
+      ? $scaled_read_pressure
+      : $temp_disk_val;
     $io_sat = 100 if $io_sat > 100;
 
     $result{'ResourceSaturation'}{'CPU'}         = int($cpu_sat);
@@ -1128,36 +1143,47 @@ sub calculate_sectional_health_scores {
     $result{'ResourceSaturation'}{'IO'}          = int($io_sat);
 
     # Calculate Throughput Efficiency Index
-    my $qps_val = ( ( $mystat{'Uptime'} || 0 ) > 0 ) ? ( $mystat{'Questions'} || 0 ) / $mystat{'Uptime'} : 0;
-    my $logical_reads_sec = ( $uptime > 0 ) ? ( $mystat{'Innodb_buffer_pool_read_requests'} // 0 ) / $uptime : 0;
-    my $tei = ( $logical_reads_sec > 0 ) ? ( $qps_val / $logical_reads_sec ) : 0;
-    
-    $result{'ThroughputEfficiency'}{'QPS'}             = sprintf("%.3f", $qps_val) + 0;
-    $result{'ThroughputEfficiency'}{'LogicalReadsSec'} = sprintf("%.3f", $logical_reads_sec) + 0;
-    $result{'ThroughputEfficiency'}{'Index'}           = sprintf("%.5f", $tei) + 0;
+    my $qps_val =
+        ( ( $mystat{'Uptime'} || 0 ) > 0 )
+      ? ( $mystat{'Questions'} || 0 ) / $mystat{'Uptime'}
+      : 0;
+    my $logical_reads_sec =
+        ( $uptime > 0 )
+      ? ( $mystat{'Innodb_buffer_pool_read_requests'} // 0 ) / $uptime
+      : 0;
+    my $tei =
+      ( $logical_reads_sec > 0 ) ? ( $qps_val / $logical_reads_sec ) : 0;
+
+    $result{'ThroughputEfficiency'}{'QPS'} = sprintf( "%.3f", $qps_val ) + 0;
+    $result{'ThroughputEfficiency'}{'LogicalReadsSec'} =
+      sprintf( "%.3f", $logical_reads_sec ) + 0;
+    $result{'ThroughputEfficiency'}{'Index'} = sprintf( "%.5f", $tei ) + 0;
 }
 
 sub get_top_findings {
     my $list_ref = shift;
-    my @items = ();
+    my @items    = ();
     foreach my $it (@$list_ref) {
         push @items, format_recommendation_item($it);
     }
-    
+
     my @scored = ();
     foreach my $item (@items) {
         my $score = 1;
-        if ($item =~ /(dangerously high|insecure|vulnerability|CVE|not running|aborted|unencrypted|anonymous|remove|risk|critical|warning|incorrect|mismatch)/i) {
+        if ( $item =~
+/(dangerously high|insecure|vulnerability|CVE|not running|aborted|unencrypted|anonymous|remove|risk|critical|warning|incorrect|mismatch)/i
+          )
+        {
             $score = 2;
         }
         push @scored, { text => $item, score => $score };
     }
-    
+
     my @sorted = sort { $b->{score} <=> $a->{score} } @scored;
-    
+
     my @res = ();
-    for (my $i = 0; $i < 3 && $i < @sorted; $i++) {
-        my $badge = ($sorted[$i]->{score} == 2) ? 'Critical' : 'Finding';
+    for ( my $i = 0 ; $i < 3 && $i < @sorted ; $i++ ) {
+        my $badge = ( $sorted[$i]->{score} == 2 ) ? 'Critical' : 'Finding';
         push @res, { text => $sorted[$i]->{text}, badge => $badge };
     }
     return @res;
@@ -1589,13 +1615,15 @@ sub infoprintcmd {
 
 sub subheaderprint {
     my $name = $_[0];
-    my $now = eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    my $now  = eval { require Time::HiRes; Time::HiRes::time(); } || time();
     if ( defined $current_section_name && $opt{'verbose'} ) {
         my $elapsed = $now - $current_section_start;
         push @section_timings, [ $current_section_name, $elapsed ];
-        infoprint sprintf("%s execution time: %.3fs", $current_section_name, $elapsed);
+        infoprint
+          sprintf( "%s execution time: %.3fs", $current_section_name,
+            $elapsed );
     }
-    $current_section_name = $name;
+    $current_section_name  = $name;
     $current_section_start = $now;
 
     my $tln = 100;
@@ -1611,7 +1639,9 @@ sub stop_section_timing {
     if ( defined $current_section_name && $opt{'verbose'} ) {
         my $elapsed = $now - $current_section_start;
         push @section_timings, [ $current_section_name, $elapsed ];
-        infoprint sprintf("%s execution time: %.3fs", $current_section_name, $elapsed);
+        infoprint
+          sprintf( "%s execution time: %.3fs", $current_section_name,
+            $elapsed );
     }
     $current_section_name = undef;
 }
@@ -1621,7 +1651,8 @@ sub print_execution_timings {
 
     stop_section_timing();
 
-    my $total_now = eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    my $total_now =
+      eval { require Time::HiRes; Time::HiRes::time(); } || time();
     my $total_elapsed = $total_now - $tuner_start_time;
 
     subheaderprint "Execution Times";
@@ -1641,13 +1672,18 @@ sub print_audit_snapshot_summary {
         $host .= ":$opt{'port'}";
     }
 
-    my $db_user = select_one("SELECT CURRENT_USER()") || $opt{'user'} || 'unknown';
+    my $db_user =
+      select_one("SELECT CURRENT_USER()") || $opt{'user'} || 'unknown';
 
-    my $ram_str = defined($physical_memory) ? hr_bytes($physical_memory) : 'unknown';
+    my $ram_str =
+      defined($physical_memory) ? hr_bytes($physical_memory) : 'unknown';
     my $swap_str = defined($swap_memory) ? hr_bytes($swap_memory) : 'unknown';
 
     my $db_ver = $myvar{'version'} // 'unknown';
-    my $uptime_str = defined($mystat{'Uptime'}) ? pretty_uptime($mystat{'Uptime'}) : 'unknown';
+    my $uptime_str =
+      defined( $mystat{'Uptime'} )
+      ? pretty_uptime( $mystat{'Uptime'} )
+      : 'unknown';
 
     infoprint "MySQLTuner Version : $tunerversion";
     infoprint "Server Connection  : $host";
@@ -4225,7 +4261,9 @@ sub get_load_average {
         }
     }
     my $uptime_output = execute_system_command("uptime") // '';
-    if ( $uptime_output =~ /load average(?:s)?:?\s+([\d.]+),?\s+([\d.]+),?\s+([\d.]+)/i ) {
+    if ( $uptime_output =~
+        /load average(?:s)?:?\s+([\d.]+),?\s+([\d.]+),?\s+([\d.]+)/i )
+    {
         return ( $1, $2, $3 );
     }
     return ();
@@ -6658,16 +6696,16 @@ sub calculations {
         $mycalc{'query_cache_efficiency'} = 0;
     }
     elsif ( mysql_version_ge(4) ) {
-        if ( ( $mystat{'Com_select'} || 0 ) + ( $mystat{'Qcache_hits'} || 0 ) >
-            0 )
-        {
-            $mycalc{'query_cache_efficiency'} = sprintf(
-                "%.1f",
-                (
-                    $mystat{'Qcache_hits'} /
-                      ( $mystat{'Com_select'} + $mystat{'Qcache_hits'} )
-                ) * 100
-            );
+
+     # MDEV-4981: In MariaDB, Com_select includes query cache hits (Qcache_hits)
+        my $total_selects =
+          $is_mariadb
+          ? ( $mystat{'Com_select'} || 0 )
+          : (
+            ( $mystat{'Com_select'} || 0 ) + ( $mystat{'Qcache_hits'} || 0 ) );
+        if ( $total_selects > 0 ) {
+            $mycalc{'query_cache_efficiency'} = sprintf( "%.1f",
+                ( ( $mystat{'Qcache_hits'} || 0 ) / $total_selects ) * 100 );
         }
         else {
             $mycalc{'query_cache_efficiency'} = 0;
@@ -7195,12 +7233,21 @@ sub mysql_stats {
           "Query cache cannot be analyzed: no SELECT statements executed";
     }
     else {
+     # MDEV-4981: In MariaDB, Com_select includes query cache hits (Qcache_hits)
+        my $is_mariadb = ( $myvar{'version'} // '' ) =~ /mariadb/i
+          || ( $myvar{'version_comment'} // '' ) =~ /mariadb/i;
+        my $total_selects =
+          $is_mariadb
+          ? ( $mystat{'Com_select'} || 0 )
+          : (
+            ( $mystat{'Com_select'} || 0 ) + ( $mystat{'Qcache_hits'} || 0 ) );
+
         if ( $mycalc{'query_cache_efficiency'} < 20 ) {
             badprint
               "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
               . hr_num( $mystat{'Qcache_hits'} )
               . " cached / "
-              . hr_num( $mystat{'Qcache_hits'} + $mystat{'Com_select'} )
+              . hr_num($total_selects)
               . " selects)";
             badprint
               "Query cache may be disabled by default due to mutex contention.";
@@ -7212,7 +7259,7 @@ sub mysql_stats {
               "Query cache efficiency: $mycalc{'query_cache_efficiency'}% ("
               . hr_num( $mystat{'Qcache_hits'} )
               . " cached / "
-              . hr_num( $mystat{'Qcache_hits'} + $mystat{'Com_select'} )
+              . hr_num($total_selects)
               . " selects)";
             if ( $mycalc{'query_cache_prunes_per_day'} > 98 ) {
                 badprint
@@ -11754,7 +11801,7 @@ sub historical_comparison {
             ( $old->{'Stats'}{'QPS'} > 0 )
           ? ( $diff / $old->{'Stats'}{'QPS'} ) * 100
           : 0;
-        my $trend = ( $diff >= 0 ) ? "+" : "";
+        my $trend     = ( $diff >= 0 ) ? "+" : "";
         my $qps_trend = sprintf(
             "QPS Trend: %.2f -> %.2f (%s%.2f%%)",
             $old->{'Stats'}{'QPS'},
@@ -11767,8 +11814,8 @@ sub historical_comparison {
 
     # Compare Health Score
     if ( defined $result{'HealthScore'} && defined $old->{'HealthScore'} ) {
-        my $diff  = $result{'HealthScore'} - $old->{'HealthScore'};
-        my $trend = ( $diff > 0 ) ? "+" : "";
+        my $diff        = $result{'HealthScore'} - $old->{'HealthScore'};
+        my $trend       = ( $diff > 0 ) ? "+" : "";
         my $score_trend = sprintf( "Health Score Trend: %d -> %d (%s%d)",
             $old->{'HealthScore'}, $result{'HealthScore'}, $trend, $diff );
         infoprint $score_trend;
@@ -11781,7 +11828,8 @@ sub historical_comparison {
     {
         my $diff = $result{'Stats'}{'Total Data Size'} -
           $old->{'Stats'}{'Total Data Size'};
-        my $size_trend = "Data Growth: "
+        my $size_trend =
+            "Data Growth: "
           . hr_bytes( $old->{'Stats'}{'Total Data Size'} ) . " -> "
           . hr_bytes( $result{'Stats'}{'Total Data Size'} ) . " ("
           . hr_bytes($diff) . ")";
@@ -11790,15 +11838,19 @@ sub historical_comparison {
     }
 
     # Compare sectional scores
-    foreach my $sec ('General', 'Storage', 'Security', 'Replication', 'Modeling') {
-        if (defined $result{'SectionalHealthScore'}{$sec} && defined $old->{'SectionalHealthScore'}{$sec}) {
-            my $diff = $result{'SectionalHealthScore'}{$sec} - $old->{'SectionalHealthScore'}{$sec};
-            my $trend = ($diff > 0) ? "+" : "";
-            $result{'Trends'}{'Sectional'}{$sec} = sprintf("%d -> %d (%s%d)",
+    foreach
+      my $sec ( 'General', 'Storage', 'Security', 'Replication', 'Modeling' )
+    {
+        if (   defined $result{'SectionalHealthScore'}{$sec}
+            && defined $old->{'SectionalHealthScore'}{$sec} )
+        {
+            my $diff = $result{'SectionalHealthScore'}{$sec} -
+              $old->{'SectionalHealthScore'}{$sec};
+            my $trend = ( $diff > 0 ) ? "+" : "";
+            $result{'Trends'}{'Sectional'}{$sec} = sprintf( "%d -> %d (%s%d)",
                 $old->{'SectionalHealthScore'}{$sec},
                 $result{'SectionalHealthScore'}{$sec},
-                $trend, $diff
-            );
+                $trend, $diff );
         }
     }
 
@@ -12914,63 +12966,82 @@ sub dump_result {
           join( "\n", map { escape_html($_) } @raw_output_lines );
 
         # Phase 13: Calculate Sectional Health Score variables
-        my $kpi_gen  = $result{'SectionalHealthScore'}{'General'} // 100;
-        my $kpi_stor = $result{'SectionalHealthScore'}{'Storage'} // 100;
-        my $kpi_sec  = $result{'SectionalHealthScore'}{'Security'} // 100;
+        my $kpi_gen  = $result{'SectionalHealthScore'}{'General'}     // 100;
+        my $kpi_stor = $result{'SectionalHealthScore'}{'Storage'}     // 100;
+        my $kpi_sec  = $result{'SectionalHealthScore'}{'Security'}    // 100;
         my $kpi_repl = $result{'SectionalHealthScore'}{'Replication'} // 100;
-        my $kpi_mode = $result{'SectionalHealthScore'}{'Modeling'} // 100;
+        my $kpi_mode = $result{'SectionalHealthScore'}{'Modeling'}    // 100;
 
         # Prioritized Top Findings lists
-        my @general_top     = get_top_findings(\@generalrec);
-        my @storage_top     = get_top_findings(\@adjvars);
-        my @security_top    = get_top_findings(\@secrec);
-        my @repl_recs = grep { /(replica|sla[v]e|gtid|replication|binlog|relay)/i } @generalrec;
-        my @replication_top = get_top_findings(\@repl_recs);
-        my @modeling_top    = get_top_findings(\@modeling);
+        my @general_top  = get_top_findings( \@generalrec );
+        my @storage_top  = get_top_findings( \@adjvars );
+        my @security_top = get_top_findings( \@secrec );
+        my @repl_recs =
+          grep { /(replica|sla[v]e|gtid|replication|binlog|relay)/i }
+          @generalrec;
+        my @replication_top = get_top_findings( \@repl_recs );
+        my @modeling_top    = get_top_findings( \@modeling );
 
         my $format_top_findings = sub {
-            my ($title, $findings_ref) = @_;
+            my ( $title, $findings_ref ) = @_;
             my @findings = @$findings_ref;
-            if (!@findings) {
-                return "<div class='bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex flex-col justify-between h-full'>"
-                     . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center mb-3'><span>$title</span><span class='text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20'>🟢 Optimal</span></h4>"
-                     . "<p class='text-xs text-slate-500 italic py-2'>No critical issues or recommendations detected in this area.</p>"
-                     . "</div>";
+            if ( !@findings ) {
+                return
+"<div class='bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex flex-col justify-between h-full'>"
+                  . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center mb-3'><span>$title</span><span class='text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20'>🟢 Optimal</span></h4>"
+                  . "<p class='text-xs text-slate-500 italic py-2'>No critical issues or recommendations detected in this area.</p>"
+                  . "</div>";
             }
             my $items_html = '';
             foreach my $f (@findings) {
-                my $badge_color = ($f->{badge} eq 'Critical') ? 'text-rose-400 bg-rose-500/10 border-rose-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-                $items_html .= "<li class='flex items-start gap-2 py-1.5 border-b border-slate-800/30 last:border-0'>"
-                             . "<span class='text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded border $badge_color shrink-0'>" . $f->{badge} . "</span>"
-                             . "<span class='text-xs text-slate-300 break-words'>" . escape_html($f->{text}) . "</span>"
-                             . "</li>";
+                my $badge_color =
+                  ( $f->{badge} eq 'Critical' )
+                  ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                  : 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+                $items_html .=
+"<li class='flex items-start gap-2 py-1.5 border-b border-slate-800/30 last:border-0'>"
+                  . "<span class='text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded border $badge_color shrink-0'>"
+                  . $f->{badge}
+                  . "</span>"
+                  . "<span class='text-xs text-slate-300 break-words'>"
+                  . escape_html( $f->{text} )
+                  . "</span>" . "</li>";
             }
-            return "<div class='bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex flex-col justify-between h-full'>"
-                 . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center mb-3'><span>$title</span><span class='text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20'>⚠️ Action Required</span></h4>"
-                 . "<ul class='space-y-1'>$items_html</ul>"
-                 . "</div>";
+            return
+"<div class='bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex flex-col justify-between h-full'>"
+              . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center mb-3'><span>$title</span><span class='text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20'>⚠️ Action Required</span></h4>"
+              . "<ul class='space-y-1'>$items_html</ul>"
+              . "</div>";
         };
 
-        my $gen_findings_html   = $format_top_findings->('General Stats', \@general_top);
-        my $store_findings_html  = $format_top_findings->('Storage & Performance', \@storage_top);
-        my $sec_findings_html    = $format_top_findings->('Security & Compliance', \@security_top);
-        my $repl_findings_html   = $format_top_findings->('Replication & HA', \@replication_top);
-        my $model_findings_html  = $format_top_findings->('SQL Modeling', \@modeling_top);
+        my $gen_findings_html =
+          $format_top_findings->( 'General Stats', \@general_top );
+        my $store_findings_html =
+          $format_top_findings->( 'Storage & Performance', \@storage_top );
+        my $sec_findings_html =
+          $format_top_findings->( 'Security & Compliance', \@security_top );
+        my $repl_findings_html =
+          $format_top_findings->( 'Replication & HA', \@replication_top );
+        my $model_findings_html =
+          $format_top_findings->( 'SQL Modeling', \@modeling_top );
 
         # Throughput Efficiency Index
         my $tei_qps   = $result{'ThroughputEfficiency'}{'QPS'} // 0.0;
-        my $tei_reads = $result{'ThroughputEfficiency'}{'LogicalReadsSec'} // 0.0;
+        my $tei_reads = $result{'ThroughputEfficiency'}{'LogicalReadsSec'}
+          // 0.0;
         my $tei_index = $result{'ThroughputEfficiency'}{'Index'} // 0.00000;
 
         # Resource Saturation Heatmap
-        my $sat_cpu  = $result{'ResourceSaturation'}{'CPU'} // 0;
-        my $sat_mem  = $result{'ResourceSaturation'}{'Memory'} // 0;
+        my $sat_cpu  = $result{'ResourceSaturation'}{'CPU'}         // 0;
+        my $sat_mem  = $result{'ResourceSaturation'}{'Memory'}      // 0;
         my $sat_conn = $result{'ResourceSaturation'}{'Connections'} // 0;
-        my $sat_io   = $result{'ResourceSaturation'}{'IO'} // 0;
+        my $sat_io   = $result{'ResourceSaturation'}{'IO'}          // 0;
 
         my $get_sat_color = sub {
             my $val = shift;
-            return $val > 85 ? 'bg-rose-500' : ($val > 60 ? 'bg-amber-400' : 'bg-emerald-500');
+            return $val > 85
+              ? 'bg-rose-500'
+              : ( $val > 60 ? 'bg-amber-400' : 'bg-emerald-500' );
         };
         my $cpu_color  = $get_sat_color->($sat_cpu);
         my $mem_color  = $get_sat_color->($sat_mem);
@@ -12979,14 +13050,17 @@ sub dump_result {
 
         # Historical Trend Deltas
         my $historical_deltas_html = '';
-        if (defined $result{'Trends'}) {
-            my $qps_delta   = $result{'Trends'}{'QPS'} // 'N/A';
-            my $score_delta = $result{'Trends'}{'HealthScore'} // 'N/A';
+        if ( defined $result{'Trends'} ) {
+            my $qps_delta   = $result{'Trends'}{'QPS'}           // 'N/A';
+            my $score_delta = $result{'Trends'}{'HealthScore'}   // 'N/A';
             my $size_delta  = $result{'Trends'}{'TotalDataSize'} // 'N/A';
             my $sec_deltas  = '';
-            foreach my $sec ('General', 'Storage', 'Security', 'Replication', 'Modeling') {
+            foreach my $sec ( 'General', 'Storage', 'Security', 'Replication',
+                'Modeling' )
+            {
                 my $d = $result{'Trends'}{'Sectional'}{$sec} // 'N/A';
-                $sec_deltas .= "<div class='text-xs text-slate-400'><span class='font-semibold'>$sec:</span> $d</div>";
+                $sec_deltas .=
+"<div class='text-xs text-slate-400'><span class='font-semibold'>$sec:</span> $d</div>";
             }
             $historical_deltas_html = <<"HTML";
                 <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
@@ -13662,7 +13736,8 @@ sub dump_csv_files {
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 if ( !caller ) {
-    $tuner_start_time = eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    $tuner_start_time =
+      eval { require Time::HiRes; Time::HiRes::time(); } || time();
     parse_cli_args;       # Parse CLI arguments
     setup_environment;    # Initialize variables and handle early exits
     headerprint;          # Header Print
@@ -13673,14 +13748,14 @@ if ( !caller ) {
     debugprint "MySQL FINAL Client : $mysqlcmd $mysqllogin";
     debugprint "MySQL Admin FINAL Client : $mysqladmincmd $mysqllogin";
 
-    os_setup;                  # Set up some OS variables
-    get_all_vars;              # Toss variables/status into hashes
+    os_setup;                      # Set up some OS variables
+    get_all_vars;                  # Toss variables/status into hashes
     print_audit_snapshot_summary;  # Summary of the audit snapshot
-    mysql_cloud_discovery;     # Auto-discover cloud environment
-    get_tuning_info;           # Get information about the tuning connection
-    calculations;              # Calculate everything we need
-    check_architecture;        # Suggest 64-bit upgrade
-    check_storage_engines;     # Show enabled storage engines
+    mysql_cloud_discovery;         # Auto-discover cloud environment
+    get_tuning_info;               # Get information about the tuning connection
+    calculations;                  # Calculate everything we need
+    check_architecture;            # Suggest 64-bit upgrade
+    check_storage_engines;         # Show enabled storage engines
 
     if ( $opt{'feature'} ) {
         subheaderprint "See FEATURES.md for more information";
@@ -13689,7 +13764,7 @@ if ( !caller ) {
             subheaderprint "Running feature: $feature";
             $feature->();
         }
-        dump_csv_files;            # dump csv files
+        dump_csv_files;    # dump csv files
         make_recommendations;
         print_execution_timings();
         goodprint "Terminated successfully";
@@ -13719,7 +13794,7 @@ if ( !caller ) {
         $section->();
     }
 
-    dump_csv_files;            # dump csv files
+    dump_csv_files;          # dump csv files
     make_recommendations;    # Make recommendations based on stats
     dump_result;             # Dump result if debug is on
     print_execution_timings();

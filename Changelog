@@ -9,9 +9,11 @@
 - feat(report): move dump_csv_files execution step to immediately before make_recommendations.
 - feat(report): print an environment audit snapshot summary (server, user, RAM, swap, versions, uptime) right after get_all_vars.
 - feat(report): support historical comparison of database diagnostics and performance metrics over time.
+- fix(main): calculate query cache efficiency using Com_select on MariaDB, where Com_select includes query cache hits (MDEV-4981).
 - fix(main): implement cached version comparison parser to eliminate uninitialized value warnings and improve performance.
 - fix(main): guard InnoDB log file size and log size percentage checks against uninitialized variables.
 - fix(main): guard version and version comment checks in MariaDB parallel replication and query cache blocks.
+- test(lab): add unit tests for query cache efficiency logic on MySQL and MariaDB in tests/issue_927.t.
 - test(report): add verbose timing and audit snapshot summary formatting checks to tests/verbose_timing.t.
 - test(versions): add unit tests for version caching and comparisons in tests/unit_versions.t.
 
