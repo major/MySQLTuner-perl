@@ -11,7 +11,7 @@ Add execution timing information for each section and the total execution time a
   - At the end of each printed block (e.g., after `MyISAM Metrics`), its individual execution time is printed.
   - Before the final `✔ Terminated successfully` message, a summary block (`Execution Times`) listing all section names with their durations and the total execution time is printed.
 - **Example Console Output**:
-  ```
+  ```text
   -------- MyISAM Metrics ----------------------------------------------------------------------------
   ...
   [--] MyISAM Metrics execution time: 0.123s

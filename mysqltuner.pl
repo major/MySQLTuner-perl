@@ -4254,7 +4254,10 @@ sub get_other_process_memory {
 }
 
 sub get_load_average {
-    if ( -f "/proc/loadavg" ) {
+    my $prefix = get_transport_prefix();
+    return () if $prefix eq '' && is_remote();
+
+    if ( $prefix eq '' && -f "/proc/loadavg" ) {
         my $content = file2string("/proc/loadavg") // '';
         if ( $content =~ /^([\d.]+)\s+([\d.]+)\s+([\d.]+)/ ) {
             return ( $1, $2, $3 );
@@ -11762,6 +11765,8 @@ sub historical_comparison {
     my $file = $opt{'compare-file'};
     return if !$file;
 
+    calculate_health_score() unless defined $result{'HealthScore'};
+
     subheaderprint "Historical Trend Analysis";
     if ( !-e $file ) {
         badprint "Comparison file not found: $file";
@@ -12827,6 +12832,31 @@ sub format_recommendation_item {
     return $item // '';
 }
 
+sub _yaml_scalar {
+    my ( $v, $indent ) = @_;
+    return "~" unless defined $v;
+
+    if ( $v =~ /\n/ ) {
+        my $pad = '  ' x ( $indent + 1 );
+        $v =~ s/\r\n?/\n/g;
+        my @lines = split /\n/, $v, -1;
+        if ( @lines > 1 && $lines[-1] eq '' ) {
+            pop @lines;
+        }
+        my $joined = join( "\n", map { $pad . $_ } @lines );
+        return "|\n" . $joined . "\n";
+    }
+
+    if (   $v eq ''
+        || $v =~ /[:\#\'\"\[\]\{\},&*?!|>%-]/
+        || $v =~ /^(?:yes|no|true|false|null|on|off|~)$/i )
+    {
+        $v =~ s/'/''/g;
+        return "'$v'";
+    }
+    return $v;
+}
+
 sub _to_yaml {
     my ( $data, $indent ) = @_;
     $indent //= 0;
@@ -12845,12 +12875,13 @@ sub _to_yaml {
                 $output .= _to_yaml( $val, $indent + 1 );
             }
             else {
-                my $v = $val // '';
-                if ( $v =~ /[:\#\n\'\"]/ or $v eq '' ) {
-                    $v =~ s/'/''/g;
-                    $v = "'$v'";
+                my $yaml_val = _yaml_scalar( $val, $indent );
+                if ( $yaml_val =~ /^\|/ ) {
+                    $output .= " " . $yaml_val;
                 }
-                $output .= " $v\n";
+                else {
+                    $output .= " " . $yaml_val . "\n";
+                }
             }
         }
     }
@@ -12864,27 +12895,63 @@ sub _to_yaml {
                 $output .= " " . $inner;
             }
             else {
-                my $v = $item // '';
-                if ( $v =~ /[:\#\n\'\"]/ or $v eq '' ) {
-                    $v =~ s/'/''/g;
-                    $v = "'$v'";
+                my $yaml_val = _yaml_scalar( $item, $indent );
+                if ( $yaml_val =~ /^\|/ ) {
+                    $output .= " " . $yaml_val;
                 }
-                $output .= " $v\n";
+                else {
+                    $output .= " " . $yaml_val . "\n";
+                }
             }
         }
     }
     else {
-        my $v = $data;
-        if ( $v =~ /[:\#\n\'\"]/ or $v eq '' ) {
-            $v =~ s/'/''/g;
-            $v = "'$v'";
+        my $yaml_val = _yaml_scalar( $data, $indent );
+        if ( $yaml_val =~ /^\|/ ) {
+            $output .= $yaml_val;
         }
-        $output .= "$v\n";
+        else {
+            $output .= $yaml_val . "\n";
+        }
     }
     return $output;
 }
 
+sub _sanitized_result_for_export {
+    my $orig = shift;
+    my %copy = %$orig;
+
+    if ( ref $copy{'MySQLTuner'} eq 'HASH' ) {
+        my %mt_copy = %{ $copy{'MySQLTuner'} };
+        if ( ref $mt_copy{'options'} eq 'HASH' ) {
+            my %opts = %{ $mt_copy{'options'} };
+            for my $secret (qw(pass password ssh-password passenv userenv)) {
+                $opts{$secret} = '[REDACTED]' if defined $opts{$secret};
+            }
+            $mt_copy{'options'} = \%opts;
+        }
+        $copy{'MySQLTuner'} = \%mt_copy;
+    }
+
+    if ( ref $copy{'MySQL Client'} eq 'HASH' ) {
+        my %mc_copy = %{ $copy{'MySQL Client'} };
+        if ( defined $mc_copy{'Authentication Info'} ) {
+            my $auth = $mc_copy{'Authentication Info'};
+            $auth =~ s/-p'[^']*'/-p'[REDACTED]'/g;
+            $auth =~ s/-p(?!'\[REDACTED\]')\S+/-p[REDACTED]/g;
+            $mc_copy{'Authentication Info'} = $auth;
+        }
+        $copy{'MySQL Client'} = \%mc_copy;
+    }
+
+    return \%copy;
+}
+
 sub dump_result {
+    if ( $opt{'json'} && $opt{'yaml'} ) {
+        print STDERR "ERROR: --json and --yaml are mutually exclusive\n";
+        return 1;
+    }
 
     #debugprint Dumper( \%result ) if ( $opt{'debug'} );
     debugprint "HTML REPORT: " . ( $opt{'reportfile'} // 'undef' );
@@ -13459,6 +13526,11 @@ HTML
         goodprint "HTML Report successfully generated: " . $opt{'reportfile'};
     }
 
+    my $sanitized_res;
+    if ( $opt{'json'} || $opt{'yaml'} ) {
+        $sanitized_res = _sanitized_result_for_export( \%result );
+    }
+
     if ( $opt{'json'} ) {
         eval { require JSON };
         if ($@) {
@@ -13468,7 +13540,7 @@ HTML
 
         my $json = JSON->new->allow_nonref;
         print $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
-          ->encode( \%result );
+          ->encode($sanitized_res);
 
         if ( $opt{'outputfile'} ) {
             unlink $opt{'outputfile'} if ( -e $opt{'outputfile'} );
@@ -13476,13 +13548,13 @@ HTML
               or die
 "Unable to open $opt{'outputfile'} in write mode. please check permissions for this file or directory";
             print $fh $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
-              ->encode( \%result );
+              ->encode($sanitized_res);
             close $fh;
         }
     }
 
     if ( $opt{'yaml'} ) {
-        my $yaml_str = _to_yaml( \%result );
+        my $yaml_str = _to_yaml($sanitized_res);
         print $yaml_str;
 
         if ( $opt{'outputfile'} ) {
@@ -13544,6 +13616,9 @@ sub dump_csv_files {
         open( $fh, '>', $outputfile_path )
           or die("Failed to open $outputfile_path for writing: $!");
         $opt{nocolor} = 1;    # Disable colors in file output
+        if (@raw_output_lines) {
+            print $fh join( "\n", @raw_output_lines ), "\n";
+        }
     }
 
     # If outputfile is already set, create a second file handle for raw output

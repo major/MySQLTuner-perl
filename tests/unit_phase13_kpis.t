@@ -5,6 +5,7 @@ no warnings 'once';
 use Test::More;
 use File::Basename;
 use File::Spec;
+use File::Temp qw(tempfile);
 
 # Get the script path
 my $script_path = File::Spec->rel2abs(File::Spec->catfile(dirname(__FILE__), '..', 'mysqltuner.pl'));
@@ -19,9 +20,8 @@ my $script_path = File::Spec->rel2abs(File::Spec->catfile(dirname(__FILE__), '..
 package main;
 
 # Write a mock JSON file for historical delta testing
-my $mock_old_file = 'mock_old.json';
-open(my $fh, '>', $mock_old_file) or die "Could not open $mock_old_file: $!";
-print $fh q({
+my ( $mock_old_fh, $mock_old_file ) = tempfile( 'mock_old_XXXX', SUFFIX => '.json', UNLINK => 1 );
+print $mock_old_fh q({
     "General": { "Date": "2026-06-01" },
     "Stats": {
         "QPS": 10.0,
@@ -36,14 +36,7 @@ print $fh q({
         "Modeling": 90
     }
 });
-close($fh);
-
-# Ensure cleanup on exit
-END {
-    if (-e 'mock_old.json') {
-        unlink('mock_old.json');
-    }
-}
+close($mock_old_fh);
 
 # 1. Test get_load_average with mock file2string or fallback to execute_system_command
 {

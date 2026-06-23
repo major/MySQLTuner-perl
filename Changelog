@@ -9,13 +9,20 @@
 - feat(report): move dump_csv_files execution step to immediately before make_recommendations.
 - feat(report): print an environment audit snapshot summary (server, user, RAM, swap, versions, uptime) right after get_all_vars.
 - feat(report): support historical comparison of database diagnostics and performance metrics over time.
+- fix(cli): add mutually exclusive guard for json and yaml options.
 - fix(main): calculate query cache efficiency using Com_select on MariaDB, where Com_select includes query cache hits (MDEV-4981).
-- fix(main): implement cached version comparison parser to eliminate uninitialized value warnings and improve performance.
+- fix(main): calculate health score early in historical comparison to ensure scores exist for trend analysis.
+- fix(main): format YAML null as tilde (~) and multiline values using literal block style.
 - fix(main): guard InnoDB log file size and log size percentage checks against uninitialized variables.
 - fix(main): guard version and version comment checks in MariaDB parallel replication and query cache blocks.
-- test(lab): add unit tests for query cache efficiency logic on MySQL and MariaDB in tests/issue_927.t.
+- fix(main): implement cached version comparison parser to eliminate uninitialized value warnings and improve performance.
+- fix(main): sanitize and redact sensitive credentials from json/yaml output exports.
+- fix(main): skip local /proc/loadavg read during remote database audits.
+- fix(report): flush console output trace when opening raw log files late in dumpdir mode.
+- test(lab): add unit tests for query cache efficiency logic on MySQL and MariaDB in tests/test_issue_927.t (renamed from tests/issue_927.t).
+- test(lab): utilize isolated tempfile for mock json to avoid race conditions in tests/unit_phase13_kpis.t.
 - test(report): add verbose timing and audit snapshot summary formatting checks to tests/verbose_timing.t.
-- test(versions): add unit tests for version caching and comparisons in tests/unit_versions.t.
+- test(versions): add unit tests for version caching and comparisons, resolve redundant warnings, and use tempfile in tests/unit_versions.t.
 
 2.8.45 2026-06-04
 

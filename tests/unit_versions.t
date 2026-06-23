@@ -1,8 +1,8 @@
 use strict;
 use warnings;
 no warnings 'once';
-no warnings 'once';
 use Test::More;
+use File::Temp qw(tempfile);
 use File::Basename;
 use File::Spec;
 use Cwd 'abs_path';
@@ -100,15 +100,12 @@ subtest 'historical_comparison health score' => sub {
     my $compare_json =
 '{"General":{"Date":"2026-06-15"},"HealthScore":70,"Stats":{"QPS":1.5,"Total Data Size":1000}}';
 
-    my $temp_file = File::Spec->catfile( $script_dir, 'temp_compare.json' );
-    open my $tfh, '>', $temp_file or die $!;
+    my ( $tfh, $temp_file ) = tempfile( 'temp_compare_XXXX', SUFFIX => '.json', UNLINK => 1 );
     print $tfh $compare_json;
     close $tfh;
 
     local $main::opt{'compare-file'} = $temp_file;
     main::historical_comparison();
-
-    unlink $temp_file;
 
     ok( defined $captured_trend,
         "Health score trend comparison was triggered" );
@@ -117,6 +114,49 @@ subtest 'historical_comparison health score' => sub {
         qr/70 -> 85 \(\+15\)/,
         "Trend correctly shows +15 improvement"
     );
+};
+
+subtest '_sanitized_result_for_export' => sub {
+    my $mock_result = {
+        'MySQLTuner' => {
+            'options' => {
+                'host' => 'localhost',
+                'pass' => 'mysecretpassword',
+                'password' => 'anothersecret',
+                'ssh-password' => 'sshsec',
+                'passenv' => 'ENVVAR',
+                'userenv' => 'USERVAR',
+            }
+        },
+        'MySQL Client' => {
+            'Authentication Info' => "mysql -u root -p'mysecretpassword' -h localhost"
+        }
+    };
+
+    my $sanitized = main::_sanitized_result_for_export($mock_result);
+
+    # Original remains unmodified
+    is($mock_result->{'MySQLTuner'}{'options'}{'pass'}, 'mysecretpassword', 'Original remains unmodified');
+
+    # Sanitized has redacted fields
+    is($sanitized->{'MySQLTuner'}{'options'}{'host'}, 'localhost', 'Host is kept');
+    is($sanitized->{'MySQLTuner'}{'options'}{'pass'}, '[REDACTED]', 'pass is redacted');
+    is($sanitized->{'MySQLTuner'}{'options'}{'password'}, '[REDACTED]', 'password is redacted');
+    is($sanitized->{'MySQLTuner'}{'options'}{'ssh-password'}, '[REDACTED]', 'ssh-password is redacted');
+    is($sanitized->{'MySQLTuner'}{'options'}{'passenv'}, '[REDACTED]', 'passenv is redacted');
+    is($sanitized->{'MySQLTuner'}{'options'}{'userenv'}, '[REDACTED]', 'userenv is redacted');
+
+    # Authentication Info is sanitized
+    like($sanitized->{'MySQL Client'}{'Authentication Info'}, qr/-p'\[REDACTED\]'/, 'Authentication Info password in quotes is redacted');
+
+    # Test without quotes
+    my $mock_result2 = {
+        'MySQL Client' => {
+            'Authentication Info' => "mysql -u root -psecret -h localhost"
+        }
+    };
+    my $sanitized2 = main::_sanitized_result_for_export($mock_result2);
+    like($sanitized2->{'MySQL Client'}{'Authentication Info'}, qr/-p\[REDACTED\]/, 'Authentication Info password without quotes is redacted');
 };
 
 done_testing();
