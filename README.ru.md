@@ -3,7 +3,7 @@
 [!["Купите нам кофе"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
 [![Статус проекта](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
-[![Статус тестов](https://github.com/jmrenouard/MySQLTuner-perl/workflows/Test/badge.svg)](https://github.com/jmrenouard/MySQLTuner-perl/actions)
+[![Статус тестов](https://github.com/jmrenouard/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/jmrenouard/MySQLTuner-perl/actions)
 [![Среднее время решения проблемы](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Среднее время решения проблемы")
 [![Процент открытых проблем](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Процент все еще открытых проблем")
 [![Лицензия GPL](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
@@ -217,7 +217,7 @@ docker run --rm -it jmrenouard/mysqltuner --host <database_host> --user <usernam
 
 ### Расположение релизов
 
-* Официальные примечания к релизам и история изменений задокументированы в каталоге [releases/](releases/) этого репозитория (например, [releases/v2.8.44.md](releases/v2.8.44.md)).
+* Официальные примечания к релизам и история изменений задокументированы в каталоге [releases/](releases/) этого репозитория (например, [releases/v2.9.0.md](releases/v2.9.0.md)).
 * Теги релизов Git и архивы с исходным кодом доступны на странице [GitHub Releases](https://github.com/jmrenouard/MySQLTuner-perl/releases).
 
 Необязательная установка Sysschema для MySQL 5.6

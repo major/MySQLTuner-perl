@@ -3,8 +3,8 @@
 [!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
 [![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
-[![MySQLTuner Version](https://img.shields.io/badge/version-2.8.44-blue.svg)](https://github.com/jmrenouard/MySQLTuner-perl/releases/tag/v2.8.44)
-[![Test Status](https://github.com/jmrenouard/MySQLTuner-perl/workflows/Test/badge.svg)](https://github.com/jmrenouard/MySQLTuner-perl/actions)
+[![MySQLTuner Version](https://img.shields.io/badge/version-2.9.0-blue.svg)](https://github.com/jmrenouard/MySQLTuner-perl/releases/tag/v2.9.0)
+[![Test Status](https://github.com/jmrenouard/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/jmrenouard/MySQLTuner-perl/actions)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Average time to resolve an issue")
 [![Percentage of open issues](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Percentage of issues still open")
 [![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
@@ -219,7 +219,7 @@ docker run --rm -it jmrenouard/mysqltuner --host <database_host> --user <usernam
 
 ### Releases Location
 
-* Official release notes and history are documented in the [releases/](releases/) directory of this repository (e.g., [releases/v2.8.44.md](releases/v2.8.44.md)).
+* Official release notes and history are documented in the [releases/](releases/) directory of this repository (e.g., [releases/v2.9.0.md](releases/v2.9.0.md)).
 * Git release tags and downloadable source tarballs are available on [GitHub Releases](https://github.com/jmrenouard/MySQLTuner-perl/releases).
 
 Optional Sysschema installation for MySQL 5.6
