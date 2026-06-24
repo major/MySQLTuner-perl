@@ -1,7 +1,6 @@
 ![MySQLTuner-perl](mtlogo2.png)
 
-[!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
-[![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=social)](https://github.com/major/MySQLTuner-perl)
+[![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
 
 [![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
 [![MySQLTuner Version](https://img.shields.io/badge/version-2.9.0-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.0)
@@ -41,11 +40,25 @@ MySQLTuner needs you
 * Paid support for LightPath here: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
 * Paid support for Releem available here: [Releem App](https://releem.com/)
 
+### Sponsors
+
+Active development is sponsored by:
+
+<p align="center">
+  <a href="https://www.lightpath.fr">
+    <img src="https://lightpath.fr/img/logo.png" alt="LightPath" width="200"/>
+  </a>
+</p>
+
+Thanks to LightPath for providing resources (dev servers, AI subscriptions, staging & features).
+
 ![jmrenouard's GitHub stats](https://github-readme-stats.vercel.app/api?username=jmrenouard&show_icons=true&theme=radical)
 
-## Stargazers over time
+[!["Buy Us A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
-[![Stargazers over time](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=major/MySQLTuner-perl&type=Date)](https://star-history.com/#major/MySQLTuner-perl&Date)
 
 Compatibility
 ====

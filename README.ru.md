@@ -1,7 +1,6 @@
 ![MySQLTuner-perl](mtlogo2.png)
 
-[!["Купите нам кофе"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
-[![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=social)](https://github.com/major/MySQLTuner-perl)
+[![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
 
 [![Статус проекта](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
 [![Статус тестов](https://github.com/major/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/major/MySQLTuner-perl/actions)
@@ -39,11 +38,25 @@ MySQLTuner нуждается в вас
 * Платная поддержка LightPath здесь: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
 * Платная поддержка Releem доступна здесь: [приложение Releem](https://releem.com/)
 
+### Спонсоры
+
+Активная разработка спонсируется:
+
+<p align="center">
+  <a href="https://www.lightpath.fr">
+    <img src="https://lightpath.fr/img/logo.png" alt="LightPath" width="200"/>
+  </a>
+</p>
+
+Спасибо LightPath за предоставление ресурсов (серверы разработки, подписка на ИИ, стейджинг и новые функции).
+
 ![Статистика GitHub jmrenouard](https://github-readme-stats.vercel.app/api?username=jmrenouard&show_icons=true&theme=radical)
 
-## Звездочеты с течением времени
+[!["Купите нам кофе"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
-[![Звездочеты с течением времени](https://starchart.cc/major/MySQLTuner-perl.svg)](https://starchart.cc/major/MySQLTuner-perl)
+## История звезд
+
+[![Star History Chart](https://api.star-history.com/svg?repos=major/MySQLTuner-perl&type=Date)](https://star-history.com/#major/MySQLTuner-perl&Date)
 
 Совместимость
 ====
