@@ -26,8 +26,8 @@ no warnings 'redefine';
 no warnings 'uninitialized';
 *main::debugprint = sub { };
 *main::is_int = sub { return $_[0] && $_[0] =~ /^\d+$/ };
-*main::human_size = sub { return $_[0] };
-*main::hr_bytes = sub { return $_[0] };
+*main::human_size = sub { return $_[0] // '0B' };
+*main::hr_bytes = sub { return $_[0] // '0B' };
 *main::percentage = sub { return 0 };
 *main::badprint = sub { };
 *main::infoprint = sub { };
@@ -213,6 +213,7 @@ subtest 'temptable_max_mmap disk space recommendations check' => sub {
         'pct_writes' => 50,
         'pct_temp_disk' => 0,
         'thread_cache_hit_rate' => 90,
+        'table_cache_hit_rate' => 99,
         'total_sorts' => 0,
         'joins_without_indexes_per_day' => 0,
     );

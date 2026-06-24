@@ -1900,6 +1900,7 @@ sub hr_bytes_rnd {
 # Calculates the parameter passed to the nearest power of 1000, then rounds it to the nearest integer
 sub hr_num {
     my $num = shift;
+    return 0 if !$num || $num eq 'NULL';
     if ( $num >= ( 1000**3 ) ) {       # Billions
         return int( ( $num / ( 1000**3 ) ) ) . "B";
     }

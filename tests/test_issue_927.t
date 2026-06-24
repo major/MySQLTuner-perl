@@ -29,11 +29,12 @@ no warnings 'redefine';
 no warnings 'uninitialized';
 *main::debugprint   = sub { };
 *main::is_int       = sub { return $_[0] && $_[0] =~ /^\d+$/ };
-*main::human_size   = sub { return $_[0] };
-*main::hr_bytes     = sub { return $_[0] };
-*main::hr_bytes_rnd = sub { return $_[0] };
+*main::human_size   = sub { return $_[0] // '0B' };
+*main::hr_bytes     = sub { return $_[0] // '0B' };
+*main::hr_bytes_rnd = sub { return $_[0] // '0B' };
 *main::hr_num       = sub {
     my $val = shift;
+    return 0 unless defined $val;
 
     # simple formatting for tests
     1 while $val =~ s/(\d+)(\d{3})/$1,$2/;
