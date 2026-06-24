@@ -16,15 +16,12 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 | Metric | Value |
 |:---|:---|
 | Total Subroutines | 167 |
-| Tested Subroutines | ~154 (~92%) |
-| Untested Subroutines | ~13 (~8%) |
+| Tested Subroutines | 167 (100%) |
+| Untested Subroutines | 0 (0%) |
 
 #### Remaining Untested Subroutines (System/IO-Heavy)
 
-- `check_privileges`, `cloud_setup`, `get_fs_info`, `get_fs_info_win`
-- `get_http_cli`, `get_os_release`, `get_tuning_info`
-- `infoprintcmd`, `infoprinthcmd`, `is_virtual_machine`
-- `parse_cli_args`, `show_help` (x2)
+- None (100% subroutine coverage reached)
 
 ### 🔴 Critical Issues
 
@@ -58,7 +55,8 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 #### PI-006: 13 out of 167 subroutines have zero test coverage
 - **Impact**: Remaining untested functions are mostly system-level (filesystem, OS detection, cloud setup) or CLI helpers (`show_help`, `parse_cli_args`)
 - **Severity**: 🟢 LOW — core diagnostic functions now fully covered
-- **Coverage rate**: ~92% of subroutines referenced in at least one test (improved from ~55% → 62% → 78% → 92%)
+- **Coverage rate**: 100% of subroutines referenced in at least one test (improved from ~55% → 62% → 78% → 92% → 100%)
+- **Status**: [x] **FIXED** — All remaining subroutines covered in `tests/unit_coverage_boost4.t`.
 
 #### PI-007: Extremely large subroutines
 - **Impact**: Several functions exceed 500+ lines, making maintenance difficult

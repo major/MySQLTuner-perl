@@ -7126,8 +7126,9 @@ sub mysql_stats {
     if ( $myvar{'long_query_time'} > 10 ) {
         push( @adjvars, "long_query_time (<= 10)" );
     }
-    if ( defined( $myvar{'log_slow_queries'} ) ) {
-        if ( $myvar{'log_slow_queries'} eq "OFF" ) {
+    my $slow_query_log_active = $myvar{'slow_query_log'} // $myvar{'log_slow_queries'};
+    if ( defined( $slow_query_log_active ) ) {
+        if ( $slow_query_log_active eq "OFF" ) {
             push( @generalrec,
                 "Enable the slow query log to troubleshoot bad queries" );
         }
