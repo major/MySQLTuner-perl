@@ -74,8 +74,10 @@ our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
 our %exported_manifest;
 our (
     $tuner_start_time,      $current_section_name,
-    $current_section_start, @section_timings
+    $current_section_start, @section_timings,
+    $tuner_start_datetime
 );
+our $has_time_hires = eval { require Time::HiRes; 1; } // 0;
 our $failed_connection_attempts = 0;
 our $previous_failed_attempts   = 0;
 
@@ -363,6 +365,12 @@ our %CLI_METADATA = (
             myisamstat => 1,
             plugininfo => 1
         }
+    },
+    'stage-timings' => {
+        type    => '!',
+        default => 0,
+        desc    => 'Activate stage timings and final summary without full verbose mode',
+        cat     => 'OUTPUT'
     },
     'color!' => {
         type    => '!',
@@ -1613,10 +1621,53 @@ sub infoprintcmd {
     infoprintml( grep { /\S/ } `@_ 2>&1` );
 }
 
+sub get_time {
+    return $has_time_hires ? Time::HiRes::time() : time();
+}
+
+sub get_datetime_str {
+    my ( $sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst ) =
+      localtime(time);
+    return sprintf(
+        "%04d-%02d-%02d %02d:%02d:%02d",
+        $year + 1900,
+        $mon + 1, $mday, $hour, $min, $sec
+    );
+}
+
+sub pretty_duration {
+    my $duration          = shift;
+    my $seconds           = $duration % 60;
+    my $decimal           = $duration - int($duration);
+    my $seconds_formatted = sprintf( "%.3f", int($seconds) + $decimal );
+
+    my $total_minutes = int( $duration / 60 );
+    my $minutes       = $total_minutes % 60;
+    my $hours         = int( $total_minutes / 60 ) % 24;
+    my $days          = int( $total_minutes / 1440 );
+
+    my $duration_string = "";
+    if ( $days > 0 ) {
+        $duration_string =
+          "${days}d ${hours}h ${minutes}m ${seconds_formatted}s";
+    }
+    elsif ( $hours > 0 ) {
+        $duration_string = "${hours}h ${minutes}m ${seconds_formatted}s";
+    }
+    elsif ( $minutes > 0 ) {
+        $duration_string = "${minutes}m ${seconds_formatted}s";
+    }
+    else {
+        $duration_string = "${seconds_formatted}s";
+    }
+}
+
+$tuner_start_datetime = get_datetime_str();
+
 sub subheaderprint {
     my $name = $_[0];
-    my $now  = eval { require Time::HiRes; Time::HiRes::time(); } || time();
-    if ( defined $current_section_name && $opt{'verbose'} ) {
+    my $now  = get_time();
+    if ( defined $current_section_name && ( $opt{'verbose'} || $opt{'stage-timings'} ) ) {
         my $elapsed = $now - $current_section_start;
         push @section_timings, [ $current_section_name, $elapsed ];
         infoprint
@@ -1635,8 +1686,8 @@ sub subheaderprint {
 }
 
 sub stop_section_timing {
-    my $now = eval { require Time::HiRes; Time::HiRes::time(); } || time();
-    if ( defined $current_section_name && $opt{'verbose'} ) {
+    my $now = get_time();
+    if ( defined $current_section_name && ( $opt{'verbose'} || $opt{'stage-timings'} ) ) {
         my $elapsed = $now - $current_section_start;
         push @section_timings, [ $current_section_name, $elapsed ];
         infoprint
@@ -1647,21 +1698,27 @@ sub stop_section_timing {
 }
 
 sub print_execution_timings {
-    return unless $opt{'verbose'};
+    return unless ( $opt{'verbose'} || $opt{'stage-timings'} );
 
     stop_section_timing();
 
-    my $total_now =
-      eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    my $total_now = get_time();
     my $total_elapsed = $total_now - $tuner_start_time;
 
     subheaderprint "Execution Times";
-    foreach my $timing (@section_timings) {
+    if ( defined $tuner_start_datetime ) {
+        infoprint sprintf( "%-50s: %s", "Started at", $tuner_start_datetime );
+    }
+    infoprint sprintf( "%-50s: %s", "Ended at", get_datetime_str() );
+
+    # Sort timings in descending order of elapsed time
+    my @sorted_timings = sort { $b->[1] <=> $a->[1] } @section_timings;
+    foreach my $timing (@sorted_timings) {
         my ( $name, $elapsed ) = @$timing;
         my $pct = $total_elapsed > 0 ? ( $elapsed / $total_elapsed ) * 100 : 0;
         infoprint sprintf( "%-50s: %.3fs (%.1f%%)", $name, $elapsed, $pct );
     }
-    infoprint sprintf( "Total Execution Time: %.3fs", $total_elapsed );
+    infoprint sprintf( "%-50s: %s (%.3fs)", "Total Execution Time", pretty_duration($total_elapsed), $total_elapsed );
 }
 
 sub print_audit_snapshot_summary {
@@ -1686,6 +1743,7 @@ sub print_audit_snapshot_summary {
       : 'unknown';
 
     infoprint "MySQLTuner Version : $tunerversion";
+    infoprint "Audit Start Time   : $tuner_start_datetime";
     infoprint "Server Connection  : $host";
     infoprint "Database User      : $db_user";
     infoprint "Database Version   : $db_ver";
@@ -2722,6 +2780,9 @@ sub mysql_setup {
         }
         infoprint "Performing tests on $opt{host}:$opt{port}";
         $remotestring = " -h $opt{host} -P $opt{port}";
+        if ( $opt{socket} ) {
+            $remotestring .= " -S $opt{socket}";
+        }
         $doremote     = is_remote();
 
     }
@@ -3114,8 +3175,7 @@ sub select_csv_file {
 
     debugprint "PERFORM: $req CSV into $tfile";
 
-    my $start_time =
-      eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    my $start_time = get_time();
 
     my @result    = select_array_with_headers($req);
     my $row_count = scalar(@result);
@@ -3147,7 +3207,7 @@ sub select_csv_file {
     }
     close $fh;
 
-    my $end_time = eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    my $end_time = get_time();
     my $duration = $end_time - $start_time;
 
     if ( $duration > 5.0 ) {
@@ -6351,8 +6411,7 @@ sub dump_into_file {
         my $actual_file   = "$opt{dumpdir}/$file";
         my $gzip_bin      = which('gzip');
         my $is_compressed = 0;
-        my $start_time =
-          eval { require Time::HiRes; Time::HiRes::time(); } || time();
+        my $start_time = get_time();
         my $fh;
         if ( $opt{'compress-dump'} && $gzip_bin && $file =~ /\.csv$/ ) {
             $actual_file .= '.gz';
@@ -6367,8 +6426,7 @@ sub dump_into_file {
         }
         print $fh $content;
         close $fh;
-        my $end_time =
-          eval { require Time::HiRes; Time::HiRes::time(); } || time();
+        my $end_time = get_time();
         my $duration = $end_time - $start_time;
 
         if ( $duration > 5.0 ) {
@@ -6447,6 +6505,7 @@ sub calculations {
     if ( is_int( $mycalc{'max_tmp_table_size'} ) ) {
         $per_thread_buffers_without_tmp -= $mycalc{'max_tmp_table_size'};
     }
+    $mycalc{'per_thread_buffers_without_tmp'} = $per_thread_buffers_without_tmp;
 
     my $internal_tmp_engine = $myvar{'internal_tmp_mem_storage_engine'}
       // 'TempTable';
@@ -6993,11 +7052,28 @@ sub mysql_stats {
     infoprint "Max MySQL memory    : " . hr_bytes( $mycalc{'max_peak_memory'} );
     infoprint "Other process memory: " . hr_bytes( get_other_process_memory() );
 
-    infoprint "Total buffers: "
-      . hr_bytes( $mycalc{'server_buffers'} )
-      . " global + "
-      . hr_bytes( $mycalc{'per_thread_buffers'} )
-      . " per thread ($myvar{'max_connections'} max threads)";
+    my $is_mariadb = ( $myvar{'version'} // '' ) =~ /mariadb/i;
+    my $internal_tmp_engine = $myvar{'internal_tmp_mem_storage_engine'} // 'TempTable';
+    if (   defined $myvar{'temptable_max_ram'}
+        && is_int( $myvar{'temptable_max_ram'} )
+        && !$is_mariadb
+        && $internal_tmp_engine eq 'TempTable' )
+    {
+        infoprint "Total buffers: "
+          . hr_bytes( $mycalc{'server_buffers'} )
+          . " global + "
+          . hr_bytes( $myvar{'temptable_max_ram'} )
+          . " temptable + "
+          . hr_bytes( $mycalc{'per_thread_buffers_without_tmp'} )
+          . " per thread ($myvar{'max_connections'} max threads)";
+    }
+    else {
+        infoprint "Total buffers: "
+          . hr_bytes( $mycalc{'server_buffers'} )
+          . " global + "
+          . hr_bytes( $mycalc{'per_thread_buffers'} )
+          . " per thread ($myvar{'max_connections'} max threads)";
+    }
     infoprint "Performance_schema Max memory usage: "
       . hr_bytes_rnd( get_pf_memory() );
     $result{'Performance_schema'}{'memory'} = get_pf_memory();
@@ -12769,6 +12845,7 @@ sub headerprint {
       . "\t * Major Hayden <major\@mhtx.net>\n"
       . " >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/\n"
       . " >>  Run with '--help' for additional options and output filtering";
+    prettyprint " >>  Started at: " . $tuner_start_datetime if defined $tuner_start_datetime;
     debugprint( "Debug: " . $opt{debug} );
     debugprint( "Experimental: " . $opt{experimental} );
 }
@@ -14900,11 +14977,9 @@ sub dump_csv_files {
 "$dumpcmd $mysqllogin --no-data --databases \"$db\" > \"$sql_file\" 2>>$devnull";
         }
 
-        my $start_time =
-          eval { require Time::HiRes; Time::HiRes::time(); } || time();
+        my $start_time = get_time();
         execute_system_command($cmd);
-        my $end_time =
-          eval { require Time::HiRes; Time::HiRes::time(); } || time();
+        my $end_time = get_time();
         my $duration = $end_time - $start_time;
 
         my $base = basename($sql_file);
@@ -15029,8 +15104,7 @@ sub dump_csv_files {
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 if ( !caller ) {
-    $tuner_start_time =
-      eval { require Time::HiRes; Time::HiRes::time(); } || time();
+    $tuner_start_time     = get_time();
     parse_cli_args;       # Parse CLI arguments
     setup_environment;    # Initialize variables and handle early exits
     headerprint;          # Header Print

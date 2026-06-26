@@ -2,6 +2,11 @@
 
 2.9.0 2026-06-15
 
+- test: add unit test for remote host physical memory detection and validation (issue #796).
+- fix(cli): preserve --socket in connection arguments when --host is specified.
+- test: add socket preservation tests to test_issue_781.t.
+- feat: update Total buffers output message format to display temptable sizing when active.
+- test: add unit test for temptable output formatting in Total buffers.
 - ci: optimize pre-commit hook to only run unit tests when code, tests, or dependencies are modified.
 - fix: update commit process
 - feat(report): categorize recommendations in HTML report and add Connections/Performance panels, Storage engines table, and SQL modeling stats grid.

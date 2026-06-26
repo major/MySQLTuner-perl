@@ -20,6 +20,7 @@ $main::opt{'verbose'} = 1;
 @main::section_timings = ();
 @main::raw_output_lines = ();
 $main::tuner_start_time = (eval { require Time::HiRes; Time::HiRes::time(); } || time()) - 1.0;
+$main::tuner_start_datetime = "2026-06-26 10:50:00";
 $main::current_section_name = undef;
 
 # Call subheaderprint twice to trigger timing print of first section
@@ -37,10 +38,13 @@ like($section_a_lines[0], qr/Section A execution time: 0\.\d+s/, "Duration forma
 main::print_execution_timings();
 
 # Check if summary block is printed with percentages
-my @summary_lines = grep { /Section B\s*:/ || /Total Execution Time:/ } @main::raw_output_lines;
+my @summary_lines = grep { /Section B\s*:/ || /Total Execution Time\s*:/ } @main::raw_output_lines;
 ok(scalar @summary_lines >= 2, "Summary block and total execution time are printed at the end");
 my @pct_lines = grep { /\(\d+\.\d+%\)/ } @main::raw_output_lines;
 ok(scalar @pct_lines >= 2, "Percentages are printed next to each section duration");
+
+my @date_lines = grep { /Started at\s*:/ || /Ended at\s*:/ } @main::raw_output_lines;
+is(scalar @date_lines, 2, "Start and end datetimes are printed when verbose is enabled");
 
 # Run again with verbose = 0 and verify NO timings are printed
 $main::opt{'verbose'} = 0;
@@ -55,6 +59,29 @@ main::print_execution_timings();
 my @no_timing_lines = grep { /execution time:/ || /Total Execution Time:/ } @main::raw_output_lines;
 is(scalar @no_timing_lines, 0, "No timing messages are printed when verbose is disabled");
 
+# Run again with verbose = 0 and stage-timings = 1 and verify timings ARE printed
+$main::opt{'verbose'} = 0;
+$main::opt{'stage-timings'} = 1;
+@main::section_timings = ();
+@main::raw_output_lines = ();
+$main::current_section_name = undef;
+$main::tuner_start_time = (eval { require Time::HiRes; Time::HiRes::time(); } || time()) - 1.0;
+$main::tuner_start_datetime = "2026-06-26 10:50:00";
+
+main::subheaderprint("Section A");
+$main::current_section_start = $main::current_section_start - 0.5; # Fake elapsed time of 0.5s
+main::subheaderprint("Section B");
+main::print_execution_timings();
+
+my @stage_timing_lines = grep { /Section A execution time:/ } @main::raw_output_lines;
+ok(scalar @stage_timing_lines > 0, "Execution time for Section A is printed when stage-timings is enabled without verbose");
+
+my @stage_summary_lines = grep { /Section B\s*:/ || /Total Execution Time\s*:/ } @main::raw_output_lines;
+ok(scalar @stage_summary_lines >= 2, "Summary block and total execution time are printed when stage-timings is enabled without verbose");
+
+my @stage_date_lines = grep { /Started at\s*:/ || /Ended at\s*:/ } @main::raw_output_lines;
+is(scalar @stage_date_lines, 2, "Start and end datetimes are printed when stage-timings is enabled without verbose");
+
 # 3. Test print_audit_snapshot_summary
 subtest 'print_audit_snapshot_summary' => sub {
     @main::raw_output_lines = ();
@@ -66,6 +93,8 @@ subtest 'print_audit_snapshot_summary' => sub {
     $main::myvar{'version'} = "10.11.4-MariaDB";
     $main::mystat{'Uptime'} = 172800;
 
+    $main::tuner_start_datetime = "2026-06-26 15:37:58";
+
     # We mock select_one so that we don't try to query database for CURRENT_USER
     no warnings 'redefine';
     local *main::select_one = sub { return 'root@localhost'; };
@@ -75,6 +104,7 @@ subtest 'print_audit_snapshot_summary' => sub {
     my $output = join("\n", @main::raw_output_lines);
     like($output, qr/Audit Snapshot Summary/, "Header printed");
     like($output, qr/MySQLTuner Version : 9\.9\.9/, "MySQLTuner version matched");
+    like($output, qr/Audit Start Time   : 2026-06-26 15:37:58/, "Start time matched");
     like($output, qr/Server Connection  : 127\.0\.0\.1:3307/, "Connection matched");
     like($output, qr/Database User      : root\@localhost/, "Database user matched");
     like($output, qr/Database Version   : 10\.11\.4-MariaDB/, "Database version matched");

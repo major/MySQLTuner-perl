@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'once';
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use File::Basename;
 use File::Spec;
 use Cwd 'abs_path';
@@ -242,6 +242,101 @@ subtest 'temptable_max_mmap disk space recommendations check' => sub {
     eval { main::mysql_stats(); };
     ok($goodprint_called, "goodprint confirms temptable_max_mmap is compatible with disk space");
     ok(!$badprint_called, "no warning when temptable_max_mmap is compatible");
+};
+
+subtest 'Total buffers: temptable output format check' => sub {
+    no warnings 'redefine';
+    my @captured_infoprints = ();
+    local *main::infoprint = sub { push @captured_infoprints, $_[0] };
+    local *main::is_remote = sub { return 0 };
+
+    local *main::hr_bytes = sub {
+        my $val = shift;
+        return "2.0G" if $val == 2147483648;
+        return "19.1K" if $val == 19106 || $val == 19096;
+        return "6.0K" if $val == 6144;
+        return "1.0G" if $val == 1073747968;
+        return $val;
+    };
+
+    %main::myvar = (
+        'version' => '8.0.30',
+        'read_buffer_size' => 1024,
+        'read_rnd_buffer_size' => 1024,
+        'sort_buffer_size' => 1024,
+        'thread_stack' => 1024,
+        'join_buffer_size' => 1024,
+        'binlog_cache_size' => 1024,
+        'tmp_table_size' => 1024 * 1024 * 1024, # 1 GB
+        'max_heap_table_size' => 1024 * 1024 * 1024, # 1 GB
+        'max_connections' => 10,
+        'temptable_max_ram' => 2 * 1024 * 1024 * 1024, # 2 GB
+        'internal_tmp_mem_storage_engine' => 'TempTable',
+        'key_buffer_size' => 5000,
+        'innodb_buffer_pool_size' => 10000,
+        'innodb_additional_mem_pool_size' => 1024,
+        'innodb_log_buffer_size' => 1024,
+        'query_cache_size' => 1024,
+        'aria_pagecache_buffer_size' => 1024,
+        'long_query_time' => 10,
+        'log_bin' => 'OFF',
+        'have_innodb' => 'YES',
+        'open_files_limit' => 1024,
+        'thread_cache_size' => 8,
+        'concurrent_insert' => 'AUTO',
+        'query_cache_type' => 'OFF',
+    );
+    %main::mystat = (
+        'Questions' => 100,
+        'Max_used_connections' => 5,
+        'Uptime' => 86400,
+        'Qcache_hits' => 100,
+        'Com_select' => 100,
+        'Qcache_free_memory' => 512,
+        'Qcache_lowmem_prunes' => 0,
+        'Connections' => 100,
+        'Aborted_connects' => 0,
+        'Key_read_requests' => 100,
+        'Key_reads' => 0,
+        'Key_write_requests' => 100,
+        'Key_writes' => 0,
+        'Slow_queries' => 0,
+        'Key_blocks_unused' => 100,
+        'Table_locks_immediate' => 100,
+        'Table_locks_waited' => 0,
+        'Created_tmp_tables' => 10,
+        'Opened_tables' => 10,
+        'Open_tables' => 10,
+        'Threads_cached' => 5,
+        'Threads_created' => 2,
+        'Bytes_sent' => 1000,
+        'Bytes_received' => 1000,
+        'Created_tmp_disk_tables' => 0,
+    );
+    %main::mycalc = ();
+
+    # Re-run calculations to populate server_buffers and per_thread_buffers
+    main::calculations();
+
+    # Now run mysql_stats to output memory lines
+    eval { main::mysql_stats(); };
+    if ($@) {
+        fail("mysql_stats crashed: $@");
+    } else {
+        my ($total_buffers_line) = grep { /^Total buffers:/ } @captured_infoprints;
+        ok($total_buffers_line, "Found Total buffers line in output");
+        is($total_buffers_line, "Total buffers: 19.1K global + 2.0G temptable + 6.0K per thread (10 max threads)",
+             "Total buffers line has correct format with temptable");
+    }
+
+    # Now verify it falls back to standard output when internal_tmp_mem_storage_engine is MEMORY
+    @captured_infoprints = ();
+    $main::myvar{'internal_tmp_mem_storage_engine'} = 'MEMORY';
+    main::calculations();
+    eval { main::mysql_stats(); };
+    my ($fallback_line) = grep { /^Total buffers:/ } @captured_infoprints;
+    is($fallback_line, "Total buffers: 19.1K global + 1.0G per thread (10 max threads)",
+         "Falls back to standard Total buffers line when storage engine is MEMORY");
 };
 
 1;
