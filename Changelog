@@ -37,7 +37,6 @@
 - docs(roadmap): specify Phase XVI (AI Agent Integration) and Phase XVII (Dockerized MCP Daemon).
 
 
-
 2.8.45 2026-06-04
 
 - chore: restore doc_sync.py utility script and run doc synchronization.

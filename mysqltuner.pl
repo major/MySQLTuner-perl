@@ -8637,6 +8637,7 @@ sub mysql_pfs {
                 schema => $schema,
                 table  => $table,
                 index  => $index,
+                sql    => "ALTER TABLE $schema.$table DROP INDEX $index",
             }
         );
         $nbL++;
@@ -12816,7 +12817,8 @@ sub format_recommendation_item {
                 my $schema = $item->{schema} // '';
                 my $table  = $item->{table}  // '';
                 my $index  = $item->{index}  // '';
-                return "Unused index: $schema.$table ($index)";
+                my $sql    = $item->{sql}    // '';
+                return "Unused index: $schema.$table ($index) (suggested SQL: $sql)";
             }
             elsif ( $item->{type} eq 'redundant_index' ) {
                 my $schema   = $item->{schema}         // '';
@@ -12949,6 +12951,37 @@ sub _sanitized_result_for_export {
     return \%copy;
 }
 
+sub _serialize_to_json {
+    my ($data) = @_;
+    if (!defined $data) {
+        return 'null';
+    }
+    my $ref = ref($data);
+    if (!$ref) {
+        if ($data =~ /^-?(?:[0-9]+(?:\.[0-9]+)?)$/) {
+            return $data;
+        }
+        my $escaped = $data;
+        $escaped =~ s/\\/\\\\/g;
+        $escaped =~ s/"/\\"/g;
+        $escaped =~ s/\n/\\n/g;
+        $escaped =~ s/\r/\\r/g;
+        $escaped =~ s/\t/\\t/g;
+        return '"' . $escaped . '"';
+    } elsif ($ref eq 'HASH') {
+        my @pairs;
+        foreach my $k (sort keys %$data) {
+            my $v = $data->{$k};
+            push @pairs, _serialize_to_json($k) . ':' . _serialize_to_json($v);
+        }
+        return '{' . join(',', @pairs) . '}';
+    } elsif ($ref eq 'ARRAY') {
+        my @elems = map { _serialize_to_json($_) } @$data;
+        return '[' . join(',', @elems) . ']';
+    }
+    return 'null';
+}
+
 sub dump_result {
     if ( $opt{'json'} && $opt{'yaml'} ) {
         print STDERR "ERROR: --json and --yaml are mutually exclusive\n";
@@ -12979,7 +13012,36 @@ sub dump_result {
           ( $details->{'res_logs'} // 10 ) +
           ( $details->{'res_meta'} // 10 );
 
+        my $report_host = $opt{'host'} // $myvar{'hostname'} // 'localhost';
+        my $report_port = $opt{'port'} // $myvar{'port'} // '3306';
+
         # Render lists
+        my @sys_recs = (
+            @sysrec,
+            grep { /(swap|swappiness|memory|ram|cpu|process|disk|mountpoint|limit|packet|event|tcp|slot|proc|open files)/i } @generalrec
+        );
+        my %seen_sys;
+        @sys_recs = grep { !$seen_sys{$_}++ } @sys_recs;
+
+        my @sec_recs = (
+            @secrec,
+            grep { /(cve|security|password|authentication|ssl|encrypt|host|grant|privilege|user|transport)/i } @generalrec
+        );
+        my %seen_sec;
+        @sec_recs = grep { !$seen_sec{$_}++ } @sec_recs;
+
+        my @conn_recs =
+          grep { /(connection|connect|thread|max_user_connections|max_connections|aborted)/i }
+          @generalrec;
+
+        my @perf_recs =
+          grep { /(slow|query|join|sort|cache|temporary|tmp|lock|started)/i }
+          @generalrec;
+
+        my @repl_recs =
+          grep { /(replica|sla[v]e|gtid|replication|binlog|relay)/i }
+          @generalrec;
+
         my $general_rec_html = join(
             "\n",
             map {
@@ -13016,7 +13078,7 @@ sub dump_result {
 "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-rose-400 mr-2.5 font-bold'>•</span><span>"
                   . escape_html( format_recommendation_item($_) )
                   . "</span></li>"
-            } @secrec
+            } @sec_recs
           )
           || "<li class='text-slate-400 italic py-2'>No security concerns identified.</li>";
 
@@ -13026,9 +13088,39 @@ sub dump_result {
 "<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-emerald-400 mr-2.5 font-bold'>•</span><span>"
                   . escape_html( format_recommendation_item($_) )
                   . "</span></li>"
-            } @sysrec
+            } @sys_recs
           )
           || "<li class='text-slate-400 italic py-2'>No OS or system modifications suggested.</li>";
+
+        my $connections_rec_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-blue-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @conn_recs
+          )
+          || "<li class='text-slate-400 italic py-2'>No connection or network recommendations.</li>";
+
+        my $performance_rec_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-amber-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @perf_recs
+          )
+          || "<li class='text-slate-400 italic py-2'>No query or performance recommendations.</li>";
+
+        my $replication_rec_html = join(
+            "\n",
+            map {
+"<li class='flex items-start py-2 border-b border-slate-700/30'><span class='text-emerald-400 mr-2.5 font-bold'>•</span><span>"
+                  . escape_html( format_recommendation_item($_) )
+                  . "</span></li>"
+            } @repl_recs
+          )
+          || "<li class='text-slate-400 italic py-2'>No replication recommendations.</li>";
 
         # Build raw output HTML
         my $raw_output_html =
@@ -13041,13 +13133,307 @@ sub dump_result {
         my $kpi_repl = $result{'SectionalHealthScore'}{'Replication'} // 100;
         my $kpi_mode = $result{'SectionalHealthScore'}{'Modeling'}    // 100;
 
+        # Serialize metrics to JSON for Javascript download
+        my $json_myvar   = _serialize_to_json( \%myvar );
+        my $json_mystat  = _serialize_to_json( \%mystat );
+        my $json_mycalc  = _serialize_to_json( \%mycalc );
+        my $json_general = _serialize_to_json( \@generalrec );
+        my $json_adjvars = _serialize_to_json( \@adjvars );
+        my $json_secrec  = _serialize_to_json( \@secrec );
+        my $json_sysrec  = _serialize_to_json( \@sysrec );
+        my $json_modeling = _serialize_to_json( \@modeling );
+
+        # Additional metrics calculations for HTML visual components
+        my $bp_reads = $mystat{'Innodb_buffer_pool_reads'} // 0;
+        my $bp_reqs  = $mystat{'Innodb_buffer_pool_read_requests'} // 0;
+        my $bp_hit_pct = 100.0;
+        if ($bp_reqs > 0) {
+            $bp_hit_pct = 100.0 * (1.0 - ($bp_reads / $bp_reqs));
+        }
+        $bp_hit_pct = sprintf("%.2f", $bp_hit_pct);
+
+        my $threads_created = $mystat{'Threads_created'} // 0;
+        my $connections = $mystat{'Connections'} // 0;
+        my $thread_cache_hit_pct = 100.0;
+        if ($connections > 0) {
+            $thread_cache_hit_pct = 100.0 * (1.0 - ($threads_created / $connections));
+        }
+        $thread_cache_hit_pct = sprintf("%.2f", $thread_cache_hit_pct);
+
+        my $tmp_disk = $mystat{'Created_tmp_disk_tables'} // 0;
+        my $tmp_total = $mystat{'Created_tmp_tables'} // 0;
+        my $tmp_mem_pct = 100.0;
+        my $tmp_disk_pct = 0.0;
+        if ($tmp_total > 0) {
+            $tmp_disk_pct = 100.0 * ($tmp_disk / $tmp_total);
+            $tmp_mem_pct = 100.0 - $tmp_disk_pct;
+        }
+        $tmp_mem_pct = sprintf("%.1f", $tmp_mem_pct);
+        $tmp_disk_pct = sprintf("%.1f", $tmp_disk_pct);
+
+        # Schema and Engine Statistics calculations for Storage & Modeling tabs
+        my $db_count = exists $result{'Databases'}{'List'} ? scalar @{ $result{'Databases'}{'List'} } : 0;
+        my $total_tables = 0;
+        my $engines_table_html = '';
+        my $engines_status_html = '';
+        
+        if ( exists $result{'Engine'} ) {
+            my @badges;
+            my $total_data_size = 0;
+            my $total_index_size = 0;
+            my $total_size = 0;
+            
+            foreach my $eng ( sort keys %{$result{'Engine'}} ) {
+                my $info = $result{'Engine'}{$eng};
+                my $tbl_count = $info->{'Table Number'} // 0;
+                my $d_size = $info->{'Data Size'} // 0;
+                my $i_size = $info->{'Index Size'} // 0;
+                my $t_size = $info->{'Total Size'} // 0;
+                
+                my $status = $info->{'Enabled'} // '';
+                my $color_class = ($status eq 'YES' || $status eq 'DEFAULT' || $status eq 'ACTIVE')
+                    ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                    : 'text-slate-500 bg-slate-500/5 border-slate-500/10';
+                my $prefix = ($status eq 'YES' || $status eq 'DEFAULT' || $status eq 'ACTIVE') ? '+' : '-';
+                push @badges, "<span class='inline-block px-2.5 py-1 text-xs font-semibold rounded-lg border $color_class'>$prefix$eng</span>";
+                
+                next if $tbl_count == 0;
+                
+                $total_tables += $tbl_count;
+                $total_data_size += $d_size;
+                $total_index_size += $i_size;
+                $total_size += $t_size;
+                
+                $engines_table_html .= sprintf(
+                    "<tr class='border-b border-slate-800/40'>" .
+                    "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s</td>" .
+                    "<td class='px-6 py-2.5 font-mono'>%d</td>" .
+                    "<td class='px-6 py-2.5 font-mono'>%s</td>" .
+                    "<td class='px-6 py-2.5 font-mono'>%s</td>" .
+                    "<td class='px-6 py-2.5 font-mono font-bold text-blue-400'>%s</td>" .
+                    "</tr>",
+                    escape_html($eng),
+                    $tbl_count,
+                    hr_bytes($d_size),
+                    hr_bytes($i_size),
+                    hr_bytes($t_size)
+                );
+            }
+            if ($engines_table_html) {
+                $engines_table_html .= sprintf(
+                    "<tr class='bg-slate-950/40 font-bold'>" .
+                    "<td class='px-6 py-3 text-slate-200'>Total</td>" .
+                    "<td class='px-6 py-3 font-mono'>%d</td>" .
+                    "<td class='px-6 py-3 font-mono'>%s</td>" .
+                    "<td class='px-6 py-3 font-mono'>%s</td>" .
+                    "<td class='px-6 py-3 font-mono text-cyan-400'>%s</td>" .
+                    "</tr>",
+                    $total_tables,
+                    hr_bytes($total_data_size),
+                    hr_bytes($total_index_size),
+                    hr_bytes($total_size)
+                );
+            }
+            $engines_status_html = join(' ', @badges);
+        }
+        
+        if (!$engines_table_html) {
+            $engines_table_html = "<tr><td colspan='5' class='px-6 py-4 text-center text-slate-500 italic'>No storage engine usage statistics available.</td></tr>";
+        }
+        if (!$engines_status_html) {
+            $engines_status_html = "<span class='text-slate-500 italic'>No storage engine status available.</span>";
+        }
+        
+        my $frg_count = $fragtables // 0;
+        my $no_pk_count = exists $result{'Tables without PK'} ? scalar @{ $result{'Tables without PK'} } : 0;
+        my $unused_index_count = grep { ref($_) eq 'HASH' && $_->{type} eq 'unused_index' } @modeling;
+        my $redundant_index_count = grep { ref($_) eq 'HASH' && $_->{type} eq 'redundant_index' } @modeling;
+
+        # InnoDB Page stats & capacity Calculations
+        my $bp_pages_total = $mystat{'Innodb_buffer_pool_pages_total'} // 0;
+        my $bp_pages_free = $mystat{'Innodb_buffer_pool_pages_free'} // 0;
+        my $bp_pages_used = $bp_pages_total - $bp_pages_free;
+        my $bp_page_size = $myvar{'innodb_page_size'} // 16384;
+        my $bp_total_bytes = $bp_pages_total * $bp_page_size;
+        my $bp_free_bytes = $bp_pages_free * $bp_page_size;
+        my $bp_used_bytes = $bp_pages_used * $bp_page_size;
+
+        my $innodb_log_info_html = '';
+        if ( mysql_version_ge( 8, 0, 30 ) ) {
+            if ( defined $myvar{'innodb_redo_log_capacity'} ) {
+                $innodb_log_info_html = "<tr><td class='px-6 py-2 font-semibold'>innodb_redo_log_capacity</td><td class='px-6 py-2 font-mono'>" . hr_bytes($myvar{'innodb_redo_log_capacity'}) . "</td></tr>";
+            } else {
+                $innodb_log_info_html = "<tr><td class='px-6 py-2 font-semibold'>innodb_redo_log_capacity</td><td class='px-6 py-2 font-mono text-slate-500'>N/A</td></tr>";
+            }
+        } else {
+            my $log_file_size = $myvar{'innodb_log_file_size'} // 0;
+            my $log_files_in_group = $myvar{'innodb_log_files_in_group'} // 0;
+            my $total_log_size = $log_file_size * $log_files_in_group;
+            $innodb_log_info_html = "<tr><td class='px-6 py-2 font-semibold'>innodb_log_file_size</td><td class='px-6 py-2 font-mono'>" . hr_bytes($log_file_size) . "</td></tr>" .
+                                    "<tr><td class='px-6 py-2 font-semibold'>innodb_log_files_in_group</td><td class='px-6 py-2 font-mono'>$log_files_in_group</td></tr>" .
+                                    "<tr><td class='px-6 py-2 font-semibold'>Total Log File Size</td><td class='px-6 py-2 font-mono'>" . hr_bytes($total_log_size) . " (" . ($mycalc{'innodb_log_size_pct'} // 0) . "% of buffer pool)</td></tr>";
+        }
+
+        my $chunk_align_html = '';
+        if (defined $myvar{'innodb_buffer_pool_chunk_size'} && defined $myvar{'innodb_buffer_pool_instances'} && $myvar{'innodb_buffer_pool_chunk_size'} > 0 && $myvar{'innodb_buffer_pool_instances'} > 0) {
+            my $num_chunks = int( ($myvar{'innodb_buffer_pool_size'} // 0) / $myvar{'innodb_buffer_pool_chunk_size'} );
+            my $expected_size = int($myvar{'innodb_buffer_pool_chunk_size'}) * int($myvar{'innodb_buffer_pool_instances'});
+            my $is_aligned = (int($myvar{'innodb_buffer_pool_size'} // 0) % $expected_size == 0);
+            my $align_status = $is_aligned ? "<span class='text-emerald-400 font-bold'>Aligned</span>" : "<span class='text-rose-400 font-bold'>Not Aligned</span>";
+            $chunk_align_html = "<tr><td class='px-6 py-2 font-semibold'>innodb_buffer_pool_chunk_size</td><td class='px-6 py-2 font-mono'>" . hr_bytes($myvar{'innodb_buffer_pool_chunk_size'}) . "</td></tr>" .
+                                "<tr><td class='px-6 py-2 font-semibold'>InnoDB Buffer Pool Chunks</td><td class='px-6 py-2 font-mono'>$num_chunks (instances: " . $myvar{'innodb_buffer_pool_instances'} . ")</td></tr>" .
+                                "<tr><td class='px-6 py-2 font-semibold'>Chunk Alignment Status</td><td class='px-6 py-2 font-mono'>$align_status</td></tr>";
+        }
+
+        my $innodb_write_rate_html = '';
+        my $innodb_os_log_written = $mystat{'Innodb_os_log_written'} || 0;
+        my $uptime = $mystat{'Uptime'} || 1;
+        if ($uptime > 3600) {
+            my $hourly_rate = $innodb_os_log_written / ($uptime / 3600);
+            $innodb_write_rate_html = "<tr><td class='px-6 py-2 font-semibold'>Hourly InnoDB Log Write Rate</td><td class='px-6 py-2 font-mono'>" . hr_bytes($hourly_rate) . "/hour</td></tr>";
+        } else {
+            $innodb_write_rate_html = "<tr><td class='px-6 py-2 font-semibold'>Total InnoDB OS Log Written</td><td class='px-6 py-2 font-mono'>" . hr_bytes($innodb_os_log_written) . " (uptime &lt; 1h)</td></tr>";
+        }
+
+        my $db_table_html = '';
+        foreach my $db ( sort @dblist ) {
+            my $info = $result{'Databases'}{$db};
+            next unless defined $info;
+            my $tbls = $info->{'Tables'} // 0;
+            my $rows = $info->{'Rows'} // 0;
+            my $d_size = $info->{'Data Size'} // 0;
+            my $i_size = $info->{'Index Size'} // 0;
+            my $t_size = $info->{'Total Size'} // 0;
+            
+            my $d_size_str = ($d_size =~ /^\d+$/) ? hr_bytes($d_size) : $d_size;
+            my $i_size_str = ($i_size =~ /^\d+$/) ? hr_bytes($i_size) : $i_size;
+            my $t_size_str = ($t_size =~ /^\d+$/) ? hr_bytes($t_size) : $t_size;
+            
+            $db_table_html .= sprintf(
+                "<tr class='border-b border-slate-800/40'>" .
+                "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s</td>" .
+                "<td class='px-6 py-2.5 font-mono'>%d</td>" .
+                "<td class='px-6 py-2.5 font-mono'>%d</td>" .
+                "<td class='px-6 py-2.5 font-mono'>%s</td>" .
+                "<td class='px-6 py-2.5 font-mono'>%s</td>" .
+                "<td class='px-6 py-2.5 font-mono font-bold text-blue-400'>%s</td>" .
+                "</tr>",
+                escape_html($db),
+                $tbls,
+                $rows,
+                $d_size_str,
+                $i_size_str,
+                $t_size_str
+            );
+        }
+        if (!$db_table_html) {
+            $db_table_html = "<tr><td colspan='6' class='px-6 py-4 text-center text-slate-500 italic'>No user database statistics available.</td></tr>";
+        }
+
+        my $fragmented_tables_html = '';
+        if ( exists $result{'Tables'}{'Fragmented tables'} && scalar @{ $result{'Tables'}{'Fragmented tables'} } > 0 ) {
+            foreach my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } ) {
+                my ( $table_schema, $table_name, $engine, $data_free ) = split /\t/msx, $table_line;
+                my $free_mb = $data_free / 1024 / 1024;
+                my $free_str = sprintf("%.2f MB", $free_mb);
+                my $sql = ($engine eq 'InnoDB')
+                    ? "ALTER TABLE `$table_schema`.`$table_name` FORCE;"
+                    : "OPTIMIZE TABLE `$table_schema`.`$table_name`;";
+                $fragmented_tables_html .= sprintf(
+                    "<tr class='border-b border-slate-800/40'>" .
+                    "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>" .
+                    "<td class='px-6 py-2.5 font-mono'>%s</td>" .
+                    "<td class='px-6 py-2.5 font-mono text-rose-400 font-bold'>%s</td>" .
+                    "<td class='px-6 py-2.5 font-mono text-xs select-all text-slate-400 bg-slate-950/30 rounded px-2 py-1'>%s</td>" .
+                    "</tr>",
+                    escape_html($table_schema),
+                    escape_html($table_name),
+                    escape_html($engine),
+                    $free_str,
+                    escape_html($sql)
+                );
+            }
+        }
+        if (!$fragmented_tables_html) {
+            $fragmented_tables_html = "<tr><td colspan='4' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>No fragmented tables found.</td></tr>";
+        }
+
+        my $no_pk_tables_html = '';
+        if ( exists $result{'Tables without PK'} && scalar @{ $result{'Tables without PK'} } > 0 ) {
+            foreach my $badtable ( @{ $result{'Tables without PK'} } ) {
+                my ($schema, $table) = split /,/, $badtable, 2;
+                if (!defined $table) {
+                    $schema = '';
+                    $table = $badtable;
+                }
+                $no_pk_tables_html .= sprintf(
+                    "<tr class='border-b border-slate-800/40'>" .
+                    "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>" .
+                    "<td class='px-6 py-2.5 font-mono text-xs text-rose-400'>Add explicit primary key for performance, maintenance, and replication stability.</td>" .
+                    "</tr>",
+                    escape_html($schema),
+                    escape_html($table)
+                );
+            }
+        }
+        if (!$no_pk_tables_html) {
+            $no_pk_tables_html = "<tr><td colspan='2' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>All base tables have a primary key or unique index.</td></tr>";
+        }
+
+        my $redundant_indexes_html = '';
+        my $unused_indexes_html = '';
+        foreach my $item (@modeling) {
+            if ( ref($item) eq 'HASH' ) {
+                if ( ($item->{type} // '') eq 'redundant_index' ) {
+                    my $schema   = $item->{schema}         // '';
+                    my $table    = $item->{table}          // '';
+                    my $index    = $item->{index}          // '';
+                    my $dominant = $item->{dominant_index} // '';
+                    my $sql      = $item->{sql}            // '';
+                    $redundant_indexes_html .= sprintf(
+                        "<tr class='border-b border-slate-800/40'>" .
+                        "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>" .
+                        "<td class='px-6 py-2.5 font-mono text-rose-400'>%s</td>" .
+                        "<td class='px-6 py-2.5 font-mono text-slate-400'>redundant of %s</td>" .
+                        "<td class='px-6 py-2.5 font-mono text-xs select-all text-slate-400 bg-slate-950/30 rounded px-2 py-1'>%s</td>" .
+                        "</tr>",
+                        escape_html($schema),
+                        escape_html($table),
+                        escape_html($index),
+                        escape_html($dominant),
+                        escape_html($sql)
+                    );
+                }
+                elsif ( ($item->{type} // '') eq 'unused_index' ) {
+                    my $schema = $item->{schema} // '';
+                    my $table  = $item->{table}  // '';
+                    my $index  = $item->{index}  // '';
+                    my $sql    = $item->{sql}    // '';
+                    $unused_indexes_html .= sprintf(
+                        "<tr class='border-b border-slate-800/40'>" .
+                        "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>" .
+                        "<td class='px-6 py-2.5 font-mono text-amber-400'>%s</td>" .
+                        "<td class='px-6 py-2.5 font-mono text-xs select-all text-slate-400 bg-slate-950/30 rounded px-2 py-1'>%s</td>" .
+                        "</tr>",
+                        escape_html($schema),
+                        escape_html($table),
+                        escape_html($index),
+                        escape_html($sql)
+                    );
+                }
+            }
+        }
+        if (!$redundant_indexes_html) {
+            $redundant_indexes_html = "<tr><td colspan='4' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>No redundant indexes detected.</td></tr>";
+        }
+        if (!$unused_indexes_html) {
+            $unused_indexes_html = "<tr><td colspan='3' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>No unused indexes detected.</td></tr>";
+        }
+
         # Prioritized Top Findings lists
         my @general_top  = get_top_findings( \@generalrec );
         my @storage_top  = get_top_findings( \@adjvars );
         my @security_top = get_top_findings( \@secrec );
-        my @repl_recs =
-          grep { /(replica|sla[v]e|gtid|replication|binlog|relay)/i }
-          @generalrec;
         my @replication_top = get_top_findings( \@repl_recs );
         my @modeling_top    = get_top_findings( \@modeling );
 
@@ -13057,7 +13443,7 @@ sub dump_result {
             if ( !@findings ) {
                 return
 "<div class='bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex flex-col justify-between h-full'>"
-                  . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center mb-3'><span>$title</span><span class='text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20'>🟢 Optimal</span></h4>"
+                  . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center gap-2 mb-3'><span>$title</span><span class='text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 whitespace-nowrap shrink-0'>🟢 Optimal</span></h4>"
                   . "<p class='text-xs text-slate-500 italic py-2'>No critical issues or recommendations detected in this area.</p>"
                   . "</div>";
             }
@@ -13072,13 +13458,13 @@ sub dump_result {
                   . "<span class='text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded border $badge_color shrink-0'>"
                   . $f->{badge}
                   . "</span>"
-                  . "<span class='text-xs text-slate-300 break-words'>"
+                  . "<span class='text-xs text-slate-300 break-all min-w-0'>"
                   . escape_html( $f->{text} )
                   . "</span>" . "</li>";
             }
             return
 "<div class='bg-slate-900/40 border border-slate-800 rounded-xl p-4 flex flex-col justify-between h-full'>"
-              . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center mb-3'><span>$title</span><span class='text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20'>⚠️ Action Required</span></h4>"
+              . "<h4 class='text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center gap-2 mb-3'><span>$title</span><span class='text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap shrink-0'>⚠️ Action Required</span></h4>"
               . "<ul class='space-y-1'>$items_html</ul>"
               . "</div>";
         };
@@ -13173,25 +13559,227 @@ HTML
         my $sec_width  = int( $sec_score * 100 / 30 );
         my $res_width  = int( $res_score * 100 / 30 );
 
-        # HTML Content template
         my $html_content = <<"HTML";
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MySQLTuner Report</title>
+    <title>MySQLTuner Advanced Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link class="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #020617;
+            color: #cbd5e1;
+            margin: 0;
+            padding: 0;
         }
         pre, code {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        /* Fallback offline grid/flex styles if Tailwind is blocked */
+        .max-w-6xl { max-width: 1152px; margin: 0 auto; padding: 2rem 1rem; }
+        .bg-slate-900\/60 { background-color: rgba(15, 23, 42, 0.6); }
+        .bg-slate-900\/80 { background-color: rgba(15, 23, 42, 0.8); }
+        .bg-slate-950 { background-color: #020617; }
+        .bg-slate-950\/40 { background-color: rgba(2, 6, 23, 0.4); }
+        .border-slate-800 { border: 1px solid #1e293b; }
+        .border-slate-800\/80 { border: 1px solid rgba(30, 41, 59, 0.8); }
+        .rounded-2xl { border-radius: 1rem; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .p-4 { padding: 1rem; }
+        .p-6 { padding: 1.5rem; }
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mt-1\.5 { margin-top: 0.375rem; }
+        .mt-12 { margin-top: 3rem; }
+        .pt-8 { padding-top: 2rem; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .flex-wrap { flex-wrap: wrap; }
+        .justify-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        .hidden { display: none !important; }
+        .tab-btn {
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            border-radius: 0.5rem 0.5rem 0 0;
+            display: flex;
+            align-items: center;
+        }
+        .tab-btn:hover { color: #f1f5f9; }
+        .tab-btn.text-blue-400 {
+            color: #60a5fa;
+            border-bottom-color: #60a5fa;
+            background-color: rgba(15, 23, 42, 0.6);
+        }
+        .grid { display: grid; gap: 1.5rem; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .divide-y > * + * { border-top-width: 1px; border-color: #1e293b; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+        th, td { padding: 0.75rem 1rem; }
+        th { font-weight: 600; text-transform: uppercase; font-size: 0.75rem; color: #94a3b8; }
+        .border-b { border-bottom: 1px solid #1e293b; }
+        .text-blue-400 { color: #60a5fa; }
+        .text-amber-400 { color: #fbbf24; }
+        .text-emerald-400 { color: #34d399; }
+        .text-rose-500 { color: #f43f5e; }
+        .text-cyan-400 { color: #22d3ee; }
+        .text-slate-200 { color: #e2e8f0; }
+        .text-slate-300 { color: #cbd5e1; }
+        .text-slate-400 { color: #94a3b8; }
+        .text-slate-500 { color: #64748b; }
+        .text-slate-600 { color: #475569; }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, monospace; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .font-extrabold { font-weight: 800; }
+        .text-xs { font-size: 0.75rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-3xl { font-size: 1.875rem; }
+        .text-4xl { font-size: 2.25rem; }
+        .uppercase { text-transform: uppercase; }
+        .tracking-wider { letter-spacing: 0.05em; }
+        .tracking-tight { letter-spacing: -0.025em; }
+        .text-center { text-align: center; }
+        .inline-block { display: inline-block; }
+        .w-4 { width: 1rem; }
+        .h-4 { height: 1rem; }
+        .mr-1\.5 { margin-right: 0.375rem; }
+        .mr-2 { margin-right: 0.5rem; }
+        \@media (min-width: 640px) {
+            .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .sm\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+            .sm\:flex-row { flex-direction: row; }
+        }
+        \@media (min-width: 1024px) {
+            .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .lg\:col-span-1 { grid-column: span 1 / span 1; }
+            .lg\:col-span-2 { grid-column: span 2 / span 2; }
         }
     </style>
+    <script>
+        function replaceIcons() {
+            const svgPaths = {
+                'fa-database': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path>',
+                'fa-tools': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>',
+                'fa-chart-pie': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512.9.025 9.025 0 0120.488 9z"></path>',
+                'fa-server': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>',
+                'fa-plug': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>',
+                'fa-hdd': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>',
+                'fa-bolt': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>',
+                'fa-shield-alt': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>',
+                'fa-user-shield': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2c0 5.591-3.824 10.29-9 11.622-5.176-1.332-9-6.03-9-11.622 0-1.042.133-2.052.382-3.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 018.618 3.04A12.02 12.02 0 0121 12z"></path>',
+                'fa-shield-halved': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>',
+                'fa-project-diagram': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>',
+                'fa-share-alt': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742l4.632-2.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316l-4.632-2.316m0 0a3 3 0 10-5.367 2.684 3 3 0 005.367-2.684zm0 0l4.632 2.316m0 0a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>',
+                'fa-share-nodes': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742l4.632-2.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316l-4.632-2.316m0 0a3 3 0 10-5.367 2.684 3 3 0 005.367-2.684zm0 0l4.632 2.316m0 0a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>',
+                'fa-download': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>',
+                'fa-heartbeat': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>',
+                'fa-history': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
+                'fa-chart-line': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>',
+                'fa-fire': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>',
+                'fa-gauge-high': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"></path>',
+                'fa-clipboard-list': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>',
+                'fa-chevron-right': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>',
+                'fa-chevron-down': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>',
+                'fa-terminal': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>',
+                'fa-memory': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 5h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2z"></path>',
+                'fa-sliders-h': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>',
+                'fa-folder-open': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h5l2 2h9a2 2 0 012 2v5a2 2 0 01-2 2H5z"></path>',
+                'fa-file-csv': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>',
+                'fa-search': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>',
+                'fa-copy': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>',
+                'fa-check': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
+            };
+            
+            document.querySelectorAll('i').forEach(el => {
+                for (const [faClass, path] of Object.entries(svgPaths)) {
+                    if (el.classList.contains(faClass)) {
+                        const classes = el.className.replace('fas', '').replace('far', '').replace(faClass, '').trim();
+                        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                        svg.setAttribute('class', (classes + ' w-4 h-4 inline-block').trim());
+                        svg.setAttribute('fill', 'none');
+                        svg.setAttribute('stroke', 'currentColor');
+                        svg.setAttribute('viewBox', '0 0 24 24');
+                        svg.innerHTML = path;
+                        el.parentNode.replaceChild(svg, el);
+                        break;
+                    }
+                }
+            });
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-400', 'text-blue-400', 'bg-slate-900/60');
+                btn.classList.add('border-transparent', 'text-slate-400');
+            });
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-400');
+                activeBtn.classList.add('border-blue-400', 'text-blue-400', 'bg-slate-900/60');
+            }
+            window.location.hash = tabId;
+        }
+
+        function filterList(input, listId) {
+            const filter = input.value.toLowerCase();
+            const ul = document.getElementById(listId);
+            const li = ul.getElementsByTagName('li');
+            for (let i = 0; i < li.length; i++) {
+                const text = li[i].textContent || li[i].innerText;
+                if (text.toLowerCase().indexOf(filter) > -1) {
+                    li[i].style.display = "";
+                } else {
+                    li[i].style.display = "none";
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            replaceIcons();
+
+            const hash = window.location.hash.replace('#', '');
+            const validTabs = ['dashboard', 'system', 'connections', 'storage', 'performance', 'security', 'modeling', 'replication', 'export'];
+            if (hash && validTabs.includes(hash)) {
+                showTab(hash);
+            } else {
+                showTab('dashboard');
+            }
+            
+            // Circular progress gauge animation
+            const circle = document.querySelector('.gauge-progress');
+            if (circle) {
+                const offset = circle.getAttribute('data-offset');
+                circle.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                setTimeout(() => {
+                    circle.style.strokeDashoffset = offset;
+                }, 150);
+            }
+        });
+    </script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-blue-500/30 selection:text-blue-200">
     <div class="max-w-6xl mx-auto px-4 py-8">
@@ -13201,7 +13789,7 @@ HTML
             <div>
                 <h1 class="text-3xl font-extrabold bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 bg-clip-text text-transparent tracking-tight">MySQLTuner Audit Report</h1>
                 <p class="text-slate-400 mt-1.5 text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span><i class="fas fa-database text-blue-400 mr-1.5"></i>$db_ver ($db_comment)</span>
+                    <span><i class="fas fa-database text-blue-400 mr-1.5"></i>$db_ver ($db_comment) at $report_host:$report_port</span>
                     <span class="text-slate-700">•</span>
                     <span><i class="fas fa-tools text-indigo-400 mr-1.5"></i>Tuner $tunerversion</span>
                 </p>
@@ -13212,303 +13800,931 @@ HTML
             </div>
         </header>
 
-        <!-- Main Dashboard Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            
-            <!-- Sidebar: Health Score Details -->
-            <div class="lg:col-span-1 space-y-6">
-                
-                <!-- Health Score Meter -->
-                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center text-center">
-                    <h2 class="text-lg font-bold text-slate-400 mb-6 flex items-center gap-2"><i class="fas fa-heartbeat text-rose-500"></i>Overall Health Score</h2>
-                    
-                    <!-- Circular Score Gauge -->
-                    <div class="relative w-40 h-40 flex items-center justify-center mb-6">
-                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-slate-800" fill="transparent" />
-                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="$score_color_class" fill="transparent"
-                                    stroke-dasharray="264" stroke-dashoffset="$circle_offset" />
-                        </svg>
-                        <div class="absolute flex flex-col items-center">
-                            <span class="text-4xl font-extrabold tracking-tight">$score</span>
-                            <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-0.5">out of 100</span>
+        <!-- Navigation Tabs -->
+        <nav class="flex flex-wrap border-b border-slate-800 mb-8 gap-2">
+            <button id="btn-dashboard" onclick="showTab('dashboard')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-blue-400 text-blue-400 bg-slate-900/60 rounded-t-lg transition-all"><i class="fas fa-chart-pie mr-2"></i>Dashboard</button>
+            <button id="btn-system" onclick="showTab('system')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-server mr-2"></i>System &amp; Memory</button>
+            <button id="btn-connections" onclick="showTab('connections')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-plug mr-2"></i>Connections</button>
+            <button id="btn-storage" onclick="showTab('storage')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-hdd mr-2"></i>Storage Engines</button>
+            <button id="btn-performance" onclick="showTab('performance')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-bolt mr-2"></i>Performance</button>
+            <button id="btn-security" onclick="showTab('security')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-shield-alt mr-2"></i>Security</button>
+            <button id="btn-modeling" onclick="showTab('modeling')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-project-diagram mr-2"></i>SQL Modeling</button>
+            <button id="btn-replication" onclick="showTab('replication')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-share-alt mr-2"></i>Replication</button>
+            <button id="btn-export" onclick="showTab('export')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-download mr-2"></i>Data Export</button>
+        </nav>
+
+        <!-- Tab Content Containers -->
+
+        <!-- 1. DASHBOARD TAB -->
+        <div id="tab-dashboard" class="tab-content space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column: Health Score -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center text-center">
+                        <h2 class="text-lg font-bold text-slate-400 mb-6 flex items-center gap-2"><i class="fas fa-heartbeat text-rose-500"></i>Overall Health Score</h2>
+                        <div class="relative w-40 h-40 flex items-center justify-center mb-6">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-slate-800" fill="transparent" />
+                                <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="$score_color_class gauge-progress" fill="transparent"
+                                        stroke-dasharray="264" stroke-dashoffset="264" data-offset="$circle_offset" />
+                            </svg>
+                            <div class="absolute flex flex-col items-center">
+                                <span class="text-4xl font-extrabold tracking-tight">$score</span>
+                                <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-0.5">out of 100</span>
+                            </div>
+                        </div>
+                        <div class="px-4 py-1.5 rounded-full text-xs font-bold border $score_bg_class $score_color_class">
+                            $badge_text
                         </div>
                     </div>
 
-                    <!-- Health Badge -->
-                    <div class="px-4 py-1.5 rounded-full text-xs font-bold border $score_bg_class $score_color_class">
-                        $badge_text
+                    <!-- Category Scores Breakdown -->
+                    <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Category Scores</h3>
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center text-sm font-medium">
+                                <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-bolt text-amber-400 w-4"></i>Performance</span>
+                                <span class="font-mono text-slate-400">$perf_score / 40</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-2">
+                                <div class="bg-amber-400 h-2 rounded-full" style="width: $perf_width%"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center text-sm font-medium">
+                                <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-user-shield text-rose-500 w-4"></i>Security</span>
+                                <span class="font-mono text-slate-400">$sec_score / 30</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-2">
+                                <div class="bg-rose-500 h-2 rounded-full" style="width: $sec_width%"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center text-sm font-medium">
+                                <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-shield-virus text-emerald-400 w-4"></i>Resilience</span>
+                                <span class="font-mono text-slate-400">$res_score / 30</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-2">
+                                <div class="bg-emerald-400 h-2 rounded-full" style="width: $res_width%"></div>
+                            </div>
+                        </div>
                     </div>
+                    $historical_deltas_html
                 </div>
 
-                <!-- KPI Scores Breakdown -->
-                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Category Scores</h3>
-                    
-                    <!-- Performance -->
-                    <div class="space-y-1">
-                        <div class="flex justify-between items-center text-sm font-medium">
-                            <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-bolt text-amber-400 w-4"></i>Performance</span>
-                            <span class="font-mono text-slate-400">$perf_score / 40</span>
+                <!-- Right Column: Sectional KPIs & Heatmap -->
+                <div class="lg:col-span-2 space-y-6">
+                    <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl p-6 space-y-6">
+                        <div class="border-b border-slate-800/80 pb-4 flex justify-between items-center">
+                            <h2 class="text-xl font-bold text-slate-200 flex items-center gap-2"><i class="fas fa-chart-line text-indigo-400"></i>Sectional Indicators &amp; KPIs Dashboard</h2>
+                            <span class="text-xs text-slate-500 uppercase tracking-widest font-bold">Phase 13 Unified View</span>
                         </div>
-                        <div class="w-full bg-slate-800 rounded-full h-2">
-                            <div class="bg-amber-400 h-2 rounded-full" style="width: $perf_width%"></div>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                            <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">General Stats</span>
+                                <span class="text-xl font-extrabold text-blue-400 block mb-2">$kpi_gen%</span>
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="bg-blue-400 h-1.5 rounded-full" style="width: $kpi_gen%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Storage &amp; Perf</span>
+                                <span class="text-xl font-extrabold text-amber-400 block mb-2">$kpi_stor%</span>
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="bg-amber-400 h-1.5 rounded-full" style="width: $kpi_stor%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-950/40 border border-slate-850 rounded-xl p-3 text-center">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Security</span>
+                                <span class="text-xl font-extrabold text-rose-500 block mb-2">$kpi_sec%</span>
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="bg-rose-500 h-1.5 rounded-full" style="width: $kpi_sec%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-950/40 border border-slate-805 rounded-xl p-3 text-center">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Replication &amp; HA</span>
+                                <span class="text-xl font-extrabold text-emerald-400 block mb-2">$kpi_repl%</span>
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="bg-emerald-400 h-1.5 rounded-full" style="width: $kpi_repl%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">SQL Modeling</span>
+                                <span class="text-xl font-extrabold text-cyan-400 block mb-2">$kpi_mode%</span>
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="bg-cyan-400 h-1.5 rounded-full" style="width: $kpi_mode%"></div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Security -->
-                    <div class="space-y-1">
-                        <div class="flex justify-between items-center text-sm font-medium">
-                            <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-user-shield text-rose-500 w-4"></i>Security</span>
-                            <span class="font-mono text-slate-400">$sec_score / 30</span>
-                        </div>
-                        <div class="w-full bg-slate-800 rounded-full h-2">
-                            <div class="bg-rose-500 h-2 rounded-full" style="width: $sec_width%"></div>
-                        </div>
-                    </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                            <!-- Saturation Heatmap -->
+                            <div class="bg-slate-950/20 border border-slate-850 rounded-xl p-4 space-y-3">
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fas fa-fire text-amber-500"></i>Resource Saturation Heatmap</h3>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[11px] font-medium">
+                                        <span class="text-slate-400">CPU Load Saturation</span>
+                                        <span class="font-mono text-slate-300">$sat_cpu%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                        <div class="$cpu_color h-1.5 rounded-full" style="width: $sat_cpu%"></div>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[11px] font-medium">
+                                        <span class="text-slate-400">Memory Saturation</span>
+                                        <span class="font-mono text-slate-300">$sat_mem%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                        <div class="$mem_color h-1.5 rounded-full" style="width: $sat_mem%"></div>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[11px] font-medium">
+                                        <span class="text-slate-400">Connections Saturation</span>
+                                        <span class="font-mono text-slate-300">$sat_conn%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                        <div class="$conn_color h-1.5 rounded-full" style="width: $sat_conn%"></div>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[11px] font-medium">
+                                        <span class="text-slate-400">Disk I/O Pressure</span>
+                                        <span class="font-mono text-slate-300">$sat_io%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                        <div class="$io_color h-1.5 rounded-full" style="width: $sat_io%"></div>
+                                    </div>
+                                </div>
+                            </div>
 
-                    <!-- Resilience -->
-                    <div class="space-y-1">
-                        <div class="flex justify-between items-center text-sm font-medium">
-                            <span class="text-slate-300 flex items-center gap-2"><i class="fas fa-shield-virus text-emerald-400 w-4"></i>Resilience</span>
-                            <span class="font-mono text-slate-400">$res_score / 30</span>
+                            <!-- TEI -->
+                            <div class="bg-slate-950/20 border border-slate-850 rounded-xl p-4 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5"><i class="fas fa-gauge-high text-cyan-400"></i>Throughput Efficiency Index</h3>
+                                    <div class="grid grid-cols-2 gap-4 mt-2">
+                                        <div>
+                                            <span class="text-[10px] text-slate-500 uppercase font-semibold block">Logical Work</span>
+                                            <span class="text-sm font-bold text-slate-300">$tei_qps QPS</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-[10px] text-slate-500 uppercase font-semibold block">Buffer Logical Reads</span>
+                                            <span class="text-sm font-bold text-slate-300">$tei_reads/s</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="border-t border-slate-800/80 pt-3 mt-3">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-[10px] text-slate-500 uppercase font-semibold block">Efficiency Ratio</span>
+                                            <span class="text-xs text-slate-400">Queries completed per logical page read</span>
+                                        </div>
+                                        <span class="text-lg font-extrabold text-cyan-400 font-mono">$tei_index</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="w-full bg-slate-800 rounded-full h-2">
-                            <div class="bg-emerald-400 h-2 rounded-full" style="width: $res_width%"></div>
+
+                        <!-- Top Findings Summary -->
+                        <div class="pt-2">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5"><i class="fas fa-clipboard-list text-indigo-400"></i>Prioritized Executive Summary Findings</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                $gen_findings_html
+                                $store_findings_html
+                                $sec_findings_html
+                                $repl_findings_html
+                                $model_findings_html
+                            </div>
                         </div>
-                    </div>
+                    </section>
                 </div>
-
-                $historical_deltas_html
             </div>
 
-            <!-- Content Area: Recommendations lists -->
-            <div class="lg:col-span-2 space-y-6">
-
-                <!-- Unified Health Dashboard (Phase 13) -->
-                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden p-6 space-y-6">
-                    <div class="border-b border-slate-800/80 pb-4 flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-slate-200 flex items-center gap-2"><i class="fas fa-chart-line text-indigo-400"></i>Sectional Indicators &amp; KPIs Dashboard</h2>
-                        <span class="text-xs text-slate-500 uppercase tracking-widest font-bold">Phase 13 Unified View</span>
-                    </div>
-
-                    <!-- 1. Sectional Health Scores -->
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                        <!-- General -->
-                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">General Stats</span>
-                            <span class="text-xl font-extrabold text-blue-400 block mb-2">$kpi_gen%</span>
-                            <div class="w-full bg-slate-800 rounded-full h-1.5">
-                                <div class="bg-blue-400 h-1.5 rounded-full" style="width: $kpi_gen%"></div>
-                            </div>
+            <!-- Raw Console Trace at the bottom of Dashboard -->
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <details class="group">
+                    <summary class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex justify-between items-center cursor-pointer list-none select-none">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-chevron-right text-slate-500 transition-transform group-open:rotate-90"></i>
+                            <i class="fas fa-terminal text-blue-400 text-lg"></i>
+                            <h2 class="text-lg font-bold text-slate-200">Full Console Output Trace</h2>
                         </div>
-                        <!-- Storage -->
-                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Storage &amp; Perf</span>
-                            <span class="text-xl font-extrabold text-amber-400 block mb-2">$kpi_stor%</span>
-                            <div class="w-full bg-slate-800 rounded-full h-1.5">
-                                <div class="bg-amber-400 h-1.5 rounded-full" style="width: $kpi_stor%"></div>
-                            </div>
-                        </div>
-                        <!-- Security -->
-                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Security</span>
-                            <span class="text-xl font-extrabold text-rose-500 block mb-2">$kpi_sec%</span>
-                            <div class="w-full bg-slate-800 rounded-full h-1.5">
-                                <div class="bg-rose-500 h-1.5 rounded-full" style="width: $kpi_sec%"></div>
-                            </div>
-                        </div>
-                        <!-- Replication -->
-                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Replication &amp; HA</span>
-                            <span class="text-xl font-extrabold text-emerald-400 block mb-2">$kpi_repl%</span>
-                            <div class="w-full bg-slate-800 rounded-full h-1.5">
-                                <div class="bg-emerald-400 h-1.5 rounded-full" style="width: $kpi_repl%"></div>
-                            </div>
-                        </div>
-                        <!-- Modeling -->
-                        <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3 text-center">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">SQL Modeling</span>
-                            <span class="text-xl font-extrabold text-cyan-400 block mb-2">$kpi_mode%</span>
-                            <div class="w-full bg-slate-800 rounded-full h-1.5">
-                                <div class="bg-cyan-400 h-1.5 rounded-full" style="width: $kpi_mode%"></div>
-                            </div>
-                        </div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 group-open:hidden">Show Logs</span>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 hidden group-open:inline">Hide Logs</span>
+                    </summary>
+                    <div class="p-6 bg-slate-950 border-t border-slate-900/80">
+                        <pre class="text-xs leading-relaxed text-slate-400 font-mono overflow-x-auto max-h-[500px] overflow-y-auto whitespace-pre-wrap">$raw_output_html</pre>
                     </div>
-
-                    <!-- 2. Heatmap & TEI Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                        <!-- Heatmap -->
-                        <div class="bg-slate-950/20 border border-slate-850 rounded-xl p-4 space-y-3">
-                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fas fa-fire text-amber-500"></i>Resource Saturation Heatmap</h3>
-                            <!-- CPU -->
-                            <div class="space-y-1">
-                                <div class="flex justify-between text-[11px] font-medium">
-                                    <span class="text-slate-400">CPU Load Saturation</span>
-                                    <span class="font-mono text-slate-300">$sat_cpu%</span>
-                                </div>
-                                <div class="w-full bg-slate-800 rounded-full h-1.5">
-                                    <div class="$cpu_color h-1.5 rounded-full" style="width: $sat_cpu%"></div>
-                                </div>
-                            </div>
-                            <!-- Memory -->
-                            <div class="space-y-1">
-                                <div class="flex justify-between text-[11px] font-medium">
-                                    <span class="text-slate-400">Memory Saturation</span>
-                                    <span class="font-mono text-slate-300">$sat_mem%</span>
-                                </div>
-                                <div class="w-full bg-slate-800 rounded-full h-1.5">
-                                    <div class="$mem_color h-1.5 rounded-full" style="width: $sat_mem%"></div>
-                                </div>
-                            </div>
-                            <!-- Connections -->
-                            <div class="space-y-1">
-                                <div class="flex justify-between text-[11px] font-medium">
-                                    <span class="text-slate-400">Connections Saturation</span>
-                                    <span class="font-mono text-slate-300">$sat_conn%</span>
-                                </div>
-                                <div class="w-full bg-slate-800 rounded-full h-1.5">
-                                    <div class="$conn_color h-1.5 rounded-full" style="width: $sat_conn%"></div>
-                                </div>
-                            </div>
-                            <!-- Disk I/O -->
-                            <div class="space-y-1">
-                                <div class="flex justify-between text-[11px] font-medium">
-                                    <span class="text-slate-400">Disk I/O Pressure</span>
-                                    <span class="font-mono text-slate-300">$sat_io%</span>
-                                </div>
-                                <div class="w-full bg-slate-800 rounded-full h-1.5">
-                                    <div class="$io_color h-1.5 rounded-full" style="width: $sat_io%"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- TEI -->
-                        <div class="bg-slate-950/20 border border-slate-850 rounded-xl p-4 flex flex-col justify-between">
-                            <div>
-                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5"><i class="fas fa-gauge-high text-cyan-400"></i>Throughput Efficiency Index</h3>
-                                <div class="grid grid-cols-2 gap-4 mt-2">
-                                    <div>
-                                        <span class="text-[10px] text-slate-500 uppercase font-semibold block">Logical Work</span>
-                                        <span class="text-sm font-bold text-slate-300">$tei_qps QPS</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-[10px] text-slate-500 uppercase font-semibold block">Buffer Logical Reads</span>
-                                        <span class="text-sm font-bold text-slate-300">$tei_reads/s</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="border-t border-slate-800/80 pt-3 mt-3">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <span class="text-[10px] text-slate-500 uppercase font-semibold block">Efficiency Ratio</span>
-                                        <span class="text-xs text-slate-400">Queries completed per logical page read</span>
-                                    </div>
-                                    <span class="text-lg font-extrabold text-cyan-400 font-mono">$tei_index</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3. Top Findings Summary -->
-                    <div class="pt-2">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5"><i class="fas fa-clipboard-list text-indigo-400"></i>Prioritized Executive Summary Findings</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            $gen_findings_html
-                            $store_findings_html
-                            $sec_findings_html
-                            $repl_findings_html
-                            $model_findings_html
-                        </div>
-                    </div>
-                </section>
-
-                <!-- General Recommendations Panel -->
-                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
-                        <i class="fas fa-list-alt text-blue-400 text-lg"></i>
-                        <h2 class="text-lg font-bold text-slate-200">General Recommendations</h2>
-                    </div>
-                    <div class="p-6">
-                        <ul class="text-sm text-slate-300 space-y-1">
-                            $general_rec_html
-                        </ul>
-                    </div>
-                </section>
-
-                <!-- Variables to Adjust Panel -->
-                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
-                        <i class="fas fa-sliders-h text-amber-400 text-lg"></i>
-                        <h2 class="text-lg font-bold text-slate-200">Variables to Adjust</h2>
-                    </div>
-                    <div class="p-6">
-                        <ul class="text-sm text-slate-300 space-y-1">
-                            $adjvars_html
-                        </ul>
-                    </div>
-                </section>
-
-                <!-- Database Modeling & Schema Findings Panel -->
-                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
-                        <i class="fas fa-project-diagram text-cyan-400 text-lg"></i>
-                        <h2 class="text-lg font-bold text-slate-200">Database Modeling Findings</h2>
-                    </div>
-                    <div class="p-6">
-                        <ul class="text-sm text-slate-300 space-y-1">
-                            $modeling_html
-                        </ul>
-                    </div>
-                </section>
-
-                <!-- Security Recommendations Panel -->
-                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
-                        <i class="fas fa-user-shield text-rose-500 text-lg"></i>
-                        <h2 class="text-lg font-bold text-slate-200">Security Findings</h2>
-                    </div>
-                    <div class="p-6">
-                        <ul class="text-sm text-slate-300 space-y-1">
-                            $secrec_html
-                        </ul>
-                    </div>
-                </section>
-
-                <!-- System & OS Recommendations Panel -->
-                <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-                    <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
-                        <i class="fas fa-server text-emerald-400 text-lg"></i>
-                        <h2 class="text-lg font-bold text-slate-200">System &amp; OS Recommendations</h2>
-                    </div>
-                    <div class="p-6">
-                        <ul class="text-sm text-slate-300 space-y-1">
-                            $sysrec_html
-                        </ul>
-                    </div>
-                </section>
-
-            </div>
-
+                </details>
+            </section>
         </div>
 
-        <!-- Raw Console Output Panel -->
-        <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden mb-8">
-            <details class="group">
-                <summary class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex justify-between items-center cursor-pointer list-none select-none">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-chevron-right text-slate-500 transition-transform group-open:rotate-90"></i>
-                        <i class="fas fa-terminal text-blue-400 text-lg"></i>
-                        <h2 class="text-lg font-bold text-slate-200">Full Console Output Trace</h2>
-                    </div>
-                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 group-open:hidden">Show Logs</span>
-                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 hidden group-open:inline">Hide Logs</span>
-                </summary>
-                <div class="p-6 bg-slate-950 border-t border-slate-900/80">
-                    <pre class="text-xs leading-relaxed text-slate-400 font-mono overflow-x-auto max-h-[500px] overflow-y-auto whitespace-pre-wrap">$raw_output_html</pre>
+        <!-- 2. SYSTEM & MEMORY TAB -->
+        <div id="tab-system" class="tab-content hidden space-y-6">
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-xl font-bold text-slate-200 mb-4 flex items-center gap-2"><i class="fas fa-memory text-emerald-400"></i>OS &amp; Memory Allocation</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-3 border-b border-slate-800">Resource</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Allocated Value</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60">
+                            <tr>
+                                <td class="px-6 py-4 font-semibold">Physical RAM</td>
+                                <td class="px-6 py-4 font-mono">@{[$physical_memory ? sprintf("%.2f GB", $physical_memory / 1024 / 1024 / 1024) : 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 font-semibold">Swap Space</td>
+                                <td class="px-6 py-4 font-mono">@{[$swap_memory ? sprintf("%.2f GB", $swap_memory / 1024 / 1024 / 1024) : 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 font-semibold">Max Peak Memory Calculation</td>
+                                <td class="px-6 py-4 font-mono">@{[$mycalc{max_peak_memory} ? sprintf("%.2f MB (%d%% of RAM)", $mycalc{max_peak_memory} / 1024 / 1024, $mycalc{pct_max_used_memory}) : 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 font-semibold">Maximum Memory Used</td>
+                                <td class="px-6 py-4 font-mono">@{[$mycalc{max_used_memory} ? sprintf("%.2f MB", $mycalc{max_used_memory} / 1024 / 1024) : 'N/A']}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            </details>
-        </section>
+            </div>
+
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-server text-emerald-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">OS &amp; System Recommendations</h2>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" onkeyup="filterList(this, 'sysrec-list')" placeholder="Filter recommendations..." class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-400/80 focus:ring-1 focus:ring-blue-400/80 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-200 placeholder-slate-500 focus:outline-none transition-all">
+                        <i class="fas fa-search absolute right-3 top-2.5 text-slate-600 text-xs"></i>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <ul id="sysrec-list" class="text-sm text-slate-300 space-y-1">
+                        $sysrec_html
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- 3. CONNECTIONS TAB -->
+        <div id="tab-connections" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl text-center">
+                    <span class="text-xs text-slate-500 uppercase font-semibold block mb-2">Max Connections Limit</span>
+                    <span class="text-3xl font-extrabold text-blue-400 font-mono">@{[$myvar{max_connections} // 'N/A']}</span>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl text-center">
+                    <span class="text-xs text-slate-500 uppercase font-semibold block mb-2">Max Connections Used</span>
+                    <span class="text-3xl font-extrabold text-amber-400 font-mono">@{[$mystat{Max_used_connections} // 'N/A']} (@{[$mycalc{pct_connections_used} // 0]}%)</span>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl text-center flex flex-col justify-center items-center">
+                    <span class="text-xs text-slate-500 uppercase font-semibold block mb-2">Thread Cache Hit Rate</span>
+                    <div class="w-full bg-slate-800 rounded-full h-2.5 max-w-[200px]">
+                        <div class="bg-emerald-500 h-2.5 rounded-full" style="width: $thread_cache_hit_pct%"></div>
+                    </div>
+                    <span class="text-xs font-mono mt-1 text-slate-300 font-bold">$thread_cache_hit_pct%</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Connection &amp; Thread Variables</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-2 border-b border-slate-800">Variable Name</th>
+                                <th class="px-6 py-2 border-b border-slate-800">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40 font-mono">
+                            <tr>
+                                <td class="px-6 py-2">max_connections</td>
+                                <td class="px-6 py-2 text-blue-400">@{[$myvar{max_connections} // 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2">thread_cache_size</td>
+                                <td class="px-6 py-2">@{[$myvar{thread_cache_size} // 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2">Threads_cached</td>
+                                <td class="px-6 py-2">@{[$mystat{Threads_cached} // 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2">Threads_created</td>
+                                <td class="px-6 py-2">@{[$mystat{Threads_created} // 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2">Aborted_connects</td>
+                                <td class="px-6 py-2">@{[$mystat{Aborted_connects} // 'N/A']}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Connection & Network Recommendations Panel -->
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden mt-6">
+                <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-plug text-blue-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Connection &amp; Network Recommendations</h2>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" onkeyup="filterList(this, 'connections-rec-list')" placeholder="Filter recommendations..." class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-400/80 focus:ring-1 focus:ring-blue-400/80 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-200 placeholder-slate-500 focus:outline-none transition-all">
+                        <i class="fas fa-search absolute right-3 top-2.5 text-slate-600 text-xs"></i>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <ul id="connections-rec-list" class="text-sm text-slate-300 space-y-1">
+                        $connections_rec_html
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- 4. STORAGE ENGINES TAB -->
+        <div id="tab-storage" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- InnoDB Buffer Pool Hit Rate -->
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2"><i class="fas fa-bolt text-yellow-400 mr-1.5"></i>InnoDB Buffer Pool Hit Rate</h3>
+                        <p class="text-xs text-slate-500 mb-4">Indicates how frequently pages are read directly from cache memory vs disk</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-full bg-slate-800 rounded-full h-4">
+                            <div class="bg-yellow-400 h-4 rounded-full" style="width: $bp_hit_pct%"></div>
+                        </div>
+                        <span class="font-mono text-sm font-bold text-yellow-400 shrink-0">$bp_hit_pct%</span>
+                    </div>
+                </div>
+
+                <!-- InnoDB Sizing stats -->
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">InnoDB Memory Configuration</h3>
+                    <div class="space-y-2 text-xs font-mono">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">innodb_buffer_pool_size</span>
+                            <span class="text-slate-300">@{[$myvar{innodb_buffer_pool_size} ? sprintf("%.2f MB", $myvar{innodb_buffer_pool_size} / 1024 / 1024) : 'N/A']}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">innodb_log_buffer_size</span>
+                            <span class="text-slate-300">@{[$myvar{innodb_log_buffer_size} ? sprintf("%.2f MB", $myvar{innodb_log_buffer_size} / 1024 / 1024) : 'N/A']}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">innodb_file_per_table</span>
+                            <span class="text-slate-300">@{[$myvar{innodb_file_per_table} // 'N/A']}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enabled Storage Engines -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-tools text-blue-400 mr-1.5"></i>Enabled Storage Engines Status</h3>
+                <div class="flex flex-wrap gap-2">
+                    $engines_status_html
+                </div>
+            </div>
+
+            <!-- Storage Engine Data Distribution Table -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-database text-cyan-400 mr-1.5"></i>Storage Engine Data Distribution</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-3 border-b border-slate-800">Storage Engine</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Tables Count</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Data Size</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Index Size</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Total Size</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            $engines_table_html
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Detailed InnoDB Diagnostics -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-heartbeat text-emerald-400 mr-1.5"></i>InnoDB Engine Detailed Diagnostics</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-2 border-b border-slate-800">Diagnostic Parameter</th>
+                                <th class="px-6 py-2 border-b border-slate-800">Value / Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            <tr>
+                                <td class="px-6 py-2 font-semibold">InnoDB Buffer Pool Instances</td>
+                                <td class="px-6 py-2 font-mono">@{[$myvar{innodb_buffer_pool_instances} // 'N/A']}</td>
+                            </tr>
+                            $chunk_align_html
+                            $innodb_log_info_html
+                            <tr>
+                                <td class="px-6 py-2 font-semibold">InnoDB Buffer Pool Total Pages</td>
+                                <td class="px-6 py-2 font-mono">@{[$mystat{Innodb_buffer_pool_pages_total} ? sprintf("%d pages (%s)", $mystat{Innodb_buffer_pool_pages_total}, hr_bytes($bp_total_bytes)) : 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2 font-semibold">InnoDB Buffer Pool Free Pages</td>
+                                <td class="px-6 py-2 font-mono">@{[$mystat{Innodb_buffer_pool_pages_free} ? sprintf("%d pages (%s)", $mystat{Innodb_buffer_pool_pages_free}, hr_bytes($bp_free_bytes)) : 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2 font-semibold">InnoDB Buffer Pool Used Pages</td>
+                                <td class="px-6 py-2 font-mono">@{[$mystat{Innodb_buffer_pool_pages_total} ? sprintf("%d pages (%s)", $bp_pages_used, hr_bytes($bp_used_bytes)) : 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2 font-semibold">InnoDB Thread Concurrency</td>
+                                <td class="px-6 py-2 font-mono">@{[$myvar{innodb_thread_concurrency} // 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2 font-semibold">InnoDB Read Efficiency</td>
+                                <td class="px-6 py-2 font-mono font-bold text-yellow-400">$bp_hit_pct% (hit rate)</td>
+                            </tr>
+                            $innodb_write_rate_html
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Variables to Adjust panel -->
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-sliders-h text-amber-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Variables to Adjust (Storage Recommendations)</h2>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" onkeyup="filterList(this, 'adjvars-list')" placeholder="Filter adjustments..." class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-400/80 focus:ring-1 focus:ring-blue-400/80 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-200 placeholder-slate-500 focus:outline-none transition-all">
+                        <i class="fas fa-search absolute right-3 top-2.5 text-slate-600 text-xs"></i>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <ul id="adjvars-list" class="text-sm text-slate-300 space-y-1">
+                        $adjvars_html
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- 5. PERFORMANCE TAB -->
+        <div id="tab-performance" class="tab-content hidden space-y-6">
+            <!-- Temp table disk ratio split bar -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fas fa-folder-open text-cyan-400"></i>Temporary Tables Location Split</h3>
+                <p class="text-xs text-slate-500 mb-4">Shows ratio of temporary tables created in memory (optimal) vs written to disk (suboptimal)</p>
+                <div class="w-full bg-rose-500 rounded-full h-6 flex overflow-hidden">
+                    <div class="bg-emerald-500 h-6 flex justify-center items-center text-[10px] font-bold text-slate-950" style="width: $tmp_mem_pct%">RAM: $tmp_mem_pct%</div>
+                    <div class="bg-rose-500 h-6 flex justify-center items-center text-[10px] font-bold text-slate-100" style="width: $tmp_disk_pct%">Disk: $tmp_disk_pct%</div>
+                </div>
+                <div class="flex justify-between text-xs mt-3 font-mono text-slate-400">
+                    <span>Created_tmp_tables: @{[$mystat{Created_tmp_tables} // 0]}</span>
+                    <span>Created_tmp_disk_tables: @{[$mystat{Created_tmp_disk_tables} // 0]}</span>
+                </div>
+            </div>
+
+            <!-- Performance stats details -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Joins &amp; Sort Variables</h3>
+                <div class="overflow-x-auto font-mono text-xs">
+                    <table class="w-full text-left text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-2 border-b border-slate-800">Metric</th>
+                                <th class="px-6 py-2 border-b border-slate-800">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            <tr>
+                                <td class="px-6 py-2">Select_full_join (Joins without index)</td>
+                                <td class="px-6 py-2 text-rose-400">@{[$mystat{Select_full_join} // 0]}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2">Select_range_check</td>
+                                <td class="px-6 py-2">@{[$mystat{Select_range_check} // 0]}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2">Sort_merge_passes (Sorts that touched disk)</td>
+                                <td class="px-6 py-2">@{[$mystat{Sort_merge_passes} // 0]}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2">Slow_queries</td>
+                                <td class="px-6 py-2">@{[$mystat{Slow_queries} // 0]}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2">tmp_table_size</td>
+                                <td class="px-6 py-2">@{[$myvar{tmp_table_size} ? sprintf("%.2f MB", $myvar{tmp_table_size} / 1024 / 1024) : 'N/A']}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-2">max_heap_table_size</td>
+                                <td class="px-6 py-2">@{[$myvar{max_heap_table_size} ? sprintf("%.2f MB", $myvar{max_heap_table_size} / 1024 / 1024) : 'N/A']}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Query & Performance Recommendations Panel -->
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden mt-6">
+                <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-bolt text-amber-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Query &amp; Performance Recommendations</h2>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" onkeyup="filterList(this, 'performance-rec-list')" placeholder="Filter recommendations..." class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-400/80 focus:ring-1 focus:ring-blue-400/80 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-200 placeholder-slate-500 focus:outline-none transition-all">
+                        <i class="fas fa-search absolute right-3 top-2.5 text-slate-600 text-xs"></i>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <ul id="performance-rec-list" class="text-sm text-slate-300 space-y-1">
+                        $performance_rec_html
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- 6. SECURITY TAB -->
+        <div id="tab-security" class="tab-content hidden space-y-6">
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><i class="fas fa-shield-halved text-rose-500"></i>Security Indicators &amp; Configuration</h3>
+                <p class="text-xs text-slate-500 mb-4">Summary of database vulnerabilities, authentication plugins, and user permissions parameters.</p>
+                <div class="text-xs font-mono space-y-2">
+                    <div class="flex justify-between border-b border-slate-800/40 py-1.5">
+                        <span class="text-slate-500">MySQL User Logged In</span>
+                        <span class="text-slate-300">$mysqllogin</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-800/40 py-1.5">
+                        <span class="text-slate-500">Local MySQL Client Command</span>
+                        <span class="text-slate-300">$mysqlcmd</span>
+                    </div>
+                </div>
+            </div>
+
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-user-shield text-rose-500 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Security Findings &amp; Hardening Advice</h2>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" onkeyup="filterList(this, 'secrec-list')" placeholder="Filter security advice..." class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-400/80 focus:ring-1 focus:ring-blue-400/80 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-200 placeholder-slate-500 focus:outline-none transition-all">
+                        <i class="fas fa-search absolute right-3 top-2.5 text-slate-600 text-xs"></i>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <ul id="secrec-list" class="text-sm text-slate-300 space-y-1">
+                        $secrec_html
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- 7. SQL MODELING TAB -->
+        <div id="tab-modeling" class="tab-content hidden space-y-6">
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><i class="fas fa-project-diagram text-cyan-400"></i>Database Schema Modeling Findings</h3>
+                <p class="text-xs text-slate-500 mb-4">Highlights potential schema issues, indexes anomalies, PK casing problems, and naming conventions deviations.</p>
+                <div class="text-xs font-mono space-y-2">
+                    <div class="flex justify-between border-b border-slate-800/40 py-1.5">
+                        <span class="text-slate-500">Modeling Quality Score</span>
+                        <span class="text-cyan-400 font-bold">$kpi_mode%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SQL Schema Summary KPI Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">User Databases</span>
+                    <span class="text-2xl font-extrabold text-blue-400 block">$db_count</span>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Total Tables</span>
+                    <span class="text-2xl font-extrabold text-indigo-400 block">$total_tables</span>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Fragmented Tables</span>
+                    <span class="text-2xl font-extrabold @{[$frg_count > 0 ? 'text-amber-400' : 'text-emerald-400']} block">$frg_count</span>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Tables w/o PK</span>
+                    <span class="text-2xl font-extrabold @{[$no_pk_count > 0 ? 'text-rose-400' : 'text-emerald-400']} block">$no_pk_count</span>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Redundant Indexes</span>
+                    <span class="text-2xl font-extrabold @{[$redundant_index_count > 0 ? 'text-amber-400' : 'text-emerald-400']} block">$redundant_index_count</span>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Unused Indexes</span>
+                    <span class="text-2xl font-extrabold @{[$unused_index_count > 0 ? 'text-amber-400' : 'text-emerald-400']} block">$unused_index_count</span>
+                </div>
+            </div>
+
+            <!-- User Databases Size Distribution -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-database text-blue-400 mr-1.5"></i>User Databases Size Distribution</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-3 border-b border-slate-800">Database Name</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Tables</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Rows</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Data Size</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Index Size</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Total Size</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            $db_table_html
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Fragmented Tables Details -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-folder-open text-amber-400 mr-1.5"></i>Fragmented Tables Details (>100MB data &amp; >10% free space)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-3 border-b border-slate-800">Table Name</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Engine</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Free Space</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Suggested Defragmentation SQL</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            $fragmented_tables_html
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tables Without Primary Key Details -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-exclamation-triangle text-rose-500 mr-1.5"></i>Tables Without Primary Key Details</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-3 border-b border-slate-800">Table Name</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Status / Hardening Advice</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            $no_pk_tables_html
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Redundant Indexes Details -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-copy text-rose-500 mr-1.5"></i>Redundant Indexes Details</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-3 border-b border-slate-800">Table Name</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Redundant Index</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Status</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Suggested Drop SQL</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            $redundant_indexes_html
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Unused Indexes Details -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-ban text-amber-500 mr-1.5"></i>Unused Indexes Details</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-950/40">
+                            <tr>
+                                <th class="px-6 py-3 border-b border-slate-800">Table Name</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Unused Index</th>
+                                <th class="px-6 py-3 border-b border-slate-800">Suggested Drop SQL</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            $unused_indexes_html
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-project-diagram text-cyan-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">SQL Schema &amp; Modeling Recommendations</h2>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" onkeyup="filterList(this, 'modeling-list')" placeholder="Filter modeling advice..." class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-400/80 focus:ring-1 focus:ring-blue-400/80 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-200 placeholder-slate-500 focus:outline-none transition-all">
+                        <i class="fas fa-search absolute right-3 top-2.5 text-slate-600 text-xs"></i>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <ul id="modeling-list" class="text-sm text-slate-300 space-y-1">
+                        $modeling_html
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- 8. REPLICATION TAB -->
+        <div id="tab-replication" class="tab-content hidden space-y-6">
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><i class="fas fa-share-nodes text-emerald-400"></i>Replication Status Dashboard</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+                    <div class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3">
+                        <span class="text-[10px] text-slate-500 uppercase font-semibold block mb-1">Binary Logging</span>
+                        <span class="text-sm font-bold text-slate-300">@{[$myvar{log_bin} // 'OFF']}</span>
+                    </div>
+                    <div class="bg-slate-950/40 border border-slate-805 rounded-xl p-3">
+                        <span class="text-[10px] text-slate-500 uppercase font-semibold block mb-1">Replication Health Score</span>
+                        <span class="text-sm font-bold text-emerald-400">$kpi_repl%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- General Recommendations Panel with Replication Filter -->
+            <!-- General Recommendations Panel with Replication Filter -->
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-slate-900/80 px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-list-alt text-blue-400 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-200">Replication Recommendations</h2>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" onkeyup="filterList(this, 'replication-rec-list')" placeholder="Filter recommendations..." class="w-full bg-slate-950/60 border border-slate-800 focus:border-blue-400/80 focus:ring-1 focus:ring-blue-400/80 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-200 placeholder-slate-500 focus:outline-none transition-all">
+                        <i class="fas fa-search absolute right-3 top-2.5 text-slate-600 text-xs"></i>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <ul id="replication-rec-list" class="text-sm text-slate-300 space-y-1">
+                        $replication_rec_html
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- 9. DATA EXPORT TAB -->
+        <div id="tab-export" class="tab-content hidden space-y-6">
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-download text-blue-400 mr-1.5"></i>CSV Data Export Center</h3>
+                <p class="text-xs text-slate-500 mb-6">Download detailed parsed metrics and recommendation logs directly from this self-contained document to your local machine as CSV files.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <button onclick="downloadCSV('variables')" class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 font-bold text-sm px-4 py-3 rounded-xl transition-all shadow-lg"><i class="fas fa-file-csv text-lg"></i>System Variables</button>
+                    <button onclick="downloadCSV('status')" class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 font-bold text-sm px-4 py-3 rounded-xl transition-all shadow-lg"><i class="fas fa-file-csv text-lg"></i>Status Variables</button>
+                    <button onclick="downloadCSV('recommendations')" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 font-bold text-sm px-4 py-3 rounded-xl transition-all shadow-lg"><i class="fas fa-file-csv text-lg"></i>Recommendations</button>
+                    <button onclick="downloadCSV('modeling')" class="flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 font-bold text-sm px-4 py-3 rounded-xl transition-all shadow-lg"><i class="fas fa-file-csv text-lg"></i>Schema &amp; Modeling</button>
+                </div>
+            </div>
+            
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl mt-6">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fas fa-terminal text-indigo-400 mr-1.5"></i>JSON Data Export Center</h3>
+                <p class="text-xs text-slate-500 mb-6">Copy the complete parsed metric payload in structured JSON format directly to your clipboard for external integrations.</p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button id="copy-json-btn" onclick="copyJSON()" class="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 font-bold text-sm px-4 py-3 rounded-xl transition-all shadow-lg text-slate-200 cursor-pointer"><i class="fas fa-copy text-lg"></i>Copy JSON to Clipboard</button>
+                    <span id="copy-status" class="text-xs font-semibold text-emerald-400 self-center hidden"><i class="fas fa-check mr-1.5"></i>Copied successfully!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- JSON embedded data & CSV download script -->
+        <script>
+            const dbMetrics = {
+                metadata: {
+                    host: "$report_host",
+                    port: "$report_port",
+                    version: "$db_ver",
+                    timestamp: "$timestamp"
+                },
+                myvar: $json_myvar,
+                mystat: $json_mystat,
+                mycalc: $json_mycalc,
+                general: $json_general,
+                adjvars: $json_adjvars,
+                security: $json_secrec,
+                system: $json_sysrec,
+                modeling: $json_modeling
+            };
+
+            function downloadCSV(topic) {
+                let csv = '';
+                const meta = dbMetrics.metadata || {};
+                const h = (meta.host || 'localhost').replace(/[^a-zA-Z0-9.-]/g, '_');
+                const v = (meta.version || 'unknown').replace(/[^a-zA-Z0-9.-]/g, '_');
+                const ts = (meta.timestamp || '').replace(/[^a-zA-Z0-9.-]/g, '_');
+                const filename = 'mysqltuner_' + h + '_' + v + '_' + ts + '_' + topic + '.csv';
+                
+                if (topic === 'variables') {
+                    csv = 'Variable Name,Value\\n';
+                    for (const k in dbMetrics.myvar) {
+                        csv += '"' + k + '","' + dbMetrics.myvar[k] + '"\\n';
+                    }
+                } else if (topic === 'status') {
+                    csv = 'Status Variable Name,Value\\n';
+                    for (const k in dbMetrics.mystat) {
+                        csv += '"' + k + '","' + dbMetrics.mystat[k] + '"\\n';
+                    }
+                } else if (topic === 'recommendations') {
+                    csv = 'Category,Recommendation\\n';
+                    dbMetrics.general.forEach(function(r) { csv += '"General","' + r.replace(/"/g, '""') + '"\\n'; });
+                    dbMetrics.adjvars.forEach(function(r) { csv += '"Adjustments","' + r.replace(/"/g, '""') + '"\\n'; });
+                    dbMetrics.security.forEach(function(r) { csv += '"Security","' + r.replace(/"/g, '""') + '"\\n'; });
+                    dbMetrics.system.forEach(function(r) { csv += '"System","' + r.replace(/"/g, '""') + '"\\n'; });
+                } else if (topic === 'modeling') {
+                    csv = 'Type,Schema,Table,Index,Details,Remediation SQL\\n';
+                    dbMetrics.modeling.forEach(function(item) {
+                        if (typeof item === 'object') {
+                            const type = item.type || '';
+                            const schema = item.schema || '';
+                            const table = item.table || '';
+                            const index = item.index || '';
+                            const details = item.dominant_index || '';
+                            const sql = item.sql || '';
+                            csv += '"' + type + '","' + schema + '","' + table + '","' + index + '","' + details + '","' + sql.replace(/"/g, '""') + '"\\n';
+                        } else {
+                            csv += '"General","","","","' + item.replace(/"/g, '""') + '",""\\n';
+                        }
+                    });
+                }
+
+                let blob;
+                try {
+                    blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                } catch (e) {}
+                const link = document.createElement("a");
+                if (blob && window.URL && window.URL.createObjectURL) {
+                    link.href = window.URL.createObjectURL(blob);
+                } else {
+                    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+                }
+                link.setAttribute("download", filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function copyJSON() {
+                const jsonStr = JSON.stringify(dbMetrics, null, 4);
+                
+                function showSuccess() {
+                    const status = document.getElementById('copy-status');
+                    status.classList.remove('hidden');
+                    setTimeout(() => {
+                        status.classList.add('hidden');
+                    }, 2000);
+                }
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(jsonStr).then(showSuccess).catch(err => {
+                        fallbackCopy();
+                    });
+                } else {
+                    fallbackCopy();
+                }
+
+                function fallbackCopy() {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = jsonStr;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showSuccess();
+                    } catch (err) {
+                        console.error('Failed to copy JSON: ', err);
+                    }
+                    document.body.removeChild(textArea);
+                }
+            }
+        </script>
 
         <!-- Footer -->
         <footer class="text-center text-slate-600 text-xs border-t border-slate-900 pt-8 mt-12">

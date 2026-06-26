@@ -212,3 +212,13 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - [x] **Doc-Sync**: `.agent/README.md` synchronized with 18 workflows.
 - [x] **SECURITY.md**: Version reference updated to v2.8.44.
 - [x] **ROADMAP PI-010**: I/O Pressure status already corrected.
+
+### [2026-06-04] Release v2.8.45
+
+- [x] **Temptable Sizing Limits**: Integrated `temptable_max_ram` calculations and mmap checks.
+- [x] **InnoDB Index/Data Ratio Check**: Added advisory and CSV dump for tables > 50,000 rows.
+- [x] **Uptime Observability**: Exposed Database Server Uptime in all modes.
+- [x] **Performance Optimization**: Bulk-fetched table engine and column details to reduce queries (from 2N+3 to 2 per table).
+- [x] **System DB Filtering**: Excluded system tables from schema analysis and dumpdir exports.
+- [x] **SQL Escaping Fixes**: Safe dollar sign escaping in system call wrappers.
+

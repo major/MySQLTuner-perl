@@ -231,6 +231,35 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Compression & Efficiency**:
   * [x] **On-the-fly Compression**: Support for compressed `.gz` exports to minimize disk footprint in container/limited-storage environments.
 
+### [Phase 15: Interactive Multi-Page HTML Reports & Detailed Exports](file:///documentation/specifications/roadmap_phase_xiv_html_reports.md) [COMPLETED]
+
+* [x] **Summary Page Dashboard**:
+  * [x] Executive summary layout with a modern circular health score gauge, category scores breakdown, and top findings.
+* [x] **Topic-Based Metrics Partitioning**:
+  * [x] Structure the report into tabs/views: Memory, Connections, Storage Engines, Performance, Security, SQL Modeling, Replication.
+* [x] **SVG/CSS-Based Ratios Visualization**:
+  * [x] Render interactive bars/gauges for InnoDB buffer pool hit rate, thread cache hit rate, disk temp tables, and connection saturation.
+* [x] **Embedded CSV Data Exports**:
+  * [x] Embed base64 or raw string CSV representation of variables and findings in JavaScript, enabling instant local CSV downloads.
+
+### [Phase 16: AI Agent Integration & Actionable JSON Schema](file:///documentation/specifications/roadmap_phase_xv_ai_agent_integration.md) [NOT STARTED]
+
+* [ ] **Structured Actionable JSON Output**:
+  * [ ] Implementation of `--agent-json` flag returning a standardized schema.
+* [ ] **Expected Outcomes & Rollback Statements**:
+  * [ ] Each recommendation includes explicit expected outcome description and corresponding rollback statement.
+* [ ] **Risk Assessment & Impact Scoring**:
+  * [ ] Assign deterministic impact score (1-10) and category/risk level to each recommendation.
+
+### [Phase 17: Dockerized Auditing Daemon & MCP Server Support](file:///documentation/specifications/roadmap_phase_xvi_mcp_server.md) [NOT STARTED]
+
+* [ ] **Interval Auditing Daemon**:
+  * [ ] Dockerized execution environment running auditing loops every X hours with caching.
+* [ ] **Model Context Protocol (MCP) Server**:
+  * [ ] Expose caching layer, latest results, and immediate auditing as MCP tools and resources.
+* [ ] **Safe execution & Rollbacks**:
+  * [ ] Implement secure database interaction tools to apply or rollback recommendations.
+
 ## 🔮 [Strategic Technical Evolutions](file:///documentation/specifications/strategic_technical_evolutions.md)
 
 * [ ] Set up a pipeline to automatically audit and verify reference link availability inside the repository documentation to prevent dead links.

@@ -76,11 +76,10 @@ To ensure quality and clarity in every development cycle, all non-trivial featur
 - **Commit Validation:** Commits are automatically linted via `commitlint`. Non-compliant messages will be rejected by the pre-commit hook.
 - **History Documentation:** Use `npm run commit` to generate structured history.
 
-1. **Changelog:** All changes MUST be traced and documented inside `@Changelog`.
-    - _Exception_: Documentation-only updates (`docs:`) following Conventional Commits may skip the manual `@Changelog` entry if they are primarily intended for README synchronization.
-    - _Requirement_: Adding a new test MUST have a `test:` entry in the `@Changelog`.
-    - _Requirement_: Changing test scripts or updating infrastructure MUST have a `ci:` entry in the `@Changelog`.
-    - _Requirement_: Changing `Makefile` or files under `build/` MUST be traced in the `@Changelog` (usually via `ci:` or `chore:`).
+1. **Changelog:** All changes, without exception (including documentation `docs:` and unit tests `test:`), MUST be traced and documented inside the `Changelog` file to ensure granular change tracking.
+    - _Requirement_: Adding a new test MUST have a `test:` entry in the `Changelog`.
+    - _Requirement_: Changing test scripts or updating infrastructure MUST have a `ci:` entry in the `Changelog`.
+    - _Requirement_: Changing `Makefile` or files under `build/` MUST be traced in the `Changelog` (usually via `ci:` or `chore:`).
     - _Requirement_: All feature completions MUST be synchronized with `ROADMAP.md` before final PR/Commit.
     - _Ordering_: Changelog entries MUST be ordered by category: `chore`, `feat`, `fix`, `test`, `ci`, then others.
     - _Release Notes_: All release notes generated in `releases/` MUST follow the same category ordering in their "Executive Summary" section.
