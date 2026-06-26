@@ -24,3 +24,4 @@ subtest 'doc_sync.py execution verification' => sub {
 };
 
 done_testing();
+# Verify pre-commit hook execution
