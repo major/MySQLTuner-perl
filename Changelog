@@ -2,49 +2,71 @@
 
 2.9.0 2026-06-15
 
-- test: add unit test for remote host physical memory detection and validation (issue #796).
-- fix(cli): preserve --socket in connection arguments when --host is specified.
-- test: add socket preservation tests to test_issue_781.t.
-- feat: update Total buffers output message format to display temptable sizing when active.
-- test: add unit test for temptable output formatting in Total buffers.
-- ci: optimize pre-commit hook to only run unit tests when code, tests, or dependencies are modified.
-- fix: update commit process
-- feat(report): categorize recommendations in HTML report and add Connections/Performance panels, Storage engines table, and SQL modeling stats grid.
-- test(report): update HTML report unit tests to verify connections, performance, storage, and modeling HTML sections.
-- chore(main): whitelist deps and system commit scopes in check_compliance.pl to support Dependabot and host metrics commits.
+- chore(deps): update devops-infra/action-commit-push digest to fa0c793 (#929)
+- chore(deps): update shogo82148/actions-setup-mysql digest to 076e636 (#930)
 - chore(main): add roadmap to the whitelist of allowed scopes in compliance checks.
+- chore(main): whitelist deps and system commit scopes in check_compliance.pl to support Dependabot and host metrics commits.
+- chore: automated project metadata update
+- chore: remove execution.log from git repository and sync docs
 - feat(cli): create an agent-ready output format (JSON/YAML) so that MySQLTuner can be easily integrated by AI agents.
+- feat(cli): resolve remote memory, socket override, and temptable sizing issues
+- feat(main): recommend enabling slow query log if disabled (#517)
+- feat(metadata): fix test badge and update version references in READMEs
 - feat(report): add verbose execution timing measurements for each section, showing both elapsed time and its percentage relative to the total script execution time.
+- feat(report): add verbose timings, step percentages, and snapshot summary
+- feat(report): categorize recommendations in HTML report and add Connections/Performance panels, Storage engines table, and SQL modeling stats grid.
+- feat(report): finalize HTML report, YAML output, and historical comparison
 - feat(report): finalize a complete HTML report file beginning in v2.8.45.
+- feat(report): implement Phase 13 sectional global indicators and KPIs
 - feat(report): move dump_csv_files execution step to immediately before make_recommendations.
 - feat(report): print an environment audit snapshot summary (server, user, RAM, swap, versions, uptime) right after get_all_vars.
 - feat(report): support historical comparison of database diagnostics and performance metrics over time.
+- feat: recommend slow query log when disabled (#517)
+- feat: update Total buffers output message format to display temptable sizing when active.
 - fix(cli): add mutually exclusive guard for json and yaml options.
-- fix(main): calculate query cache efficiency using Com_select on MariaDB, where Com_select includes query cache hits (MDEV-4981).
+- fix(cli): preserve --socket in connection arguments when --host is specified.
+- fix(main): add undefined and 'NULL' guards to hr_num to eliminate uninitialized value warnings.
+- fix(main): add undefined/NULL guards to hr_num to resolve uninitialized warnings
+- fix(main): address PR #931 code review feedback and enhance test validations
 - fix(main): calculate health score early in historical comparison to ensure scores exist for trend analysis.
+- fix(main): calculate query cache efficiency using Com_select on MariaDB (MDEV-4981)
+- fix(main): calculate query cache efficiency using Com_select on MariaDB, where Com_select includes query cache hits (MDEV-4981).
 - fix(main): format YAML null as tilde (~) and multiline values using literal block style.
 - fix(main): guard InnoDB log file size and log size percentage checks against uninitialized variables.
 - fix(main): guard version and version comment checks in MariaDB parallel replication and query cache blocks.
 - fix(main): implement cached version comparison parser to eliminate uninitialized value warnings and improve performance.
-- fix(main): add undefined and 'NULL' guards to hr_num to eliminate uninitialized value warnings.
 - fix(main): sanitize and redact sensitive credentials from json/yaml output exports.
 - fix(main): skip local /proc/loadavg read during remote database audits.
 - fix(report): flush console output trace when opening raw log files late in dumpdir mode.
 - fix(test): add undef fallbacks to human_size, hr_bytes and hr_bytes_rnd mocks in tests.
+- fix: update commit process
+- fix: update documentation and code
+- test(hook): verify pre-commit hook runs tests when test files change
+- test(lab): add unit test test_issue_480.t for table_open_cache_instances recommendation (#480)
+- test(lab): add unit test test_issue_517.t for slow query log recommendations (#517)
+- test(lab): add unit test test_issue_810.t for issue 810
+- test(lab): add unit test test_issue_810.t for remote host forcemem MB interpretation correctness (issue #810)
 - test(lab): add unit tests for query cache efficiency logic on MySQL and MariaDB in tests/test_issue_927.t (renamed from tests/issue_927.t).
+- test(lab): normalize all repro_issue_*.t and issue_*.t test file names to test_issue_*.t
+- test(lab): split unit_coverage_boost4.t into smaller topic-oriented unit tests: unit_cli_helpers.t, unit_client_privileges.t, unit_cloud_commands.t, unit_fs_info.t, unit_os_vm.t
 - test(lab): utilize isolated tempfile for mock json to avoid race conditions in tests/unit_phase13_kpis.t.
 - test(report): add verbose timing and audit snapshot summary formatting checks to tests/verbose_timing.t.
+- test(report): update HTML report unit tests to verify connections, performance, storage, and modeling HTML sections.
 - test(versions): add unit tests for version caching and comparisons, resolve redundant warnings, and use tempfile in tests/unit_versions.t.
-- feat(main): recommend enabling slow query log if disabled (#517)
-- test(lab): add unit test test_issue_517.t for slow query log recommendations (#517)
-- test(lab): add unit test test_issue_480.t for table_open_cache_instances recommendation (#480)
-- test(lab): split unit_coverage_boost4.t into smaller topic-oriented unit tests: unit_cli_helpers.t, unit_client_privileges.t, unit_cloud_commands.t, unit_fs_info.t, unit_os_vm.t
-- test(lab): normalize all repro_issue_*.t and issue_*.t test file names to test_issue_*.t
-- test(lab): add unit test test_issue_810.t for remote host forcemem MB interpretation correctness (issue #810)
+- test: add socket preservation tests to test_issue_781.t.
+- test: add unit test for remote host physical memory detection and validation (issue #796).
+- test: add unit test for temptable output formatting in Total buffers.
+- ci: optimize pre-commit hook to only run unit tests when code, tests, or dependencies are modified.
+- docs(metadata): remove timestamp from doc-sync generated files
+- docs(roadmap): link strategic technical evolutions specification and enforce changelog staging
 - docs(roadmap): specify Phase XVI (AI Agent Integration) and Phase XVII (Dockerized MCP Daemon).
-
+- docs: add LightPath as sponsor, relocate coffee button, and use star-history chart
+- docs: regenerate release notes
+- docs: update repository links to major/MySQLTuner-perl and add GitHub stars badge
 
 2.8.45 2026-06-04
+
+
 
 - chore: restore doc_sync.py utility script and run doc synchronization.
 - feat: export both complete (unfiltered) and filtered CSV files for sys views in dumpdir.
@@ -69,6 +91,8 @@
 - test: add unit test for remote/cloud host recap in tests/unit_coverage_boost3.t.
 
 2.8.44 2026-05-27
+
+
 
 - feat: develop automated end-of-life (EOL) date synchronization check script to audit LTS versions in CI.
 - feat: develop automated specification consistency auditor and Spec-to-Test Mapping Matrix.
@@ -100,6 +124,8 @@
 
 2.8.43 2026-05-25
 
+
+
 - chore: bump version to 2.8.43.
 - feat: add --compress-dump option to compress SQL schema dumps using gzip.
 - feat: add --dump-limit option to limit row extraction count for CSV dumps.
@@ -126,10 +152,14 @@
 
 2.8.42 2026-05-17
 
+
+
 - chore: automated project metadata update (empty release).
 
 
 2.8.41 2026-05-17
+
+
 
 - feat: enhance --forcemem and --forceswap to support human-readable memory units (B, K, M, G, T, P).
 - feat: implement idiomatic Perl Boolean practices across the project (#34).
@@ -173,6 +203,8 @@
 
 2.8.40 2026-02-15
 
+
+
 - feat: overhaul InnoDB Redo Log Capacity logic to consider RAM size and workload writes.
 - feat: add support for `innodb_dedicated_server` detection in Redo Log diagnostics.
 - feat: implement multi-cloud autodiscovery for AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed), and DigitalOcean.
@@ -187,6 +219,8 @@
 - chore: bump version to 2.8.40.
 
 2.8.39 2026-02-15
+
+
 
 - feat: implement authentication plugin security checks to detect insecure or deprecated plugins like mysql_native_password and sha256_password.
 - feat: add MySQL 9.x readiness diagnostics for eliminated authentication methods.
@@ -213,6 +247,8 @@
 
 2.8.36 2026-02-13
 
+
+
 - fix: migrate CI workflows to native GitHub services to resolve Docker API version mismatch.
 - fix: modernize release workflow using softprops/action-gh-release@v2.
 - fix: enhance Docker publishing with Buildx setup for reliable multi-platform builds.
@@ -230,6 +266,8 @@
 
 2.8.35 2026-02-02
 
+
+
 - feat: modernize version check using `HTTP::Tiny` with robust fallback to `curl`/`wget` (PR #18 and #17).
 - feat: integrate `perltidy` in `release-preflight` workflow and enforce script formatting (issue #19).
 - fix: resolve inaccurate `innodb_log_file_size` recommendations caused by integer rounding (issue #770).
@@ -241,6 +279,8 @@
 - test: add regression test `tests/issue_783.t` to verify `innodb_log_buffer_size` recommendation on idle servers.
 
 2.8.33 2026-01-31
+
+
 
 - fix: improved cPanel/Flex detection and refined `skip-name-resolve` recommendation (issue #863).
 - test: add enhanced unit test `tests/issue_863_enhanced.t` for cPanel detection verification.
@@ -263,6 +303,8 @@
 
 2.8.32 2026-01-30
 
+
+
 - feat: remove `--skippassword` from test laboratory to enable security checks.
 - fix: resolve false positive weak password warnings on MariaDB socket authentication (issue #875) and prevent dictionary corruption by silencing `curl`/`wget` output.
 - test: add unit test [tests/test_issue_875.t](file:///tests/test_issue_875.t) to verify socket authentication detection.
@@ -271,6 +313,8 @@
 - chore: update `multi-db-docker-env` and `test_db` vendors.
 
 2.8.31 2026-01-27
+
+
 
 - feat: add `--schemadir <path>` option to generate per-schema markdown documentation.
 - feat: support independent schema documentation generation without requiring `--dumpdir`.
@@ -307,6 +351,8 @@
 
 2.8.30 2026-01-24
 
+
+
 - feat: auto-generate `raw_mysqltuner.txt` report in `dumps/` directory when using `--dumpdir`
 - feat: add InnoDB transaction isolation levels and metrics (active count, longest duration)
 - feat: add MariaDB innodb_snapshot_isolation detection and recommendation
@@ -333,10 +379,14 @@
 
 2.8.29 2026-01-24
 
+
+
 - fix: synchronize all version occurrences in mysqltuner.pl and update release workflows (issue #15)
 - feat: add version consistency check to release-preflight and git-flow workflows
 - docs: update copyright years to 2026
 2.8.28 2026-01-22
+
+
 
 - feat: ajoute l'option --no-pfstat pour la partie performance schema
 - feat: ajoute l'option --no-colstat pour la partie colonne stat
@@ -344,9 +394,13 @@
 
 2.8.27 2026-01-18
 
+
+
 - refactor: replace massive raw backtick usage with execute_system_command wrapper for better security and compliance (Compliance Sentinel)
 
 2.8.26 2026-01-18
+
+
 
 - fix: inverted replication command logic causing wrong SQL on MySQL 8.0+/MariaDB 10.5+ (issue #553)
 - feat: add MySQL/MariaDB version detection to prevent version number conflicts in replication logic
@@ -355,16 +409,22 @@
 
 2.8.24 2026-01-18
 
+
+
 - fix: improve MariaDB 11+ detection by checking version_comment (issue #869)
 - fix: handle innodb_buffer_pool_chunk_size=0 (autosize) in MariaDB 10.8+ (#869)
 - chore: bump version to 2.8.24
 
 2.8.23 2026-01-18
 
+
+
 - feat: add --ignore-tables CLI option to filter specific tables from analysis (#749)
 - chore: bump version to 2.8.23
 
 2.8.22 2026-01-18
+
+
 
 - feat: update all repository links from 'major' to 'jmrenouard' (issue #410)
 - docs: add Changelog information and Useful Links to all README files (issue #411)
@@ -376,16 +436,22 @@
 
 2.8.21 2026-01-18
 
+
+
 - fix: remove contradictory query_cache_limit recommendation when disabling query cache (issue #671)
 - fix: cap join_buffer_size recommendation at 4MB and prefer index optimization (issue #671)
 - chore: bump version to 2.8.21
 
 2.8.20 2026-01-18
 
+
+
 - feat: add automated regression test for forcemem MB interpretation (issues #780, #810)
 - chore: bump version to 2.8.20
 
 2.8.18 2026-01-18
+
+
 
 - feat: add --max-password-checks option to limit dictionary checks (default: 100)
 - fix: ensure Machine type is reported as 'Container' when --container option is used
@@ -393,14 +459,20 @@
 
 2.8.17 2026-01-18
 
+
+
 - feat: implementation of issue #403 to check weak passwords on MySQL 8.0+ and flush hosts every 100 attempts
 - chore: bump version to 2.8.17
 
 2.8.16 2026-01-18
 
+
+
 - chore: bump version to 2.8.16
 
 2.8.15 2026-01-18
+
+
 
 - feat: update all GitHub links from 'major' to 'jmrenouard' organization
 - feat: refactor plugin information to filter ACTIVE status and display specific columns grouped by type
@@ -408,20 +480,28 @@
 
 2.8.13 2026-01-18
 
+
+
 - docs: add Useful Links section to all README files (English, French, Russian, Italian)
 - chore: bump version to 2.8.13
 
 2.8.12 2026-01-17
+
+
 
 - feat: update is_docker() to detect containerd and podman runtimes
 - chore: bump version to 2.8.12
 
 2.8.11 2026-01-17
 
+
+
 - docs: update INTERNALS.md with information about Cloud, SSH, Containers, and Plugins
 - chore: bump version to 2.8.11
 
 2.8.10 2026-01-17
+
+
 
 - feat: add dates and commands to log files in test_envs.sh
 - feat: add separators (=) at the end of log files in test_envs.sh
@@ -429,11 +509,15 @@
 
 2.8.9 2026-01-17
 
+
+
 - feat: improve container log detection by excluding proxy containers (traefik, haproxy, maxscale, proxy)
 - feat: prioritize database-related container names (mysql, mariadb, percona, db, database)
 - chore: bump version to 2.8.9
 
 2.8.8 2026-01-17
+
+
 
 - feat: add -d/--database parameter to test_envs.sh to tune specific databases
 - feat: add -c/--configs parameter to test_envs.sh for easier configuration selection
@@ -443,11 +527,15 @@
 
 2.8.7 2026-01-17
 
+
+
 - docs: add standardized comment headers to all build shell scripts
 - chore: synchronize version strings across script, POD, and version file
 - fix: ensure version consistency between Changelog and CURRENT_VERSION.txt
 
 2.8.6 2026-01-17
+
+
 
 - feat: add Plugin Information section and --plugininfo flag (#794)
 - fix: memory calculation bug in system_recommendations (1.5GB check)
@@ -456,29 +544,41 @@
 
 2.8.5 2026-01-17
 
+
+
 - fix: noisy sysctl errors for sunrpc parameters when kernel module is not loaded
 - fix: refactor get_kernel_info to handle missing sysctl parameters gracefully
 
 2.8.4 2026-01-17
+
+
 
 - fix: database injection failing to find dump files due to incorrect working directory
 - fix: ensure correct path handling for 'source' commands in employees.sql
 
 2.8.3 2026-01-17
 
+
+
 - feat: detect docker/podman environment and automatically grab logs from container if local log file is not found
 - feat: add --container option to manually specify a container for log retrieval
 
 2.8.2 2026-01-17
+
+
 
 - fix: system command failures (ping/ifconfig/redirection) on modern Linux (Ubuntu 22.04/WSL2)
 - feat: integrate external test dependencies (multi-db-docker-env, test_db) and automated employees database injection
 
 2.8.1 2026-01-17
 
+
+
 - fix: resilient memory checks with /proc fallback on Linux and silencing expected ps failures
 
 2.8.0 2026-01-17
+
+
 
 - Bump version to 2.8.0
 - enhance user hostname restriction checks
