@@ -6,6 +6,7 @@
 - chore(build): rewrite dev_sync and doc_sync in Perl for consistency
 - chore(deps): update devops-infra/action-commit-push digest to fa0c793 (#929)
 - chore(deps): update shogo82148/actions-setup-mysql digest to 076e636 (#930)
+- chore(main): add doc links in localhost warnings and support custom local subdomains
 - chore(main): add roadmap to the whitelist of allowed scopes in compliance checks.
 - chore(main): hide hostname, ssl, and replication warnings on localhost (#933)
 - chore(main): whitelist deps and system commit scopes in check_compliance.pl to support Dependabot and host metrics commits.
