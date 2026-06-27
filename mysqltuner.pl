@@ -1291,7 +1291,7 @@ sub predictive_capacity_analysis {
 sub check_replication_advanced {
     subheaderprint "Cluster & Replication Intelligence";
     if ($is_local_only) {
-        infoprint "Skipping advanced replication checks: Server is bound to localhost-only.";
+        infoprint "Skipping advanced replication checks: Server is bound to localhost-only (Ref: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_bind_address).";
         return;
     }
 
@@ -3774,7 +3774,7 @@ sub get_all_vars {
         my @addrs = split( /\s*,\s*/, $myvar{'bind_address'} );
         my $all_local = 1;
         foreach my $addr (@addrs) {
-            if ( $addr ne '127.0.0.1' && $addr ne '::1' && $addr ne 'localhost' ) {
+            if ( $addr ne '127.0.0.1' && $addr ne '::1' && $addr ne 'localhost' && $addr !~ /\.(?:local|localhost)$/i ) {
                 $all_local = 0;
                 last;
             }
@@ -4968,7 +4968,7 @@ sub system_recommendations {
 sub ssl_tls_recommendations {
     subheaderprint "SSL/TLS Security Recommendations";
     if ($is_local_only) {
-        infoprint "Skipping SSL/TLS security recommendations: Server is bound to localhost-only.";
+        infoprint "Skipping SSL/TLS security recommendations: Server is bound to localhost-only (Ref: https://dev.mysql.com/doc/refman/8.0/en/server-options.html#option_mysqld_skip-networking).";
         return;
     }
 
