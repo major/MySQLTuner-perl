@@ -36,6 +36,7 @@ This directory contains the project's technical constitution, specialized skills
 | [`hey-agent.md`](./workflows/hey-agent.md) | Unified management for Rules, Skills, and Workflows. |
 | [`lab-down.md`](./workflows/lab-down.md) | Stops and cleans up the database laboratory. |
 | [`lab-up.md`](./workflows/lab-up.md) | Starts a persistent database laboratory and injects data. |
+| [`local-dev-sync.md`](./workflows/local-dev-sync.md) | Synchronize developer changes, run unit tests, and update changelog and release notes. |
 | [`markdown-lint.md`](./workflows/markdown-lint.md) | Check markdown content for cleanliness and project standard compliance (AFF, keywords, links) |
 | [`plan.md`](./workflows/plan.md) | Create or update an implementation plan (implementation_plan.md) |
 | [`release-manager.md`](./workflows/release-manager.md) | High-level release orchestrator for the Release Manager role |

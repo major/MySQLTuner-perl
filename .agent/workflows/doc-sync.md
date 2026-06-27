@@ -10,7 +10,7 @@ category: Documentation
 // turbo
 
 ```bash
-python3 build/doc_sync.py
+perl build/doc_sync.pl
 ```
 
 1. **Full Documentation Review Checklist**:
