@@ -80,6 +80,7 @@ our (
 our $has_time_hires = eval { require Time::HiRes; 1; } // 0;
 our $failed_connection_attempts = 0;
 our $previous_failed_attempts   = 0;
+our $is_local_only              = 0;
 
 # Set defaults
 # Central metadata for CLI options
@@ -1289,6 +1290,10 @@ sub predictive_capacity_analysis {
 
 sub check_replication_advanced {
     subheaderprint "Cluster & Replication Intelligence";
+    if ($is_local_only) {
+        infoprint "Skipping advanced replication checks: Server is bound to localhost-only.";
+        return;
+    }
 
     my $is_replica = (
              defined $myrepl{'Seconds_Behind_Source'}
@@ -1572,9 +1577,11 @@ sub check_security_2_0 {
           . ( $myvar{'tls_version'} // 'defaults' );
     }
     else {
-        badprint "TLS/SSL is disabled. Connections are unencrypted.";
-        push_recommendation( 'sec',
-            "Enable TLS/SSL for encrypted connections." );
+        unless ($is_local_only) {
+            badprint "TLS/SSL is disabled. Connections are unencrypted.";
+            push_recommendation( 'sec',
+                "Enable TLS/SSL for encrypted connections." );
+        }
     }
 
     # TDE Check (InnoDB)
@@ -3757,6 +3764,23 @@ sub get_all_vars {
             );
         }
     }
+
+    # Calculate if the server is loopback/local-only
+    $is_local_only = 0;
+    if ( defined $myvar{'skip_networking'} && $myvar{'skip_networking'} eq 'ON' ) {
+        $is_local_only = 1;
+    }
+    elsif ( defined $myvar{'bind_address'} ) {
+        my @addrs = split( /\s*,\s*/, $myvar{'bind_address'} );
+        my $all_local = 1;
+        foreach my $addr (@addrs) {
+            if ( $addr ne '127.0.0.1' && $addr ne '::1' && $addr ne 'localhost' ) {
+                $all_local = 0;
+                last;
+            }
+        }
+        $is_local_only = 1 if ( @addrs && $all_local );
+    }
 }
 
 sub remove_cr {
@@ -4943,6 +4967,10 @@ sub system_recommendations {
 # ---------------------------------------------------------------------------
 sub ssl_tls_recommendations {
     subheaderprint "SSL/TLS Security Recommendations";
+    if ($is_local_only) {
+        infoprint "Skipping SSL/TLS security recommendations: Server is bound to localhost-only.";
+        return;
+    }
 
     my @ssl_csv_rows = ("Variable,Value,IssueType,Description");
 
@@ -5477,31 +5505,33 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
         }
     }
 
-    @mysqlstatlist = select_array
-      "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
-    if ( scalar(@mysqlstatlist) > 0 ) {
-        if ( $opt{dumpdir} ) {
-            select_csv_file(
-                "$opt{dumpdir}/user_with_general_wildcard.csv",
-                "SELECT user, host FROM mysql.user WHERE HOST='%'"
+    unless ($is_local_only) {
+        @mysqlstatlist = select_array
+          "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
+        if ( scalar(@mysqlstatlist) > 0 ) {
+            if ( $opt{dumpdir} ) {
+                select_csv_file(
+                    "$opt{dumpdir}/user_with_general_wildcard.csv",
+                    "SELECT user, host FROM mysql.user WHERE HOST='%'"
+                );
+            }
+            my $luser = 'user_name';
+            if ( scalar(@mysqlstatlist) == 1 ) {
+                $luser = ( split /@/, $mysqlstatlist[0] )[0];
+            }
+            foreach my $line ( sort @mysqlstatlist ) {
+                chomp($line);
+                badprint "User " . $line
+                  . " does not specify hostname restrictions.";
+            }
+            push( @generalrec,
+                "Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
             );
+            push( @generalrec,
+                    "RENAME USER $luser\@'%' TO "
+                  . $luser
+                  . "\@LimitedIPRangeOrLocalhost;" );
         }
-        my $luser = 'user_name';
-        if ( scalar(@mysqlstatlist) == 1 ) {
-            $luser = ( split /@/, $mysqlstatlist[0] )[0];
-        }
-        foreach my $line ( sort @mysqlstatlist ) {
-            chomp($line);
-            badprint "User " . $line
-              . " does not specify hostname restrictions.";
-        }
-        push( @generalrec,
-            "Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
-        );
-        push( @generalrec,
-                "RENAME USER $luser\@'%' TO "
-              . $luser
-              . "\@LimitedIPRangeOrLocalhost;" );
     }
 
     unless ( -f $basic_password_files ) {
