@@ -68,6 +68,8 @@
 
 
 
+
+
 - chore: restore doc_sync.py utility script and run doc synchronization.
 - feat: export both complete (unfiltered) and filtered CSV files for sys views in dumpdir.
 - feat: filter system databases from PFS/sys schema analysis queries and dumpdir exports.
@@ -91,6 +93,8 @@
 - test: add unit test for remote/cloud host recap in tests/unit_coverage_boost3.t.
 
 2.8.44 2026-05-27
+
+
 
 
 
@@ -126,6 +130,8 @@
 
 
 
+
+
 - chore: bump version to 2.8.43.
 - feat: add --compress-dump option to compress SQL schema dumps using gzip.
 - feat: add --dump-limit option to limit row extraction count for CSV dumps.
@@ -154,10 +160,14 @@
 
 
 
+
+
 - chore: automated project metadata update (empty release).
 
 
 2.8.41 2026-05-17
+
+
 
 
 
@@ -205,6 +215,8 @@
 
 
 
+
+
 - feat: overhaul InnoDB Redo Log Capacity logic to consider RAM size and workload writes.
 - feat: add support for `innodb_dedicated_server` detection in Redo Log diagnostics.
 - feat: implement multi-cloud autodiscovery for AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed), and DigitalOcean.
@@ -219,6 +231,8 @@
 - chore: bump version to 2.8.40.
 
 2.8.39 2026-02-15
+
+
 
 
 
@@ -249,6 +263,8 @@
 
 
 
+
+
 - fix: migrate CI workflows to native GitHub services to resolve Docker API version mismatch.
 - fix: modernize release workflow using softprops/action-gh-release@v2.
 - fix: enhance Docker publishing with Buildx setup for reliable multi-platform builds.
@@ -268,6 +284,8 @@
 
 
 
+
+
 - feat: modernize version check using `HTTP::Tiny` with robust fallback to `curl`/`wget` (PR #18 and #17).
 - feat: integrate `perltidy` in `release-preflight` workflow and enforce script formatting (issue #19).
 - fix: resolve inaccurate `innodb_log_file_size` recommendations caused by integer rounding (issue #770).
@@ -279,6 +297,8 @@
 - test: add regression test `tests/issue_783.t` to verify `innodb_log_buffer_size` recommendation on idle servers.
 
 2.8.33 2026-01-31
+
+
 
 
 
@@ -305,6 +325,8 @@
 
 
 
+
+
 - feat: remove `--skippassword` from test laboratory to enable security checks.
 - fix: resolve false positive weak password warnings on MariaDB socket authentication (issue #875) and prevent dictionary corruption by silencing `curl`/`wget` output.
 - test: add unit test [tests/test_issue_875.t](file:///tests/test_issue_875.t) to verify socket authentication detection.
@@ -313,6 +335,8 @@
 - chore: update `multi-db-docker-env` and `test_db` vendors.
 
 2.8.31 2026-01-27
+
+
 
 
 
@@ -353,6 +377,8 @@
 
 
 
+
+
 - feat: auto-generate `raw_mysqltuner.txt` report in `dumps/` directory when using `--dumpdir`
 - feat: add InnoDB transaction isolation levels and metrics (active count, longest duration)
 - feat: add MariaDB innodb_snapshot_isolation detection and recommendation
@@ -381,10 +407,14 @@
 
 
 
+
+
 - fix: synchronize all version occurrences in mysqltuner.pl and update release workflows (issue #15)
 - feat: add version consistency check to release-preflight and git-flow workflows
 - docs: update copyright years to 2026
 2.8.28 2026-01-22
+
+
 
 
 
@@ -396,9 +426,13 @@
 
 
 
+
+
 - refactor: replace massive raw backtick usage with execute_system_command wrapper for better security and compliance (Compliance Sentinel)
 
 2.8.26 2026-01-18
+
+
 
 
 
@@ -411,6 +445,8 @@
 
 
 
+
+
 - fix: improve MariaDB 11+ detection by checking version_comment (issue #869)
 - fix: handle innodb_buffer_pool_chunk_size=0 (autosize) in MariaDB 10.8+ (#869)
 - chore: bump version to 2.8.24
@@ -419,10 +455,14 @@
 
 
 
+
+
 - feat: add --ignore-tables CLI option to filter specific tables from analysis (#749)
 - chore: bump version to 2.8.23
 
 2.8.22 2026-01-18
+
+
 
 
 
@@ -438,6 +478,8 @@
 
 
 
+
+
 - fix: remove contradictory query_cache_limit recommendation when disabling query cache (issue #671)
 - fix: cap join_buffer_size recommendation at 4MB and prefer index optimization (issue #671)
 - chore: bump version to 2.8.21
@@ -446,10 +488,14 @@
 
 
 
+
+
 - feat: add automated regression test for forcemem MB interpretation (issues #780, #810)
 - chore: bump version to 2.8.20
 
 2.8.18 2026-01-18
+
+
 
 
 
@@ -461,6 +507,8 @@
 
 
 
+
+
 - feat: implementation of issue #403 to check weak passwords on MySQL 8.0+ and flush hosts every 100 attempts
 - chore: bump version to 2.8.17
 
@@ -468,9 +516,13 @@
 
 
 
+
+
 - chore: bump version to 2.8.16
 
 2.8.15 2026-01-18
+
+
 
 
 
@@ -482,10 +534,14 @@
 
 
 
+
+
 - docs: add Useful Links section to all README files (English, French, Russian, Italian)
 - chore: bump version to 2.8.13
 
 2.8.12 2026-01-17
+
+
 
 
 
@@ -496,10 +552,14 @@
 
 
 
+
+
 - docs: update INTERNALS.md with information about Cloud, SSH, Containers, and Plugins
 - chore: bump version to 2.8.11
 
 2.8.10 2026-01-17
+
+
 
 
 
@@ -511,11 +571,15 @@
 
 
 
+
+
 - feat: improve container log detection by excluding proxy containers (traefik, haproxy, maxscale, proxy)
 - feat: prioritize database-related container names (mysql, mariadb, percona, db, database)
 - chore: bump version to 2.8.9
 
 2.8.8 2026-01-17
+
+
 
 
 
@@ -529,11 +593,15 @@
 
 
 
+
+
 - docs: add standardized comment headers to all build shell scripts
 - chore: synchronize version strings across script, POD, and version file
 - fix: ensure version consistency between Changelog and CURRENT_VERSION.txt
 
 2.8.6 2026-01-17
+
+
 
 
 
@@ -546,10 +614,14 @@
 
 
 
+
+
 - fix: noisy sysctl errors for sunrpc parameters when kernel module is not loaded
 - fix: refactor get_kernel_info to handle missing sysctl parameters gracefully
 
 2.8.4 2026-01-17
+
+
 
 
 
@@ -560,10 +632,14 @@
 
 
 
+
+
 - feat: detect docker/podman environment and automatically grab logs from container if local log file is not found
 - feat: add --container option to manually specify a container for log retrieval
 
 2.8.2 2026-01-17
+
+
 
 
 
@@ -574,9 +650,13 @@
 
 
 
+
+
 - fix: resilient memory checks with /proc fallback on Linux and silencing expected ps failures
 
 2.8.0 2026-01-17
+
+
 
 
 
