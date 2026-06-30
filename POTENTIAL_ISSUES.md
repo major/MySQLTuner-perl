@@ -2,13 +2,13 @@
 
 This file records anomalies discovered during laboratory testing (Perl warnings, SQL errors, etc.).
 
-## [2026-05-29 Audit] Status Refresh v2.8.44
+## [2026-06-16 Audit] Status Refresh v2.9.0
 
 ### Unit Test Results
 
 - **Status**: ✅ ALL PASS
-- **Files**: 72 test files
-- **Assertions**: 362 tests
+- **Files**: 81 test files
+- **Assertions**: 462 tests
 - **Perl Syntax**: Clean (`perl -cw mysqltuner.pl` — no warnings)
 
 ### Test Coverage Analysis
@@ -16,15 +16,12 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 | Metric | Value |
 |:---|:---|
 | Total Subroutines | 167 |
-| Tested Subroutines | ~154 (~92%) |
-| Untested Subroutines | ~13 (~8%) |
+| Tested Subroutines | 167 (100%) |
+| Untested Subroutines | 0 (0%) |
 
 #### Remaining Untested Subroutines (System/IO-Heavy)
 
-- `check_privileges`, `cloud_setup`, `get_fs_info`, `get_fs_info_win`
-- `get_http_cli`, `get_os_release`, `get_tuning_info`
-- `infoprintcmd`, `infoprinthcmd`, `is_virtual_machine`
-- `parse_cli_args`, `show_help` (x2)
+- None (100% subroutine coverage reached)
 
 ### 🔴 Critical Issues
 
@@ -58,7 +55,8 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 #### PI-006: 13 out of 167 subroutines have zero test coverage
 - **Impact**: Remaining untested functions are mostly system-level (filesystem, OS detection, cloud setup) or CLI helpers (`show_help`, `parse_cli_args`)
 - **Severity**: 🟢 LOW — core diagnostic functions now fully covered
-- **Coverage rate**: ~92% of subroutines referenced in at least one test (improved from ~55% → 62% → 78% → 92%)
+- **Coverage rate**: 100% of subroutines referenced in at least one test (improved from ~55% → 62% → 78% → 92% → 100%)
+- **Status**: [x] **FIXED** — All remaining subroutines covered in `tests/unit_coverage_boost4.t`.
 
 #### PI-007: Extremely large subroutines
 - **Impact**: Several functions exceed 500+ lines, making maintenance difficult
@@ -70,6 +68,7 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - **Source**: Each call to `mysql_version_ge()`, `mysql_version_le()`, `mysql_version_eq()` re-parses `$myvar{'version'}` via regex
 - **Impact**: Redundant computation — called 100+ times across the script
 - **Severity**: 🟢 LOW — performance impact minimal but code duplication
+- **Status**: [x] **FIXED** — Implemented version parsing caching via `_parse_version()`.
 
 #### PI-009: MariaDB 10.6 Approaching EOL
 - **Source**: [mariadb_support.md](file:///mariadb_support.md)
@@ -114,12 +113,13 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - Binlog checksum, doublewrite consistency: NOT implemented
 - **Status**: Phase 9 partially implemented
 
-#### PI-016: ROADMAP Phases 10-12 — Not started
+#### PI-016: ROADMAP Phases 11-12 — Not started
 - Workload Analysis & Traffic Profiling: Not implemented
 - Advanced Log Parser & Lock Monitoring: Not implemented
-- Sectional Global Indicators: Not implemented
 
-#### PI-017: ROADMAP Phase 13 (Export Optimization) — COMPLETED ✅
+#### PI-017: ROADMAP Phase 13 (Sectional Global Indicators) — COMPLETED ✅
+
+#### PI-018: ROADMAP Phase 14 (Export Optimization) — COMPLETED ✅
 
 ---
 
@@ -212,3 +212,13 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - [x] **Doc-Sync**: `.agent/README.md` synchronized with 18 workflows.
 - [x] **SECURITY.md**: Version reference updated to v2.8.44.
 - [x] **ROADMAP PI-010**: I/O Pressure status already corrected.
+
+### [2026-06-04] Release v2.8.45
+
+- [x] **Temptable Sizing Limits**: Integrated `temptable_max_ram` calculations and mmap checks.
+- [x] **InnoDB Index/Data Ratio Check**: Added advisory and CSV dump for tables > 50,000 rows.
+- [x] **Uptime Observability**: Exposed Database Server Uptime in all modes.
+- [x] **Performance Optimization**: Bulk-fetched table engine and column details to reduce queries (from 2N+3 to 2 per table).
+- [x] **System DB Filtering**: Excluded system tables from schema analysis and dumpdir exports.
+- [x] **SQL Escaping Fixes**: Safe dollar sign escaping in system call wrappers.
+

@@ -1,1 +1,8 @@
-npm test
+#!/bin/sh
+
+# Only run tests if code, tests, build scripts, Makefile, or package configuration has changed
+if git diff --cached --name-only | grep -qE '\.(pl|pm)$|^tests/|^build/|^Makefile$|^package(-lock)?\.json$'; then
+  npm test
+else
+  echo "Husky [pre-commit]: No code or test files modified. Skipping unit tests."
+fi

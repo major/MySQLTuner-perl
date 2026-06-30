@@ -1,11 +1,11 @@
 ![MySQLTuner-perl](mtlogo2.png)
 
-[!["Купите нам кофе"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
+[![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
 
 [![Статус проекта](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
-[![Статус тестов](https://github.com/jmrenouard/MySQLTuner-perl/workflows/Test/badge.svg)](https://github.com/jmrenouard/MySQLTuner-perl/actions)
-[![Среднее время решения проблемы](https://isitmaintained.com/badge/resolution/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Среднее время решения проблемы")
-[![Процент открытых проблем](https://isitmaintained.com/badge/open/jmrenouard/MySQLTuner-perl.svg)](https://isitmaintained.com/project/jmrenouard/MySQLTuner-perl "Процент все еще открытых проблем")
+[![Статус тестов](https://github.com/major/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/major/MySQLTuner-perl/actions)
+[![Среднее время решения проблемы](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Среднее время решения проблемы")
+[![Процент открытых проблем](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Процент все еще открытых проблем")
 [![Лицензия GPL](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** — это скрипт, написанный на Perl, который позволяет быстро просмотреть установку MySQL и внести коррективы для повышения производительности и стабильности. Текущие переменные конфигурации и данные о состоянии извлекаются и представляются в кратком формате вместе с некоторыми основными предложениями по производительности.
@@ -15,16 +15,16 @@
 **MySQLTuner** активно поддерживается и поддерживает множество конфигураций, таких как [кластер Galera](https://galeracluster.com/), [TokuDB](https://www.percona.com/software/mysql-database/percona-tokudb), [схема производительности](https://github.com/mysql/mysql-sys), метрики ОС Linux, [InnoDB](https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html), [MyISAM](https://dev.mysql.com/doc/refman/5.7/en/myisam-storage-engine.html), [Aria](https://mariadb.com/docs/server/server-usage/storage-engines/aria/aria-storage-engine), ...
 
 Более подробную информацию об этих индикаторах можно найти здесь:
-[Описание индикаторов](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
+[Описание индикаторов](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
-![MysqlTuner](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysqltuner.png)
+![MysqlTuner](https://github.com/major/MySQLTuner-perl/blob/master/mysqltuner.png)
 
 Полезные ссылки
 ==
 
-* **Активная разработка:** [https://github.com/jmrenouard/MySQLTuner-perl](https://github.com/jmrenouard/MySQLTuner-perl)
-* **Релизы/Теги:** [https://github.com/jmrenouard/MySQLTuner-perl/tags](https://github.com/jmrenouard/MySQLTuner-perl/tags)
-* **Changelog:** [https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/Changelog)
+* **Активная разработка:** [https://github.com/major/MySQLTuner-perl](https://github.com/major/MySQLTuner-perl)
+* **Релизы/Теги:** [https://github.com/major/MySQLTuner-perl/tags](https://github.com/major/MySQLTuner-perl/tags)
+* **Changelog:** [https://github.com/major/MySQLTuner-perl/blob/master/Changelog](https://github.com/major/MySQLTuner-perl/blob/master/Changelog)
 * **Docker-образы:** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
 
 MySQLTuner нуждается в вас
@@ -32,17 +32,31 @@ MySQLTuner нуждается в вас
 
 **MySQLTuner** нуждается в участниках для документации, кода и обратной связи:
 
-* Присоединяйтесь к нам в нашем трекере проблем на [трекере GitHub](https://github.com/jmrenouard/MySQLTuner-perl/issues).
-* Руководство по участию доступно по следующей [руководству по участию в MySQLTuner](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
-* Отметьте звездочкой **проект MySQLTuner** на [проекте MySQLTuner на Git Hub](https://github.com/jmrenouard/MySQLTuner-perl/)
+* Присоединяйтесь к нам в нашем трекере проблем на [трекере GitHub](https://github.com/major/MySQLTuner-perl/issues).
+* Руководство по участию доступно по следующей [руководству по участию в MySQLTuner](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
+* Отметьте звездочкой **проект MySQLTuner** на [проекте MySQLTuner на Git Hub](https://github.com/major/MySQLTuner-perl/)
 * Платная поддержка LightPath здесь: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
 * Платная поддержка Releem доступна здесь: [приложение Releem](https://releem.com/)
 
+### Спонсоры
+
+Активная разработка спонсируется:
+
+<p align="center">
+  <a href="https://www.lightpath.fr">
+    <img src="https://lightpath.fr/img/logo.png" alt="LightPath" width="200"/>
+  </a>
+</p>
+
+Спасибо LightPath за предоставление ресурсов (серверы разработки, подписка на ИИ, стейджинг и новые функции).
+
 ![Статистика GitHub jmrenouard](https://github-readme-stats.vercel.app/api?username=jmrenouard&show_icons=true&theme=radical)
 
-## Звездочеты с течением времени
+[!["Купите нам кофе"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jmrenouard)
 
-[![Звездочеты с течением времени](https://starchart.cc/jmrenouard/MySQLTuner-perl.svg)](https://starchart.cc/jmrenouard/MySQLTuner-perl)
+## История звезд
+
+[![Star History Chart](https://api.star-history.com/svg?repos=major/MySQLTuner-perl&type=Date)](https://star-history.com/#major/MySQLTuner-perl&Date)
 
 Совместимость
 ====
@@ -58,8 +72,8 @@ MySQLTuner нуждается в вас
 
 Спасибо [endoflife.date](https://endoflife.date/)
 
-* См. [Поддерживаемые версии MariaDB](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mariadb_support.md).
-* См. [Поддерживаемые версии MySQL](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/mysql_support.md).
+* См. [Поддерживаемые версии MariaDB](https://github.com/major/MySQLTuner-perl/blob/master/mariadb_support.md).
+* См. [Поддерживаемые версии MySQL](https://github.com/major/MySQLTuner-perl/blob/master/mysql_support.md).
 
 ***Поддержка Windows частична***
 
@@ -156,12 +170,12 @@ GRANT SELECT, PROCESS, EXECUTE, REPLICATION CLIENT, SHOW DATABASES, SHOW VIEW ON
 
 Привет, пользователь directadmin!
 Мы обнаружили, что вы запускаете mysqltuner с учетными данными da_admin, взятыми из `/usr/local/directadmin/conf/my.cnf`, что может привести к раскрытию пароля!
-Подробнее читайте по ссылке [Проблема №289](https://github.com/jmrenouard/MySQLTuner-perl/issues/289).
+Подробнее читайте по ссылке [Проблема №289](https://github.com/major/MySQLTuner-perl/issues/289).
 
 Что именно проверяет MySQLTuner?
 --
 
-Все проверки, выполняемые **MySQLTuner**, задокументированы в документации [MySQLTuner Internals](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md).
+Все проверки, выполняемые **MySQLTuner** задокументированы в документации [MySQLTuner Internals](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md).
 
 **MySQLTuner** анализирует следующие области:
 
@@ -190,14 +204,14 @@ GRANT SELECT, PROCESS, EXECUTE, REPLICATION CLIENT, SHOW DATABASES, SHOW VIEW ON
 
 ```bash
 wget https://mysqltuner.pl/ -O mysqltuner.pl
-wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
-wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
+wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
+wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 ```
 
 2) Вы можете загрузить весь репозиторий, используя `git clone` или `git clone --depth 1 -b master`, за которым следует URL-адрес клонирования выше.
 
 ```bash
-git clone --depth 1 -b master https://github.com/jmrenouard/MySQLTuner-perl.git
+git clone --depth 1 -b master https://github.com/major/MySQLTuner-perl.git
 ```
 
 3) На Apple macOS установите через [Homebrew](https://brew.sh/):
@@ -217,8 +231,8 @@ docker run --rm -it jmrenouard/mysqltuner --host <database_host> --user <usernam
 
 ### Расположение релизов
 
-* Официальные примечания к релизам и история изменений задокументированы в каталоге [releases/](releases/) этого репозитория (например, [releases/v2.8.44.md](releases/v2.8.44.md)).
-* Теги релизов Git и архивы с исходным кодом доступны на странице [GitHub Releases](https://github.com/jmrenouard/MySQLTuner-perl/releases).
+* Официальные примечания к релизам и история изменений задокументированы в каталоге [releases/](releases/) этого репозитория (например, [releases/v2.9.0.md](releases/v2.9.0.md)).
+* Теги релизов Git и архивы с исходным кодом доступны на странице [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 Необязательная установка Sysschema для MySQL 5.6
 --
@@ -465,7 +479,7 @@ perl mysqltuner.pl --prettyjson
 perl mysqltuner.pl --nondedicated
 ```
 
-Для полного списка всех доступных опций выполните `perl mysqltuner.pl --help` или обратитесь к документации [USAGE.md](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/USAGE.md).
+Для полного списка всех доступных опций выполните `perl mysqltuner.pl --help` или обратитесь к документации [USAGE.md](https://github.com/major/MySQLTuner-perl/blob/master/USAGE.md).
 
 Поддержка облака
 --
@@ -658,15 +672,15 @@ host = localhost
 
 ```bash
 wget https://mysqltuner.pl/ -O mysqltuner.pl
-wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
-wget https://raw.githubusercontent.com/jmrenouard/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
+wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
+wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
 chmod +x mysqltuner.pl
 ```
 
 * **Git clone:**
 
 ```bash
-git clone --depth 1 -b master https://github.com/jmrenouard/MySQLTuner-perl.git
+git clone --depth 1 -b master https://github.com/major/MySQLTuner-perl.git
 cd MySQLTuner-perl
 perl mysqltuner.pl
 ```
