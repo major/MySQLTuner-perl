@@ -42,7 +42,7 @@
 - fix(main): guard InnoDB log file size and log size percentage checks against uninitialized variables.
 - fix(main): guard version and version comment checks in MariaDB parallel replication and query cache blocks.
 - fix(main): implement cached version comparison parser to eliminate uninitialized value warnings and improve performance.
-- fix(main): only recommend increasing innodb_log_buffer_size when log waits occur
+- fix(main): only recommend increasing innodb_log_buffer_size when log waits occur 
 - fix(main): sanitize and redact sensitive credentials from json/yaml output exports.
 - fix(main): skip local /proc/loadavg read during remote database audits.
 - fix(main): support MariaDB 11.4+ zero-configuration TLS and avoid false missing certificate warnings

@@ -11392,7 +11392,9 @@ sub mysql_innodb {
 "InnoDB Write Log efficiency: metrics are not reliable (writes > write requests)";
     }
     elsif ( defined $mycalc{'pct_write_efficiency'}
-        && $mycalc{'pct_write_efficiency'} < 90 )
+        && $mycalc{'pct_write_efficiency'} < 90
+        && defined $mystat{'Innodb_log_waits'}
+        && $mystat{'Innodb_log_waits'} > 0 )
     {
         badprint "InnoDB Write Log efficiency: "
           . abs( $mycalc{'pct_write_efficiency'} ) . "% ("
