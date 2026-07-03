@@ -5051,12 +5051,17 @@ sub ssl_tls_recommendations {
 
     # Certificate presence and local audit
     if ( !$myvar{'ssl_cert'} && !$myvar{'ssl_key'} ) {
-        badprint "No SSL certificates configured (ssl_cert/ssl_key are empty)";
-        push_recommendation( 'Security',
+        if ( mysql_version_ge( 11, 4 ) && $myvar{'version'} =~ /MariaDB/i && ( defined($myvar{'have_ssl'}) && ($myvar{'have_ssl'} eq 'YES' || $myvar{'have_ssl'} eq 'ON') ) ) {
+            goodprint "TLS is active, but no explicit ssl_cert/ssl_key paths are configured (MariaDB zero-configuration TLS active)";
+        }
+        else {
+            badprint "No SSL certificates configured (ssl_cert/ssl_key are empty)";
+            push_recommendation( 'Security',
 "Configure SSL certificates (ssl_cert, ssl_key, ssl_ca) to enable encrypted connections."
-        );
-        push @ssl_csv_rows,
+            );
+            push @ssl_csv_rows,
 "ssl_cert/ssl_key,empty,NoCertificates,Configure SSL certificates (ssl_cert, ssl_key, ssl_ca) to enable encrypted connections.";
+        }
     }
     else {
         check_local_certificates( \@ssl_csv_rows );
@@ -5211,12 +5216,19 @@ sub check_remote_user_ssl {
     my @remote_users;
     if ( mysql_version_ge( 10, 4 ) && $myvar{'version'} =~ /MariaDB/i ) {
         @remote_users = select_array(
-"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.global_priv WHERE host NOT IN ('localhost', '127.0.0.1', '::1') AND JSON_VALUE(Priv, '\$.ssl_type') = ''"
+"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.global_priv WHERE host NOT IN ('localhost', '127.0.0.1', '::1') AND JSON_VALUE(Priv, '\$.ssl_type') = '' AND COALESCE(JSON_VALUE(Priv, '\$.is_role'), '') NOT IN ('true', '1')"
         );
     }
     else {
+        my $is_role_column = select_one(
+"select count(*) from information_schema.columns where TABLE_NAME='user' AND TABLE_SCHEMA='mysql' and COLUMN_NAME='IS_ROLE'"
+        );
+        my $extra_user_condition = "";
+        if ( defined($is_role_column) && $is_role_column =~ /^\d+$/ && $is_role_column > 0 ) {
+            $extra_user_condition = " AND IS_ROLE = 'N'";
+        }
         @remote_users = select_array(
-"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE host NOT IN ('localhost', '127.0.0.1', '::1') AND (ssl_type = 'NONE' OR ssl_type = '')"
+"SELECT CONCAT(QUOTE(user), '\@', QUOTE(host)) FROM mysql.user WHERE host NOT IN ('localhost', '127.0.0.1', '::1') AND (ssl_type = 'NONE' OR ssl_type = '')$extra_user_condition"
         );
     }
 
