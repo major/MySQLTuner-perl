@@ -1,6 +1,6 @@
 # MySQLTuner Changelog
 
-2.9.0 2026-06-27
+2.9.0 2026-07-03
 
 - chore(build): allow build scope in compliance auditor
 - chore(build): rewrite dev_sync and doc_sync in Perl for consistency
@@ -10,6 +10,7 @@
 - chore(main): add roadmap to the whitelist of allowed scopes in compliance checks.
 - chore(main): hide hostname, ssl, and replication warnings on localhost (#933)
 - chore(main): whitelist deps and system commit scopes in check_compliance.pl to support Dependabot and host metrics commits.
+- chore(metadata): add GitHub issue templates for bugs and feature requests
 - chore: automated project metadata update
 - chore: remove execution.log from git repository and sync docs
 - feat(cli): create an agent-ready output format (JSON/YAML) so that MySQLTuner can be easily integrated by AI agents.
@@ -35,12 +36,14 @@
 - fix(main): calculate health score early in historical comparison to ensure scores exist for trend analysis.
 - fix(main): calculate query cache efficiency using Com_select on MariaDB (MDEV-4981)
 - fix(main): calculate query cache efficiency using Com_select on MariaDB, where Com_select includes query cache hits (MDEV-4981).
+- fix(main): exclude MariaDB user roles from remote user SSL enforcement audit
 - fix(main): format YAML null as tilde (~) and multiline values using literal block style.
 - fix(main): guard InnoDB log file size and log size percentage checks against uninitialized variables.
 - fix(main): guard version and version comment checks in MariaDB parallel replication and query cache blocks.
 - fix(main): implement cached version comparison parser to eliminate uninitialized value warnings and improve performance.
 - fix(main): sanitize and redact sensitive credentials from json/yaml output exports.
 - fix(main): skip local /proc/loadavg read during remote database audits.
+- fix(main): support MariaDB 11.4+ zero-configuration TLS and avoid false missing certificate warnings
 - fix(report): flush console output trace when opening raw log files late in dumpdir mode.
 - fix(test): add undef fallbacks to human_size, hr_bytes and hr_bytes_rnd mocks in tests.
 - fix: update commit process
@@ -56,6 +59,7 @@
 - test(lab): utilize isolated tempfile for mock json to avoid race conditions in tests/unit_phase13_kpis.t.
 - test(report): add verbose timing and audit snapshot summary formatting checks to tests/verbose_timing.t.
 - test(report): update HTML report unit tests to verify connections, performance, storage, and modeling HTML sections.
+- test(security): add test cases for MariaDB role exclusion and zero-configuration TLS
 - test(versions): add unit tests for version caching and comparisons, resolve redundant warnings, and use tempfile in tests/unit_versions.t.
 - test: add socket preservation tests to test_issue_781.t.
 - test: add unit test for remote host physical memory detection and validation (issue #796).
