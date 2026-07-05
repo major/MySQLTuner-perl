@@ -13810,6 +13810,9 @@ HTML
                 'fa-shield-alt': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>',
                 'fa-user-shield': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2c0 5.591-3.824 10.29-9 11.622-5.176-1.332-9-6.03-9-11.622 0-1.042.133-2.052.382-3.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 018.618 3.04A12.02 12.02 0 0121 12z"></path>',
                 'fa-shield-halved': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>',
+                'fa-lock': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>',
+                'fa-table': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>',
+                'fa-exclamation-triangle': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>',
                 'fa-project-diagram': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>',
                 'fa-share-alt': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742l4.632-2.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316l-4.632-2.316m0 0a3 3 0 10-5.367 2.684 3 3 0 005.367-2.684zm0 0l4.632 2.316m0 0a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>',
                 'fa-share-nodes': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742l4.632-2.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316l-4.632-2.316m0 0a3 3 0 10-5.367 2.684 3 3 0 005.367-2.684zm0 0l4.632 2.316m0 0a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>',
@@ -13883,7 +13886,7 @@ HTML
             replaceIcons();
 
             const hash = window.location.hash.replace('#', '');
-            const validTabs = ['dashboard', 'system', 'connections', 'storage', 'performance', 'security', 'modeling', 'replication', 'export'];
+            const validTabs = ['dashboard', 'system', 'connections', 'queries', 'locks', 'storage', 'temptables', 'performance', 'security', 'modeling', 'replication', 'events', 'export'];
             if (hash && validTabs.includes(hash)) {
                 showTab(hash);
             } else {
@@ -13926,12 +13929,16 @@ HTML
             <button id="btn-dashboard" onclick="showTab('dashboard')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-blue-400 text-blue-400 bg-slate-900/60 rounded-t-lg transition-all"><i class="fas fa-chart-pie mr-2"></i>Dashboard</button>
             <button id="btn-system" onclick="showTab('system')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-server mr-2"></i>System &amp; Memory</button>
             <button id="btn-connections" onclick="showTab('connections')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-plug mr-2"></i>Connections</button>
-            <button id="btn-storage" onclick="showTab('storage')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-hdd mr-2"></i>Storage Engines</button>
+            <button id="btn-queries" onclick="showTab('queries')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-search mr-2"></i>Queries</button>
+            <button id="btn-locks" onclick="showTab('locks')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-lock mr-2"></i>Locks</button>
+            <button id="btn-storage" onclick="showTab('storage')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-hdd mr-2"></i>Storage</button>
+            <button id="btn-temptables" onclick="showTab('temptables')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-table mr-2"></i>Temp Tables</button>
             <button id="btn-performance" onclick="showTab('performance')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-bolt mr-2"></i>Performance</button>
             <button id="btn-security" onclick="showTab('security')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-shield-alt mr-2"></i>Security</button>
-            <button id="btn-modeling" onclick="showTab('modeling')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-project-diagram mr-2"></i>SQL Modeling</button>
+            <button id="btn-modeling" onclick="showTab('modeling')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-project-diagram mr-2"></i>Modeling</button>
             <button id="btn-replication" onclick="showTab('replication')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-share-alt mr-2"></i>Replication</button>
-            <button id="btn-export" onclick="showTab('export')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-download mr-2"></i>Data Export</button>
+            <button id="btn-events" onclick="showTab('events')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-exclamation-triangle mr-2"></i>Events</button>
+            <button id="btn-export" onclick="showTab('export')" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all"><i class="fas fa-download mr-2"></i>Export</button>
         </nav>
 
         <!-- Tab Content Containers -->
@@ -14709,6 +14716,74 @@ HTML
             </section>
         </div>
 
+        <!-- NEW TAB: QUERIES & EXECUTION -->
+        <div id="tab-queries" class="tab-content hidden space-y-6">
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl p-6">
+                <h2 class="text-xl font-bold text-slate-200 mb-6 flex items-center gap-2"><i class="fas fa-search text-indigo-400"></i>Queries &amp; Execution Analytics</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Query Distribution</h3>
+                        <div id="pgbadger-query-distribution" class="w-full bg-slate-800 rounded-lg p-4 font-mono text-sm space-y-2">
+                            <!-- Injected by JS -->
+                            <div class="text-slate-500 italic">Processing telemetry...</div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Query Ratios</h3>
+                        <div id="pgbadger-query-ratios" class="grid grid-cols-2 gap-4">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- NEW TAB: LOCKS & LATENCY -->
+        <div id="tab-locks" class="tab-content hidden space-y-6">
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl p-6">
+                <h2 class="text-xl font-bold text-slate-200 mb-6 flex items-center gap-2"><i class="fas fa-lock text-rose-500"></i>Locks &amp; Latency</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Table Locks</h3>
+                        <div id="pgbadger-table-locks" class="w-full bg-slate-800 rounded-lg p-4 font-mono text-sm space-y-2">
+                            <div class="text-slate-500 italic">Processing telemetry...</div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Row Locks</h3>
+                        <div id="pgbadger-row-locks" class="w-full bg-slate-800 rounded-lg p-4 font-mono text-sm space-y-2">
+                            <div class="text-slate-500 italic">Processing telemetry...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- NEW TAB: TEMP TABLES -->
+        <div id="tab-temptables" class="tab-content hidden space-y-6">
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl p-6">
+                <h2 class="text-xl font-bold text-slate-200 mb-6 flex items-center gap-2"><i class="fas fa-table text-amber-400"></i>Temporary Tables &amp; Spills</h2>
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Temp Table Ratios</h3>
+                    <div id="pgbadger-temp-tables" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-slate-500 italic">Processing telemetry...</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- NEW TAB: EVENTS & LOGS -->
+        <div id="tab-events" class="tab-content hidden space-y-6">
+            <section class="bg-slate-900/40 border border-slate-800 rounded-2xl shadow-xl p-6">
+                <h2 class="text-xl font-bold text-slate-200 mb-6 flex items-center gap-2"><i class="fas fa-exclamation-triangle text-rose-500"></i>Events &amp; Log Summary</h2>
+                <div class="space-y-4">
+                    <div id="pgbadger-events" class="w-full bg-slate-800 rounded-lg p-4 font-mono text-sm">
+                        <div class="text-slate-400">MySQL error log parsing requires enabling `--log-error` with appropriate permissions. If log parser data is available, it will be mapped here in future updates.</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
         <!-- 9. DATA EXPORT TAB -->
         <div id="tab-export" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl">
@@ -14845,6 +14920,99 @@ HTML
                     document.body.removeChild(textArea);
                 }
             }
+
+            // --- pgBadger-inspired Telemetry Renderers ---
+            function renderPgBadgerAnalytics() {
+                // 1. Queries Distribution
+                const q_questions = parseFloat(dbMetrics.mystat['Questions'] || 0);
+                const q_select = parseFloat(dbMetrics.mystat['Com_select'] || 0);
+                const q_insert = parseFloat(dbMetrics.mystat['Com_insert'] || 0);
+                const q_update = parseFloat(dbMetrics.mystat['Com_update'] || 0);
+                const q_delete = parseFloat(dbMetrics.mystat['Com_delete'] || 0);
+                const q_replace = parseFloat(dbMetrics.mystat['Com_replace'] || 0);
+                const q_slow = parseFloat(dbMetrics.mystat['Slow_queries'] || 0);
+
+                if (q_questions > 0) {
+                    const selPct = ((q_select / q_questions) * 100).toFixed(1);
+                    const insPct = ((q_insert / q_questions) * 100).toFixed(1);
+                    const updPct = ((q_update / q_questions) * 100).toFixed(1);
+                    const delPct = ((q_delete / q_questions) * 100).toFixed(1);
+                    const repPct = ((q_replace / q_questions) * 100).toFixed(1);
+
+                    document.getElementById('pgbadger-query-distribution').innerHTML = 
+                        '<div class="flex justify-between"><span class="text-blue-400">SELECT</span> <span>' + q_select.toLocaleString() + ' (' + selPct + '%)</span></div>' +
+                        '<div class="w-full bg-slate-900 rounded-full h-2 mb-2"><div class="bg-blue-400 h-2 rounded-full" style="width: ' + selPct + '%"></div></div>' +
+                        
+                        '<div class="flex justify-between"><span class="text-emerald-400">INSERT</span> <span>' + q_insert.toLocaleString() + ' (' + insPct + '%)</span></div>' +
+                        '<div class="w-full bg-slate-900 rounded-full h-2 mb-2"><div class="bg-emerald-400 h-2 rounded-full" style="width: ' + insPct + '%"></div></div>' +
+                        
+                        '<div class="flex justify-between"><span class="text-amber-400">UPDATE</span> <span>' + q_update.toLocaleString() + ' (' + updPct + '%)</span></div>' +
+                        '<div class="w-full bg-slate-900 rounded-full h-2 mb-2"><div class="bg-amber-400 h-2 rounded-full" style="width: ' + updPct + '%"></div></div>' +
+                        
+                        '<div class="flex justify-between"><span class="text-rose-400">DELETE</span> <span>' + q_delete.toLocaleString() + ' (' + delPct + '%)</span></div>' +
+                        '<div class="w-full bg-slate-900 rounded-full h-2 mb-2"><div class="bg-rose-400 h-2 rounded-full" style="width: ' + delPct + '%"></div></div>';
+
+                    document.getElementById('pgbadger-query-ratios').innerHTML = 
+                        '<div class="bg-slate-800 p-4 rounded-xl text-center shadow-inner border border-slate-700">' +
+                            '<div class="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Total Questions</div>' +
+                            '<div class="text-2xl font-extrabold text-slate-200">' + q_questions.toLocaleString() + '</div>' +
+                        '</div>' +
+                        '<div class="bg-slate-800 p-4 rounded-xl text-center shadow-inner border border-slate-700">' +
+                            '<div class="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Slow Queries</div>' +
+                            '<div class="text-2xl font-extrabold ' + (q_slow > 0 ? 'text-rose-500' : 'text-emerald-400') + '">' + q_slow.toLocaleString() + '</div>' +
+                        '</div>';
+                } else {
+                    document.getElementById('pgbadger-query-distribution').innerHTML = '<div class="text-slate-500 italic">No query traffic data available.</div>';
+                }
+
+                // 2. Locks & Latency
+                const lock_imm = parseFloat(dbMetrics.mystat['Table_locks_immediate'] || 0);
+                const lock_wait = parseFloat(dbMetrics.mystat['Table_locks_waited'] || 0);
+                const row_lock_waits = parseFloat(dbMetrics.mystat['Innodb_row_lock_waits'] || 0);
+                const row_lock_time = parseFloat(dbMetrics.mystat['Innodb_row_lock_time'] || 0);
+                const row_lock_time_avg = parseFloat(dbMetrics.mystat['Innodb_row_lock_time_avg'] || 0);
+
+                if ((lock_imm + lock_wait) > 0) {
+                    const waitPct = ((lock_wait / (lock_imm + lock_wait)) * 100).toFixed(2);
+                    document.getElementById('pgbadger-table-locks').innerHTML = 
+                        '<div class="flex justify-between"><span class="text-emerald-400">Immediate</span> <span>' + lock_imm.toLocaleString() + '</span></div>' +
+                        '<div class="flex justify-between mt-2"><span class="text-rose-400">Waited</span> <span>' + lock_wait.toLocaleString() + ' (' + waitPct + '%)</span></div>' +
+                        '<div class="w-full bg-slate-900 rounded-full h-2 mt-1"><div class="bg-rose-400 h-2 rounded-full" style="width: ' + (waitPct > 100 ? 100 : waitPct) + '%"></div></div>';
+                }
+
+                document.getElementById('pgbadger-row-locks').innerHTML = 
+                    '<div class="flex justify-between"><span class="text-slate-300">Total Row Lock Waits</span> <span class="' + (row_lock_waits > 0 ? 'text-rose-400 font-bold' : 'text-emerald-400') + '">' + row_lock_waits.toLocaleString() + '</span></div>' +
+                    '<div class="flex justify-between mt-2"><span class="text-slate-300">Total Wait Time (ms)</span> <span>' + row_lock_time.toLocaleString() + ' ms</span></div>' +
+                    '<div class="flex justify-between mt-2"><span class="text-slate-300">Average Wait Time (ms)</span> <span>' + row_lock_time_avg.toLocaleString() + ' ms</span></div>';
+
+                // 3. Temp Tables
+                const tmp_tables = parseFloat(dbMetrics.mystat['Created_tmp_tables'] || 0);
+                const tmp_disk = parseFloat(dbMetrics.mystat['Created_tmp_disk_tables'] || 0);
+                
+                if (tmp_tables > 0) {
+                    const diskPct = ((tmp_disk / tmp_tables) * 100).toFixed(2);
+                    const memPct = (100 - diskPct).toFixed(2);
+                    document.getElementById('pgbadger-temp-tables').innerHTML = 
+                        '<div class="bg-slate-800 p-4 rounded-xl text-center shadow-inner border border-slate-700">' +
+                            '<div class="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Total Temp Tables</div>' +
+                            '<div class="text-2xl font-extrabold text-slate-200">' + tmp_tables.toLocaleString() + '</div>' +
+                        '</div>' +
+                        '<div class="bg-slate-800 p-4 rounded-xl text-center shadow-inner border border-slate-700">' +
+                            '<div class="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">In-Memory</div>' +
+                            '<div class="text-2xl font-extrabold text-emerald-400">' + memPct + '%</div>' +
+                        '</div>' +
+                        '<div class="bg-slate-800 p-4 rounded-xl text-center shadow-inner border border-slate-700">' +
+                            '<div class="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">On-Disk (Spills)</div>' +
+                            '<div class="text-2xl font-extrabold ' + (diskPct > 20 ? 'text-rose-500' : 'text-amber-400') + '">' + diskPct + '%</div>' +
+                            '<div class="text-xs text-slate-500 mt-1">' + tmp_disk.toLocaleString() + ' tables</div>' +
+                        '</div>';
+                }
+            }
+
+            window.addEventListener('DOMContentLoaded', () => {
+                renderPgBadgerAnalytics();
+            });
+
         </script>
 
         <!-- Footer -->
