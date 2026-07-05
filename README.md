@@ -28,6 +28,10 @@ Useful Links
 * **Changelog:** [https://github.com/major/MySQLTuner-perl/blob/master/Changelog](https://github.com/major/MySQLTuner-perl/blob/master/Changelog)
 * **Docker Images:** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
 * **Useful References:** [Documentation/References](https://github.com/major/MySQLTuner-perl/blob/master/documentation/REFERENCES.md)
+* **Interactive HTML Reports (v2.9.0+):**
+  * [MariaDB 11.4 E2E HTML Report Example](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_mariadb114/Schemadir/mysqltuner_report.html)
+  * [MySQL 8.4 E2E HTML Report Example](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_mysql84/Schemadir/mysqltuner_report.html)
+  * [Percona 8.0 E2E HTML Report Example](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_percona80/Schemadir/mysqltuner_report.html)
 
 MySQLTuner needs you
 ===

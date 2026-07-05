@@ -26,6 +26,10 @@ Liens utiles
 * **Versions/Tags :** [https://github.com/major/MySQLTuner-perl/tags](https://github.com/major/MySQLTuner-perl/tags)
 * **Changelog :** [https://github.com/major/MySQLTuner-perl/blob/master/Changelog](https://github.com/major/MySQLTuner-perl/blob/master/Changelog)
 * **Images Docker :** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
+* **Rapports HTML Interactifs (v2.9.0+) :**
+  * [Exemple de rapport MariaDB 11.4](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_mariadb114/Schemadir/mysqltuner_report.html)
+  * [Exemple de rapport MySQL 8.4](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_mysql84/Schemadir/mysqltuner_report.html)
+  * [Exemple de rapport Percona 8.0](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_percona80/Schemadir/mysqltuner_report.html)
 
 MySQLTuner a besoin de vous
 ===
