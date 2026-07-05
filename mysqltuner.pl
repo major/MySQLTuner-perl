@@ -73,11 +73,10 @@ our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
 our %exported_manifest;
 our (
-    $tuner_start_time,      $current_section_name,
-    $current_section_start, @section_timings,
-    $tuner_start_datetime
+    $tuner_start_time, $current_section_name, $current_section_start,
+    @section_timings,  $tuner_start_datetime
 );
-our $has_time_hires = eval { require Time::HiRes; 1; } // 0;
+our $has_time_hires             = eval { require Time::HiRes; 1; } // 0;
 our $failed_connection_attempts = 0;
 our $previous_failed_attempts   = 0;
 our $is_local_only              = 0;
@@ -370,8 +369,9 @@ our %CLI_METADATA = (
     'stage-timings' => {
         type    => '!',
         default => 0,
-        desc    => 'Activate stage timings and final summary without full verbose mode',
-        cat     => 'OUTPUT'
+        desc    =>
+          'Activate stage timings and final summary without full verbose mode',
+        cat => 'OUTPUT'
     },
     'color!' => {
         type    => '!',
@@ -1291,7 +1291,8 @@ sub predictive_capacity_analysis {
 sub check_replication_advanced {
     subheaderprint "Cluster & Replication Intelligence";
     if ($is_local_only) {
-        infoprint "Skipping advanced replication checks: Server is bound to localhost-only (Ref: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_bind_address).";
+        infoprint
+"Skipping advanced replication checks: Server is bound to localhost-only (Ref: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_bind_address).";
         return;
     }
 
@@ -1674,7 +1675,9 @@ $tuner_start_datetime = get_datetime_str();
 sub subheaderprint {
     my $name = $_[0];
     my $now  = get_time();
-    if ( defined $current_section_name && ( $opt{'verbose'} || $opt{'stage-timings'} ) ) {
+    if ( defined $current_section_name
+        && ( $opt{'verbose'} || $opt{'stage-timings'} ) )
+    {
         my $elapsed = $now - $current_section_start;
         push @section_timings, [ $current_section_name, $elapsed ];
         infoprint
@@ -1694,7 +1697,9 @@ sub subheaderprint {
 
 sub stop_section_timing {
     my $now = get_time();
-    if ( defined $current_section_name && ( $opt{'verbose'} || $opt{'stage-timings'} ) ) {
+    if ( defined $current_section_name
+        && ( $opt{'verbose'} || $opt{'stage-timings'} ) )
+    {
         my $elapsed = $now - $current_section_start;
         push @section_timings, [ $current_section_name, $elapsed ];
         infoprint
@@ -1709,7 +1714,7 @@ sub print_execution_timings {
 
     stop_section_timing();
 
-    my $total_now = get_time();
+    my $total_now     = get_time();
     my $total_elapsed = $total_now - $tuner_start_time;
 
     subheaderprint "Execution Times";
@@ -1725,7 +1730,12 @@ sub print_execution_timings {
         my $pct = $total_elapsed > 0 ? ( $elapsed / $total_elapsed ) * 100 : 0;
         infoprint sprintf( "%-50s: %.3fs (%.1f%%)", $name, $elapsed, $pct );
     }
-    infoprint sprintf( "%-50s: %s (%.3fs)", "Total Execution Time", pretty_duration($total_elapsed), $total_elapsed );
+    infoprint sprintf(
+        "%-50s: %s (%.3fs)",
+        "Total Execution Time",
+        pretty_duration($total_elapsed),
+        $total_elapsed
+    );
 }
 
 sub print_audit_snapshot_summary {
@@ -2790,7 +2800,7 @@ sub mysql_setup {
         if ( $opt{socket} ) {
             $remotestring .= " -S $opt{socket}";
         }
-        $doremote     = is_remote();
+        $doremote = is_remote();
 
     }
     else {
@@ -3767,14 +3777,20 @@ sub get_all_vars {
 
     # Calculate if the server is loopback/local-only
     $is_local_only = 0;
-    if ( defined $myvar{'skip_networking'} && $myvar{'skip_networking'} eq 'ON' ) {
+    if ( defined $myvar{'skip_networking'}
+        && $myvar{'skip_networking'} eq 'ON' )
+    {
         $is_local_only = 1;
     }
     elsif ( defined $myvar{'bind_address'} ) {
-        my @addrs = split( /\s*,\s*/, $myvar{'bind_address'} );
+        my @addrs     = split( /\s*,\s*/, $myvar{'bind_address'} );
         my $all_local = 1;
         foreach my $addr (@addrs) {
-            if ( $addr ne '127.0.0.1' && $addr ne '::1' && $addr ne 'localhost' && $addr !~ /\.(?:local|localhost)$/i ) {
+            if (   $addr ne '127.0.0.1'
+                && $addr ne '::1'
+                && $addr ne 'localhost'
+                && $addr !~ /\.(?:local|localhost)$/i )
+            {
                 $all_local = 0;
                 last;
             }
@@ -4968,7 +4984,8 @@ sub system_recommendations {
 sub ssl_tls_recommendations {
     subheaderprint "SSL/TLS Security Recommendations";
     if ($is_local_only) {
-        infoprint "Skipping SSL/TLS security recommendations: Server is bound to localhost-only (Ref: https://dev.mysql.com/doc/refman/8.0/en/server-options.html#option_mysqld_skip-networking).";
+        infoprint
+"Skipping SSL/TLS security recommendations: Server is bound to localhost-only (Ref: https://dev.mysql.com/doc/refman/8.0/en/server-options.html#option_mysqld_skip-networking).";
         return;
     }
 
@@ -5051,11 +5068,21 @@ sub ssl_tls_recommendations {
 
     # Certificate presence and local audit
     if ( !$myvar{'ssl_cert'} && !$myvar{'ssl_key'} ) {
-        if ( mysql_version_ge( 11, 4 ) && $myvar{'version'} =~ /MariaDB/i && ( defined($myvar{'have_ssl'}) && ($myvar{'have_ssl'} eq 'YES' || $myvar{'have_ssl'} eq 'ON') ) ) {
-            goodprint "TLS is active, but no explicit ssl_cert/ssl_key paths are configured (MariaDB zero-configuration TLS active)";
+        if (
+               mysql_version_ge( 11, 4 )
+            && $myvar{'version'} =~ /MariaDB/i
+            && (
+                defined( $myvar{'have_ssl'} )
+                && ( $myvar{'have_ssl'} eq 'YES' || $myvar{'have_ssl'} eq 'ON' )
+            )
+          )
+        {
+            goodprint
+"TLS is active, but no explicit ssl_cert/ssl_key paths are configured (MariaDB zero-configuration TLS active)";
         }
         else {
-            badprint "No SSL certificates configured (ssl_cert/ssl_key are empty)";
+            badprint
+              "No SSL certificates configured (ssl_cert/ssl_key are empty)";
             push_recommendation( 'Security',
 "Configure SSL certificates (ssl_cert, ssl_key, ssl_ca) to enable encrypted connections."
             );
@@ -5224,7 +5251,10 @@ sub check_remote_user_ssl {
 "select count(*) from information_schema.columns where TABLE_NAME='user' AND TABLE_SCHEMA='mysql' and COLUMN_NAME='IS_ROLE'"
         );
         my $extra_user_condition = "";
-        if ( defined($is_role_column) && $is_role_column =~ /^\d+$/ && $is_role_column > 0 ) {
+        if (   defined($is_role_column)
+            && $is_role_column =~ /^\d+$/
+            && $is_role_column > 0 )
+        {
             $extra_user_condition = " AND IS_ROLE = 'N'";
         }
         @remote_users = select_array(
@@ -5519,7 +5549,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
 
     unless ($is_local_only) {
         @mysqlstatlist = select_array
-          "SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
+"SELECT CONCAT(QUOTE(user), '\@', host) FROM mysql.user WHERE HOST='%'";
         if ( scalar(@mysqlstatlist) > 0 ) {
             if ( $opt{dumpdir} ) {
                 select_csv_file(
@@ -5537,7 +5567,7 @@ q{SELECT CONCAT(QUOTE(user), '@', QUOTE(host)) FROM mysql.global_priv WHERE
                   . " does not specify hostname restrictions.";
             }
             push( @generalrec,
-                "Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
+"Restrict Host for $luser\@'%' to $luser\@LimitedIPRangeOrLocalhost"
             );
             push( @generalrec,
                     "RENAME USER $luser\@'%' TO "
@@ -6453,7 +6483,7 @@ sub dump_into_file {
         my $actual_file   = "$opt{dumpdir}/$file";
         my $gzip_bin      = which('gzip');
         my $is_compressed = 0;
-        my $start_time = get_time();
+        my $start_time    = get_time();
         my $fh;
         if ( $opt{'compress-dump'} && $gzip_bin && $file =~ /\.csv$/ ) {
             $actual_file .= '.gz';
@@ -7094,8 +7124,9 @@ sub mysql_stats {
     infoprint "Max MySQL memory    : " . hr_bytes( $mycalc{'max_peak_memory'} );
     infoprint "Other process memory: " . hr_bytes( get_other_process_memory() );
 
-    my $is_mariadb = ( $myvar{'version'} // '' ) =~ /mariadb/i;
-    my $internal_tmp_engine = $myvar{'internal_tmp_mem_storage_engine'} // 'TempTable';
+    my $is_mariadb          = ( $myvar{'version'} // '' ) =~ /mariadb/i;
+    my $internal_tmp_engine = $myvar{'internal_tmp_mem_storage_engine'}
+      // 'TempTable';
     if (   defined $myvar{'temptable_max_ram'}
         && is_int( $myvar{'temptable_max_ram'} )
         && !$is_mariadb
@@ -7244,8 +7275,9 @@ sub mysql_stats {
     if ( $myvar{'long_query_time'} > 10 ) {
         push( @adjvars, "long_query_time (<= 10)" );
     }
-    my $slow_query_log_active = $myvar{'slow_query_log'} // $myvar{'log_slow_queries'};
-    if ( defined( $slow_query_log_active ) ) {
+    my $slow_query_log_active = $myvar{'slow_query_log'}
+      // $myvar{'log_slow_queries'};
+    if ( defined($slow_query_log_active) ) {
         if ( $slow_query_log_active eq "OFF" ) {
             push( @generalrec,
                 "Enable the slow query log to troubleshoot bad queries" );
@@ -11391,7 +11423,7 @@ sub mysql_innodb {
         infoprint
 "InnoDB Write Log efficiency: metrics are not reliable (writes > write requests)";
     }
-    elsif ( defined $mycalc{'pct_write_efficiency'}
+    elsif (defined $mycalc{'pct_write_efficiency'}
         && $mycalc{'pct_write_efficiency'} < 90
         && defined $mystat{'Innodb_log_waits'}
         && $mystat{'Innodb_log_waits'} > 0 )
@@ -12889,7 +12921,8 @@ sub headerprint {
       . "\t * Major Hayden <major\@mhtx.net>\n"
       . " >>  Bug reports, feature requests, and downloads at http://mysqltuner.pl/\n"
       . " >>  Run with '--help' for additional options and output filtering";
-    prettyprint " >>  Started at: " . $tuner_start_datetime if defined $tuner_start_datetime;
+    prettyprint " >>  Started at: " . $tuner_start_datetime
+      if defined $tuner_start_datetime;
     debugprint( "Debug: " . $opt{debug} );
     debugprint( "Experimental: " . $opt{experimental} );
 }
@@ -12939,7 +12972,8 @@ sub format_recommendation_item {
                 my $table  = $item->{table}  // '';
                 my $index  = $item->{index}  // '';
                 my $sql    = $item->{sql}    // '';
-                return "Unused index: $schema.$table ($index) (suggested SQL: $sql)";
+                return
+                  "Unused index: $schema.$table ($index) (suggested SQL: $sql)";
             }
             elsif ( $item->{type} eq 'redundant_index' ) {
                 my $schema   = $item->{schema}         // '';
@@ -13074,12 +13108,12 @@ sub _sanitized_result_for_export {
 
 sub _serialize_to_json {
     my ($data) = @_;
-    if (!defined $data) {
+    if ( !defined $data ) {
         return 'null';
     }
     my $ref = ref($data);
-    if (!$ref) {
-        if ($data =~ /^-?(?:[0-9]+(?:\.[0-9]+)?)$/) {
+    if ( !$ref ) {
+        if ( $data =~ /^-?(?:[0-9]+(?:\.[0-9]+)?)$/ ) {
             return $data;
         }
         my $escaped = $data;
@@ -13089,16 +13123,18 @@ sub _serialize_to_json {
         $escaped =~ s/\r/\\r/g;
         $escaped =~ s/\t/\\t/g;
         return '"' . $escaped . '"';
-    } elsif ($ref eq 'HASH') {
+    }
+    elsif ( $ref eq 'HASH' ) {
         my @pairs;
-        foreach my $k (sort keys %$data) {
+        foreach my $k ( sort keys %$data ) {
             my $v = $data->{$k};
             push @pairs, _serialize_to_json($k) . ':' . _serialize_to_json($v);
         }
-        return '{' . join(',', @pairs) . '}';
-    } elsif ($ref eq 'ARRAY') {
+        return '{' . join( ',', @pairs ) . '}';
+    }
+    elsif ( $ref eq 'ARRAY' ) {
         my @elems = map { _serialize_to_json($_) } @$data;
-        return '[' . join(',', @elems) . ']';
+        return '[' . join( ',', @elems ) . ']';
     }
     return 'null';
 }
@@ -13134,26 +13170,31 @@ sub dump_result {
           ( $details->{'res_meta'} // 10 );
 
         my $report_host = $opt{'host'} // $myvar{'hostname'} // 'localhost';
-        my $report_port = $opt{'port'} // $myvar{'port'} // '3306';
+        my $report_port = $opt{'port'} // $myvar{'port'}     // '3306';
 
         # Render lists
         my @sys_recs = (
             @sysrec,
-            grep { /(swap|swappiness|memory|ram|cpu|process|disk|mountpoint|limit|packet|event|tcp|slot|proc|open files)/i } @generalrec
+            grep {
+/(swap|swappiness|memory|ram|cpu|process|disk|mountpoint|limit|packet|event|tcp|slot|proc|open files)/i
+            } @generalrec
         );
         my %seen_sys;
         @sys_recs = grep { !$seen_sys{$_}++ } @sys_recs;
 
         my @sec_recs = (
             @secrec,
-            grep { /(cve|security|password|authentication|ssl|encrypt|host|grant|privilege|user|transport)/i } @generalrec
+            grep {
+/(cve|security|password|authentication|ssl|encrypt|host|grant|privilege|user|transport)/i
+            } @generalrec
         );
         my %seen_sec;
         @sec_recs = grep { !$seen_sec{$_}++ } @sec_recs;
 
         my @conn_recs =
-          grep { /(connection|connect|thread|max_user_connections|max_connections|aborted)/i }
-          @generalrec;
+          grep {
+/(connection|connect|thread|max_user_connections|max_connections|aborted)/i
+          } @generalrec;
 
         my @perf_recs =
           grep { /(slow|query|join|sort|cache|temporary|tmp|lock|started)/i }
@@ -13255,306 +13296,360 @@ sub dump_result {
         my $kpi_mode = $result{'SectionalHealthScore'}{'Modeling'}    // 100;
 
         # Serialize metrics to JSON for Javascript download
-        my $json_myvar   = _serialize_to_json( \%myvar );
-        my $json_mystat  = _serialize_to_json( \%mystat );
-        my $json_mycalc  = _serialize_to_json( \%mycalc );
-        my $json_general = _serialize_to_json( \@generalrec );
-        my $json_adjvars = _serialize_to_json( \@adjvars );
-        my $json_secrec  = _serialize_to_json( \@secrec );
-        my $json_sysrec  = _serialize_to_json( \@sysrec );
+        my $json_myvar    = _serialize_to_json( \%myvar );
+        my $json_mystat   = _serialize_to_json( \%mystat );
+        my $json_mycalc   = _serialize_to_json( \%mycalc );
+        my $json_general  = _serialize_to_json( \@generalrec );
+        my $json_adjvars  = _serialize_to_json( \@adjvars );
+        my $json_secrec   = _serialize_to_json( \@secrec );
+        my $json_sysrec   = _serialize_to_json( \@sysrec );
         my $json_modeling = _serialize_to_json( \@modeling );
 
         # Additional metrics calculations for HTML visual components
-        my $bp_reads = $mystat{'Innodb_buffer_pool_reads'} // 0;
-        my $bp_reqs  = $mystat{'Innodb_buffer_pool_read_requests'} // 0;
+        my $bp_reads   = $mystat{'Innodb_buffer_pool_reads'}         // 0;
+        my $bp_reqs    = $mystat{'Innodb_buffer_pool_read_requests'} // 0;
         my $bp_hit_pct = 100.0;
-        if ($bp_reqs > 0) {
-            $bp_hit_pct = 100.0 * (1.0 - ($bp_reads / $bp_reqs));
+        if ( $bp_reqs > 0 ) {
+            $bp_hit_pct = 100.0 * ( 1.0 - ( $bp_reads / $bp_reqs ) );
         }
-        $bp_hit_pct = sprintf("%.2f", $bp_hit_pct);
+        $bp_hit_pct = sprintf( "%.2f", $bp_hit_pct );
 
-        my $threads_created = $mystat{'Threads_created'} // 0;
-        my $connections = $mystat{'Connections'} // 0;
+        my $threads_created      = $mystat{'Threads_created'} // 0;
+        my $connections          = $mystat{'Connections'}     // 0;
         my $thread_cache_hit_pct = 100.0;
-        if ($connections > 0) {
-            $thread_cache_hit_pct = 100.0 * (1.0 - ($threads_created / $connections));
+        if ( $connections > 0 ) {
+            $thread_cache_hit_pct =
+              100.0 * ( 1.0 - ( $threads_created / $connections ) );
         }
-        $thread_cache_hit_pct = sprintf("%.2f", $thread_cache_hit_pct);
+        $thread_cache_hit_pct = sprintf( "%.2f", $thread_cache_hit_pct );
 
-        my $tmp_disk = $mystat{'Created_tmp_disk_tables'} // 0;
-        my $tmp_total = $mystat{'Created_tmp_tables'} // 0;
-        my $tmp_mem_pct = 100.0;
+        my $tmp_disk     = $mystat{'Created_tmp_disk_tables'} // 0;
+        my $tmp_total    = $mystat{'Created_tmp_tables'}      // 0;
+        my $tmp_mem_pct  = 100.0;
         my $tmp_disk_pct = 0.0;
-        if ($tmp_total > 0) {
-            $tmp_disk_pct = 100.0 * ($tmp_disk / $tmp_total);
-            $tmp_mem_pct = 100.0 - $tmp_disk_pct;
+        if ( $tmp_total > 0 ) {
+            $tmp_disk_pct = 100.0 * ( $tmp_disk / $tmp_total );
+            $tmp_mem_pct  = 100.0 - $tmp_disk_pct;
         }
-        $tmp_mem_pct = sprintf("%.1f", $tmp_mem_pct);
-        $tmp_disk_pct = sprintf("%.1f", $tmp_disk_pct);
+        $tmp_mem_pct  = sprintf( "%.1f", $tmp_mem_pct );
+        $tmp_disk_pct = sprintf( "%.1f", $tmp_disk_pct );
 
         # Schema and Engine Statistics calculations for Storage & Modeling tabs
-        my $db_count = exists $result{'Databases'}{'List'} ? scalar @{ $result{'Databases'}{'List'} } : 0;
-        my $total_tables = 0;
-        my $engines_table_html = '';
+        my $db_count =
+          exists $result{'Databases'}{'List'}
+          ? scalar @{ $result{'Databases'}{'List'} }
+          : 0;
+        my $total_tables        = 0;
+        my $engines_table_html  = '';
         my $engines_status_html = '';
-        
+
         if ( exists $result{'Engine'} ) {
             my @badges;
-            my $total_data_size = 0;
+            my $total_data_size  = 0;
             my $total_index_size = 0;
-            my $total_size = 0;
-            
-            foreach my $eng ( sort keys %{$result{'Engine'}} ) {
-                my $info = $result{'Engine'}{$eng};
+            my $total_size       = 0;
+
+            foreach my $eng ( sort keys %{ $result{'Engine'} } ) {
+                my $info      = $result{'Engine'}{$eng};
                 my $tbl_count = $info->{'Table Number'} // 0;
-                my $d_size = $info->{'Data Size'} // 0;
-                my $i_size = $info->{'Index Size'} // 0;
-                my $t_size = $info->{'Total Size'} // 0;
-                
+                my $d_size    = $info->{'Data Size'}    // 0;
+                my $i_size    = $info->{'Index Size'}   // 0;
+                my $t_size    = $info->{'Total Size'}   // 0;
+
                 my $status = $info->{'Enabled'} // '';
-                my $color_class = ($status eq 'YES' || $status eq 'DEFAULT' || $status eq 'ACTIVE')
-                    ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-                    : 'text-slate-500 bg-slate-500/5 border-slate-500/10';
-                my $prefix = ($status eq 'YES' || $status eq 'DEFAULT' || $status eq 'ACTIVE') ? '+' : '-';
-                push @badges, "<span class='inline-block px-2.5 py-1 text-xs font-semibold rounded-lg border $color_class'>$prefix$eng</span>";
-                
+                my $color_class =
+                  (      $status eq 'YES'
+                      || $status eq 'DEFAULT'
+                      || $status eq 'ACTIVE' )
+                  ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                  : 'text-slate-500 bg-slate-500/5 border-slate-500/10';
+                my $prefix =
+                  (      $status eq 'YES'
+                      || $status eq 'DEFAULT'
+                      || $status eq 'ACTIVE' ) ? '+' : '-';
+                push @badges,
+"<span class='inline-block px-2.5 py-1 text-xs font-semibold rounded-lg border $color_class'>$prefix$eng</span>";
+
                 next if $tbl_count == 0;
-                
-                $total_tables += $tbl_count;
-                $total_data_size += $d_size;
+
+                $total_tables     += $tbl_count;
+                $total_data_size  += $d_size;
                 $total_index_size += $i_size;
-                $total_size += $t_size;
-                
+                $total_size       += $t_size;
+
                 $engines_table_html .= sprintf(
-                    "<tr class='border-b border-slate-800/40'>" .
-                    "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s</td>" .
-                    "<td class='px-6 py-2.5 font-mono'>%d</td>" .
-                    "<td class='px-6 py-2.5 font-mono'>%s</td>" .
-                    "<td class='px-6 py-2.5 font-mono'>%s</td>" .
-                    "<td class='px-6 py-2.5 font-mono font-bold text-blue-400'>%s</td>" .
-                    "</tr>",
-                    escape_html($eng),
-                    $tbl_count,
-                    hr_bytes($d_size),
-                    hr_bytes($i_size),
-                    hr_bytes($t_size)
+                    "<tr class='border-b border-slate-800/40'>"
+                      . "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s</td>"
+                      . "<td class='px-6 py-2.5 font-mono'>%d</td>"
+                      . "<td class='px-6 py-2.5 font-mono'>%s</td>"
+                      . "<td class='px-6 py-2.5 font-mono'>%s</td>"
+                      . "<td class='px-6 py-2.5 font-mono font-bold text-blue-400'>%s</td>"
+                      . "</tr>",
+                    escape_html($eng), $tbl_count, hr_bytes($d_size),
+                    hr_bytes($i_size), hr_bytes($t_size)
                 );
             }
             if ($engines_table_html) {
                 $engines_table_html .= sprintf(
-                    "<tr class='bg-slate-950/40 font-bold'>" .
-                    "<td class='px-6 py-3 text-slate-200'>Total</td>" .
-                    "<td class='px-6 py-3 font-mono'>%d</td>" .
-                    "<td class='px-6 py-3 font-mono'>%s</td>" .
-                    "<td class='px-6 py-3 font-mono'>%s</td>" .
-                    "<td class='px-6 py-3 font-mono text-cyan-400'>%s</td>" .
-                    "</tr>",
+                    "<tr class='bg-slate-950/40 font-bold'>"
+                      . "<td class='px-6 py-3 text-slate-200'>Total</td>"
+                      . "<td class='px-6 py-3 font-mono'>%d</td>"
+                      . "<td class='px-6 py-3 font-mono'>%s</td>"
+                      . "<td class='px-6 py-3 font-mono'>%s</td>"
+                      . "<td class='px-6 py-3 font-mono text-cyan-400'>%s</td>"
+                      . "</tr>",
                     $total_tables,
                     hr_bytes($total_data_size),
                     hr_bytes($total_index_size),
                     hr_bytes($total_size)
                 );
             }
-            $engines_status_html = join(' ', @badges);
+            $engines_status_html = join( ' ', @badges );
         }
-        
-        if (!$engines_table_html) {
-            $engines_table_html = "<tr><td colspan='5' class='px-6 py-4 text-center text-slate-500 italic'>No storage engine usage statistics available.</td></tr>";
+
+        if ( !$engines_table_html ) {
+            $engines_table_html =
+"<tr><td colspan='5' class='px-6 py-4 text-center text-slate-500 italic'>No storage engine usage statistics available.</td></tr>";
         }
-        if (!$engines_status_html) {
-            $engines_status_html = "<span class='text-slate-500 italic'>No storage engine status available.</span>";
+        if ( !$engines_status_html ) {
+            $engines_status_html =
+"<span class='text-slate-500 italic'>No storage engine status available.</span>";
         }
-        
+
         my $frg_count = $fragtables // 0;
-        my $no_pk_count = exists $result{'Tables without PK'} ? scalar @{ $result{'Tables without PK'} } : 0;
-        my $unused_index_count = grep { ref($_) eq 'HASH' && $_->{type} eq 'unused_index' } @modeling;
-        my $redundant_index_count = grep { ref($_) eq 'HASH' && $_->{type} eq 'redundant_index' } @modeling;
+        my $no_pk_count =
+          exists $result{'Tables without PK'}
+          ? scalar @{ $result{'Tables without PK'} }
+          : 0;
+        my $unused_index_count =
+          grep { ref($_) eq 'HASH' && $_->{type} eq 'unused_index' } @modeling;
+        my $redundant_index_count =
+          grep { ref($_) eq 'HASH' && $_->{type} eq 'redundant_index' }
+          @modeling;
 
         # InnoDB Page stats & capacity Calculations
         my $bp_pages_total = $mystat{'Innodb_buffer_pool_pages_total'} // 0;
-        my $bp_pages_free = $mystat{'Innodb_buffer_pool_pages_free'} // 0;
-        my $bp_pages_used = $bp_pages_total - $bp_pages_free;
-        my $bp_page_size = $myvar{'innodb_page_size'} // 16384;
+        my $bp_pages_free  = $mystat{'Innodb_buffer_pool_pages_free'}  // 0;
+        my $bp_pages_used  = $bp_pages_total - $bp_pages_free;
+        my $bp_page_size   = $myvar{'innodb_page_size'} // 16384;
         my $bp_total_bytes = $bp_pages_total * $bp_page_size;
-        my $bp_free_bytes = $bp_pages_free * $bp_page_size;
-        my $bp_used_bytes = $bp_pages_used * $bp_page_size;
+        my $bp_free_bytes  = $bp_pages_free * $bp_page_size;
+        my $bp_used_bytes  = $bp_pages_used * $bp_page_size;
 
         my $innodb_log_info_html = '';
         if ( mysql_version_ge( 8, 0, 30 ) ) {
             if ( defined $myvar{'innodb_redo_log_capacity'} ) {
-                $innodb_log_info_html = "<tr><td class='px-6 py-2 font-semibold'>innodb_redo_log_capacity</td><td class='px-6 py-2 font-mono'>" . hr_bytes($myvar{'innodb_redo_log_capacity'}) . "</td></tr>";
-            } else {
-                $innodb_log_info_html = "<tr><td class='px-6 py-2 font-semibold'>innodb_redo_log_capacity</td><td class='px-6 py-2 font-mono text-slate-500'>N/A</td></tr>";
+                $innodb_log_info_html =
+"<tr><td class='px-6 py-2 font-semibold'>innodb_redo_log_capacity</td><td class='px-6 py-2 font-mono'>"
+                  . hr_bytes( $myvar{'innodb_redo_log_capacity'} )
+                  . "</td></tr>";
             }
-        } else {
-            my $log_file_size = $myvar{'innodb_log_file_size'} // 0;
+            else {
+                $innodb_log_info_html =
+"<tr><td class='px-6 py-2 font-semibold'>innodb_redo_log_capacity</td><td class='px-6 py-2 font-mono text-slate-500'>N/A</td></tr>";
+            }
+        }
+        else {
+            my $log_file_size      = $myvar{'innodb_log_file_size'}      // 0;
             my $log_files_in_group = $myvar{'innodb_log_files_in_group'} // 0;
-            my $total_log_size = $log_file_size * $log_files_in_group;
-            $innodb_log_info_html = "<tr><td class='px-6 py-2 font-semibold'>innodb_log_file_size</td><td class='px-6 py-2 font-mono'>" . hr_bytes($log_file_size) . "</td></tr>" .
-                                    "<tr><td class='px-6 py-2 font-semibold'>innodb_log_files_in_group</td><td class='px-6 py-2 font-mono'>$log_files_in_group</td></tr>" .
-                                    "<tr><td class='px-6 py-2 font-semibold'>Total Log File Size</td><td class='px-6 py-2 font-mono'>" . hr_bytes($total_log_size) . " (" . ($mycalc{'innodb_log_size_pct'} // 0) . "% of buffer pool)</td></tr>";
+            my $total_log_size     = $log_file_size * $log_files_in_group;
+            $innodb_log_info_html =
+"<tr><td class='px-6 py-2 font-semibold'>innodb_log_file_size</td><td class='px-6 py-2 font-mono'>"
+              . hr_bytes($log_file_size)
+              . "</td></tr>"
+              . "<tr><td class='px-6 py-2 font-semibold'>innodb_log_files_in_group</td><td class='px-6 py-2 font-mono'>$log_files_in_group</td></tr>"
+              . "<tr><td class='px-6 py-2 font-semibold'>Total Log File Size</td><td class='px-6 py-2 font-mono'>"
+              . hr_bytes($total_log_size) . " ("
+              . ( $mycalc{'innodb_log_size_pct'} // 0 )
+              . "% of buffer pool)</td></tr>";
         }
 
         my $chunk_align_html = '';
-        if (defined $myvar{'innodb_buffer_pool_chunk_size'} && defined $myvar{'innodb_buffer_pool_instances'} && $myvar{'innodb_buffer_pool_chunk_size'} > 0 && $myvar{'innodb_buffer_pool_instances'} > 0) {
-            my $num_chunks = int( ($myvar{'innodb_buffer_pool_size'} // 0) / $myvar{'innodb_buffer_pool_chunk_size'} );
-            my $expected_size = int($myvar{'innodb_buffer_pool_chunk_size'}) * int($myvar{'innodb_buffer_pool_instances'});
-            my $is_aligned = (int($myvar{'innodb_buffer_pool_size'} // 0) % $expected_size == 0);
-            my $align_status = $is_aligned ? "<span class='text-emerald-400 font-bold'>Aligned</span>" : "<span class='text-rose-400 font-bold'>Not Aligned</span>";
-            $chunk_align_html = "<tr><td class='px-6 py-2 font-semibold'>innodb_buffer_pool_chunk_size</td><td class='px-6 py-2 font-mono'>" . hr_bytes($myvar{'innodb_buffer_pool_chunk_size'}) . "</td></tr>" .
-                                "<tr><td class='px-6 py-2 font-semibold'>InnoDB Buffer Pool Chunks</td><td class='px-6 py-2 font-mono'>$num_chunks (instances: " . $myvar{'innodb_buffer_pool_instances'} . ")</td></tr>" .
-                                "<tr><td class='px-6 py-2 font-semibold'>Chunk Alignment Status</td><td class='px-6 py-2 font-mono'>$align_status</td></tr>";
+        if (   defined $myvar{'innodb_buffer_pool_chunk_size'}
+            && defined $myvar{'innodb_buffer_pool_instances'}
+            && $myvar{'innodb_buffer_pool_chunk_size'} > 0
+            && $myvar{'innodb_buffer_pool_instances'} > 0 )
+        {
+            my $num_chunks = int( ( $myvar{'innodb_buffer_pool_size'} // 0 ) /
+                  $myvar{'innodb_buffer_pool_chunk_size'} );
+            my $expected_size = int( $myvar{'innodb_buffer_pool_chunk_size'} ) *
+              int( $myvar{'innodb_buffer_pool_instances'} );
+            my $is_aligned = (
+                int( $myvar{'innodb_buffer_pool_size'} // 0 )
+                  % $expected_size == 0 );
+            my $align_status =
+              $is_aligned
+              ? "<span class='text-emerald-400 font-bold'>Aligned</span>"
+              : "<span class='text-rose-400 font-bold'>Not Aligned</span>";
+            $chunk_align_html =
+"<tr><td class='px-6 py-2 font-semibold'>innodb_buffer_pool_chunk_size</td><td class='px-6 py-2 font-mono'>"
+              . hr_bytes( $myvar{'innodb_buffer_pool_chunk_size'} )
+              . "</td></tr>"
+              . "<tr><td class='px-6 py-2 font-semibold'>InnoDB Buffer Pool Chunks</td><td class='px-6 py-2 font-mono'>$num_chunks (instances: "
+              . $myvar{'innodb_buffer_pool_instances'}
+              . ")</td></tr>"
+              . "<tr><td class='px-6 py-2 font-semibold'>Chunk Alignment Status</td><td class='px-6 py-2 font-mono'>$align_status</td></tr>";
         }
 
         my $innodb_write_rate_html = '';
-        my $innodb_os_log_written = $mystat{'Innodb_os_log_written'} || 0;
-        my $uptime = $mystat{'Uptime'} || 1;
-        if ($uptime > 3600) {
-            my $hourly_rate = $innodb_os_log_written / ($uptime / 3600);
-            $innodb_write_rate_html = "<tr><td class='px-6 py-2 font-semibold'>Hourly InnoDB Log Write Rate</td><td class='px-6 py-2 font-mono'>" . hr_bytes($hourly_rate) . "/hour</td></tr>";
-        } else {
-            $innodb_write_rate_html = "<tr><td class='px-6 py-2 font-semibold'>Total InnoDB OS Log Written</td><td class='px-6 py-2 font-mono'>" . hr_bytes($innodb_os_log_written) . " (uptime &lt; 1h)</td></tr>";
+        my $innodb_os_log_written  = $mystat{'Innodb_os_log_written'} || 0;
+        my $uptime                 = $mystat{'Uptime'}                || 1;
+        if ( $uptime > 3600 ) {
+            my $hourly_rate = $innodb_os_log_written / ( $uptime / 3600 );
+            $innodb_write_rate_html =
+"<tr><td class='px-6 py-2 font-semibold'>Hourly InnoDB Log Write Rate</td><td class='px-6 py-2 font-mono'>"
+              . hr_bytes($hourly_rate)
+              . "/hour</td></tr>";
+        }
+        else {
+            $innodb_write_rate_html =
+"<tr><td class='px-6 py-2 font-semibold'>Total InnoDB OS Log Written</td><td class='px-6 py-2 font-mono'>"
+              . hr_bytes($innodb_os_log_written)
+              . " (uptime &lt; 1h)</td></tr>";
         }
 
         my $db_table_html = '';
         foreach my $db ( sort @dblist ) {
             my $info = $result{'Databases'}{$db};
             next unless defined $info;
-            my $tbls = $info->{'Tables'} // 0;
-            my $rows = $info->{'Rows'} // 0;
-            my $d_size = $info->{'Data Size'} // 0;
+            my $tbls   = $info->{'Tables'}     // 0;
+            my $rows   = $info->{'Rows'}       // 0;
+            my $d_size = $info->{'Data Size'}  // 0;
             my $i_size = $info->{'Index Size'} // 0;
             my $t_size = $info->{'Total Size'} // 0;
-            
-            my $d_size_str = ($d_size =~ /^\d+$/) ? hr_bytes($d_size) : $d_size;
-            my $i_size_str = ($i_size =~ /^\d+$/) ? hr_bytes($i_size) : $i_size;
-            my $t_size_str = ($t_size =~ /^\d+$/) ? hr_bytes($t_size) : $t_size;
-            
-            $db_table_html .= sprintf(
-                "<tr class='border-b border-slate-800/40'>" .
-                "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s</td>" .
-                "<td class='px-6 py-2.5 font-mono'>%d</td>" .
-                "<td class='px-6 py-2.5 font-mono'>%d</td>" .
-                "<td class='px-6 py-2.5 font-mono'>%s</td>" .
-                "<td class='px-6 py-2.5 font-mono'>%s</td>" .
-                "<td class='px-6 py-2.5 font-mono font-bold text-blue-400'>%s</td>" .
-                "</tr>",
-                escape_html($db),
-                $tbls,
-                $rows,
-                $d_size_str,
-                $i_size_str,
-                $t_size_str
-            );
+
+            my $d_size_str =
+              ( $d_size =~ /^\d+$/ ) ? hr_bytes($d_size) : $d_size;
+            my $i_size_str =
+              ( $i_size =~ /^\d+$/ ) ? hr_bytes($i_size) : $i_size;
+            my $t_size_str =
+              ( $t_size =~ /^\d+$/ ) ? hr_bytes($t_size) : $t_size;
+
+            $db_table_html .=
+              sprintf( "<tr class='border-b border-slate-800/40'>"
+                  . "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s</td>"
+                  . "<td class='px-6 py-2.5 font-mono'>%d</td>"
+                  . "<td class='px-6 py-2.5 font-mono'>%d</td>"
+                  . "<td class='px-6 py-2.5 font-mono'>%s</td>"
+                  . "<td class='px-6 py-2.5 font-mono'>%s</td>"
+                  . "<td class='px-6 py-2.5 font-mono font-bold text-blue-400'>%s</td>"
+                  . "</tr>",
+                escape_html($db), $tbls, $rows, $d_size_str, $i_size_str,
+                $t_size_str );
         }
-        if (!$db_table_html) {
-            $db_table_html = "<tr><td colspan='6' class='px-6 py-4 text-center text-slate-500 italic'>No user database statistics available.</td></tr>";
+        if ( !$db_table_html ) {
+            $db_table_html =
+"<tr><td colspan='6' class='px-6 py-4 text-center text-slate-500 italic'>No user database statistics available.</td></tr>";
         }
 
         my $fragmented_tables_html = '';
-        if ( exists $result{'Tables'}{'Fragmented tables'} && scalar @{ $result{'Tables'}{'Fragmented tables'} } > 0 ) {
-            foreach my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } ) {
-                my ( $table_schema, $table_name, $engine, $data_free ) = split /\t/msx, $table_line;
-                my $free_mb = $data_free / 1024 / 1024;
-                my $free_str = sprintf("%.2f MB", $free_mb);
-                my $sql = ($engine eq 'InnoDB')
-                    ? "ALTER TABLE `$table_schema`.`$table_name` FORCE;"
-                    : "OPTIMIZE TABLE `$table_schema`.`$table_name`;";
+        if ( exists $result{'Tables'}{'Fragmented tables'}
+            && scalar @{ $result{'Tables'}{'Fragmented tables'} } > 0 )
+        {
+            foreach
+              my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } )
+            {
+                my ( $table_schema, $table_name, $engine, $data_free ) =
+                  split /\t/msx, $table_line;
+                my $free_mb  = $data_free / 1024 / 1024;
+                my $free_str = sprintf( "%.2f MB", $free_mb );
+                my $sql =
+                  ( $engine eq 'InnoDB' )
+                  ? "ALTER TABLE `$table_schema`.`$table_name` FORCE;"
+                  : "OPTIMIZE TABLE `$table_schema`.`$table_name`;";
                 $fragmented_tables_html .= sprintf(
-                    "<tr class='border-b border-slate-800/40'>" .
-                    "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>" .
-                    "<td class='px-6 py-2.5 font-mono'>%s</td>" .
-                    "<td class='px-6 py-2.5 font-mono text-rose-400 font-bold'>%s</td>" .
-                    "<td class='px-6 py-2.5 font-mono text-xs select-all text-slate-400 bg-slate-950/30 rounded px-2 py-1'>%s</td>" .
-                    "</tr>",
+                    "<tr class='border-b border-slate-800/40'>"
+                      . "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>"
+                      . "<td class='px-6 py-2.5 font-mono'>%s</td>"
+                      . "<td class='px-6 py-2.5 font-mono text-rose-400 font-bold'>%s</td>"
+                      . "<td class='px-6 py-2.5 font-mono text-xs select-all text-slate-400 bg-slate-950/30 rounded px-2 py-1'>%s</td>"
+                      . "</tr>",
                     escape_html($table_schema),
                     escape_html($table_name),
-                    escape_html($engine),
-                    $free_str,
-                    escape_html($sql)
+                    escape_html($engine), $free_str, escape_html($sql)
                 );
             }
         }
-        if (!$fragmented_tables_html) {
-            $fragmented_tables_html = "<tr><td colspan='4' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>No fragmented tables found.</td></tr>";
+        if ( !$fragmented_tables_html ) {
+            $fragmented_tables_html =
+"<tr><td colspan='4' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>No fragmented tables found.</td></tr>";
         }
 
         my $no_pk_tables_html = '';
-        if ( exists $result{'Tables without PK'} && scalar @{ $result{'Tables without PK'} } > 0 ) {
+        if ( exists $result{'Tables without PK'}
+            && scalar @{ $result{'Tables without PK'} } > 0 )
+        {
             foreach my $badtable ( @{ $result{'Tables without PK'} } ) {
-                my ($schema, $table) = split /,/, $badtable, 2;
-                if (!defined $table) {
+                my ( $schema, $table ) = split /,/, $badtable, 2;
+                if ( !defined $table ) {
                     $schema = '';
-                    $table = $badtable;
+                    $table  = $badtable;
                 }
-                $no_pk_tables_html .= sprintf(
-                    "<tr class='border-b border-slate-800/40'>" .
-                    "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>" .
-                    "<td class='px-6 py-2.5 font-mono text-xs text-rose-400'>Add explicit primary key for performance, maintenance, and replication stability.</td>" .
-                    "</tr>",
-                    escape_html($schema),
-                    escape_html($table)
-                );
+                $no_pk_tables_html .=
+                  sprintf( "<tr class='border-b border-slate-800/40'>"
+                      . "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>"
+                      . "<td class='px-6 py-2.5 font-mono text-xs text-rose-400'>Add explicit primary key for performance, maintenance, and replication stability.</td>"
+                      . "</tr>",
+                    escape_html($schema), escape_html($table) );
             }
         }
-        if (!$no_pk_tables_html) {
-            $no_pk_tables_html = "<tr><td colspan='2' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>All base tables have a primary key or unique index.</td></tr>";
+        if ( !$no_pk_tables_html ) {
+            $no_pk_tables_html =
+"<tr><td colspan='2' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>All base tables have a primary key or unique index.</td></tr>";
         }
 
         my $redundant_indexes_html = '';
-        my $unused_indexes_html = '';
+        my $unused_indexes_html    = '';
         foreach my $item (@modeling) {
             if ( ref($item) eq 'HASH' ) {
-                if ( ($item->{type} // '') eq 'redundant_index' ) {
+                if ( ( $item->{type} // '' ) eq 'redundant_index' ) {
                     my $schema   = $item->{schema}         // '';
                     my $table    = $item->{table}          // '';
                     my $index    = $item->{index}          // '';
                     my $dominant = $item->{dominant_index} // '';
                     my $sql      = $item->{sql}            // '';
                     $redundant_indexes_html .= sprintf(
-                        "<tr class='border-b border-slate-800/40'>" .
-                        "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>" .
-                        "<td class='px-6 py-2.5 font-mono text-rose-400'>%s</td>" .
-                        "<td class='px-6 py-2.5 font-mono text-slate-400'>redundant of %s</td>" .
-                        "<td class='px-6 py-2.5 font-mono text-xs select-all text-slate-400 bg-slate-950/30 rounded px-2 py-1'>%s</td>" .
-                        "</tr>",
-                        escape_html($schema),
-                        escape_html($table),
-                        escape_html($index),
-                        escape_html($dominant),
+                        "<tr class='border-b border-slate-800/40'>"
+                          . "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>"
+                          . "<td class='px-6 py-2.5 font-mono text-rose-400'>%s</td>"
+                          . "<td class='px-6 py-2.5 font-mono text-slate-400'>redundant of %s</td>"
+                          . "<td class='px-6 py-2.5 font-mono text-xs select-all text-slate-400 bg-slate-950/30 rounded px-2 py-1'>%s</td>"
+                          . "</tr>",
+                        escape_html($schema), escape_html($table),
+                        escape_html($index),  escape_html($dominant),
                         escape_html($sql)
                     );
                 }
-                elsif ( ($item->{type} // '') eq 'unused_index' ) {
+                elsif ( ( $item->{type} // '' ) eq 'unused_index' ) {
                     my $schema = $item->{schema} // '';
                     my $table  = $item->{table}  // '';
                     my $index  = $item->{index}  // '';
                     my $sql    = $item->{sql}    // '';
                     $unused_indexes_html .= sprintf(
-                        "<tr class='border-b border-slate-800/40'>" .
-                        "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>" .
-                        "<td class='px-6 py-2.5 font-mono text-amber-400'>%s</td>" .
-                        "<td class='px-6 py-2.5 font-mono text-xs select-all text-slate-400 bg-slate-950/30 rounded px-2 py-1'>%s</td>" .
-                        "</tr>",
-                        escape_html($schema),
-                        escape_html($table),
-                        escape_html($index),
-                        escape_html($sql)
+                        "<tr class='border-b border-slate-800/40'>"
+                          . "<td class='px-6 py-2.5 font-semibold text-slate-300'>%s.%s</td>"
+                          . "<td class='px-6 py-2.5 font-mono text-amber-400'>%s</td>"
+                          . "<td class='px-6 py-2.5 font-mono text-xs select-all text-slate-400 bg-slate-950/30 rounded px-2 py-1'>%s</td>"
+                          . "</tr>",
+                        escape_html($schema), escape_html($table),
+                        escape_html($index),  escape_html($sql)
                     );
                 }
             }
         }
-        if (!$redundant_indexes_html) {
-            $redundant_indexes_html = "<tr><td colspan='4' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>No redundant indexes detected.</td></tr>";
+        if ( !$redundant_indexes_html ) {
+            $redundant_indexes_html =
+"<tr><td colspan='4' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>No redundant indexes detected.</td></tr>";
         }
-        if (!$unused_indexes_html) {
-            $unused_indexes_html = "<tr><td colspan='3' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>No unused indexes detected.</td></tr>";
+        if ( !$unused_indexes_html ) {
+            $unused_indexes_html =
+"<tr><td colspan='3' class='px-6 py-4 text-center text-emerald-400 italic font-semibold'>No unused indexes detected.</td></tr>";
         }
 
         # Prioritized Top Findings lists
-        my @general_top  = get_top_findings( \@generalrec );
-        my @storage_top  = get_top_findings( \@adjvars );
-        my @security_top = get_top_findings( \@secrec );
+        my @general_top     = get_top_findings( \@generalrec );
+        my @storage_top     = get_top_findings( \@adjvars );
+        my @security_top    = get_top_findings( \@secrec );
         my @replication_top = get_top_findings( \@repl_recs );
         my @modeling_top    = get_top_findings( \@modeling );
 
@@ -15316,7 +15411,7 @@ sub dump_csv_files {
 # BEGIN 'MAIN'
 # ---------------------------------------------------------------------------
 if ( !caller ) {
-    $tuner_start_time     = get_time();
+    $tuner_start_time = get_time();
     parse_cli_args;       # Parse CLI arguments
     setup_environment;    # Initialize variables and handle early exits
     headerprint;          # Header Print

@@ -2,9 +2,15 @@ Features list for option: --feature (dev only)
 ---
 
 
+* _parse_version
+* _sanitized_result_for_export
+* _serialize_to_json
+* _to_yaml
+* _yaml_scalar
 * adjust_aborted_connects
 * build_mysql_connection_command
 * calculate_health_score
+* calculate_sectional_health_scores
 * cloud_setup
 * cve_recommendations
 * detect_infrastructure
@@ -49,6 +55,7 @@ Features list for option: --feature (dev only)
 * mysql_views
 * parse_cli_args
 * predictive_capacity_analysis
+* pretty_duration
 * process_sysbench_metrics
 * push_recommendation
 * save_aborted_connects_state
@@ -57,6 +64,7 @@ Features list for option: --feature (dev only)
 * show_help
 * show_help;
 * ssl_tls_recommendations
+* stop_section_timing
 * system_recommendations
 * validate_mysql_version
 * validate_tuner_version
