@@ -69,6 +69,7 @@
 - test: add unit test for remote host physical memory detection and validation (issue #796).
 - test: add unit test for temptable output formatting in Total buffers.
 - ci: optimize pre-commit hook to only run unit tests when code, tests, or dependencies are modified.
+- docs(metadata): promote HTML reports and add E2E examples
 - docs(metadata): remove timestamp from doc-sync generated files
 - docs(roadmap): link strategic technical evolutions specification and enforce changelog staging
 - docs(roadmap): specify and implement Phase XIV pgBadger-inspired HTML report modules
