@@ -105,4 +105,40 @@ subtest 'Issue 781 - Passwords with complex characters' => sub {
     diag "Commands tried: " . join(", ", @commands_executed) unless $found;
 };
 
+subtest 'Issue 781 - Socket option is preserved when host is default' => sub {
+    @commands_executed = ();
+    %main::opt = (
+        %main::opt,
+        'user' => 'tuneruser',
+        'pass' => 'tunerpass',
+        'socket' => '/var/lib/mysql/mysql.sock',
+        'host' => undef,
+        'noask' => 1,
+    );
+
+    eval { main::mysql_setup(); };
+
+    my $found = grep { /-S \/var\/lib\/mysql\/mysql\.sock/ } @commands_executed;
+    ok($found, "mysql_setup should connect using the specified socket path when host is default");
+    diag "Commands tried: " . join(", ", @commands_executed) unless $found;
+};
+
+subtest 'Issue 781 - Socket option is preserved when host is explicitly specified' => sub {
+    @commands_executed = ();
+    %main::opt = (
+        %main::opt,
+        'user' => 'tuneruser',
+        'pass' => 'tunerpass',
+        'socket' => '/var/lib/mysql/mysql.sock',
+        'host' => 'localhost',
+        'noask' => 1,
+    );
+
+    eval { main::mysql_setup(); };
+
+    my $found = grep { /-S \/var\/lib\/mysql\/mysql\.sock/ && /-h localhost/ } @commands_executed;
+    ok($found, "mysql_setup should connect using both specified host and socket path");
+    diag "Commands tried: " . join(", ", @commands_executed) unless $found;
+};
+
 done_testing();

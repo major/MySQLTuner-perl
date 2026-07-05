@@ -1,1 +1,16 @@
-npx --no-install commitlint --edit "$1"
+#!/bin/sh
+
+# Run commitlint first to validate the commit message format
+npx --no-install commitlint --edit "$1" || exit 1
+
+# Check if Changelog is staged when commit type is feat or fix
+COMMIT_MSG_FILE="$1"
+FIRST_LINE=$(head -n 1 "$COMMIT_MSG_FILE")
+
+if echo "$FIRST_LINE" | grep -qE "^(feat|fix)(\([^)]+\))?!?:\s" ; then
+  if ! git diff --cached --name-only | grep -q "^Changelog$"; then
+    echo "ERROR: Commit type 'feat' or 'fix' detected, but 'Changelog' is not staged."
+    echo "Please update and stage 'Changelog' before committing."
+    exit 1
+  fi
+fi

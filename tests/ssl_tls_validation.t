@@ -115,6 +115,31 @@ subtest 'ssl_tls_recommendations' => sub {
     main::ssl_tls_recommendations();
     ok(grep(/Insecure TLS versions enabled/, @bad_prints), "Detects TLS 1.1 as insecure");
     ok(grep(/No modern TLS versions/, @bad_prints), "Detects lack of TLS 1.2+");
+
+    # Case 5: MariaDB 11.4+ Zero-Configuration TLS (ssl_cert and ssl_key empty, but TLS active)
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar, 
+        'version' => '11.8.8-MariaDB',
+        'have_ssl' => 'YES',
+        'require_secure_transport' => 'ON',
+        'tls_version' => 'TLSv1.2,TLSv1.3',
+        'ssl_cert' => '',
+        'ssl_key' => ''
+    );
+    local *main::select_one = sub {
+        my $query = shift;
+        if ($query =~ /Ssl_cipher/) {
+            return "Ssl_cipher\tTLS_AES_256_GCM_SHA384";
+        }
+        return "";
+    };
+    @main::generalrec = ();
+    @bad_prints = ();
+    @good_prints = ();
+    @recommendations = ();
+    main::ssl_tls_recommendations();
+    ok(grep(/TLS is active, but no explicit ssl_cert\/ssl_key paths are configured/, @good_prints), "MariaDB 11.4+ Zero-Configuration TLS prints info message");
+    is(scalar(grep(/No SSL certificates configured/, @bad_prints)), 0, "No missing certificates warning for zero-config TLS");
 };
 
 subtest 'check_local_certificates' => sub {
@@ -217,6 +242,49 @@ subtest 'check_remote_user_ssl' => sub {
     @bad_prints = ();
     main::check_remote_user_ssl();
     ok(grep(/users can connect remotely without SSL/, @bad_prints), "Detects remote user without SSL (MySQL)");
+
+    # Case 3: Exclude role (MariaDB >= 10.4)
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar,  'version' => '10.5.0-MariaDB' );
+    local *main::select_array = sub {
+        my ($query) = @_;
+        if ($query =~ /global_priv/ && $query =~ /is_role/) {
+            return (); # Excluded!
+        }
+        return ("'should_not_happen'\@'%'");
+    };
+    local *main::mysql_version_ge = sub { 1 };
+    @bad_prints = ();
+    @good_prints = ();
+    main::check_remote_user_ssl();
+    ok(grep(/All remote users have SSL enforcement active/, @good_prints), "Excludes role (MariaDB >= 10.4)");
+
+    # Case 4: Exclude role (MariaDB < 10.4 with IS_ROLE column)
+    MySQLTuner::TestHelper::reset_state();
+    %main::myvar = ( %main::myvar,  'version' => '10.2.0-MariaDB' );
+    local *main::select_one = sub {
+        my ($query) = @_;
+        if ($query =~ /IS_ROLE/) {
+            return 1; # IS_ROLE column exists
+        }
+        return 0;
+    };
+    local *main::select_array = sub {
+        my ($query) = @_;
+        if ($query =~ /mysql.user/ && $query =~ /IS_ROLE = 'N'/) {
+            return (); # Excluded!
+        }
+        return ("'should_not_happen'\@'%'");
+    };
+    local *main::mysql_version_ge = sub {
+        my ($maj, $min) = @_;
+        if ($maj == 10 && $min == 4) { return 0; } # Not >= 10.4
+        return 1;
+    };
+    @bad_prints = ();
+    @good_prints = ();
+    main::check_remote_user_ssl();
+    ok(grep(/All remote users have SSL enforcement active/, @good_prints), "Excludes role using IS_ROLE (MariaDB < 10.4)");
 };
 
 done_testing();

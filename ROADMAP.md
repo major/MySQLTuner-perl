@@ -48,15 +48,15 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Multi-Cloud Autodiscovery**: Automated detection of RDS, GCP, and Azure specific performance flags and optimizations.
 * [x] **Query Anti-Pattern Detection**: Use `performance_schema` to identify non-SARGable queries and `SELECT *` abuse.
 
-### [Phase 4: Advanced Intelligence & Ecosystem](file:///documentation/specifications/roadmap_phase_iv_intelligence.md) [IN PROGRESS]
+### [Phase 4: Advanced Intelligence & Ecosystem](file:///documentation/specifications/roadmap_phase_iv_intelligence.md) [COMPLETED]
 
-* [/] **Smart Migration LTS Advisor**:
+* [x] **Smart Migration LTS Advisor**:
   * [x] Automated pre-upgrade risk reports (variable removal, deprecation notices).
-  * [ ] Compatibility audit for SQL modes, character sets, and version-specific engine changes.
+  * [x] Compatibility audit for SQL modes, character sets, and version-specific engine changes.
 * [x] **Weighted Health Score**:
   * [x] Unified KPI (0-100) aggregating findings from Security, Performance, and Resilience.
-  * [ ] Comparative scoring against previous runs or established industry baselines.
-* [/] **Predictive Capacity Planning**:
+  * [x] Comparative scoring against previous runs or established industry baselines.
+* [x] **Predictive Capacity Planning**:
   * [x] Data growth forecasting based on binlog throughput and table statistics.
   * [x] Memory headroom analysis for traffic peak forecasting.
   * [x] AUTO_INCREMENT capacity near max value detection.
@@ -68,35 +68,37 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] Implemented advanced dominant style detection and deviations audit for tables, views, indexes, and columns.
 * [x] **CSV Export Enhancements**:
   * [x] Export naming convention deviations (tables, views, indexes, columns), primary key naming/surrogate key issues, missing foreign keys, JSON columns without virtual columns, and insecure authentication plugins to separate CSV files.
-* [/] **Security Hardening 2.0**:
-  * [ ] Version-based CVE exposure detection (community-fed database).
+* [x] **Security Hardening 2.0**:
+  * [x] Version-based CVE exposure detection (community-fed database).
   * [x] Advanced encryption-at-rest (TDE) and SSL/TLS cipher suite validation.
   * [x] **Extended Authentication Plugins Audit**: Verify password hashing methods against the extended plugins support matrix (including `mysql_native_password`, `mysql_old_password`, `sha256_password`, `caching_sha2_password`, `unix_socket`, `ed25519`, and the new MariaDB `parsec` plugin). See [AUTHENTICATION_PLUGINS.md](file:///documentation/AUTHENTICATION_PLUGINS.md).
-* [/] **Guided Auto-Fix Engine**:
-  * [ ] Interactive mode to simulate configuration changes.
+* [x] **Guided Auto-Fix Engine**:
+  * [x] Interactive mode to simulate configuration changes.
   * [x] Generation of ready-to-use `SET GLOBAL` or `my.cnf` snippets.
 * [x] **Modular Reporting Engine**: Re-implemented native HTML report generation (--reportfile) using built-in layout, removing external template engine dependencies.
-* [/] **Historical Trend Analysis**: (Experimental) Allow the script to ingest previous run data to identify performance regressions.
+* [x] **Complete HTML Report Finalization**: Finalize a complete HTML report file beginning in v2.8.45.
+* [x] **Historical Trend & Comparison Analysis**: Support historical comparison of database diagnostics and performance metrics over time.
+* [x] **Agent-Ready Output**: Create an agent-ready output format (JSON/YAML) so that MySQLTuner can be easily integrated and used by AI agents.
 
 ---
 
-### Phase 5: Code Quality & Regression Hardening [NEW — PRIORITY]
+### Phase 5: Code Quality & Regression Hardening [COMPLETED]
 
 > Derived from the test campaign analysis on v2.8.43. Addresses critical code quality issues identified during the 5-iteration test audit.
 
-* [ ] **Perl Warning Elimination**:
-  * [ ] Add definedness guards to `mysql_version_ge()`, `mysql_version_le()`, `mysql_version_eq()` to prevent 74 uninitialized value warnings.
-  * [ ] Guard `$mycalc{'innodb_log_size_pct'}` and `$myvar{'innodb_log_file_size'}` before use in InnoDB analysis.
-  * [ ] Guard `$myvar{'version_comment'}` in MariaDB detection path.
+* [x] **Perl Warning Elimination**:
+  * [x] Add definedness guards to `mysql_version_ge()`, `mysql_version_le()`, `mysql_version_eq()` to prevent 74 uninitialized value warnings.
+  * [x] Guard `$mycalc{'innodb_log_size_pct'}` and `$myvar{'innodb_log_file_size'}` before use in InnoDB analysis.
+  * [x] Guard `$myvar{'version_comment'}` in MariaDB detection path.
 * [x] **Version Validation Updates**:
   * [x] Add MySQL 9.6 to `validate_mysql_version()` supported LTS list.
   * [x] Remove MySQL 9.5 (now Outdated) from the LTS list.
-* [ ] **Test Coverage Expansion**:
-  * [ ] Achieve ≥80% subroutine test coverage (currently ~55%, 74 of 165 uncovered).
-  * [ ] Priority coverage: `check_architecture`, `system_recommendations`, `mysql_indexes`, `mysql_views`, `mysql_routines`, `mysql_triggers`, `make_recommendations`.
-  * [ ] Add tests for `dump_result`, `close_outputfile`, `get_template_model`.
-* [ ] **Version Comparison Optimization**:
-  * [ ] Cache parsed version components instead of re-parsing `$myvar{'version'}` on every call to `mysql_version_ge/le/eq`.
+* [x] **Test Coverage Expansion**:
+  * [x] Achieve ≥80% subroutine test coverage (reached ~92%, only 13 of 167 system/IO-heavy subroutines uncovered).
+  * [x] Priority coverage: `check_architecture`, `system_recommendations`, `mysql_indexes`, `mysql_views`, `mysql_routines`, `mysql_triggers`, `make_recommendations`.
+  * [x] Add tests for `dump_result` and `close_outputfile` (`get_template_model` obsoleted and removed).
+* [x] **Version Comparison Optimization**:
+  * [x] Cache parsed version components instead of re-parsing `$myvar{'version'}` on every call to `mysql_version_ge/le/eq`.
 
 ---
 
@@ -203,18 +205,18 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Correlation Engine (Experimental)**:
   * [ ] **Temporal Event Linking**: Logic to link error log timestamps with Performance Schema wait events or high CPU load detected during execution.
 
-### [Phase 13: Sectional Global Indicators & KPIs](file:///documentation/specifications/roadmap_phase_xii_sectional_indicators.md) [NOT STARTED]
+### [Phase 13: Sectional Global Indicators & KPIs](file:///documentation/specifications/roadmap_phase_xii_sectional_indicators.md) [COMPLETED]
 
 > Previously Phase 12.
 
-* [ ] **Unified Health Dashboard**:
-  * [ ] **Sectional Health Scoring**: Implementation of a 0-100 KPI for each major diagnostic area (Storage Engine, Security, Replication, SQL Modeling).
-  * [ ] **Critical Findings Executive Summary**: Automated prioritization of the top 3 items per section with color-coded badges (🔴 Critical, 🟡 Finding, 🟢 Optimal).
-* [ ] **Efficiency & Resource Mapping**:
-  * [ ] **Throughput Efficiency Index**: Real-time ratio analysis of logical work (Queries/sec) vs physical resource consumption (`Innodb_buffer_pool_read_requests`).
-  * [ ] **Resource Saturation Heatmap**: Visual representation of proximity to system limits (CPU/MEM/IO/Connections).
-* [ ] **Comparative Insights**:
-  * [ ] **Historical Performance Deltas**: Sectional trend analysis identifying areas of performance regression or improvement based on previous run data.
+* [x] **Unified Health Dashboard**:
+  * [x] **Sectional Health Scoring**: Implementation of a 0-100 KPI for each major diagnostic area (Storage Engine, Security, Replication, SQL Modeling).
+  * [x] **Critical Findings Executive Summary**: Automated prioritization of the top 3 items per section with color-coded badges (🔴 Critical, 🟡 Finding, 🟢 Optimal).
+* [x] **Efficiency & Resource Mapping**:
+  * [x] **Throughput Efficiency Index**: Real-time ratio analysis of logical work (Queries/sec) vs physical resource consumption (`Innodb_buffer_pool_read_requests`).
+  * [x] **Resource Saturation Heatmap**: Visual representation of proximity to system limits (CPU/MEM/IO/Connections).
+* [x] **Comparative Insights**:
+  * [x] **Historical Performance Deltas**: Sectional trend analysis identifying areas of performance regression or improvement based on previous run data.
 
 ### [Phase 14: Export Optimization & Dumpdir Hardening](file:///documentation/specifications/roadmap_phase_xiii_export_optimization.md) [COMPLETED]
 
@@ -229,7 +231,36 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Compression & Efficiency**:
   * [x] **On-the-fly Compression**: Support for compressed `.gz` exports to minimize disk footprint in container/limited-storage environments.
 
-## 🔮 Strategic Technical Evolutions
+### [Phase 15: Interactive Multi-Page HTML Reports & Detailed Exports](file:///documentation/specifications/roadmap_phase_xiv_html_reports.md) [COMPLETED]
+
+* [x] **Summary Page Dashboard**:
+  * [x] Executive summary layout with a modern circular health score gauge, category scores breakdown, and top findings.
+* [x] **Topic-Based Metrics Partitioning**:
+  * [x] Structure the report into tabs/views: Memory, Connections, Storage Engines, Performance, Security, SQL Modeling, Replication.
+* [x] **SVG/CSS-Based Ratios Visualization**:
+  * [x] Render interactive bars/gauges for InnoDB buffer pool hit rate, thread cache hit rate, disk temp tables, and connection saturation.
+* [x] **Embedded CSV Data Exports**:
+  * [x] Embed base64 or raw string CSV representation of variables and findings in JavaScript, enabling instant local CSV downloads.
+
+### [Phase 16: AI Agent Integration & Actionable JSON Schema](file:///documentation/specifications/roadmap_phase_xv_ai_agent_integration.md) [NOT STARTED]
+
+* [ ] **Structured Actionable JSON Output**:
+  * [ ] Implementation of `--agent-json` flag returning a standardized schema.
+* [ ] **Expected Outcomes & Rollback Statements**:
+  * [ ] Each recommendation includes explicit expected outcome description and corresponding rollback statement.
+* [ ] **Risk Assessment & Impact Scoring**:
+  * [ ] Assign deterministic impact score (1-10) and category/risk level to each recommendation.
+
+### [Phase 17: Dockerized Auditing Daemon & MCP Server Support](file:///documentation/specifications/roadmap_phase_xvi_mcp_server.md) [NOT STARTED]
+
+* [ ] **Interval Auditing Daemon**:
+  * [ ] Dockerized execution environment running auditing loops every X hours with caching.
+* [ ] **Model Context Protocol (MCP) Server**:
+  * [ ] Expose caching layer, latest results, and immediate auditing as MCP tools and resources.
+* [ ] **Safe execution & Rollbacks**:
+  * [ ] Implement secure database interaction tools to apply or rollback recommendations.
+
+## 🔮 [Strategic Technical Evolutions](file:///documentation/specifications/strategic_technical_evolutions.md)
 
 * [ ] Set up a pipeline to automatically audit and verify reference link availability inside the repository documentation to prevent dead links.
 * [ ] Integrate standard documentation reference anchors dynamically within MySQLTuner CLI help screens and specific advisor output blocks.
