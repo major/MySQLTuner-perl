@@ -14,6 +14,7 @@
 - chore(deps): update softprops/action-gh-release digest to 718ea10 (#934)
 - chore(deps): update ubuntu:latest docker digest to 53958ec (#935)
 - chore(deps): update ubuntu:latest docker digest to b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e
+- chore(docs): add custom rule for GitHub issue creation
 - chore(docs): implement rule to decompose unit tests into readable segments
 - chore(docs): update agent best practices and customization rules
 - chore(main): add doc links in localhost warnings and support custom local subdomains
@@ -24,6 +25,7 @@
 - feat(cli): resolve remote memory, socket override, and temptable sizing issues
 - feat(main): audit InnoDB lock monitors and print all deadlocks configuration
 - feat(main): enhance error log parser with OOM, semaphore waits, file limits, and page corruption alerts
+- feat(main): implement advanced log parser and lock monitoring
 - feat(main): implement experimental Correlation Engine linking PFS wait events and CPU load with log events
 - feat(metadata): fix test badge and update version references in READMEs
 - feat(report): add pgBadger-inspired query, lock, and temp table visual analytics to HTML report
