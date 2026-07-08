@@ -4320,6 +4320,35 @@ sub log_file_recommendations {
     }
 
     subheaderprint "Log file Recommendations";
+
+    # Log verbosity audit
+    my $is_mariadb = (
+        ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+          or ( defined $myvar{'version_comment'}
+            && $myvar{'version_comment'} =~ /MariaDB/i )
+    );
+    my $is_mysql = !$is_mariadb;
+
+    if ( $is_mysql && mysql_version_ge( 8, 0 ) ) {
+        if ( defined $myvar{'log_error_verbosity'} ) {
+            if ( $myvar{'log_error_verbosity'} < 2 ) {
+                badprint "log_error_verbosity is set to $myvar{'log_error_verbosity'} (should be >= 2)";
+                push @generalrec, "Set log_error_verbosity = 2 or 3 to capture warning events in the error log";
+            } else {
+                goodprint "log_error_verbosity is set to $myvar{'log_error_verbosity'}";
+            }
+        }
+    } else {
+        if ( defined $myvar{'log_warnings'} ) {
+            if ( $myvar{'log_warnings'} < 2 ) {
+                badprint "log_warnings is set to $myvar{'log_warnings'} (should be >= 2)";
+                push @generalrec, "Set log_warnings = 2 or higher to capture warnings in the error log";
+            } else {
+                goodprint "log_warnings is set to $myvar{'log_warnings'}";
+            }
+        }
+    }
+
     if ( $has_pfs_error_log && !$opt{'server-log'} ) {
         goodprint "Performance Schema error_log table detected";
         my $pfs_count =
@@ -4410,6 +4439,10 @@ sub log_file_recommendations {
     my $nbErrLog  = 0;
     my @lastShutdowns;
     my @lastStarts;
+    my $oom_detected = 0;
+    my $semaphore_detected = 0;
+    my $file_limit_detected = 0;
+    my $corruption_detected = 0;
 
     while ( my $logLi = <$fh> ) {
         chomp $logLi;
@@ -4420,6 +4453,19 @@ sub log_file_recommendations {
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
         push @lastStarts, $logLi if $logLi =~ /ready for connections/;
+
+        if ( $logLi =~ /(out of memory|OOM-killer|killed process|mysqld killed)/i ) {
+            $oom_detected++;
+        }
+        if ( $logLi =~ /(semaphore wait|long semaphore wait)/i ) {
+            $semaphore_detected++;
+        }
+        if ( $logLi =~ /(too many open files|Error in accept: Too many open files)/i ) {
+            $file_limit_detected++;
+        }
+        if ( $logLi =~ /(is marked as crashed|checksum mismatch|corrupted page|Page checksum)/i ) {
+            $corruption_detected++;
+        }
     }
     close $fh;
 
@@ -4436,6 +4482,37 @@ sub log_file_recommendations {
     }
     else {
         goodprint "$myvar{'log_error'} doesn't contain any error.";
+    }
+
+    if ( $oom_detected > 0 ) {
+        badprint "Database error log contains $oom_detected Out-Of-Memory (OOM) patterns.";
+        push @generalrec, "Verify system RAM allocations and consider reducing innodb_buffer_pool_size to avoid OOM kills";
+    }
+    if ( $semaphore_detected > 0 ) {
+        badprint "InnoDB long semaphore waits detected $semaphore_detected time(s) in the error log.";
+        push @generalrec, "Audit storage I/O capacity or check system-level contention as InnoDB experienced semaphore waits";
+    }
+    if ( $file_limit_detected > 0 ) {
+        badprint "Error log contains 'Too many open files' warnings $file_limit_detected time(s).";
+        push @generalrec, "Increase open_files_limit or raise OS-level ulimits for file descriptors (nofile)";
+    }
+    if ( $corruption_detected > 0 ) {
+        badprint "Database corruption patterns detected $corruption_detected time(s) in the error log.";
+        push @generalrec, "Run CHECK TABLE / REPAIR TABLE or restore from backup as corruption warnings were detected";
+    }
+
+    # Correlation Engine (Experimental)
+    if ( $semaphore_detected > 0 || $oom_detected > 0 ) {
+        my @load = get_load_average();
+        my $cores = logical_cpu_cores();
+        my $is_high_load = ( @load && $load[0] > $cores ) ? 1 : 0;
+        my $is_high_lock_waits = ( ($mystat{'Innodb_row_lock_waits'} // 0) > 10 || ($mystat{'Table_locks_waited'} // 0) > 10 ) ? 1 : 0;
+        
+        if ( $is_high_load || $is_high_lock_waits ) {
+            infoprint "Experimental Correlation: Log anomalies (semaphore/OOM) correlate with active system pressure:";
+            infoprint "  - System Load: " . ($is_high_load ? "HIGH (@load)" : "Normal (@load)");
+            infoprint "  - Lock Contention: " . ($is_high_lock_waits ? "HIGH (Innodb_row_lock_waits=$mystat{'Innodb_row_lock_waits'})" : "Normal");
+        }
     }
 
     infoprint scalar @lastStarts . " start(s) detected in $myvar{'log_error'}";
@@ -12088,6 +12165,27 @@ sub mysql_innodb {
                 badprint "InnoDB experienced $err_res[0] lock deadlocks (ER_LOCK_DEADLOCK)";
                 push( @generalrec, "Optimize application queries, transaction lengths, and index coverage to reduce lock deadlocks." );
             }
+        }
+    }
+
+    # Task 9: InnoDB Lock Monitoring & Deadlock Logging Audit
+    if ( defined $myvar{'innodb_print_all_deadlocks'} ) {
+        if ( $myvar{'innodb_print_all_deadlocks'} eq 'OFF' ) {
+            badprint "InnoDB deadlock logging (innodb_print_all_deadlocks) is disabled";
+            push( @generalrec, "Enable innodb_print_all_deadlocks = ON to capture detailed transaction information in the error log when deadlocks occur." );
+        } else {
+            goodprint "InnoDB deadlock logging (innodb_print_all_deadlocks) is enabled";
+        }
+    }
+    if ( defined $myvar{'innodb_status_output'} && $myvar{'innodb_status_output'} eq 'OFF' ) {
+        infoprint "InnoDB periodic status output (innodb_status_output) is disabled";
+    }
+    if ( defined $myvar{'innodb_status_output_locks'} ) {
+        if ( $myvar{'innodb_status_output_locks'} eq 'OFF' ) {
+            infoprint "InnoDB lock monitor output (innodb_status_output_locks) is disabled";
+            push( @generalrec, "Consider enabling innodb_status_output_locks = ON during active lock contention troubleshooting to print lock details in SHOW ENGINE INNODB STATUS." );
+        } else {
+            goodprint "InnoDB lock monitor output (innodb_status_output_locks) is enabled";
         }
     }
 

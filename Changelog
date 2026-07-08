@@ -22,6 +22,9 @@
 - chore: automated project metadata update
 - chore: remove execution.log from git repository and sync docs
 - feat(cli): resolve remote memory, socket override, and temptable sizing issues
+- feat(main): audit InnoDB lock monitors and print all deadlocks configuration
+- feat(main): enhance error log parser with OOM, semaphore waits, file limits, and page corruption alerts
+- feat(main): implement experimental Correlation Engine linking PFS wait events and CPU load with log events
 - feat(metadata): fix test badge and update version references in READMEs
 - feat(report): add pgBadger-inspired query, lock, and temp table visual analytics to HTML report
 - feat(report): add verbose timings, step percentages, and snapshot summary
@@ -44,6 +47,7 @@
 - test(test): add unit_eol_warnings.t to validate version support warnings
 - test(test): add unit_galera_pxc.t to validate Phase 9 Galera cluster checks
 - test(test): add unit_ha_cluster.t to validate Phase 7 HA cluster checks
+- test(test): add unit_log_parser.t to validate advanced log parsing and correlation
 - test(test): add unit_replication_internals.t to validate Phase 8 replication features
 - test(test): add unit_version_helpers.t to validate version caching and helpers
 - test(test): add unit_workload_traffic.t to validate Phase 11 workload profiling
