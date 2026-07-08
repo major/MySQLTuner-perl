@@ -61,6 +61,7 @@
 - docs(metadata): remove timestamp from doc-sync generated files
 - docs(releases): regenerate release notes and changelog
 - docs(roadmap): link strategic technical evolutions specification and enforce changelog staging
+- docs(roadmap): mark Phase 12 as completed in ROADMAP.md
 - docs(roadmap): update Phase 7, Phase 9, Phase 10, and Phase 11 status to completed in ROADMAP.md
 - docs: add LightPath as sponsor, relocate coffee button, and use star-history chart
 - docs: regenerate release notes
