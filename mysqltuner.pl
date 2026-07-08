@@ -1711,6 +1711,144 @@ sub check_security_2_0 {
     }
 }
 
+sub check_workload_traffic {
+    subheaderprint "Workload Analysis & Traffic Profiling";
+
+    # 1. Workload Characterization (Read-Heavy vs Write-Heavy vs Mixed)
+    my $com_select = $mystat{'Com_select'} // 0;
+    my $com_insert = $mystat{'Com_insert'} // 0;
+    my $com_update = $mystat{'Com_update'} // 0;
+    my $com_delete = $mystat{'Com_delete'} // 0;
+    my $com_replace = $mystat{'Com_replace'} // 0;
+    
+    my $total_reads = $com_select;
+    my $total_writes = $com_insert + $com_update + $com_delete + $com_replace;
+    my $total_ops = $total_reads + $total_writes;
+    
+    if ($total_ops > 0) {
+        my $read_ratio = $total_reads / $total_ops;
+        my $char_str = "Mixed";
+        if ($read_ratio > 0.80) {
+            $char_str = "Read-Heavy (" . sprintf("%.1f%%", $read_ratio * 100) . " reads)";
+            goodprint "Workload Characterization: $char_str";
+        } elsif ($read_ratio < 0.20) {
+            $char_str = "Write-Heavy (" . sprintf("%.1f%%", (1 - $read_ratio) * 100) . " writes)";
+            badprint "Workload Characterization: $char_str";
+            push @generalrec, "Write-heavy workload detected. Optimize redo logs size, transaction log flushing, and doublewrite buffer.";
+        } else {
+            $char_str = "Mixed (" . sprintf("%.1f%%", $read_ratio * 100) . " reads, " . sprintf("%.1f%%", (1 - $read_ratio) * 100) . " writes)";
+            goodprint "Workload Characterization: $char_str";
+        }
+    } else {
+        infoprint "Workload Characterization: No query counters traffic recorded yet.";
+    }
+
+    # 2. Wait Event Fingerprinting (Performance Schema Waits analysis)
+    if (defined $myvar{'performance_schema'} && $myvar{'performance_schema'} eq 'ON') {
+        my @wait_events = select_array(
+            "SELECT EVENT_NAME, SUM_TIMER_WAIT FROM performance_schema.events_waits_summary_global_by_event_name WHERE SUM_TIMER_WAIT > 0 AND EVENT_NAME NOT LIKE 'idle%' AND EVENT_NAME NOT LIKE 'wait/io/table/%' ORDER BY SUM_TIMER_WAIT DESC LIMIT 5"
+        );
+        if (scalar(@wait_events) > 0) {
+            infoprint "Top Wait Events (excluding idle/table I/O):";
+            my $disk_waits = 0;
+            my $lock_waits = 0;
+            my $net_waits = 0;
+            foreach my $we (@wait_events) {
+                my ($name, $wait) = split(/\|/, $we);
+                $name //= '';
+                $wait //= 0;
+                infoprint "  - $name: " . sprintf("%.2fs", $wait / 1000000000000);
+                
+                if ($name =~ m{^wait/io/file/}) { $disk_waits += $wait; }
+                elsif ($name =~ m{^wait/synch/}) { $lock_waits += $wait; }
+                elsif ($name =~ m{^wait/io/socket/}) { $net_waits += $wait; }
+            }
+            
+            my $total_wait = $disk_waits + $lock_waits + $net_waits;
+            if ($total_wait > 0) {
+                if ($disk_waits / $total_wait > 0.5) {
+                    badprint "Primary DB Bottleneck detected: Disk/File I/O waits";
+                    push @generalrec, "Primary database bottleneck is Disk I/O. Check storage performance, swap usage, or increase buffer pool.";
+                } elsif ($lock_waits / $total_wait > 0.5) {
+                    badprint "Primary DB Bottleneck detected: Synchronization Locks/Mutex waits";
+                    push @generalrec, "Primary database bottleneck is Lock contention. Optimize slow transactions and reduce lock wait timeout.";
+                } elsif ($net_waits / $total_wait > 0.5) {
+                    badprint "Primary DB Bottleneck detected: Network Sockets waits";
+                    push @generalrec, "Primary database bottleneck is Network/Socket I/O. Check client connections latency and network bandwidth.";
+                }
+            }
+        }
+    }
+
+    # 3. Table Churn & Fragmentation Advisor (Combining PFS write metrics and fragmentation stats)
+    if (defined $myvar{'performance_schema'} && $myvar{'performance_schema'} eq 'ON') {
+        my @churn_tables = select_array(
+            "SELECT OBJECT_SCHEMA, OBJECT_NAME, COUNT_WRITE FROM performance_schema.table_io_waits_summary_by_table WHERE OBJECT_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys') AND COUNT_WRITE > 1000 ORDER BY COUNT_WRITE DESC LIMIT 5"
+        );
+        if (scalar(@churn_tables) > 0) {
+            my %churn_map;
+            foreach my $ct (@churn_tables) {
+                my ($schema, $table, $writes) = split(/\|/, $ct);
+                $churn_map{"$schema.$table"} = $writes if $schema && $table;
+            }
+            
+            my $matched_churn_frag = 0;
+            if (defined $result{'Tables'}{'Fragmented tables'}) {
+                foreach my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } ) {
+                    my ( $table_schema, $table_name, $engine, $data_free ) = split /\t/msx, $table_line;
+                    if (exists $churn_map{"$table_schema.$table_name"}) {
+                        $matched_churn_frag++;
+                        badprint "High-churn table `$table_schema`.`$table_name` is fragmented (free: " . hr_bytes($data_free) . ")";
+                        push @generalrec, "Defragment high-churn table `$table_schema`.`$table_name` to optimize DML space reclamation.";
+                    }
+                }
+            }
+            if ($matched_churn_frag > 0) {
+                infoprint "Identified $matched_churn_frag high-churn fragmented tables.";
+            }
+        }
+    }
+
+    # 4. Auto-Increment Exhaustion Audit
+    my @auto_inc_cols = select_array(
+        "SELECT t.TABLE_SCHEMA, t.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, t.AUTO_INCREMENT FROM information_schema.tables t JOIN information_schema.columns c ON t.table_schema = c.table_schema AND t.table_name = c.table_name WHERE c.extra = 'auto_increment' AND t.auto_increment IS NOT NULL AND t.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')"
+    );
+    
+    if (scalar(@auto_inc_cols) > 0) {
+        foreach my $col_info (@auto_inc_cols) {
+            my ($schema, $table, $col, $type, $curr_val) = split(/\|/, $col_info);
+            $type = lc($type // '');
+            $curr_val //= 0;
+            
+            my $max_val = 0;
+            my $col_type = select_one("SELECT COLUMN_TYPE FROM information_schema.columns WHERE TABLE_SCHEMA = '$schema' AND TABLE_NAME = '$table' AND COLUMN_NAME = '$col'") // '';
+            my $is_unsigned = ($col_type =~ /unsigned/i) ? 1 : 0;
+            
+            if ($type eq 'tinyint') {
+                $max_val = $is_unsigned ? 255 : 127;
+            } elsif ($type eq 'smallint') {
+                $max_val = $is_unsigned ? 65535 : 32767;
+            } elsif ($type eq 'mediumint') {
+                $max_val = $is_unsigned ? 16777215 : 8388607;
+            } elsif ($type eq 'int' || $type eq 'integer') {
+                $max_val = $is_unsigned ? 4294967295 : 2147483647;
+            } elsif ($type eq 'bigint') {
+                $max_val = $is_unsigned ? 18446744073709551615 : 9223372036854775807;
+            }
+            
+            if ($max_val > 0) {
+                my $ratio = $curr_val / $max_val;
+                if ($ratio > 0.80) {
+                    badprint "Auto-increment column `$schema`.`$table`.`$col` ($type) is near exhaustion: current value $curr_val (" . sprintf("%.1f%%", $ratio * 100) . " of max $max_val)";
+                    push @generalrec, "Danger of auto-increment overflow on `$schema`.`$table`.`$col`. Upgrade type to BIGINT or reset sequence.";
+                } elsif ($ratio > 0.50) {
+                    infoprint "Auto-increment column `$schema`.`$table`.`$col` ($type) has reached " . sprintf("%.1f%%", $ratio * 100) . " capacity.";
+                }
+            }
+        }
+    }
+}
+
 sub generate_auto_fix_snippets {
     return if $opt{'silent'} || $opt{'json'} || $opt{'yaml'};
     subheaderprint "Guided Auto-Fix Snippets";
@@ -15764,6 +15902,7 @@ if ( !caller ) {
         \&get_replication_status,     \&process_sysbench_metrics,
         \&historical_comparison,      \&predictive_capacity_analysis,
         \&check_replication_advanced, \&check_security_2_0,
+        \&check_workload_traffic,
         \&generate_auto_fix_snippets,
     );
 

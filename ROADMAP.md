@@ -179,16 +179,16 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] **End-to-End Verification Audit**: Analysis of `source_verify_checksum` and `replica_sql_verify_checksum` settings.
   * [x] **Relay Log Hardening**: Verification of checksum validation before transaction application on replicas.
 
-### Phase 11: Workload Analysis & Traffic Profiling [NOT STARTED]
+### Phase 11: Workload Analysis & Traffic Profiling [COMPLETED]
 
 > Previously Phase 10.
 
-* [ ] **Query Performance Profiling**:
-  * [ ] **Wait Event Fingerprinting**: Aggregation of `performance_schema` wait events to identify the primary database bottleneck (CPU, disk, lock, network).
-  * [ ] **Workload Characterization**: Automated classification of the database as Read-Heavy, Write-Heavy, or Mixed based on I/O ratios.
-* [ ] **Metadata & Object Lifecycle**:
-  * [ ] **Table Churn & Fragmentation Advisor**: Identification of tables with frequent DML that require periodic `OPTIMIZE TABLE`.
-  * [ ] **Auto-Increment Exhaustion Audit**: Monitoring of large tables for potential auto-increment overflow (especially 32-bit integers).
+* [x] **Query Performance Profiling**:
+  * [x] **Wait Event Fingerprinting**: Aggregation of `performance_schema` wait events to identify the primary database bottleneck (CPU, disk, lock, network).
+  * [x] **Workload Characterization**: Automated classification of the database as Read-Heavy, Write-Heavy, or Mixed based on I/O ratios.
+* [x] **Metadata & Object Lifecycle**:
+  * [x] **Table Churn & Fragmentation Advisor**: Identification of tables with frequent DML that require periodic `OPTIMIZE TABLE`.
+  * [x] **Auto-Increment Exhaustion Audit**: Monitoring of large tables for potential auto-increment overflow (especially 32-bit integers).
 
 ### [Phase 12: Advanced Log Parser & Lock Monitoring](file:///documentation/specifications/roadmap_phase_xi_log_parser.md) [NOT STARTED]
 
