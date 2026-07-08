@@ -30,14 +30,14 @@ To ensure consistency and high-density development, the following roles are defi
 
 ### Phase 2: Advanced Diagnostics (v2.8.34 - v2.8.38) [COMPLETED]
 
-| Item | Status |
-| :--- | :--- |
-| **System Call Optimization** | [x] Replaced `awk`, `grep`, `hostname`, `uname`, `sysctl` with native Perl. |
-| **Native /proc Parsing** | [x] Implemented native parsing for `cpuinfo`, `meminfo`, `swappiness`. |
-| **[Index Audit 2.0](file:///documentation/specifications/index_checks_pfs.md)** | [x] Integrated `performance_schema` for redundant/unused index detection. |
-| **Observability Log Ingestion** | [x] Support for `syslog`, `journald`, and `performance_schema.error_log`. |
-| **Transactional Contention** | [x] Detect isolation levels and long-running transactions. |
-| **Buffer Pool Advisory** | [x] More granular analysis of InnoDB Redo Log Capacity based on RAM/Writes. |
+| Item                                                                            | Status                                                                      |
+| :--------------------------------------------------------------------------------| :----------------------------------------------------------------------------|
+| **System Call Optimization**                                                    | [x] Replaced `awk`, `grep`, `hostname`, `uname`, `sysctl` with native Perl. |
+| **Native /proc Parsing**                                                        | [x] Implemented native parsing for `cpuinfo`, `meminfo`, `swappiness`.      |
+| **[Index Audit 2.0](file:///documentation/specifications/index_checks_pfs.md)** | [x] Integrated `performance_schema` for redundant/unused index detection.   |
+| **Observability Log Ingestion**                                                 | [x] Support for `syslog`, `journald`, and `performance_schema.error_log`.   |
+| **Transactional Contention**                                                    | [x] Detect isolation levels and long-running transactions.                  |
+| **Buffer Pool Advisory**                                                        | [x] More granular analysis of InnoDB Redo Log Capacity based on RAM/Writes. |
 
 ### Phase 3: Automation & Ecosystem [COMPLETED]
 
@@ -151,20 +151,20 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] **Semi-Sync Safety Check**: Dynamic analysis of semi-synchronous wait points (`AFTER_SYNC` vs `AFTER_COMMIT`) and fallback triggers.
   * [x] **Multi-Source Channel Monitoring**: Full observability for multi-master and multi-channel replication topologies.
 
-### [Phase 9: Advanced Galera Cluster 4 & PXC 8.0](file:///documentation/specifications/roadmap_phase_viii_galera.md) [PARTIAL]
+### [Phase 9: Advanced Galera Cluster 4 & PXC 8.0](file:///documentation/specifications/roadmap_phase_viii_galera.md) [COMPLETED]
 
 > Previously Phase 8. Foundation exists (106 wsrep + 51 galera references). Advanced diagnostics missing.
 
-* [ ] **Synchronous Efficiency & Streaming**:
-  * [ ] **Streaming Replication Audit**: Observability for large transaction fragments (`wsrep_streaming_log_writes`) and their I/O footprint (MariaDB 10.4+).
-  * [ ] **Gcache Lifecycle Optimization**: Advanced sizing advisory for `gcache.size` vs write load to maximize IST success.
-* [ ] **Conflict & Performance Diagnostics**:
-  * [ ] **Certification Failure Deep-Dive**: Quantitative analysis of brute-force aborts (`wsrep_local_bf_aborts`) and certification conflicts.
-  * [ ] **Cluster-Wide Flow Control Mapping**: Identification of "bottleneck nodes" (Victim vs Culprit) using `wsrep_flow_control_sent` metrics.
-  * [ ] **Write-Set Dependency Analysis**: Optimization of `wsrep_slave_threads` based on `wsrep_cert_deps_distance` tracking.
-* [ ] **Stability & Scalability Safeguards**:
-  * [ ] **Network Jitter Detection**: Monitoring of group communication latency (`wsrep_evs_repl_latency` statistics) and its impact on consistency.
-  * [ ] **PXC Strict Mode Verification**: Consistency checks for Percona XtraDB Cluster specific security and performance enforcements.
+* [x] **Synchronous Efficiency & Streaming**:
+  * [x] **Streaming Replication Audit**: Observability for large transaction fragments (`wsrep_streaming_log_writes`) and their I/O footprint (MariaDB 10.4+).
+  * [x] **Gcache Lifecycle Optimization**: Advanced sizing advisory for `gcache.size` vs write load to maximize IST success.
+* [x] **Conflict & Performance Diagnostics**:
+  * [x] **Certification Failure Deep-Dive**: Quantitative analysis of brute-force aborts (`wsrep_local_bf_aborts`) and certification conflicts.
+  * [x] **Cluster-Wide Flow Control Mapping**: Identification of "bottleneck nodes" (Victim vs Culprit) using `wsrep_flow_control_sent` metrics.
+  * [x] **Write-Set Dependency Analysis**: Optimization of `wsrep_slave_threads` based on `wsrep_cert_deps_distance` tracking.
+* [x] **Stability & Scalability Safeguards**:
+  * [x] **Network Jitter Detection**: Monitoring of group communication latency (`wsrep_evs_repl_latency` statistics) and its impact on consistency.
+  * [x] **PXC Strict Mode Verification**: Consistency checks for Percona XtraDB Cluster specific security and performance enforcements.
 
 ### [Phase 10: Data Integrity & Checksum Verification](file:///documentation/specifications/roadmap_phase_ix_integrity.md) [COMPLETED]
 

@@ -9966,6 +9966,19 @@ sub get_wsrep_option {
     return $memValue;
 }
 
+sub parse_size_bytes {
+    my $str = shift // '';
+    $str =~ s/\s+//g;
+    if ($str =~ /^(\d+(?:\.\d+)?)([KMG])$/i) {
+        my ($val, $unit) = ($1, uc($2));
+        return $val * 1024 if $unit eq 'K';
+        return $val * 1024 * 1024 if $unit eq 'M';
+        return $val * 1024 * 1024 * 1024 if $unit eq 'G';
+    }
+    return $str if $str =~ /^\d+$/;
+    return 0;
+}
+
 # REcommendations for Tables
 sub mysql_table_structures {
     return 0 unless ( $opt{structstat} > 0 );
@@ -11007,6 +11020,81 @@ sub mariadb_galera {
     for my $key ( keys %mystat ) {
         if ( $key =~ /wsrep_|galera/i ) {
             debugprint "WSREP: $key = $mystat{$key}";
+        }
+    }
+
+    # --- PHASE 9: ADVANCED GALERA & PXC DIAGNOSTICS ---
+    # 1. Streaming Replication Monitor
+    my $stream_writes = $mystat{'wsrep_streaming_log_writes'} // 0;
+    my $stream_reads  = $mystat{'wsrep_streaming_log_reads'}  // 0;
+    if ($stream_writes > 0) {
+        badprint "Galera is using streaming replication: $stream_writes write(s), $stream_reads read(s)";
+        push @generalrec, "Streaming replication active. Review wsrep_trx_fragment_size and ensure storage can handle the fragment log I/O overhead.";
+    }
+    
+    # 2. Gcache Sizing Optimization
+    my $gcache_size_str = get_wsrep_option('gcache.size') // '';
+    if ($gcache_size_str) {
+        my $gcache_bytes = parse_size_bytes($gcache_size_str);
+        if ($gcache_bytes > 0) {
+            my $min_gcache = 128 * 1024 * 1024;
+            my $five_pct_ram = $physical_memory ? ($physical_memory * 0.05) : 0;
+            my $target_gcache = ($five_pct_ram > $min_gcache) ? $five_pct_ram : $min_gcache;
+            if ($gcache_bytes < $target_gcache) {
+                badprint "gcache.size is too small ($gcache_size_str, recommended: >= " . hr_bytes($target_gcache) . ")";
+                push @generalrec, "Increase gcache.size in wsrep_provider_options to maximize IST success and avoid full SST on node re-joins.";
+            }
+        }
+    }
+    
+    # 3. Certification Conflict & Abort Analysis
+    my $bf_aborts = $mystat{'wsrep_local_bf_aborts'} // 0;
+    my $cert_failures = $mystat{'wsrep_local_cert_failures'} // 0;
+    if ($bf_aborts > 50 || $cert_failures > 50) {
+        badprint "High cluster certification conflicts: $bf_aborts brute-force abort(s), $cert_failures certification failure(s)";
+        push @generalrec, "High certification conflicts. Optimize write concurrency, index hotspot tables, or review application transactions size.";
+    }
+    
+    # 4. Advanced Flow Control Observability
+    my $fc_sent = $mystat{'wsrep_flow_control_sent'} // 0;
+    if ($fc_sent > 0) {
+        badprint "Flow Control: Node triggered flow control $fc_sent times (pause sender culprit)";
+        push @generalrec, "Node is triggering flow control pause events. Check disk write latency, CPU load, or swap space.";
+    }
+    my $fc_paused = $mystat{'wsrep_flow_control_paused'} // 0;
+    if ($fc_paused > 0.05) {
+        badprint "Flow Control: Node replication was paused " . sprintf("%.2f%%", $fc_paused * 100) . " of the time (throttling)";
+        push @generalrec, "Node is heavily throttled by flow control. Check slower nodes in the cluster triggering flow control.";
+    }
+    
+    # 5. Group Communication Latency & Jitter
+    my $repl_latency = $mystat{'wsrep_evs_repl_latency'} // '';
+    if ($repl_latency && $repl_latency =~ m{^([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+)$}) {
+        my ($min, $avg, $max, $stddev) = ($1, $2, $3, $4);
+        if ($avg > 0.1) {
+            badprint "High average replication latency: " . sprintf("%.2fms", $avg * 1000);
+            push @generalrec, "High average replication latency. Optimize inter-node network latency.";
+        }
+        if ($stddev > 0.05) {
+            badprint "High network replication jitter (stddev: " . sprintf("%.2fms", $stddev * 1000) . ")";
+            push @generalrec, "High replication jitter. Review inter-node network stability and WAN link quality.";
+        }
+    }
+    
+    # 6. Applier Concurrency Tuning
+    my $deps_dist = $mystat{'wsrep_cert_deps_distance'} // 0;
+    if ($deps_dist > 4 && $wsrep_threads_value == 1) {
+        infoprint "Average write-set dependency distance is " . sprintf("%.2f", $deps_dist) . " (threads: 1)";
+        push @generalrec, "Consider increasing $wsrep_threads_var_name to leverage parallel certification concurrency.";
+    }
+    
+    # 7. PXC Strict Mode Verification
+    my $is_percona = ( ($myvar{'version_comment'} // '') =~ /Percona/i || ($myvar{'version'} // '') =~ /Percona/i );
+    if ($is_percona && defined $myvar{'pxc_strict_mode'}) {
+        my $pxc_mode = $myvar{'pxc_strict_mode'};
+        if ($pxc_mode ne 'ENFORCING' && $pxc_mode ne 'MASTER') {
+            badprint "pxc_strict_mode is set to $pxc_mode (recommended: ENFORCING)";
+            push @generalrec, "Set pxc_strict_mode = ENFORCING to prevent unsafe operations on Percona XtraDB Cluster.";
         }
     }
 
