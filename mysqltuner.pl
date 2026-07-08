@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.9.0
+# mysqltuner.pl - Version 2.9.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.9.0";
+our $tunerversion = "2.9.1";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -3298,7 +3298,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.9.0' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.9.1' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -3314,7 +3314,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.9.0' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.9.1' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -15489,7 +15489,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.9.0 - MySQL High Performance Tuning Script
+ MySQLTuner 2.9.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -15504,7 +15504,7 @@ See C<mysqltuner --help> for a full list of available options and their categori
 
 =head1 VERSION
 
-Version 2.9.0
+Version 2.9.1
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.

@@ -2,7 +2,7 @@
 
 This file records anomalies discovered during laboratory testing (Perl warnings, SQL errors, etc.).
 
-## [2026-06-16 Audit] Status Refresh v2.9.0
+## [2026-06-16 Audit] Status Refresh v2.9.1
 
 ### Unit Test Results
 
