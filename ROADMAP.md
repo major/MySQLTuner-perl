@@ -242,23 +242,23 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Embedded CSV Data Exports**:
   * [x] Embed base64 or raw string CSV representation of variables and findings in JavaScript, enabling instant local CSV downloads.
 
-### [Phase 16: AI Agent Integration & Actionable JSON Schema](file:///documentation/specifications/roadmap_phase_xv_ai_agent_integration.md) [NOT STARTED]
+### [Phase 16: AI Agent Integration & Actionable JSON Schema](file:///documentation/specifications/roadmap_phase_xv_ai_agent_integration.md) [COMPLETED]
 
-* [ ] **Structured Actionable JSON Output**:
-  * [ ] Implementation of `--agent-json` flag returning a standardized schema.
-* [ ] **Expected Outcomes & Rollback Statements**:
-  * [ ] Each recommendation includes explicit expected outcome description and corresponding rollback statement.
-* [ ] **Risk Assessment & Impact Scoring**:
-  * [ ] Assign deterministic impact score (1-10) and category/risk level to each recommendation.
+* [x] **Structured Actionable JSON Output**:
+  * [x] Implementation of `--agent-json` flag returning a standardized schema.
+* [x] **Expected Outcomes & Rollback Statements**:
+  * [x] Each recommendation includes explicit expected outcome description and corresponding rollback statement.
+* [x] **Risk Assessment & Impact Scoring**:
+  * [x] Assign deterministic impact score (1-10) and category/risk level to each recommendation.
 
-### [Phase 17: Dockerized Auditing Daemon & MCP Server Support](file:///documentation/specifications/roadmap_phase_xvi_mcp_server.md) [NOT STARTED]
+### [Phase 17: Dockerized Auditing Daemon & MCP Server Support](file:///documentation/specifications/roadmap_phase_xvi_mcp_server.md) [COMPLETED]
 
-* [ ] **Interval Auditing Daemon**:
-  * [ ] Dockerized execution environment running auditing loops every X hours with caching.
-* [ ] **Model Context Protocol (MCP) Server**:
-  * [ ] Expose caching layer, latest results, and immediate auditing as MCP tools and resources.
-* [ ] **Safe execution & Rollbacks**:
-  * [ ] Implement secure database interaction tools to apply or rollback recommendations.
+* [x] **Interval Auditing Daemon**:
+  * [x] Dockerized execution environment running auditing loops every X hours with caching.
+* [x] **Model Context Protocol (MCP) Server**:
+  * [x] Expose caching layer, latest results, and immediate auditing as MCP tools and resources.
+* [x] **Safe execution & Rollbacks**:
+  * [x] Implement secure database interaction tools to apply or rollback recommendations.
 
 ## 🔮 [Strategic Technical Evolutions](file:///documentation/specifications/strategic_technical_evolutions.md)
 
