@@ -50,6 +50,7 @@
 - docs(roadmap): update Phase 7, Phase 9, and Phase 10 status to completed in ROADMAP.md
 - docs: add LightPath as sponsor, relocate coffee button, and use star-history chart
 - docs: regenerate release notes
+- docs: update potential issues log with Phase 9 Galera audit findings
 - docs: update potential issues log with release v2.9.0 and v2.9.1 audit results
 - docs: update repository links to major/MySQLTuner-perl and add GitHub stars badge
 
