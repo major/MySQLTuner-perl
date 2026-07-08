@@ -22,6 +22,7 @@
 - chore(releases): start v2.9.1 branch with version bump and dependency updates
 - chore: automated project metadata update
 - chore: remove execution.log from git repository and sync docs
+- feat(cli): implement agent-json flag returning structured actionable schema
 - feat(cli): resolve remote memory, socket override, and temptable sizing issues
 - feat(container): implement dockerized auditing daemon and zero-dependency MCP server
 - feat(main): audit InnoDB lock monitors and print all deadlocks configuration
@@ -46,6 +47,7 @@
 - test(hook): verify pre-commit hook runs tests when test files change
 - test(lab): add unit test test_issue_810.t for issue 810
 - test(test): add unit tests for potential issues and split unit_coverage_boost3
+- test(test): add unit_agent_json.t to validate actionable JSON schema
 - test(test): add unit_deadlocks_pfs.t to validate InnoDB deadlock PFS checks
 - test(test): add unit_eol_warnings.t to validate version support warnings
 - test(test): add unit_galera_pxc.t to validate Phase 9 Galera cluster checks
