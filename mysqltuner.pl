@@ -11650,6 +11650,103 @@ sub mysql_innodb {
 "No InnoDB tables with > 50,000 rows found to calculate index/data ratios.";
     }
 
+    # --- PHASE 6: DEEP ENGINE TUNING & SAFEGUARDING ---
+
+    # Task 1: I/O Pressure & Flushing Advisor
+    if ( defined $mystat{'Innodb_buffer_pool_wait_free'} && $mystat{'Innodb_buffer_pool_wait_free'} > 0 ) {
+        my $io_cap = $myvar{'innodb_io_capacity'} // 0;
+        my $io_cap_max = $myvar{'innodb_io_capacity_max'} // 0;
+        badprint "InnoDB is experiencing I/O pressure (Innodb_buffer_pool_wait_free = $mystat{'Innodb_buffer_pool_wait_free'})";
+        push( @generalrec, "Increase innodb_io_capacity (current: $io_cap) or innodb_io_capacity_max (current: $io_cap_max) to alleviate flushing/free buffer page waits." );
+    }
+
+    # Task 2: Read-Ahead Efficiency Audit
+    if ( defined $mystat{'Innodb_buffer_pool_read_ahead'} && $mystat{'Innodb_buffer_pool_read_ahead'} > 0 ) {
+        my $read_ahead = $mystat{'Innodb_buffer_pool_read_ahead'};
+        my $evicted = $mystat{'Innodb_buffer_pool_read_ahead_evicted'} // 0;
+        my $eviction_ratio = ($evicted / $read_ahead) * 100;
+        if ( $eviction_ratio > 20 ) {
+            badprint sprintf("InnoDB read-ahead efficiency is low: %.2f%% of read-ahead pages were evicted without being accessed", $eviction_ratio);
+            my $threshold = $myvar{'innodb_read_ahead_threshold'} // 56;
+            push( @generalrec, "Decrease innodb_read_ahead_threshold (current: $threshold) or disable innodb_random_read_ahead to reduce read-ahead page eviction." );
+        }
+    }
+
+    # Task 3: Purge Lag Prevention
+    if ( defined $mystat{'Innodb_history_list_length'} && $mystat{'Innodb_history_list_length'} > 100000 ) {
+        my $purge_threads = $myvar{'innodb_purge_threads'} // 0;
+        badprint "InnoDB history list length is high ($mystat{'Innodb_history_list_length'}) - purge process may lag";
+        push( @generalrec, "Increase innodb_purge_threads (current: $purge_threads, up to 32) and audit long-running transactions to prevent MVCC purge lag." );
+    }
+
+    # Task 4: Change Buffer & Adaptive Hash Index Optimization
+    my $rows_read = $mystat{'Innodb_rows_read'} // 0;
+    my $rows_write = ($mystat{'Innodb_rows_inserted'} // 0) + ($mystat{'Innodb_rows_updated'} // 0) + ($mystat{'Innodb_rows_deleted'} // 0);
+    if ( $rows_write > 0 && ($rows_read / $rows_write) > 100 ) {
+        if ( defined $myvar{'innodb_change_buffering'} && $myvar{'innodb_change_buffering'} ne 'none' ) {
+            badprint "Workload is highly read-intensive, but innodb_change_buffering is enabled";
+            push( @generalrec, "Consider setting innodb_change_buffering = none to save buffer pool memory on read-only/read-heavy workloads." );
+        }
+    }
+    if ( ( $myvar{'innodb_adaptive_hash_index'} // 'OFF' ) eq 'ON' && logical_cpu_cores() > 16 ) {
+        infoprint "InnoDB Adaptive Hash Index is enabled on a high core count system ($myvar{'innodb_adaptive_hash_index'})";
+        push( @generalrec, "Monitor Adaptive Hash Index (AHI) lock contention; consider setting innodb_adaptive_hash_index = OFF if contention is high." );
+    }
+
+    # Task 5: Modern Storage Alignment (doublewrite pages, fdatasync, flush method)
+    my $is_mysql = !( ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+                     or ( defined $myvar{'version_comment'} && $myvar{'version_comment'} =~ /MariaDB/i ) );
+    if ($is_mysql && mysql_version_ge( 8, 4 ) && defined $myvar{'innodb_doublewrite_pages'} && $myvar{'innodb_doublewrite_pages'} != 128 ) {
+        badprint "innodb_doublewrite_pages is not aligned with modern SSD/NVMe storage ($myvar{'innodb_doublewrite_pages'})";
+        push( @generalrec, "Set innodb_doublewrite_pages = 128 for optimal doublewrite buffer throughput on modern SSDs." );
+    }
+    if ( defined $myvar{'innodb_use_fdatasync'} && $myvar{'innodb_use_fdatasync'} eq 'OFF' ) {
+        my $flush_method = $myvar{'innodb_flush_method'} // '';
+        if ( $flush_method ne 'O_DIRECT' && $flush_method ne 'O_DIRECT_NO_FSYNC' ) {
+            infoprint "innodb_use_fdatasync is disabled ($myvar{'innodb_use_fdatasync'})";
+            push( @generalrec, "Consider enabling innodb_use_fdatasync = ON to reduce fsync system call overhead on Linux if not using O_DIRECT." );
+        }
+    }
+
+    # Task 6: NUMA-Aware Memory Allocation
+    if ( !is_docker() && !is_remote() ) {
+        my $has_numa = 0;
+        if ( -d '/sys/devices/system/node' ) {
+            my @nodes = glob('/sys/devices/system/node/node[0-9]*');
+            if ( @nodes > 1 ) {
+                $has_numa = 1;
+            }
+        }
+        if ( $has_numa ) {
+            if ( defined $myvar{'innodb_numa_interleave'} && $myvar{'innodb_numa_interleave'} eq 'OFF' ) {
+                my $total_mem = $physical_memory // 0;
+                if ( $total_mem > 34359738368 ) {
+                    badprint "NUMA architecture detected but innodb_numa_interleave is disabled";
+                    push( @generalrec, "Enable innodb_numa_interleave = ON to balance buffer pool memory allocation across NUMA nodes." );
+                }
+            }
+        }
+    }
+
+    # Task 7: MariaDB Temp & Undo Lifecycle Manager
+    my $is_mariadb = !$is_mysql;
+    if ( $is_mariadb && mysql_version_ge( 11, 4 ) ) {
+        if ( defined $myvar{'innodb_truncate_temporary_tablespace_now'} ) {
+            goodprint "MariaDB online temporary tablespace truncation is supported";
+        }
+    }
+
+    # Task 8: Deadlock & Contention Analytics via Performance Schema
+    if ( ( $myvar{'performance_schema'} // 'OFF' ) eq 'ON' ) {
+        if ( $is_mysql && mysql_version_ge( 8, 0 ) ) {
+            my @err_res = select_array("SELECT SUM(COUNT_STAR) FROM performance_schema.events_errors_summary_global_by_error WHERE ERROR_NUMBER = 1213");
+            if ( @err_res && defined $err_res[0] && $err_res[0] > 0 ) {
+                badprint "InnoDB experienced $err_res[0] lock deadlocks (ER_LOCK_DEADLOCK)";
+                push( @generalrec, "Optimize application queries, transaction lengths, and index coverage to reduce lock deadlocks." );
+            }
+        }
+    }
+
     $result{'Calculations'} = {%mycalc};
 }
 
