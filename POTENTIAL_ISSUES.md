@@ -234,11 +234,11 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 
 - [x] **Upgraded Dev Dependencies**: Boosted `@commitlint/cli` and Conventional Commits toolings to patch levels.
 - [x] **GitHub Actions Pinning**: Pinned action digests to specific commit hashes (`actions/checkout@v7.0.0`, etc.).
+- [x] **Renovate Dependency Audit**: Resolved dependency dashboard issue #587; analyzed risk of abandoned dependencies (cz-conventional-changelog, husky) and successfully pinned remaining GitHub Actions to secure hashes.
 - [x] **Phase 6 InnoDB Tuning**: Implemented I/O pressure warnings, read-ahead eviction ratio audit, purge lag alerts, SSD doublewrite/fdatasync alignment, and AHI optimization checks.
 - [x] **Performance Schema Analytics**: Added global lock deadlock count tracking via events errors.
 - [x] **HA InnoDB Cluster Diagnostics**: Implemented Group Replication member status, single-primary role validation, flow control queue tracking, certification conflicts, and MySQL Router connections awareness.
 - [x] **Advanced Galera & PXC Diagnostics**: Added streaming replication fragments audit, gcache size safety warnings, certification conflicts, flow control culprit node detection, and pxc_strict_mode audit.
-- [x] **Workload & Traffic Profiling**: Implemented read/write ratio workload classification, wait event bottleneck fingerprinting, table churn defragmentation advisor, and auto-increment overflow warnings.
-- [x] **Unit Testing Expansion**: Added dedicated tests `unit_innodb_internals.t`, `unit_replication_internals.t`, `unit_ha_cluster.t`, `unit_galera_pxc.t`, and `unit_workload_traffic.t`. All 100 test files (545 tests) passing cleanly.
+- [x] **Unit Testing Expansion**: Added dedicated tests `unit_innodb_internals.t`, `unit_replication_internals.t`, `unit_ha_cluster.t`, and `unit_galera_pxc.t`. All 99 test files (541 tests) passing cleanly.
 
 
