@@ -1567,6 +1567,124 @@ sub check_replication_advanced {
 "Enable replica_sql_verify_checksum = ON (or slave_sql_verify_checksum)."
         );
     }
+
+    # Relay Log Hardening
+    my $skip_verify = $myvar{'replica_skip_verify_binlog_checksum'}
+      // $myvar{'slave_skip_verify_binlog_checksum'} // '';
+    if ( $skip_verify eq 'ON' || $skip_verify eq '1' ) {
+        badprint "replica_skip_verify_binlog_checksum is enabled (recommended: OFF)";
+        push_recommendation( 'res',
+"Disable replica_skip_verify_binlog_checksum to ensure checksum verification on replica."
+        );
+    }
+
+    # --- PHASE 7: HA & INNODB CLUSTER DIAGNOSTICS ---
+    my $is_group_repl = (
+           defined $myvar{'group_replication_group_name'}
+        || defined $myvar{'group_replication_single_primary_mode'}
+    );
+    if ($is_group_repl) {
+        subheaderprint "InnoDB Cluster & Group Replication Diagnostics";
+        
+        # 1. Topology & Role Audit
+        if (defined $myvar{'performance_schema'} && $myvar{'performance_schema'} eq 'ON') {
+            my @group_members = select_array("SELECT MEMBER_HOST, MEMBER_PORT, MEMBER_STATE, MEMBER_ROLE, MEMBER_VERSION FROM performance_schema.replication_group_members");
+            my $member_count = scalar(@group_members);
+            if ($member_count > 0) {
+                goodprint "InnoDB Cluster is running with $member_count group members.";
+                my $primary_count = 0;
+                my %versions;
+                foreach my $m (@group_members) {
+                    my @mparts = split(/\|/, $m);
+                    my $host = $mparts[0] // '';
+                    my $port = $mparts[1] // '';
+                    my $state = $mparts[2] // '';
+                    my $role = $mparts[3] // '';
+                    my $ver = $mparts[4] // '';
+                    
+                    if ($state ne 'ONLINE') {
+                        badprint "Group member $host:$port state is $state (recommended: ONLINE)";
+                        push_recommendation('res', "Group member $host:$port is not ONLINE (state: $state). Check member status and error log.");
+                    }
+                    if ($role eq 'PRIMARY') {
+                        $primary_count++;
+                    }
+                    $versions{$ver}++ if $ver;
+                }
+                
+                my $single_primary = $myvar{'group_replication_single_primary_mode'} // 'ON';
+                if ($single_primary eq 'ON' || $single_primary eq '1') {
+                    if ($primary_count != 1) {
+                        badprint "Single-primary mode active, but found $primary_count primary member(s) (recommended: 1)";
+                        push_recommendation('res', "Investigate role state: single-primary mode requires exactly 1 primary member.");
+                    }
+                }
+                
+                my @unique_vers = keys %versions;
+                if (scalar(@unique_vers) > 1) {
+                    badprint "Inconsistent MySQL versions across group members: " . join(", ", @unique_vers);
+                    push_recommendation('res', "Standardize MySQL versions across all group members to ensure replication compatibility.");
+                }
+            }
+            
+            # 2. Flow Control & Certification Conflict Analytics
+            my $server_uuid = select_one('SELECT @@server_uuid') // '';
+            if ($server_uuid) {
+                my $local_stats = select_one("SELECT CONCAT_WS('|', COUNT_TRANSACTIONS_IN_QUEUE, COUNT_TRANSACTIONS_REMOTE_IN_APPLIER_QUEUE, TRANSACTIONS_COMMITTED_ALL_MEMBERS, TRANSACTIONS_LOCAL_ROLLBACK) FROM performance_schema.replication_group_member_stats WHERE MEMBER_ID = '$server_uuid'");
+                if ($local_stats) {
+                    my ($cert_queue, $applier_queue, $committed, $rollbacks) = split(/\|/, $local_stats);
+                    $cert_queue //= 0;
+                    $applier_queue //= 0;
+                    $committed //= 0;
+                    $rollbacks //= 0;
+                    
+                    my $cert_thresh = $myvar{'group_replication_flow_control_certifier_threshold'} // 25000;
+                    my $applier_thresh = $myvar{'group_replication_flow_control_applier_threshold'} // 25000;
+                    
+                    if ($cert_queue > $cert_thresh) {
+                        badprint "Flow Control: Certification queue ($cert_queue) exceeds threshold ($cert_thresh)";
+                        push_recommendation('res', "Increase group_replication_flow_control_period or tune certifier settings to handle high transaction load.");
+                    }
+                    if ($applier_queue > $applier_thresh) {
+                        badprint "Flow Control: Applier queue ($applier_queue) exceeds threshold ($applier_thresh)";
+                        push_recommendation('res', "Scale replication parallel threads (current workers check) or check disk I/O on slower nodes.");
+                    }
+                    
+                    my $total_tx = $committed + $rollbacks;
+                    if ($total_tx > 0) {
+                        my $rollback_ratio = $rollbacks / $total_tx;
+                        if ($rollback_ratio > 0.05) {
+                            badprint "Certification rollback ratio is " . sprintf("%.2f%%", $rollback_ratio * 100) . " (too many optimistic lock conflicts)";
+                            push_recommendation('res', "High certification rollback ratio detected. Optimize write concurrency or switch to Single-Primary mode.");
+                        }
+                    }
+                }
+            }
+        }
+        
+        # 3. Communication Cache & Quorum Integrity
+        my $cache_size = $myvar{'group_replication_message_cache_size'} // 1073741824;
+        if ($physical_memory > 0) {
+            my $cache_pct = $cache_size / $physical_memory;
+            if ($cache_pct > 0.3) {
+                badprint "group_replication_message_cache_size is " . hr_bytes($cache_size) . " (" . sprintf("%.1f%%", $cache_pct * 100) . " of system memory)";
+                push_recommendation('res', "Reduce group_replication_message_cache_size to prevent OOM errors on this system.");
+            }
+        }
+        
+        my $unreachable_timeout = $myvar{'group_replication_unreachable_majority_timeout'} // 0;
+        if ($unreachable_timeout == 0) {
+            badprint "group_replication_unreachable_majority_timeout is set to 0 (default: risk of cluster hang on partition)";
+            push_recommendation('res', "Configure group_replication_unreachable_majority_timeout to a positive value (e.g., 10s) to allow auto-eviction.");
+        }
+    }
+    
+    # 4. MySQL Router Connectivity (Experimental)
+    my $router_conn = select_one("SELECT COUNT(*) FROM information_schema.processlist WHERE USER LIKE '%router%' OR HOST LIKE '%router%'");
+    my $router_conn_count = (defined $router_conn && $router_conn =~ /^\d+$/) ? $router_conn : 0;
+    if ($router_conn_count > 0) {
+        goodprint "MySQL Router connections active: found $router_conn_count connection(s) routed to this instance.";
+    }
 }
 
 sub check_security_2_0 {
@@ -13298,7 +13416,7 @@ sub dump_result {
           @generalrec;
 
         my @repl_recs =
-          grep { /(replica|sla[v]e|gtid|replication|binlog|relay)/i }
+          grep { /(replica|sla[v]e|gtid|replication|binlog|relay|flow control|group_replication|router|quorum)/i }
           @generalrec;
 
         my $general_rec_html = join(

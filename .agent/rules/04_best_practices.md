@@ -105,6 +105,7 @@ Beyond hard constraints, following established patterns ensures code durability,
 ### 16. Unit Test Decomposition
 
 - Unit tests MUST be decomposed into small, focused, human-assimilable subtests (e.g. using `subtest` blocks in Perl/Test::More) rather than monoliths to improve readability and debuggability.
+- **ADD TESTS FOR ALL CHANGES**: Every code change, modification, or enhancement MUST be accompanied by dedicated unit tests to prove correctness and prevent regressions.
 
 ## ✅ Verification
 
