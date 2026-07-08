@@ -39,6 +39,7 @@
 - fix: update documentation and code
 - test(hook): verify pre-commit hook runs tests when test files change
 - test(lab): add unit test test_issue_810.t for issue 810
+- test(test): add unit tests for potential issues and split unit_coverage_boost3
 - test(test): add unit_deadlocks_pfs.t to validate InnoDB deadlock PFS checks
 - test(test): add unit_eol_warnings.t to validate version support warnings
 - test(test): add unit_galera_pxc.t to validate Phase 9 Galera cluster checks
