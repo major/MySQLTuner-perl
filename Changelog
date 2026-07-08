@@ -2,14 +2,45 @@
 
 2.9.1 2026-07-09
 
+- chore(build): allow build scope in compliance auditor
+- chore(build): rewrite dev_sync and doc_sync in Perl for consistency
 - chore(deps): update actions/checkout action to v7.0.0
 - chore(deps): update all non-major dependencies (@commitlint/cli, @commitlint/config-conventional, brace-expansion, commitizen)
 - chore(deps): update devops-infra/action-commit-push digest to f27e0951b748268e6ac8d91861eeac5bc2bd36a8
+- chore(deps): update devops-infra/action-commit-push digest to fa0c793 (#929)
 - chore(deps): update docker/setup-buildx-action digest to bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
 - chore(deps): update github/codeql-action digest to 99df26d4f13ea111d4ec1a7dddef6063f76b97e9
+- chore(deps): update shogo82148/actions-setup-mysql digest to 076e636 (#930)
 - chore(deps): update softprops/action-gh-release digest to 718ea10 (#934)
+- chore(deps): update ubuntu:latest docker digest to 53958ec (#935)
 - chore(deps): update ubuntu:latest docker digest to b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e
+- chore(main): add doc links in localhost warnings and support custom local subdomains
+- chore(main): hide hostname, ssl, and replication warnings on localhost (#933)
+- chore(releases): start v2.9.1 branch with version bump and dependency updates
 - chore: automated project metadata update
+- chore: remove execution.log from git repository and sync docs
+- feat(cli): resolve remote memory, socket override, and temptable sizing issues
+- feat(metadata): fix test badge and update version references in READMEs
+- feat(report): add pgBadger-inspired query, lock, and temp table visual analytics to HTML report
+- feat(report): add verbose timings, step percentages, and snapshot summary
+- feat(report): finalize HTML report, YAML output, and historical comparison
+- feat: recommend slow query log when disabled (#517)
+- fix(main): add undefined/NULL guards to hr_num to resolve uninitialized warnings
+- fix(main): address PR #931 code review feedback and enhance test validations
+- fix(main): calculate query cache efficiency using Com_select on MariaDB (MDEV-4981)
+- fix(main): exclude MariaDB user roles and support zero-config TLS
+- fix(main): only recommend increasing innodb_log_buffer_size when log waits occur
+- fix: update documentation and code
+- test(hook): verify pre-commit hook runs tests when test files change
+- test(lab): add unit test test_issue_810.t for issue 810
+- ci: optimize pre-commit hook to only run unit tests when code, tests, or dependencies are modified
+- docs(metadata): promote HTML reports and add E2E examples
+- docs(metadata): remove timestamp from doc-sync generated files
+- docs(releases): regenerate release notes and changelog
+- docs(roadmap): link strategic technical evolutions specification and enforce changelog staging
+- docs: add LightPath as sponsor, relocate coffee button, and use star-history chart
+- docs: regenerate release notes
+- docs: update repository links to major/MySQLTuner-perl and add GitHub stars badge
 
 2.9.0 2026-07-03
 
