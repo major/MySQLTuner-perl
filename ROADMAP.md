@@ -190,20 +190,20 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] **Table Churn & Fragmentation Advisor**: Identification of tables with frequent DML that require periodic `OPTIMIZE TABLE`.
   * [x] **Auto-Increment Exhaustion Audit**: Monitoring of large tables for potential auto-increment overflow (especially 32-bit integers).
 
-### [Phase 12: Advanced Log Parser & Lock Monitoring](file:///documentation/specifications/roadmap_phase_xi_log_parser.md) [NOT STARTED]
+### [Phase 12: Advanced Log Parser & Lock Monitoring](file:///documentation/specifications/roadmap_phase_xi_log_parser.md) [COMPLETED]
 
 > Previously Phase 11.
 
-* [ ] **Logging & Lock Instrumentation**:
-  * [ ] **Deadlock Logging Audit**: Verification of `innodb_print_all_deadlocks` and `innodb_status_output` settings.
-  * [ ] **Lock Monitor Insights**: Advisory for enabling `innodb_status_output_locks` during active contention troubleshooting.
-  * [ ] **Log Hygiene & Rotation**: Verification of log rotation policies and verbosity settings (`log_error_verbosity` / `log_findings`).
-* [ ] **Proactive Error Log Tracer**:
-  * [ ] **Semantic Error Detection**: Automated parsing for OOM (Out of Memory) patterns, semaphore waits, and filesystem bottlenecks.
-  * [ ] **Corruption & Recovery Guard**: Early detection of "crashed" tables or InnoDB checksum failures in the logs.
-  * [ ] **Resource Limit Correlation**: Mapping of "too many open files" errors to `open_files_limit` and OS-level table cache settings.
-* [ ] **Correlation Engine (Experimental)**:
-  * [ ] **Temporal Event Linking**: Logic to link error log timestamps with Performance Schema wait events or high CPU load detected during execution.
+* [x] **Logging & Lock Instrumentation**:
+  * [x] **Deadlock Logging Audit**: Verification of `innodb_print_all_deadlocks` and `innodb_status_output` settings.
+  * [x] **Lock Monitor Insights**: Advisory for enabling `innodb_status_output_locks` during active contention troubleshooting.
+  * [x] **Log Hygiene & Rotation**: Verification of log rotation policies and verbosity settings (`log_error_verbosity` / `log_findings`).
+* [x] **Proactive Error Log Tracer**:
+  * [x] **Semantic Error Detection**: Automated parsing for OOM (Out of Memory) patterns, semaphore waits, and filesystem bottlenecks.
+  * [x] **Corruption & Recovery Guard**: Early detection of "crashed" tables or InnoDB checksum failures in the logs.
+  * [x] **Resource Limit Correlation**: Mapping of "too many open files" errors to `open_files_limit` and OS-level table cache settings.
+* [x] **Correlation Engine (Experimental)**:
+  * [x] **Temporal Event Linking**: Logic to link error log timestamps with Performance Schema wait events or high CPU load detected during execution.
 
 ### [Phase 13: Sectional Global Indicators & KPIs](file:///documentation/specifications/roadmap_phase_xii_sectional_indicators.md) [COMPLETED]
 
