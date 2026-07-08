@@ -34,6 +34,7 @@
 - fix: update documentation and code
 - test(hook): verify pre-commit hook runs tests when test files change
 - test(lab): add unit test test_issue_810.t for issue 810
+- test(test): add unit_replication_internals.t to validate Phase 8 replication features
 - ci: optimize pre-commit hook to only run unit tests when code, tests, or dependencies are modified
 - docs(metadata): promote HTML reports and add E2E examples
 - docs(metadata): remove timestamp from doc-sync generated files
