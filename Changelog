@@ -26,8 +26,9 @@
 - feat(report): add pgBadger-inspired query, lock, and temp table visual analytics to HTML report
 - feat(report): add verbose timings, step percentages, and snapshot summary
 - feat(report): finalize HTML report, YAML output, and historical comparison
-- feat(report): implement advanced Galera Cluster 4 & PXC 8.0 diagnostics
 - feat(report): implement HA InnoDB Cluster diagnostics and Group Replication checks
+- feat(report): implement advanced Galera Cluster 4 & PXC 8.0 diagnostics
+- feat(report): implement advanced Galera Cluster 4 and PXC 8.0 diagnostics
 - feat(report): implement phase 6 deep engine tuning and mark phase 8 completed
 - feat: recommend slow query log when disabled (#517)
 - fix(main): add undefined/NULL guards to hr_num to resolve uninitialized warnings
