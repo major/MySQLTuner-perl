@@ -236,6 +236,8 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - [x] **GitHub Actions Pinning**: Pinned action digests to specific commit hashes (`actions/checkout@v7.0.0`, etc.).
 - [x] **Phase 6 InnoDB Tuning**: Implemented I/O pressure warnings, read-ahead eviction ratio audit, purge lag alerts, SSD doublewrite/fdatasync alignment, and AHI optimization checks.
 - [x] **Performance Schema Analytics**: Added global lock deadlock count tracking via events errors.
-- [x] **Unit Testing Expansion**: Added dedicated tests `unit_innodb_internals.t` and `unit_replication_internals.t`. All 97 test files (528 tests) passing cleanly.
+- [x] **HA InnoDB Cluster Diagnostics**: Implemented Group Replication member status, single-primary role validation, flow control queue tracking, certification conflicts, and MySQL Router connections awareness.
+- [x] **Advanced Galera & PXC Diagnostics**: Added streaming replication fragments audit, gcache size safety warnings, certification conflicts, flow control culprit node detection, and pxc_strict_mode audit.
+- [x] **Unit Testing Expansion**: Added dedicated tests `unit_innodb_internals.t`, `unit_replication_internals.t`, `unit_ha_cluster.t`, and `unit_galera_pxc.t`. All 99 test files (541 tests) passing cleanly.
 
 
