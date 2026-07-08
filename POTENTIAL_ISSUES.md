@@ -127,16 +127,16 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 
 ### Overall Posture: ✅ GOOD
 
-| Category | Status |
-|:---|:---|
+| Category                | Status                                          |
+| :------------------------| :------------------------------------------------|
 | Shell Injection Surface | 🟡 Mitigated by `execute_system_command` wrapper |
-| Backtick Usage | ✅ No raw backticks outside wrapper |
-| eval Usage | ✅ No dangerous patterns |
-| File Operations | ✅ Proper handle usage |
-| system()/exec() | ✅ No direct calls |
-| Credential Handling | ✅ Properly masked in v2.8.44 |
-| Temp File Safety | ✅ Symlink protection + atomic writes |
-| SQL Injection | ✅ No user-controlled SQL interpolation |
+| Backtick Usage          | ✅ No raw backticks outside wrapper              |
+| eval Usage              | ✅ No dangerous patterns                         |
+| File Operations         | ✅ Proper handle usage                           |
+| system()/exec()         | ✅ No direct calls                               |
+| Credential Handling     | ✅ Properly masked in v2.8.44                    |
+| Temp File Safety        | ✅ Symlink protection + atomic writes            |
+| SQL Injection           | ✅ No user-controlled SQL interpolation          |
 
 ### Security Observations (Audit-Only)
 
@@ -221,4 +221,21 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - [x] **Performance Optimization**: Bulk-fetched table engine and column details to reduce queries (from 2N+3 to 2 per table).
 - [x] **System DB Filtering**: Excluded system tables from schema analysis and dumpdir exports.
 - [x] **SQL Escaping Fixes**: Safe dollar sign escaping in system call wrappers.
+
+### [2026-07-03] Release v2.9.0
+
+- [x] **Modular HTML Reporting Engine**: Removed external template dependencies and built HTML structure natively.
+- [x] **Historical Comparison**: Supported tracking database performance metrics across time intervals.
+- [x] **AI Agent Integration**: Added JSON/YAML output format for AI agent accessibility.
+- [x] **Visual Contention Analytics**: Integrated pgBadger-inspired query, lock, and temp table graphs.
+- [x] **Regression Hardening**: Fixed Com_select query cache parsing and MariaDB user role exceptions.
+
+### [2026-07-09] Release v2.9.1
+
+- [x] **Upgraded Dev Dependencies**: Boosted `@commitlint/cli` and Conventional Commits toolings to patch levels.
+- [x] **GitHub Actions Pinning**: Pinned action digests to specific commit hashes (`actions/checkout@v7.0.0`, etc.).
+- [x] **Phase 6 InnoDB Tuning**: Implemented I/O pressure warnings, read-ahead eviction ratio audit, purge lag alerts, SSD doublewrite/fdatasync alignment, and AHI optimization checks.
+- [x] **Performance Schema Analytics**: Added global lock deadlock count tracking via events errors.
+- [x] **Unit Testing Expansion**: Added dedicated tests `unit_innodb_internals.t` and `unit_replication_internals.t`. All 97 test files (528 tests) passing cleanly.
+
 
