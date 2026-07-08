@@ -102,6 +102,10 @@ Beyond hard constraints, following established patterns ensures code durability,
 - **STRICT PROHIBITION**: Never modify or update the release notes of previous versions (`releases/v[OLD_VERSION].md`). Only update or edit the release notes corresponding to the current release version.
 - **SIMULTANEOUS UPDATE**: Release notes (`releases/v[VERSION].md`) MUST be updated or regenerated whenever the `Changelog` is modified to ensure version/metadata synchronization.
 
+### 16. Unit Test Decomposition
+
+- Unit tests MUST be decomposed into small, focused, human-assimilable subtests (e.g. using `subtest` blocks in Perl/Test::More) rather than monoliths to improve readability and debuggability.
+
 ## ✅ Verification
 
 - Manual code review.
