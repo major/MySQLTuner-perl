@@ -12386,15 +12386,20 @@ sub mysql_innodb {
     # Task 8: Deadlock & Contention Analytics via Performance Schema
     if ( ( $myvar{'performance_schema'} // 'OFF' ) eq 'ON' ) {
         if ( $is_mysql && mysql_version_ge( 8, 0 ) ) {
-            my @err_res = select_array(
-"SELECT SUM(COUNT_STAR) FROM performance_schema.events_errors_summary_global_by_error WHERE ERROR_NUMBER = 1213"
+            my $has_events_errors = select_one(
+"SELECT 1 FROM information_schema.tables WHERE table_schema='performance_schema' AND table_name='events_errors_summary_global_by_error' LIMIT 1"
             );
-            if ( @err_res && defined $err_res[0] && $err_res[0] > 0 ) {
-                badprint
-"InnoDB experienced $err_res[0] lock deadlocks (ER_LOCK_DEADLOCK)";
-                push( @generalrec,
-"Optimize application queries, transaction lengths, and index coverage to reduce lock deadlocks."
+            if ($has_events_errors) {
+                my @err_res = select_array(
+"SELECT SUM(COUNT_STAR) FROM performance_schema.events_errors_summary_global_by_error WHERE ERROR_NUMBER = 1213"
                 );
+                if ( @err_res && defined $err_res[0] && $err_res[0] > 0 ) {
+                    badprint
+"InnoDB experienced $err_res[0] lock deadlocks (ER_LOCK_DEADLOCK)";
+                    push( @generalrec,
+"Optimize application queries, transaction lengths, and index coverage to reduce lock deadlocks."
+                    );
+                }
             }
         }
     }

@@ -305,6 +305,15 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **InnoDB Cluster Auditing**:
   * [ ] Query `mysql_innodb_cluster_metadata` to retrieve cluster members status and performance schema metrics.
 
+### [Phase 23: E2E Quality and Query Safety Hardening](file:///documentation/specifications/roadmap_phase_xxii_query_safety.md) [NOT STARTED]
+
+* [ ] **Performance Schema Pre-Flight Checks**:
+  * [ ] Dynamically verify Performance Schema table availability in `information_schema.tables` before querying to prevent exit failures.
+* [ ] **Horizontal Multi-Scenario Comparative HTML Report**:
+  * [ ] Extend the HTML dashboard with a side-by-side comparative table showing metric differences between Standard, Container, and Dumpdir modes.
+* [ ] **Trace Logging for SQL Compilation Errors**:
+  * [ ] Capture and redirect SQL execution errors to a dedicated debug log rather than silent deletion to assist DBAs in diagnosing permission restrictions.
+
 ## 🤝 Contribution & Feedback
 
 We welcome community feedback on this roadmap. If you have specific feature requests or want to contribute to a specific phase, please open an issue on our [GitHub repository](https://github.com/jmrenouard/MySQLTuner-perl).

@@ -28,7 +28,14 @@ subtest 'InnoDB Lock Deadlocks PFS Audit' => sub {
     # Populate the version globals
     main::validate_mysql_version();
     
-    # Mock select_array to return correct values
+    # Mock select_array and select_one to return correct values
+    local *main::select_one = sub {
+        my $sql = shift;
+        if ($sql =~ /events_errors_summary_global_by_error/i) {
+            return 1;
+        }
+        return 0;
+    };
     local *main::select_array = sub {
         my $sql = shift;
         if ($sql =~ /SHOW ENGINE PERFORMANCE_SCHEMA STATUS/i) {
