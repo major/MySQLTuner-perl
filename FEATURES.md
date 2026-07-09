@@ -54,6 +54,7 @@ Features list for option: --feature (dev only)
 * mysql_triggers
 * mysql_views
 * parse_cli_args
+* parse_size_bytes
 * predictive_capacity_analysis
 * pretty_duration
 * process_sysbench_metrics
