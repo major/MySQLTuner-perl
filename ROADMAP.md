@@ -294,6 +294,17 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Automated Status Checklist Sync**:
   * [ ] Integrate a workflow script that automatically marks roadmap checklist items as completed (`[x]`) upon detection of related commit scopes (e.g. `feat(auth):` marking authentication items as done).
 
+### [Phase 22: High Availability & Replication Auto-Discovery](file:///documentation/specifications/roadmap_phase_xxi_replication_autodiscovery.md) [NOT STARTED]
+
+* [ ] **Topology Auto-Discovery**:
+  * [ ] Query MySQL system tables and variables to automatically identify the topology (Galera Cluster, InnoDB Cluster, or Logical Replication source/replica).
+* [ ] **Galera Member Exploration**:
+  * [ ] Discover all active cluster members from `wsrep_incoming_addresses` and support launching auditing runs on replica nodes.
+* [ ] **Logical Replica Lag Auditing**:
+  * [ ] Track source-replica status, check lag metrics, and audit IO/SQL thread parameters on replicas.
+* [ ] **InnoDB Cluster Auditing**:
+  * [ ] Query `mysql_innodb_cluster_metadata` to retrieve cluster members status and performance schema metrics.
+
 ## 🤝 Contribution & Feedback
 
 We welcome community feedback on this roadmap. If you have specific feature requests or want to contribute to a specific phase, please open an issue on our [GitHub repository](https://github.com/jmrenouard/MySQLTuner-perl).
