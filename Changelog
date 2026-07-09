@@ -72,6 +72,7 @@
 - docs: add MCP and AI integration guide for MySQL database tuning
 - docs: generate FEATURES.md
 - docs: generate end-of-life status files
+- docs: link recent features to GitHub issues in Changelog
 - docs: regenerate release notes
 - docs: update potential issues log with Phase 9 Galera audit findings
 - docs: update potential issues log with Renovate dependency dashboard analysis
