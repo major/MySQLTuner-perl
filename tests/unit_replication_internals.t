@@ -118,4 +118,34 @@ subtest 'Semi-sync wait point check' => sub {
     ok(grep(/Set rpl_semi_sync_source_wait_point = AFTER_SYNC/, @main::generalrec), 'Recommends setting AFTER_SYNC wait point');
 };
 
+# Task 8: Replication Checksums and Terminology verification
+subtest 'Replication Checksums & Terminology' => sub {
+    @main::generalrec = ();
+    MySQLTuner::TestHelper::reset_state();
+    $main::is_local_only = 0;
+    
+    # Set legacy variables to trigger warnings
+    $main::myvar{'master_verify_checksum'} = 'OFF';
+    $main::myvar{'slave_sql_verify_checksum'} = 'OFF';
+    $main::myvar{'slave_skip_verify_binlog_checksum'} = 'ON';
+
+    main::check_replication_advanced();
+
+    # Verify recommendations are made using clean terms
+    ok(grep(/Enable source_verify_checksum/, @main::generalrec), 'Recommends source_verify_checksum instead of master_verify_checksum');
+    ok(grep(/Enable replica_sql_verify_checksum/, @main::generalrec), 'Recommends replica_sql_verify_checksum instead of slave_sql_verify_checksum');
+    ok(grep(/Disable replica_skip_verify_binlog_checksum/, @main::generalrec), 'Recommends replica_skip_verify_binlog_checksum instead of slave');
+
+    # Double check no raw 'master' or 'slave' in the output recommendations
+    foreach my $rec (@main::generalrec) {
+        # Exclude legacy variable names in parentheses: e.g. "Enable source_verify_checksum = ON (or master_verify_checksum)."
+        my $clean_rec = $rec;
+        $clean_rec =~ s/\((?:or )?master_verify_checksum\)//g;
+        $clean_rec =~ s/\((?:or )?slave_sql_verify_checksum\)//g;
+        $clean_rec =~ s/slave_skip_verify_binlog_checksum//g;
+        
+        like($clean_rec, qr/^(?!.*\b(?:master|slave)\b).*$/i, "No standalone 'master' or 'slave' in recommendation: $rec");
+    }
+};
+
 done_testing();
