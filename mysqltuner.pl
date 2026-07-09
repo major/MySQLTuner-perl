@@ -7758,7 +7758,7 @@ sub mysql_stats {
     my $slow_query_log_active = $myvar{'slow_query_log'}
       // $myvar{'log_slow_queries'};
     if ( defined($slow_query_log_active) ) {
-        if ( $slow_query_log_active eq "OFF" ) {
+        if ( $slow_query_log_active eq "OFF" || $slow_query_log_active eq "0" ) {
             push( @generalrec,
                 "Enable the slow query log to troubleshoot bad queries" );
         }

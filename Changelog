@@ -44,7 +44,7 @@
 - fix(main): exclude MariaDB user roles and support zero-config TLS
 - fix(main): only recommend increasing innodb_log_buffer_size when log waits occur
 - fix(main): query events_errors_summary_global_by_error safely (#956, jmrenouard#64)
-- fix(main): support '0' and 'OFF' value representations when checking slow query log status (#517)
+- fix(main): support '0' and 'OFF' value representations when checking slow query log status (#517) (finalized implementation)
 - fix: update documentation and code
 - test(hook): verify pre-commit hook runs tests when test files change
 - test(lab): add unit test test_issue_810.t for issue 810
