@@ -1,0 +1,29 @@
+{
+  "topology": "replication",
+  "display_name": "MariaDB Source-Replica Replication",
+  "required_sections": [
+    "Replication",
+    "Slave"
+  ],
+  "required_patterns": [
+    "Slave_IO_Running",
+    "Slave_SQL_Running",
+    "Seconds_Behind_Master"
+  ],
+  "forbidden_patterns": [
+    "Use of uninitialized value",
+    "FAIL Execute SQL",
+    "Can't connect to"
+  ],
+  "expected_diagnostics": [
+    "replication lag",
+    "binlog",
+    "relay_log",
+    "gtid",
+    "slave_parallel"
+  ],
+  "ports": [3411, 3412, 3413],
+  "startup_command": "up-repli",
+  "shutdown_command": "down-repli",
+  "inject_command": "inject-employee-repli"
+}

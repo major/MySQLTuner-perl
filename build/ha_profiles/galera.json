@@ -1,0 +1,29 @@
+{
+  "topology": "galera",
+  "display_name": "MariaDB Galera Cluster",
+  "required_sections": [
+    "Galera Cluster",
+    "wsrep"
+  ],
+  "required_patterns": [
+    "wsrep_cluster_size",
+    "wsrep_ready",
+    "wsrep_local_state_comment",
+    "wsrep_connected"
+  ],
+  "forbidden_patterns": [
+    "Use of uninitialized value",
+    "FAIL Execute SQL",
+    "Can't connect to"
+  ],
+  "expected_diagnostics": [
+    "wsrep_flow_control",
+    "wsrep_local_bf_aborts",
+    "gcache",
+    "Galera"
+  ],
+  "ports": [3511, 3512, 3513],
+  "startup_command": "up-galera",
+  "shutdown_command": "down-galera",
+  "inject_command": "inject-employee-galera"
+}

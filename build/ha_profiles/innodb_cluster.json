@@ -1,0 +1,28 @@
+{
+  "topology": "innodb_cluster",
+  "display_name": "MySQL InnoDB Cluster (Group Replication)",
+  "required_sections": [
+    "Group Replication",
+    "Replication"
+  ],
+  "required_patterns": [
+    "group_replication",
+    "MEMBER_STATE",
+    "MEMBER_ROLE"
+  ],
+  "forbidden_patterns": [
+    "Use of uninitialized value",
+    "FAIL Execute SQL",
+    "Can't connect to"
+  ],
+  "expected_diagnostics": [
+    "group_replication_flow_control",
+    "COUNT_TRANSACTIONS_IN_QUEUE",
+    "replication_group_members",
+    "certification"
+  ],
+  "ports": [4411, 4412, 4413],
+  "startup_command": "innodb-up",
+  "shutdown_command": "innodb-down",
+  "inject_command": "inject-data service=mysql_node1 db=employees"
+}

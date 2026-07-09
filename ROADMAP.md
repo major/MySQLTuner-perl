@@ -314,6 +314,74 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Trace Logging for SQL Compilation Errors**:
   * [ ] Capture and redirect SQL execution errors to a dedicated debug log rather than silent deletion to assist DBAs in diagnosing permission restrictions.
 
+### Phase 24: MySQL Boolean Normalization Engine [NOT STARTED]
+
+* [ ] **System-Wide Boolean Normalization**:
+  * [ ] Create an internal utility function to convert and normalize system variable boolean representations (`ON`/`OFF`, `1`/`0`, `YES`/`NO`) to simplify all current and future conditional logic in `mysqltuner.pl`.
+
+### Phase 25: Deprecated System Variables & Synonyms Audit [NOT STARTED]
+
+* [ ] **Obsolete Configuration Warnings**:
+  * [ ] Add specific diagnostic warnings when obsolete synonyms (e.g. `log_slow_queries`) are configured instead of the modern recommended variables (e.g. `slow_query_log`).
+
+### Phase 26: Subtest Decomposition & Test Suite Optimization [NOT STARTED]
+
+* [ ] **Granular Unit Test Decomposition**:
+  * [ ] Continue decomposing monolithic test scripts in the `tests/` directory into structured, human-assimilable subtests to simplify regression tracking and database laboratory debugging.
+
+### Phase 27: Multi-Language Normalization & Duplicate Elimination [NOT STARTED]
+
+> Addresses the 6 cross-language duplications identified during the transversal project audit (Perl/Python/Bash/YAML).
+
+* [ ] **CVE Update Consolidation (Perl-Only)**:
+  * [ ] Merge enriched fields from `updateCVElist.py` (CVSS scores, references, publication dates) into `updateCVElist.pl`.
+  * [ ] Deprecate and remove `updateCVElist.py` and its `__pycache__/` directory after migration validation.
+* [ ] **Centralized Version Extraction Script**:
+  * [ ] Create a single `build/get_version.sh` script encapsulating the version extraction logic (`grep '- Version ' mysqltuner.pl | awk '{ print $NF}'`) currently duplicated in 5 locations (Makefile, 2 workflows, 1 test script).
+  * [ ] Refactor Makefile, `publish_release.yml`, `docker_publish.yml`, and `tests/check_release_files.sh` to source this single script.
+* [ ] **Orphan File Cleanup**:
+  * [ ] Remove empty `JenkinsFile` (0 bytes, no pipeline defined).
+  * [ ] Remove `mysqltuner.pl.bak` and `tests/unit_versions.t.bak` (unversioned backup files).
+
+### Phase 28: CI/CD Version Matrix Harmonization [NOT STARTED]
+
+> Resolves critical discrepancies where CI workflows test exclusively EOL database versions while ignoring supported ones.
+
+* [ ] **Centralized CI Version Matrix**:
+  * [ ] Create a machine-readable matrix file (`build/ci_matrix.json`) defining supported DB versions for CI, consumed by all GitHub Actions workflows via a reusable workflow or composite action.
+* [ ] **Obsolete Workflow Updates**:
+  * [ ] Update `generate_mariadb_examples.yml` to target supported versions (10.11, 11.4, 11.8, 12.3) instead of exclusively EOL versions (10.2→10.9).
+  * [ ] Update `generate_mysql_examples.yml` to target supported versions (8.4, 9.7) instead of exclusively EOL versions (5.6, 5.7, 8.0).
+  * [ ] Update `pull_request.yml` to test at least one supported MySQL (8.4) and one supported MariaDB (11.4) version alongside legacy versions.
+* [ ] **Automated Matrix Synchronization**:
+  * [ ] Extend `lts_autobump.pl` to automatically update the CI version matrix in tandem with `mysqltuner.pl` and test suite updates.
+
+### Phase 29: Publish Pipeline Unification [NOT STARTED]
+
+> Eliminates duplication between local and CI publish flows, and harmonizes pre-publish validation.
+
+* [ ] **Unified Pre-Publish Validation Script**:
+  * [ ] Factor the pre-publish validation logic (critical file checks, release notes existence, tag/version consistency) into a single reusable script `build/validate_release.sh`.
+  * [ ] Refactor `docker_publish.yml` and `publish_release.yml` to call this shared script instead of embedding inline validation.
+  * [ ] Harmonize the critical file lists (currently divergent between the two workflows).
+* [ ] **Local Docker Publish Deprecation**:
+  * [ ] Mark `publishtodockerhub.sh` as deprecated in favor of the `docker_publish.yml` workflow (which includes Buildx, multi-arch, and full validation).
+  * [ ] Update `Makefile` `docker_push` target to warn about deprecation and recommend using the CI workflow.
+
+### Phase 30: Build Stack Rationalization [NOT STARTED]
+
+> Simplifies the multi-language build toolchain toward Perl-first consistency with the project's zero-dependency philosophy.
+
+* [ ] **Release Notes Generator Migration (Python → Perl)**:
+  * [ ] Rewrite `release_gen.py` (347 lines) in Perl using Core modules only, eliminating the Python 3 runtime dependency from the build stack.
+  * [ ] Preserve all current features: changelog parsing, git commit grouping, diagnostic growth indicators, and CLI option delta analysis.
+* [ ] **Features Generator Migration (Bash → Perl)**:
+  * [ ] Rewrite `genFeatures.sh` (currently a `grep | perl | sort | perl | grep` pipeline) as a pure Perl script to eliminate the shell dependency.
+* [ ] **Build Script Header Standardization**:
+  * [ ] Standardize all `build/` script headers with a common format including: description, author, dependencies, usage, and exit codes.
+* [ ] **EOL Script Consolidation**:
+  * [ ] Merge `endoflife.sh` (Bash + curl + jq) functionality into `sync_eol_dates.pl` (already uses HTTP::Tiny), eliminating the `jq` external dependency.
+
 ## 🤝 Contribution & Feedback
 
 We welcome community feedback on this roadmap. If you have specific feature requests or want to contribute to a specific phase, please open an issue on our [GitHub repository](https://github.com/jmrenouard/MySQLTuner-perl).
