@@ -22,12 +22,12 @@
 - chore(releases): start v2.9.1 branch with version bump and dependency updates
 - chore: automated project metadata update
 - chore: remove execution.log from git repository and sync docs
-- feat(cli): implement agent-json flag returning structured actionable schema (#955)
+- feat(cli): implement agent-json flag returning structured actionable schema (#955, jmrenouard#63)
 - feat(cli): resolve remote memory, socket override, and temptable sizing issues
-- feat(container): implement dockerized auditing daemon and zero-dependency MCP server (#954)
+- feat(container): implement dockerized auditing daemon and zero-dependency MCP server (#954, jmrenouard#62)
 - feat(main): audit InnoDB lock monitors and print all deadlocks configuration
 - feat(main): enhance error log parser with OOM, semaphore waits, file limits, and page corruption alerts
-- feat(main): implement advanced log parser and lock monitoring (#953)
+- feat(main): implement advanced log parser and lock monitoring (#953, jmrenouard#61)
 - feat(main): implement experimental Correlation Engine linking PFS wait events and CPU load with log events
 - feat(metadata): fix test badge and update version references in READMEs
 - feat(report): add pgBadger-inspired query, lock, and temp table visual analytics to HTML report
