@@ -62,6 +62,7 @@
 - docs(metadata): promote HTML reports and add E2E examples
 - docs(metadata): remove timestamp from doc-sync generated files
 - docs(releases): regenerate release notes and changelog
+- docs(roadmap): add Phase 22 for High Availability & Replication Auto-Discovery
 - docs(roadmap): group strategic technical evolutions into phases 18 to 21
 - docs(roadmap): link strategic technical evolutions specification and enforce changelog staging
 - docs(roadmap): mark Phase 12 as completed in ROADMAP.md
