@@ -52,10 +52,9 @@ subtest 'Wait Event Fingerprinting' => sub {
         my $sql = shift;
         if ($sql =~ /events_waits_summary_global_by_event_name/i) {
             return (
-                'wait/io/file/innodb/innodb_data_file|800000000000000',
-                'wait/synch/mutex/innodb/buf_pool_mutex|100000000000000',
-                'wait/io/socket/mysql/client_connection|5000000000000
-'
+                "wait/io/file/innodb/innodb_data_file\t800000000000000",
+                "wait/synch/mutex/innodb/buf_pool_mutex\t100000000000000",
+                "wait/io/socket/mysql/client_connection\t5000000000000\n"
             );
         }
         return ();
@@ -69,8 +68,8 @@ subtest 'Wait Event Fingerprinting' => sub {
         my $sql = shift;
         if ($sql =~ /events_waits_summary_global_by_event_name/i) {
             return (
-                'wait/synch/mutex/innodb/buf_pool_mutex|900000000000000',
-                'wait/io/file/innodb/innodb_data_file|50000000000000'
+                "wait/synch/mutex/innodb/buf_pool_mutex\t900000000000000",
+                "wait/io/file/innodb/innodb_data_file\t50000000000000"
             );
         }
         return ();
@@ -87,7 +86,7 @@ subtest 'Table Churn & Fragmentation Alignment' => sub {
     local *main::select_array = sub {
         my $sql = shift;
         if ($sql =~ /table_io_waits_summary_by_table/i) {
-            return ('test_db|active_table|15000');
+            return ("test_db\tactive_table\t15000");
         }
         return ();
     };
@@ -105,7 +104,7 @@ subtest 'Auto-Increment Exhaustion Audit' => sub {
     local *main::select_array = sub {
         my $sql = shift;
         if ($sql =~ /information_schema\.tables/i) {
-            return ('test_db|large_table|id|int|3500000000');
+            return ("test_db\tlarge_table\tid\tint\t3500000000");
         }
         return ();
     };

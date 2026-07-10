@@ -64,9 +64,9 @@ subtest 'Group Replication ONLINE Topology & single-primary OK' => sub {
 
     # Mock group members: 3 nodes, all ONLINE, 1 primary, matching version
     $mock_members_data = [
-        'host1|3306|ONLINE|PRIMARY|8.0.35',
-        'host2|3306|ONLINE|SECONDARY|8.0.35',
-        'host3|3306|ONLINE|SECONDARY|8.0.35'
+        "host1\t3306\tONLINE\tPRIMARY\t8.0.35",
+        "host2\t3306\tONLINE\tSECONDARY\t8.0.35",
+        "host3\t3306\tONLINE\tSECONDARY\t8.0.35"
     ];
     $mock_stats_data = '10|5|1000|2'; # queue values well below 25000 threshold, rollback ratio 0.2%
     $mock_router_data = 0;
@@ -93,9 +93,9 @@ subtest 'Group Replication offline nodes and multiple primaries warnings' => sub
     # host2 is RECOVERING, host3 is ONLINE but also PRIMARY (illegal in single primary mode)
     # version mismatch on host3 (8.4.0)
     $mock_members_data = [
-        'host1|3306|ONLINE|PRIMARY|8.0.35',
-        'host2|3306|RECOVERING|SECONDARY|8.0.35',
-        'host3|3306|ONLINE|PRIMARY|8.4.0'
+        "host1\t3306\tONLINE\tPRIMARY\t8.0.35",
+        "host2\t3306\tRECOVERING\tSECONDARY\t8.0.35",
+        "host3\t3306\tONLINE\tPRIMARY\t8.4.0"
     ];
     $mock_stats_data = '10|5|1000|2';
 
@@ -119,7 +119,7 @@ subtest 'Flow Control Queues & Certification Rollbacks' => sub {
     $main::myvar{'group_replication_unreachable_majority_timeout'} = 10;
 
     $mock_members_data = [
-        'host1|3306|ONLINE|PRIMARY|8.0.35'
+        "host1\t3306\tONLINE\tPRIMARY\t8.0.35"
     ];
     # cert_queue: 30000 (>25000), applier_queue: 40000 (>25000)
     # rollbacks: 100 out of 1000 total (10% rollback ratio > 5% threshold)
@@ -149,7 +149,7 @@ subtest 'Resilience Cache & Timeout checks' => sub {
     $main::myvar{'group_replication_unreachable_majority_timeout'} = 0;
 
     $mock_members_data = [
-        'host1|3306|ONLINE|PRIMARY|8.0.35'
+        "host1\t3306\tONLINE\tPRIMARY\t8.0.35"
     ];
     $mock_stats_data = '10|5|1000|2';
 
@@ -172,7 +172,7 @@ subtest 'MySQL Router Connectivity' => sub {
     $main::myvar{'group_replication_unreachable_majority_timeout'} = 10;
 
     $mock_members_data = [
-        'host1|3306|ONLINE|PRIMARY|8.0.35'
+        "host1\t3306\tONLINE\tPRIMARY\t8.0.35"
     ];
     $mock_stats_data = '10|5|1000|2';
     

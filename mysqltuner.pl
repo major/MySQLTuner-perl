@@ -1608,7 +1608,7 @@ sub check_replication_advanced {
                 my $primary_count = 0;
                 my %versions;
                 foreach my $m (@group_members) {
-                    my @mparts = split( /\|/, $m );
+                    my @mparts = split( /\t/, $m );
                     my $host   = $mparts[0] // '';
                     my $port   = $mparts[1] // '';
                     my $state  = $mparts[2] // '';
@@ -1828,7 +1828,7 @@ sub check_workload_traffic {
             my $lock_waits = 0;
             my $net_waits  = 0;
             foreach my $we (@wait_events) {
-                my ( $name, $wait ) = split( /\|/, $we );
+                my ( $name, $wait ) = split( /\t/, $we );
                 $name //= '';
                 $wait //= 0;
                 infoprint "  - $name: "
@@ -1873,7 +1873,7 @@ sub check_workload_traffic {
         if ( scalar(@churn_tables) > 0 ) {
             my %churn_map;
             foreach my $ct (@churn_tables) {
-                my ( $schema, $table, $writes ) = split( /\|/, $ct );
+                my ( $schema, $table, $writes ) = split( /\t/, $ct );
                 $churn_map{"$schema.$table"} = $writes if $schema && $table;
             }
 
@@ -1909,7 +1909,7 @@ sub check_workload_traffic {
     if ( scalar(@auto_inc_cols) > 0 ) {
         foreach my $col_info (@auto_inc_cols) {
             my ( $schema, $table, $col, $type, $curr_val ) =
-              split( /\|/, $col_info );
+              split( /\t/, $col_info );
             $type = lc( $type // '' );
             $curr_val //= 0;
 
@@ -5800,7 +5800,7 @@ sub check_auth_plugins {
 
         # Extract user and host for CSV
         my ( $user, $host ) = ( '', '' );
-        if ( $user_host =~ /'([^']*)'@'([^']*)'/ ) {
+        if ( $user_host =~ /'([^']*)'\@'([^']*)'/ ) {
             $user = $1;
             $host = $2;
         }
@@ -14735,7 +14735,7 @@ HTML
     <title>MySQLTuner Advanced Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link class="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght\@300;400;500;600;700;800&family=JetBrains+Mono:wght\@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
