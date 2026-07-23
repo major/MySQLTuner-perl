@@ -305,10 +305,10 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **InnoDB Cluster Auditing**:
   * [ ] Query `mysql_innodb_cluster_metadata` to retrieve cluster members status and performance schema metrics.
 
-### [Phase 23: E2E Quality and Query Safety Hardening](file:///documentation/specifications/roadmap_phase_xxii_query_safety.md) [NOT STARTED]
+### [Phase 23: E2E Quality and Query Safety Hardening](file:///documentation/specifications/roadmap_phase_xxii_query_safety.md) [IN PROGRESS]
 
-* [ ] **Performance Schema Pre-Flight Checks**:
-  * [ ] Dynamically verify Performance Schema table availability in `information_schema.tables` before querying to prevent exit failures.
+* [x] **Performance Schema Pre-Flight Checks**:
+  * [x] Dynamically verify Performance Schema table availability in `information_schema.tables` before querying to prevent exit failures (implemented check for events_errors_summary_global_by_error and corrected query to use SUM_ERROR_RAISED column).
 * [ ] **Horizontal Multi-Scenario Comparative HTML Report**:
   * [ ] Extend the HTML dashboard with a side-by-side comparative table showing metric differences between Standard, Container, and Dumpdir modes.
 * [ ] **Trace Logging for SQL Compilation Errors**:

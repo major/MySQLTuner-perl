@@ -4656,9 +4656,11 @@ sub log_file_recommendations {
             infoprint "  - System Load: "
               . ( $is_high_load ? "HIGH (@load)" : "Normal (@load)" );
             infoprint "  - Lock Contention: "
-              . ( $is_high_lock_waits
+              . (
+                $is_high_lock_waits
                 ? "HIGH (Innodb_row_lock_waits=$mystat{'Innodb_row_lock_waits'})"
-                : "Normal" );
+                : "Normal"
+              );
         }
     }
 
@@ -7758,7 +7760,8 @@ sub mysql_stats {
     my $slow_query_log_active = $myvar{'slow_query_log'}
       // $myvar{'log_slow_queries'};
     if ( defined($slow_query_log_active) ) {
-        if ( $slow_query_log_active eq "OFF" || $slow_query_log_active eq "0" ) {
+        if ( $slow_query_log_active eq "OFF" || $slow_query_log_active eq "0" )
+        {
             push( @generalrec,
                 "Enable the slow query log to troubleshoot bad queries" );
         }
@@ -12391,7 +12394,7 @@ sub mysql_innodb {
             );
             if ($has_events_errors) {
                 my @err_res = select_array(
-"SELECT SUM(COUNT_STAR) FROM performance_schema.events_errors_summary_global_by_error WHERE ERROR_NUMBER = 1213"
+"SELECT SUM(SUM_ERROR_RAISED) FROM performance_schema.events_errors_summary_global_by_error WHERE ERROR_NUMBER = 1213"
                 );
                 if ( @err_res && defined $err_res[0] && $err_res[0] > 0 ) {
                     badprint

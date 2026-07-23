@@ -26,7 +26,7 @@ foreach my $arg (@ARGV) {
 }
 my $cmd = $filtered_args[0] || $ENV{AUDIT_TEST_CMD};
 if (!$cmd) {
-    $cmd = $debug ? 'prove -rv tests/' : 'prove -r tests/';
+    $cmd = $debug ? 'prove -j4 -rv tests/' : 'prove -j4 -r tests/';
 }
 
 # --- Phase 1: Compile-time syntax check and static analysis ---
@@ -105,6 +105,19 @@ if (@syntax_warnings) {
     print "\n";
 } else {
     print "[OK] Compile Check: All files parsed cleanly.\n\n";
+}
+
+# --- Phase 1.5: SQL Static Linter Check ---
+print "Performing SQL static linting...\n";
+my $sql_linter_script = 'build/check_sql_linter.pl';
+if (-f $sql_linter_script) {
+    my $linter_out = qx(perl "$sql_linter_script" 2>&1);
+    my $exit_val = $? >> 8;
+    if ($exit_val != 0) {
+        print "\n[!] SQL Static Linter Failed:\n$linter_out\n";
+        exit 1;
+    }
+    print "[OK] SQL Linter: All embedded queries conform to conventions.\n\n";
 }
 
 # --- Phase 2: Run test suite and audit runtime output ---

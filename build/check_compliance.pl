@@ -205,6 +205,17 @@ if ( defined $prev_tag && $prev_tag ne '' ) {
     }
 }
 
+# Run static SQL linter check
+my $linter_script = dirname(__FILE__) . '/check_sql_linter.pl';
+if (-f $linter_script) {
+    my $linter_output = qx(perl "$linter_script" 2>&1);
+    my $exit_val = $? >> 8;
+    if ($exit_val != 0) {
+        print "ERROR [SQL Linter Audit]: SQL static linter failed:\n$linter_output\n";
+        $errors++;
+    }
+}
+
 if ( $errors > 0 ) {
     print "\n[FAIL] Compliance check failed: $errors violations detected.\n";
     exit 1;
