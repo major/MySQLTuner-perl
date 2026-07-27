@@ -539,9 +539,10 @@ our %CLI_METADATA = (
         cat         => 'CLOUD'
     },
     'container' => {
-        type        => '=s',
-        default     => undef,
-        desc        => 'Enable container mode with ID or name',
+        type    => '=s',
+        default => undef,
+        desc    =>
+'Enable container mode with ID or name (requires docker, podman, or kubectl client)',
         placeholder => '<id>',
         cat         => 'CLOUD'
     },

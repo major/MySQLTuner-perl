@@ -38,6 +38,7 @@
 - feat(report): implement phase 6 deep engine tuning and mark phase 8 completed
 - feat(report): implement workload traffic profiling and query waits analysis
 - feat: recommend slow query log when disabled (#517)
+- fix(container): create default /defaults.cnf in Dockerfile and document volume mounts (#932)
 - fix(main): add undefined/NULL guards to hr_num to resolve uninitialized warnings
 - fix(main): address PR #931 code review feedback and enhance test validations
 - fix(main): calculate query cache efficiency using Com_select on MariaDB (MDEV-4981)
@@ -152,6 +153,7 @@
 - test(lab): add unit test test_issue_517.t for slow query log recommendations (#517)
 - test(lab): add unit test test_issue_810.t for issue 810
 - test(lab): add unit test test_issue_810.t for remote host forcemem MB interpretation correctness (issue #810)
+- test(lab): add unit test test_issue_932.t for Dockerfile and README volume mount documentation (#932)
 - test(lab): add unit test test_issue_938.t for InnoDB write log efficiency
 - test(lab): add unit tests for query cache efficiency logic on MySQL and MariaDB in tests/test_issue_927.t (renamed from tests/issue_927.t).
 - test(lab): normalize all repro_issue_*.t and issue_*.t test file names to test_issue_*.t

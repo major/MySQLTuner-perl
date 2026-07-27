@@ -232,7 +232,14 @@ brew install mysqltuner
 
 ```bash
 docker pull jmrenouard/mysqltuner:latest
+# Basic execution
 docker run --rm -it jmrenouard/mysqltuner --host <database_host> --user <username> --pass <password>
+
+# Save generated reports (HTML/TXT) to host filesystem:
+docker run --rm -it -v $(pwd)/results:/results jmrenouard/mysqltuner --host <database_host> --user <username> --pass <password>
+
+# Mount custom configuration / defaults file:
+docker run --rm -it -v $(pwd)/my.cnf:/defaults.cnf -v $(pwd)/results:/results jmrenouard/mysqltuner --host <database_host> --user <username> --pass <password>
 ```
 
 ### Releases Location
