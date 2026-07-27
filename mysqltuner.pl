@@ -3307,10 +3307,11 @@ sub mysql_setup {
         # It's a DirectAdmin box, use the available credentials
         my $mysqluser =
           execute_system_command(
-            "cat /usr/local/directadmin/conf/mysql.conf | egrep '^user=.*'");
+            "cat /usr/local/directadmin/conf/mysql.conf | grep -E '^user=.*'");
         my $mysqlpass =
           execute_system_command(
-            "cat /usr/local/directadmin/conf/mysql.conf | egrep '^passwd=.*'");
+            "cat /usr/local/directadmin/conf/mysql.conf | grep -E '^passwd=.*'"
+          );
 
         $mysqluser =~ s/user=//;
         $mysqluser =~ s/[\r\n]//;
