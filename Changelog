@@ -1,6 +1,6 @@
 # MySQLTuner Changelog
 
-2.9.1 2026-07-23
+2.9.1 2026-07-27
 
 - chore(build): allow build scope in compliance auditor
 - chore(build): rewrite dev_sync and doc_sync in Perl for consistency
@@ -69,6 +69,7 @@
 - test(test): split unit_coverage_boost3.t into three smaller test files
 - test(test): update workload traffic and HA cluster unit tests to use tab-delimited mock data
 - test(test): verify replication terminology and checksums in unit tests (#888)
+- ci(build): implement static SQL linter and fix PFS deadlock error query
 - ci: optimize pre-commit hook to only run unit tests when code, tests, or dependencies are modified
 - docs(metadata): promote HTML reports and add E2E examples
 - docs(metadata): remove timestamp from doc-sync generated files
@@ -93,6 +94,7 @@
 - docs: update potential issues log with Renovate dependency dashboard analysis
 - docs: update potential issues log with release v2.9.0 and v2.9.1 audit results
 - docs: update repository links to major/MySQLTuner-perl and add GitHub stars badge
+- style: tidy mysqltuner.pl
 
 2.9.0 2026-07-03
 
