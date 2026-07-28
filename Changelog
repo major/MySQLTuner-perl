@@ -4,11 +4,14 @@
 
 - chore(build): allow build scope in compliance auditor
 - chore(build): rewrite dev_sync and doc_sync in Perl for consistency
-- chore(deps): update actions/checkout action to v7.0.0
+- chore(deps): update actions/checkout action to v7.0.0 (#961)
 - chore(deps): update all non-major dependencies (@commitlint/cli, @commitlint/config-conventional, brace-expansion, commitizen)
-- chore(deps): update devops-infra/action-commit-push digest to f27e0951b748268e6ac8d91861eeac5bc2bd36a8
+- chore(deps): update devops-infra/action-commit-push digest to f27e0951b748268e6ac8d91861eeac5bc2bd36a8 (#958)
 - chore(deps): update devops-infra/action-commit-push digest to fa0c793 (#929)
-- chore(deps): update docker/setup-buildx-action digest to bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+- chore(deps): update docker/build-push-action digest to 53b7df9 (#939)
+- chore(deps): update docker/login-action digest to abd2ef4 (#962)
+- chore(deps): update docker/login-action digest to af1e73f (#940)
+- chore(deps): update docker/setup-buildx-action digest to bb05f3f5519dd87d3ba754cc423b652a5edd6d2c (#959)
 - chore(deps): update github/codeql-action digest to 99df26d4f13ea111d4ec1a7dddef6063f76b97e9
 - chore(deps): update shogo82148/actions-setup-mysql digest to 076e636 (#930)
 - chore(deps): update softprops/action-gh-release digest to 718ea10 (#934)
@@ -23,29 +26,29 @@
 - chore: automated project metadata update
 - chore: remove execution.log from git repository and sync docs
 - feat(cli): implement agent-json flag returning structured actionable schema (#955, jmrenouard#63)
-- feat(cli): resolve remote memory, socket override, and temptable sizing issues
+- feat(cli): resolve remote memory, socket override, and temptable sizing issues (#923)
 - feat(container): implement dockerized auditing daemon and zero-dependency MCP server (#954, jmrenouard#62)
 - feat(main): audit InnoDB lock monitors and print all deadlocks configuration
-- feat(main): enhance error log parser with OOM, semaphore waits, file limits, and page corruption alerts
+- feat(main): enhance error log parser with OOM, semaphore waits, file limits, and page corruption alerts (#953)
 - feat(main): implement advanced log parser and lock monitoring (#953, jmrenouard#61)
 - feat(main): implement experimental Correlation Engine linking PFS wait events and CPU load with log events
 - feat(metadata): fix test badge and update version references in READMEs
-- feat(report): add pgBadger-inspired query, lock, and temp table visual analytics to HTML report
+- feat(report): add pgBadger-inspired query, lock, and temp table visual analytics to HTML report (#791)
 - feat(report): add verbose timings, step percentages, and snapshot summary
 - feat(report): finalize HTML report, YAML output, and historical comparison
 - feat(report): implement HA InnoDB Cluster diagnostics and Group Replication checks
 - feat(report): implement advanced Galera Cluster 4 and PXC 8.0 diagnostics
 - feat(report): implement phase 6 deep engine tuning and mark phase 8 completed
-- feat(report): implement workload traffic profiling and query waits analysis
+- feat(report): implement workload traffic profiling and query waits analysis (#960)
 - feat: recommend slow query log when disabled (#517)
 - fix(container): create default /defaults.cnf in Dockerfile and document volume mounts (#932)
-- fix(main): add undefined/NULL guards to hr_num to resolve uninitialized warnings
+- fix(main): add undefined/NULL guards to hr_num to resolve uninitialized warnings (#904)
 - fix(main): address PR #931 code review feedback and enhance test validations
-- fix(main): calculate query cache efficiency using Com_select on MariaDB (MDEV-4981)
-- fix(main): exclude MariaDB user roles and support zero-config TLS
-- fix(main): only recommend increasing innodb_log_buffer_size when log waits occur
+- fix(main): calculate query cache efficiency using Com_select on MariaDB (MDEV-4981) (#927)
+- fix(main): exclude MariaDB user roles and support zero-config TLS (#936, #937)
+- fix(main): only recommend increasing innodb_log_buffer_size when log waits occur (#938)
 - fix(main): query events_errors_summary_global_by_error safely (#956, jmrenouard#64)
-- fix(main): resolve uninitialized warnings in auto-increment audit and fix split delimiters
+- fix(main): resolve uninitialized warnings in auto-increment audit and fix split delimiters (#913)
 - fix(main): support '0' and 'OFF' value representations when checking slow query log status (#517) (finalized implementation)
 - fix: update documentation and code
 - test(hook): verify pre-commit hook runs tests when test files change
@@ -54,19 +57,22 @@
 - test(lab): add build/analyze_mt_output.pl dedicated output analyzer with HA profile support
 - test(lab): add build/test_ha.sh E2E orchestrator for Galera, InnoDB Cluster, and Replication topologies
 - test(lab): add e2e_mcp_server.t for MCP server E2E validation with live MariaDB container
-- test(lab): add unit test test_issue_810.t for issue 810
-- test(lab): expand unit tests for issue #517 to verify alternative representations of slow query log active state
+- test(lab): add unit test test_issue_810.t for issue 810 (#810)
+- test(lab): expand unit tests for issue #517 to verify alternative representations of slow query log active state (#517)
+- test(test): add unit tests for issues #553, #605, #671, #770, #774, #777, #781, #782, #783, #796 (#553, #605, #671, #770, #774, #777, #781, #782, #783, #796)
+- test(test): add unit tests for issues #863, #864, #869, #874, #875, #881, #887 (#863, #864, #869, #874, #875, #881, #887)
+- test(test): add unit tests for issues #896, #900, #904, #913, #923, #927, #932, #938 (#896, #900, #904, #913, #923, #927, #932, #938)
 - test(test): add unit tests for potential issues and split unit_coverage_boost3
-- test(test): add unit_agent_json.t to validate actionable JSON schema
+- test(test): add unit_agent_json.t to validate actionable JSON schema (#955)
 - test(test): add unit_deadlocks_pfs.t to validate InnoDB deadlock PFS checks
 - test(test): add unit_eol_warnings.t to validate version support warnings
 - test(test): add unit_galera_pxc.t to validate Phase 9 Galera cluster checks
 - test(test): add unit_ha_cluster.t to validate Phase 7 HA cluster checks
-- test(test): add unit_log_parser.t to validate advanced log parsing and correlation
-- test(test): add unit_mcp_server.t to validate JSON-RPC protocol compliance
+- test(test): add unit_log_parser.t to validate advanced log parsing and correlation (#953)
+- test(test): add unit_mcp_server.t to validate JSON-RPC protocol compliance (#954)
 - test(test): add unit_replication_internals.t to validate Phase 8 replication features
 - test(test): add unit_version_helpers.t to validate version caching and helpers
-- test(test): add unit_workload_traffic.t to validate Phase 11 workload profiling
+- test(test): add unit_workload_traffic.t to validate Phase 11 workload profiling (#960)
 - test(test): split unit_coverage_boost3.t into three smaller test files
 - test(test): update workload traffic and HA cluster unit tests to use tab-delimited mock data
 - test(test): verify replication terminology and checksums in unit tests (#888)
