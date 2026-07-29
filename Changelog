@@ -1,9 +1,11 @@
 # MySQLTuner Changelog
 
-2.9.1 2026-07-27
+2.9.2 2026-07-29
+- chore(deps): replace abandoned cz-conventional-changelog with @commitlint/cz-commitlint (#587)
+- fix(main): enhance storage detection for HW RAID controllers (AVAGO/LSI MegaRAID) (#957)
+- test(lab): add unit test test_issue_957.t for storage detection logic (#957)
 
-- chore(build): allow build scope in compliance auditor
-- chore(build): rewrite dev_sync and doc_sync in Perl for consistency
+2.9.1 2026-07-27
 - chore(deps): update actions/checkout action to v7.0.0 (#961)
 - chore(deps): update all non-major dependencies (@commitlint/cli, @commitlint/config-conventional, brace-expansion, commitizen)
 - chore(deps): update devops-infra/action-commit-push digest to f27e0951b748268e6ac8d91861eeac5bc2bd36a8 (#958)

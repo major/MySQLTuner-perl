@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.9.1
+# mysqltuner.pl - Version 2.9.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.9.1";
+our $tunerversion = "2.9.2";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -2460,30 +2460,169 @@ sub detect_infrastructure {
 
     # Storage Detection (Linux only)
     if ( !$is_win ) {
+        my $has_ssd     = 0;
+        my $has_hdd     = 0;
+        my $has_hw_raid = 0;
+
         if ( $prefix eq '' ) {
 
             # Local Linux detection
-            my @sys_blocks = glob('/sys/block/*');
-            my $has_ssd    = 0;
-            my $has_hdd    = 0;
+            my $sys_block_dir = $ENV{'MYSQLTUNER_SYS_BLOCK_DIR'}
+              // '/sys/block';
+            my @sys_blocks = glob("$sys_block_dir/*");
+
+            # Check if system has HW RAID controller via lspci if available
+            my $pci_out    = '';
+            my $lspci_path = which('lspci');
+            if ( defined $lspci_path && -x $lspci_path ) {
+                my @lspci = execute_system_command(
+"$lspci_path -d ::0104 2>/dev/null || $lspci_path 2>/dev/null"
+                );
+                $pci_out = join( ' ', @lspci );
+            }
+            if ( $pci_out =~
+/RAID|MegaRAID|AVAGO|LSI|Smart\s*Array|PERC|Adaptec|3ware|ServeRAID/i
+              )
+            {
+                $has_hw_raid = 1;
+            }
+
             foreach my $block (@sys_blocks) {
                 my $name = basename($block);
-                next if $name =~ /^loop|^ram|^nbd|^zram/;
+                next if $name =~ /^loop|^ram|^nbd|^zram|^dm-|^md/;
+
+                # 1. NVMe devices are inherently SSD
+                if ( $name =~ /^nvme/ ) {
+                    $has_ssd = 1;
+                    next;
+                }
+
+                # 2. Check vendor / model for HW RAID controllers
+                my $vendor = '';
+                my $model  = '';
+                if ( open( my $vf, '<', "$block/device/vendor" ) ) {
+                    $vendor = <$vf> // '';
+                    chomp($vendor);
+                    close($vf);
+                }
+                if ( open( my $mf, '<', "$block/device/model" ) ) {
+                    $model = <$mf> // '';
+                    chomp($model);
+                    close($model);
+                }
+                if ( "$vendor $model" =~
+/MegaRAID|AVAGO|PERC|LSI|Smart\s*Array|ServeRAID|Adaptec|AACRAID|3ware|Areca|RAID/i
+                  )
+                {
+                    $has_hw_raid = 1;
+                }
+
+                # 3. Check discard_granularity (TRIM support -> SSD)
+                my $discard = 0;
+                if ( open( my $df, '<', "$block/queue/discard_granularity" ) ) {
+                    my $d_val = <$df> // '0';
+                    chomp($d_val);
+                    close($df);
+                    if ( defined $d_val && $d_val =~ /^\d+$/ && $d_val > 0 ) {
+                        $discard = $d_val;
+                    }
+                }
+
+                # 4. Check rotational flag
+                my $is_rot;
                 if ( open( my $rot, '<', "$block/queue/rotational" ) ) {
-                    my $is_rot = <$rot>;
+                    $is_rot = <$rot>;
                     chomp($is_rot);
                     close($rot);
-                    if ( defined $is_rot ) {
-                        if   ( $is_rot == 0 ) { $has_ssd = 1; }
-                        else                  { $has_hdd = 1; }
+                }
+
+                if ( defined $is_rot ) {
+                    if ( $is_rot == 0 || $discard > 0 ) {
+                        $has_ssd = 1;
+                    }
+                    elsif ( $is_rot == 1 && !$has_hw_raid ) {
+                        $has_hdd = 1;
+                    }
+                }
+            }
+
+  # 5. Helper CLI checks for HW RAID if installed (storcli / megacli / smartctl)
+            if ( $has_hw_raid && !$has_ssd ) {
+                my $storcli =
+                  which('storcli') || which('storcli64') || which('megacli');
+                if ( defined $storcli && -x $storcli ) {
+                    my @raid_info = execute_system_command(
+"$storcli /c0 show all 2>/dev/null || $storcli -pdlist -aall 2>/dev/null"
+                    );
+                    my $raid_txt = join( ' ', @raid_info );
+                    if ( $raid_txt =~
+/Media\s*Type\s*:\s*SSD|Drive\s*Type\s*:\s*SSD|Solid\s*State|SSD/i
+                      )
+                    {
+                        $has_ssd = 1;
+                    }
+                    if ( $raid_txt =~
+/Media\s*Type\s*:\s*HDD|Drive\s*Type\s*:\s*HDD|Hard\s*Disk|HDD/i
+                      )
+                    {
+                        $has_hdd = 1;
+                    }
+                }
+            }
+
+            if ( $has_ssd && !$has_hdd ) {
+                $infra{'storage_type'} = 'SSD/NVMe';
+            }
+            elsif ( !$has_ssd && $has_hdd ) {
+                $infra{'storage_type'} = 'HDD';
+            }
+            elsif ( $has_ssd && $has_hdd ) {
+                $infra{'storage_type'} = 'Mixed';
+            }
+            elsif ($has_hw_raid) {
+
+             # Hardware RAID present, physical media unconfirmed -> safe unknown
+                $infra{'storage_type'} = 'unknown';
+            }
+        }
+        else {
+            # Remote / Transport storage detection
+            my @lsblk_out = execute_system_command(
+                "lsblk -d -n -o NAME,ROTA,DISC-GRAN,MODEL 2>/dev/null");
+            foreach my $line (@lsblk_out) {
+                chomp($line);
+                next if $line =~ /^loop|^ram|^nbd|^zram|^dm-|^md/;
+                my ( $name, $rota, $gran, $model ) = split( /\s+/, $line, 4 );
+                $model //= '';
+                if (   ( $name // '' ) =~ /^nvme/
+                    || ( $gran // 0 ) > 0
+                    || ( $rota // 1 ) eq '0' )
+                {
+                    $has_ssd = 1;
+                }
+                elsif ( ( $rota // '' ) eq '1' ) {
+                    if ( $model =~
+                        /MegaRAID|AVAGO|PERC|LSI|Smart\s*Array|RAID/i )
+                    {
+                        $has_hw_raid = 1;
+                    }
+                    else {
+                        $has_hdd = 1;
                     }
                 }
             }
             if ( $has_ssd && !$has_hdd ) {
                 $infra{'storage_type'} = 'SSD/NVMe';
             }
-            elsif ( !$has_ssd && $has_hdd ) { $infra{'storage_type'} = 'HDD'; }
-            elsif ( $has_ssd && $has_hdd ) { $infra{'storage_type'} = 'Mixed'; }
+            elsif ( !$has_ssd && $has_hdd ) {
+                $infra{'storage_type'} = 'HDD';
+            }
+            elsif ( $has_ssd && $has_hdd ) {
+                $infra{'storage_type'} = 'Mixed';
+            }
+            elsif ($has_hw_raid) {
+                $infra{'storage_type'} = 'unknown';
+            }
         }
     }
 
@@ -3677,7 +3816,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.9.1' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.9.2' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -3693,7 +3832,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.9.1' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.9.2' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -8186,6 +8325,8 @@ sub mysql_stats {
                 if ( defined $myvar{'table_open_cache_instances'}
                     and $myvar{'table_open_cache_instances'} > 0 )
                 {
+# MariaDB 10.2.2+ autosizes table_open_cache_instances dynamically upon contention
+# Ref: https://mariadb.com/kb/en/server-system-variables/#table_open_cache_instances
                     infoprint
 "MariaDB 10.2.2+ autosizes table_open_cache_instances. Current value is $myvar{'table_open_cache_instances'}.";
                 }
@@ -16449,7 +16590,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.9.1 - MySQL High Performance Tuning Script
+ MySQLTuner 2.9.2 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -16464,7 +16605,7 @@ See C<mysqltuner --help> for a full list of available options and their categori
 
 =head1 VERSION
 
-Version 2.9.1
+Version 2.9.2
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.
