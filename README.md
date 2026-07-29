@@ -28,7 +28,7 @@ Useful Links
 * **Changelog:** [https://github.com/major/MySQLTuner-perl/blob/master/Changelog](https://github.com/major/MySQLTuner-perl/blob/master/Changelog)
 * **Docker Images:** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
 * **Useful References:** [Documentation/References](https://github.com/major/MySQLTuner-perl/blob/master/documentation/REFERENCES.md)
-* **AI Agent & MCP Server Integration Guide:** [Documentation/AI MCP Server Guide](https://github.com/major/MySQLTuner-perl/blob/master/documentation/mcp_ai_integration_guide.md)
+* **AI Agent & MCP Server Integration Guide:** [Documentation/AI MCP Server Guide](https://github.com/major/MySQLTuner-perl/blob/master/documentation/mcp_ai_integration_guide.md) | [Guide Serveur MCP (FR)](https://github.com/major/MySQLTuner-perl/blob/master/documentation/mcp_ai_integration_guide.fr.md) | [AGENT.md](https://github.com/major/MySQLTuner-perl/blob/master/AGENT.md)
 * **Interactive HTML Reports (v2.9.0+):**
   * [MariaDB 11.4 E2E HTML Report Example](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_mariadb114/Schemadir/mysqltuner_report.html)
   * [MySQL 8.4 E2E HTML Report Example](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_mysql84/Schemadir/mysqltuner_report.html)
@@ -105,6 +105,36 @@ Thanks to [endoflife.date](https://endoflife.date/)
 * **Historical Trend Analysis**: Ingest JSON output from previous runs via `--compare-file` to track QPS and data growth trends.
 * **Sysbench Integration**: Parse sysbench output for QPS, TPS, and latency metrics (Avg/95th/Max) via `--sysbench-file`.
 * **Container & Systemd Log Integration**: Automatic log detection from Docker, Podman, Kubectl/Kubernetes, and Systemd journal.
+* **AI & MCP Protocol Support**: Native JSON-RPC stdio Model Context Protocol (MCP) server daemon and `--agent-json` structured output for AI client tools (Claude Desktop, Cursor, VS Code / Cline, Antigravity).
+
+---
+
+## 🤖 AI Agent & Model Context Protocol (MCP) Integration
+
+MySQLTuner natively supports modern Artificial Intelligence (AI) workflows, autonomous DBA agents, and developer assistants (e.g., Claude Desktop, Cursor IDE, VS Code / Cline, Antigravity, and LangChain/LlamaIndex frameworks).
+
+For complete technical documentation, refer to the [AI & MCP Integration Guide](documentation/mcp_ai_integration_guide.md), [Guide Serveur MCP IA (FR)](documentation/mcp_ai_integration_guide.fr.md), and [AGENT.md](AGENT.md).
+
+### Operating Modes
+
+1. **Direct CLI Telemetry (`--agent-json`)**:
+   Outputs zero-dependency structured JSON containing findings, impact scores (`1`-`10`), risk levels (`Low`, `Medium`, `High`, `Critical`), executable `SET GLOBAL` SQL statements, and pre-calculated `rollback_statement` baselines.
+   ```bash
+   perl mysqltuner.pl --agent-json --host 127.0.0.1 --user root --pass secret
+   ```
+
+2. **Model Context Protocol (MCP) Server**:
+   A lightweight microservice ([build/mcp_server.py](build/mcp_server.py) and [Dockerfile.mcp](Dockerfile.mcp)) communicating over standard I/O (stdio) via JSON-RPC 2.0.
+   - **Resources**: `mysqltuner://reports/latest.json`, `mysqltuner://indicators/summary.json`
+   - **Tools**: `get_latest_audit`, `run_audit`, `apply_recommendation`, `rollback_recommendation`
+   ```bash
+   docker run -d \
+     --name mysqltuner-mcp \
+     -e DB_HOST=127.0.0.1 -e DB_USER=root -e DB_PASSWORD=secret \
+     mysqltuner-mcp
+   ```
+
+---
 
 ***Unsupported storage engines: PRs welcome***
 --

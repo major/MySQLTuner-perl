@@ -141,7 +141,7 @@ my %ALLOWED_SCOPES = map { $_ => 1 } (
     'style',    'releases', 'dependencies', 'cli',
     'auth',     'main',     'metadata',     'deps',
     'system',   'roadmap',  'hook',         'hooks',
-    'build'
+    'build',    'mcp'
 );
 
 # Lint Changelog structure and scopes for the current version block
