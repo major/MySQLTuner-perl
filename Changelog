@@ -2,6 +2,7 @@
 
 2.9.2 2026-07-29
 - chore(deps): replace abandoned cz-conventional-changelog with @commitlint/cz-commitlint (#587)
+- docs(mcp): add comprehensive AI MCP server integration guides in English and French (#954)
 - fix(main): enhance storage detection for HW RAID controllers (AVAGO/LSI MegaRAID) (#957)
 - test(lab): add unit test test_issue_957.t for storage detection logic (#957)
 
