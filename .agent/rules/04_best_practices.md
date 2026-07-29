@@ -100,6 +100,12 @@ Beyond hard constraints, following established patterns ensures code durability,
 - Release notes MUST be verified during the `/release-manager` orchestration to prevent omission on the remote repository.
 - Ensure `releases/v[VERSION].md` exists and is synchronized with the current release.
 - **STRICT PROHIBITION**: Never modify or update the release notes of previous versions (`releases/v[OLD_VERSION].md`). Only update or edit the release notes corresponding to the current release version.
+- **SIMULTANEOUS UPDATE**: Release notes (`releases/v[VERSION].md`) MUST be updated or regenerated whenever the `Changelog` is modified to ensure version/metadata synchronization.
+
+### 16. Unit Test Decomposition
+
+- Unit tests MUST be decomposed into small, focused, human-assimilable subtests (e.g. using `subtest` blocks in Perl/Test::More) rather than monoliths to improve readability and debuggability.
+- **ADD TESTS FOR ALL CHANGES**: Every code change, modification, or enhancement MUST be accompanied by dedicated unit tests to prove correctness and prevent regressions.
 
 ## ✅ Verification
 

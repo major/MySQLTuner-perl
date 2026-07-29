@@ -29,6 +29,12 @@ help:
 	@echo "  unit-tests-debug:  Run unit tests with verbose debug information"
 	@echo "  clean_examples:    Cleanup examples directory (KEEP=n, default 5)"
 	@echo "  setup_commits:     Install Conventional Commits tools (Node.js)"
+	@echo "  test-ha:           Run E2E tests on all HA topologies (Galera, InnoDB Cluster, Replication)"
+	@echo "  test-ha-galera:    Run E2E tests on Galera Cluster only"
+	@echo "  test-ha-innodb:    Run E2E tests on InnoDB Cluster only"
+	@echo "  test-ha-repli:     Run E2E tests on Replication only"
+	@echo "  test-mcp-e2e:      Run MCP Server E2E tests with a real database"
+	@echo "  analyze-output:    Analyze MySQLTuner output (FILE=path/to/output.txt)"
 
 
 installdep_debian: setup_commits
@@ -185,6 +191,30 @@ audit:
 audit-logs:
 	@echo "Running laboratory logs audit..."
 	perl build/audit_logs.pl --dir=examples --verbose
+
+test-ha: vendor_setup
+	@echo "Running MySQLTuner HA E2E Tests (all topologies)..."
+	bash build/test_ha.sh all
+
+test-ha-galera: vendor_setup
+	@echo "Running MySQLTuner HA E2E Tests (Galera)..."
+	bash build/test_ha.sh galera
+
+test-ha-innodb: vendor_setup
+	@echo "Running MySQLTuner HA E2E Tests (InnoDB Cluster)..."
+	bash build/test_ha.sh innodb
+
+test-ha-repli: vendor_setup
+	@echo "Running MySQLTuner HA E2E Tests (Replication)..."
+	bash build/test_ha.sh repli
+
+test-mcp-e2e:
+	@echo "Running MCP Server E2E Tests..."
+	prove -v tests/e2e_mcp_server.t
+
+analyze-output:
+	@echo "Analyzing MySQLTuner output..."
+	perl build/analyze_mt_output.pl $(FILE)
 
 unit-tests:
 	@echo "Running unit and regression tests..."

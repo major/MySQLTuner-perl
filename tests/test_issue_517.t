@@ -165,4 +165,92 @@ subtest 'log_slow_queries fallback is OFF' => sub {
     ok($found, 'Should recommend enabling slow query log when log_slow_queries fallback is OFF');
 };
 
+subtest 'slow_query_log is 0' => sub {
+    @main::generalrec = ();
+    @main::adjvars = ();
+    $main::physical_memory = 32 * 1024 * 1024 * 1024;
+    $main::swap_memory     = 4 * 1024 * 1024 * 1024;
+    
+    %main::myvar = (
+        get_base_mock_vars(),
+        slow_query_log => '0',
+    );
+    %main::mystat = (
+        get_base_mock_stats(),
+    );
+    %main::mycalc = ();
+
+    eval { main::calculations(); main::mysql_stats(); };
+    ok(!$@, 'calculations() did not crash') or diag("Crashed: $@");
+
+    my $found = grep { /Enable the slow query log/ } @main::generalrec;
+    ok($found, 'Should recommend enabling slow query log when slow_query_log is 0');
+};
+
+subtest 'slow_query_log is 1' => sub {
+    @main::generalrec = ();
+    @main::adjvars = ();
+    $main::physical_memory = 32 * 1024 * 1024 * 1024;
+    $main::swap_memory     = 4 * 1024 * 1024 * 1024;
+    
+    %main::myvar = (
+        get_base_mock_vars(),
+        slow_query_log => '1',
+    );
+    %main::mystat = (
+        get_base_mock_stats(),
+    );
+    %main::mycalc = ();
+
+    eval { main::calculations(); main::mysql_stats(); };
+    ok(!$@, 'calculations() did not crash') or diag("Crashed: $@");
+
+    my $found = grep { /Enable the slow query log/ } @main::generalrec;
+    ok(!$found, 'Should not recommend enabling slow query log when slow_query_log is 1');
+};
+
+subtest 'log_slow_queries fallback is 0' => sub {
+    @main::generalrec = ();
+    @main::adjvars = ();
+    $main::physical_memory = 32 * 1024 * 1024 * 1024;
+    $main::swap_memory     = 4 * 1024 * 1024 * 1024;
+    
+    %main::myvar = (
+        get_base_mock_vars(),
+        log_slow_queries => '0',
+    );
+    %main::mystat = (
+        get_base_mock_stats(),
+    );
+    %main::mycalc = ();
+
+    eval { main::calculations(); main::mysql_stats(); };
+    ok(!$@, 'calculations() did not crash') or diag("Crashed: $@");
+
+    my $found = grep { /Enable the slow query log/ } @main::generalrec;
+    ok($found, 'Should recommend enabling slow query log when log_slow_queries fallback is 0');
+};
+
+subtest 'log_slow_queries fallback is 1' => sub {
+    @main::generalrec = ();
+    @main::adjvars = ();
+    $main::physical_memory = 32 * 1024 * 1024 * 1024;
+    $main::swap_memory     = 4 * 1024 * 1024 * 1024;
+    
+    %main::myvar = (
+        get_base_mock_vars(),
+        log_slow_queries => '1',
+    );
+    %main::mystat = (
+        get_base_mock_stats(),
+    );
+    %main::mycalc = ();
+
+    eval { main::calculations(); main::mysql_stats(); };
+    ok(!$@, 'calculations() did not crash') or diag("Crashed: $@");
+
+    my $found = grep { /Enable the slow query log/ } @main::generalrec;
+    ok(!$found, 'Should not recommend enabling slow query log when log_slow_queries fallback is 1');
+};
+
 done_testing();

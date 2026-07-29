@@ -1,4 +1,4 @@
-FROM ubuntu:latest@sha256:53958ec7b67c2c9355df922dd08dbf0360611f8c3cdb656875e81873db9ffdba
+FROM ubuntu:latest@sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e
 
 LABEL maintainer="jmrenouard@gmail.com"
 
@@ -20,6 +20,7 @@ RUN apt clean all
 WORKDIR /
 COPY ./mysqltuner.pl /mysqltuner.pl 
 COPY ./basic_passwords.txt /basic_passwords.txt
+RUN touch /defaults.cnf
 
 #Problem with generateion of CVE files
 COPY ./vulnerabilities.csv /vulnerabilities.txt
@@ -28,4 +29,4 @@ ENTRYPOINT [ "perl", "/mysqltuner.pl", "--passwordfile", "/basic_passwords.txt",
   "--nosysstat", "--defaults-file", "/defaults.cnf", "--cvefile", "/vulnerabilities.txt", \
   "--dumpdir", "/results", "--outputfile", \
   "/results/mysqltuner.txt", \
-  "--reportfile", "/results/mysqltuner.html" , "--verbose" ]
+  "--reportfile", "/results/mysqltuner.html" ]

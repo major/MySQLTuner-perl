@@ -1,6 +1,6 @@
 # MySQLTuner-perl Version Memory
 
-## Current Version: 2.8.44
+## Current Version: 2.9.0
 
 ## Project Evolution & Systemic Findings
 

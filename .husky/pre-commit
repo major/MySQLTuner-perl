@@ -1,8 +1,25 @@
 #!/bin/sh
 
-# Only run tests if code, tests, build scripts, Makefile, or package configuration has changed
+# Only run checks/tests if code, tests, build scripts, Makefile, or package configuration has changed
 if git diff --cached --name-only | grep -qE '\.(pl|pm)$|^tests/|^build/|^Makefile$|^package(-lock)?\.json$'; then
+  # 1. Formatting check
+  echo "Husky [pre-commit]: Checking formatting tidiness..."
+  if ! make check-tidy; then
+    echo "ERROR [pre-commit]: mysqltuner.pl is not formatted correctly according to perltidy."
+    echo "Please run: make tidy (or format manually) before committing."
+    exit 1
+  fi
+
+  # 2. SQL Static Linter check
+  echo "Husky [pre-commit]: Running SQL static linter..."
+  if ! perl build/check_sql_linter.pl; then
+    echo "ERROR [pre-commit]: Embedded SQL queries did not pass the static linter."
+    exit 1
+  fi
+
+  # 3. Unit test execution
+  echo "Husky [pre-commit]: Executing unit test suite..."
   npm test
 else
-  echo "Husky [pre-commit]: No code or test files modified. Skipping unit tests."
+  echo "Husky [pre-commit]: No code or test files modified. Skipping checks."
 fi

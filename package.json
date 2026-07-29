@@ -26,9 +26,9 @@
   },
   "homepage": "https://github.com/jmrenouard/MySQLTuner-perl#readme",
   "devDependencies": {
-    "@commitlint/cli": "21.0.2",
-    "@commitlint/config-conventional": "21.0.2",
-    "commitizen": "4.3.1",
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "commitizen": "^4.3.2",
     "cz-conventional-changelog": "3.3.0",
     "husky": "9.1.7"
   },

@@ -1,0 +1,26 @@
+# Dockerfile.mcp - MySQLTuner Daemon & MCP Server Microservice
+FROM alpine:3.18
+
+# Install Perl, Python 3, and MariaDB client (mysql client binary)
+RUN apk add --no-cache perl python3 mariadb-client
+
+# Set up working directory
+WORKDIR /app
+
+# Copy the MySQLTuner Perl script and MCP/Daemon wrapper
+COPY mysqltuner.pl .
+COPY build/mcp_server.py .
+
+# Create cache directory
+RUN mkdir -p /var/cache/mysqltuner
+
+# Set environmental defaults
+ENV CACHE_DIR=/var/cache/mysqltuner
+ENV AUDIT_INTERVAL_HOURS=12
+ENV READ_ONLY=false
+
+# Expose standard volumes
+VOLUME ["/var/cache/mysqltuner"]
+
+# Run MCP server by default (which also spawns the daemon thread)
+CMD ["python3", "mcp_server.py"]

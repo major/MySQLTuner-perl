@@ -93,7 +93,12 @@ subtest 'HTML Report Generation' => sub {
     $main::myvar{'innodb_redo_log_capacity'} = 512 * 1024 * 1024;
     $main::fragtables = 3;
     
-    @main::generalrec = ("Test General Recommendation");
+    @main::generalrec = (
+        "Test General Recommendation",
+        "Test Replication Warning (binlog)",
+        "Flow Control: Certification queue exceeds threshold",
+        "Reduce group_replication_message_cache_size to prevent OOM errors"
+    );
     @main::adjvars = ("innodb_buffer_pool_size = 1G");
     @main::modeling = (
         "Test Modeling Warning",
@@ -154,6 +159,9 @@ subtest 'HTML Report Generation' => sub {
     like($content, qr/id="secrec-list"/i, "Contains Security advice list");
     like($content, qr/id="modeling-list"/i, "Contains SQL modeling recommendations list");
     like($content, qr/id="replication-rec-list"/i, "Contains Replication general recommendations list");
+    like($content, qr/Test Replication Warning \(binlog\)/i, "Contains replication warning");
+    like($content, qr/Flow Control: Certification queue/i, "Contains flow control warning");
+    like($content, qr/Reduce group_replication_message_cache_size/i, "Contains communication cache warning");
     like($content, qr/id="connections-rec-list"/i, "Contains Connections recommendations list");
     like($content, qr/id="performance-rec-list"/i, "Contains Performance recommendations list");
     like($content, qr/at 127\.0\.0\.1:3307/i, "Contains host and port in header");

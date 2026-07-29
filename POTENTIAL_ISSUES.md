@@ -2,7 +2,53 @@
 
 This file records anomalies discovered during laboratory testing (Perl warnings, SQL errors, etc.).
 
-## [2026-06-16 Audit] Status Refresh v2.9.0
+## [2026-07-18 Audit] Status Refresh v2.9.1
+
+### Unit Test Results
+
+- **Status**: ✅ ALL PASS
+- **Files**: 110 test files
+- **Assertions**: 563 tests
+- **Perl Syntax**: Clean (`perl -cw mysqltuner.pl` — no warnings)
+
+### Test Coverage Analysis
+
+| Metric | Value |
+|:---|:---|
+| Total Subroutines | 167 |
+| Tested Subroutines | 167 (100%) |
+| Untested Subroutines | 0 (0%) |
+
+#### Remaining Untested Subroutines (System/IO-Heavy)
+
+- None (100% subroutine coverage reached)
+
+### 🔴 Critical Issues
+
+None
+
+### 🟡 Medium Issues
+
+#### PI-019: SQL Execution Failure in Performance Schema Deadlock Analytics
+- **Source**: `mysqltuner.pl` line 12394, executed in laboratory tests e.g. [examples/20260709_021903_mysql84/Standard/execution.log](file:///examples/20260709_021903_mysql84/Standard/execution.log#L1877)
+- **Impact**: Fails with SQL error and exit code 256/1: `Failed to execute: SELECT SUM(COUNT_STAR) FROM performance_schema.events_errors_summary_global_by_error WHERE ERROR_NUMBER = 1213`
+- **Root Cause**: The table `performance_schema.events_errors_summary_global_by_error` does not have a `COUNT_STAR` column. The correct column name for error summary tables is `SUM_ERROR_RAISED` or `SUM_ERROR_HANDLED`.
+- **Severity**: 🟡 MEDIUM — SQL query failure in diagnostics path
+- **Status**: [x] **FIXED** — Updated query to target `SUM_ERROR_RAISED` instead of `COUNT_STAR`. Verified correct functionality via new unit subtest in `tests/unit_deadlocks_pfs.t`.
+
+#### PI-020: mysqltuner.pl is not tidy
+- **Source**: `make check-tidy`
+- **Impact**: Code formatting checks fail.
+- **Severity**: 🟡 MEDIUM — Style standard compliance failure
+- **Status**: [x] **FIXED** — Formatted `mysqltuner.pl` using `perltidy` and `dos2unix`. Verified that `make check-tidy` passes cleanly.
+
+### 🟢 Low Issues
+
+None
+
+---
+
+## [2026-06-16 Audit] Status Refresh v2.9.1
 
 ### Unit Test Results
 
@@ -72,8 +118,9 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 
 #### PI-009: MariaDB 10.6 Approaching EOL
 - **Source**: [mariadb_support.md](file:///mariadb_support.md)
-- **Impact**: MariaDB 10.6 LTS EOL is 2026-07-06 (**38 days away**)
-- **Severity**: 🟠 HIGH — approaching critical threshold, plan deprecation urgently
+- **Impact**: MariaDB 10.6 LTS EOL is 2026-07-06
+- **Severity**: 🟠 HIGH
+- **Status**: [x] **FIXED** — MariaDB 10.6 has reached EOL (2026-07-06) and status has been updated to Outdated in mariadb_support.md.
 
 #### PI-010: ROADMAP Phase 5 Status Incorrect
 - **Source**: [ROADMAP.md](file:///ROADMAP.md) line 108
@@ -127,16 +174,16 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 
 ### Overall Posture: ✅ GOOD
 
-| Category | Status |
-|:---|:---|
+| Category                | Status                                          |
+| :------------------------| :------------------------------------------------|
 | Shell Injection Surface | 🟡 Mitigated by `execute_system_command` wrapper |
-| Backtick Usage | ✅ No raw backticks outside wrapper |
-| eval Usage | ✅ No dangerous patterns |
-| File Operations | ✅ Proper handle usage |
-| system()/exec() | ✅ No direct calls |
-| Credential Handling | ✅ Properly masked in v2.8.44 |
-| Temp File Safety | ✅ Symlink protection + atomic writes |
-| SQL Injection | ✅ No user-controlled SQL interpolation |
+| Backtick Usage          | ✅ No raw backticks outside wrapper              |
+| eval Usage              | ✅ No dangerous patterns                         |
+| File Operations         | ✅ Proper handle usage                           |
+| system()/exec()         | ✅ No direct calls                               |
+| Credential Handling     | ✅ Properly masked in v2.8.44                    |
+| Temp File Safety        | ✅ Symlink protection + atomic writes            |
+| SQL Injection           | ✅ No user-controlled SQL interpolation          |
 
 ### Security Observations (Audit-Only)
 
@@ -222,3 +269,28 @@ This file records anomalies discovered during laboratory testing (Perl warnings,
 - [x] **System DB Filtering**: Excluded system tables from schema analysis and dumpdir exports.
 - [x] **SQL Escaping Fixes**: Safe dollar sign escaping in system call wrappers.
 
+### [2026-07-03] Release v2.9.0
+
+- [x] **Modular HTML Reporting Engine**: Removed external template dependencies and built HTML structure natively.
+- [x] **Historical Comparison**: Supported tracking database performance metrics across time intervals.
+- [x] **AI Agent Integration**: Added JSON/YAML output format for AI agent accessibility.
+- [x] **Visual Contention Analytics**: Integrated pgBadger-inspired query, lock, and temp table graphs.
+- [x] **Regression Hardening**: Fixed Com_select query cache parsing and MariaDB user role exceptions.
+
+### [2026-07-09] Release v2.9.1
+
+- [x] **Upgraded Dev Dependencies**: Boosted `@commitlint/cli` and Conventional Commits toolings to patch levels.
+- [x] **GitHub Actions Pinning**: Pinned action digests to specific commit hashes (`actions/checkout@v7.0.0`, etc.).
+- [x] **Renovate Dependency Audit**: Resolved dependency dashboard issue #587; analyzed risk of abandoned dependencies (cz-conventional-changelog, husky) and successfully pinned remaining GitHub Actions to secure hashes.
+- [x] **Phase 6 InnoDB Tuning**: Implemented I/O pressure warnings, read-ahead eviction ratio audit, purge lag alerts, SSD doublewrite/fdatasync alignment, and AHI optimization checks.
+- [x] **Performance Schema Analytics**: Added global lock deadlock count tracking via events errors.
+- [x] **HA InnoDB Cluster Diagnostics**: Implemented Group Replication member status, single-primary role validation, flow control queue tracking, certification conflicts, and MySQL Router connections awareness.
+- [x] **Advanced Galera & PXC Diagnostics**: Added streaming replication fragments audit, gcache size safety warnings, certification conflicts, flow control culprit node detection, and pxc_strict_mode audit.
+- [x] **Unit Testing Expansion**: Added dedicated tests `unit_innodb_internals.t`, `unit_replication_internals.t`, `unit_ha_cluster.t`, and `unit_galera_pxc.t`. All 99 test files (541 tests) passing cleanly.
+
+### [2026-07-18] Development v2.9.1
+
+- [x] **Unit Tests Compliance**: Verified that all 110 unit test files and 563 assertions pass cleanly (100% pass rate).
+- [x] **Perl Syntax Audit**: Confirmed compile check and syntax are completely warnings-free (`perl -cw mysqltuner.pl`).
+- [x] **Tidiness Enforcement**: Identified and formatted `mysqltuner.pl` according to perltidy to ensure `make check-tidy` passes cleanly.
+- [x] **SQL Query Failure**: Fixed Performance Schema deadlock analytics query by changing the non-existent `COUNT_STAR` column to `SUM_ERROR_RAISED` on `events_errors_summary_global_by_error`. Added dedicated assertion in `tests/unit_deadlocks_pfs.t`.

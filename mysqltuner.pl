@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.9.0
+# mysqltuner.pl - Version 2.9.1
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.9.0";
+our $tunerversion = "2.9.1";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -298,6 +298,12 @@ our %CLI_METADATA = (
         type    => '!',
         default => 0,
         desc    => 'Print result as JSON string',
+        cat     => 'PERFORMANCE'
+    },
+    'agent-json' => {
+        type    => '!',
+        default => 0,
+        desc    => 'Print result as actionable JSON schema for AI agents',
         cat     => 'PERFORMANCE'
     },
     'prettyjson' => {
@@ -533,9 +539,10 @@ our %CLI_METADATA = (
         cat         => 'CLOUD'
     },
     'container' => {
-        type        => '=s',
-        default     => undef,
-        desc        => 'Enable container mode with ID or name',
+        type    => '=s',
+        default => undef,
+        desc    =>
+'Enable container mode with ID or name (requires docker, podman, or kubectl client)',
         placeholder => '<id>',
         cat         => 'CLOUD'
     },
@@ -887,7 +894,10 @@ sub show_help {
 
 sub prettyprint {
     print $_[0] . "\n"
-      unless ( $opt{'silent'} or $opt{'json'} or $opt{'yaml'} );
+      unless ( $opt{'silent'}
+        or $opt{'json'}
+        or $opt{'yaml'}
+        or $opt{'agent-json'} );
     print $fh $_[0] . "\n" if defined($fh);
     my $plain_text = $_[0] // '';
     $plain_text =~ s/\e\[[0-9;]*[mK]//g;
@@ -1567,6 +1577,171 @@ sub check_replication_advanced {
 "Enable replica_sql_verify_checksum = ON (or slave_sql_verify_checksum)."
         );
     }
+
+    # Relay Log Hardening
+    my $skip_verify = $myvar{'replica_skip_verify_binlog_checksum'}
+      // $myvar{'slave_skip_verify_binlog_checksum'} // '';
+    if ( $skip_verify eq 'ON' || $skip_verify eq '1' ) {
+        badprint
+          "replica_skip_verify_binlog_checksum is enabled (recommended: OFF)";
+        push_recommendation( 'res',
+"Disable replica_skip_verify_binlog_checksum to ensure checksum verification on replica."
+        );
+    }
+
+    # --- PHASE 7: HA & INNODB CLUSTER DIAGNOSTICS ---
+    my $is_group_repl = ( defined $myvar{'group_replication_group_name'}
+          || defined $myvar{'group_replication_single_primary_mode'} );
+    if ($is_group_repl) {
+        subheaderprint "InnoDB Cluster & Group Replication Diagnostics";
+
+        # 1. Topology & Role Audit
+        if ( defined $myvar{'performance_schema'}
+            && $myvar{'performance_schema'} eq 'ON' )
+        {
+            my @group_members = select_array(
+"SELECT MEMBER_HOST, MEMBER_PORT, MEMBER_STATE, MEMBER_ROLE, MEMBER_VERSION FROM performance_schema.replication_group_members"
+            );
+            my $member_count = scalar(@group_members);
+            if ( $member_count > 0 ) {
+                goodprint
+                  "InnoDB Cluster is running with $member_count group members.";
+                my $primary_count = 0;
+                my %versions;
+                foreach my $m (@group_members) {
+                    my @mparts = split( /\t/, $m );
+                    my $host   = $mparts[0] // '';
+                    my $port   = $mparts[1] // '';
+                    my $state  = $mparts[2] // '';
+                    my $role   = $mparts[3] // '';
+                    my $ver    = $mparts[4] // '';
+
+                    if ( $state ne 'ONLINE' ) {
+                        badprint
+"Group member $host:$port state is $state (recommended: ONLINE)";
+                        push_recommendation( 'res',
+"Group member $host:$port is not ONLINE (state: $state). Check member status and error log."
+                        );
+                    }
+                    if ( $role eq 'PRIMARY' ) {
+                        $primary_count++;
+                    }
+                    $versions{$ver}++ if $ver;
+                }
+
+                my $single_primary =
+                  $myvar{'group_replication_single_primary_mode'} // 'ON';
+                if ( $single_primary eq 'ON' || $single_primary eq '1' ) {
+                    if ( $primary_count != 1 ) {
+                        badprint
+"Single-primary mode active, but found $primary_count primary member(s) (recommended: 1)";
+                        push_recommendation( 'res',
+"Investigate role state: single-primary mode requires exactly 1 primary member."
+                        );
+                    }
+                }
+
+                my @unique_vers = keys %versions;
+                if ( scalar(@unique_vers) > 1 ) {
+                    badprint
+                      "Inconsistent MySQL versions across group members: "
+                      . join( ", ", @unique_vers );
+                    push_recommendation( 'res',
+"Standardize MySQL versions across all group members to ensure replication compatibility."
+                    );
+                }
+            }
+
+            # 2. Flow Control & Certification Conflict Analytics
+            my $server_uuid = select_one('SELECT @@server_uuid') // '';
+            if ($server_uuid) {
+                my $local_stats = select_one(
+"SELECT CONCAT_WS('|', COUNT_TRANSACTIONS_IN_QUEUE, COUNT_TRANSACTIONS_REMOTE_IN_APPLIER_QUEUE, TRANSACTIONS_COMMITTED_ALL_MEMBERS, TRANSACTIONS_LOCAL_ROLLBACK) FROM performance_schema.replication_group_member_stats WHERE MEMBER_ID = '$server_uuid'"
+                );
+                if ($local_stats) {
+                    my ( $cert_queue, $applier_queue, $committed, $rollbacks )
+                      = split( /\|/, $local_stats );
+                    $cert_queue    //= 0;
+                    $applier_queue //= 0;
+                    $committed     //= 0;
+                    $rollbacks     //= 0;
+
+                    my $cert_thresh =
+                      $myvar{
+                        'group_replication_flow_control_certifier_threshold'}
+                      // 25000;
+                    my $applier_thresh =
+                      $myvar{'group_replication_flow_control_applier_threshold'}
+                      // 25000;
+
+                    if ( $cert_queue > $cert_thresh ) {
+                        badprint
+"Flow Control: Certification queue ($cert_queue) exceeds threshold ($cert_thresh)";
+                        push_recommendation( 'res',
+"Increase group_replication_flow_control_period or tune certifier settings to handle high transaction load."
+                        );
+                    }
+                    if ( $applier_queue > $applier_thresh ) {
+                        badprint
+"Flow Control: Applier queue ($applier_queue) exceeds threshold ($applier_thresh)";
+                        push_recommendation( 'res',
+"Scale replication parallel threads (current workers check) or check disk I/O on slower nodes."
+                        );
+                    }
+
+                    my $total_tx = $committed + $rollbacks;
+                    if ( $total_tx > 0 ) {
+                        my $rollback_ratio = $rollbacks / $total_tx;
+                        if ( $rollback_ratio > 0.05 ) {
+                            badprint "Certification rollback ratio is "
+                              . sprintf( "%.2f%%", $rollback_ratio * 100 )
+                              . " (too many optimistic lock conflicts)";
+                            push_recommendation( 'res',
+"High certification rollback ratio detected. Optimize write concurrency or switch to Single-Primary mode."
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        # 3. Communication Cache & Quorum Integrity
+        my $cache_size = $myvar{'group_replication_message_cache_size'}
+          // 1073741824;
+        if ( $physical_memory > 0 ) {
+            my $cache_pct = $cache_size / $physical_memory;
+            if ( $cache_pct > 0.3 ) {
+                badprint "group_replication_message_cache_size is "
+                  . hr_bytes($cache_size) . " ("
+                  . sprintf( "%.1f%%", $cache_pct * 100 )
+                  . " of system memory)";
+                push_recommendation( 'res',
+"Reduce group_replication_message_cache_size to prevent OOM errors on this system."
+                );
+            }
+        }
+
+        my $unreachable_timeout =
+          $myvar{'group_replication_unreachable_majority_timeout'} // 0;
+        if ( $unreachable_timeout == 0 ) {
+            badprint
+"group_replication_unreachable_majority_timeout is set to 0 (default: risk of cluster hang on partition)";
+            push_recommendation( 'res',
+"Configure group_replication_unreachable_majority_timeout to a positive value (e.g., 10s) to allow auto-eviction."
+            );
+        }
+    }
+
+    # 4. MySQL Router Connectivity (Experimental)
+    my $router_conn = select_one(
+"SELECT COUNT(*) FROM information_schema.processlist WHERE USER LIKE '%router%' OR HOST LIKE '%router%'"
+    );
+    my $router_conn_count =
+      ( defined $router_conn && $router_conn =~ /^\d+$/ ) ? $router_conn : 0;
+    if ( $router_conn_count > 0 ) {
+        goodprint
+"MySQL Router connections active: found $router_conn_count connection(s) routed to this instance.";
+    }
 }
 
 sub check_security_2_0 {
@@ -1593,8 +1768,199 @@ sub check_security_2_0 {
     }
 }
 
+sub check_workload_traffic {
+    subheaderprint "Workload Analysis & Traffic Profiling";
+
+    # 1. Workload Characterization (Read-Heavy vs Write-Heavy vs Mixed)
+    my $com_select  = $mystat{'Com_select'}  // 0;
+    my $com_insert  = $mystat{'Com_insert'}  // 0;
+    my $com_update  = $mystat{'Com_update'}  // 0;
+    my $com_delete  = $mystat{'Com_delete'}  // 0;
+    my $com_replace = $mystat{'Com_replace'} // 0;
+
+    my $total_reads  = $com_select;
+    my $total_writes = $com_insert + $com_update + $com_delete + $com_replace;
+    my $total_ops    = $total_reads + $total_writes;
+
+    if ( $total_ops > 0 ) {
+        my $read_ratio = $total_reads / $total_ops;
+        my $char_str   = "Mixed";
+        if ( $read_ratio > 0.80 ) {
+            $char_str =
+                "Read-Heavy ("
+              . sprintf( "%.1f%%", $read_ratio * 100 )
+              . " reads)";
+            goodprint "Workload Characterization: $char_str";
+        }
+        elsif ( $read_ratio < 0.20 ) {
+            $char_str =
+                "Write-Heavy ("
+              . sprintf( "%.1f%%", ( 1 - $read_ratio ) * 100 )
+              . " writes)";
+            badprint "Workload Characterization: $char_str";
+            push @generalrec,
+"Write-heavy workload detected. Optimize redo logs size, transaction log flushing, and doublewrite buffer.";
+        }
+        else {
+            $char_str =
+                "Mixed ("
+              . sprintf( "%.1f%%", $read_ratio * 100 )
+              . " reads, "
+              . sprintf( "%.1f%%", ( 1 - $read_ratio ) * 100 )
+              . " writes)";
+            goodprint "Workload Characterization: $char_str";
+        }
+    }
+    else {
+        infoprint
+          "Workload Characterization: No query counters traffic recorded yet.";
+    }
+
+    # 2. Wait Event Fingerprinting (Performance Schema Waits analysis)
+    if ( defined $myvar{'performance_schema'}
+        && $myvar{'performance_schema'} eq 'ON' )
+    {
+        my @wait_events = select_array(
+"SELECT EVENT_NAME, SUM_TIMER_WAIT FROM performance_schema.events_waits_summary_global_by_event_name WHERE SUM_TIMER_WAIT > 0 AND EVENT_NAME NOT LIKE 'idle%' AND EVENT_NAME NOT LIKE 'wait/io/table/%' ORDER BY SUM_TIMER_WAIT DESC LIMIT 5"
+        );
+        if ( scalar(@wait_events) > 0 ) {
+            infoprint "Top Wait Events (excluding idle/table I/O):";
+            my $disk_waits = 0;
+            my $lock_waits = 0;
+            my $net_waits  = 0;
+            foreach my $we (@wait_events) {
+                my ( $name, $wait ) = split( /\t/, $we );
+                $name //= '';
+                $wait //= 0;
+                infoprint "  - $name: "
+                  . sprintf( "%.2fs", $wait / 1000000000000 );
+
+                if    ( $name =~ m{^wait/io/file/} )   { $disk_waits += $wait; }
+                elsif ( $name =~ m{^wait/synch/} )     { $lock_waits += $wait; }
+                elsif ( $name =~ m{^wait/io/socket/} ) { $net_waits  += $wait; }
+            }
+
+            my $total_wait = $disk_waits + $lock_waits + $net_waits;
+            if ( $total_wait > 0 ) {
+                if ( $disk_waits / $total_wait > 0.5 ) {
+                    badprint
+                      "Primary DB Bottleneck detected: Disk/File I/O waits";
+                    push @generalrec,
+"Primary database bottleneck is Disk I/O. Check storage performance, swap usage, or increase buffer pool.";
+                }
+                elsif ( $lock_waits / $total_wait > 0.5 ) {
+                    badprint
+"Primary DB Bottleneck detected: Synchronization Locks/Mutex waits";
+                    push @generalrec,
+"Primary database bottleneck is Lock contention. Optimize slow transactions and reduce lock wait timeout.";
+                }
+                elsif ( $net_waits / $total_wait > 0.5 ) {
+                    badprint
+                      "Primary DB Bottleneck detected: Network Sockets waits";
+                    push @generalrec,
+"Primary database bottleneck is Network/Socket I/O. Check client connections latency and network bandwidth.";
+                }
+            }
+        }
+    }
+
+# 3. Table Churn & Fragmentation Advisor (Combining PFS write metrics and fragmentation stats)
+    if ( defined $myvar{'performance_schema'}
+        && $myvar{'performance_schema'} eq 'ON' )
+    {
+        my @churn_tables = select_array(
+"SELECT OBJECT_SCHEMA, OBJECT_NAME, COUNT_WRITE FROM performance_schema.table_io_waits_summary_by_table WHERE OBJECT_SCHEMA NOT IN ('mysql', 'performance_schema', 'information_schema', 'sys') AND COUNT_WRITE > 1000 ORDER BY COUNT_WRITE DESC LIMIT 5"
+        );
+        if ( scalar(@churn_tables) > 0 ) {
+            my %churn_map;
+            foreach my $ct (@churn_tables) {
+                my ( $schema, $table, $writes ) = split( /\t/, $ct );
+                $churn_map{"$schema.$table"} = $writes if $schema && $table;
+            }
+
+            my $matched_churn_frag = 0;
+            if ( defined $result{'Tables'}{'Fragmented tables'} ) {
+                foreach
+                  my $table_line ( @{ $result{'Tables'}{'Fragmented tables'} } )
+                {
+                    my ( $table_schema, $table_name, $engine, $data_free ) =
+                      split /\t/msx, $table_line;
+                    if ( exists $churn_map{"$table_schema.$table_name"} ) {
+                        $matched_churn_frag++;
+                        badprint
+"High-churn table `$table_schema`.`$table_name` is fragmented (free: "
+                          . hr_bytes($data_free) . ")";
+                        push @generalrec,
+"Defragment high-churn table `$table_schema`.`$table_name` to optimize DML space reclamation.";
+                    }
+                }
+            }
+            if ( $matched_churn_frag > 0 ) {
+                infoprint
+"Identified $matched_churn_frag high-churn fragmented tables.";
+            }
+        }
+    }
+
+    # 4. Auto-Increment Exhaustion Audit
+    my @auto_inc_cols = select_array(
+"SELECT t.TABLE_SCHEMA, t.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, t.AUTO_INCREMENT FROM information_schema.tables t JOIN information_schema.columns c ON t.table_schema = c.table_schema AND t.table_name = c.table_name WHERE c.extra = 'auto_increment' AND t.auto_increment IS NOT NULL AND t.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')"
+    );
+
+    if ( scalar(@auto_inc_cols) > 0 ) {
+        foreach my $col_info (@auto_inc_cols) {
+            my ( $schema, $table, $col, $type, $curr_val ) =
+              split( /\t/, $col_info );
+            $type = lc( $type // '' );
+            $curr_val //= 0;
+
+            my $max_val  = 0;
+            my $col_type = select_one(
+"SELECT COLUMN_TYPE FROM information_schema.columns WHERE TABLE_SCHEMA = '$schema' AND TABLE_NAME = '$table' AND COLUMN_NAME = '$col'"
+            ) // '';
+            my $is_unsigned = ( $col_type =~ /unsigned/i ) ? 1 : 0;
+
+            if ( $type eq 'tinyint' ) {
+                $max_val = $is_unsigned ? 255 : 127;
+            }
+            elsif ( $type eq 'smallint' ) {
+                $max_val = $is_unsigned ? 65535 : 32767;
+            }
+            elsif ( $type eq 'mediumint' ) {
+                $max_val = $is_unsigned ? 16777215 : 8388607;
+            }
+            elsif ( $type eq 'int' || $type eq 'integer' ) {
+                $max_val = $is_unsigned ? 4294967295 : 2147483647;
+            }
+            elsif ( $type eq 'bigint' ) {
+                $max_val =
+                  $is_unsigned ? 18446744073709551615 : 9223372036854775807;
+            }
+
+            if ( $max_val > 0 ) {
+                my $ratio = $curr_val / $max_val;
+                if ( $ratio > 0.80 ) {
+                    badprint
+"Auto-increment column `$schema`.`$table`.`$col` ($type) is near exhaustion: current value $curr_val ("
+                      . sprintf( "%.1f%%", $ratio * 100 )
+                      . " of max $max_val)";
+                    push @generalrec,
+"Danger of auto-increment overflow on `$schema`.`$table`.`$col`. Upgrade type to BIGINT or reset sequence.";
+                }
+                elsif ( $ratio > 0.50 ) {
+                    infoprint
+"Auto-increment column `$schema`.`$table`.`$col` ($type) has reached "
+                      . sprintf( "%.1f%%", $ratio * 100 )
+                      . " capacity.";
+                }
+            }
+        }
+    }
+}
+
 sub generate_auto_fix_snippets {
-    return if $opt{'silent'} || $opt{'json'} || $opt{'yaml'};
+    return
+      if $opt{'silent'} || $opt{'json'} || $opt{'yaml'} || $opt{'agent-json'};
     subheaderprint "Guided Auto-Fix Snippets";
 
     if ( @adjvars > 0 ) {
@@ -2332,7 +2698,11 @@ sub get_http_cli {
 # Checks for updates to MySQLTuner
 sub validate_tuner_version {
     if ( $opt{'checkversion'} eq 0 ) {
-        print "\n" unless ( $opt{'silent'} or $opt{'json'} or $opt{'yaml'} );
+        print "\n"
+          unless ( $opt{'silent'}
+            or $opt{'json'}
+            or $opt{'yaml'}
+            or $opt{'agent-json'} );
         infoprint "Skipped version check for MySQLTuner script";
         return;
     }
@@ -2394,7 +2764,11 @@ sub validate_tuner_version {
 sub update_tuner_version {
     if ( $opt{'updateversion'} eq 0 ) {
         badprint "Skipped version update for MySQLTuner script";
-        print "\n" unless ( $opt{'silent'} or $opt{'json'} or $opt{'yaml'} );
+        print "\n"
+          unless ( $opt{'silent'}
+            or $opt{'json'}
+            or $opt{'yaml'}
+            or $opt{'agent-json'} );
         return;
     }
 
@@ -2934,10 +3308,11 @@ sub mysql_setup {
         # It's a DirectAdmin box, use the available credentials
         my $mysqluser =
           execute_system_command(
-            "cat /usr/local/directadmin/conf/mysql.conf | egrep '^user=.*'");
+            "cat /usr/local/directadmin/conf/mysql.conf | grep -E '^user=.*'");
         my $mysqlpass =
           execute_system_command(
-            "cat /usr/local/directadmin/conf/mysql.conf | egrep '^passwd=.*'");
+            "cat /usr/local/directadmin/conf/mysql.conf | grep -E '^passwd=.*'"
+          );
 
         $mysqluser =~ s/user=//;
         $mysqluser =~ s/[\r\n]//;
@@ -3298,7 +3673,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.9.0' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.9.1' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -3314,7 +3689,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.9.0' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.9.1' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -4064,6 +4439,43 @@ sub log_file_recommendations {
     }
 
     subheaderprint "Log file Recommendations";
+
+    # Log verbosity audit
+    my $is_mariadb = (
+        ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+          or ( defined $myvar{'version_comment'}
+            && $myvar{'version_comment'} =~ /MariaDB/i )
+    );
+    my $is_mysql = !$is_mariadb;
+
+    if ( $is_mysql && mysql_version_ge( 8, 0 ) ) {
+        if ( defined $myvar{'log_error_verbosity'} ) {
+            if ( $myvar{'log_error_verbosity'} < 2 ) {
+                badprint
+"log_error_verbosity is set to $myvar{'log_error_verbosity'} (should be >= 2)";
+                push @generalrec,
+"Set log_error_verbosity = 2 or 3 to capture warning events in the error log";
+            }
+            else {
+                goodprint
+                  "log_error_verbosity is set to $myvar{'log_error_verbosity'}";
+            }
+        }
+    }
+    else {
+        if ( defined $myvar{'log_warnings'} ) {
+            if ( $myvar{'log_warnings'} < 2 ) {
+                badprint
+"log_warnings is set to $myvar{'log_warnings'} (should be >= 2)";
+                push @generalrec,
+"Set log_warnings = 2 or higher to capture warnings in the error log";
+            }
+            else {
+                goodprint "log_warnings is set to $myvar{'log_warnings'}";
+            }
+        }
+    }
+
     if ( $has_pfs_error_log && !$opt{'server-log'} ) {
         goodprint "Performance Schema error_log table detected";
         my $pfs_count =
@@ -4154,6 +4566,10 @@ sub log_file_recommendations {
     my $nbErrLog  = 0;
     my @lastShutdowns;
     my @lastStarts;
+    my $oom_detected        = 0;
+    my $semaphore_detected  = 0;
+    my $file_limit_detected = 0;
+    my $corruption_detected = 0;
 
     while ( my $logLi = <$fh> ) {
         chomp $logLi;
@@ -4164,6 +4580,26 @@ sub log_file_recommendations {
         push @lastShutdowns, $logLi
           if $logLi =~ /Shutdown complete/ and $logLi !~ /Innodb/i;
         push @lastStarts, $logLi if $logLi =~ /ready for connections/;
+
+        if ( $logLi =~
+            /(out of memory|OOM-killer|killed process|mysqld killed)/i )
+        {
+            $oom_detected++;
+        }
+        if ( $logLi =~ /(semaphore wait|long semaphore wait)/i ) {
+            $semaphore_detected++;
+        }
+        if ( $logLi =~
+            /(too many open files|Error in accept: Too many open files)/i )
+        {
+            $file_limit_detected++;
+        }
+        if ( $logLi =~
+/(is marked as crashed|checksum mismatch|corrupted page|Page checksum)/i
+          )
+        {
+            $corruption_detected++;
+        }
     }
     close $fh;
 
@@ -4180,6 +4616,54 @@ sub log_file_recommendations {
     }
     else {
         goodprint "$myvar{'log_error'} doesn't contain any error.";
+    }
+
+    if ( $oom_detected > 0 ) {
+        badprint
+"Database error log contains $oom_detected Out-Of-Memory (OOM) patterns.";
+        push @generalrec,
+"Verify system RAM allocations and consider reducing innodb_buffer_pool_size to avoid OOM kills";
+    }
+    if ( $semaphore_detected > 0 ) {
+        badprint
+"InnoDB long semaphore waits detected $semaphore_detected time(s) in the error log.";
+        push @generalrec,
+"Audit storage I/O capacity or check system-level contention as InnoDB experienced semaphore waits";
+    }
+    if ( $file_limit_detected > 0 ) {
+        badprint
+"Error log contains 'Too many open files' warnings $file_limit_detected time(s).";
+        push @generalrec,
+"Increase open_files_limit or raise OS-level ulimits for file descriptors (nofile)";
+    }
+    if ( $corruption_detected > 0 ) {
+        badprint
+"Database corruption patterns detected $corruption_detected time(s) in the error log.";
+        push @generalrec,
+"Run CHECK TABLE / REPAIR TABLE or restore from backup as corruption warnings were detected";
+    }
+
+    # Correlation Engine (Experimental)
+    if ( $semaphore_detected > 0 || $oom_detected > 0 ) {
+        my @load         = get_load_average();
+        my $cores        = logical_cpu_cores();
+        my $is_high_load = ( @load && $load[0] > $cores ) ? 1 : 0;
+        my $is_high_lock_waits =
+          (      ( $mystat{'Innodb_row_lock_waits'} // 0 ) > 10
+              || ( $mystat{'Table_locks_waited'} // 0 ) > 10 ) ? 1 : 0;
+
+        if ( $is_high_load || $is_high_lock_waits ) {
+            infoprint
+"Experimental Correlation: Log anomalies (semaphore/OOM) correlate with active system pressure:";
+            infoprint "  - System Load: "
+              . ( $is_high_load ? "HIGH (@load)" : "Normal (@load)" );
+            infoprint "  - Lock Contention: "
+              . (
+                $is_high_lock_waits
+                ? "HIGH (Innodb_row_lock_waits=$mystat{'Innodb_row_lock_waits'})"
+                : "Normal"
+              );
+        }
     }
 
     infoprint scalar @lastStarts . " start(s) detected in $myvar{'log_error'}";
@@ -5320,7 +5804,7 @@ sub check_auth_plugins {
 
         # Extract user and host for CSV
         my ( $user, $host ) = ( '', '' );
-        if ( $user_host =~ /'([^']*)'@'([^']*)'/ ) {
+        if ( $user_host =~ /'([^']*)'\@'([^']*)'/ ) {
             $user = $1;
             $host = $2;
         }
@@ -7278,7 +7762,8 @@ sub mysql_stats {
     my $slow_query_log_active = $myvar{'slow_query_log'}
       // $myvar{'log_slow_queries'};
     if ( defined($slow_query_log_active) ) {
-        if ( $slow_query_log_active eq "OFF" ) {
+        if ( $slow_query_log_active eq "OFF" || $slow_query_log_active eq "0" )
+        {
             push( @generalrec,
                 "Enable the slow query log to troubleshoot bad queries" );
         }
@@ -9848,6 +10333,19 @@ sub get_wsrep_option {
     return $memValue;
 }
 
+sub parse_size_bytes {
+    my $str = shift // '';
+    $str =~ s/\s+//g;
+    if ( $str =~ /^(\d+(?:\.\d+)?)([KMG])$/i ) {
+        my ( $val, $unit ) = ( $1, uc($2) );
+        return $val * 1024               if $unit eq 'K';
+        return $val * 1024 * 1024        if $unit eq 'M';
+        return $val * 1024 * 1024 * 1024 if $unit eq 'G';
+    }
+    return $str if $str =~ /^\d+$/;
+    return 0;
+}
+
 # REcommendations for Tables
 sub mysql_table_structures {
     return 0 unless ( $opt{structstat} > 0 );
@@ -10892,6 +11390,107 @@ sub mariadb_galera {
         }
     }
 
+    # --- PHASE 9: ADVANCED GALERA & PXC DIAGNOSTICS ---
+    # 1. Streaming Replication Monitor
+    my $stream_writes = $mystat{'wsrep_streaming_log_writes'} // 0;
+    my $stream_reads  = $mystat{'wsrep_streaming_log_reads'}  // 0;
+    if ( $stream_writes > 0 ) {
+        badprint
+"Galera is using streaming replication: $stream_writes write(s), $stream_reads read(s)";
+        push @generalrec,
+"Streaming replication active. Review wsrep_trx_fragment_size and ensure storage can handle the fragment log I/O overhead.";
+    }
+
+    # 2. Gcache Sizing Optimization
+    my $gcache_size_str = get_wsrep_option('gcache.size') // '';
+    if ($gcache_size_str) {
+        my $gcache_bytes = parse_size_bytes($gcache_size_str);
+        if ( $gcache_bytes > 0 ) {
+            my $min_gcache = 128 * 1024 * 1024;
+            my $five_pct_ram =
+              $physical_memory ? ( $physical_memory * 0.05 ) : 0;
+            my $target_gcache =
+              ( $five_pct_ram > $min_gcache ) ? $five_pct_ram : $min_gcache;
+            if ( $gcache_bytes < $target_gcache ) {
+                badprint
+                  "gcache.size is too small ($gcache_size_str, recommended: >= "
+                  . hr_bytes($target_gcache) . ")";
+                push @generalrec,
+"Increase gcache.size in wsrep_provider_options to maximize IST success and avoid full SST on node re-joins.";
+            }
+        }
+    }
+
+    # 3. Certification Conflict & Abort Analysis
+    my $bf_aborts     = $mystat{'wsrep_local_bf_aborts'}     // 0;
+    my $cert_failures = $mystat{'wsrep_local_cert_failures'} // 0;
+    if ( $bf_aborts > 50 || $cert_failures > 50 ) {
+        badprint
+"High cluster certification conflicts: $bf_aborts brute-force abort(s), $cert_failures certification failure(s)";
+        push @generalrec,
+"High certification conflicts. Optimize write concurrency, index hotspot tables, or review application transactions size.";
+    }
+
+    # 4. Advanced Flow Control Observability
+    my $fc_sent = $mystat{'wsrep_flow_control_sent'} // 0;
+    if ( $fc_sent > 0 ) {
+        badprint
+"Flow Control: Node triggered flow control $fc_sent times (pause sender culprit)";
+        push @generalrec,
+"Node is triggering flow control pause events. Check disk write latency, CPU load, or swap space.";
+    }
+    my $fc_paused = $mystat{'wsrep_flow_control_paused'} // 0;
+    if ( $fc_paused > 0.05 ) {
+        badprint "Flow Control: Node replication was paused "
+          . sprintf( "%.2f%%", $fc_paused * 100 )
+          . " of the time (throttling)";
+        push @generalrec,
+"Node is heavily throttled by flow control. Check slower nodes in the cluster triggering flow control.";
+    }
+
+    # 5. Group Communication Latency & Jitter
+    my $repl_latency = $mystat{'wsrep_evs_repl_latency'} // '';
+    if (   $repl_latency
+        && $repl_latency =~ m{^([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+)$} )
+    {
+        my ( $min, $avg, $max, $stddev ) = ( $1, $2, $3, $4 );
+        if ( $avg > 0.1 ) {
+            badprint "High average replication latency: "
+              . sprintf( "%.2fms", $avg * 1000 );
+            push @generalrec,
+"High average replication latency. Optimize inter-node network latency.";
+        }
+        if ( $stddev > 0.05 ) {
+            badprint "High network replication jitter (stddev: "
+              . sprintf( "%.2fms", $stddev * 1000 ) . ")";
+            push @generalrec,
+"High replication jitter. Review inter-node network stability and WAN link quality.";
+        }
+    }
+
+    # 6. Applier Concurrency Tuning
+    my $deps_dist = $mystat{'wsrep_cert_deps_distance'} // 0;
+    if ( $deps_dist > 4 && $wsrep_threads_value == 1 ) {
+        infoprint "Average write-set dependency distance is "
+          . sprintf( "%.2f", $deps_dist )
+          . " (threads: 1)";
+        push @generalrec,
+"Consider increasing $wsrep_threads_var_name to leverage parallel certification concurrency.";
+    }
+
+    # 7. PXC Strict Mode Verification
+    my $is_percona = ( ( $myvar{'version_comment'} // '' ) =~ /Percona/i
+          || ( $myvar{'version'} // '' ) =~ /Percona/i );
+    if ( $is_percona && defined $myvar{'pxc_strict_mode'} ) {
+        my $pxc_mode = $myvar{'pxc_strict_mode'};
+        if ( $pxc_mode ne 'ENFORCING' && $pxc_mode ne 'MASTER' ) {
+            badprint
+              "pxc_strict_mode is set to $pxc_mode (recommended: ENFORCING)";
+            push @generalrec,
+"Set pxc_strict_mode = ENFORCING to prevent unsafe operations on Percona XtraDB Cluster.";
+        }
+    }
+
     #debugprint Dumper get_wsrep_options() if $opt{debug};
 }
 
@@ -11650,6 +12249,200 @@ sub mysql_innodb {
 "No InnoDB tables with > 50,000 rows found to calculate index/data ratios.";
     }
 
+    # --- PHASE 6: DEEP ENGINE TUNING & SAFEGUARDING ---
+
+    # Task 1: I/O Pressure & Flushing Advisor
+    if ( defined $mystat{'Innodb_buffer_pool_wait_free'}
+        && $mystat{'Innodb_buffer_pool_wait_free'} > 0 )
+    {
+        my $io_cap     = $myvar{'innodb_io_capacity'}     // 0;
+        my $io_cap_max = $myvar{'innodb_io_capacity_max'} // 0;
+        badprint
+"InnoDB is experiencing I/O pressure (Innodb_buffer_pool_wait_free = $mystat{'Innodb_buffer_pool_wait_free'})";
+        push( @generalrec,
+"Increase innodb_io_capacity (current: $io_cap) or innodb_io_capacity_max (current: $io_cap_max) to alleviate flushing/free buffer page waits."
+        );
+    }
+
+    # Task 2: Read-Ahead Efficiency Audit
+    if ( defined $mystat{'Innodb_buffer_pool_read_ahead'}
+        && $mystat{'Innodb_buffer_pool_read_ahead'} > 0 )
+    {
+        my $read_ahead = $mystat{'Innodb_buffer_pool_read_ahead'};
+        my $evicted    = $mystat{'Innodb_buffer_pool_read_ahead_evicted'} // 0;
+        my $eviction_ratio = ( $evicted / $read_ahead ) * 100;
+        if ( $eviction_ratio > 20 ) {
+            badprint
+              sprintf(
+"InnoDB read-ahead efficiency is low: %.2f%% of read-ahead pages were evicted without being accessed",
+                $eviction_ratio );
+            my $threshold = $myvar{'innodb_read_ahead_threshold'} // 56;
+            push( @generalrec,
+"Decrease innodb_read_ahead_threshold (current: $threshold) or disable innodb_random_read_ahead to reduce read-ahead page eviction."
+            );
+        }
+    }
+
+    # Task 3: Purge Lag Prevention
+    if ( defined $mystat{'Innodb_history_list_length'}
+        && $mystat{'Innodb_history_list_length'} > 100000 )
+    {
+        my $purge_threads = $myvar{'innodb_purge_threads'} // 0;
+        badprint
+"InnoDB history list length is high ($mystat{'Innodb_history_list_length'}) - purge process may lag";
+        push( @generalrec,
+"Increase innodb_purge_threads (current: $purge_threads, up to 32) and audit long-running transactions to prevent MVCC purge lag."
+        );
+    }
+
+    # Task 4: Change Buffer & Adaptive Hash Index Optimization
+    my $rows_read = $mystat{'Innodb_rows_read'} // 0;
+    my $rows_write =
+      ( $mystat{'Innodb_rows_inserted'} // 0 ) +
+      ( $mystat{'Innodb_rows_updated'}  // 0 ) +
+      ( $mystat{'Innodb_rows_deleted'}  // 0 );
+    if ( $rows_write > 0 && ( $rows_read / $rows_write ) > 100 ) {
+        if ( defined $myvar{'innodb_change_buffering'}
+            && $myvar{'innodb_change_buffering'} ne 'none' )
+        {
+            badprint
+"Workload is highly read-intensive, but innodb_change_buffering is enabled";
+            push( @generalrec,
+"Consider setting innodb_change_buffering = none to save buffer pool memory on read-only/read-heavy workloads."
+            );
+        }
+    }
+    if ( ( $myvar{'innodb_adaptive_hash_index'} // 'OFF' ) eq 'ON'
+        && logical_cpu_cores() > 16 )
+    {
+        infoprint
+"InnoDB Adaptive Hash Index is enabled on a high core count system ($myvar{'innodb_adaptive_hash_index'})";
+        push( @generalrec,
+"Monitor Adaptive Hash Index (AHI) lock contention; consider setting innodb_adaptive_hash_index = OFF if contention is high."
+        );
+    }
+
+ # Task 5: Modern Storage Alignment (doublewrite pages, fdatasync, flush method)
+    my $is_mysql = !(
+        ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+        or ( defined $myvar{'version_comment'}
+            && $myvar{'version_comment'} =~ /MariaDB/i )
+    );
+    if (   $is_mysql
+        && mysql_version_ge( 8, 4 )
+        && defined $myvar{'innodb_doublewrite_pages'}
+        && $myvar{'innodb_doublewrite_pages'} != 128 )
+    {
+        badprint
+"innodb_doublewrite_pages is not aligned with modern SSD/NVMe storage ($myvar{'innodb_doublewrite_pages'})";
+        push( @generalrec,
+"Set innodb_doublewrite_pages = 128 for optimal doublewrite buffer throughput on modern SSDs."
+        );
+    }
+    if ( defined $myvar{'innodb_use_fdatasync'}
+        && $myvar{'innodb_use_fdatasync'} eq 'OFF' )
+    {
+        my $flush_method = $myvar{'innodb_flush_method'} // '';
+        if (   $flush_method ne 'O_DIRECT'
+            && $flush_method ne 'O_DIRECT_NO_FSYNC' )
+        {
+            infoprint
+"innodb_use_fdatasync is disabled ($myvar{'innodb_use_fdatasync'})";
+            push( @generalrec,
+"Consider enabling innodb_use_fdatasync = ON to reduce fsync system call overhead on Linux if not using O_DIRECT."
+            );
+        }
+    }
+
+    # Task 6: NUMA-Aware Memory Allocation
+    if ( !is_docker() && !is_remote() ) {
+        my $has_numa = 0;
+        if ( -d '/sys/devices/system/node' ) {
+            my @nodes = glob('/sys/devices/system/node/node[0-9]*');
+            if ( @nodes > 1 ) {
+                $has_numa = 1;
+            }
+        }
+        if ($has_numa) {
+            if ( defined $myvar{'innodb_numa_interleave'}
+                && $myvar{'innodb_numa_interleave'} eq 'OFF' )
+            {
+                my $total_mem = $physical_memory // 0;
+                if ( $total_mem > 34359738368 ) {
+                    badprint
+"NUMA architecture detected but innodb_numa_interleave is disabled";
+                    push( @generalrec,
+"Enable innodb_numa_interleave = ON to balance buffer pool memory allocation across NUMA nodes."
+                    );
+                }
+            }
+        }
+    }
+
+    # Task 7: MariaDB Temp & Undo Lifecycle Manager
+    my $is_mariadb = !$is_mysql;
+    if ( $is_mariadb && mysql_version_ge( 11, 4 ) ) {
+        if ( defined $myvar{'innodb_truncate_temporary_tablespace_now'} ) {
+            goodprint
+              "MariaDB online temporary tablespace truncation is supported";
+        }
+    }
+
+    # Task 8: Deadlock & Contention Analytics via Performance Schema
+    if ( ( $myvar{'performance_schema'} // 'OFF' ) eq 'ON' ) {
+        if ( $is_mysql && mysql_version_ge( 8, 0 ) ) {
+            my $has_events_errors = select_one(
+"SELECT 1 FROM information_schema.tables WHERE table_schema='performance_schema' AND table_name='events_errors_summary_global_by_error' LIMIT 1"
+            );
+            if ($has_events_errors) {
+                my @err_res = select_array(
+"SELECT SUM(SUM_ERROR_RAISED) FROM performance_schema.events_errors_summary_global_by_error WHERE ERROR_NUMBER = 1213"
+                );
+                if ( @err_res && defined $err_res[0] && $err_res[0] > 0 ) {
+                    badprint
+"InnoDB experienced $err_res[0] lock deadlocks (ER_LOCK_DEADLOCK)";
+                    push( @generalrec,
+"Optimize application queries, transaction lengths, and index coverage to reduce lock deadlocks."
+                    );
+                }
+            }
+        }
+    }
+
+    # Task 9: InnoDB Lock Monitoring & Deadlock Logging Audit
+    if ( defined $myvar{'innodb_print_all_deadlocks'} ) {
+        if ( $myvar{'innodb_print_all_deadlocks'} eq 'OFF' ) {
+            badprint
+"InnoDB deadlock logging (innodb_print_all_deadlocks) is disabled";
+            push( @generalrec,
+"Enable innodb_print_all_deadlocks = ON to capture detailed transaction information in the error log when deadlocks occur."
+            );
+        }
+        else {
+            goodprint
+              "InnoDB deadlock logging (innodb_print_all_deadlocks) is enabled";
+        }
+    }
+    if ( defined $myvar{'innodb_status_output'}
+        && $myvar{'innodb_status_output'} eq 'OFF' )
+    {
+        infoprint
+          "InnoDB periodic status output (innodb_status_output) is disabled";
+    }
+    if ( defined $myvar{'innodb_status_output_locks'} ) {
+        if ( $myvar{'innodb_status_output_locks'} eq 'OFF' ) {
+            infoprint
+"InnoDB lock monitor output (innodb_status_output_locks) is disabled";
+            push( @generalrec,
+"Consider enabling innodb_status_output_locks = ON during active lock contention troubleshooting to print lock details in SHOW ENGINE INNODB STATUS."
+            );
+        }
+        else {
+            goodprint
+"InnoDB lock monitor output (innodb_status_output_locks) is enabled";
+        }
+    }
+
     $result{'Calculations'} = {%mycalc};
 }
 
@@ -12314,7 +13107,11 @@ sub mysql_databases {
     $result{'Databases'}{'All databases'}{'Index Pct'} =
       percentage( $totaldbinfo[2], $totaldbinfo[3] ) . "%";
     $result{'Databases'}{'All databases'}{'Total Size'} = $totaldbinfo[3];
-    print "\n" unless ( $opt{'silent'} or $opt{'json'} or $opt{'yaml'} );
+    print "\n"
+      unless ( $opt{'silent'}
+        or $opt{'json'}
+        or $opt{'yaml'}
+        or $opt{'agent-json'} );
     my $nbViews  = 0;
     my $nbTables = 0;
 
@@ -13112,6 +13909,9 @@ sub _serialize_to_json {
         return 'null';
     }
     my $ref = ref($data);
+    if ( $ref eq 'SCALAR' ) {
+        return $$data ? 'true' : 'false';
+    }
     if ( !$ref ) {
         if ( $data =~ /^-?(?:[0-9]+(?:\.[0-9]+)?)$/ ) {
             return $data;
@@ -13140,6 +13940,161 @@ sub _serialize_to_json {
 }
 
 sub dump_result {
+    if ( $opt{'agent-json'} ) {
+        my @findings;
+        foreach my $adj (@adjvars) {
+            my $var_name   = '';
+            my $raw_target = '';
+            if ( $adj =~ /^([a-zA-Z0-9_-]+)\s*[=(<>]+\s*(.*)$/ ) {
+                $var_name   = $1;
+                $raw_target = $2;
+            }
+            else {
+                next;
+            }
+
+            my $target_val = $raw_target;
+            $target_val =~ s/[()>=<=]//g;
+            $target_val =~ s/^\s+|\s+$//g;
+
+            my $current_val = $myvar{$var_name} // '';
+
+            my $id           = "${var_name}_adjust";
+            my $topic        = "Performance";
+            my $description  = "Variable $var_name is misconfigured.";
+            my $impact_score = 5;
+            my $risk_level   = "Low";
+            my $risk_description =
+"Review the variable description and potential memory impact before applying.";
+            my $requires_restart = 0;
+            my $expected_outcome =
+              "Optimizes the $var_name configuration parameters.";
+
+            if ( $var_name eq 'innodb_buffer_pool_size' ) {
+                $id    = "innodb_buffer_pool_size_adjust";
+                $topic = "Performance";
+                $description =
+"InnoDB buffer pool size is under-allocated for the current workload.";
+                $impact_score = 9;
+                $risk_level   = "Medium";
+                $risk_description =
+"Increases memory consumption. Ensure sufficient OS-free RAM to prevent OOM swapping.";
+                $requires_restart = 0;
+                $expected_outcome =
+                  "Reduces disk I/O and increases query cache read hits.";
+            }
+            elsif ( $var_name eq 'performance_schema' ) {
+                $id           = "performance_schema_enable";
+                $topic        = "Performance";
+                $description  = "Performance Schema is disabled.";
+                $impact_score = 8;
+                $risk_level   = "Medium";
+                $risk_description =
+"Enabling Performance Schema requires memory allocation and a database restart.";
+                $requires_restart = 1;
+                $expected_outcome =
+"Enables query performance diagnostics, lock profiling, and telemetry.";
+            }
+            elsif ( $var_name eq 'skip-name-resolve' ) {
+                $id    = "skip_name_resolve_enable";
+                $topic = "Security";
+                $description =
+"Database is performing DNS resolution for client connections.";
+                $impact_score = 7;
+                $risk_level   = "Medium";
+                $risk_description =
+"Ensure all accounts are configured to connect using IP addresses or wildcard domains before enabling.";
+                $requires_restart = 1;
+                $expected_outcome =
+"Eliminates connection latency overhead caused by DNS name lookups.";
+            }
+            elsif ( $var_name eq 'innodb_file_per_table' ) {
+                $id    = "innodb_file_per_table_enable";
+                $topic = "Performance";
+                $description =
+                  "InnoDB is storing tables in the system tablespace.";
+                $impact_score = 8;
+                $risk_level   = "Low";
+                $risk_description =
+"Only affects newly created tables. Reclaiming space from existing tables requires OPTIMIZE TABLE.";
+                $requires_restart = 0;
+                $expected_outcome =
+"Allows individual tablespaces to be reclaimed upon dropping or truncating tables.";
+            }
+            elsif ( $var_name eq 'long_query_time' ) {
+                $id           = "long_query_time_adjust";
+                $topic        = "Performance";
+                $description  = "Slow query log threshold is set too high.";
+                $impact_score = 6;
+                $risk_level   = "Low";
+                $risk_description =
+"Might slightly increase disk write I/O if logging many queries.";
+                $requires_restart = 0;
+                $expected_outcome =
+                  "Captures fine-grained slow queries for profiling.";
+            }
+            elsif ( $var_name eq 'query_cache_size' ) {
+                $id    = "query_cache_size_disable";
+                $topic = "Performance";
+                $description =
+"Query Cache is enabled on a high-concurrency database, causing mutex contention.";
+                $impact_score = 8;
+                $risk_level   = "Low";
+                $risk_description =
+"Disables simple query result caching which could increase read latency on low-concurrency read-heavy tables.";
+                $requires_restart = 0;
+                $expected_outcome =
+                  "Reduces query cache mutex contention and locking overhead.";
+            }
+            elsif ( $var_name eq 'max_connections' ) {
+                $id    = "max_connections_adjust";
+                $topic = "Reliability";
+                $description =
+                  "Maximum connections limit is set too high or too low.";
+                $impact_score = 7;
+                $risk_level   = "Medium";
+                $risk_description =
+"High limits increase potential memory consumption under peak loads.";
+                $requires_restart = 0;
+                $expected_outcome =
+"Prevents running out of connections or protects against OOM spikes.";
+            }
+
+            my $stmt     = "SET GLOBAL $var_name = $target_val;";
+            my $rollback = "SET GLOBAL $var_name = "
+              . ( $current_val ne '' ? $current_val : $target_val ) . ";";
+
+            if ($requires_restart) {
+                $stmt     = "$var_name = $target_val";
+                $rollback = "$var_name = "
+                  . ( $current_val ne '' ? $current_val : $target_val );
+            }
+
+            push @findings,
+              {
+                'id'               => $id,
+                'topic'            => $topic,
+                'description'      => $description,
+                'impact_score'     => int($impact_score),
+                'risk_level'       => $risk_level,
+                'risk_description' => $risk_description,
+                'requires_restart' => $requires_restart ? \1 : \0,
+                'expected_outcome' => $expected_outcome,
+                'action'           => {
+                    'type'      => $requires_restart ? 'Config' : 'SQL',
+                    'statement' => $stmt,
+                    'rollback_statement' => $rollback
+                }
+              };
+        }
+
+        my $payload = { 'findings' => \@findings };
+
+        my $json_str = _serialize_to_json($payload);
+        print $json_str . "\n";
+        exit 0;
+    }
+
     if ( $opt{'json'} && $opt{'yaml'} ) {
         print STDERR "ERROR: --json and --yaml are mutually exclusive\n";
         return 1;
@@ -13201,8 +14156,9 @@ sub dump_result {
           @generalrec;
 
         my @repl_recs =
-          grep { /(replica|sla[v]e|gtid|replication|binlog|relay)/i }
-          @generalrec;
+          grep {
+/(replica|sla[v]e|gtid|replication|binlog|relay|flow control|group_replication|router|quorum)/i
+          } @generalrec;
 
         my $general_rec_html = join(
             "\n",
@@ -13784,7 +14740,7 @@ HTML
     <title>MySQLTuner Advanced Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link class="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght\@300;400;500;600;700;800&family=JetBrains+Mono:wght\@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -15461,7 +16417,7 @@ if ( !caller ) {
         \&get_replication_status,     \&process_sysbench_metrics,
         \&historical_comparison,      \&predictive_capacity_analysis,
         \&check_replication_advanced, \&check_security_2_0,
-        \&generate_auto_fix_snippets,
+        \&check_workload_traffic,     \&generate_auto_fix_snippets,
     );
 
     foreach my $section (@REPORT_SECTIONS) {
@@ -15489,7 +16445,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.9.0 - MySQL High Performance Tuning Script
+ MySQLTuner 2.9.1 - MySQL High Performance Tuning Script
 
 =head1 IMPORTANT USAGE GUIDELINES
 
@@ -15504,7 +16460,7 @@ See C<mysqltuner --help> for a full list of available options and their categori
 
 =head1 VERSION
 
-Version 2.9.0
+Version 2.9.1
 =head1 PERLDOC
 
 You can find documentation for this module with the perldoc command.

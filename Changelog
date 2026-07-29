@@ -1,5 +1,108 @@
 # MySQLTuner Changelog
 
+2.9.1 2026-07-27
+
+- chore(build): allow build scope in compliance auditor
+- chore(build): rewrite dev_sync and doc_sync in Perl for consistency
+- chore(deps): update actions/checkout action to v7.0.0 (#961)
+- chore(deps): update all non-major dependencies (@commitlint/cli, @commitlint/config-conventional, brace-expansion, commitizen)
+- chore(deps): update devops-infra/action-commit-push digest to f27e0951b748268e6ac8d91861eeac5bc2bd36a8 (#958)
+- chore(deps): update devops-infra/action-commit-push digest to fa0c793 (#929)
+- chore(deps): update docker/build-push-action digest to 53b7df9 (#939)
+- chore(deps): update docker/login-action digest to abd2ef4 (#962)
+- chore(deps): update docker/login-action digest to af1e73f (#940)
+- chore(deps): update docker/setup-buildx-action digest to bb05f3f5519dd87d3ba754cc423b652a5edd6d2c (#959)
+- chore(deps): update github/codeql-action digest to 99df26d4f13ea111d4ec1a7dddef6063f76b97e9
+- chore(deps): update shogo82148/actions-setup-mysql digest to 076e636 (#930)
+- chore(deps): update softprops/action-gh-release digest to 718ea10 (#934)
+- chore(deps): update ubuntu:latest docker digest to 53958ec (#935)
+- chore(deps): update ubuntu:latest docker digest to b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e
+- chore(docs): add custom rule for GitHub issue creation
+- chore(docs): implement rule to decompose unit tests into readable segments
+- chore(docs): update agent best practices and customization rules
+- chore(main): add doc links in localhost warnings and support custom local subdomains
+- chore(main): hide hostname, ssl, and replication warnings on localhost (#933)
+- chore(releases): start v2.9.1 branch with version bump and dependency updates
+- chore: automated project metadata update
+- chore: remove execution.log from git repository and sync docs
+- feat(cli): implement agent-json flag returning structured actionable schema (#955, jmrenouard#63)
+- feat(cli): resolve remote memory, socket override, and temptable sizing issues (#923)
+- feat(container): implement dockerized auditing daemon and zero-dependency MCP server (#954, jmrenouard#62)
+- feat(main): audit InnoDB lock monitors and print all deadlocks configuration
+- feat(main): enhance error log parser with OOM, semaphore waits, file limits, and page corruption alerts (#953)
+- feat(main): implement advanced log parser and lock monitoring (#953, jmrenouard#61)
+- feat(main): implement experimental Correlation Engine linking PFS wait events and CPU load with log events
+- feat(metadata): fix test badge and update version references in READMEs
+- feat(report): add pgBadger-inspired query, lock, and temp table visual analytics to HTML report (#791)
+- feat(report): add verbose timings, step percentages, and snapshot summary
+- feat(report): finalize HTML report, YAML output, and historical comparison
+- feat(report): implement HA InnoDB Cluster diagnostics and Group Replication checks
+- feat(report): implement advanced Galera Cluster 4 and PXC 8.0 diagnostics
+- feat(report): implement phase 6 deep engine tuning and mark phase 8 completed
+- feat(report): implement workload traffic profiling and query waits analysis (#960)
+- feat: recommend slow query log when disabled (#517)
+- fix(container): create default /defaults.cnf in Dockerfile and document volume mounts (#932)
+- fix(main): add undefined/NULL guards to hr_num to resolve uninitialized warnings (#904)
+- fix(main): address PR #931 code review feedback and enhance test validations
+- fix(main): calculate query cache efficiency using Com_select on MariaDB (MDEV-4981) (#927)
+- fix(main): exclude MariaDB user roles and support zero-config TLS (#936, #937)
+- fix(main): only recommend increasing innodb_log_buffer_size when log waits occur (#938)
+- fix(main): query events_errors_summary_global_by_error safely (#956, jmrenouard#64)
+- fix(main): resolve uninitialized warnings in auto-increment audit and fix split delimiters (#913)
+- fix(main): support '0' and 'OFF' value representations when checking slow query log status (#517) (finalized implementation)
+- fix: update documentation and code
+- test(hook): verify pre-commit hook runs tests when test files change
+- test(lab): add HA topology E2E tests, MCP server E2E test, and dedicated output analyzer
+- test(lab): add HA validation profiles (galera.json, innodb_cluster.json, replication.json)
+- test(lab): add build/analyze_mt_output.pl dedicated output analyzer with HA profile support
+- test(lab): add build/test_ha.sh E2E orchestrator for Galera, InnoDB Cluster, and Replication topologies
+- test(lab): add e2e_mcp_server.t for MCP server E2E validation with live MariaDB container
+- test(lab): add unit test test_issue_810.t for issue 810 (#810)
+- test(lab): expand unit tests for issue #517 to verify alternative representations of slow query log active state (#517)
+- test(test): add unit tests for issues #553, #605, #671, #770, #774, #777, #781, #782, #783, #796 (#553, #605, #671, #770, #774, #777, #781, #782, #783, #796)
+- test(test): add unit tests for issues #863, #864, #869, #874, #875, #881, #887 (#863, #864, #869, #874, #875, #881, #887)
+- test(test): add unit tests for issues #896, #900, #904, #913, #923, #927, #932, #938 (#896, #900, #904, #913, #923, #927, #932, #938)
+- test(test): add unit tests for potential issues and split unit_coverage_boost3
+- test(test): add unit_agent_json.t to validate actionable JSON schema (#955)
+- test(test): add unit_deadlocks_pfs.t to validate InnoDB deadlock PFS checks
+- test(test): add unit_eol_warnings.t to validate version support warnings
+- test(test): add unit_galera_pxc.t to validate Phase 9 Galera cluster checks
+- test(test): add unit_ha_cluster.t to validate Phase 7 HA cluster checks
+- test(test): add unit_log_parser.t to validate advanced log parsing and correlation (#953)
+- test(test): add unit_mcp_server.t to validate JSON-RPC protocol compliance (#954)
+- test(test): add unit_replication_internals.t to validate Phase 8 replication features
+- test(test): add unit_version_helpers.t to validate version caching and helpers
+- test(test): add unit_workload_traffic.t to validate Phase 11 workload profiling (#960)
+- test(test): split unit_coverage_boost3.t into three smaller test files
+- test(test): update workload traffic and HA cluster unit tests to use tab-delimited mock data
+- test(test): verify replication terminology and checksums in unit tests (#888)
+- ci(build): implement static SQL linter and fix PFS deadlock error query
+- ci: optimize pre-commit hook to only run unit tests when code, tests, or dependencies are modified
+- docs(metadata): promote HTML reports and add E2E examples
+- docs(metadata): remove timestamp from doc-sync generated files
+- docs(releases): regenerate release notes and changelog
+- docs(roadmap): add Phase 22 for High Availability & Replication Auto-Discovery
+- docs(roadmap): add Phase 24 (Boolean Normalization), Phase 25 (Deprecated Variables), Phase 26 (Subtest Decomposition) to ROADMAP.md
+- docs(roadmap): add Phase 27 (Multi-Language Normalization), Phase 28 (CI Version Matrix), Phase 29 (Publish Pipeline), Phase 30 (Build Stack Rationalization) from transversal audit
+- docs(roadmap): group strategic technical evolutions into phases 18 to 21
+- docs(roadmap): link strategic technical evolutions specification and enforce changelog staging
+- docs(roadmap): mark Phase 12 as completed in ROADMAP.md
+- docs(roadmap): mark Phase 16 and 17 as completed in ROADMAP.md
+- docs(roadmap): update Phase 7, Phase 9, Phase 10, and Phase 11 status to completed in ROADMAP.md
+- docs: add AGENT.md integration guide for AI and MCP server
+- docs: add LightPath as sponsor, relocate coffee button, and use star-history chart
+- docs: add MCP and AI integration guide for MySQL database tuning
+- docs: generate FEATURES.md
+- docs: generate end-of-life status files
+- docs: link recent features to GitHub issues in Changelog
+- docs: link recent features to jmrenouard fork issues in Changelog
+- docs: regenerate release notes
+- docs: update potential issues log with Phase 9 Galera audit findings
+- docs: update potential issues log with Renovate dependency dashboard analysis
+- docs: update potential issues log with release v2.9.0 and v2.9.1 audit results
+- docs: update repository links to major/MySQLTuner-perl and add GitHub stars badge
+- style: tidy mysqltuner.pl
+
 2.9.0 2026-07-03
 
 - chore(build): allow build scope in compliance auditor
@@ -56,6 +159,7 @@
 - test(lab): add unit test test_issue_517.t for slow query log recommendations (#517)
 - test(lab): add unit test test_issue_810.t for issue 810
 - test(lab): add unit test test_issue_810.t for remote host forcemem MB interpretation correctness (issue #810)
+- test(lab): add unit test test_issue_932.t for Dockerfile and README volume mount documentation (#932)
 - test(lab): add unit test test_issue_938.t for InnoDB write log efficiency
 - test(lab): add unit tests for query cache efficiency logic on MySQL and MariaDB in tests/test_issue_927.t (renamed from tests/issue_927.t).
 - test(lab): normalize all repro_issue_*.t and issue_*.t test file names to test_issue_*.t
