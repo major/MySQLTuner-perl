@@ -1,5 +1,5 @@
 # Dockerfile.mcp - MySQLTuner Daemon & MCP Server Microservice
-FROM alpine:3.18
+FROM alpine:3.24@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
 
 # Install Perl, Python 3, and MariaDB client (mysql client binary)
 RUN apk add --no-cache perl python3 mariadb-client
