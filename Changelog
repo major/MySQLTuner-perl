@@ -6,6 +6,7 @@
 - docs(rules): align release governance, conventional commit, and git tagging rules (#739)
 - fix(main): enhance storage detection for HW RAID controllers (AVAGO/LSI MegaRAID) (#957)
 - test(lab): add unit test test_issue_957.t for storage detection logic (#957)
+- ci(build): add rules scope to check_compliance.pl allowed conventional commit scopes
 
 2.9.1 2026-07-27
 - chore(deps): update actions/checkout action to v7.0.0 (#961)
