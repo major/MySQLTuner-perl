@@ -1,4 +1,5 @@
 ---
+test_file: tests/cli_options.t
 title: CLI Execution Mastery Skill Specification
 status: proposed
 author: Antigravity
@@ -6,6 +7,10 @@ date: 2026-01-25
 ---
 
 # Specification: CLI Execution Mastery Skill
+
+## Goal
+
+Provide instructions and reference options for executing MySQLTuner via command-line interfaces across standalone, containerized, and remote SSH environments.
 
 ## 🧠 Rationale
 
@@ -30,3 +35,8 @@ The MySQLTuner project has numerous CLI options for connection and authenticatio
 - The skill must be registered in `.agent/README.md`.
 - The skill must follow the AFF (Agent-Friendly Format) with frontmatter.
 - The instructions must be technically accurate according to `mysqltuner.pl` source code.
+
+## Verification
+
+- Validated via `tests/cli_options.t` and `tests/cli_validation.t`.
+- Verified parameter parsing for connection options (`--host`, `--port`, `--socket`, `--user`, `--pass`).

@@ -1,3 +1,6 @@
+---
+test_file: tests/index_pfs_checks.t
+---
 # Specification: Index Checks via Performance Schema
 
 ## Goal

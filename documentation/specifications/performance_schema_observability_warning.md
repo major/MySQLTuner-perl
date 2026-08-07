@@ -1,3 +1,6 @@
+---
+test_file: tests/pfs_observability.t
+---
 # Specification: Performance Schema Observability Warning
 
 ## Goal
@@ -21,3 +24,8 @@ Improve user awareness of observability gaps when `performance_schema` is disabl
 - **Scenario 1**: User runs MySQLTuner on a server where `performance_schema` is OFF.
   - **Result**: The "Performance schema" section shows a failure message including "(observability issue)".
   - **Recommendation**: "Performance schema should be activated for better diagnostics and observability" is added to the general recommendations.
+
+## Verification
+
+- Validated via `tests/pfs_observability.t`.
+- Confirms CLI output warning when Performance Schema is disabled.

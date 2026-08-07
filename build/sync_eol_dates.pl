@@ -131,7 +131,7 @@ for my $cycle (keys %$mariadb_active) {
 # Check if any declared check is actually outdated/EOL
 for my $check_ver (keys %checks_found) {
     # It must be active in either MySQL or MariaDB active cycles
-    if (!$mysql_active->{$check_ver} && !$mariadb_active->{$check_ver}) {
+    if (!exists $mysql_active->{$check_ver} && !exists $mariadb_active->{$check_ver}) {
         print "ERROR: Outdated or EOL cycle $check_ver is still declared as supported in validate_mysql_version()!\n";
         $errors++;
     }

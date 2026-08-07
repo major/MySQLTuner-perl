@@ -1,4 +1,11 @@
+---
+test_file: tests/verbose_timing.t
+---
 # Specification: Roadmap Phase XII - Sectional Global Indicators & KPIs
+
+## Goal
+
+Organize diagnostic output into clean, structured visual sections with clear indicator headers and KPI counters.
 
 ## Context
 
@@ -39,3 +46,8 @@ As MySQLTuner-perl reports grow in complexity, users need a fast, high-level ove
 - **Manager-Friendly Summaries**: Quick reporting for stakeholders who don't need line-by-line technical details.
 - **Prioritized Action Plan**: Clear guidance on which section requires the most urgent attention.
 - **Consistency**: Providing a standard KPI format across MySQL, MariaDB, and Cloud-managed instances.
+
+## Verification
+
+- Validated via `tests/verbose_timing.t` and CLI standard runs.
+- Confirms output section formatting and indicator counters.

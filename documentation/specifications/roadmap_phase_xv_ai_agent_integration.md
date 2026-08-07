@@ -1,4 +1,11 @@
+---
+test_file: tests/unit_agent_json.t
+---
 # Specification: Roadmap Phase XVI - AI Agent Integration & Actionable JSON Schema
+
+## Goal
+
+Provide structured JSON schema export format (`--json`) to allow LLM AI agents to ingest MySQLTuner diagnostic results directly.
 
 - **Feature Name**: AI Agent Integration & Actionable JSON Schema
 - **Status**: Draft
@@ -129,3 +136,8 @@ The `--agent-json` format will output a JSON object containing a `findings` list
 1. Test generation of `--agent-json` output and validate its conformance to the schema.
 2. Validate that each generated recommendation has a corresponding valid `rollback_statement`.
 3. Verify that parsing of database metrics properly populates all metadata fields (e.g., `impact_score`, `risk_level`, `requires_restart`).
+
+## Verification
+
+- Validated via `tests/unit_agent_json.t`.
+- Confirms JSON output schema compliance and indicator key structure.

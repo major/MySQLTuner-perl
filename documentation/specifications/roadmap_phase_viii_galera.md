@@ -1,4 +1,11 @@
+---
+test_file: tests/unit_galera_enhanced.t
+---
 # Specification: Roadmap Phase VIII - Galera Cluster 4 & PXC 8.0 Mastery
+
+## Goal
+
+Provide advanced Galera 4 and Percona XtraDB Cluster (PXC) 8.0 cluster health diagnostics, flow control analysis, and wsrep variable checks.
 
 ## Context
 
@@ -46,3 +53,8 @@ Galera Cluster 4 (MariaDB 10.4+) and Percona XtraDB Cluster 8.0 have introduced 
 * **Clustering Stability**: Avoiding expensive SST operations.
 * **Performance**: Reducing the impact of flow control on write throughput.
 * **Diagnostics**: Faster root cause analysis for "hanging" clusters.
+
+## Verification
+
+- Validated via `tests/unit_galera_enhanced.t` and `tests/unit_galera_pxc.t`.
+- Confirms wsrep cluster status parsing and flow control conflict reporting.

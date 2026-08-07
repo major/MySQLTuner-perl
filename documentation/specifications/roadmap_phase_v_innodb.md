@@ -1,4 +1,11 @@
+---
+test_file: tests/innodb_redo_log_capacity_logic.t
+---
 # Specification: Roadmap Phase V - Deep InnoDB Tuning & Safeguarding
+
+## Goal
+
+Provide granular InnoDB tuning recommendations including Workload-based Redo Log capacity, Buffer Pool Instance scaling, and Undo tablespace monitoring.
 
 ## Context
 
@@ -40,3 +47,8 @@ MySQLTuner-perl has successfully integrated infrastructure awareness and modern 
 * **Stability**: Reducing I/O stalls and buffer pool pollution.
 * **Performance**: Better utilization of NVMe storage and multi-socket CPU (NUMA).
 * **Portability**: Maintaining the single-file architecture while deep-diving into PFS/Status metrics.
+
+## Verification
+
+- Validated via `tests/innodb_redo_log_capacity_logic.t` and `tests/unit_innodb_internals.t`.
+- Confirms InnoDB buffer pool and redo log sizing recommendations.

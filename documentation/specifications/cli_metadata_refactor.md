@@ -1,3 +1,6 @@
+---
+test_file: tests/cli_mod_keys.t
+---
 # Specification: Metadata-Driven CLI Options Refactor (Phase 6)
 
 ## Overview
@@ -34,3 +37,8 @@ This specification covers the enhancement of the CLI option parsing mechanism in
 - Update `show_help` if needed (already mostly metadata-driven).
 - Clean up `setup_environment` by removing logic now handled by metadata.
 - Correct `pod2usage` sections.
+
+## Verification
+
+- Verified with `tests/cli_options.t` and `tests/cli_mod_keys.t`.
+- Ensures `--help` and CLI metadata map cleanly to option definitions.

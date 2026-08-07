@@ -1,4 +1,11 @@
+---
+test_file: tests/pfs_observability.t
+---
 # Specification - Performance Schema `Error Log` Analysis
+
+## Goal
+
+Integrate `performance_schema.error_log` table parsing in MySQL 8.0+ / MariaDB 10.6+ to ingest system errors, warnings, and subsystem crash events without reading local files.
 
 ## 🧠 Rationale
 

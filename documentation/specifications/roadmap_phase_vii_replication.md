@@ -1,4 +1,11 @@
+---
+test_file: tests/unit_replication_internals.t
+---
 # Specification: Roadmap Phase VII - Modern Replication & GTID Mastery
+
+## Goal
+
+Enhance replication monitoring with GTID consistency checks, semi-synchronous replication lag analysis, and multi-source replica diagnostics.
 
 ## Context
 
@@ -47,3 +54,8 @@ MySQL and MariaDB replication have evolved significantly with GTID-based failove
 * **Data Integrity**: Ensuring GTID consistency across the topology.
 * **Throughput**: Maximizing parallel applier performance.
 * **Resilience**: Better observability of semi-synchronous failure modes.
+
+## Verification
+
+- Validated via `tests/unit_replication_internals.t` and `make test-ha-repli`.
+- Confirms IO/SQL thread lag detection and GTID auto-positioning checks.

@@ -1,3 +1,6 @@
+---
+test_file: tests/verbose_timing.t
+---
 # Specification: Verbose Execution Timings
 
 ## Goal
@@ -32,3 +35,8 @@ Add execution timing information for each section and the total execution time a
 3. Fallback to `time()` when `Time::HiRes` is not available.
 4. Timings must only print when `$opt{'verbose'}` is set.
 5. Timing outputs must be placed before the terminal `✔ Terminated successfully` message.
+
+## Verification
+
+- Validated via `tests/verbose_timing.t`.
+- Confirms measurement and display of execution time per diagnostic section when `--verbose` is enabled.

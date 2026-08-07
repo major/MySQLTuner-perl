@@ -1,4 +1,11 @@
+---
+test_file: tests/schemadir.t
+---
 # Specification: --schemadir option for Schema Documentation
+
+## Goal
+
+Implement the `--schemadir` CLI option to dump complete database table structures, naming convention deviations, and index metadata to a specified directory.
 
 - **Feature Name**: --schemadir option
 - **Status**: Draft
@@ -44,3 +51,8 @@ A user wants both the dump files and the split schema documentation.
 
 - **Unit Test**: Mock database metadata and verify that `mysql_tables` correctly identifies schemas and writes to separate files when `schemadir` is set.
 - **Integration Test**: Run against a real database (multi-version lab) and check the filesystem structure.
+
+## Verification
+
+- Validated via `tests/schemadir.t`.
+- Confirms creation of schema SQL and CSV audit files in the target directory.

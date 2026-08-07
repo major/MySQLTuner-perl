@@ -1,4 +1,11 @@
+---
+test_file: tests/unit_log_parser.t
+---
 # Specification: Roadmap Phase XI - Advanced Log Parser & Lock Monitoring
+
+## Goal
+
+Implement high-performance line-by-line log parsing for error logs, slow query logs, and deadlock traces with low memory footprint.
 
 ## Context
 
@@ -36,3 +43,8 @@ While MySQLTuner currently ingests basic error logs, Phase XI aims to transform 
 - **Faster Root Cause Analysis**: Moving from "something is slow" to "InnoDB is stalling on I/O semaphores".
 - **Proactive Corruption Warning**: Detecting disk failures before the entire database becomes unavailable.
 - **Resource Limit Visibility**: Identifying OS-level constraints (file descriptors, memory) affecting the DB.
+
+## Verification
+
+- Validated via `tests/unit_log_parser.t` and `tests/unit_deadlocks_pfs.t`.
+- Confirms line-by-line streaming log analysis without loading entire files into memory.

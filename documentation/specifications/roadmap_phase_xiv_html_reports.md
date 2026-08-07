@@ -1,4 +1,11 @@
+---
+test_file: tests/html_report.t
+---
 # Specification: Roadmap Phase XIV - Interactive Multi-Page HTML Reports & Detailed Exports
+
+## Goal
+
+Generate stand-alone, zero-dependency HTML diagnostic reports (`--reportfile`) featuring tabbed navigation, responsive layouts, and embedded CSS.
 
 - **Feature Name**: Interactive Multi-Page HTML Reports & Detailed Exports
 - **Status**: Approved
@@ -121,3 +128,8 @@ The native HTML report is structured as an interactive SPA (Single Page Applicat
    - All interactive tabs (Dashboard, Storage, Modeling, Security, Queries, Locks, Events, etc.) function offline.
    - All SVG charts and gauges load and format correctly.
    - The CSV download buttons trigger local downloads with the correct format headers.
+
+## Verification
+
+- Validated via `tests/html_report.t`.
+- Confirms HTML report generation without external Perl dependencies.

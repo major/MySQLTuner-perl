@@ -1,3 +1,6 @@
+---
+test_file: tests/auth_plugin_checks.t
+---
 # Specification: Authentication Plugin Security Checks
 
 ## Feature Name: Authentication Plugin Auditing
@@ -44,3 +47,8 @@ Implement diagnostic checks in `mysqltuner.pl` to identify insecure or deprecate
 1. Query `mysql.user` (or `information_schema.USER_PRIVILEGES` / `information_schema.applicable_roles` depending on version).
 2. For each account, check `plugin` column.
 3. Aggregate findings and display in "Security Recommendations".
+
+## Verification
+
+- Validated via unit test suite `tests/auth_plugin_checks.t`.
+- Verified detection of caching_sha2_password, mysql_native_password, unix_socket, and ed25519 plugins.

@@ -1,6 +1,6 @@
 # MySQLTuner-perl Version Memory
 
-## Current Version: 2.9.0
+## Current Version: 2.9.2
 
 ## Project Evolution & Systemic Findings
 
@@ -18,6 +18,14 @@ Migrated several external commands to native Core Perl to reduce fork overhead a
 - `uptime` -> `/proc/uptime` parsing or `$^T` calculation
 
 ### Recent Audits
+- **v2.9.2**:
+  - Comprehensive Model Context Protocol (MCP) AI Server integration guides in English and French.
+  - Hardware RAID controller storage detection for AVAGO/LSI MegaRAID (`storcli` / `perccli` / `megacli`).
+  - Unified E2E High Availability laboratory test suite across Galera, InnoDB Cluster, and Replication topologies.
+  - Synchronized EOL API date auditing script (`build/sync_eol_dates.pl`) and active LTS version validation.
+- **v2.9.1**:
+  - Automated release orchestrator (`/release-manager`) for single-command version bumps, release notes, and tags.
+  - Enhanced Docker log ingestion and systemd container diagnostics.
 - **v2.8.44**:
   - Developed automated specification consistency auditor (`build/audit_specifications.pl`) and Spec-to-Test Mapping Matrix.
   - Developed LTS API auto-bumping utility (`build/lts_autobump.pl`) and GitHub Actions integration.

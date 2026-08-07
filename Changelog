@@ -3,10 +3,13 @@
 2.9.2 2026-07-29
 - chore(deps): replace abandoned cz-conventional-changelog with @commitlint/cz-commitlint (#587)
 - docs(container): add comprehensive AI MCP server integration guides in English and French (#954)
+- docs(docs): update all specification files with YAML frontmatter test bindings and mandatory Goal/Verification sections
 - docs(rules): align release governance, conventional commit, and git tagging rules (#739)
+- docs(versions): synchronize v2.9.2 version strings, EOL LTS support checks, and multi-language README release links
 - feat(galera): add network queue, PK certification, and split-brain quorum diagnostics (#975)
 - feat(main): enhance MySQL InnoDB Cluster & Group Replication diagnostics (#976)
 - fix(main): enhance storage detection for HW RAID controllers (AVAGO/LSI MegaRAID) (#957)
+- fix(versions): fix boolean evaluation of 0 EOL dates in sync_eol_dates.pl
 - fix(ci): resolve DB_PASS from multi-db-docker-env .env file in test_ha.sh
 - test(galera): add unit test unit_galera_enhanced.t for Galera diagnostics (#975)
 - test(lab): add unit test test_issue_957.t for storage detection logic (#957)

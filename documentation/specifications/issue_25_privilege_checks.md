@@ -1,3 +1,6 @@
+---
+test_file: tests/unit_client_privileges.t
+---
 # Specification: Warn if current user does not have minimum privileges
 
 ## Goal
@@ -62,3 +65,8 @@ The check should be compatible with various MySQL and MariaDB versions:
 - [ ] `mysqltuner.pl` runs normally when full privileges are granted.
 - [ ] `mysqltuner.pl` displays a warning listing missing privileges when some are revoked.
 - [ ] Compatible with MySQL 5.5-8.4 and MariaDB 10.3-11.8.
+
+## Verification
+
+- Validated via `tests/unit_client_privileges.t` and `tests/test_issue_20.t`.
+- Confirms warnings are raised when user lacks `SELECT`, `SHOW DATABASES`, or `PROCESS` privileges.

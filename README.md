@@ -3,7 +3,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
 
 [![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
-[![MySQLTuner Version](https://img.shields.io/badge/version-2.9.1-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.1)
+[![MySQLTuner Version](https://img.shields.io/badge/version-2.9.2-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.2)
 [![Test Status](https://github.com/major/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/major/MySQLTuner-perl/actions)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
 [![Percentage of open issues](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
@@ -275,7 +275,7 @@ docker run --rm -it -v $(pwd)/my.cnf:/defaults.cnf -v $(pwd)/results:/results jm
 
 ### Releases Location
 
-* Official release notes and history are documented in the [releases/](releases/) directory of this repository (e.g., [releases/v2.9.1.md](releases/v2.9.1.md)).
+* Official release notes and history are documented in the [releases/](releases/) directory of this repository (e.g., [releases/v2.9.2.md](releases/v2.9.2.md)).
 * Git release tags and downloadable source tarballs are available on [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 Optional Sysschema installation for MySQL 5.6
