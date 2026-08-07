@@ -89,8 +89,11 @@ if (@sql_failures) {
 # Category 3: Transport / Connection Errors
 # ===================================================================
 my @conn_errors;
-while ($content =~ /^(.*(?:Can't connect to|Access denied|Connection refused|timeout|Lost connection).*)$/gmi) {
-    push @conn_errors, $1;
+while ($content =~ /^(.*(?:Can't connect to|Access denied|Connection refused|Connection timeout|connect timeout|timed out|Lost connection).*)$/gmi) {
+    # Exclude variable names, thread names, or recommendation text containing 'timeout'
+    my $line = $1;
+    next if $line =~ /_timeout|srv_lock_timeout|group_replication_.*timeout/i;
+    push @conn_errors, $line;
 }
 if (@conn_errors) {
     push @errors, {

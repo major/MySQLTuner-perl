@@ -1608,9 +1608,9 @@ sub check_replication_advanced {
             );
             my $member_count = scalar(@group_members);
             if ( $member_count > 0 ) {
-                goodprint
-                  "InnoDB Cluster is running with $member_count group members.";
-                my $primary_count = 0;
+                my $primary_count   = 0;
+                my $secondary_count = 0;
+                my $online_count    = 0;
                 my %versions;
                 foreach my $m (@group_members) {
                     my @mparts = split( /\t/, $m );
@@ -1620,9 +1620,10 @@ sub check_replication_advanced {
                     my $role   = $mparts[3] // '';
                     my $ver    = $mparts[4] // '';
 
+                    $online_count++ if $state eq 'ONLINE';
                     if ( $state ne 'ONLINE' ) {
                         badprint
-"Group member $host:$port state is $state (recommended: ONLINE)";
+"Group member $host:$port MEMBER_STATE is $state (recommended: ONLINE)";
                         push_recommendation( 'res',
 "Group member $host:$port is not ONLINE (state: $state). Check member status and error log."
                         );
@@ -1630,12 +1631,19 @@ sub check_replication_advanced {
                     if ( $role eq 'PRIMARY' ) {
                         $primary_count++;
                     }
+                    elsif ( $role eq 'SECONDARY' ) {
+                        $secondary_count++;
+                    }
                     $versions{$ver}++ if $ver;
                 }
+                goodprint
+"InnoDB Cluster topology: MEMBER_STATE ($online_count/$member_count ONLINE), MEMBER_ROLE ($primary_count PRIMARY, $secondary_count SECONDARY).";
 
                 my $single_primary =
                   $myvar{'group_replication_single_primary_mode'} // 'ON';
-                if ( $single_primary eq 'ON' || $single_primary eq '1' ) {
+                my $is_single_primary =
+                  ( $single_primary eq 'ON' || $single_primary eq '1' ) ? 1 : 0;
+                if ($is_single_primary) {
                     if ( $primary_count != 1 ) {
                         badprint
 "Single-primary mode active, but found $primary_count primary member(s) (recommended: 1)";
@@ -1643,6 +1651,10 @@ sub check_replication_advanced {
 "Investigate role state: single-primary mode requires exactly 1 primary member."
                         );
                     }
+                }
+                else {
+                    goodprint
+                      "Group Replication is running in Multi-Primary mode.";
                 }
 
                 my @unique_vers = keys %versions;
@@ -1660,7 +1672,7 @@ sub check_replication_advanced {
             my $server_uuid = select_one('SELECT @@server_uuid') // '';
             if ($server_uuid) {
                 my $local_stats = select_one(
-"SELECT CONCAT_WS('|', COUNT_TRANSACTIONS_IN_QUEUE, COUNT_TRANSACTIONS_REMOTE_IN_APPLIER_QUEUE, TRANSACTIONS_COMMITTED_ALL_MEMBERS, TRANSACTIONS_LOCAL_ROLLBACK) FROM performance_schema.replication_group_member_stats WHERE MEMBER_ID = '$server_uuid'"
+"SELECT CONCAT_WS('|', COUNT_TRANSACTIONS_IN_QUEUE, COUNT_TRANSACTIONS_REMOTE_IN_APPLIER_QUEUE, COUNT_TRANSACTIONS_LOCAL_PROPOSED, COUNT_TRANSACTIONS_LOCAL_ROLLBACK) FROM performance_schema.replication_group_member_stats WHERE MEMBER_ID = '$server_uuid'"
                 );
                 if ($local_stats) {
                     my ( $cert_queue, $applier_queue, $committed, $rollbacks )
@@ -1696,12 +1708,28 @@ sub check_replication_advanced {
                     my $total_tx = $committed + $rollbacks;
                     if ( $total_tx > 0 ) {
                         my $rollback_ratio = $rollbacks / $total_tx;
-                        if ( $rollback_ratio > 0.05 ) {
+                        my $single_primary =
+                          $myvar{'group_replication_single_primary_mode'}
+                          // 'ON';
+                        my $is_sp =
+                          ( $single_primary eq 'ON' || $single_primary eq '1' )
+                          ? 1
+                          : 0;
+                        my $rollback_thresh = $is_sp ? 0.05 : 0.02;
+                        if ( $rollback_ratio > $rollback_thresh ) {
                             badprint "Certification rollback ratio is "
                               . sprintf( "%.2f%%", $rollback_ratio * 100 )
-                              . " (too many optimistic lock conflicts)";
-                            push_recommendation( 'res',
-"High certification rollback ratio detected. Optimize write concurrency or switch to Single-Primary mode."
+                              . " (threshold: "
+                              . sprintf( "%.1f%%", $rollback_thresh * 100 )
+                              . ")";
+                            push_recommendation(
+                                'res',
+                                "High certification rollback ratio detected. "
+                                  . (
+                                    $is_sp
+                                    ? "Optimize write concurrency or switch to Single-Primary mode."
+                                    : "High multi-primary conflict rate! Consider switching to Single-Primary mode or tuning group_replication_flow_control_period."
+                                  )
                             );
                         }
                     }
@@ -1725,6 +1753,36 @@ sub check_replication_advanced {
             }
         }
 
+        # Estimate retention window based on real-time network throughput
+        my $uptime = $mystat{'Uptime'} // 1;
+        if (
+            $uptime > 0
+            && (   defined $mystat{'Bytes_sent'}
+                || defined $mystat{'Bytes_received'} )
+          )
+        {
+            my $bytes_sent = $mystat{'Bytes_sent'}     // 0;
+            my $bytes_recv = $mystat{'Bytes_received'} // 0;
+            my $net_rate   = ( $bytes_sent + $bytes_recv ) / $uptime;
+            if ( $net_rate > 102400 ) {
+                my $retention_sec = int( $cache_size / $net_rate );
+                if ( $retention_sec < 60 ) {
+                    badprint "group_replication_message_cache_size ("
+                      . hr_bytes($cache_size)
+                      . ") provides only ~${retention_sec}s network partition retention under current load ("
+                      . hr_bytes($net_rate) . "/s)";
+                    push_recommendation( 'res',
+"Increase group_replication_message_cache_size to prevent full state transfers (SST) during transient network partitions."
+                    );
+                }
+                else {
+                    goodprint
+"group_replication_message_cache_size retention capacity: ~${retention_sec}s under current network load ("
+                      . hr_bytes($net_rate) . "/s).";
+                }
+            }
+        }
+
         my $unreachable_timeout =
           $myvar{'group_replication_unreachable_majority_timeout'} // 0;
         if ( $unreachable_timeout == 0 ) {
@@ -1736,15 +1794,49 @@ sub check_replication_advanced {
         }
     }
 
-    # 4. MySQL Router Connectivity (Experimental)
-    my $router_conn = select_one(
-"SELECT COUNT(*) FROM information_schema.processlist WHERE USER LIKE '%router%' OR HOST LIKE '%router%'"
+    # 4. MySQL Router Connectivity & Advanced Traffic Metrics
+    my @router_procs = select_array(
+"SELECT COMMAND, INFO FROM information_schema.processlist WHERE USER LIKE '%router%' OR HOST LIKE '%router%'"
     );
-    my $router_conn_count =
-      ( defined $router_conn && $router_conn =~ /^\d+$/ ) ? $router_conn : 0;
+    my $router_conn_count = scalar(@router_procs);
     if ( $router_conn_count > 0 ) {
+        my $active_count = 0;
+        my $sleep_count  = 0;
+        my $write_count  = 0;
+        foreach my $p (@router_procs) {
+            my ( $cmd, $info ) = split( /\t/, $p );
+            $cmd  //= '';
+            $info //= '';
+            if ( $cmd ne 'Sleep' ) {
+                $active_count++;
+                if ( $info =~
+/^\s*(INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|REPLACE|TRUNCATE)/i
+                  )
+                {
+                    $write_count++;
+                }
+            }
+            else {
+                $sleep_count++;
+            }
+        }
         goodprint
-"MySQL Router connections active: found $router_conn_count connection(s) routed to this instance.";
+"MySQL Router connections active: found $router_conn_count connection(s) ($active_count active, $sleep_count sleeping) routed to this instance.";
+
+        if ( defined $myvar{'performance_schema'}
+            && $myvar{'performance_schema'} eq 'ON' )
+        {
+            my $local_role = select_one(
+'SELECT MEMBER_ROLE FROM performance_schema.replication_group_members WHERE MEMBER_ID = @@server_uuid'
+            ) // '';
+            if ( $local_role eq 'SECONDARY' && $write_count > 0 ) {
+                badprint
+"MySQL Router is routing write queries ($write_count detected) to a SECONDARY node!";
+                push_recommendation( 'res',
+"MySQL Router routing misconfiguration: write queries detected on a SECONDARY node. Check router destination ports (e.g. 6446 R/W vs 6447 R/O)."
+                );
+            }
+        }
     }
 }
 
@@ -11634,6 +11726,36 @@ sub mariadb_galera {
             push @generalrec,
 "Set pxc_strict_mode = ENFORCING to prevent unsafe operations on Percona XtraDB Cluster.";
         }
+    }
+
+    # 8. Galera Local Send & Recv Queue Monitoring
+    my $send_q_avg = $mystat{'wsrep_local_send_queue_avg'} // 0;
+    my $recv_q_avg = $mystat{'wsrep_local_recv_queue_avg'} // 0;
+    if ( $send_q_avg > 0.05 || $recv_q_avg > 0.05 ) {
+        badprint
+          sprintf( "Galera queue length elevated: send_avg=%.3f, recv_avg=%.3f",
+            $send_q_avg, $recv_q_avg );
+        push @generalrec,
+"Elevated Galera send/receive queues detected. Check network bandwidth and storage latency on slower nodes.";
+    }
+
+    # 9. Galera Primary Key Certification Enforcement
+    if ( defined $myvar{'wsrep_certify_non_pk'}
+        && $myvar{'wsrep_certify_non_pk'} eq 'OFF' )
+    {
+        badprint
+"wsrep_certify_non_pk is OFF. Non-PK tables can cause replication inconsistencies.";
+        push @generalrec,
+"Enable wsrep_certify_non_pk = ON to enforce automatic primary key certification in Galera.";
+    }
+
+    # 10. Galera Cluster Quorum & Split-Brain Risk
+    my $c_size = $mystat{'wsrep_cluster_size'} // 0;
+    if ( $c_size > 0 && $c_size % 2 == 0 ) {
+        badprint
+"Galera cluster size is an even number ($c_size nodes). Risk of split-brain without garbd.";
+        push @generalrec,
+"Use an odd number of nodes (3, 5) or deploy Galera Arbitrator (garbd) to prevent split-brain quorums.";
     }
 
     #debugprint Dumper get_wsrep_options() if $opt{debug};
