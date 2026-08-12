@@ -62,7 +62,7 @@ Thanks to LightPath for providing resources (dev servers, AI subscriptions, stag
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=major/MySQLTuner-perl&type=Date)](https://star-history.com/#major/MySQLTuner-perl&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=major/MySQLTuner-perl&type=Date)](https://star-history.dera.page/#major/MySQLTuner-perl&Date)
 
 Compatibility
 ====
