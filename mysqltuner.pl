@@ -11400,14 +11400,15 @@ sub mariadb_galera {
 "Set $wsrep_threads_var_name to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on replica";
 
         # check options for parallel replica
-        if ( get_wsrep_option('wsrep_slave_FK_checks') eq "OFF" ) {
-            badprint "wsrep_slave_FK_checks is off with parallel replica";
+        if ( ( get_wsrep_option('wsrep_slave_FK_checks') // '' ) eq "OFF" ) {
+            badprint
+"wsrep_slave_FK_checks is OFF and need to be ON with parallel replica";
             push @adjvars,
               "wsrep_slave_FK_checks should be ON when using parallel replica";
         }
 
         # wsrep_slave_UK_checks seems useless in MySQL source code
-        if ( $myvar{'innodb_autoinc_lock_mode'} != 2 ) {
+        if ( ( $myvar{'innodb_autoinc_lock_mode'} // 0 ) != 2 ) {
             badprint
               "innodb_autoinc_lock_mode is incorrect with parallel replica";
             push @adjvars,
@@ -11415,27 +11416,46 @@ sub mariadb_galera {
         }
     }
 
-    if ( get_wsrep_option('gcs.fc_limit') != $wsrep_threads_value * 5 ) {
+    my $fc_limit = get_wsrep_option('gcs.fc_limit');
+    $fc_limit =
+      ( defined($fc_limit) && $fc_limit ne '' && $fc_limit =~ /^[\d\.]+$/ )
+      ? $fc_limit + 0
+      : 0;
+
+    if ( $fc_limit != ( ( $wsrep_threads_value // 0 ) * 5 ) ) {
         badprint
           "gcs.fc_limit should be equal to 5 * $wsrep_threads_var_name (="
-          . ( $wsrep_threads_value * 5 ) . ")";
+          . ( ( $wsrep_threads_value // 0 ) * 5 ) . ")";
         push @adjvars, "gcs.fc_limit= $wsrep_threads_var_name * 5 (="
-          . ( $wsrep_threads_value * 5 ) . ")";
+          . ( ( $wsrep_threads_value // 0 ) * 5 ) . ")";
     }
     else {
         goodprint "gcs.fc_limit is equal to 5 * $wsrep_threads_var_name ( ="
-          . get_wsrep_option('gcs.fc_limit') . ")";
+          . $fc_limit . ")";
     }
 
-    if ( get_wsrep_option('gcs.fc_factor') != 0.8 ) {
-        badprint "gcs.fc_factor should be equal to 0.8 (="
-          . get_wsrep_option('gcs.fc_factor') . ")";
+    my $fc_factor = get_wsrep_option('gcs.fc_factor');
+    $fc_factor =
+      ( defined($fc_factor) && $fc_factor ne '' && $fc_factor =~ /^[\d\.]+$/ )
+      ? $fc_factor + 0
+      : 0;
+
+    if ( $fc_factor != 0.8 ) {
+        badprint "gcs.fc_factor should be equal to 0.8 (=" . $fc_factor . ")";
         push @adjvars, "gcs.fc_factor=0.8";
     }
     else {
         goodprint "gcs.fc_factor is equal to 0.8";
     }
-    if ( get_wsrep_option('wsrep_flow_control_paused') > 0.02 ) {
+
+    my $flow_control_paused_stat =
+      (      defined( $mystat{'wsrep_flow_control_paused'} )
+          && $mystat{'wsrep_flow_control_paused'} ne ''
+          && $mystat{'wsrep_flow_control_paused'} =~ /^[\d\.]+$/ )
+      ? $mystat{'wsrep_flow_control_paused'} + 0
+      : 0;
+
+    if ( $flow_control_paused_stat > 0.02 ) {
         badprint "Fraction of time node pause flow control > 0.02";
     }
     else {
