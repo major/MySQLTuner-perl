@@ -178,15 +178,29 @@ license your work under the [GPLv3 License].
 Copy of the license is available at [LICENSE]
 
 <a name="code-conventions"></a>
-## MySQLTuner Code Conventions
+## MySQLTuner Code Conventions & Quality Standards
 
-1. Check code convention using **perltidy** and **perlcritic**
-2. Don't manually update the version number in `mysqltuner.pl`.
+To maintain MySQLTuner's production stability, portability, and governance, all contributions must strictly adhere to the following rules:
 
+1. **Single-File Architecture & Zero-Dependency CPAN Policy**:
+   - `mysqltuner.pl` must remain a single, self-contained executable file.
+   - Module splitting or external non-core CPAN dependencies are strictly prohibited.
+2. **Mandatory Unit Tests (TDD)**:
+   - Every code modification, new indicator, or bugfix must be accompanied by dedicated unit tests in `tests/` using `Test::More`.
+   - Run the full suite before submitting: `prove -j4 -r tests/` or `make unit-tests`.
+3. **Conventional Commits**:
+   - All commit messages must follow the Conventional Commits format: `<type>(<scope>): <description>`.
+   - Allowed types: `feat:`, `fix:`, `chore:`, `docs:`, `perf:`, `test:`, `ci:`, `refactor:`.
+   - Commit formatting is validated by `@commitlint/cz-commitlint` via `npm run commit` or git pre-commit hooks.
+4. **Code Formatting & Cleanliness**:
+   - Format Perl code using `perltidy` (`make tidy` and `make check-tidy`).
+   - Static SQL queries must be uppercase and checked via `perl build/audit_tests.pl`.
+5. **No Direct Master Commits**:
+   - All development occurs in dedicated feature/fix branches. Release orchestration and version bumping are exclusively handled via release workflows.
 
 [Enhancement issue]:https://github.com/jmrenouard/MySQLTuner-perl/labels/enhancement
 [GitHub issue search]:https://github.com/jmrenouard/MySQLTuner-perl/search?type=Issues
-[git commit message guidelines]:http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+[git commit message guidelines]:https://www.conventionalcommits.org/
 [Open a Pull Request]:https://help.github.com/articles/using-pull-requests/
 [GPLv3 License]:https://en.wikipedia.org/wiki/GNU_General_Public_License
 [LICENSE]:https://github.com/jmrenouard/MySQLTuner-perl/blob/master/LICENSE
