@@ -309,6 +309,8 @@ To ensure consistency and high-density development, the following roles are defi
 
 * [x] **Performance Schema Pre-Flight Checks**:
   * [x] Dynamically verify Performance Schema table availability in `information_schema.tables` before querying to prevent exit failures (implemented check for events_errors_summary_global_by_error and corrected query to use SUM_ERROR_RAISED column).
+* [x] **Workload & Traffic Profiling Performance Bypass**:
+  * [x] Implement `--skipworkload` CLI option and optimize Auto-Increment Exhaustion Audit queries to prevent N+1 query loops.
 * [ ] **Horizontal Multi-Scenario Comparative HTML Report**:
   * [ ] Extend the HTML dashboard with a side-by-side comparative table showing metric differences between Standard, Container, and Dumpdir modes.
 * [ ] **Trace Logging for SQL Compilation Errors**:

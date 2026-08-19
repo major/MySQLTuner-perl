@@ -42,6 +42,13 @@ None
 - **Severity**: 🟡 MEDIUM — Style standard compliance failure
 - **Status**: [x] **FIXED** — Formatted `mysqltuner.pl` using `perltidy` and `dos2unix`. Verified that `make check-tidy` passes cleanly.
 
+#### PI-021: Extreme slowness in check_workload_traffic on large databases (Issue #986)
+- **Source**: `mysqltuner.pl` lines 1997-2051 (`check_workload_traffic`)
+- **Impact**: Takes hours to complete on servers with thousands of tables/databases.
+- **Root Cause**: Executing an N+1 query inside the loop to fetch `COLUMN_TYPE` on `information_schema.columns` for every single auto-increment column, plus lack of a bypass option.
+- **Severity**: 🟠 HIGH — Major operational performance bottleneck
+- **Status**: [x] **FIXED** — Implemented `--skipworkload` option and optimized query to retrieve `COLUMN_TYPE` directly in the main join query, eliminating the query loop. Verified via unit tests.
+
 ### 🟢 Low Issues
 
 None

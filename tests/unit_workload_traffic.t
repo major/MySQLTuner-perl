@@ -104,20 +104,32 @@ subtest 'Auto-Increment Exhaustion Audit' => sub {
     local *main::select_array = sub {
         my $sql = shift;
         if ($sql =~ /information_schema\.tables/i) {
-            return ("test_db\tlarge_table\tid\tint\t3500000000");
+            return ("test_db\tlarge_table\tid\tint\t3500000000\tint(11) unsigned");
         }
         return ();
     };
-    # Mock column type details (unsigned)
-    local *main::select_one = sub {
-        my $sql = shift;
-        if ($sql =~ /COLUMN_TYPE/i) {
-            return 'int(11) unsigned';
-        }
-        return '';
-    };
     main::check_workload_traffic();
     ok(grep(/Danger of auto-increment overflow on `test_db`.`large_table`.`id`/, @main::generalrec), 'Warns when auto-increment is near exhaustion');
+};
+
+# Subtest 5: Skip Workload Check
+subtest 'Skip Workload Check' => sub {
+    no warnings 'redefine', 'once';
+    reset_workload_state();
+    $main::opt{'skipworkload'} = 1;
+    $main::mystat{'Com_select'} = 900;
+    $main::mystat{'Com_insert'} = 50;
+
+    my $skipped_msg = 0;
+    local *main::infoprint = sub {
+        my $msg = shift;
+        if ($msg =~ /Skipped due to --skipworkload option/) {
+            $skipped_msg = 1;
+        }
+    };
+    main::check_workload_traffic();
+    ok($skipped_msg, 'Skipped message printed');
+    ok(scalar(@main::generalrec) == 0, 'No recommendations added when skipped');
 };
 
 done_testing();
