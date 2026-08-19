@@ -117,6 +117,27 @@ docker run -d \
   mysqltuner-mcp
 ```
 
+### Configuration des Clients IA (Claude Desktop, Cursor, Antigravity)
+
+Ajoutez cette configuration dans votre fichier `claude_desktop_config.json` ou `.cursor/mcp.json` :
+
+```json
+{
+  "mcpServers": {
+    "mysqltuner": {
+      "command": "python3",
+      "args": ["/chemin/vers/MySQLTuner-perl/build/mcp_server.py"],
+      "env": {
+        "DB_HOST": "127.0.0.1",
+        "DB_PORT": "3306",
+        "DB_USER": "mysqltuner",
+        "DB_PASSWORD": "secret_password"
+      }
+    }
+  }
+}
+```
+
 ---
 
 ## 🛡️ Consignes et Prompt Système pour l'Agent IA
