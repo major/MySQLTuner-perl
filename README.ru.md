@@ -521,7 +521,27 @@ perl mysqltuner.pl --prettyjson
 perl mysqltuner.pl --nondedicated
 ```
 
-Для полного списка всех доступных опций выполните `perl mysqltuner.pl --help` или обратитесь к документации [USAGE.md](https://github.com/major/MySQLTuner-perl/blob/master/USAGE.md).
+**Использование:** быстрое сканирование без анализа нагрузки таблиц (Issue #986)
+
+```bash
+perl mysqltuner.pl --skipworkload
+```
+
+**Использование:** схема исправлений для ИИ-агентов (Actionable JSON)
+
+```bash
+perl mysqltuner.pl --agent-json --outputfile=remediation.json
+```
+
+**Использование:** использование учетных данных из переменных окружения
+
+```bash
+export MYSQL_USER=mysqltuner
+export MYSQL_PASS=secret
+perl mysqltuner.pl --userenv=MYSQL_USER --passenv=MYSQL_PASS
+```
+
+Для полного списка всех доступных опций выполните `perl mysqltuner.pl --help` или обратитесь к документации [USAGE.md](USAGE.md).
 
 Поддержка облака
 --
