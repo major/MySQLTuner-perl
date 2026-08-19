@@ -10,6 +10,7 @@
 - fix(main): fall back to /usr/share/mysqltuner for vulnerabilities.csv (#985)
 - fix(versions): fix boolean evaluation of 0 EOL dates in sync_eol_dates.pl
 - fix(ci): resolve DB_PASS from multi-db-docker-env .env file in test_ha.sh
+- test(cve): add unit test unit_cvefile_fallback.t for downstream cvefile fallback resolution (#985)
 - test(galera): add unit test unit_galera_enhanced.t for Galera diagnostics (#975)
 - test(lab): add unit test test_issue_957.t for storage detection logic (#957)
 - test(main): add unit tests for --skipworkload option and auto-increment optimization (#986)

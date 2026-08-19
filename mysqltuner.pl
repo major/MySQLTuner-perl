@@ -2019,7 +2019,8 @@ sub check_workload_traffic {
             my ( $schema, $table, $col, $type, $curr_val, $col_type ) =
               split( /\t/, $col_info );
             $type = lc( $type // '' );
-            $curr_val //= 0;
+            $curr_val =
+              ( defined($curr_val) && $curr_val =~ /^(\d+)$/ ) ? $1 + 0 : 0;
             $col_type //= '';
 
             my $max_val     = 0;
