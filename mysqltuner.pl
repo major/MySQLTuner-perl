@@ -347,6 +347,12 @@ our %CLI_METADATA = (
         desc    => "Don't perform checks on user passwords",
         cat     => 'PERFORMANCE'
     },
+    'skipworkload' => {
+        type    => '!',
+        default => 0,
+        desc    => "Don't perform workload analysis and traffic profiling",
+        cat     => 'PERFORMANCE'
+    },
 
     # Output Options
     'silent' => {
@@ -1866,6 +1872,10 @@ sub check_security_2_0 {
 
 sub check_workload_traffic {
     subheaderprint "Workload Analysis & Traffic Profiling";
+    if ( ( $opt{'skipworkload'} // 0 ) eq 1 ) {
+        infoprint "Skipped due to --skipworkload option";
+        return;
+    }
 
     # 1. Workload Characterization (Read-Heavy vs Write-Heavy vs Mixed)
     my $com_select  = $mystat{'Com_select'}  // 0;
@@ -2000,20 +2010,19 @@ sub check_workload_traffic {
 
     # 4. Auto-Increment Exhaustion Audit
     my @auto_inc_cols = select_array(
-"SELECT t.TABLE_SCHEMA, t.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, t.AUTO_INCREMENT FROM information_schema.tables t JOIN information_schema.columns c ON t.table_schema = c.table_schema AND t.table_name = c.table_name WHERE c.extra = 'auto_increment' AND t.auto_increment IS NOT NULL AND t.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')"
+"SELECT t.TABLE_SCHEMA, t.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, t.AUTO_INCREMENT, c.COLUMN_TYPE FROM information_schema.tables t JOIN information_schema.columns c ON t.table_schema = c.table_schema AND t.table_name = c.table_name WHERE c.extra = 'auto_increment' AND t.auto_increment IS NOT NULL AND t.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')"
     );
 
     if ( scalar(@auto_inc_cols) > 0 ) {
         foreach my $col_info (@auto_inc_cols) {
-            my ( $schema, $table, $col, $type, $curr_val ) =
+            chomp($col_info);
+            my ( $schema, $table, $col, $type, $curr_val, $col_type ) =
               split( /\t/, $col_info );
             $type = lc( $type // '' );
             $curr_val //= 0;
+            $col_type //= '';
 
-            my $max_val  = 0;
-            my $col_type = select_one(
-"SELECT COLUMN_TYPE FROM information_schema.columns WHERE TABLE_SCHEMA = '$schema' AND TABLE_NAME = '$table' AND COLUMN_NAME = '$col'"
-            ) // '';
+            my $max_val     = 0;
             my $is_unsigned = ( $col_type =~ /unsigned/i ) ? 1 : 0;
 
             if ( $type eq 'tinyint' ) {
