@@ -753,7 +753,7 @@ sub setup_environment {
     $opt{pass} = $opt{password}
       if ( !$opt{pass} and $opt{password} );
 
-    # for RPM distributions
+    # for downstream distributions
     $basic_password_files = "/usr/share/mysqltuner/basic_passwords.txt"
       unless -f "$basic_password_files";
 
@@ -776,6 +776,10 @@ sub setup_environment {
     # Handle cvefile if it was not passed but exists locally
     $opt{cvefile} = './vulnerabilities.csv'
       if ( !$opt{cvefile} && -f './vulnerabilities.csv' );
+
+    # for downstream distributions
+    $opt{cvefile} = '/usr/share/mysqltuner/vulnerabilities.csv'
+      if ( !$opt{cvefile} && -f '/usr/share/mysqltuner/vulnerabilities.csv' );
 
     $opt{'bannedports'} = '' unless $opt{'bannedports'};
     @banned_ports       = split ',', $opt{'bannedports'};
