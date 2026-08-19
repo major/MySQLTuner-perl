@@ -1,4 +1,7 @@
-# Version Support for mariadb
+# Version Support for MariaDB
+
+> Official lifecycle data sourced dynamically from [endoflife.date/mariadb](https://endoflife.date/mariadb).
+> Regenerate via: `perl build/sync_eol_dates.pl`
 
 | Version | End of Support Date | LTS | Status |
 |---------|------------------------|-----|--------|

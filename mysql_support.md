@@ -1,4 +1,7 @@
-# Version Support for mysql
+# Version Support for MySQL
+
+> Official lifecycle data sourced dynamically from [endoflife.date/mysql](https://endoflife.date/mysql).
+> Regenerate via: `perl build/sync_eol_dates.pl`
 
 | Version | End of Support Date | LTS | Status |
 |---------|------------------------|-----|--------|
