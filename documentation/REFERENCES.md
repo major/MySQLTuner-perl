@@ -4,6 +4,35 @@ This document contains a curated list of official documentation, engineering blo
 
 ---
 
+## 🧮 Mathematical Formulations & Tuning Algorithms
+
+MySQLTuner implements standardized sizing algorithms to evaluate memory allocations and risk profiles:
+
+### 1. Global Server Buffers
+Global buffers are allocated once at server startup (or dynamically resized) and shared among all client sessions:
+$$\text{Global Buffers} = \text{innodb\_buffer\_pool\_size} + \text{innodb\_log\_buffer\_size} + \text{key\_buffer\_size} + \text{aria\_pagecache\_buffer\_size} + \text{query\_cache\_size}$$
+
+### 2. Per-Thread Session Buffers
+Per-thread buffers are allocated individually for each connected client whenever a query requires sorting, joins, or table scans:
+$$\text{Per-Thread Memory} = \text{read\_buffer\_size} + \text{read\_rnd\_buffer\_size} + \text{sort\_buffer\_size} + \text{join\_buffer\_size} + \text{binlog\_cache\_size} + \text{thread\_stack}$$
+
+### 3. Total Maximum Theoretical vs. Peak Memory
+- **Maximum Possible Memory Allocation:**
+  $$\text{Max Possible Memory} = \text{Global Buffers} + (\text{max\_connections} \times \text{Per-Thread Memory})$$
+- **Peak Realized Memory (Historical Peak):**
+  $$\text{Peak Memory} = \text{Global Buffers} + (\text{Max\_used\_connections} \times \text{Per-Thread Memory})$$
+
+### 4. Memory Safety Ratios & Headroom KPI
+- **Physical RAM Utilization:**
+  $$\text{RAM Usage Ratio} = \frac{\text{Max Possible Memory}}{\text{Physical RAM}} \times 100$$
+  - Safe: $\le 85\%$ on dedicated servers ($\le 60\%$ on shared/containerized hosts).
+  - Risk (OOM Trigger): $> 90\%$ triggers immediate warning.
+- **Buffer Pool Efficiency:**
+  $$\text{Hit Rate} = \left(1 - \frac{\text{Innodb\_buffer\_pool\_reads}}{\text{Innodb\_buffer\_pool\_read\_requests}}\right) \times 100$$
+  - Target: $\ge 99\%$ in OLTP workloads.
+
+---
+
 ## 🏛️ Official Documentations by Topic
 
 ### 1. Memory Management & Connection Tuning
