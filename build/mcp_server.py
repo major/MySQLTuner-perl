@@ -213,7 +213,7 @@ def main_mcp():
                         },
                         "serverInfo": {
                             "name": "mysqltuner-mcp",
-                            "version": "2.9.1"
+                            "version": "2.9.2"
                         }
                     },
                     "id": id_

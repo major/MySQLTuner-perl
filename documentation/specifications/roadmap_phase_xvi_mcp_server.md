@@ -1,4 +1,11 @@
+---
+test_file: tests/unit_mcp_server.t
+---
 # Specification: Roadmap Phase XVII - Dockerized Auditing Daemon & MCP Server Support
+
+## Goal
+
+Expose MySQLTuner via the Model Context Protocol (MCP) server interface (`build/mcp_server.py`) to enable real-time database tuning tool invocation from AI assistants.
 
 - **Feature Name**: Dockerized Auditing Daemon & MCP Server Support
 - **Status**: Draft
@@ -69,3 +76,8 @@ Tuning operations on production databases pose high risk. The MCP server impleme
 2. Run container: `docker run -d -e DB_HOST=localhost -e AUDIT_INTERVAL_HOURS=2 -v /tmp/cache:/var/cache/mysqltuner mysqltuner-mcp`.
 3. Verify that `/tmp/cache/latest.json` is generated and updated every 2 hours.
 4. Interact with the running container using an MCP client CLI (e.g. `@modelcontextprotocol/inspector`) and verify tools and resources are correctly exposed.
+
+## Verification
+
+- Validated via `tests/unit_mcp_server.t` and `tests/e2e_mcp_server.t`.
+- Confirms MCP tool registration, JSON-RPC protocol handling, and report parsing.

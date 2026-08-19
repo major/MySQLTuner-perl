@@ -1,3 +1,6 @@
+---
+test_file: tests/repro_mysql9_regressions.t
+---
 # Specification: MySQL 9.x Support
 
 ## Feature Name: MySQL 9.x Ecosystem Support
@@ -33,3 +36,8 @@ Ensure `mysqltuner.pl` is fully compatible with MySQL 9.x, handling removed vari
 1. Update version detection logic in `mysqltuner.pl`.
 2. Audit all existing checks for features removed in 9.x.
 3. Add specific advice for 9.x performance optimizations.
+
+## Verification
+
+- Validated via `tests/repro_mysql9_regressions.t`.
+- Confirms compatibility with MySQL 9.x versions and missing `mysql_native_password` variable handling.

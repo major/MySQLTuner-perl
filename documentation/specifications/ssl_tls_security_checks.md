@@ -1,3 +1,6 @@
+---
+test_file: tests/ssl_tls_validation.t
+---
 # Specification: SSL/TLS Security Checks
 
 ## Goal
@@ -39,3 +42,8 @@ Implement automated checks for SSL/TLS configuration in `mysqltuner.pl` to ensur
 - **Scenario 1**: User runs MySQLTuner on a default installation. It should detect that SSL might be missing or not forced.
 - **Scenario 2**: User has SSL enabled but hasn't disabled TLSv1.1. It should point out the security risk.
 - **Scenario 3**: User wants to know if their current connection to the database is encrypted.
+
+## Verification
+
+- Validated via `tests/ssl_tls_validation.t`.
+- Confirms warning outputs for unencrypted client traffic.

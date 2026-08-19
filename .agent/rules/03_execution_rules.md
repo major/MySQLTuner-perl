@@ -19,8 +19,8 @@ category: governance
 7. **ARTIFACT ROTATION:** Keep the `brain/` directory lean. Rotate old plans/walkthroughs after integration.
 8. **WEB SEARCH:** Assume world knowledge is out of date. Use web search for up-to-date documentation.
 
-9. **VERSION CONSISTENCY:** Version numbers MUST be synchronized across `CURRENT_VERSION.txt`, `Changelog`, and all occurrences within `mysqltuner.pl` (Header, internal variable, and POD documentation) before any release.
-10. **CONVENTIONAL COMMITS:** All commit messages MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. Use `npm run commit` for interactive commit creation. Compliance is enforced via `commitlint` and Git hooks.
+9. **VERSION CONSISTENCY & SYNCHRONIZATION:** Version numbers follow strict incremental semantic versioning (no irregular bumps). Version numbers MUST be synchronized across `CURRENT_VERSION.txt`, `Changelog`, `releases/v[VERSION].md`, and all occurrences within `mysqltuner.pl` (Header, internal variable `$VERSION`, and POD documentation) before any release.
+10. **CONVENTIONAL COMMITS & CENTRALIZED CHANGELOG:** All commit messages MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification (`feat:`, `fix:`, `chore:`, `docs:`, `perf:`, `test:`, `ci:`). Compliance is enforced via `@commitlint/cz-commitlint` and Git hooks (`npm run commit` / `git cz`).
 11. **NO DIRECT COMMIT:** All changes MUST be committed via `npm run commit` or `git cz` to ensure metadata quality and automated changelog compatibility.
 12. **VERSION SUPPORT POLICY:** Automated test example generation (via `run-tests`) MUST only target "Supported" versions of MySQL and MariaDB as defined in `mysql_support.md` and `mariadb_support.md`.
 
@@ -72,6 +72,7 @@ To ensure quality and clarity in every development cycle, all non-trivial featur
 - **STRICT PROHIBITION:** No `git commit`, `git push`, or `git tag` without an explicit user order.
 - **BRANCHING MANDATORY:** ALL developments, features, bug fixes, and interventions MUST be done in a dedicated Git branch separated from `master`. Committing directly to the `master` branch is strictly prohibited.
 - **UNIFIED RELEASE MANAGEMENT:** The entire release process (doc sync, testing, changelog generation, tagging, and branch creation) is now orchestrated exclusively by the `/release-manager` workflow. Do not run disjointed commands (`/git-flow`, `/release-preflight`, `/doc-sync`) manually.
+- **SYNCHRONIZED RELEASE TAGGING:** Every version bump MUST create an explicit `vX.Y.Z` Git tag force-pushed to origin during release orchestration, guaranteeing 100% synchronization between GitHub Releases and Git history.
 - **Conventional Commits:** Use `feat:`, `fix:`, `chore:`, `docs:`, `perf:`, `refactor:`, `style:`, `test:`, `ci:`. Breaking changes must be marked with `!` after type/scope or `BREAKING CHANGE:` in footer.
 - **Commit Validation:** Commits are automatically linted via `commitlint`. Non-compliant messages will be rejected by the pre-commit hook.
 - **History Documentation:** Use `npm run commit` to generate structured history.

@@ -185,4 +185,54 @@ subtest 'MySQL Router Connectivity' => sub {
     pass('MySQL Router connectivity check passed');
 };
 
+subtest 'Multi-Primary Mode & Lower Certification Threshold' => sub {
+    @main::generalrec = ();
+    MySQLTuner::TestHelper::reset_state();
+    $main::is_local_only = 0;
+
+    $main::myvar{'group_replication_group_name'} = 'test-cluster';
+    $main::myvar{'group_replication_single_primary_mode'} = 'OFF';
+    $main::myvar{'performance_schema'} = 'ON';
+    $main::physical_memory = 8 * 1024 * 1024 * 1024;
+    $main::myvar{'group_replication_message_cache_size'} = 1073741824;
+    $main::myvar{'group_replication_unreachable_majority_timeout'} = 10;
+
+    $mock_members_data = [
+        "host1\t3306\tONLINE\tPRIMARY\t8.0.35",
+        "host2\t3306\tONLINE\tPRIMARY\t8.0.35"
+    ];
+    # 30 rollbacks out of 1000 = 3.0% (exceeds 2.0% threshold for multi-primary, but below 5.0% single-primary)
+    $mock_stats_data = '10|5|970|30';
+
+    main::check_replication_advanced();
+
+    ok(grep(/High multi-primary conflict rate/, @main::generalrec), 'Warns on multi-primary certification rollback > 2%');
+};
+
+subtest 'Message Cache Network Retention Capacity Audit' => sub {
+    @main::generalrec = ();
+    MySQLTuner::TestHelper::reset_state();
+    $main::is_local_only = 0;
+
+    $main::myvar{'group_replication_group_name'} = 'test-cluster';
+    $main::myvar{'group_replication_single_primary_mode'} = 'ON';
+    $main::myvar{'performance_schema'} = 'ON';
+    $main::physical_memory = 32 * 1024 * 1024 * 1024;
+    $main::myvar{'group_replication_message_cache_size'} = 512 * 1024 * 1024; # 512 MB
+    $main::myvar{'group_replication_unreachable_majority_timeout'} = 10;
+
+    $main::mystat{'Uptime'} = 100;
+    $main::mystat{'Bytes_sent'} = 1000 * 1024 * 1024; # 1 GB sent in 100s = ~20 MB/s traffic rate
+    $main::mystat{'Bytes_received'} = 1000 * 1024 * 1024;
+
+    $mock_members_data = [
+        "host1\t3306\tONLINE\tPRIMARY\t8.0.35"
+    ];
+    $mock_stats_data = '10|5|1000|2';
+
+    main::check_replication_advanced();
+
+    ok(grep(/Increase group_replication_message_cache_size to prevent full state transfers/, @main::generalrec), 'Warns when cache retention window < 60s under active network traffic');
+};
+
 done_testing();

@@ -1,4 +1,11 @@
+---
+test_file: tests/schemadir.t
+---
 # Specification: Roadmap Phase XIII - Export Optimization & Dumpdir Hardening
+
+## Goal
+
+Optimize multi-table schema export performance with gzip compression (`--compress-dump`) and size limits (`--dump-limit`).
 
 ## Context
 
@@ -35,3 +42,8 @@ The `dumpdir` and `schemadir` features provide essential offline diagnostic capa
 - **Production Safety**: Zero risk of slowing down the source database due to excessive export activity.
 - **User Experience**: Faster turnaround time for offline diagnostic snapshots.
 - **Reliability**: Better traceability of offline reports via structured metadata.
+
+## Verification
+
+- Validated via `tests/schemadir.t`.
+- Confirms compressed dump file generation and export limit enforcement.

@@ -1,10 +1,15 @@
 ---
+test_file: tests/test_audit_logs.t
 trigger: after_test_run
 description: Post-execution audit of laboratory logs to detect subtle regressions and diagnostic anomalies.
 category: governance
 ---
 
 # Specification: Advanced Test Log Auditing
+
+## Goal
+
+Audit test execution logs (`execution.log`) after lab runs to detect Perl warnings, uninitialized values, SQL execution failures, and transport errors.
 
 ## 1. Description
 
@@ -34,3 +39,8 @@ Every laboratory run (via `make test`, `test-it`, or `test_envs.sh`) generates a
 - A `POTENTIAL_ISSUES` file exists if any anomaly is found.
 - The rule is formalized in `remembers.md` and `04_best_practices.md`.
 - No duplicated entries in `POTENTIAL_ISSUES` for the same lab run.
+
+## Verification
+
+- Validated via `build/audit_logs.pl` and `tests/test_audit_logs.t`.
+- Confirms detection of execution anomalies and log error reporting.

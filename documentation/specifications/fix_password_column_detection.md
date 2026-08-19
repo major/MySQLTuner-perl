@@ -1,4 +1,11 @@
+---
+test_file: tests/test_issue_22.t
+---
 # Specification: Robust Password Column Detection in mysqltuner.pl
+
+## Goal
+
+Inspect `information_schema.columns` dynamically to identify whether `mysql.user` uses `Password`, `authentication_string`, or vendor-specific columns, preventing query errors across MySQL 5.7, 8.0, 8.4, 9.x, and MariaDB versions.
 
 ## Problem
 
@@ -32,3 +39,8 @@ on versions where the `password` column no longer exists.
 - `mysqltuner.pl` executes security recommendations without SQL errors on MySQL 8.0.
 - `mysqltuner.pl` still works correctly on legacy MySQL 5.5/5.6.
 - `mysqltuner.pl` works correctly on MariaDB 10.11+.
+
+## Verification
+
+- Validated via `tests/test_issue_22.t` and `tests/fix_password_column_detection.t`.
+- Confirms zero SQL execution errors on `mysql.user` across all supported DBMS versions.

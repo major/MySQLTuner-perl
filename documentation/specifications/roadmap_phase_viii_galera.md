@@ -1,4 +1,11 @@
+---
+test_file: tests/unit_galera_enhanced.t
+---
 # Specification: Roadmap Phase VIII - Galera Cluster 4 & PXC 8.0 Mastery
+
+## Goal
+
+Provide advanced Galera 4 and Percona XtraDB Cluster (PXC) 8.0 cluster health diagnostics, flow control analysis, and wsrep variable checks.
 
 ## Context
 
@@ -27,10 +34,16 @@ Galera Cluster 4 (MariaDB 10.4+) and Percona XtraDB Cluster 8.0 have introduced 
 ### 4. Advanced Flow Control Observability
 
 * **Metric**: `wsrep_flow_control_paused`, `wsrep_flow_control_sent`, and `wsrep_flow_control_recv`.
+* **Flow Control Parameters**: Inspect `wsrep_provider_options` for `gcs.fc_limit` (default 64) and `gcs.fc_factor` (default 0.8). Low values cause aggressive throttling on moderate write bursts.
 * **Logic**: Identify which specific node is triggering flow control across the cluster ("Victim" vs "Culprit" detection).
-* **Recommendation**: Check disk latency on nodes with high `fc_sent`.
+* **Recommendation**: Increase `gcs.fc_limit` and check disk latency on nodes with high `fc_sent`.
 
-### 5. Group Communication Latency
+### 5. Non-PK Certification & Split-Brain Safeguards
+
+* **Primary Key Enforcement**: Warn if tables lack primary keys and `wsrep_certify_non_pk = OFF`, as writes cannot be safely verified in multi-writer topologies.
+* **Even Cluster Size Warning**: Warn if cluster node count is an even number (e.g., 2 or 4 nodes) without `garbd` (Galera Arbitrator Daemon), exposing the cluster to split-brain partition failures.
+
+### 6. Group Communication Latency
 
 * **Metric**: `wsrep_evs_repl_latency` (min/avg/max/stddev).
 * **Indicator**: Detect network jitter between nodes.
@@ -46,3 +59,8 @@ Galera Cluster 4 (MariaDB 10.4+) and Percona XtraDB Cluster 8.0 have introduced 
 * **Clustering Stability**: Avoiding expensive SST operations.
 * **Performance**: Reducing the impact of flow control on write throughput.
 * **Diagnostics**: Faster root cause analysis for "hanging" clusters.
+
+## Verification
+
+- Validated via `tests/unit_galera_enhanced.t` and `tests/unit_galera_pxc.t`.
+- Confirms wsrep cluster status parsing and flow control conflict reporting.

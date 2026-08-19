@@ -1,10 +1,15 @@
 ---
+test_file: tests/doc_sync.t
 title: Documentation Synchronization Enhancement
 status: draft
 project: MySQLTuner-perl
 ---
 
 # Documentation Synchronization Enhancement
+
+## Goal
+
+Automate synchronization between `mysqltuner.pl`, `README.md`, `INTERNALS.md`, and `.agent/README.md` to ensure indicator counts, version strings, and usage instructions remain 100% consistent.
 
 ## 🧠 Rationale
 
@@ -36,3 +41,8 @@ A new "Synchronization Checklist" will be added to the workflow to ensure:
 - Manual verification of documentation consistency.
 - Successful execution of `doc_sync.py`.
 - Validation of version strings across all 5 mandatory locations (CURRENT_VERSION.txt, script header, $VERSION variable, POD, Changelog).
+
+## Verification
+
+- Validated via `build/doc_sync.pl` and unit test `tests/doc_sync.t`.
+- Ensures `.agent/README.md` is updated cleanly.

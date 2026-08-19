@@ -107,21 +107,32 @@ make increment_major_version # Bumps major version (e.g. 2.8.41 -> 3.0.0)
 ```
 
 ### Step 2.3: Update the Changelog & Generate Release Notes
-1.  Add detailed bullet points in [Changelog](file:///Changelog) under the new version header, categorized by Conventional Commit types (`chore`, `feat`, `fix`, `test`, `ci`, etc.).
+1.  Add detailed bullet points in [Changelog](file:///Changelog) under the new version header, categorized following the strict priority order:
+    - `chore`
+    - `feat`
+    - `fix`
+    - `test`
+    - `ci`
+    - `docs`
+    - `perf`
 2.  Run the `/release-notes-gen` workflow (or script directly) to analyze the changelog, delta indicator metrics, and generate/update the corresponding release notes file:
     ```bash
     python3 build/release_gen.py
     ```
-    *Behind the scenes*: This compiles the release summary, diagnostic growth statistics, commit differences, and CLI modifications into [releases/](file:///releases/) (e.g., `releases/v2.8.42.md`).
+    *Behind the scenes*: This compiles the release summary, diagnostic growth statistics, commit differences, and CLI modifications into [releases/](file:///releases/) (e.g., `releases/v2.9.2.md`).
 
-### Step 2.4: Execute Release Preflight Checks
+### Step 2.4: Execute Release Preflight & Compliance Checks
 Run the preflight checks to guarantee zero configuration mismatch and 100% compliance:
 ```bash
+# Automated compliance sentinel:
+perl build/check_compliance.pl
+
+# Preflight checks:
 /release-preflight
 ```
 *Behind the scenes*: This workflow:
 1.  Verifies version consistency across files (via [tests/version_consistency.t](file:///tests/version_consistency.t)).
-2.  Verifies that release notes exist in `releases/v[VERSION].md`.
+2.  Verifies single-file architecture, zero-dependency CPAN rules, and release note presence.
 3.  Checks that all commit messages follow conventional commits since the last tag.
 4.  Checks project documentation formatting and metadata compliance.
 5.  Validates `mysqltuner.pl` code formatting (`make check-tidy`).

@@ -26,6 +26,7 @@ Liens utiles
 * **Versions/Tags :** [https://github.com/major/MySQLTuner-perl/tags](https://github.com/major/MySQLTuner-perl/tags)
 * **Changelog :** [https://github.com/major/MySQLTuner-perl/blob/master/Changelog](https://github.com/major/MySQLTuner-perl/blob/master/Changelog)
 * **Images Docker :** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
+* **Guide d'intégration Agent IA & Serveur MCP :** [Documentation/Guide Serveur MCP IA](https://github.com/major/MySQLTuner-perl/blob/master/documentation/mcp_ai_integration_guide.fr.md)
 * **Rapports HTML Interactifs (v2.9.0+) :**
   * [Exemple de rapport MariaDB 11.4](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_mariadb114/Schemadir/mysqltuner_report.html)
   * [Exemple de rapport MySQL 8.4](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_mysql84/Schemadir/mysqltuner_report.html)
@@ -60,7 +61,7 @@ Merci à LightPath pour la mise à disposition des ressources (serveurs de déve
 
 ## Historique des étoiles
 
-[![Star History Chart](https://api.star-history.com/svg?repos=major/MySQLTuner-perl&type=Date)](https://star-history.com/#major/MySQLTuner-perl&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=major/MySQLTuner-perl&type=Date)](https://star-history.dera.page/#major/MySQLTuner-perl&Date)
 
 Compatibilité
 ====
@@ -102,6 +103,36 @@ Merci à [endoflife.date](https://endoflife.date/)
 * **Analyse de tendances historiques** : Ingestion de sorties JSON de runs précédents via `--compare-file` pour suivre les tendances QPS et de croissance des données.
 * **Intégration Sysbench** : Analyse de la sortie sysbench pour les métriques QPS, TPS et latence (Moy/95e/Max) via `--sysbench-file`.
 * **Intégration logs Container et Systemd** : Détection automatique des logs depuis Docker, Podman, Kubectl/Kubernetes et le journal Systemd.
+* **Support Protocole IA & MCP** : Serveur microservice Model Context Protocol (MCP) natif stdio JSON-RPC et sortie JSON structurée `--agent-json` pour les clients IA (Claude Desktop, Cursor, VS Code / Cline, Antigravity).
+
+---
+
+## 🤖 Intégration Agent IA & Model Context Protocol (MCP)
+
+MySQLTuner prend en charge en natif les flux de travail basés sur l'Intelligence Artificielle (IA), les agents DBA autonomes et les assistants de développement (ex. Claude Desktop, Cursor IDE, VS Code / Cline, Antigravity, ainsi que les frameworks LangChain et LlamaIndex).
+
+Pour la documentation technique complète, consultez le [Guide d'Intégration IA & MCP (FR)](documentation/mcp_ai_integration_guide.fr.md), la [Version Anglaise](documentation/mcp_ai_integration_guide.md) et le fichier [AGENT.md](AGENT.md).
+
+### Modes d'Opération
+
+1. **Télémétrie CLI Directe (`--agent-json`)** :
+   Émet un schéma JSON structuré sans dépendance externe contenant les diagnostics, les scores d'impact (`1`-`10`), les niveaux de risque (`Low`, `Medium`, `High`, `Critical`), les requêtes d'exécution `SET GLOBAL` ainsi que les instructions de retour en arrière `rollback_statement`.
+   ```bash
+   perl mysqltuner.pl --agent-json --host 127.0.0.1 --user root --pass secret
+   ```
+
+2. **Serveur Model Context Protocol (MCP)** :
+   Un microservice léger ([build/mcp_server.py](build/mcp_server.py) et [Dockerfile.mcp](Dockerfile.mcp)) communiquant via l'entrée/sortie standard (stdio) en JSON-RPC 2.0.
+   - **Ressources** : `mysqltuner://reports/latest.json`, `mysqltuner://indicators/summary.json`
+   - **Outils** : `get_latest_audit`, `run_audit`, `apply_recommendation`, `rollback_recommendation`
+   ```bash
+   docker run -d \
+     --name mysqltuner-mcp \
+     -e DB_HOST=127.0.0.1 -e DB_USER=root -e DB_PASSWORD=secret \
+     mysqltuner-mcp
+   ```
+
+---
 
 ***Moteurs de stockage non pris en charge : les PR sont les bienvenues***
 --
@@ -242,7 +273,7 @@ docker run --rm -it -v $(pwd)/my.cnf:/defaults.cnf -v $(pwd)/results:/results jm
 
 ### Emplacement des versions (Releases)
 
-* Les notes de version officielles et l'historique sont documentés dans le dossier [releases/](releases/) de ce dépôt (par exemple, [releases/v2.9.0.md](releases/v2.9.0.md)).
+* Les notes de version officielles et l'historique sont documentés dans le dossier [releases/](releases/) de ce dépôt (par exemple, [releases/v2.9.2.md](releases/v2.9.2.md)).
 * Les tags de version Git et les archives sources téléchargeables sont disponibles sur [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 Installation facultative de Sysschema pour MySQL 5.6
@@ -490,6 +521,18 @@ perl mysqltuner.pl --prettyjson
 perl mysqltuner.pl --nondedicated
 ```
 
+**Utilisation :** Analyse accélérée en ignorant l'analyse de charge des tables (Issue #986)
+
+```bash
+perl mysqltuner.pl --skipworkload
+```
+
+**Utilisation :** Schéma de remédiation IA (JSON Actionnable)
+
+```bash
+perl mysqltuner.pl --agent-json --outputfile=remediation.json
+```
+
 **Utilisation :** Utiliser des identifiants via des variables d'environnement
 
 ```bash
@@ -498,7 +541,7 @@ export MYSQL_PASS=secret
 perl mysqltuner.pl --userenv=MYSQL_USER --passenv=MYSQL_PASS
 ```
 
-Pour une liste complète de toutes les options disponibles, exécutez `perl mysqltuner.pl --help` ou consultez la documentation [USAGE.md](https://github.com/major/MySQLTuner-perl/blob/master/USAGE.md).
+Pour une liste complète de toutes les options disponibles, exécutez `perl mysqltuner.pl --help` ou consultez la documentation [USAGE.md](USAGE.md).
 
 Prise en charge du cloud
 --

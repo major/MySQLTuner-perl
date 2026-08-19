@@ -1,4 +1,11 @@
+---
+test_file: tests/syslog_journal_detection.t
+---
 # Specification - Syslog and Systemd Journal Support for MariaDB/MySQL
+
+## Goal
+
+Support log ingestion from `journalctl` and `/var/log/syslog` when standard MySQL log files are unreadable or handled by systemd log management.
 
 ## 🧠 Rationale
 

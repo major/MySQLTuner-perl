@@ -1,4 +1,11 @@
+---
+test_file: tests/compliance.t
+---
 # Specification: Strategic Technical Evolutions
+
+## Goal
+
+Outline strategic engineering evolutions for MySQLTuner including interactive release management, automated EOL date auditing, and Spec-Driven Development (SDD).
 
 - **Feature Name**: Strategic Technical Evolutions
 - **Status**: Draft
@@ -63,3 +70,8 @@ The **Automated Changelog Formatting Verification** hook intercepts the commit, 
 ### Manual Verification
 - Execute `--help` and verify that documentation references are listed and dynamically generated.
 - Run the localized script (e.g., with environment configuration) to verify translation mapping of reference domains.
+
+## Verification
+
+- Validated via `build/check_compliance.pl` and `build/audit_specifications.pl`.
+- Confirms specification compliance and workflow execution.

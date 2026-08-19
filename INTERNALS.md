@@ -54,6 +54,9 @@
 - [MySQLTuner Sysbench Integration](#mysqltuner-sysbench-integration)
 - [MySQLTuner Historical Trend Analysis](#mysqltuner-historical-trend-analysis)
 - [MySQLTuner Aborted Connections Management](#mysqltuner-aborted-connections-management)
+- [MySQLTuner AI Agent Remediation & MCP Server Architecture](#mysqltuner-ai-agent-remediation--mcp-server-architecture)
+- [MySQLTuner Workload Profiling & Auto-Increment Optimization](#mysqltuner-workload-profiling--auto-increment-optimization)
+- [MySQLTuner Enhanced Galera Cluster & Group Replication](#mysqltuner-enhanced-galera-cluster--group-replication)
 
 ## MySQLTuner steps
 
@@ -689,3 +692,32 @@ Activated with `--structstat` or `--verbose`.
   - Atomic writes to prevent corruption
   - Transport-specific host and container identifiers in state file path to prevent collisions
 - Adjusts the aborted connections count to subtract connections caused by MySQLTuner's own password strength checks
+
+## MySQLTuner AI Agent Remediation & MCP Server Architecture
+
+- **Actionable JSON (`--agent-json`)**:
+  - Emits normalized JSON schema containing prioritized remediation recommendations.
+  - Every finding includes: `category`, `rule_id`, `risk_level` (`Low`, `Medium`, `High`, `Critical`), `impact_score` (`1`-`10`), `fix_statement` (`SET GLOBAL ...`), and `rollback_statement`.
+  - Machine-readable structure designed for deterministic AI agent execution without unstructured text parsing.
+- **Model Context Protocol (MCP) Daemon**:
+  - Lightweight Python wrapper (`build/mcp_server.py`) exposing MySQLTuner as a standardized JSON-RPC 2.0 stdio / SSE tool.
+  - Exposes tools: `run_audit`, `get_latest_audit`, `apply_recommendation`, `rollback_recommendation`.
+
+## MySQLTuner Workload Profiling & Auto-Increment Optimization
+
+- **High-Performance Table Churn & Auto-Increment Scanning**:
+  - Optimized SQL query combining `information_schema.TABLES` and `information_schema.COLUMNS` to evaluate AUTO_INCREMENT usage percentages in a single batch pass.
+  - Detects exhausted keys near the max integer limit for `TINYINT`, `SMALLINT`, `MEDIUMINT`, `INT`, and `BIGINT`.
+- **Fast-Track Workload Bypass (`--skipworkload`)**:
+  - For massive enterprise deployments (>10,000 tables), `--skipworkload` bypasses heavy information_schema joins to complete connection, memory, buffer pool, and replication diagnostics in sub-second execution times.
+
+## MySQLTuner Enhanced Galera Cluster & Group Replication
+
+- **Galera Multi-Master Diagnostics**:
+  - Evaluates `wsrep_flow_control_paused` to identify cluster-wide replication pauses and lag.
+  - Inspects `wsrep_provider_options` (`gcs.fc_limit`, `gcs.fc_factor`) to detect misconfigured replication flow thresholds.
+  - Warns on non-primary key tables (`wsrep_certify_non_pk = OFF`) and even cluster node counts risking split-brain scenarios.
+- **MySQL Group Replication & InnoDB Cluster**:
+  - Analyzes `performance_schema.replication_group_members` for node states (`ONLINE`, `RECOVERING`, `UNREACHABLE`).
+  - Audits single-primary vs multi-primary configurations and transaction certification queues.
+

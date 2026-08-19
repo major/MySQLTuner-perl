@@ -1,4 +1,11 @@
+---
+test_file: tests/compliance.t
+---
 # Specification: Persistent Lab Environment
+
+## Goal
+
+Provide persistent Docker container orchestration via `make lab-up` and `make lab-down` to test MySQLTuner against real database instances without resetting state on each run.
 
 ## 🧠 Rationale
 
@@ -34,3 +41,8 @@ Current testing (via `build/test_envs.sh`) restarts containers for every run. Th
 - Verify containers are still running after script completion.
 - Run `mysqltuner.pl` manually against the running container.
 - Stop the lab manually.
+
+## Verification
+
+- Validated via `build/test_envs.sh --keep-alive`.
+- Confirms lab containers start, accept queries, and stop cleanly.

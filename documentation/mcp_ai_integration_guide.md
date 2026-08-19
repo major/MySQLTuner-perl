@@ -1,47 +1,159 @@
-# AI & MCP Integration Guide for MySQL Optimization
+# AI Agent Integration & Model Context Protocol (MCP) Server Guide
 
-This guide explains how to set up the Model Context Protocol (MCP) server for MySQLTuner and configure AI agents (e.g. Claude Desktop, Cursor, VS Code Extensions) to run deep, automated performance audits and apply safe, rollback-enabled tuning configurations.
+This guide provides exhaustive technical documentation for integrating MySQLTuner with Artificial Intelligence (AI) agents, LLM coding assistants, and automated database administration pipelines using the **Model Context Protocol (MCP)** and direct `--agent-json` CLI telemetry.
 
 ---
 
-## 📦 Part 1: Setting Up the MCP Server
+## 🏗️ Architecture & Component Overview
 
-The MySQLTuner MCP server acts as an intermediary bridge between your database and AI agents, exposing database telemetry and actionable SQL recommendations over standard I/O (stdio).
+MySQLTuner provides a zero-dependency, container-ready AI integration stack. It bridges database engine metrics with modern AI clients (such as Claude Desktop, Cursor IDE, VS Code extensions, Antigravity, and LangChain/LlamaIndex frameworks).
 
-### Method A: Dockerized Deployment (Recommended)
-This method containerizes the entire toolchain (Perl, Python 3, and mysql client utilities) to ensure compatibility.
+```mermaid
+graph TD
+    subgraph "AI Client Layer"
+        Claude[Claude Desktop]
+        Cursor[Cursor IDE]
+        VSCode[VS Code / Cline / Roo Code]
+        Custom[Custom LLM Pipeline]
+    end
+
+    subgraph "MCP Server Layer (build/mcp_server.py)"
+        JSONRPC[JSON-RPC 2.0 stdio Interface]
+        Daemon[Background Audit Daemon]
+        CacheManager[JSON / HTML Cache Store]
+        RollbackEngine[Rollback & Transaction Engine]
+    end
+
+    subgraph "Database & Core Engine"
+        PerlEngine[MySQLTuner Perl Core (mysqltuner.pl)]
+        MySQLInstance[(MySQL / MariaDB / Percona Server)]
+    end
+
+    Claude <-->|stdio JSON-RPC| JSONRPC
+    Cursor <-->|stdio JSON-RPC| JSONRPC
+    VSCode <-->|stdio JSON-RPC| JSONRPC
+    Custom <-->|stdio JSON-RPC| JSONRPC
+
+    JSONRPC --> Daemon
+    Daemon -->|Executes --agent-json| PerlEngine
+    PerlEngine -->|SQL Telemetry| MySQLInstance
+    PerlEngine -->|Structured JSON| CacheManager
+    CacheManager -->|Resources & Findings| JSONRPC
+    RollbackEngine -->|SET GLOBAL / Revert| MySQLInstance
+```
+
+---
+
+## ⚡ Mode 1: Direct CLI Machine Integration (`--agent-json`)
+
+When invoked with `--agent-json`, `mysqltuner.pl` suppresses ANSI formatting and outputs a clean, single-payload JSON schema designed for direct LLM ingestion or programmatic parsing.
+
+### CLI Command Syntax
+```bash
+perl mysqltuner.pl --agent-json --host <db_host> --user <db_user> --pass <db_pass>
+```
+
+### JSON Schema & Field Specifications
+```json
+{
+  "findings": [
+    {
+      "id": "innodb_buffer_pool_size_adjust",
+      "topic": "Performance",
+      "description": "InnoDB buffer pool size is under-allocated for current workload.",
+      "impact_score": 9,
+      "risk_level": "Medium",
+      "risk_description": "Increases memory consumption. Ensure sufficient OS-free RAM to prevent OOM swapping.",
+      "requires_restart": false,
+      "expected_outcome": "Reduces disk I/O and increases query cache read hits.",
+      "action": {
+        "type": "SQL",
+        "statement": "SET GLOBAL innodb_buffer_pool_size = 1073741824;",
+        "rollback_statement": "SET GLOBAL innodb_buffer_pool_size = 134217728;"
+      }
+    }
+  ]
+}
+```
+
+#### Field Glossary:
+- **`id`**: Deterministic key for the specific diagnostic check.
+- **`topic`**: Domain (`Performance`, `Security`, `Reliability`, `Modeling`, `Replication`).
+- **`impact_score`**: Estimated optimization value on a scale of `1` (minor) to `10` (critical optimization).
+- **`risk_level`**: Safety classification (`Low`, `Medium`, `High`, `Critical`).
+- **`risk_description`**: Detailed side-effect analysis (memory allocation, table lock potential, restart requirement).
+- **`requires_restart`**: Boolean (`true`/`false`) indicating if `my.cnf` edit and service restart is required.
+- **`action`**: Object containing the executable `statement` (`SQL` or `Config`) and its counterpart `rollback_statement`.
+
+---
+
+## 🔌 Mode 2: Model Context Protocol (MCP) Server Interface
+
+The MySQLTuner MCP server ([build/mcp_server.py](file:///build/mcp_server.py)) implements the standard MCP specification over `stdio` transport using JSON-RPC 2.0.
+
+### Exposed MCP Resources
+
+| URI Resource | Content Type | Description |
+| :--- | :--- | :--- |
+| `mysqltuner://reports/latest.json` | `application/json` | Accesses the latest cached audit findings and database variable state. |
+| `mysqltuner://reports/latest.html` | `text/html` | Retrieves the interactive HTML analytics report (pgBadger-style visuals). |
+| `mysqltuner://indicators/summary.json` | `application/json` | Provides high-level KPI indicators (Performance, Security, Resilience scores). |
+
+### Exposed MCP Tools
+
+#### 1. `get_latest_audit`
+* **Purpose**: Retrieves cached audit findings instantly without querying the database server.
+* **Arguments**: None.
+
+#### 2. `run_audit`
+* **Purpose**: Triggers a live execution of `mysqltuner.pl --agent-json` and updates the cache.
+* **Arguments**: None.
+
+#### 3. `apply_recommendation`
+* **Purpose**: Applies a safe, dynamic SQL tuning adjustment (`SET GLOBAL`).
+* **Arguments**:
+  - `statement` (string, required): The SQL command to execute.
+  - `variable_name` (string, optional): Target variable to capture pre-execution baseline for rollback.
+
+#### 4. `rollback_recommendation`
+* **Purpose**: Reverts a previously applied SQL modification using recorded transaction state.
+* **Arguments**:
+  - `statement_id` (string, required): Transaction identifier returned during `apply_recommendation`.
+
+---
+
+## 🚀 Deployment & Configuration Guide
+
+### Containerized Deployment (Recommended Microservice)
+
+The official Docker image ([Dockerfile.mcp](file:///Dockerfile.mcp)) packages Perl, Python 3, mysql-client, and the MCP server.
 
 ```bash
 docker run -d \
   --name mysqltuner-mcp \
-  -e DB_HOST=your-database-host \
+  -e DB_HOST=mysql-server \
   -e DB_PORT=3306 \
-  -e DB_USER=tuner_user \
-  -e DB_PASSWORD=your_password \
+  -e DB_USER=root \
+  -e DB_PASSWORD=secret_pass \
   -e AUDIT_INTERVAL_HOURS=6 \
   -v /var/cache/mysqltuner:/var/cache/mysqltuner \
   mysqltuner-mcp
 ```
 
-### Method B: Local Execution (Without Docker)
-Ensure Python 3 and Perl are installed locally, then run the script directly:
-```bash
-export DB_HOST="127.0.0.1"
-export DB_USER="root"
-export DB_PASSWORD="your_password"
-export CACHE_DIR="./mcp_cache"
-
-python3 build/mcp_server.py
-```
+#### Supported Environment Variables:
+- `DB_HOST`: Hostname or IP address of the target MySQL/MariaDB server (default: `127.0.0.1`).
+- `DB_PORT`: Database port (default: `3306`).
+- `DB_USER`: Database audit user (default: `root`).
+- `DB_PASSWORD`: Password for the database user.
+- `AUDIT_INTERVAL_HOURS`: Periodic audit refresh interval in hours (default: `6`).
+- `CACHE_DIR`: Cache directory for report artifacts (default: `/var/cache/mysqltuner`).
 
 ---
 
-## 🛠️ Part 2: Configuring AI Clients
+### Client IDE & Agent Configurations
 
-Once the server is running, register it inside your preferred AI agent environment.
-
-### 1. Claude Desktop Config
-Add the server definition to your Claude Desktop configuration file:
+#### 1. Claude Desktop
+Edit your Claude configuration file:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
@@ -61,7 +173,7 @@ Add the server definition to your Claude Desktop configuration file:
         "-e",
         "DB_USER=root",
         "-e",
-        "DB_PASSWORD=secret",
+        "DB_PASSWORD=your_password",
         "mysqltuner-mcp"
       ]
     }
@@ -69,17 +181,16 @@ Add the server definition to your Claude Desktop configuration file:
 }
 ```
 
-### 2. Cursor IDE Config
-1. Open Cursor and navigate to **Settings** -> **Features** -> **MCP**.
+#### 2. Cursor IDE
+1. Go to **Settings** -> **Features** -> **MCP**.
 2. Click **+ Add New MCP Server**.
-3. Fill in the parameters:
+3. Configure settings:
    - **Name**: `mysqltuner`
    - **Type**: `stdio`
    - **Command**: `python3 /path/to/MySQLTuner-perl/build/mcp_server.py`
-4. Set environment variables in the terminal where Cursor was launched.
 
-### 3. VS Code (Cline / Roo Code / Roo Cline)
-Configure the extension settings `mcpSettings.json` to spawn the server:
+#### 3. VS Code (Cline / Roo Code)
+Add to `mcpSettings.json`:
 ```json
 {
   "mcpServers": {
@@ -98,39 +209,18 @@ Configure the extension settings `mcpSettings.json` to spawn the server:
 
 ---
 
-## 🔍 Part 3: Deep Database Tuning with AI
+## 🛡️ AI Agent Governance & System Prompt
 
-When connected, the AI agent has access to MySQLTuner findings and can cross-reference logs, memory allocations, and schema design to perform high-density optimizations.
-
-### 1. Memory Allocation and Buffers
-AI agents can parse the buffer pool allocations and compare them to physical RAM limits to prevent Out-Of-Memory (OOM) situations.
-- **Agent Analysis**: Evaluates `pct_max_physical_memory` to verify if memory usage is safe.
-- **Live Adjustment**: Executes `apply_recommendation` with `SET GLOBAL innodb_buffer_pool_size = <value>` if the database version supports dynamic buffer pool resizing (MySQL 5.7+).
-
-### 2. Connection Saturation and Thread Cache
-High connection spikes cause high thread creation overhead.
-- **Agent Analysis**: Evaluates `max_connections` and matches it against `threads_created`.
-- **Live Adjustment**: Sets `thread_cache_size` to reduce creation overhead:
-  `SET GLOBAL thread_cache_size = 16;`
-
-### 3. Index Profiling and Table Churn
-- **Agent Analysis**: The agent queries table fragmentation and matches it with Performance Schema query logs.
-- **Live Action**: Automatically schedules defragmentation for high-churn tables:
-  `OPTIMIZE TABLE schema_name.table_name;`
-
----
-
-## 🤖 Part 4: Advanced Prompt Engineering for AI Agents
-
-To ensure the AI operates safely and acts as an expert DBA, prepend your conversations with the following System Prompt:
+To ensure safe, production-grade operations, inject the following system prompt into your LLM agent context:
 
 ```markdown
-You are a Senior Principal Database Administrator (DBA). You have access to the MySQLTuner MCP server.
-Your core mission is to audit, analyze, and optimize the MySQL instance safely.
+You are a Principal Database Administrator (DBA) managing a MySQL/MariaDB infrastructure via the MySQLTuner MCP server.
 
-### Operating Rules:
-1. **Always Verify Baseline**: Before executing any SQL changes, read the cached audit resources (`mysqltuner://reports/latest.json`).
-2. **Classify by Risk**: Categorize recommendations. Apply 'Low' or 'Medium' risk adjustments dynamically. Never apply 'High' or 'Critical' recommendations (such as changes requiring a service restart or ALTER TABLE on tables > 10GB) without explicit user confirmation.
-3. **Draft Rollbacks First**: Before invoking `apply_recommendation`, state the exact SQL statement to be executed AND the corresponding `rollback_statement` so the user is fully informed.
-4. **Iterative Auditing**: After applying a recommendation, trigger `run_audit` to confirm that the indicator has improved. If performance metrics degrade or the audit flags unexpected regressions, immediately run `rollback_recommendation` using the returned Statement ID.
+### Safety Rules:
+1. **Baseline Inspection**: Always run `get_latest_audit` before proposing changes.
+2. **Risk Categorization**:
+   - `Low` / `Medium` risk statements with `requires_restart: false` can be applied live after presenting the rollback statement to the user.
+   - `High` / `Critical` risk statements or changes with `requires_restart: true` MUST require explicit confirmation.
+3. **Rollback Availability**: Always state both the `statement` and `rollback_statement` prior to executing `apply_recommendation`.
+4. **Post-Execution Verification**: Call `run_audit` after executing changes to verify KPI score improvement. If metrics regress, immediately execute `rollback_recommendation`.
 ```

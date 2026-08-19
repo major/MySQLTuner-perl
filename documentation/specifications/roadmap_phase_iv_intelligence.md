@@ -1,4 +1,11 @@
+---
+test_file: tests/phase4_features.t
+---
 # Specification: Roadmap Phase IV - Advanced Intelligence & Ecosystem
+
+## Goal
+
+Implement Phase IV roadmap features including Weighted Health Score KPI, Predictive Capacity Planning, Guided Auto-Fix Engine, and CSV Exports.
 
 ## Context
 
@@ -61,3 +68,8 @@ Phase IV refocuses MySQLTuner-perl on proactive intelligence, lifecycle manageme
 * **Decision Support**: Higher quality information for DBAs and SREs during migrations and scaling.
 * **Business Visibility**: Clear KPIs for stakeholders via the Health Score.
 * **Operational Speed**: Faster time-to-fix with the Auto-Fix engine.
+
+## Verification
+
+- Validated via `tests/phase4_features.t` and `tests/unit_phase13_kpis.t`.
+- Confirms calculation of Weighted Health Score KPI and forecasting metrics.

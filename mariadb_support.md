@@ -1,9 +1,12 @@
-# Version Support for mariadb
+# Version Support for MariaDB
+
+> Official lifecycle data sourced dynamically from [endoflife.date/mariadb](https://endoflife.date/mariadb).
+> Regenerate via: `perl build/sync_eol_dates.pl`
 
 | Version | End of Support Date | LTS | Status |
 |---------|------------------------|-----|--------|
-| 12.3 | 2029-06-30 | YES | Supported |
-| 12.2 | 2026-05-13 | NO | Outdated |
+| 12.3 | N/A | YES | Supported |
+| 12.2 | 2026-05-28 | NO | Outdated |
 | 12.1 | 2026-02-13 | NO | Outdated |
 | 12.0 | 2025-11-18 | NO | Outdated |
 | 11.8 | 2028-06-04 | YES | Supported |

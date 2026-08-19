@@ -1,4 +1,11 @@
+---
+test_file: tests/unit_ha_cluster.t
+---
 # Specification: Roadmap Phase VI - High Availability & InnoDB Cluster
+
+## Goal
+
+Incorporate High Availability diagnostics for MySQL InnoDB Cluster, Group Replication, and Router instances.
 
 ## Context
 
@@ -53,3 +60,8 @@ As MySQL environments shift towards High Availability (HA) architectures, MySQLT
 * **Resilience**: Proactive detection of cluster partition risks.
 * **Performance**: Identifying the "bottleneck node" that triggers cluster-wide flow control.
 * **Observability**: Bringing enterprise-grade HA monitoring to a single-file script.
+
+## Verification
+
+- Validated via `tests/unit_ha_cluster.t` and `make test-ha-innodb`.
+- Confirms Group Replication state parsing and primary/secondary node detection.

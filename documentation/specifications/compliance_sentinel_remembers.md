@@ -1,3 +1,6 @@
+---
+test_file: tests/compliance.t
+---
 # Specification: Compliance Sentinel - Remembers Integration
 
 ## Goal

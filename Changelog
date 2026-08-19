@@ -1,9 +1,31 @@
 # MySQLTuner Changelog
 
-2.9.1 2026-07-27
+2.9.2 2026-07-29
+- chore(deps): replace abandoned cz-conventional-changelog with @commitlint/cz-commitlint (#587)
+- feat(galera): add network queue, PK certification, and split-brain quorum diagnostics (#975)
+- feat(main): enhance MySQL InnoDB Cluster & Group Replication diagnostics (#976)
+- feat(main): add --skipworkload option to skip workload analysis & traffic profiling (#986)
+- fix(galera): harden wsrep options and status checks against uninitialized values (#975)
+- fix(main): enhance storage detection for HW RAID controllers (AVAGO/LSI MegaRAID) (#957)
+- fix(main): fall back to /usr/share/mysqltuner for vulnerabilities.csv (#985)
+- fix(versions): fix boolean evaluation of 0 EOL dates in sync_eol_dates.pl
+- fix(ci): resolve DB_PASS from multi-db-docker-env .env file in test_ha.sh
+- test(cve): add unit test unit_cvefile_fallback.t for downstream cvefile fallback resolution (#985)
+- test(galera): add unit test unit_galera_enhanced.t for Galera diagnostics (#975)
+- test(lab): add unit test test_issue_957.t for storage detection logic (#957)
+- test(main): add unit tests for --skipworkload option and auto-increment optimization (#986)
+- ci(build): add rules scope to check_compliance.pl allowed conventional commit scopes
+- ci(lab): refine transport connection timeout pattern in output analyzer
+- ci(ci): update and pin CodeQL and setup-mysql action digests
+- docs(container): add comprehensive AI MCP server integration guides in English and French (#954)
+- docs(docs): update all specification files with YAML frontmatter test bindings and mandatory Goal/Verification sections
+- docs(docs): fix broken star history chart link (#981)
+- docs(docs): enrich embedded POD documentation with comprehensive CLI reference
+- docs(rules): align release governance, conventional commit, and git tagging rules (#739)
+- docs(versions): synchronize v2.9.2 version strings, EOL LTS support checks, and multi-language README release links
+- perf(main): optimize auto-increment exhaustion check by retrieving COLUMN_TYPE in initial join query (#986)
 
-- chore(build): allow build scope in compliance auditor
-- chore(build): rewrite dev_sync and doc_sync in Perl for consistency
+2.9.1 2026-07-27
 - chore(deps): update actions/checkout action to v7.0.0 (#961)
 - chore(deps): update all non-major dependencies (@commitlint/cli, @commitlint/config-conventional, brace-expansion, commitizen)
 - chore(deps): update devops-infra/action-commit-push digest to f27e0951b748268e6ac8d91861eeac5bc2bd36a8 (#958)

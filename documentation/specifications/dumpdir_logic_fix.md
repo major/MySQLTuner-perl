@@ -1,4 +1,11 @@
+---
+test_file: tests/schemadir.t
+---
 # Specification: Fix --dumpdir TRUE/FALSE logic
+
+## Goal
+
+Correct `--dumpdir` parameter parsing so that boolean flags, explicit directory paths, and default directory fallback (`dumps/`) are handled predictably without script execution failure.
 
 - **Feature Name**: --dumpdir logic fix
 - **Status**: Draft
@@ -44,3 +51,8 @@ User runs `mysqltuner.pl --dumpdir 0` or similar.
 
 - **Manual Test**: Run `perl mysqltuner.pl --host 127.0.0.1` (or local equivalent) and verify no `0/` directory exists.
 - **Automated Test**: Create a test script `tests/issue_dumpdir_0.t` that executes the script without the option and checks for the directory.
+
+## Verification
+
+- Validated via `tests/schemadir.t` and laboratory dumpdir test runs.
+- Confirms schema export files are saved to the target directory.

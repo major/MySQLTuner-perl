@@ -1,3 +1,6 @@
+---
+test_file: tests/compliance.t
+---
 # Specification: Perltidy Integration in Release Preflight
 
 ## Goal
@@ -26,3 +29,8 @@ A developer runs `/release-preflight` after making manual formatting changes. Th
 - Command for checking: `perltidy -st mysqltuner.pl | diff -q - mysqltuner.pl` (returns exit code 1 if different).
 - Integrated into `.agent/workflows/release-preflight.md`.
 - (Optional) New `Makefile` target `check-tidy` for easier local verification.
+
+## Verification
+
+- Validated via `make check-tidy` and `tests/compliance.t`.
+- Confirms `mysqltuner.pl` passes `perltidy` checks.

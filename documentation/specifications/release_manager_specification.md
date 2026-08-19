@@ -1,4 +1,11 @@
+---
+test_file: tests/test_release_files.t
+---
 # Specification - Release Manager
+
+## Goal
+
+Automate the release process (version bumping, documentation sync, changelog generation, release notes build, and Git tag creation) through a single release orchestrator.
 
 ## 🧠 Rationale
 

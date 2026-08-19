@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.9.1
+# mysqltuner.pl - Version 2.9.2
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.9.1";
+our $tunerversion = "2.9.2";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -345,6 +345,12 @@ our %CLI_METADATA = (
         type    => '!',
         default => 0,
         desc    => "Don't perform checks on user passwords",
+        cat     => 'PERFORMANCE'
+    },
+    'skipworkload' => {
+        type    => '!',
+        default => 0,
+        desc    => "Don't perform workload analysis and traffic profiling",
         cat     => 'PERFORMANCE'
     },
 
@@ -1608,9 +1614,9 @@ sub check_replication_advanced {
             );
             my $member_count = scalar(@group_members);
             if ( $member_count > 0 ) {
-                goodprint
-                  "InnoDB Cluster is running with $member_count group members.";
-                my $primary_count = 0;
+                my $primary_count   = 0;
+                my $secondary_count = 0;
+                my $online_count    = 0;
                 my %versions;
                 foreach my $m (@group_members) {
                     my @mparts = split( /\t/, $m );
@@ -1620,9 +1626,10 @@ sub check_replication_advanced {
                     my $role   = $mparts[3] // '';
                     my $ver    = $mparts[4] // '';
 
+                    $online_count++ if $state eq 'ONLINE';
                     if ( $state ne 'ONLINE' ) {
                         badprint
-"Group member $host:$port state is $state (recommended: ONLINE)";
+"Group member $host:$port MEMBER_STATE is $state (recommended: ONLINE)";
                         push_recommendation( 'res',
 "Group member $host:$port is not ONLINE (state: $state). Check member status and error log."
                         );
@@ -1630,12 +1637,19 @@ sub check_replication_advanced {
                     if ( $role eq 'PRIMARY' ) {
                         $primary_count++;
                     }
+                    elsif ( $role eq 'SECONDARY' ) {
+                        $secondary_count++;
+                    }
                     $versions{$ver}++ if $ver;
                 }
+                goodprint
+"InnoDB Cluster topology: MEMBER_STATE ($online_count/$member_count ONLINE), MEMBER_ROLE ($primary_count PRIMARY, $secondary_count SECONDARY).";
 
                 my $single_primary =
                   $myvar{'group_replication_single_primary_mode'} // 'ON';
-                if ( $single_primary eq 'ON' || $single_primary eq '1' ) {
+                my $is_single_primary =
+                  ( $single_primary eq 'ON' || $single_primary eq '1' ) ? 1 : 0;
+                if ($is_single_primary) {
                     if ( $primary_count != 1 ) {
                         badprint
 "Single-primary mode active, but found $primary_count primary member(s) (recommended: 1)";
@@ -1643,6 +1657,10 @@ sub check_replication_advanced {
 "Investigate role state: single-primary mode requires exactly 1 primary member."
                         );
                     }
+                }
+                else {
+                    goodprint
+                      "Group Replication is running in Multi-Primary mode.";
                 }
 
                 my @unique_vers = keys %versions;
@@ -1660,7 +1678,7 @@ sub check_replication_advanced {
             my $server_uuid = select_one('SELECT @@server_uuid') // '';
             if ($server_uuid) {
                 my $local_stats = select_one(
-"SELECT CONCAT_WS('|', COUNT_TRANSACTIONS_IN_QUEUE, COUNT_TRANSACTIONS_REMOTE_IN_APPLIER_QUEUE, TRANSACTIONS_COMMITTED_ALL_MEMBERS, TRANSACTIONS_LOCAL_ROLLBACK) FROM performance_schema.replication_group_member_stats WHERE MEMBER_ID = '$server_uuid'"
+"SELECT CONCAT_WS('|', COUNT_TRANSACTIONS_IN_QUEUE, COUNT_TRANSACTIONS_REMOTE_IN_APPLIER_QUEUE, COUNT_TRANSACTIONS_LOCAL_PROPOSED, COUNT_TRANSACTIONS_LOCAL_ROLLBACK) FROM performance_schema.replication_group_member_stats WHERE MEMBER_ID = '$server_uuid'"
                 );
                 if ($local_stats) {
                     my ( $cert_queue, $applier_queue, $committed, $rollbacks )
@@ -1696,12 +1714,28 @@ sub check_replication_advanced {
                     my $total_tx = $committed + $rollbacks;
                     if ( $total_tx > 0 ) {
                         my $rollback_ratio = $rollbacks / $total_tx;
-                        if ( $rollback_ratio > 0.05 ) {
+                        my $single_primary =
+                          $myvar{'group_replication_single_primary_mode'}
+                          // 'ON';
+                        my $is_sp =
+                          ( $single_primary eq 'ON' || $single_primary eq '1' )
+                          ? 1
+                          : 0;
+                        my $rollback_thresh = $is_sp ? 0.05 : 0.02;
+                        if ( $rollback_ratio > $rollback_thresh ) {
                             badprint "Certification rollback ratio is "
                               . sprintf( "%.2f%%", $rollback_ratio * 100 )
-                              . " (too many optimistic lock conflicts)";
-                            push_recommendation( 'res',
-"High certification rollback ratio detected. Optimize write concurrency or switch to Single-Primary mode."
+                              . " (threshold: "
+                              . sprintf( "%.1f%%", $rollback_thresh * 100 )
+                              . ")";
+                            push_recommendation(
+                                'res',
+                                "High certification rollback ratio detected. "
+                                  . (
+                                    $is_sp
+                                    ? "Optimize write concurrency or switch to Single-Primary mode."
+                                    : "High multi-primary conflict rate! Consider switching to Single-Primary mode or tuning group_replication_flow_control_period."
+                                  )
                             );
                         }
                     }
@@ -1725,6 +1759,36 @@ sub check_replication_advanced {
             }
         }
 
+        # Estimate retention window based on real-time network throughput
+        my $uptime = $mystat{'Uptime'} // 1;
+        if (
+            $uptime > 0
+            && (   defined $mystat{'Bytes_sent'}
+                || defined $mystat{'Bytes_received'} )
+          )
+        {
+            my $bytes_sent = $mystat{'Bytes_sent'}     // 0;
+            my $bytes_recv = $mystat{'Bytes_received'} // 0;
+            my $net_rate   = ( $bytes_sent + $bytes_recv ) / $uptime;
+            if ( $net_rate > 102400 ) {
+                my $retention_sec = int( $cache_size / $net_rate );
+                if ( $retention_sec < 60 ) {
+                    badprint "group_replication_message_cache_size ("
+                      . hr_bytes($cache_size)
+                      . ") provides only ~${retention_sec}s network partition retention under current load ("
+                      . hr_bytes($net_rate) . "/s)";
+                    push_recommendation( 'res',
+"Increase group_replication_message_cache_size to prevent full state transfers (SST) during transient network partitions."
+                    );
+                }
+                else {
+                    goodprint
+"group_replication_message_cache_size retention capacity: ~${retention_sec}s under current network load ("
+                      . hr_bytes($net_rate) . "/s).";
+                }
+            }
+        }
+
         my $unreachable_timeout =
           $myvar{'group_replication_unreachable_majority_timeout'} // 0;
         if ( $unreachable_timeout == 0 ) {
@@ -1736,15 +1800,49 @@ sub check_replication_advanced {
         }
     }
 
-    # 4. MySQL Router Connectivity (Experimental)
-    my $router_conn = select_one(
-"SELECT COUNT(*) FROM information_schema.processlist WHERE USER LIKE '%router%' OR HOST LIKE '%router%'"
+    # 4. MySQL Router Connectivity & Advanced Traffic Metrics
+    my @router_procs = select_array(
+"SELECT COMMAND, INFO FROM information_schema.processlist WHERE USER LIKE '%router%' OR HOST LIKE '%router%'"
     );
-    my $router_conn_count =
-      ( defined $router_conn && $router_conn =~ /^\d+$/ ) ? $router_conn : 0;
+    my $router_conn_count = scalar(@router_procs);
     if ( $router_conn_count > 0 ) {
+        my $active_count = 0;
+        my $sleep_count  = 0;
+        my $write_count  = 0;
+        foreach my $p (@router_procs) {
+            my ( $cmd, $info ) = split( /\t/, $p );
+            $cmd  //= '';
+            $info //= '';
+            if ( $cmd ne 'Sleep' ) {
+                $active_count++;
+                if ( $info =~
+/^\s*(INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|REPLACE|TRUNCATE)/i
+                  )
+                {
+                    $write_count++;
+                }
+            }
+            else {
+                $sleep_count++;
+            }
+        }
         goodprint
-"MySQL Router connections active: found $router_conn_count connection(s) routed to this instance.";
+"MySQL Router connections active: found $router_conn_count connection(s) ($active_count active, $sleep_count sleeping) routed to this instance.";
+
+        if ( defined $myvar{'performance_schema'}
+            && $myvar{'performance_schema'} eq 'ON' )
+        {
+            my $local_role = select_one(
+'SELECT MEMBER_ROLE FROM performance_schema.replication_group_members WHERE MEMBER_ID = @@server_uuid'
+            ) // '';
+            if ( $local_role eq 'SECONDARY' && $write_count > 0 ) {
+                badprint
+"MySQL Router is routing write queries ($write_count detected) to a SECONDARY node!";
+                push_recommendation( 'res',
+"MySQL Router routing misconfiguration: write queries detected on a SECONDARY node. Check router destination ports (e.g. 6446 R/W vs 6447 R/O)."
+                );
+            }
+        }
     }
 }
 
@@ -1774,6 +1872,10 @@ sub check_security_2_0 {
 
 sub check_workload_traffic {
     subheaderprint "Workload Analysis & Traffic Profiling";
+    if ( ( $opt{'skipworkload'} // 0 ) eq 1 ) {
+        infoprint "Skipped due to --skipworkload option";
+        return;
+    }
 
     # 1. Workload Characterization (Read-Heavy vs Write-Heavy vs Mixed)
     my $com_select  = $mystat{'Com_select'}  // 0;
@@ -1908,20 +2010,20 @@ sub check_workload_traffic {
 
     # 4. Auto-Increment Exhaustion Audit
     my @auto_inc_cols = select_array(
-"SELECT t.TABLE_SCHEMA, t.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, t.AUTO_INCREMENT FROM information_schema.tables t JOIN information_schema.columns c ON t.table_schema = c.table_schema AND t.table_name = c.table_name WHERE c.extra = 'auto_increment' AND t.auto_increment IS NOT NULL AND t.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')"
+"SELECT t.TABLE_SCHEMA, t.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, t.AUTO_INCREMENT, c.COLUMN_TYPE FROM information_schema.tables t JOIN information_schema.columns c ON t.table_schema = c.table_schema AND t.table_name = c.table_name WHERE c.extra = 'auto_increment' AND t.auto_increment IS NOT NULL AND t.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')"
     );
 
     if ( scalar(@auto_inc_cols) > 0 ) {
         foreach my $col_info (@auto_inc_cols) {
-            my ( $schema, $table, $col, $type, $curr_val ) =
+            chomp($col_info);
+            my ( $schema, $table, $col, $type, $curr_val, $col_type ) =
               split( /\t/, $col_info );
             $type = lc( $type // '' );
-            $curr_val //= 0;
+            $curr_val =
+              ( defined($curr_val) && $curr_val =~ /^(\d+)$/ ) ? $1 + 0 : 0;
+            $col_type //= '';
 
-            my $max_val  = 0;
-            my $col_type = select_one(
-"SELECT COLUMN_TYPE FROM information_schema.columns WHERE TABLE_SCHEMA = '$schema' AND TABLE_NAME = '$table' AND COLUMN_NAME = '$col'"
-            ) // '';
+            my $max_val     = 0;
             my $is_unsigned = ( $col_type =~ /unsigned/i ) ? 1 : 0;
 
             if ( $type eq 'tinyint' ) {
@@ -2460,30 +2562,169 @@ sub detect_infrastructure {
 
     # Storage Detection (Linux only)
     if ( !$is_win ) {
+        my $has_ssd     = 0;
+        my $has_hdd     = 0;
+        my $has_hw_raid = 0;
+
         if ( $prefix eq '' ) {
 
             # Local Linux detection
-            my @sys_blocks = glob('/sys/block/*');
-            my $has_ssd    = 0;
-            my $has_hdd    = 0;
+            my $sys_block_dir = $ENV{'MYSQLTUNER_SYS_BLOCK_DIR'}
+              // '/sys/block';
+            my @sys_blocks = glob("$sys_block_dir/*");
+
+            # Check if system has HW RAID controller via lspci if available
+            my $pci_out    = '';
+            my $lspci_path = which('lspci');
+            if ( defined $lspci_path && -x $lspci_path ) {
+                my @lspci = execute_system_command(
+"$lspci_path -d ::0104 2>/dev/null || $lspci_path 2>/dev/null"
+                );
+                $pci_out = join( ' ', @lspci );
+            }
+            if ( $pci_out =~
+/RAID|MegaRAID|AVAGO|LSI|Smart\s*Array|PERC|Adaptec|3ware|ServeRAID/i
+              )
+            {
+                $has_hw_raid = 1;
+            }
+
             foreach my $block (@sys_blocks) {
                 my $name = basename($block);
-                next if $name =~ /^loop|^ram|^nbd|^zram/;
+                next if $name =~ /^loop|^ram|^nbd|^zram|^dm-|^md/;
+
+                # 1. NVMe devices are inherently SSD
+                if ( $name =~ /^nvme/ ) {
+                    $has_ssd = 1;
+                    next;
+                }
+
+                # 2. Check vendor / model for HW RAID controllers
+                my $vendor = '';
+                my $model  = '';
+                if ( open( my $vf, '<', "$block/device/vendor" ) ) {
+                    $vendor = <$vf> // '';
+                    chomp($vendor);
+                    close($vf);
+                }
+                if ( open( my $mf, '<', "$block/device/model" ) ) {
+                    $model = <$mf> // '';
+                    chomp($model);
+                    close($model);
+                }
+                if ( "$vendor $model" =~
+/MegaRAID|AVAGO|PERC|LSI|Smart\s*Array|ServeRAID|Adaptec|AACRAID|3ware|Areca|RAID/i
+                  )
+                {
+                    $has_hw_raid = 1;
+                }
+
+                # 3. Check discard_granularity (TRIM support -> SSD)
+                my $discard = 0;
+                if ( open( my $df, '<', "$block/queue/discard_granularity" ) ) {
+                    my $d_val = <$df> // '0';
+                    chomp($d_val);
+                    close($df);
+                    if ( defined $d_val && $d_val =~ /^\d+$/ && $d_val > 0 ) {
+                        $discard = $d_val;
+                    }
+                }
+
+                # 4. Check rotational flag
+                my $is_rot;
                 if ( open( my $rot, '<', "$block/queue/rotational" ) ) {
-                    my $is_rot = <$rot>;
+                    $is_rot = <$rot>;
                     chomp($is_rot);
                     close($rot);
-                    if ( defined $is_rot ) {
-                        if   ( $is_rot == 0 ) { $has_ssd = 1; }
-                        else                  { $has_hdd = 1; }
+                }
+
+                if ( defined $is_rot ) {
+                    if ( $is_rot == 0 || $discard > 0 ) {
+                        $has_ssd = 1;
+                    }
+                    elsif ( $is_rot == 1 && !$has_hw_raid ) {
+                        $has_hdd = 1;
+                    }
+                }
+            }
+
+  # 5. Helper CLI checks for HW RAID if installed (storcli / megacli / smartctl)
+            if ( $has_hw_raid && !$has_ssd ) {
+                my $storcli =
+                  which('storcli') || which('storcli64') || which('megacli');
+                if ( defined $storcli && -x $storcli ) {
+                    my @raid_info = execute_system_command(
+"$storcli /c0 show all 2>/dev/null || $storcli -pdlist -aall 2>/dev/null"
+                    );
+                    my $raid_txt = join( ' ', @raid_info );
+                    if ( $raid_txt =~
+/Media\s*Type\s*:\s*SSD|Drive\s*Type\s*:\s*SSD|Solid\s*State|SSD/i
+                      )
+                    {
+                        $has_ssd = 1;
+                    }
+                    if ( $raid_txt =~
+/Media\s*Type\s*:\s*HDD|Drive\s*Type\s*:\s*HDD|Hard\s*Disk|HDD/i
+                      )
+                    {
+                        $has_hdd = 1;
+                    }
+                }
+            }
+
+            if ( $has_ssd && !$has_hdd ) {
+                $infra{'storage_type'} = 'SSD/NVMe';
+            }
+            elsif ( !$has_ssd && $has_hdd ) {
+                $infra{'storage_type'} = 'HDD';
+            }
+            elsif ( $has_ssd && $has_hdd ) {
+                $infra{'storage_type'} = 'Mixed';
+            }
+            elsif ($has_hw_raid) {
+
+             # Hardware RAID present, physical media unconfirmed -> safe unknown
+                $infra{'storage_type'} = 'unknown';
+            }
+        }
+        else {
+            # Remote / Transport storage detection
+            my @lsblk_out = execute_system_command(
+                "lsblk -d -n -o NAME,ROTA,DISC-GRAN,MODEL 2>/dev/null");
+            foreach my $line (@lsblk_out) {
+                chomp($line);
+                next if $line =~ /^loop|^ram|^nbd|^zram|^dm-|^md/;
+                my ( $name, $rota, $gran, $model ) = split( /\s+/, $line, 4 );
+                $model //= '';
+                if (   ( $name // '' ) =~ /^nvme/
+                    || ( $gran // 0 ) > 0
+                    || ( $rota // 1 ) eq '0' )
+                {
+                    $has_ssd = 1;
+                }
+                elsif ( ( $rota // '' ) eq '1' ) {
+                    if ( $model =~
+                        /MegaRAID|AVAGO|PERC|LSI|Smart\s*Array|RAID/i )
+                    {
+                        $has_hw_raid = 1;
+                    }
+                    else {
+                        $has_hdd = 1;
                     }
                 }
             }
             if ( $has_ssd && !$has_hdd ) {
                 $infra{'storage_type'} = 'SSD/NVMe';
             }
-            elsif ( !$has_ssd && $has_hdd ) { $infra{'storage_type'} = 'HDD'; }
-            elsif ( $has_ssd && $has_hdd ) { $infra{'storage_type'} = 'Mixed'; }
+            elsif ( !$has_ssd && $has_hdd ) {
+                $infra{'storage_type'} = 'HDD';
+            }
+            elsif ( $has_ssd && $has_hdd ) {
+                $infra{'storage_type'} = 'Mixed';
+            }
+            elsif ($has_hw_raid) {
+                $infra{'storage_type'} = 'unknown';
+            }
         }
     }
 
@@ -3677,7 +3918,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.9.1' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.9.2' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -3693,7 +3934,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.9.1' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.9.2' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -6458,7 +6699,6 @@ sub validate_mysql_version {
     if (   mysql_version_eq( 8, 0 )
         or mysql_version_eq( 8,  4 )
         or mysql_version_eq( 9,  7 )
-        or mysql_version_eq( 10, 6 )
         or mysql_version_eq( 10, 11 )
         or mysql_version_eq( 11, 4 )
         or mysql_version_eq( 11, 8 )
@@ -8186,6 +8426,8 @@ sub mysql_stats {
                 if ( defined $myvar{'table_open_cache_instances'}
                     and $myvar{'table_open_cache_instances'} > 0 )
                 {
+# MariaDB 10.2.2+ autosizes table_open_cache_instances dynamically upon contention
+# Ref: https://mariadb.com/kb/en/server-system-variables/#table_open_cache_instances
                     infoprint
 "MariaDB 10.2.2+ autosizes table_open_cache_instances. Current value is $myvar{'table_open_cache_instances'}.";
                 }
@@ -11159,14 +11401,15 @@ sub mariadb_galera {
 "Set $wsrep_threads_var_name to 1 in case of HA_ERR_FOUND_DUPP_KEY crash on replica";
 
         # check options for parallel replica
-        if ( get_wsrep_option('wsrep_slave_FK_checks') eq "OFF" ) {
-            badprint "wsrep_slave_FK_checks is off with parallel replica";
+        if ( ( get_wsrep_option('wsrep_slave_FK_checks') // '' ) eq "OFF" ) {
+            badprint
+"wsrep_slave_FK_checks is OFF and need to be ON with parallel replica";
             push @adjvars,
               "wsrep_slave_FK_checks should be ON when using parallel replica";
         }
 
         # wsrep_slave_UK_checks seems useless in MySQL source code
-        if ( $myvar{'innodb_autoinc_lock_mode'} != 2 ) {
+        if ( ( $myvar{'innodb_autoinc_lock_mode'} // 0 ) != 2 ) {
             badprint
               "innodb_autoinc_lock_mode is incorrect with parallel replica";
             push @adjvars,
@@ -11174,27 +11417,46 @@ sub mariadb_galera {
         }
     }
 
-    if ( get_wsrep_option('gcs.fc_limit') != $wsrep_threads_value * 5 ) {
+    my $fc_limit = get_wsrep_option('gcs.fc_limit');
+    $fc_limit =
+      ( defined($fc_limit) && $fc_limit ne '' && $fc_limit =~ /^[\d\.]+$/ )
+      ? $fc_limit + 0
+      : 0;
+
+    if ( $fc_limit != ( ( $wsrep_threads_value // 0 ) * 5 ) ) {
         badprint
           "gcs.fc_limit should be equal to 5 * $wsrep_threads_var_name (="
-          . ( $wsrep_threads_value * 5 ) . ")";
+          . ( ( $wsrep_threads_value // 0 ) * 5 ) . ")";
         push @adjvars, "gcs.fc_limit= $wsrep_threads_var_name * 5 (="
-          . ( $wsrep_threads_value * 5 ) . ")";
+          . ( ( $wsrep_threads_value // 0 ) * 5 ) . ")";
     }
     else {
         goodprint "gcs.fc_limit is equal to 5 * $wsrep_threads_var_name ( ="
-          . get_wsrep_option('gcs.fc_limit') . ")";
+          . $fc_limit . ")";
     }
 
-    if ( get_wsrep_option('gcs.fc_factor') != 0.8 ) {
-        badprint "gcs.fc_factor should be equal to 0.8 (="
-          . get_wsrep_option('gcs.fc_factor') . ")";
+    my $fc_factor = get_wsrep_option('gcs.fc_factor');
+    $fc_factor =
+      ( defined($fc_factor) && $fc_factor ne '' && $fc_factor =~ /^[\d\.]+$/ )
+      ? $fc_factor + 0
+      : 0;
+
+    if ( $fc_factor != 0.8 ) {
+        badprint "gcs.fc_factor should be equal to 0.8 (=" . $fc_factor . ")";
         push @adjvars, "gcs.fc_factor=0.8";
     }
     else {
         goodprint "gcs.fc_factor is equal to 0.8";
     }
-    if ( get_wsrep_option('wsrep_flow_control_paused') > 0.02 ) {
+
+    my $flow_control_paused_stat =
+      (      defined( $mystat{'wsrep_flow_control_paused'} )
+          && $mystat{'wsrep_flow_control_paused'} ne ''
+          && $mystat{'wsrep_flow_control_paused'} =~ /^[\d\.]+$/ )
+      ? $mystat{'wsrep_flow_control_paused'} + 0
+      : 0;
+
+    if ( $flow_control_paused_stat > 0.02 ) {
         badprint "Fraction of time node pause flow control > 0.02";
     }
     else {
@@ -11493,6 +11755,36 @@ sub mariadb_galera {
             push @generalrec,
 "Set pxc_strict_mode = ENFORCING to prevent unsafe operations on Percona XtraDB Cluster.";
         }
+    }
+
+    # 8. Galera Local Send & Recv Queue Monitoring
+    my $send_q_avg = $mystat{'wsrep_local_send_queue_avg'} // 0;
+    my $recv_q_avg = $mystat{'wsrep_local_recv_queue_avg'} // 0;
+    if ( $send_q_avg > 0.05 || $recv_q_avg > 0.05 ) {
+        badprint
+          sprintf( "Galera queue length elevated: send_avg=%.3f, recv_avg=%.3f",
+            $send_q_avg, $recv_q_avg );
+        push @generalrec,
+"Elevated Galera send/receive queues detected. Check network bandwidth and storage latency on slower nodes.";
+    }
+
+    # 9. Galera Primary Key Certification Enforcement
+    if ( defined $myvar{'wsrep_certify_non_pk'}
+        && $myvar{'wsrep_certify_non_pk'} eq 'OFF' )
+    {
+        badprint
+"wsrep_certify_non_pk is OFF. Non-PK tables can cause replication inconsistencies.";
+        push @generalrec,
+"Enable wsrep_certify_non_pk = ON to enforce automatic primary key certification in Galera.";
+    }
+
+    # 10. Galera Cluster Quorum & Split-Brain Risk
+    my $c_size = $mystat{'wsrep_cluster_size'} // 0;
+    if ( $c_size > 0 && $c_size % 2 == 0 ) {
+        badprint
+"Galera cluster size is an even number ($c_size nodes). Risk of split-brain without garbd.";
+        push @generalrec,
+"Use an odd number of nodes (3, 5) or deploy Galera Arbitrator (garbd) to prevent split-brain quorums.";
     }
 
     #debugprint Dumper get_wsrep_options() if $opt{debug};
@@ -16449,27 +16741,317 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.9.1 - MySQL High Performance Tuning Script
+ MySQLTuner 2.9.2 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
+
+=head1 SYNOPSIS
+
+B<mysqltuner> [I<OPTIONS>]
+
+  # Basic local execution using standard unix socket
+  perl mysqltuner.pl
+
+  # Remote TCP/IP connection with explicit credentials and forced memory sizing
+  perl mysqltuner.pl --host 192.168.1.50 --port 3306 --user root --pass secret --forcemem 16G
+
+  # Containerized database analysis via Docker/Podman
+  perl mysqltuner.pl --container production_mysql_1 --user root --pass secret
+
+  # Generate comprehensive interactive HTML diagnostic dashboard
+  perl mysqltuner.pl --reportfile /var/www/html/tuner_report.html
+
+  # Export schema markdown documentation per database
+  perl mysqltuner.pl --schemadir /opt/db_docs/
+
+  # AI Agent integration output (actionable JSON remediation plan)
+  perl mysqltuner.pl --agent-json
 
 =head1 IMPORTANT USAGE GUIDELINES
 
-To run the script with the default options, run the script without arguments
-Allow MySQL server to run for at least 24-48 hours before trusting suggestions
-Some routines may require root level privileges (script will provide warnings)
-You must provide the remote server's total memory when connecting to other servers
+=over 4
+
+=item *
+
+B<Production Stability:> Run the script without modifying arguments first to review recommendations before applying changes.
+
+=item *
+
+B<Representative Workload:> Allow your database server to run under normal production load for at least 24 to 48 hours before trusting metric ratios and sizing advice.
+
+=item *
+
+B<Privilege Requirements:> Administrative read-only access (C<SELECT>, C<PROCESS>, C<SHOW DATABASES>, C<REPLICATION CLIENT>) is required for exhaustive diagnostics.
+
+=item *
+
+B<Remote Host Hardware Sizing:> When connecting over TCP/IP or SSH to remote instances, specify host RAM via C<--forcemem> (e.g., C<--forcemem 32G>) to ensure accurate buffer sizing recommendations.
+
+=back
 
 =head1 OPTIONS
 
-See C<mysqltuner --help> for a full list of available options and their categories.
+=head2 Connection and Authentication Options
+
+=over 4
+
+=item B<--host> I<hostname>
+
+Connect to remote MySQL/MariaDB server via TCP/IP hostname or IP address.
+
+=item B<--port> I<port>
+
+TCP/IP port number to connect to (default: 3306).
+
+=item B<--socket> I<socket_path>
+
+Path to local UNIX domain socket for database communication.
+
+=item B<--user> I<username>
+
+Database username for authentication.
+
+=item B<--password> I<password>, B<--pass> I<password>
+
+Database password for authentication.
+
+=item B<--ask-pass>
+
+Prompt interactively for database password on the terminal.
+
+=item B<--defaults-file> I<path>
+
+Path to a custom MySQL configuration file (e.g., C<~/.my.cnf>).
+
+=item B<--defaults-extra-file> I<path>
+
+Path to an additional configuration file to read after standard defaults.
+
+=item B<--login-path> I<path>
+
+Read credentials from MySQL encrypted login path (via C<mysql_config_editor>).
+
+=item B<--mysqlcmd> I<path>
+
+Path to custom C<mysql> client binary.
+
+=item B<--mysqladmin> I<path>
+
+Path to custom C<mysqladmin> binary.
+
+=item B<--tli>
+
+Use Transport Layer Interface abstraction.
+
+=item B<--ssl-ca> I<path>
+
+Path to SSL Certificate Authority (CA) certificate.
+
+=item B<--caching-sha2-password>
+
+Force caching_sha2_password authentication plugin mode.
+
+=back
+
+=head2 Target Environment and Cloud Discovery Options
+
+=over 4
+
+=item B<--container> I<container_name_or_id>
+
+Execute diagnostics inside a running Docker or Podman container.
+
+=item B<--ssh-host> I<hostname>
+
+Execute diagnostics over SSH remote transport.
+
+=item B<--ssh-user> I<username>
+
+SSH login username.
+
+=item B<--ssh-key> I<path>
+
+Path to SSH private key file.
+
+=item B<--ssh-port> I<port>
+
+SSH daemon port (default: 22).
+
+=item B<--aws-profile> I<profile>
+
+AWS CLI profile for Amazon RDS / Aurora cluster discovery.
+
+=item B<--aws-region> I<region>
+
+AWS Region for RDS / Aurora discovery.
+
+=item B<--aws-cluster-identifier> I<id>
+
+Amazon RDS / Aurora cluster identifier.
+
+=item B<--aws-instance-identifier> I<id>
+
+Amazon RDS instance identifier.
+
+=item B<--gcp-project> I<project_id>
+
+Google Cloud project ID for Cloud SQL instances.
+
+=item B<--gcp-instance> I<instance_id>
+
+Google Cloud SQL instance identifier.
+
+=item B<--azure-resource-group> I<group>
+
+Azure resource group for Azure Database for MySQL.
+
+=item B<--azure-server-name> I<name>
+
+Azure MySQL flexible/single server name.
+
+=back
+
+=head2 Performance and Diagnostic Tuning Options
+
+=over 4
+
+=item B<--forcemem> I<size>
+
+Amount of physical RAM installed in host (e.g., C<16G>, C<1024M>, C<128K>).
+
+=item B<--forceswap> I<size>
+
+Amount of configured swap space on host (e.g., C<4G>, C<2048M>).
+
+=item B<--skipworkload>
+
+Bypass high-cardinality table churn and auto-increment exhaustion checks.
+
+=item B<--skippassword>
+
+Skip offline dictionary checks for weak user passwords.
+
+=item B<--skipsize>
+
+Skip table size enumeration queries on C<information_schema>.
+
+=item B<--buffers>
+
+Print detailed per-buffer memory allocations.
+
+=item B<--cvefile> I<path>
+
+Path to custom CVE vulnerabilities CSV database file.
+
+=item B<--passwordfile> I<path>
+
+Path to custom dictionary file for password audits.
+
+=item B<--checkversion>
+
+Check for upstream MySQLTuner version updates.
+
+=item B<--nondedicated>
+
+Adjust tuning formulas assuming the host runs non-database workloads.
+
+=item B<--noprocess>
+
+Skip OS-level non-mysqld process enumeration.
+
+=back
+
+=head2 Output and Export Options
+
+=over 4
+
+=item B<--verbose>, B<-v>
+
+Activate full verbose output including storage engines and table statistics.
+
+=item B<--silent>
+
+Suppress standard console output.
+
+=item B<--outputfile> I<path>
+
+Save console report to plain text file.
+
+=item B<--reportfile> [I<path>]
+
+Generate interactive self-contained HTML diagnostic dashboard.
+
+=item B<--json>
+
+Output raw diagnostic results as a JSON string.
+
+=item B<--prettyjson>
+
+Output diagnostic results as formatted, indented JSON.
+
+=item B<--agent-json>
+
+Output actionable AI remediation schema with SQL/config fixes and rollback statements.
+
+=item B<--yaml>
+
+Output diagnostic metrics in YAML format.
+
+=item B<--dumpdir> I<path>
+
+Dump diagnostic data files and Markdown schema summaries to target directory.
+
+=item B<--schemadir> I<path>
+
+Export individual Markdown documentation files with Mermaid ER diagrams per schema.
+
+=item B<--nocolor>
+
+Disable ANSI color codes in terminal output.
+
+=item B<--noprettyicon>
+
+Use plain text markers ([OK], [!!], [--]) instead of Unicode icons.
+
+=item B<--stage-timings>
+
+Display execution duration for each analysis stage.
+
+=back
+
+=head2 Debugging and Filtering Options
+
+=over 4
+
+=item B<--debug>
+
+Print internal debug traces and SQL query payloads.
+
+=item B<--dbgpattern> I<regex>
+
+Filter debug messages by regular expression pattern.
+
+=item B<--nobad>
+
+Suppress negative findings and warning recommendations.
+
+=item B<--nogood>
+
+Suppress positive / passing health checks.
+
+=item B<--noinfo>
+
+Suppress informational messages.
+
+=back
 
 =head1 VERSION
 
-Version 2.9.1
+Version 2.9.2
+
 =head1 PERLDOC
 
-You can find documentation for this module with the perldoc command.
+You can inspect the embedded manual with the perldoc command:
 
-  perldoc mysqltuner
+  perldoc mysqltuner.pl
 
 =head2 INTERNALS
 

@@ -1,4 +1,11 @@
+---
+test_file: tests/schemadir.t
+---
 # Specification: --schemadir option for Schema Documentation
+
+## Goal
+
+Implement the `--schemadir` CLI option to dump complete database table structures, naming convention deviations, and index metadata to a specified directory.
 
 - **Feature Name**: --schemadir option
 - **Status**: Draft
@@ -33,14 +40,25 @@ A user wants both the dump files and the split schema documentation.
 
 ## 📋 User Stories
 
-| Title | Priority | Description | Rationale | Test Case |
-| :--- | :--- | :--- | :--- | :--- |
 | Independent Option | P1 | As a user, I want a dedicated `--schemadir` option | To avoid coupling schema docs with other dumps | GIVEN `--schemadir` is provided, WHEN script runs, THEN MD files are created in that dir. |
 | One File per Schema | P1 | As a user, I want one `.md` file per schema | For better navigability and wiki integration | GIVEN `--schemadir` is used, THEN each database has its own MD file. |
+| Mermaid ER Diagrams | P1 | As a user, I want embedded Mermaid ER diagrams | To visually render table relationships and foreign keys | GIVEN foreign keys exist, THEN an `erDiagram` code block is embedded in each schema file. |
 | Dumpdir Compatibility | P2 | As a user, I want `--dumpdir` to still work as before | To avoid breaking existing workflows | GIVEN `--dumpdir` is used, THEN `schema_documentation.md` is created as a single file. |
 | Automatic Directory Creation | P2 | As a user, I want the target directory to be created if it doesn't exist | To simplify usage | GIVEN `--schemadir` points to a non-existent path, WHEN script runs, THEN directory is created. |
 
-## ✅ Verification Plan
+## 📊 Mermaid ER Diagram Specification
+Each generated Markdown file contains an embedded Mermaid ER diagram block:
+```mermaid
+erDiagram
+    USERS ||--o{ ORDERS : places
+    ORDERS ||--|{ ORDER_ITEMS : contains
+```
+Tables and column definitions specify primary keys (`PK`), foreign keys (`FK`), and column nullability.
 
 - **Unit Test**: Mock database metadata and verify that `mysql_tables` correctly identifies schemas and writes to separate files when `schemadir` is set.
 - **Integration Test**: Run against a real database (multi-version lab) and check the filesystem structure.
+
+## Verification
+
+- Validated via `tests/schemadir.t`.
+- Confirms creation of schema SQL and CSV audit files in the target directory.

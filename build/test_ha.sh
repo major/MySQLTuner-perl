@@ -51,6 +51,12 @@ setup_vendor() {
     # Ensure .env exists
     if [ ! -f "$MULTI_DB_DIR/.env" ]; then
         echo "DB_ROOT_PASSWORD=$DB_PASS" > "$MULTI_DB_DIR/.env"
+    else
+        local env_pass
+        env_pass=$(grep '^DB_ROOT_PASSWORD=' "$MULTI_DB_DIR/.env" | cut -d'=' -f2- | tr -d '\r\n')
+        if [ -n "$env_pass" ]; then
+            DB_PASS="$env_pass"
+        fi
     fi
 }
 

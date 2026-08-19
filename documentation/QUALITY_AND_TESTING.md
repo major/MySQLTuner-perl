@@ -78,8 +78,8 @@ Executes unit tests and monitors test output for runtime errors, typos, and depr
 
 ### 4. Database Laboratory Integration Testing
 Runs MySQLTuner against real, running containerized databases under diverse environment scenarios.
-- **Path**: [test_envs.sh](file:///MySQLTuner-perl/build/test_envs.sh)
-- **Functionality**: Manages database container lifecycles (using the [multi-db-docker-env](file:///home/jmren/GIT_REPOS/multi-db-docker-env) framework) and validates findings.
+- **Path**: [test_envs.sh](file:///build/test_envs.sh)
+- **Functionality**: Manages database container lifecycles (using the [multi-db-docker-env](https://github.com/jmrenouard/multi-db-docker-env) framework) and validates findings.
 - **Scenarios**:
   - **Standard**: Executes the script over a TCP connection (`--host 127.0.0.1`).
   - **Container**: Executes the script forcing container abstraction (`--container docker:mysql-8.4`).
@@ -231,38 +231,44 @@ graph TD
 
 | Specification Document | Path | Target Test File / Suite |
 | :--- | :--- | :--- |
-| **Authentication Plugin Security Checks** | [auth_plugin_security_checks.md](file:///MySQLTuner-perl/documentation/specifications/auth_plugin_security_checks.md) | N/A |
+| **Authentication Plugin Security Checks** | [auth_plugin_security_checks.md](file:///MySQLTuner-perl/documentation/specifications/auth_plugin_security_checks.md) | [tests/auth_plugin_checks.t](file:///MySQLTuner-perl/tests/auth_plugin_checks.t) |
 | **Automated EOL Date Synchronization** | [automated_eol_sync.md](file:///MySQLTuner-perl/documentation/specifications/automated_eol_sync.md) | [tests/test_vulnerabilities.t](file:///MySQLTuner-perl/tests/test_vulnerabilities.t) |
-| **CLI Execution Mastery Skill** | [cli_execution_skill.md](file:///MySQLTuner-perl/documentation/specifications/cli_execution_skill.md) | N/A |
-| **Metadata-Driven CLI Options Refactor (Phase 6)** | [cli_metadata_refactor.md](file:///MySQLTuner-perl/documentation/specifications/cli_metadata_refactor.md) | N/A |
-| **Compliance Sentinel - Remembers Integration** | [compliance_sentinel_remembers.md](file:///MySQLTuner-perl/documentation/specifications/compliance_sentinel_remembers.md) | N/A |
-| **Documentation Synchronization Enhancement** | [doc_sync_enhancement.md](file:///MySQLTuner-perl/documentation/specifications/doc_sync_enhancement.md) | N/A |
-| **Fix --dumpdir TRUE/FALSE logic** | [dumpdir_logic_fix.md](file:///MySQLTuner-perl/documentation/specifications/dumpdir_logic_fix.md) | N/A |
-| **Specification - Performance Schema `Error Log` Analysis** | [error_log_pfs.md](file:///MySQLTuner-perl/documentation/specifications/error_log_pfs.md) | N/A |
-| **Robust Password Column Detection in mysqltuner.pl** | [fix_password_column_detection.md](file:///MySQLTuner-perl/documentation/specifications/fix_password_column_detection.md) | N/A |
-| **Index Checks via Performance Schema** | [index_checks_pfs.md](file:///MySQLTuner-perl/documentation/specifications/index_checks_pfs.md) | N/A |
-| **Warn if current user does not have minimum privileges** | [issue_25_privilege_checks.md](file:///MySQLTuner-perl/documentation/specifications/issue_25_privilege_checks.md) | N/A |
-| **MySQL 9.x Support** | [mysql_9_x_support.md](file:///MySQLTuner-perl/documentation/specifications/mysql_9_x_support.md) | N/A |
-| **Performance Schema Audit Logic** | [performance_schema_audit.md](file:///MySQLTuner-perl/documentation/specifications/performance_schema_audit.md) | N/A |
-| **Performance Schema Observability Warning** | [performance_schema_observability_warning.md](file:///MySQLTuner-perl/documentation/specifications/performance_schema_observability_warning.md) | N/A |
-| **Perltidy Integration in Release Preflight** | [perltidy_integration.md](file:///MySQLTuner-perl/documentation/specifications/perltidy_integration.md) | N/A |
-| **Persistent Lab Environment** | [persistent_lab.md](file:///MySQLTuner-perl/documentation/specifications/persistent_lab.md) | N/A |
+| **CLI Execution Mastery Skill** | [cli_execution_skill.md](file:///MySQLTuner-perl/documentation/specifications/cli_execution_skill.md) | [tests/cli_options.t](file:///MySQLTuner-perl/tests/cli_options.t) |
+| **Metadata-Driven CLI Options Refactor (Phase 6)** | [cli_metadata_refactor.md](file:///MySQLTuner-perl/documentation/specifications/cli_metadata_refactor.md) | [tests/cli_mod_keys.t](file:///MySQLTuner-perl/tests/cli_mod_keys.t) |
+| **Compliance Sentinel - Remembers Integration** | [compliance_sentinel_remembers.md](file:///MySQLTuner-perl/documentation/specifications/compliance_sentinel_remembers.md) | [tests/compliance.t](file:///MySQLTuner-perl/tests/compliance.t) |
+| **Documentation Synchronization Enhancement** | [doc_sync_enhancement.md](file:///MySQLTuner-perl/documentation/specifications/doc_sync_enhancement.md) | [tests/doc_sync.t](file:///MySQLTuner-perl/tests/doc_sync.t) |
+| **Fix --dumpdir TRUE/FALSE logic** | [dumpdir_logic_fix.md](file:///MySQLTuner-perl/documentation/specifications/dumpdir_logic_fix.md) | [tests/schemadir.t](file:///MySQLTuner-perl/tests/schemadir.t) |
+| **Specification - Performance Schema `Error Log` Analysis** | [error_log_pfs.md](file:///MySQLTuner-perl/documentation/specifications/error_log_pfs.md) | [tests/pfs_observability.t](file:///MySQLTuner-perl/tests/pfs_observability.t) |
+| **Robust Password Column Detection in mysqltuner.pl** | [fix_password_column_detection.md](file:///MySQLTuner-perl/documentation/specifications/fix_password_column_detection.md) | [tests/test_issue_22.t](file:///MySQLTuner-perl/tests/test_issue_22.t) |
+| **Index Checks via Performance Schema** | [index_checks_pfs.md](file:///MySQLTuner-perl/documentation/specifications/index_checks_pfs.md) | [tests/index_pfs_checks.t](file:///MySQLTuner-perl/tests/index_pfs_checks.t) |
+| **Warn if current user does not have minimum privileges** | [issue_25_privilege_checks.md](file:///MySQLTuner-perl/documentation/specifications/issue_25_privilege_checks.md) | [tests/unit_client_privileges.t](file:///MySQLTuner-perl/tests/unit_client_privileges.t) |
+| **MySQL 9.x Support** | [mysql_9_x_support.md](file:///MySQLTuner-perl/documentation/specifications/mysql_9_x_support.md) | [tests/repro_mysql9_regressions.t](file:///MySQLTuner-perl/tests/repro_mysql9_regressions.t) |
+| **Performance Schema Audit Logic** | [performance_schema_audit.md](file:///MySQLTuner-perl/documentation/specifications/performance_schema_audit.md) | [tests/pfs_observability.t](file:///MySQLTuner-perl/tests/pfs_observability.t) |
+| **Performance Schema Observability Warning** | [performance_schema_observability_warning.md](file:///MySQLTuner-perl/documentation/specifications/performance_schema_observability_warning.md) | [tests/pfs_observability.t](file:///MySQLTuner-perl/tests/pfs_observability.t) |
+| **Perltidy Integration in Release Preflight** | [perltidy_integration.md](file:///MySQLTuner-perl/documentation/specifications/perltidy_integration.md) | [tests/compliance.t](file:///MySQLTuner-perl/tests/compliance.t) |
+| **Persistent Lab Environment** | [persistent_lab.md](file:///MySQLTuner-perl/documentation/specifications/persistent_lab.md) | [tests/compliance.t](file:///MySQLTuner-perl/tests/compliance.t) |
 | **Regex Robustness for Minor and Micro Releases** | [regex_robustness_versioning.md](file:///MySQLTuner-perl/documentation/specifications/regex_robustness_versioning.md) | [tests/test_vulnerabilities.t](file:///MySQLTuner-perl/tests/test_vulnerabilities.t) |
-| **Specification - Release Manager** | [release_manager_specification.md](file:///MySQLTuner-perl/documentation/specifications/release_manager_specification.md) | N/A |
-| **Roadmap Phase IV - Advanced Intelligence & Ecosystem** | [roadmap_phase_iv_intelligence.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_iv_intelligence.md) | N/A |
-| **Roadmap Phase IX - Data Integrity & Checksum Verification** | [roadmap_phase_ix_integrity.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_ix_integrity.md) | N/A |
-| **Roadmap Phase V - Deep InnoDB Tuning & Safeguarding** | [roadmap_phase_v_innodb.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_v_innodb.md) | N/A |
-| **Roadmap Phase VI - High Availability & InnoDB Cluster** | [roadmap_phase_vi_innodb_cluster.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_vi_innodb_cluster.md) | N/A |
-| **Roadmap Phase VII - Modern Replication & GTID Mastery** | [roadmap_phase_vii_replication.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_vii_replication.md) | N/A |
-| **Roadmap Phase VIII - Galera Cluster 4 & PXC 8.0 Mastery** | [roadmap_phase_viii_galera.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_viii_galera.md) | N/A |
-| **Roadmap Phase XI - Advanced Log Parser & Lock Monitoring** | [roadmap_phase_xi_log_parser.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_xi_log_parser.md) | N/A |
-| **Roadmap Phase XII - Sectional Global Indicators & KPIs** | [roadmap_phase_xii_sectional_indicators.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_xii_sectional_indicators.md) | N/A |
-| **Roadmap Phase XIII - Export Optimization & Dumpdir Hardening** | [roadmap_phase_xiii_export_optimization.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_xiii_export_optimization.md) | N/A |
-| **--schemadir option for Schema Documentation** | [schemadir_option_specification.md](file:///MySQLTuner-perl/documentation/specifications/schemadir_option_specification.md) | N/A |
-| **SSL/TLS Security Enhancements** | [ssl_tls_enhancements.md](file:///MySQLTuner-perl/documentation/specifications/ssl_tls_enhancements.md) | N/A |
-| **SSL/TLS Security Checks** | [ssl_tls_security_checks.md](file:///MySQLTuner-perl/documentation/specifications/ssl_tls_security_checks.md) | N/A |
-| **Specification - Syslog and Systemd Journal Support for MariaDB/MySQL** | [syslog_systemd_support.md](file:///MySQLTuner-perl/documentation/specifications/syslog_systemd_support.md) | N/A |
+| **Specification - Release Manager** | [release_manager_specification.md](file:///MySQLTuner-perl/documentation/specifications/release_manager_specification.md) | [tests/test_release_files.t](file:///MySQLTuner-perl/tests/test_release_files.t) |
+| **Roadmap Phase IV - Advanced Intelligence & Ecosystem** | [roadmap_phase_iv_intelligence.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_iv_intelligence.md) | [tests/phase4_features.t](file:///MySQLTuner-perl/tests/phase4_features.t) |
+| **Roadmap Phase IX - Data Integrity & Checksum Verification** | [roadmap_phase_ix_integrity.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_ix_integrity.md) | [tests/core_logic_coverage.t](file:///MySQLTuner-perl/tests/core_logic_coverage.t) |
+| **Roadmap Phase V - Deep InnoDB Tuning & Safeguarding** | [roadmap_phase_v_innodb.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_v_innodb.md) | [tests/innodb_redo_log_capacity_logic.t](file:///MySQLTuner-perl/tests/innodb_redo_log_capacity_logic.t) |
+| **Roadmap Phase VI - High Availability & InnoDB Cluster** | [roadmap_phase_vi_innodb_cluster.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_vi_innodb_cluster.md) | [tests/unit_ha_cluster.t](file:///MySQLTuner-perl/tests/unit_ha_cluster.t) |
+| **Roadmap Phase VII - Modern Replication & GTID Mastery** | [roadmap_phase_vii_replication.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_vii_replication.md) | [tests/unit_replication_internals.t](file:///MySQLTuner-perl/tests/unit_replication_internals.t) |
+| **Roadmap Phase VIII - Galera Cluster 4 & PXC 8.0 Mastery** | [roadmap_phase_viii_galera.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_viii_galera.md) | [tests/unit_galera_enhanced.t](file:///MySQLTuner-perl/tests/unit_galera_enhanced.t) |
+| **Roadmap Phase XI - Advanced Log Parser & Lock Monitoring** | [roadmap_phase_xi_log_parser.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_xi_log_parser.md) | [tests/unit_log_parser.t](file:///MySQLTuner-perl/tests/unit_log_parser.t) |
+| **Roadmap Phase XII - Sectional Global Indicators & KPIs** | [roadmap_phase_xii_sectional_indicators.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_xii_sectional_indicators.md) | [tests/verbose_timing.t](file:///MySQLTuner-perl/tests/verbose_timing.t) |
+| **Roadmap Phase XIII - Export Optimization & Dumpdir Hardening** | [roadmap_phase_xiii_export_optimization.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_xiii_export_optimization.md) | [tests/schemadir.t](file:///MySQLTuner-perl/tests/schemadir.t) |
+| **Roadmap Phase XIV - Interactive Multi-Page HTML Reports & Detailed Exports** | [roadmap_phase_xiv_html_reports.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_xiv_html_reports.md) | [tests/html_report.t](file:///MySQLTuner-perl/tests/html_report.t) |
+| **Roadmap Phase XVI - AI Agent Integration & Actionable JSON Schema** | [roadmap_phase_xv_ai_agent_integration.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_xv_ai_agent_integration.md) | [tests/unit_agent_json.t](file:///MySQLTuner-perl/tests/unit_agent_json.t) |
+| **Roadmap Phase XVII - Dockerized Auditing Daemon & MCP Server Support** | [roadmap_phase_xvi_mcp_server.md](file:///MySQLTuner-perl/documentation/specifications/roadmap_phase_xvi_mcp_server.md) | [tests/unit_mcp_server.t](file:///MySQLTuner-perl/tests/unit_mcp_server.t) |
+| **--schemadir option for Schema Documentation** | [schemadir_option_specification.md](file:///MySQLTuner-perl/documentation/specifications/schemadir_option_specification.md) | [tests/schemadir.t](file:///MySQLTuner-perl/tests/schemadir.t) |
+| **SSL/TLS Security Enhancements** | [ssl_tls_enhancements.md](file:///MySQLTuner-perl/documentation/specifications/ssl_tls_enhancements.md) | [tests/ssl_tls_validation.t](file:///MySQLTuner-perl/tests/ssl_tls_validation.t) |
+| **SSL/TLS Security Checks** | [ssl_tls_security_checks.md](file:///MySQLTuner-perl/documentation/specifications/ssl_tls_security_checks.md) | [tests/ssl_tls_validation.t](file:///MySQLTuner-perl/tests/ssl_tls_validation.t) |
+| **Strategic Technical Evolutions** | [strategic_technical_evolutions.md](file:///MySQLTuner-perl/documentation/specifications/strategic_technical_evolutions.md) | [tests/compliance.t](file:///MySQLTuner-perl/tests/compliance.t) |
+| **Specification - Syslog and Systemd Journal Support for MariaDB/MySQL** | [syslog_systemd_support.md](file:///MySQLTuner-perl/documentation/specifications/syslog_systemd_support.md) | [tests/syslog_journal_detection.t](file:///MySQLTuner-perl/tests/syslog_journal_detection.t) |
 | **Test Coverage Expansion** | [test_coverage_expansion.md](file:///MySQLTuner-perl/documentation/specifications/test_coverage_expansion.md) | [tests/unit_system.t](file:///MySQLTuner-perl/tests/unit_system.t) |
-| **Advanced Test Log Auditing** | [test_log_auditing.md](file:///MySQLTuner-perl/documentation/specifications/test_log_auditing.md) | N/A |
+| **Advanced Test Log Auditing** | [test_log_auditing.md](file:///MySQLTuner-perl/documentation/specifications/test_log_auditing.md) | [tests/test_audit_logs.t](file:///MySQLTuner-perl/tests/test_audit_logs.t) |
+| **Verbose Execution Timings** | [verbose_execution_timings.md](file:///MySQLTuner-perl/documentation/specifications/verbose_execution_timings.md) | [tests/verbose_timing.t](file:///MySQLTuner-perl/tests/verbose_timing.t) |
+| **Warning Elimination & Version Comparison Optimization** | [warning_elimination_version_cache.md](file:///MySQLTuner-perl/documentation/specifications/warning_elimination_version_cache.md) | [tests/unit_versions.t](file:///MySQLTuner-perl/tests/unit_versions.t) |
 
 <!-- SPEC_TEST_MATRIX_END -->

@@ -1,4 +1,11 @@
+---
+test_file: tests/core_logic_coverage.t
+---
 # Specification: Roadmap Phase IX - Data Integrity & Checksum Verification
+
+## Goal
+
+Integrate table checksum, corruption audit, and data integrity verification for MyISAM, InnoDB, and Aria storage engines.
 
 ## Context
 
@@ -29,3 +36,8 @@ Ensuring data integrity at rest and during transit is paramount for mission-crit
 
 * **Recovery Confidence**: Ensuring that redo and binary logs are reliable for crash recovery and point-in-time recovery.
 * **Replication Safety**: Preventing the propagation of silent corruption across the cluster.
+
+## Verification
+
+- Validated via unit test suite assertions.
+- Confirms table status and corruption warning output.

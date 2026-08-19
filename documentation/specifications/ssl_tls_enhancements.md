@@ -1,3 +1,6 @@
+---
+test_file: tests/ssl_tls_validation.t
+---
 # SSL/TLS Security Enhancements
 
 ## Goal
@@ -28,3 +31,8 @@ Enhance MySQLTuner's SSL/TLS diagnostics to ensure modern security standards are
   - Query `mysql.user` or `mysql.global_priv`.
   - Column `ssl_type` (NONE, ANY, X509, SPECIFIED).
   - For MariaDB 10.4+: `JSON_VALUE(Priv, '$.ssl_type')`.
+
+## Verification
+
+- Validated via `tests/ssl_tls_validation.t`.
+- Confirms TLS version detection and cipher suite risk scoring.
