@@ -20,6 +20,7 @@
 - docs(container): add comprehensive AI MCP server integration guides in English and French (#954)
 - docs(docs): update all specification files with YAML frontmatter test bindings and mandatory Goal/Verification sections
 - docs(docs): fix broken star history chart link (#981)
+- docs(docs): enrich embedded POD documentation with comprehensive CLI reference
 - docs(rules): align release governance, conventional commit, and git tagging rules (#739)
 - docs(versions): synchronize v2.9.2 version strings, EOL LTS support checks, and multi-language README release links
 - perf(main): optimize auto-increment exhaustion check by retrieving COLUMN_TYPE in initial join query (#986)

@@ -16741,27 +16741,317 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.9.2 - MySQL High Performance Tuning Script
+ MySQLTuner 2.9.2 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
+
+=head1 SYNOPSIS
+
+B<mysqltuner> [I<OPTIONS>]
+
+  # Basic local execution using standard unix socket
+  perl mysqltuner.pl
+
+  # Remote TCP/IP connection with explicit credentials and forced memory sizing
+  perl mysqltuner.pl --host 192.168.1.50 --port 3306 --user root --pass secret --forcemem 16G
+
+  # Containerized database analysis via Docker/Podman
+  perl mysqltuner.pl --container production_mysql_1 --user root --pass secret
+
+  # Generate comprehensive interactive HTML diagnostic dashboard
+  perl mysqltuner.pl --reportfile /var/www/html/tuner_report.html
+
+  # Export schema markdown documentation per database
+  perl mysqltuner.pl --schemadir /opt/db_docs/
+
+  # AI Agent integration output (actionable JSON remediation plan)
+  perl mysqltuner.pl --agent-json
 
 =head1 IMPORTANT USAGE GUIDELINES
 
-To run the script with the default options, run the script without arguments
-Allow MySQL server to run for at least 24-48 hours before trusting suggestions
-Some routines may require root level privileges (script will provide warnings)
-You must provide the remote server's total memory when connecting to other servers
+=over 4
+
+=item *
+
+B<Production Stability:> Run the script without modifying arguments first to review recommendations before applying changes.
+
+=item *
+
+B<Representative Workload:> Allow your database server to run under normal production load for at least 24 to 48 hours before trusting metric ratios and sizing advice.
+
+=item *
+
+B<Privilege Requirements:> Administrative read-only access (C<SELECT>, C<PROCESS>, C<SHOW DATABASES>, C<REPLICATION CLIENT>) is required for exhaustive diagnostics.
+
+=item *
+
+B<Remote Host Hardware Sizing:> When connecting over TCP/IP or SSH to remote instances, specify host RAM via C<--forcemem> (e.g., C<--forcemem 32G>) to ensure accurate buffer sizing recommendations.
+
+=back
 
 =head1 OPTIONS
 
-See C<mysqltuner --help> for a full list of available options and their categories.
+=head2 Connection and Authentication Options
+
+=over 4
+
+=item B<--host> I<hostname>
+
+Connect to remote MySQL/MariaDB server via TCP/IP hostname or IP address.
+
+=item B<--port> I<port>
+
+TCP/IP port number to connect to (default: 3306).
+
+=item B<--socket> I<socket_path>
+
+Path to local UNIX domain socket for database communication.
+
+=item B<--user> I<username>
+
+Database username for authentication.
+
+=item B<--password> I<password>, B<--pass> I<password>
+
+Database password for authentication.
+
+=item B<--ask-pass>
+
+Prompt interactively for database password on the terminal.
+
+=item B<--defaults-file> I<path>
+
+Path to a custom MySQL configuration file (e.g., C<~/.my.cnf>).
+
+=item B<--defaults-extra-file> I<path>
+
+Path to an additional configuration file to read after standard defaults.
+
+=item B<--login-path> I<path>
+
+Read credentials from MySQL encrypted login path (via C<mysql_config_editor>).
+
+=item B<--mysqlcmd> I<path>
+
+Path to custom C<mysql> client binary.
+
+=item B<--mysqladmin> I<path>
+
+Path to custom C<mysqladmin> binary.
+
+=item B<--tli>
+
+Use Transport Layer Interface abstraction.
+
+=item B<--ssl-ca> I<path>
+
+Path to SSL Certificate Authority (CA) certificate.
+
+=item B<--caching-sha2-password>
+
+Force caching_sha2_password authentication plugin mode.
+
+=back
+
+=head2 Target Environment and Cloud Discovery Options
+
+=over 4
+
+=item B<--container> I<container_name_or_id>
+
+Execute diagnostics inside a running Docker or Podman container.
+
+=item B<--ssh-host> I<hostname>
+
+Execute diagnostics over SSH remote transport.
+
+=item B<--ssh-user> I<username>
+
+SSH login username.
+
+=item B<--ssh-key> I<path>
+
+Path to SSH private key file.
+
+=item B<--ssh-port> I<port>
+
+SSH daemon port (default: 22).
+
+=item B<--aws-profile> I<profile>
+
+AWS CLI profile for Amazon RDS / Aurora cluster discovery.
+
+=item B<--aws-region> I<region>
+
+AWS Region for RDS / Aurora discovery.
+
+=item B<--aws-cluster-identifier> I<id>
+
+Amazon RDS / Aurora cluster identifier.
+
+=item B<--aws-instance-identifier> I<id>
+
+Amazon RDS instance identifier.
+
+=item B<--gcp-project> I<project_id>
+
+Google Cloud project ID for Cloud SQL instances.
+
+=item B<--gcp-instance> I<instance_id>
+
+Google Cloud SQL instance identifier.
+
+=item B<--azure-resource-group> I<group>
+
+Azure resource group for Azure Database for MySQL.
+
+=item B<--azure-server-name> I<name>
+
+Azure MySQL flexible/single server name.
+
+=back
+
+=head2 Performance and Diagnostic Tuning Options
+
+=over 4
+
+=item B<--forcemem> I<size>
+
+Amount of physical RAM installed in host (e.g., C<16G>, C<1024M>, C<128K>).
+
+=item B<--forceswap> I<size>
+
+Amount of configured swap space on host (e.g., C<4G>, C<2048M>).
+
+=item B<--skipworkload>
+
+Bypass high-cardinality table churn and auto-increment exhaustion checks.
+
+=item B<--skippassword>
+
+Skip offline dictionary checks for weak user passwords.
+
+=item B<--skipsize>
+
+Skip table size enumeration queries on C<information_schema>.
+
+=item B<--buffers>
+
+Print detailed per-buffer memory allocations.
+
+=item B<--cvefile> I<path>
+
+Path to custom CVE vulnerabilities CSV database file.
+
+=item B<--passwordfile> I<path>
+
+Path to custom dictionary file for password audits.
+
+=item B<--checkversion>
+
+Check for upstream MySQLTuner version updates.
+
+=item B<--nondedicated>
+
+Adjust tuning formulas assuming the host runs non-database workloads.
+
+=item B<--noprocess>
+
+Skip OS-level non-mysqld process enumeration.
+
+=back
+
+=head2 Output and Export Options
+
+=over 4
+
+=item B<--verbose>, B<-v>
+
+Activate full verbose output including storage engines and table statistics.
+
+=item B<--silent>
+
+Suppress standard console output.
+
+=item B<--outputfile> I<path>
+
+Save console report to plain text file.
+
+=item B<--reportfile> [I<path>]
+
+Generate interactive self-contained HTML diagnostic dashboard.
+
+=item B<--json>
+
+Output raw diagnostic results as a JSON string.
+
+=item B<--prettyjson>
+
+Output diagnostic results as formatted, indented JSON.
+
+=item B<--agent-json>
+
+Output actionable AI remediation schema with SQL/config fixes and rollback statements.
+
+=item B<--yaml>
+
+Output diagnostic metrics in YAML format.
+
+=item B<--dumpdir> I<path>
+
+Dump diagnostic data files and Markdown schema summaries to target directory.
+
+=item B<--schemadir> I<path>
+
+Export individual Markdown documentation files with Mermaid ER diagrams per schema.
+
+=item B<--nocolor>
+
+Disable ANSI color codes in terminal output.
+
+=item B<--noprettyicon>
+
+Use plain text markers ([OK], [!!], [--]) instead of Unicode icons.
+
+=item B<--stage-timings>
+
+Display execution duration for each analysis stage.
+
+=back
+
+=head2 Debugging and Filtering Options
+
+=over 4
+
+=item B<--debug>
+
+Print internal debug traces and SQL query payloads.
+
+=item B<--dbgpattern> I<regex>
+
+Filter debug messages by regular expression pattern.
+
+=item B<--nobad>
+
+Suppress negative findings and warning recommendations.
+
+=item B<--nogood>
+
+Suppress positive / passing health checks.
+
+=item B<--noinfo>
+
+Suppress informational messages.
+
+=back
 
 =head1 VERSION
 
 Version 2.9.2
+
 =head1 PERLDOC
 
-You can find documentation for this module with the perldoc command.
+You can inspect the embedded manual with the perldoc command:
 
-  perldoc mysqltuner
+  perldoc mysqltuner.pl
 
 =head2 INTERNALS
 
