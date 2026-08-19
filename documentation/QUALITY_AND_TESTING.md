@@ -78,8 +78,8 @@ Executes unit tests and monitors test output for runtime errors, typos, and depr
 
 ### 4. Database Laboratory Integration Testing
 Runs MySQLTuner against real, running containerized databases under diverse environment scenarios.
-- **Path**: [test_envs.sh](file:///MySQLTuner-perl/build/test_envs.sh)
-- **Functionality**: Manages database container lifecycles (using the [multi-db-docker-env](file:///home/jmren/GIT_REPOS/multi-db-docker-env) framework) and validates findings.
+- **Path**: [test_envs.sh](file:///build/test_envs.sh)
+- **Functionality**: Manages database container lifecycles (using the [multi-db-docker-env](https://github.com/jmrenouard/multi-db-docker-env) framework) and validates findings.
 - **Scenarios**:
   - **Standard**: Executes the script over a TCP connection (`--host 127.0.0.1`).
   - **Container**: Executes the script forcing container abstraction (`--container docker:mysql-8.4`).

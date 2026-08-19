@@ -61,28 +61,28 @@ Migrated several external commands to native Core Perl to reduce fork overhead a
 
 The following files track and contain the MySQLTuner version string. Below are the mechanisms to modify or regenerate each:
 
-1. **[mysqltuner.pl](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/mysqltuner.pl)** (Main script & POD documentation):
+1. **[mysqltuner.pl](file:///mysqltuner.pl)** (Main script & POD documentation):
    - **Locations**: File header (`# mysqltuner.pl - Version X.Y.Z`), internal variable (`our $tunerversion = "X.Y.Z";`), and POD documentation.
    - **Update Command**: Makefile targets `make release VERSION=X.Y.Z` or `make increment_sub_version` automatically replace old versions using `sed`.
 
-2. **[CURRENT_VERSION.txt](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/CURRENT_VERSION.txt)** (Minimal version manifest):
-   - **Update Command**: Run `make generate_version_file` to extract the version from the [mysqltuner.pl](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/mysqltuner.pl) header.
+2. **[CURRENT_VERSION.txt](file:///CURRENT_VERSION.txt)** (Minimal version manifest):
+   - **Update Command**: Run `make generate_version_file` to extract the version from the [mysqltuner.pl](file:///mysqltuner.pl) header.
 
-3. **[USAGE.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/USAGE.md)** (Markdown CLI manual):
+3. **[USAGE.md](file:///USAGE.md)** (Markdown CLI manual):
    - **Update Command**: Run `rm -f USAGE.md && pod2markdown mysqltuner.pl > USAGE.md` or `make generate_usage`.
 
-4. **[README.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/README.md)** (Version badge and links):
+4. **[README.md](file:///README.md)** (Version badge and links):
    - **Update Command**: Handled automatically during `make release VERSION=X.Y.Z` using `sed` substitution.
 
-5. **[SECURITY.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/SECURITY.md)** (Supported versions table):
+5. **[SECURITY.md](file:///SECURITY.md)** (Supported versions table):
    - **Update Command**: Updated manually or via sed-based version bumps.
 
-6. **[MEMORY_DB.md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/MEMORY_DB.md)** (Project version memory):
+6. **[MEMORY_DB.md](file:///MEMORY_DB.md)** (Project version memory):
    - **Update Command**: Updated automatically during `make release VERSION=X.Y.Z` using `sed` substitution.
 
-7. **[Changelog](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/Changelog)** (History log):
+7. **[Changelog](file:///Changelog)** (History log):
    - **Update Command**: Updated automatically during `make release VERSION=X.Y.Z` using `sed` substitution.
 
-8. **[releases/v[VERSION].md](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/releases/)** (Release notes):
+8. **[releases/v[VERSION].md](file:///releases/)** (Release notes):
    - **Update Command**: Generated via `python3 build/release_gen.py`.
 

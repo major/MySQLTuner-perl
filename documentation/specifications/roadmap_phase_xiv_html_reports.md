@@ -117,7 +117,7 @@ The native HTML report is structured as an interactive SPA (Single Page Applicat
 
 ### Automated Tests
 1. **Perl Syntax Validation**: The HTML generation block must be warning-free under `perl -cw mysqltuner.pl`.
-2. **Unit Test Assertions**: [tests/html_report.t](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/tests/html_report.t) must mock database status variables, schema lists, and verification logs, asserting that the generated HTML file matches the target SPA layout regex patterns.
+2. **Unit Test Assertions**: [tests/html_report.t](file:///tests/html_report.t) must mock database status variables, schema lists, and verification logs, asserting that the generated HTML file matches the target SPA layout regex patterns.
 
 ### Manual Verification
 1. Generate the HTML report:

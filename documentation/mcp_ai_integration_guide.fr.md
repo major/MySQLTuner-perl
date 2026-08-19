@@ -80,7 +80,7 @@ perl mysqltuner.pl --agent-json --host <db_host> --user <db_user> --pass <db_pas
 
 ## 🔌 Mode 2 : Serveur Model Context Protocol (MCP)
 
-Le serveur MCP ([build/mcp_server.py](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/build/mcp_server.py)) implémente le standard MCP sur le transport `stdio` en utilisant le protocole JSON-RPC 2.0.
+Le serveur MCP ([build/mcp_server.py](file:///build/mcp_server.py)) implémente le standard MCP sur le transport `stdio` en utilisant le protocole JSON-RPC 2.0.
 
 ### Ressources MCP Exposées
 
@@ -103,7 +103,7 @@ Le serveur MCP ([build/mcp_server.py](file:///home/jmren/GIT_REPOS/MySQLTuner-pe
 
 ### Déploiement Microservice Conteneurisé
 
-L'image Docker officielle ([Dockerfile.mcp](file:///home/jmren/GIT_REPOS/MySQLTuner-perl/Dockerfile.mcp)) regroupe Perl, Python 3, mysql-client et le serveur MCP.
+L'image Docker officielle ([Dockerfile.mcp](file:///Dockerfile.mcp)) regroupe Perl, Python 3, mysql-client et le serveur MCP.
 
 ```bash
 docker run -d \
