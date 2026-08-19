@@ -523,6 +523,18 @@ perl mysqltuner.pl --prettyjson
 perl mysqltuner.pl --nondedicated
 ```
 
+**Usage:** Fast Analysis by Bypassing Table Workload Scans (Issue #986)
+
+```bash
+perl mysqltuner.pl --skipworkload
+```
+
+**Usage:** AI Agent Remediation Schema (Actionable JSON)
+
+```bash
+perl mysqltuner.pl --agent-json --outputfile=remediation.json
+```
+
 **Usage:** Use credentials from environment variables
 
 ```bash
@@ -537,7 +549,7 @@ perl mysqltuner.pl --userenv=MYSQL_USER --passenv=MYSQL_PASS
 perl mysqltuner.pl --defaults-file=/path/to/my.cnf
 ```
 
-For a complete list of all available options, run `perl mysqltuner.pl --help` or refer to the [USAGE.md](https://github.com/major/MySQLTuner-perl/blob/master/USAGE.md) documentation.
+For a complete list of all available options, run `perl mysqltuner.pl --help` or refer to the [USAGE.md](USAGE.md) documentation.
 
 Cloud Support
 --
