@@ -61,7 +61,7 @@ Merci à LightPath pour la mise à disposition des ressources (serveurs de déve
 
 ## Historique des étoiles
 
-[![Star History Chart](https://api.star-history.com/svg?repos=major/MySQLTuner-perl&type=Date)](https://star-history.com/#major/MySQLTuner-perl&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=major/MySQLTuner-perl&type=Date)](https://star-history.dera.page/#major/MySQLTuner-perl&Date)
 
 Compatibilité
 ====
