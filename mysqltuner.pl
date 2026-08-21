@@ -2713,6 +2713,93 @@ sub format_sql_trace_report {
     return $out;
 }
 
+# Audits Performance Schema stage and wait events to identify execution bottlenecks
+sub audit_pfs_stage_profiling {
+    my ( $stages_ref, $waits_ref ) = @_;
+    my @findings;
+    $stages_ref //= {};
+    $waits_ref  //= {};
+
+    # 1. Audit Stage Events: Disk / Memory Temp Tables and Sorting
+    if ( exists $stages_ref->{'stage/sql/Creating tmp table'} ) {
+        my $tmp_count = $stages_ref->{'stage/sql/Creating tmp table'}{'count'}
+          // 0;
+        my $tmp_latency_ms =
+          $stages_ref->{'stage/sql/Creating tmp table'}{'latency_ms'} // 0;
+        if ( $tmp_count > 1000 && $tmp_latency_ms > 5000 ) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Stages',
+                message  => sprintf(
+"High temporary table creation stage latency: %d executions took %.2f ms",
+                    $tmp_count, $tmp_latency_ms
+                ),
+                recommendation =>
+"Review queries generating temporary tables or increase tmp_table_size / max_heap_table_size",
+              };
+        }
+    }
+
+    if ( exists $stages_ref->{'stage/sql/Sorting result'} ) {
+        my $sort_count = $stages_ref->{'stage/sql/Sorting result'}{'count'}
+          // 0;
+        my $sort_latency_ms =
+          $stages_ref->{'stage/sql/Sorting result'}{'latency_ms'} // 0;
+        if ( $sort_count > 5000 && $sort_latency_ms > 10000 ) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Stages',
+                message  => sprintf(
+"High sorting stage latency: %d sort operations took %.2f ms",
+                    $sort_count, $sort_latency_ms
+                ),
+                recommendation =>
+"Optimize queries with filesorts using composite indexes or adjust sort_buffer_size",
+              };
+        }
+    }
+
+    # 2. Audit Wait Events: Mutex and IO Contention
+    foreach my $wait_event ( sort keys %$waits_ref ) {
+        my $wait_count      = $waits_ref->{$wait_event}{'count'}      // 0;
+        my $wait_latency_ms = $waits_ref->{$wait_event}{'latency_ms'} // 0;
+        if (   $wait_event =~ /^wait\/synch\/mutex\/innodb/
+            && $wait_latency_ms > 10000 )
+        {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Waits',
+                message  => sprintf(
+"InnoDB mutex contention detected on '%s': %.2f ms wait time",
+                    $wait_event, $wait_latency_ms
+                ),
+                recommendation =>
+"Consider increasing innodb_buffer_pool_instances or tuning thread concurrency",
+              };
+        }
+        elsif ($wait_event =~ /^wait\/io\/file\/innodb\/innodb_data_file/
+            && $wait_latency_ms > 50000 )
+        {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Waits',
+                message  => sprintf(
+"High InnoDB data file IO wait latency on '%s': %.2f ms wait time",
+                    $wait_event, $wait_latency_ms
+                ),
+                recommendation =>
+"Check disk IOPS capacity or consider tuning innodb_io_capacity / innodb_io_capacity_max",
+              };
+        }
+    }
+
+    return @findings;
+}
+
 # Calculate Percentage
 sub percentage {
     my $value = shift;
