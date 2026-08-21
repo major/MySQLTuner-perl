@@ -2462,6 +2462,40 @@ sub hr_num {
     }
 }
 
+# Normalizes any MySQL/MariaDB boolean representation (ON/OFF, 1/0, YES/NO, TRUE/FALSE, ENABLED/DISABLED)
+# Returns 1 for truthy values, 0 for falsy values, and undef if undefined or unparseable.
+sub normalize_mysql_bool {
+    my $val = shift;
+    return undef if !defined $val;
+    $val =~ s/^\s+|\s+$//g;
+    return 1 if $val =~ /^(?:1|ON|YES|TRUE|ENABLE|ENABLED)$/i;
+    return 0 if $val =~ /^(?:0|OFF|NO|FALSE|DISABLE|DISABLED)$/i;
+    return undef;
+}
+
+# Checks if a MySQL/MariaDB variable or status value is functionally truthy
+sub is_mysql_true {
+    my $val = shift;
+    my $res = normalize_mysql_bool($val);
+    return ( defined $res && $res == 1 ) ? 1 : 0;
+}
+
+# Checks if a MySQL/MariaDB variable or status value is functionally falsy
+sub is_mysql_false {
+    my $val = shift;
+    my $res = normalize_mysql_bool($val);
+    return ( defined $res && $res == 0 ) ? 1 : 0;
+}
+
+# Formats a MySQL boolean value into a standardized string representation ("ON" or "OFF")
+sub format_mysql_bool {
+    my $val = shift;
+    my $res = normalize_mysql_bool($val);
+    return "ON"  if defined $res && $res == 1;
+    return "OFF" if defined $res && $res == 0;
+    return defined $val ? $val : "UNKNOWN";
+}
+
 # Calculate Percentage
 sub percentage {
     my $value = shift;
@@ -8006,8 +8040,7 @@ sub mysql_stats {
     my $slow_query_log_active = $myvar{'slow_query_log'}
       // $myvar{'log_slow_queries'};
     if ( defined($slow_query_log_active) ) {
-        if ( $slow_query_log_active eq "OFF" || $slow_query_log_active eq "0" )
-        {
+        if ( is_mysql_false($slow_query_log_active) ) {
             push( @generalrec,
                 "Enable the slow query log to troubleshoot bad queries" );
         }
