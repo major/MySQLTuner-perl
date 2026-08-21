@@ -78,8 +78,7 @@ generate_version_file:
 
 generate_eof_files:
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_eof_files..." >> execution.log
-	bash ./build/endoflife.sh mariadb 
-	bash ./build/endoflife.sh mysql
+	perl ./build/sync_eol_dates.pl --generate
 	git add ./*_support.md
 	git commit -m "docs: generate end-of-life status files" || echo "No changes to commit"
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_eof_files." >> execution.log

@@ -331,19 +331,19 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Granular Unit Test Decomposition**:
   * [ ] Continue decomposing monolithic test scripts in the `tests/` directory into structured, human-assimilable subtests to simplify regression tracking and database laboratory debugging.
 
-### Phase 27: Multi-Language Normalization & Duplicate Elimination [NOT STARTED]
+### Phase 27: Multi-Language Normalization & Duplicate Elimination [COMPLETED]
 
 > Addresses the 6 cross-language duplications identified during the transversal project audit (Perl/Python/Bash/YAML).
 
-* [ ] **CVE Update Consolidation (Perl-Only)**:
-  * [ ] Merge enriched fields from `updateCVElist.py` (CVSS scores, references, publication dates) into `updateCVElist.pl`.
-  * [ ] Deprecate and remove `updateCVElist.py` and its `__pycache__/` directory after migration validation.
-* [ ] **Centralized Version Extraction Script**:
-  * [ ] Create a single `build/get_version.sh` script encapsulating the version extraction logic (`grep '- Version ' mysqltuner.pl | awk '{ print $NF}'`) currently duplicated in 5 locations (Makefile, 2 workflows, 1 test script).
-  * [ ] Refactor Makefile, `publish_release.yml`, `docker_publish.yml`, and `tests/check_release_files.sh` to source this single script.
-* [ ] **Orphan File Cleanup**:
-  * [ ] Remove empty `JenkinsFile` (0 bytes, no pipeline defined).
-  * [ ] Remove `mysqltuner.pl.bak` and `tests/unit_versions.t.bak` (unversioned backup files).
+* [x] **CVE Update Consolidation (Perl-Only)**:
+  * [x] Merge enriched fields from `updateCVElist.py` (CVSS scores, references, publication dates) into `updateCVElist.pl`.
+  * [x] Deprecate and remove `updateCVElist.py` and its `__pycache__/` directory after migration validation.
+* [x] **Centralized Version Extraction Script**:
+  * [x] Create a single `build/get_version.sh` script encapsulating the version extraction logic (`grep '- Version ' mysqltuner.pl | awk '{ print $NF}'`) currently duplicated in 5 locations (Makefile, 2 workflows, 1 test script).
+  * [x] Refactor Makefile, `publish_release.yml`, `docker_publish.yml`, and `tests/check_release_files.sh` to source this single script.
+* [x] **Orphan File Cleanup**:
+  * [x] Remove empty `JenkinsFile` (0 bytes, no pipeline defined).
+  * [x] Remove `mysqltuner.pl.bak` and `tests/unit_versions.t.bak` (unversioned backup files).
 
 ### Phase 28: CI/CD Version Matrix Harmonization [NOT STARTED]
 
@@ -381,8 +381,8 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] Rewrite `genFeatures.sh` (currently a `grep | perl | sort | perl | grep` pipeline) as a pure Perl script to eliminate the shell dependency.
 * [ ] **Build Script Header Standardization**:
   * [ ] Standardize all `build/` script headers with a common format including: description, author, dependencies, usage, and exit codes.
-* [ ] **EOL Script Consolidation**:
-  * [ ] Merge `endoflife.sh` (Bash + curl + jq) functionality into `sync_eol_dates.pl` (already uses HTTP::Tiny), eliminating the `jq` external dependency.
+* [x] **EOL Script Consolidation**:
+  * [x] Merge `endoflife.sh` (Bash + curl + jq) functionality into `sync_eol_dates.pl` (already uses HTTP::Tiny), eliminating the `jq` external dependency.
 
 ## 🤝 Contribution & Feedback
 
