@@ -142,7 +142,8 @@ my %ALLOWED_SCOPES = map { $_ => 1 } (
     'auth',     'main',     'metadata',     'deps',
     'system',   'roadmap',  'hook',         'hooks',
     'build',    'mcp',      'rules',    'galera',
-    'skill',    'skills',   'innodb',   'replication'
+    'skill',    'skills',   'innodb',   'replication',
+    'engine'
 );
 
 # Lint Changelog structure and scopes for the current version block
