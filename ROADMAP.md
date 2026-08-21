@@ -370,7 +370,7 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] Mark `publishtodockerhub.sh` as deprecated in favor of the `docker_publish.yml` workflow (which includes Buildx, multi-arch, and full validation).
   * [x] Update `Makefile` `docker_push` target to warn about deprecation and recommend using the CI workflow.
 
-### Phase 30: Build Stack Rationalization [IN PROGRESS]
+### Phase 30: Build Stack Rationalization [COMPLETED]
 
 > Simplifies the multi-language build toolchain toward Perl-first consistency with the project's zero-dependency philosophy.
 
@@ -379,8 +379,8 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] Preserve all current features: changelog parsing, git commit grouping, diagnostic growth indicators, and CLI option delta analysis.
 * [x] **Features Generator Migration (Bash → Perl)**:
   * [x] Rewrite `genFeatures.sh` (currently a `grep | perl | sort | perl | grep` pipeline) as a pure Perl script to eliminate the shell dependency.
-* [ ] **Build Script Header Standardization**:
-  * [ ] Standardize all `build/` script headers with a common format including: description, author, dependencies, usage, and exit codes.
+* [x] **Build Script Header Standardization**:
+  * [x] Standardize all `build/` script headers with a common format including: description, author, dependencies, usage, and exit codes (`build/check_build_headers.pl`).
 * [x] **EOL Script Consolidation**:
   * [x] Merge `endoflife.sh` (Bash + curl + jq) functionality into `sync_eol_dates.pl` (already uses HTTP::Tiny), eliminating the `jq` external dependency.
 
