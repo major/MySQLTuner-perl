@@ -370,15 +370,15 @@ To ensure consistency and high-density development, the following roles are defi
   * [ ] Mark `publishtodockerhub.sh` as deprecated in favor of the `docker_publish.yml` workflow (which includes Buildx, multi-arch, and full validation).
   * [ ] Update `Makefile` `docker_push` target to warn about deprecation and recommend using the CI workflow.
 
-### Phase 30: Build Stack Rationalization [NOT STARTED]
+### Phase 30: Build Stack Rationalization [IN PROGRESS]
 
 > Simplifies the multi-language build toolchain toward Perl-first consistency with the project's zero-dependency philosophy.
 
-* [ ] **Release Notes Generator Migration (Python → Perl)**:
-  * [ ] Rewrite `release_gen.py` (347 lines) in Perl using Core modules only, eliminating the Python 3 runtime dependency from the build stack.
-  * [ ] Preserve all current features: changelog parsing, git commit grouping, diagnostic growth indicators, and CLI option delta analysis.
-* [ ] **Features Generator Migration (Bash → Perl)**:
-  * [ ] Rewrite `genFeatures.sh` (currently a `grep | perl | sort | perl | grep` pipeline) as a pure Perl script to eliminate the shell dependency.
+* [x] **Release Notes Generator Migration (Python → Perl)**:
+  * [x] Rewrite `release_gen.py` (347 lines) in Perl using Core modules only, eliminating the Python 3 runtime dependency from the build stack.
+  * [x] Preserve all current features: changelog parsing, git commit grouping, diagnostic growth indicators, and CLI option delta analysis.
+* [x] **Features Generator Migration (Bash → Perl)**:
+  * [x] Rewrite `genFeatures.sh` (currently a `grep | perl | sort | perl | grep` pipeline) as a pure Perl script to eliminate the shell dependency.
 * [ ] **Build Script Header Standardization**:
   * [ ] Standardize all `build/` script headers with a common format including: description, author, dependencies, usage, and exit codes.
 * [ ] **EOL Script Consolidation**:

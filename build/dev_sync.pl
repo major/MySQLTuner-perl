@@ -193,7 +193,7 @@ sub main {
     }
     
     log_msg("Regenerating release notes file...");
-    my $rel_notes_res = system("python3 build/release_gen.py");
+    my $rel_notes_res = system("perl build/release_gen.pl");
     if ($rel_notes_res != 0) {
         log_msg("FAIL: Release notes generation failed!");
         exit(1);
