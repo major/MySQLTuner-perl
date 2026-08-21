@@ -266,8 +266,8 @@ To ensure consistency and high-density development, the following roles are defi
 
 * [x] **Reference Link Auditing Pipeline**:
   * [x] Set up a pipeline to automatically audit and verify reference link availability inside the repository documentation to prevent dead links (`build/check_doc_links.pl`).
-* [ ] **Dynamic Help Screen Anchors**:
-  * [ ] Integrate standard documentation reference anchors dynamically within MySQLTuner CLI help screens and specific advisor output blocks.
+* [x] **Dynamic Help Screen Anchors**:
+  * [x] Integrate standard documentation reference anchors dynamically within MySQLTuner CLI help screens and specific advisor output blocks (`get_doc_anchor`, `get_doc_url`).
 * [ ] **Localization Support**:
   * [ ] Support localized versions of the reference documentation matching other translations of the script (e.g. Italian, French, Russian).
 
