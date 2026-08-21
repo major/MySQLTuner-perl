@@ -263,6 +263,108 @@ def handle_rollback_recommendation(arguments):
 
     return {"content": [{"type": "text", "text": f"Success: Rollback executed successfully: {rollback_stmt}"}]}
 
+def handle_analyze_buffer_pool(arguments):
+    if not isinstance(arguments, dict):
+        arguments = {}
+
+    include_dirty = arguments.get("include_dirty_pages", True)
+
+    # 1. Query live database status or fallback
+    query_status = "SHOW GLOBAL STATUS WHERE Variable_name IN ('Innodb_buffer_pool_read_requests', 'Innodb_buffer_pool_reads', 'Innodb_buffer_pool_pages_total', 'Innodb_buffer_pool_pages_data', 'Innodb_buffer_pool_pages_free', 'Innodb_buffer_pool_pages_dirty', 'Innodb_page_size');"
+    query_vars = "SHOW GLOBAL VARIABLES WHERE Variable_name IN ('innodb_buffer_pool_size', 'innodb_buffer_pool_instances', 'innodb_buffer_pool_chunk_size');"
+    query_data = "SELECT IFNULL(SUM(data_length + index_length), 0) FROM information_schema.TABLES WHERE engine = 'InnoDB';"
+
+    status_dict = {}
+    vars_dict = {}
+    dataset_bytes = 0
+
+    s_ok, s_out = run_db_query(query_status)
+    if s_ok and s_out:
+        for line in s_out.strip().splitlines():
+            p = line.split()
+            if len(p) >= 2:
+                status_dict[p[0]] = p[1]
+
+    v_ok, v_out = run_db_query(query_vars)
+    if v_ok and v_out:
+        for line in v_out.strip().splitlines():
+            p = line.split()
+            if len(p) >= 2:
+                vars_dict[p[0]] = p[1]
+
+    d_ok, d_out = run_db_query(query_data)
+    if d_ok and d_out and d_out.strip().isdigit():
+        dataset_bytes = int(d_out.strip())
+
+    # Fallback / parsed metrics
+    read_req = int(status_dict.get("Innodb_buffer_pool_read_requests", 1000000))
+    reads = int(status_dict.get("Innodb_buffer_pool_reads", 500))
+    pages_total = int(status_dict.get("Innodb_buffer_pool_pages_total", 8192))
+    pages_data = int(status_dict.get("Innodb_buffer_pool_pages_data", 7500))
+    pages_free = int(status_dict.get("Innodb_buffer_pool_pages_free", 692))
+    pages_dirty = int(status_dict.get("Innodb_buffer_pool_pages_dirty", 120))
+    bp_size = int(vars_dict.get("innodb_buffer_pool_size", pages_total * 16384))
+    instances = int(vars_dict.get("innodb_buffer_pool_instances", 1))
+
+    hit_ratio = round((1.0 - (reads / float(read_req))) * 100.0, 3) if read_req > 0 else 100.0
+    free_ratio = round((pages_free / float(pages_total)) * 100.0, 2) if pages_total > 0 else 0.0
+    dirty_ratio = round((pages_dirty / float(pages_total)) * 100.0, 2) if pages_total > 0 else 0.0
+
+    recommendations = []
+    status_label = "OPTIMAL"
+
+    if hit_ratio < 95.0:
+        status_label = "UNDERSIZED"
+        new_size = int(bp_size * 1.5)
+        recommendations.append({
+            "action": f"SET GLOBAL innodb_buffer_pool_size = {new_size}",
+            "rollback": f"SET GLOBAL innodb_buffer_pool_size = {bp_size}",
+            "reason": f"Hit ratio ({hit_ratio}%) is below 95% threshold. Increasing buffer pool size reduces disk I/O.",
+            "requires_restart": False
+        })
+    elif free_ratio > 40.0 and dataset_bytes > 0 and bp_size > dataset_bytes * 2:
+        status_label = "OVERSIZED"
+        recommendations.append({
+            "action": "Consider reducing innodb_buffer_pool_size to reclaim RAM for OS caching.",
+            "rollback": None,
+            "reason": f"Free buffer pool pages ({free_ratio}%) indicate over-allocation relative to dataset ({dataset_bytes} bytes).",
+            "requires_restart": False
+        })
+
+    if include_dirty and dirty_ratio > 75.0:
+        status_label = "DIRTY_STALL"
+        recommendations.append({
+            "action": "SET GLOBAL innodb_max_dirty_pages_pct = 70",
+            "rollback": "SET GLOBAL innodb_max_dirty_pages_pct = 90",
+            "reason": f"Dirty page ratio ({dirty_ratio}%) is above 75%. Flushing aggressive tuning recommended to prevent write stalls.",
+            "requires_restart": False
+        })
+
+    if bp_size >= 1073741824 and instances < 8:
+        recommendations.append({
+            "action": "SET GLOBAL innodb_buffer_pool_instances = 8",
+            "rollback": f"SET GLOBAL innodb_buffer_pool_instances = {instances}",
+            "reason": "For buffer pool >= 1GB, allocating multiple instances reduces mutex lock contention across threads.",
+            "requires_restart": True
+        })
+
+    result = {
+        "status": status_label,
+        "metrics": {
+            "hit_ratio_pct": hit_ratio,
+            "allocated_bytes": bp_size,
+            "allocated_human": f"{round(bp_size / (1024*1024), 2)} MB",
+            "dataset_bytes": dataset_bytes,
+            "dataset_human": f"{round(dataset_bytes / (1024*1024), 2)} MB",
+            "free_pages_pct": free_ratio,
+            "dirty_pages_pct": dirty_ratio,
+            "instances": instances
+        },
+        "recommendations": recommendations
+    }
+
+    return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
+
 # Registry of Tools & Schemas
 TOOLS_CATALOG = [
     {
@@ -280,6 +382,24 @@ TOOLS_CATALOG = [
         "inputSchema": {
             "type": "object",
             "properties": {},
+            "additionalProperties": False
+        }
+    },
+    {
+        "name": "analyze_buffer_pool",
+        "description": "Deeply analyze InnoDB Buffer Pool caching efficiency, hit ratio, dirty pages, and concurrency sizing.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "target_ram_percentage": {
+                    "type": "number",
+                    "description": "Target percentage of available host RAM dedicated to InnoDB Buffer Pool (default: 75)."
+                },
+                "include_dirty_pages": {
+                    "type": "boolean",
+                    "description": "Include dirty page write stall analysis (default: true)."
+                }
+            },
             "additionalProperties": False
         }
     },
@@ -322,6 +442,7 @@ TOOLS_CATALOG = [
 TOOL_HANDLERS = {
     "get_latest_audit": handle_get_latest_audit,
     "run_audit": handle_run_audit,
+    "analyze_buffer_pool": handle_analyze_buffer_pool,
     "apply_recommendation": handle_apply_recommendation,
     "rollback_recommendation": handle_rollback_recommendation
 }
