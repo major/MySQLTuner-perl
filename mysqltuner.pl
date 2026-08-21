@@ -2596,6 +2596,80 @@ sub format_mysql_bool {
     return defined $val ? $val : "UNKNOWN";
 }
 
+# Returns standard documentation reference anchor tags for tuning topics
+sub get_doc_anchor {
+    my $topic = shift // 'general';
+    $topic = lc($topic);
+    $topic =~ s/[^a-z0-9_]/_/g;
+
+    my %anchors = (
+        'buffer_pool'        => '[REF: INNODB-BUFFER-POOL]',
+        'innodb_buffer_pool' => '[REF: INNODB-BUFFER-POOL]',
+        'query_cache'        => '[REF: QUERY-CACHE]',
+        'replication'        => '[REF: REPLICATION-LAG]',
+        'replication_lag'    => '[REF: REPLICATION-LAG]',
+        'table_cache'        => '[REF: TABLE-CACHE]',
+        'table_open_cache'   => '[REF: TABLE-CACHE]',
+        'connection_limits'  => '[REF: CONNECTION-LIMITS]',
+        'max_connections'    => '[REF: CONNECTION-LIMITS]',
+        'security_auth'      => '[REF: SECURITY-AUTH]',
+        'authentication'     => '[REF: SECURITY-AUTH]',
+        'temporary_tables'   => '[REF: TEMP-TABLES]',
+        'temp_tables'        => '[REF: TEMP-TABLES]',
+        'galera_cluster'     => '[REF: GALERA-CLUSTER]',
+        'galera'             => '[REF: GALERA-CLUSTER]',
+        'innodb_redo_log'    => '[REF: INNODB-REDO-LOG]',
+        'redo_log'           => '[REF: INNODB-REDO-LOG]',
+        'general'            => '[REF: MYSQLTUNER-DOCS]'
+    );
+
+    return $anchors{$topic} // '[REF: MYSQLTUNER-DOCS]';
+}
+
+# Returns official database documentation URL for tuning topics
+sub get_doc_url {
+    my $topic = shift // 'general';
+    $topic = lc($topic);
+    $topic =~ s/[^a-z0-9_]/_/g;
+
+    my %urls = (
+        'buffer_pool' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html',
+        'innodb_buffer_pool' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html',
+        'query_cache' => 'https://mariadb.com/kb/en/query-cache/',
+        'replication' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/replication.html',
+        'replication_lag' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/replication.html',
+        'table_cache' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/table-cache.html',
+        'table_open_cache' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/table-cache.html',
+        'connection_limits' =>
+'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_connections',
+        'max_connections' =>
+'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_connections',
+        'security_auth' =>
+'https://dev.mysql.com/doc/refman/8.4/en/pluggable-authentication.html',
+        'authentication' =>
+'https://dev.mysql.com/doc/refman/8.4/en/pluggable-authentication.html',
+        'temporary_tables' =>
+'https://dev.mysql.com/doc/refman/8.4/en/internal-temporary-tables.html',
+        'temp_tables' =>
+'https://dev.mysql.com/doc/refman/8.4/en/internal-temporary-tables.html',
+        'galera_cluster'  => 'https://galeracluster.com/library/documentation/',
+        'galera'          => 'https://galeracluster.com/library/documentation/',
+        'innodb_redo_log' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html',
+        'redo_log' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html',
+        'general' => 'https://github.com/jmrenouard/MySQLTuner-perl'
+    );
+
+    return $urls{$topic} // 'https://github.com/jmrenouard/MySQLTuner-perl';
+}
+
 # Calculate Percentage
 sub percentage {
     my $value = shift;
