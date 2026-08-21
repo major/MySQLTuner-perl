@@ -17,6 +17,7 @@ This directory contains the project's technical constitution, specialized skills
 
 | File | Description |
 | :--- | :--- |
+| [`analyze-buffer-pool/`](./skills/analyze-buffer-pool/SKILL.md) | Deeply analyzes InnoDB Buffer Pool efficiency, hit ratio, memory allocation, and instance concurrency to recommend optimal sizing. |
 | [`cli-execution-mastery/`](./skills/cli-execution-mastery/SKILL.md) | Mastery of MySQLTuner CLI options for connection and authentication. |
 | [`db-version-rift/`](./skills/db-version-rift/SKILL.md) | Mapping of critical differences between MySQL and MariaDB versions for cross-compatible diagnostics. |
 | [`legacy-perl-patterns/`](./skills/legacy-perl-patterns/SKILL.md) | Guidelines and patterns for maintaining backward compatibility with older Perl versions (5.8+). |

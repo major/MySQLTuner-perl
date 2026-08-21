@@ -365,6 +365,112 @@ def handle_analyze_buffer_pool(arguments):
 
     return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
 
+def handle_diagnose_replication_lag(arguments):
+    if not isinstance(arguments, dict):
+        arguments = {}
+
+    max_lag = int(arguments.get("max_acceptable_lag_seconds", 30))
+    channel = arguments.get("channel_name", "")
+
+    # Try SHOW REPLICA STATUS first, fallback to SHOW SLAVE STATUS
+    channel_clause = f" FOR CHANNEL '{channel}'" if channel else ""
+    rep_query = f"SHOW REPLICA STATUS{channel_clause}\\G"
+    success, out = run_db_query(rep_query)
+    if not success or not out or ("Slave_IO_Running" not in out and "Replica_IO_Running" not in out):
+        rep_query = f"SHOW SLAVE STATUS{channel_clause}\\G"
+        success, out = run_db_query(rep_query)
+
+    vars_query = "SHOW GLOBAL VARIABLES WHERE Variable_name IN ('replica_parallel_workers', 'slave_parallel_workers', 'replica_parallel_type', 'slave_parallel_type', 'gtid_mode');"
+    _, vars_out = run_db_query(vars_query)
+    vars_dict = {}
+    if vars_out:
+        for line in vars_out.strip().splitlines():
+            p = line.split()
+            if len(p) >= 2:
+                vars_dict[p[0]] = p[1]
+
+    workers = int(vars_dict.get("replica_parallel_workers") or vars_dict.get("slave_parallel_workers") or 0)
+    worker_type = vars_dict.get("replica_parallel_type") or vars_dict.get("slave_parallel_type") or "DATABASE"
+    gtid_mode = vars_dict.get("gtid_mode", "OFF")
+
+    if not success or not out or ("Slave_IO_Running" not in out and "Replica_IO_Running" not in out):
+        # Standalone node or no replication configured
+        result = {
+            "status": "NOT_A_REPLICA",
+            "message": "Instance is operating as standalone primary or replication is not configured.",
+            "metrics": {
+                "is_replica": False,
+                "parallel_workers": workers,
+                "gtid_mode": gtid_mode
+            },
+            "recommendations": []
+        }
+        return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
+
+    # Parse key-value pairs from \\G output
+    repl_data = {}
+    for line in out.strip().splitlines():
+        if ":" in line:
+            k, v = line.split(":", 1)
+            repl_data[k.strip()] = v.strip()
+
+    io_running = repl_data.get("Slave_IO_Running") or repl_data.get("Replica_IO_Running") or "No"
+    sql_running = repl_data.get("Slave_SQL_Running") or repl_data.get("Replica_SQL_Running") or "No"
+    sec_behind = repl_data.get("Seconds_Behind_Master") or repl_data.get("Seconds_Behind_Source")
+    last_io_err = repl_data.get("Last_IO_Error") or ""
+    last_sql_err = repl_data.get("Last_SQL_Error") or ""
+    last_sql_errno = int(repl_data.get("Last_SQL_Errno") or 0)
+
+    lag_seconds = int(sec_behind) if (sec_behind is not None and str(sec_behind).isdigit()) else None
+
+    recommendations = []
+    status_label = "HEALTHY"
+
+    if io_running != "Yes" or sql_running != "Yes":
+        status_label = "THREAD_FAILED"
+        err_detail = last_sql_err if sql_running != "Yes" else last_io_err
+        recommendations.append({
+            "action": "START REPLICA;",
+            "rollback": "STOP REPLICA;",
+            "reason": f"Replication thread failure detected (IO: {io_running}, SQL: {sql_running}). Error #{last_sql_errno}: {err_detail}",
+            "requires_restart": False
+        })
+    elif lag_seconds is not None and lag_seconds > max_lag:
+        status_label = "DEGRADED_LAG"
+        if workers == 0:
+            recommendations.append({
+                "action": "SET GLOBAL replica_parallel_workers = 4",
+                "rollback": f"SET GLOBAL replica_parallel_workers = {workers}",
+                "reason": f"Replication lag ({lag_seconds}s) exceeds threshold ({max_lag}s). Parallel workers are currently disabled.",
+                "requires_restart": False
+            })
+        else:
+            recommendations.append({
+                "action": f"SET GLOBAL replica_parallel_workers = {workers * 2}",
+                "rollback": f"SET GLOBAL replica_parallel_workers = {workers}",
+                "reason": f"Replication lag ({lag_seconds}s) exceeds threshold ({max_lag}s). Increasing parallel workers from {workers} to {workers * 2}.",
+                "requires_restart": False
+            })
+
+    result = {
+        "status": status_label,
+        "metrics": {
+            "is_replica": True,
+            "io_thread_running": io_running == "Yes",
+            "sql_thread_running": sql_running == "Yes",
+            "lag_seconds": lag_seconds,
+            "parallel_workers": workers,
+            "parallel_type": worker_type,
+            "gtid_mode": gtid_mode,
+            "last_sql_errno": last_sql_errno,
+            "last_sql_error": last_sql_err,
+            "last_io_error": last_io_err
+        },
+        "recommendations": recommendations
+    }
+
+    return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
+
 # Registry of Tools & Schemas
 TOOLS_CATALOG = [
     {
@@ -398,6 +504,24 @@ TOOLS_CATALOG = [
                 "include_dirty_pages": {
                     "type": "boolean",
                     "description": "Include dirty page write stall analysis (default: true)."
+                }
+            },
+            "additionalProperties": False
+        }
+    },
+    {
+        "name": "diagnose_replication_lag",
+        "description": "Diagnose MySQL / MariaDB replication latency, IO/SQL thread failures, GTID synchronization, and parallel workers.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "max_acceptable_lag_seconds": {
+                    "type": "integer",
+                    "description": "Threshold in seconds above which replication is considered degraded (default: 30)."
+                },
+                "channel_name": {
+                    "type": "string",
+                    "description": "Multi-source replication channel name (optional, default empty for default channel)."
                 }
             },
             "additionalProperties": False
@@ -443,6 +567,7 @@ TOOL_HANDLERS = {
     "get_latest_audit": handle_get_latest_audit,
     "run_audit": handle_run_audit,
     "analyze_buffer_pool": handle_analyze_buffer_pool,
+    "diagnose_replication_lag": handle_diagnose_replication_lag,
     "apply_recommendation": handle_apply_recommendation,
     "rollback_recommendation": handle_rollback_recommendation
 }
