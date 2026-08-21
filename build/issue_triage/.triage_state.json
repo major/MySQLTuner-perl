@@ -1,0 +1,18 @@
+{
+  "last_sync_time": 1787352199,
+  "last_processed_number": 883,
+  "processed_issues": [
+    881,
+    882,
+    883,
+    512,
+    513,
+    514,
+    34,
+    33,
+    32,
+    22
+  ],
+  "graphql_end_cursor": null,
+  "total_ingested": 10
+}
