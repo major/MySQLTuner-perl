@@ -1,14 +1,20 @@
 # MySQLTuner Changelog
 
+2.9.3 2026-08-21
+- feat(mcp): harden JSON-RPC 2.0 error handling, safety guardrails and SSE transport (#1001)
+- feat(skill): add analyze_buffer_pool AI diagnostic skill to MCP server (#1003)
+- feat(skill): add diagnose_replication_lag AI diagnostic skill to MCP server (#1005)
+- feat(skill): add detect_fragmented_tables AI diagnostic skill to MCP server (#1007)
+- test(mcp): add unit_mcp_protocol.t validating standard JSON-RPC 2.0 error codes and SSE endpoints (#1001)
+- test(skill): add unit_skill_buffer_pool.t validating InnoDB buffer pool calculations (#1003)
+- test(skill): add unit_skill_replication.t validating replication lag and thread diagnostics (#1005)
+- test(skill): add unit_skill_fragmentation.t validating table fragmentation checks (#1007)
+
 2.9.2 2026-07-29
 - chore(deps): replace abandoned cz-conventional-changelog with @commitlint/cz-commitlint (#587)
 - feat(galera): add network queue, PK certification, and split-brain quorum diagnostics (#975)
 - feat(main): enhance MySQL InnoDB Cluster & Group Replication diagnostics (#976)
 - feat(main): add --skipworkload option to skip workload analysis & traffic profiling (#986)
-- feat(mcp): harden JSON-RPC 2.0 error handling, safety guardrails and SSE transport (#1001)
-- feat(skill): add analyze_buffer_pool AI diagnostic skill to MCP server (#1003)
-- feat(skill): add diagnose_replication_lag AI diagnostic skill to MCP server (#1005)
-- feat(skill): add detect_fragmented_tables AI diagnostic skill to MCP server (#1007)
 - fix(galera): harden wsrep options and status checks against uninitialized values (#975)
 - fix(main): enhance storage detection for HW RAID controllers (AVAGO/LSI MegaRAID) (#957)
 - fix(main): fall back to /usr/share/mysqltuner for vulnerabilities.csv (#985)
@@ -18,10 +24,6 @@
 - test(galera): add unit test unit_galera_enhanced.t for Galera diagnostics (#975)
 - test(lab): add unit test test_issue_957.t for storage detection logic (#957)
 - test(main): add unit tests for --skipworkload option and auto-increment optimization (#986)
-- test(mcp): add unit_mcp_protocol.t validating standard JSON-RPC 2.0 error codes and SSE endpoints (#1001)
-- test(skill): add unit_skill_buffer_pool.t validating InnoDB buffer pool calculations (#1003)
-- test(skill): add unit_skill_replication.t validating replication lag and thread diagnostics (#1005)
-- test(skill): add unit_skill_fragmentation.t validating table fragmentation checks (#1007)
 - ci(build): add rules scope to check_compliance.pl allowed conventional commit scopes
 - ci(lab): refine transport connection timeout pattern in output analyzer
 - ci(ci): update and pin CodeQL and setup-mysql action digests
