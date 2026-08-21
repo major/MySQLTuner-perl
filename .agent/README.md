@@ -20,6 +20,7 @@ This directory contains the project's technical constitution, specialized skills
 | [`analyze-buffer-pool/`](./skills/analyze-buffer-pool/SKILL.md) | Deeply analyzes InnoDB Buffer Pool efficiency, hit ratio, memory allocation, and instance concurrency to recommend optimal sizing. |
 | [`cli-execution-mastery/`](./skills/cli-execution-mastery/SKILL.md) | Mastery of MySQLTuner CLI options for connection and authentication. |
 | [`db-version-rift/`](./skills/db-version-rift/SKILL.md) | Mapping of critical differences between MySQL and MariaDB versions for cross-compatible diagnostics. |
+| [`diagnose-replication-lag/`](./skills/diagnose-replication-lag/SKILL.md) | Diagnoses MySQL and MariaDB replication latency, IO/SQL thread failures, GTID synchronization, and parallel worker saturation. |
 | [`legacy-perl-patterns/`](./skills/legacy-perl-patterns/SKILL.md) | Guidelines and patterns for maintaining backward compatibility with older Perl versions (5.8+). |
 | [`testing-orchestration/`](./skills/testing-orchestration/SKILL.md) | Knowledge on how to run, orchestrate, and validate tests in the MySQLTuner project. |
 
