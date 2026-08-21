@@ -313,8 +313,8 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] Implement `--skipworkload` CLI option and optimize Auto-Increment Exhaustion Audit queries to prevent N+1 query loops.
 * [ ] **Horizontal Multi-Scenario Comparative HTML Report**:
   * [ ] Extend the HTML dashboard with a side-by-side comparative table showing metric differences between Standard, Container, and Dumpdir modes.
-* [ ] **Trace Logging for SQL Compilation Errors**:
-  * [ ] Capture and redirect SQL execution errors to a dedicated debug log rather than silent deletion to assist DBAs in diagnosing permission restrictions.
+* [x] **Trace Logging for SQL Compilation Errors**:
+  * [x] Capture and redirect SQL execution errors to a dedicated debug log rather than silent deletion to assist DBAs in diagnosing permission restrictions (`log_sql_trace`, `get_sql_traces`, `format_sql_trace_report`).
 
 ### Phase 24: MySQL Boolean Normalization Engine [COMPLETED]
 

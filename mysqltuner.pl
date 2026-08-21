@@ -2670,6 +2670,49 @@ sub get_doc_url {
     return $urls{$topic} // 'https://github.com/jmrenouard/MySQLTuner-perl';
 }
 
+# Global trace buffer for SQL execution errors and warnings
+our @sql_traces = ();
+
+# Logs an SQL execution error or warning to the internal trace buffer
+sub log_sql_trace {
+    my ( $query, $error_msg, $status_code ) = @_;
+    return unless defined $query;
+    $status_code //= 'ERROR';
+    $error_msg   //= 'Unknown SQL error';
+    my $timestamp = time();
+    push @sql_traces,
+      {
+        timestamp   => $timestamp,
+        query       => $query,
+        error       => $error_msg,
+        status_code => $status_code,
+      };
+}
+
+# Returns all recorded SQL execution traces
+sub get_sql_traces {
+    return @sql_traces;
+}
+
+# Clears the internal SQL execution trace buffer
+sub clear_sql_traces {
+    @sql_traces = ();
+}
+
+# Formats a summary diagnostic report of all recorded SQL execution traces
+sub format_sql_trace_report {
+    my @traces = get_sql_traces();
+    return "No SQL errors or execution anomalies recorded.\n" unless @traces;
+    my $out =
+      sprintf( "Recorded %d SQL execution anomalies:\n", scalar(@traces) );
+    for my $i ( 0 .. $#traces ) {
+        my $t = $traces[$i];
+        $out .= sprintf( "  [%d] [%s] %s -> Error: %s\n",
+            $i + 1, $t->{status_code}, $t->{query}, $t->{error} );
+    }
+    return $out;
+}
+
 # Calculate Percentage
 sub percentage {
     my $value = shift;
