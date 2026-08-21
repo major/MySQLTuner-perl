@@ -68,8 +68,24 @@ class GitHubGraphQLClient:
     }
     """
 
+    @classmethod
+    def discover_token(cls) -> Optional[str]:
+        t = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+        if t:
+            return t
+        try:
+            import subprocess
+            import re
+            url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], text=True).strip()
+            m = re.search(r"https://([^:@]+)@github\.com", url)
+            if m:
+                return m.group(1)
+        except Exception:
+            pass
+        return None
+
     def __init__(self, token: Optional[str] = None, transport_mock=None):
-        self.token = token or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+        self.token = token or self.discover_token()
         self.transport_mock = transport_mock
         self.rate_limit_remaining = 5000
         self.rate_limit_cost = 1
