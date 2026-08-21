@@ -384,6 +384,26 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **EOL Script Consolidation**:
   * [x] Merge `endoflife.sh` (Bash + curl + jq) functionality into `sync_eol_dates.pl` (already uses HTTP::Tiny), eliminating the `jq` external dependency.
 
+### Phase 31: Performance Schema Stage & Wait Event Profiling [COMPLETED]
+
+* [x] **Stage & Wait Bottleneck Auditing**:
+  * [x] Audit database execution bottlenecks by analyzing Performance Schema stage and wait event summaries (`audit_pfs_stage_profiling`).
+
+### Phase 32: InnoDB Adaptive Hash Index (AHI) & Memory Partitions Audit [NOT STARTED]
+
+* [ ] **Adaptive Hash Index (AHI) Contention & Sizing**:
+  * [ ] Evaluate `innodb_adaptive_hash_index` efficiency, search ratio vs overhead, and recommend partition tuning.
+
+### Phase 33: TLS/SSL Cipher Suite & Protocol Deprecation Audit [NOT STARTED]
+
+* [ ] **Modern Cipher Suites & Deprecated Protocol Detection**:
+  * [ ] Audit TLS version enforcement (`tls_version`) and flag deprecated protocols (TLSv1, TLSv1.1) or weak ciphers.
+
+### Phase 34: Table Definition Cache & Open Tables Saturation Audit [NOT STARTED]
+
+* [ ] **Table Cache & Definition Cache Saturation**:
+  * [ ] Evaluate `table_definition_cache` hit ratio and open table definition limits to detect cache eviction thrashing.
+
 ## 🤝 Contribution & Feedback
 
 We welcome community feedback on this roadmap. If you have specific feature requests or want to contribute to a specific phase, please open an issue on our [GitHub repository](https://github.com/jmrenouard/MySQLTuner-perl).
