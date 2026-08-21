@@ -2920,6 +2920,48 @@ sub audit_tls_ciphers_protocols {
     return @findings;
 }
 
+# Audits Table Definition Cache capacity, utilization, and eviction thrashing
+sub audit_table_definition_cache {
+    my ( $table_definition_cache, $open_table_definitions,
+        $opened_table_definitions, $uptime )
+      = @_;
+    my @findings;
+    $table_definition_cache   //= 0;
+    $open_table_definitions   //= 0;
+    $opened_table_definitions //= 0;
+    $uptime                   //= 1;
+
+    return @findings if ( $table_definition_cache <= 0 || $uptime <= 0 );
+
+    my $fill_ratio =
+      ( $open_table_definitions / $table_definition_cache ) * 100;
+    my $open_rate = $opened_table_definitions / $uptime;
+
+    if (   $fill_ratio >= 90.0
+        && $open_rate > 5.0
+        && $opened_table_definitions > $table_definition_cache * 2 )
+    {
+        my $suggested_cache = int( $table_definition_cache * 1.5 );
+        $suggested_cache = 2000 if $suggested_cache < 2000;
+        push @findings,
+          {
+            severity => 'WARN',
+            category => 'Table Cache',
+            message  => sprintf(
+"table_definition_cache is %0.1f%% full (%d/%d) with high eviction rate (%.1f opened/sec)",
+                $fill_ratio,             $open_table_definitions,
+                $table_definition_cache, $open_rate
+            ),
+            recommendation => sprintf(
+"Increase table_definition_cache (current: %d, suggest >= %d) to reduce table definition disk reads and mutex waits",
+                $table_definition_cache, $suggested_cache
+            ),
+          };
+    }
+
+    return @findings;
+}
+
 # Calculate Percentage
 sub percentage {
     my $value = shift;
