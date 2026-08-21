@@ -471,6 +471,95 @@ def handle_diagnose_replication_lag(arguments):
 
     return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
 
+def handle_detect_fragmented_tables(arguments):
+    if not isinstance(arguments, dict):
+        arguments = {}
+
+    min_frag_pct = float(arguments.get("min_fragmentation_pct", 20.0))
+    min_size_mb = float(arguments.get("min_table_size_mb", 10.0))
+    min_size_bytes = int(min_size_mb * 1024 * 1024)
+    schema_filter = str(arguments.get("schema_filter") or "").strip()
+
+    where_clauses = [
+        "TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys')",
+        "(DATA_LENGTH + INDEX_LENGTH + DATA_FREE) >= %d" % min_size_bytes
+    ]
+    if schema_filter:
+        escaped_schema = schema_filter.replace("'", "''")
+        where_clauses.append("TABLE_SCHEMA = '%s'" % escaped_schema)
+
+    query = (
+        "SELECT TABLE_SCHEMA, TABLE_NAME, IFNULL(ENGINE, 'UNKNOWN'), "
+        "DATA_LENGTH, INDEX_LENGTH, DATA_FREE, IFNULL(TABLE_ROWS, 0) "
+        "FROM information_schema.TABLES WHERE %s "
+        "ORDER BY DATA_FREE DESC LIMIT 100;" % " AND ".join(where_clauses)
+    )
+
+    success, out = run_db_query(query)
+    tables_list = []
+    total_reclaimable_bytes = 0
+
+    if success and out:
+        for line in out.strip().splitlines():
+            parts = line.split("\t")
+            if len(parts) < 6:
+                parts = line.split()
+            if len(parts) >= 6:
+                schema_name = parts[0]
+                tbl_name = parts[1]
+                engine = parts[2]
+                try:
+                    data_len = int(parts[3])
+                    idx_len = int(parts[4])
+                    data_free = int(parts[5])
+                    tbl_rows = int(parts[6]) if len(parts) > 6 else 0
+                except ValueError:
+                    continue
+
+                total_space = data_len + idx_len + data_free
+                if total_space <= 0:
+                    continue
+
+                frag_pct = round((data_free / float(total_space)) * 100.0, 2)
+                if frag_pct >= min_frag_pct:
+                    is_high_impact = total_space >= (5 * 1024 * 1024 * 1024)
+                    reclaimable = data_free
+                    total_reclaimable_bytes += reclaimable
+
+                    clean_schema = schema_name.replace("`", "``")
+                    clean_tbl = tbl_name.replace("`", "``")
+                    optimize_stmt = f"OPTIMIZE TABLE `{clean_schema}`.`{clean_tbl}`;"
+
+                    tables_list.append({
+                        "schema": schema_name,
+                        "table": tbl_name,
+                        "engine": engine,
+                        "total_size_bytes": total_space,
+                        "total_size_human": f"{round(total_space / (1024*1024), 2)} MB",
+                        "data_free_bytes": data_free,
+                        "data_free_human": f"{round(data_free / (1024*1024), 2)} MB",
+                        "fragmentation_pct": frag_pct,
+                        "rows": tbl_rows,
+                        "is_high_impact": is_high_impact,
+                        "recommended_action": optimize_stmt
+                    })
+
+    status_label = "FRAGMENTATION_DETECTED" if tables_list else "OPTIMAL"
+
+    result = {
+        "status": status_label,
+        "metrics": {
+            "fragmented_table_count": len(tables_list),
+            "total_reclaimable_bytes": total_reclaimable_bytes,
+            "total_reclaimable_human": f"{round(total_reclaimable_bytes / (1024*1024), 2)} MB",
+            "evaluated_min_size_mb": min_size_mb,
+            "evaluated_min_fragmentation_pct": min_frag_pct
+        },
+        "fragmented_tables": tables_list
+    }
+
+    return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
+
 # Registry of Tools & Schemas
 TOOLS_CATALOG = [
     {
@@ -528,6 +617,28 @@ TOOLS_CATALOG = [
         }
     },
     {
+        "name": "detect_fragmented_tables",
+        "description": "Detect tables with high storage fragmentation, calculate reclaimable space, and recommend defragmentation actions.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "min_fragmentation_pct": {
+                    "type": "number",
+                    "description": "Minimum fragmentation percentage to trigger reporting (default: 20)."
+                },
+                "min_table_size_mb": {
+                    "type": "number",
+                    "description": "Minimum table size in MB to filter out trivial tables (default: 10)."
+                },
+                "schema_filter": {
+                    "type": "string",
+                    "description": "Optional schema name to restrict the scan (default empty for all user schemas)."
+                }
+            },
+            "additionalProperties": False
+        }
+    },
+    {
         "name": "apply_recommendation",
         "description": "Apply a safe database recommendation (e.g. SET GLOBAL or ALTER TABLE) with transactional state tracking.",
         "inputSchema": {
@@ -568,6 +679,7 @@ TOOL_HANDLERS = {
     "run_audit": handle_run_audit,
     "analyze_buffer_pool": handle_analyze_buffer_pool,
     "diagnose_replication_lag": handle_diagnose_replication_lag,
+    "detect_fragmented_tables": handle_detect_fragmented_tables,
     "apply_recommendation": handle_apply_recommendation,
     "rollback_recommendation": handle_rollback_recommendation
 }
