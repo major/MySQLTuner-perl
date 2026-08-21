@@ -130,8 +130,8 @@ if (-f $qa_file) {
     $matrix_md .= "| Specification Document | Path | Target Test File / Suite |\n";
     $matrix_md .= "| :--- | :--- | :--- |\n";
     for my $entry (@matrix_entries) {
-        my $test_link = $entry->{test_file} eq 'N/A' ? 'N/A' : "[$entry->{test_file}](file:///MySQLTuner-perl/$entry->{test_file})";
-        $matrix_md .= sprintf("| **%s** | [%s](file:///MySQLTuner-perl/%s) | %s |\n",
+        my $test_link = $entry->{test_file} eq 'N/A' ? 'N/A' : "[$entry->{test_file}](file:///$entry->{test_file})";
+        $matrix_md .= sprintf("| **%s** | [%s](file:///%s) | %s |\n",
             $entry->{spec_name},
             basename($entry->{spec_path}),
             $entry->{spec_path},

@@ -262,10 +262,10 @@ To ensure consistency and high-density development, the following roles are defi
 
 ## 🔮 [Strategic Technical Evolutions](file:///documentation/specifications/strategic_technical_evolutions.md)
 
-### [Phase 18: Documentation Integrity & Dynamic References](file:///documentation/specifications/strategic_technical_evolutions.md) [NOT STARTED]
+### [Phase 18: Documentation Integrity & Dynamic References](file:///documentation/specifications/strategic_technical_evolutions.md) [IN PROGRESS]
 
-* [ ] **Reference Link Auditing Pipeline**:
-  * [ ] Set up a pipeline to automatically audit and verify reference link availability inside the repository documentation to prevent dead links.
+* [x] **Reference Link Auditing Pipeline**:
+  * [x] Set up a pipeline to automatically audit and verify reference link availability inside the repository documentation to prevent dead links (`build/check_doc_links.pl`).
 * [ ] **Dynamic Help Screen Anchors**:
   * [ ] Integrate standard documentation reference anchors dynamically within MySQLTuner CLI help screens and specific advisor output blocks.
 * [ ] **Localization Support**:
