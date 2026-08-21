@@ -144,33 +144,33 @@ The GitHub Actions pipeline is defined in [.github/workflows/pull_request.yml](f
 
 ```mermaid
 graph TD
-    A[Trigger: Push or PR] --> B[test_help]
-    A --> C[test_with_empty_db]
-    A --> D[unit_tests]
+    A["Trigger: Push or PR"] --> B["test_help"]
+    A --> C["test_with_empty_db"]
+    A --> D["unit_tests"]
     
-    subgraph Job: test_help
-        B1[Checkout Repo] --> B2[Inject .my.cnf]
-        B2 --> B3[Start MySQL 5.7 & 8.0]
-        B3 --> B4[Run mysqltuner.pl --help]
-        B4 --> B5{Check warnings}
-        B5 -->|Found warnings| B6[Fail Build]
-        B5 -->|Clean| B7[Pass]
+    subgraph "Job: test_help"
+        B1["Checkout Repo"] --> B2["Inject .my.cnf"]
+        B2 --> B3["Start MySQL 5.7 and 8.0"]
+        B3 --> B4["Run mysqltuner.pl --help"]
+        B4 --> B5{"Check warnings"}
+        B5 -->|Found warnings| B6["Fail Build"]
+        B5 -->|Clean| B7["Pass"]
     end
 
-    subgraph Job: test_with_empty_db
-        C1[Checkout Repo] --> C2[Inject .my.cnf]
-        C2 --> C3[Start MySQL 5.7 & 8.0]
-        C3 --> C4[Run mysqltuner.pl --verbose]
-        C4 --> C5{Check warnings}
-        C5 -->|Found warnings| C6[Fail Build]
-        C5 -->|Clean| C7[Pass]
+    subgraph "Job: test_with_empty_db"
+        C1["Checkout Repo"] --> C2["Inject .my.cnf"]
+        C2 --> C3["Start MySQL 5.7 and 8.0"]
+        C3 --> C4["Run mysqltuner.pl --verbose"]
+        C4 --> C5{"Check warnings"}
+        C5 -->|Found warnings| C6["Fail Build"]
+        C5 -->|Clean| C7["Pass"]
     end
 
-    subgraph Job: unit_tests
-        D1[Checkout Repo] --> D2[Run Compliance Checks]
-        D2 --> D3[Run EOL Synchronization Check]
-        D3 --> D4[Run unit-tests via audit_tests.pl]
-        D4 --> D5[Audit test logs for warnings]
+    subgraph "Job: unit_tests"
+        D1["Checkout Repo"] --> D2["Run Compliance Checks"]
+        D2 --> D3["Run EOL Synchronization Check"]
+        D3 --> D4["Run unit-tests via audit_tests.pl"]
+        D4 --> D5["Audit test logs for warnings"]
     end
 ```
 

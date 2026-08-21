@@ -131,17 +131,17 @@ An AI agent performing database maintenance should follow this operational path:
 
 ```mermaid
 graph TD
-    A[Start: Read Latest Audit] --> B{Are there findings?}
-    B -- No --> C[End: Database is Tuned]
-    B -- Yes --> D[Filter findings by Risk Level]
-    D --> E[Filter: Risk <= Medium]
-    E --> F[Present to User: Statement & Rollback]
-    F --> G{User Confirms?}
-    G -- No --> H[Skip recommendation]
-    G -- Yes --> I[Execute apply_recommendation]
-    I --> J{Performance OK?}
-    J -- Yes --> K[Log Transaction Success]
-    J -- No --> L[Execute rollback_recommendation]
+    A["Start: Read Latest Audit"] --> B{"Are there findings?"}
+    B -- No --> C["End: Database is Tuned"]
+    B -- Yes --> D["Filter findings by Risk Level"]
+    D --> E["Filter: Risk <= Medium"]
+    E --> F["Present to User: Statement & Rollback"]
+    F --> G{"User Confirms?"}
+    G -- No --> H["Skip recommendation"]
+    G -- Yes --> I["Execute apply_recommendation"]
+    I --> J{"Performance OK?"}
+    J -- Yes --> K["Log Transaction Success"]
+    J -- No --> L["Execute rollback_recommendation"]
 ```
 
 ### Agent Prompt Instructions Template (Copy-Paste for LLM Context)

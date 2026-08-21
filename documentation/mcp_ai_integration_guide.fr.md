@@ -11,22 +11,22 @@ MySQLTuner propose une pile d'intégration IA conteneurisée et sans dépendance
 ```mermaid
 graph TD
     subgraph "Couche Client IA"
-        Claude[Claude Desktop]
-        Cursor[Cursor IDE]
-        VSCode[VS Code / Cline / Roo Code]
-        Custom[Pipeline LLM Personnalisé]
+        Claude["Claude Desktop"]
+        Cursor["Cursor IDE"]
+        VSCode["VS Code / Cline / Roo Code"]
+        Custom["Pipeline LLM Personnalisé"]
     end
 
     subgraph "Serveur MCP (build/mcp_server.py)"
-        JSONRPC[Interface stdio JSON-RPC 2.0]
-        Daemon[Démon d'Audit en Arrière-plan]
-        CacheManager[Gestionnaire de Cache JSON / HTML]
-        RollbackEngine[Moteur de Rollback & Transactions]
+        JSONRPC["Interface stdio JSON-RPC 2.0"]
+        Daemon["Démon d'Audit en Arrière-plan"]
+        CacheManager["Gestionnaire de Cache JSON / HTML"]
+        RollbackEngine["Moteur de Rollback & Transactions"]
     end
 
     subgraph "Base de Données & Moteur"
-        PerlEngine[Moteur Perl MySQLTuner (mysqltuner.pl)]
-        MySQLInstance[(MySQL / MariaDB / Percona Server)]
+        PerlEngine["Moteur Perl MySQLTuner (mysqltuner.pl)"]
+        MySQLInstance[("MySQL / MariaDB / Percona Server")]
     end
 
     Claude <-->|stdio JSON-RPC| JSONRPC

@@ -11,22 +11,22 @@ MySQLTuner provides a zero-dependency, container-ready AI integration stack. It 
 ```mermaid
 graph TD
     subgraph "AI Client Layer"
-        Claude[Claude Desktop]
-        Cursor[Cursor IDE]
-        VSCode[VS Code / Cline / Roo Code]
-        Custom[Custom LLM Pipeline]
+        Claude["Claude Desktop"]
+        Cursor["Cursor IDE"]
+        VSCode["VS Code / Cline / Roo Code"]
+        Custom["Custom LLM Pipeline"]
     end
 
     subgraph "MCP Server Layer (build/mcp_server.py)"
-        JSONRPC[JSON-RPC 2.0 stdio Interface]
-        Daemon[Background Audit Daemon]
-        CacheManager[JSON / HTML Cache Store]
-        RollbackEngine[Rollback & Transaction Engine]
+        JSONRPC["JSON-RPC 2.0 stdio Interface"]
+        Daemon["Background Audit Daemon"]
+        CacheManager["JSON / HTML Cache Store"]
+        RollbackEngine["Rollback & Transaction Engine"]
     end
 
     subgraph "Database & Core Engine"
-        PerlEngine[MySQLTuner Perl Core (mysqltuner.pl)]
-        MySQLInstance[(MySQL / MariaDB / Percona Server)]
+        PerlEngine["MySQLTuner Perl Core (mysqltuner.pl)"]
+        MySQLInstance[("MySQL / MariaDB / Percona Server")]
     end
 
     Claude <-->|stdio JSON-RPC| JSONRPC
