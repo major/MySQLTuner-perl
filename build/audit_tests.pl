@@ -1,10 +1,12 @@
 #!/usr/bin/env perl
-
+# ===========================================================================
+# Script:      build/audit_tests.pl
+# Description: Test Output Auditor scanning test runs for warnings and errors.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/audit_tests.pl
+# ===========================================================================
 use strict;
 use warnings;
-
-# MySQLTuner Test Output Auditor
-# Purpose: Run prove and scan its output for subtle Perl warnings, typos, and syntax errors.
 
 my $quiet = 1;
 my $debug = 0;

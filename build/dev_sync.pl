@@ -1,4 +1,10 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/dev_sync.pl
+# Description: Synchronize developer changes, unit tests, and changelog.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/dev_sync.pl [options]
+# ===========================================================================
 use strict;
 use warnings;
 use File::Basename;

@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/audit_specifications.pl
+# Description: Specification Consistency Auditor & QA Matrix Builder.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/audit_specifications.pl
+# ===========================================================================
 use strict;
 use warnings;
 use File::Basename;
-
-# Specification Consistency Auditor & QA Matrix Builder
-# Checks all specifications in documentation/specifications/ for:
-# - Valid markdown heading structure
-# - Resolution of referenced local file links
-# - Existence of associated test file defined in YAML frontmatter
 # - Dynamically rewrites the Spec-to-Test Mapping Matrix in documentation/QUALITY_AND_TESTING.md
 
 my $script_dir = dirname(__FILE__);
