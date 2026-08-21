@@ -280,12 +280,12 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Schema Validation for Release Artifacts**:
   * [x] Implement a CI step to parse and validate that markdown formats, issues referenced, and version definitions in the `releases/` directory are syntactically and logically correct before release tagging (`build/check_changelog_gate.pl`).
 
-### [Phase 20: Release Automation & Synchronization](file:///documentation/specifications/strategic_technical_evolutions.md) [NOT STARTED]
+### [Phase 20: Release Automation & Synchronization](file:///documentation/specifications/strategic_technical_evolutions.md) [COMPLETED]
 
-* [ ] **Interactive Release Orchestrator**:
-  * [ ] Create a script that automates the interactive selection of version bump categories (micro, minor, major), executes the version replacement across all 6 reference locations, and automatically runs the `release_gen.pl` script to generate release notes in a single workflow step.
-* [ ] **Automated Release Notes Synchronization**:
-  * [ ] Create a script or Git hook that automatically extracts changes from the branch commits and populates the `Executive Summary` sections in both the `Changelog` and release notes to prevent manual synchronization omissions.
+* [x] **Interactive Release Orchestrator**:
+  * [x] Create a script that automates the interactive selection of version bump categories (micro, minor, major), executes the version replacement across all 6 reference locations, and automatically runs the `release_gen.pl` script to generate release notes in a single workflow step (`build/release_orchestrator.pl`).
+* [x] **Automated Release Notes Synchronization**:
+  * [x] Create a script or Git hook that automatically extracts changes from the branch commits and populates the `Executive Summary` sections in both the `Changelog` and release notes to prevent manual synchronization omissions (`build/release_orchestrator.pl` & `build/release_gen.pl`).
 
 ### [Phase 21: Structured Roadmap Automation](file:///documentation/specifications/strategic_technical_evolutions.md) [COMPLETED]
 
