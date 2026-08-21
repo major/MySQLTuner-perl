@@ -15,11 +15,13 @@ use File::Path qw(make_path remove_tree);
 # --- Pre-flight checks ---
 my $has_docker = system("docker info >/dev/null 2>&1") == 0;
 my $has_python = system("which python3 >/dev/null 2>&1") == 0;
+my $has_image  = system("docker image inspect mariadb:11.4 >/dev/null 2>&1") == 0;
 
-unless ($has_docker && $has_python) {
-    plan skip_all => "Docker and Python3 are required for MCP E2E tests"
+unless ($has_docker && $has_python && ($ENV{RUN_E2E_TESTS} || $has_image)) {
+    plan skip_all => "Docker, Python3 and mariadb:11.4 image (or RUN_E2E_TESTS=1) are required for MCP E2E tests"
         . ($has_docker ? "" : " (Docker unavailable)")
-        . ($has_python ? "" : " (Python3 unavailable)");
+        . ($has_python ? "" : " (Python3 unavailable)")
+        . (($has_image || $ENV{RUN_E2E_TESTS}) ? "" : " (mariadb:11.4 image not cached; set RUN_E2E_TESTS=1 to pull)");
 }
 
 plan tests => 2;
