@@ -358,17 +358,17 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Automated Matrix Synchronization**:
   * [x] Extend `sync_eol_dates.pl` / `tests/unit_ci_matrix.t` to automatically validate the CI version matrix in tandem with support documentation.
 
-### Phase 29: Publish Pipeline Unification [NOT STARTED]
+### Phase 29: Publish Pipeline Unification [COMPLETED]
 
 > Eliminates duplication between local and CI publish flows, and harmonizes pre-publish validation.
 
-* [ ] **Unified Pre-Publish Validation Script**:
-  * [ ] Factor the pre-publish validation logic (critical file checks, release notes existence, tag/version consistency) into a single reusable script `build/validate_release.sh`.
-  * [ ] Refactor `docker_publish.yml` and `publish_release.yml` to call this shared script instead of embedding inline validation.
-  * [ ] Harmonize the critical file lists (currently divergent between the two workflows).
-* [ ] **Local Docker Publish Deprecation**:
-  * [ ] Mark `publishtodockerhub.sh` as deprecated in favor of the `docker_publish.yml` workflow (which includes Buildx, multi-arch, and full validation).
-  * [ ] Update `Makefile` `docker_push` target to warn about deprecation and recommend using the CI workflow.
+* [x] **Unified Pre-Publish Validation Script**:
+  * [x] Factor the pre-publish validation logic (critical file checks, release notes existence, tag/version consistency) into a single reusable script `build/validate_release.sh` / `build/validate_release.pl`.
+  * [x] Refactor `docker_publish.yml` and `publish_release.yml` to call this shared script instead of embedding inline validation.
+  * [x] Harmonize the critical file lists (currently divergent between the two workflows).
+* [x] **Local Docker Publish Deprecation**:
+  * [x] Mark `publishtodockerhub.sh` as deprecated in favor of the `docker_publish.yml` workflow (which includes Buildx, multi-arch, and full validation).
+  * [x] Update `Makefile` `docker_push` target to warn about deprecation and recommend using the CI workflow.
 
 ### Phase 30: Build Stack Rationalization [IN PROGRESS]
 

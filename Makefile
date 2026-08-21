@@ -141,7 +141,11 @@ docker_build:
 docker_slim:
 	docker run --rm -it --privileged -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):/root/app -w /root/app jmrenouard/mysqltuner:latest slim build
 
-docker_push: docker_build
+validate_release:
+	perl build/validate_release.pl
+
+docker_push: docker_build validate_release
+	@echo "WARNING: Local docker_push is deprecated. Use the GitHub Actions 'docker_publish.yml' workflow for multi-arch buildx releases."
 	bash build/publishtodockerhub.sh $(VERSION)
 	
 
