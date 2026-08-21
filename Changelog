@@ -29,6 +29,7 @@
 - test(ci): add unit_changelog_gate.t validating conventional commits and release schema (#1032)
 - test(ci): add unit_release_orchestrator.t validating SemVer bumps and dry runs (#1033)
 - test(ci): decompose repro_native_parsing.t into granular structured subtests (#1035)
+- test(ci): decompose test_issue_863.t into granular structured subtests (#1036)
 - test(engine): add unit_boolean_normalization.t validating boolean parsing (#1021)
 - test(engine): add unit_deprecated_vars_audit.t validating deprecation rules (#1022)
 - test(engine): add unit_doc_anchors.t validating topic anchor and KB URL mappings (#1031)
