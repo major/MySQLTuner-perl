@@ -12931,8 +12931,121 @@ sub check_removed_innodb_variables {
     }
 }
 
+# Audit deprecated system variables and obsolete synonyms (Phase 25)
+sub audit_deprecated_variables {
+    my $is_mariadb = (
+        ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+          or ( defined $myvar{'version_comment'}
+            && $myvar{'version_comment'} =~ /MariaDB/i )
+    );
+    my $is_mysql = !$is_mariadb;
+
+    my @deprecations = ();
+
+    # 1. log_slow_queries -> slow_query_log
+    if ( defined $myvar{'log_slow_queries'}
+        && $myvar{'log_slow_queries'} ne '' )
+    {
+        push @deprecations,
+          {
+            variable    => 'log_slow_queries',
+            replacement => 'slow_query_log',
+            reason      =>
+'log_slow_queries is an obsolete synonym; configure slow_query_log instead'
+          };
+    }
+
+    # 2. table_cache -> table_open_cache
+    if ( defined $myvar{'table_cache'} && $myvar{'table_cache'} ne '' ) {
+        push @deprecations,
+          {
+            variable    => 'table_cache',
+            replacement => 'table_open_cache',
+            reason      =>
+'table_cache is an obsolete synonym removed in MySQL 5.5; configure table_open_cache instead'
+          };
+    }
+
+    # 3. tx_isolation -> transaction_isolation
+    if ( defined $myvar{'tx_isolation'} && $myvar{'tx_isolation'} ne '' ) {
+        if (   ( $is_mysql && mysql_version_ge( 8, 0, 0 ) )
+            || ( $is_mariadb && mysql_version_ge( 11, 1, 0 ) ) )
+        {
+            push @deprecations,
+              {
+                variable    => 'tx_isolation',
+                replacement => 'transaction_isolation',
+                reason      =>
+'tx_isolation was removed in modern versions; use transaction_isolation'
+              };
+        }
+    }
+
+    # 4. tx_read_only -> transaction_read_only
+    if ( defined $myvar{'tx_read_only'} && $myvar{'tx_read_only'} ne '' ) {
+        if ( $is_mysql && mysql_version_ge( 8, 0, 0 ) ) {
+            push @deprecations,
+              {
+                variable    => 'tx_read_only',
+                replacement => 'transaction_read_only',
+                reason      =>
+'tx_read_only was removed in MySQL 8.0; use transaction_read_only'
+              };
+        }
+    }
+
+    # 5. query_cache_size / query_cache_type on MySQL 8.0+
+    if ( $is_mysql && mysql_version_ge( 8, 0, 0 ) ) {
+        if (
+            (
+                defined $myvar{'query_cache_size'}
+                && $myvar{'query_cache_size'} > 0
+            )
+            || ( defined $myvar{'query_cache_type'}
+                && !is_mysql_false( $myvar{'query_cache_type'} ) )
+          )
+        {
+            push @deprecations,
+              {
+                variable    => 'query_cache_size',
+                replacement => 'None (Removed)',
+                reason      =>
+'Query Cache subsystem was completely removed in MySQL 8.0; remove query_cache_* settings from my.cnf'
+              };
+        }
+    }
+
+    # 6. default_authentication_plugin on MySQL 8.4+
+    if (   $is_mysql
+        && mysql_version_ge( 8, 4, 0 )
+        && defined $myvar{'default_authentication_plugin'}
+        && $myvar{'default_authentication_plugin'} ne '' )
+    {
+        push @deprecations,
+          {
+            variable    => 'default_authentication_plugin',
+            replacement => 'authentication_policy',
+            reason      =>
+'default_authentication_plugin was removed in MySQL 8.4; use authentication_policy'
+          };
+    }
+
+    # Output and recording findings
+    if ( @deprecations > 0 ) {
+        $result{'Deprecated_Variables'} = \@deprecations;
+        foreach my $d (@deprecations) {
+            badprint
+"Deprecated/Obsolete variable detected: $d->{variable} ($d->{reason})";
+            push @generalrec,
+"Modernize deprecated configuration: replace $d->{variable} with $d->{replacement}";
+            push @sysrec, "Deprecated variable $d->{variable}: $d->{reason}";
+        }
+    }
+}
+
 sub check_migration_advisor {
     subheaderprint "Smart Migration LTS Advisor";
+    audit_deprecated_variables();
     my $is_mariadb = (
         ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
           or ( defined $myvar{'version_comment'}
