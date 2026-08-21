@@ -17,13 +17,13 @@ The **MySQLTuner Autonomous Issue Triage System** provides an automated, reprodu
 
 ```mermaid
 graph TD
-    A[GitHub Issue Webhook / Cron] --> B[Module 1: Ingestion & Sanitizer]
-    B --> C[Module 2: Diagnostic Engine]
-    C --> D[Module 3: Test Generator & Proof]
-    D --> E[Module 4: Synthesis & Formatter]
-    E --> F[Module 5: Safety & Governance]
-    F --> G[Module 6: Orchestrator & CLI]
-    G --> H[GitHub API / CI Artifacts]
+    A["GitHub Issue Webhook / Cron"] --> B["Module 1: Ingestion & Sanitizer"]
+    B --> C["Module 2: Diagnostic Engine"]
+    C --> D["Module 3: Test Generator & Proof"]
+    D --> E["Module 4: Synthesis & Formatter"]
+    E --> F["Module 5: Safety & Governance"]
+    F --> G["Module 6: Orchestrator & CLI"]
+    G --> H["GitHub API / CI Artifacts"]
 ```
 
 ### Module 1: Ingestion & Sanitizer (`build/issue_triage/github_ingest.py`, `sanitizer.py`)

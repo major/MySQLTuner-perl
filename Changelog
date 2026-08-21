@@ -54,6 +54,7 @@
 - test(triage): add unit and E2E suites for issue triage engine (#1041)
 - test(triage): add unit_upstream_syncer.py for major/MySQLTuner-perl (#1042)
 - ci(triage): add autonomous issue triage workflow and Makefile targets (#1041)
+- docs(mcp): fix Mermaid diagram syntax and quoting in architecture guides (#1045)
 
 2.9.2 2026-07-29
 - chore(deps): replace abandoned cz-conventional-changelog with @commitlint/cz-commitlint (#587)
