@@ -1,6 +1,6 @@
 {
-  "last_sync_time": 1787352199,
-  "last_processed_number": 883,
+  "last_sync_time": 1787353577,
+  "last_processed_number": 988,
   "processed_issues": [
     881,
     882,
@@ -11,8 +11,36 @@
     34,
     33,
     32,
-    22
+    22,
+    988,
+    986,
+    982,
+    977,
+    976,
+    975,
+    957,
+    938,
+    937,
+    936,
+    932,
+    874,
+    869,
+    810,
+    794,
+    792,
+    791,
+    782,
+    781,
+    749,
+    708,
+    671,
+    617,
+    587,
+    490,
+    480,
+    440,
+    435
   ],
   "graphql_end_cursor": null,
-  "total_ingested": 10
+  "total_ingested": 38
 }

@@ -30,7 +30,7 @@ class GitHubIngestionService:
         state_file: Optional[str] = None,
     ):
         self.repo = repo
-        self.token = token or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+        self.token = token or GitHubRESTClient.discover_token()
         self.offline_engine = offline_engine
         self.rate_limiter = AdaptiveRateLimiter()
         self.pagination_mgr = PaginationCheckpointManager(state_file)
@@ -136,7 +136,8 @@ class GitHubIngestionService:
         elif self.token:
             try:
                 # Attempt GraphQL batch
-                nodes, _, _ = self.graphql_client.fetch_open_issues_batch(count=min(limit, 50))
+                owner, name = self.repo.split("/", 1) if "/" in self.repo else ("jmrenouard", "MySQLTuner-perl")
+                nodes, _, _ = self.graphql_client.fetch_open_issues_batch(owner=owner, name=name, count=min(limit, 50))
                 raw_issues = nodes
             except Exception as e:
                 logger.warning(f"GraphQL fetch failed ({e}), falling back to REST client.")
