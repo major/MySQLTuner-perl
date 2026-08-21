@@ -294,16 +294,16 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Automated Status Checklist Sync**:
   * [x] Integrate a workflow script that automatically marks roadmap checklist items as completed (`[x]`) upon detection of related commit scopes (e.g. `feat(auth):` marking authentication items as done).
 
-### [Phase 22: High Availability & Replication Auto-Discovery](file:///documentation/specifications/strategic_technical_evolutions.md) [NOT STARTED]
+### [Phase 22: High Availability & Replication Auto-Discovery](file:///documentation/specifications/strategic_technical_evolutions.md) [COMPLETED]
 
-* [ ] **Topology Auto-Discovery**:
-  * [ ] Query MySQL system tables and variables to automatically identify the topology (Galera Cluster, InnoDB Cluster, or Logical Replication source/replica).
-* [ ] **Galera Member Exploration**:
-  * [ ] Discover all active cluster members from `wsrep_incoming_addresses` and support launching auditing runs on replica nodes.
-* [ ] **Logical Replica Lag Auditing**:
-  * [ ] Track source-replica status, check lag metrics, and audit IO/SQL thread parameters on replicas.
-* [ ] **InnoDB Cluster Auditing**:
-  * [ ] Query `mysql_innodb_cluster_metadata` to retrieve cluster members status and performance schema metrics.
+* [x] **Topology Auto-Discovery**:
+  * [x] Query MySQL system tables and variables to automatically identify the topology (Galera Cluster, InnoDB Cluster, or Logical Replication source/replica).
+* [x] **Galera Member Exploration**:
+  * [x] Discover all active cluster members from `wsrep_incoming_addresses` and support launching auditing runs on replica nodes.
+* [x] **Logical Replica Lag Auditing**:
+  * [x] Track source-replica status, check lag metrics, and audit IO/SQL thread parameters on replicas.
+* [x] **InnoDB Cluster Auditing**:
+  * [x] Query `mysql_innodb_cluster_metadata` to retrieve cluster members status and performance schema metrics.
 
 ### [Phase 23: E2E Quality and Query Safety Hardening](file:///documentation/specifications/strategic_technical_evolutions.md) [IN PROGRESS]
 
