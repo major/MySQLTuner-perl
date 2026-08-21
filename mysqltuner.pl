@@ -1308,8 +1308,108 @@ sub predictive_capacity_analysis {
     }
 }
 
+# Auto-discovers cluster, HA, and replication topology (Phase 22)
+sub discover_cluster_topology {
+    my %ha_info = (
+        topology     => 'Standalone',
+        cluster_type => 'None',
+        role         => 'Standalone Node',
+        members      => [],
+        details      => {}
+    );
+
+    # 1. Galera / Percona XtraDB Cluster
+    if ( is_mysql_true( $myvar{'wsrep_on'} ) ) {
+        $ha_info{topology}     = 'Galera Cluster / PXC';
+        $ha_info{cluster_type} = 'Synchronous Multi-Primary';
+        $ha_info{role}         = $mystat{'wsrep_local_state_comment'}
+          // 'Cluster Member';
+
+        my $cluster_name = $myvar{'wsrep_cluster_name'}  // 'Unnamed Cluster';
+        my $cluster_size = $mystat{'wsrep_cluster_size'} // 1;
+        $ha_info{details}{cluster_name} = $cluster_name;
+        $ha_info{details}{cluster_size} = int($cluster_size);
+
+        if ( defined $myvar{'wsrep_incoming_addresses'}
+            && $myvar{'wsrep_incoming_addresses'} ne '' )
+        {
+            my @members = split( /,\s*/, $myvar{'wsrep_incoming_addresses'} );
+            $ha_info{members} = \@members;
+        }
+
+        goodprint
+"Topology Detected: Galera Cluster '$cluster_name' (Size: $cluster_size nodes)";
+        if ( $cluster_size == 2 ) {
+            badprint
+"Galera Cluster has only 2 nodes without arbitrator (garbd): Split-brain risk on network partition!";
+            push @generalrec,
+"Deploy a 3rd Galera node or garbd arbitrator to prevent split-brain conditions.";
+            push @sysrec,
+              "Galera Cluster size is 2 (requires >=3 nodes or arbitrator).";
+        }
+    }
+
+    # 2. MySQL Group Replication / InnoDB Cluster
+    elsif ( defined $myvar{'group_replication_group_name'}
+        && $myvar{'group_replication_group_name'} ne '' )
+    {
+        $ha_info{topology}     = 'InnoDB Cluster / Group Replication';
+        $ha_info{cluster_type} = 'Group Replication';
+        my $is_single_primary =
+          is_mysql_true( $myvar{'group_replication_single_primary_mode'} );
+        $ha_info{role} =
+          $is_single_primary ? 'Single-Primary' : 'Multi-Primary';
+        $ha_info{details}{group_name} = $myvar{'group_replication_group_name'};
+
+        goodprint
+          "Topology Detected: MySQL Group Replication (Mode: $ha_info{role})";
+    }
+
+    # 3. Asynchronous or Semi-Sync Replica
+    elsif (
+        (
+            defined $myrepl{'Seconds_Behind_Source'}
+            && $myrepl{'Seconds_Behind_Source'} ne 'NULL'
+        )
+        || ( defined $myrepl{'Seconds_Behind_Master'}
+            && $myrepl{'Seconds_Behind_Master'} ne 'NULL' )
+        || ( defined $myrepl{'Replica_IO_Running'}
+            && $myrepl{'Replica_IO_Running'} ne '' )
+        || ( defined $myrepl{'Slave_IO_Running'}
+            && $myrepl{'Slave_IO_Running'} ne '' )
+      )
+    {
+        $ha_info{topology}     = 'Asynchronous/Semi-Sync Replication';
+        $ha_info{cluster_type} = 'Source-Replica';
+        $ha_info{role}         = 'Replica';
+
+        my $lag = $myrepl{'Seconds_Behind_Source'}
+          // $myrepl{'Seconds_Behind_Master'} // 0;
+        $ha_info{details}{replication_lag} = $lag;
+
+        goodprint "Topology Detected: Replication Replica (Lag: ${lag}s)";
+    }
+
+    # 4. Replication Source (Binary log active)
+    elsif ( is_mysql_true( $myvar{'log_bin'} ) ) {
+        $ha_info{topology}     = 'Replication Source / Primary';
+        $ha_info{cluster_type} = 'Source-Replica';
+        $ha_info{role}         = 'Source';
+
+        goodprint "Topology Detected: Replication Source (Binary Log: ON)";
+    }
+    else {
+        infoprint "Topology Detected: Standalone MySQL Instance";
+    }
+
+    $result{'Topology'}     = $ha_info{topology};
+    $result{'HA_Discovery'} = \%ha_info;
+    return \%ha_info;
+}
+
 sub check_replication_advanced {
     subheaderprint "Cluster & Replication Intelligence";
+    discover_cluster_topology();
     if ($is_local_only) {
         infoprint
 "Skipping advanced replication checks: Server is bound to localhost-only (Ref: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_bind_address).";
