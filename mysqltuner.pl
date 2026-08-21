@@ -2854,6 +2854,72 @@ sub audit_innodb_ahi {
     return @findings;
 }
 
+# Audits TLS/SSL protocol versions and cipher suite security
+sub audit_tls_ciphers_protocols {
+    my ( $have_ssl, $tls_version, $ssl_cipher ) = @_;
+    my @findings;
+    $have_ssl    //= '';
+    $tls_version //= '';
+    $ssl_cipher  //= '';
+
+    my $ssl_active = normalize_mysql_bool($have_ssl);
+    if ( defined $ssl_active && $ssl_active == 0 ) {
+        return @findings;    # SSL not enabled
+    }
+
+    # 1. Audit TLS protocol versions
+    if ($tls_version) {
+        my @deprecated_protocols;
+        my @versions = split( /\s*,\s*/, $tls_version );
+        foreach my $v (@versions) {
+            if ( $v =~ /^TLSv1(?:\.0)?$/i || $v =~ /^TLSv1\.1$/i ) {
+                push @deprecated_protocols, $v;
+            }
+        }
+
+        if (@deprecated_protocols) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'Security TLS',
+                message  =>
+                  sprintf( "Insecure deprecated TLS protocol(s) enabled: %s",
+                    join( ', ', @deprecated_protocols ) ),
+                recommendation =>
+"Restrict tls_version to modern secure protocols: tls_version='TLSv1.2,TLSv1.3'",
+              };
+        }
+    }
+
+    # 2. Audit weak ciphers
+    if ($ssl_cipher) {
+        my @weak_ciphers;
+        foreach my $c ( split( /[:,]/, $ssl_cipher ) ) {
+            $c =~ s/^\s+|\s+$//g;
+            next unless length($c);
+            if (   $c =~ /^(?:RC4|DES|3DES|MD5|EXPORT|NULL|ADH)/i
+                || $c =~ /(?:-RC4|-MD5|-DES)/i )
+            {
+                push @weak_ciphers, $c;
+            }
+        }
+        if (@weak_ciphers) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'Security SSL Ciphers',
+                message  =>
+                  sprintf( "Weak or vulnerable SSL cipher(s) detected: %s",
+                    join( ', ', @weak_ciphers ) ),
+                recommendation =>
+"Update ssl_cipher to use strong AEAD/GCM ciphers (e.g. ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256)",
+              };
+        }
+    }
+
+    return @findings;
+}
+
 # Calculate Percentage
 sub percentage {
     my $value = shift;
