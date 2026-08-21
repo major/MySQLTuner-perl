@@ -389,10 +389,10 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Stage & Wait Bottleneck Auditing**:
   * [x] Audit database execution bottlenecks by analyzing Performance Schema stage and wait event summaries (`audit_pfs_stage_profiling`).
 
-### Phase 32: InnoDB Adaptive Hash Index (AHI) & Memory Partitions Audit [NOT STARTED]
+### Phase 32: InnoDB Adaptive Hash Index (AHI) & Memory Partitions Audit [COMPLETED]
 
-* [ ] **Adaptive Hash Index (AHI) Contention & Sizing**:
-  * [ ] Evaluate `innodb_adaptive_hash_index` efficiency, search ratio vs overhead, and recommend partition tuning.
+* [x] **Adaptive Hash Index (AHI) Contention & Sizing**:
+  * [x] Evaluate `innodb_adaptive_hash_index` efficiency, search ratio vs overhead, and recommend partition tuning (`audit_innodb_ahi`).
 
 ### Phase 33: TLS/SSL Cipher Suite & Protocol Deprecation Audit [NOT STARTED]
 
