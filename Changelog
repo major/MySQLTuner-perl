@@ -26,6 +26,7 @@
 - feat(triage): implement autonomous issue triage & diagnostic engine (#1041)
 - feat(triage): add upstream synchronization and triage for major/MySQLTuner-perl (#1042)
 - feat(triage): add live triage and closing runner for major/MySQLTuner-perl (#1043)
+- feat(triage): add English translation engine for major/MySQLTuner-perl comments (#1044)
 - test(build): add unit_build_headers.t validating build script header compliance (#1029)
 - test(build): add unit_cve_update.t validating pure Perl CVE and EOL scripts (#1024)
 - test(build): add unit_release_gen.t validating pure Perl release generator (#1023)

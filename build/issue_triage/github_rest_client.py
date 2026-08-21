@@ -160,6 +160,28 @@ class GitHubRESTClient:
         )
         return data
 
+    def update_comment(self, comment_id: int, body: str, repo: Optional[str] = None) -> Dict[str, Any]:
+        target_repo = repo or self.default_repo
+        status, data, _ = self._request(
+            f"repos/{target_repo}/issues/comments/{comment_id}",
+            method="PATCH",
+            data={"body": body},
+        )
+        return data
+
+    def delete_comment(self, comment_id: int, repo: Optional[str] = None) -> bool:
+        target_repo = repo or self.default_repo
+        try:
+            status, _, _ = self._request(
+                f"repos/{target_repo}/issues/comments/{comment_id}",
+                method="DELETE",
+            )
+            return status in [200, 204]
+        except GitHubAPIError as e:
+            if e.status_code == 404:
+                return True
+            raise
+
     def add_labels(self, issue_number: int, labels: List[str], repo: Optional[str] = None) -> List[str]:
         target_repo = repo or self.default_repo
         status, data, _ = self._request(
