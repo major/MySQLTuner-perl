@@ -271,14 +271,14 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Localization Support**:
   * [ ] Support localized versions of the reference documentation matching other translations of the script (e.g. Italian, French, Russian).
 
-### [Phase 19: CI/CD Quality Gates & Validation Runners](file:///documentation/specifications/strategic_technical_evolutions.md) [NOT STARTED]
+### [Phase 19: CI/CD Quality Gates & Validation Runners](file:///documentation/specifications/strategic_technical_evolutions.md) [IN PROGRESS]
 
-* [ ] **Automated Changelog Verification**:
-  * [ ] Implement a Git pre-commit hook that automatically checks if the `Changelog` has been modified when changes of type `feat` or `fix` are detected, preventing commits without changelog documentation.
+* [x] **Automated Changelog Verification**:
+  * [x] Implement a Git pre-commit hook or script that automatically checks if the `Changelog` has been modified when changes of type `feat` or `fix` are detected (`build/check_changelog_gate.pl`).
 * [ ] **Containerized Validation Runners**:
   * [ ] Standardize local pre-flight checks by executing all verification steps (including unit tests and version consistency checks) inside a standardized, minimal Docker environment to avoid environmental differences between developer environments and CI.
-* [ ] **Schema Validation for Release Artifacts**:
-  * [ ] Implement a CI step to parse and validate that markdown formats, issues referenced, and version definitions in the `releases/` directory are syntactically and logically correct before release tagging.
+* [x] **Schema Validation for Release Artifacts**:
+  * [x] Implement a CI step to parse and validate that markdown formats, issues referenced, and version definitions in the `releases/` directory are syntactically and logically correct before release tagging (`build/check_changelog_gate.pl`).
 
 ### [Phase 20: Release Automation & Synchronization](file:///documentation/specifications/strategic_technical_evolutions.md) [NOT STARTED]
 
