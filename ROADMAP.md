@@ -394,10 +394,10 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Adaptive Hash Index (AHI) Contention & Sizing**:
   * [x] Evaluate `innodb_adaptive_hash_index` efficiency, search ratio vs overhead, and recommend partition tuning (`audit_innodb_ahi`).
 
-### Phase 33: TLS/SSL Cipher Suite & Protocol Deprecation Audit [NOT STARTED]
+### Phase 33: TLS/SSL Cipher Suite & Protocol Deprecation Audit [COMPLETED]
 
-* [ ] **Modern Cipher Suites & Deprecated Protocol Detection**:
-  * [ ] Audit TLS version enforcement (`tls_version`) and flag deprecated protocols (TLSv1, TLSv1.1) or weak ciphers.
+* [x] **Modern Cipher Suites & Deprecated Protocol Detection**:
+  * [x] Audit TLS version enforcement (`tls_version`) and flag deprecated protocols (TLSv1, TLSv1.1) or weak ciphers (`audit_tls_ciphers_protocols`).
 
 ### Phase 34: Table Definition Cache & Open Tables Saturation Audit [NOT STARTED]
 
