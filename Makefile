@@ -86,7 +86,7 @@ generate_eof_files:
 
 generate_features:
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_features..." >> execution.log
-	perl ./build/genFeatures.sh
+	perl ./build/genFeatures.pl
 	git add ./FEATURES.md
 	git commit -m "docs: generate FEATURES.md" || echo "No changes to commit"
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_features." >> execution.log
@@ -101,12 +101,12 @@ release:
 	echo "$(VERSION)" > CURRENT_VERSION.txt; \
 	sed -i "s/$$OLD_VERSION/$(VERSION)/g" mysqltuner.pl README.md POTENTIAL_ISSUES.md MEMORY_DB.md Changelog; \
 	pod2markdown mysqltuner.pl > USAGE.md; \
-	python3 build/release_gen.py; \
+	perl build/release_gen.pl; \
 	echo "Version bumped to $(VERSION). USAGE.md and release notes generated."
 
 generate_release_notes:
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_release_notes..." >> execution.log
-	python3 build/release_gen.py
+	perl build/release_gen.pl
 	git add ./releases/
 	git commit -m "docs: regenerate release notes" || echo "No changes to commit"
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_release_notes." >> execution.log
