@@ -34,6 +34,12 @@ help:
 	@echo "  test-ha-innodb:    Run E2E tests on InnoDB Cluster only"
 	@echo "  test-ha-repli:     Run E2E tests on Replication only"
 	@echo "  test-mcp-e2e:      Run MCP Server E2E tests with a real database"
+	@echo "  test-triage:       Run all Issue Triage Python & Perl unit tests"
+	@echo "  issue-triage:      Run Issue Triage Orchestrator (ISSUE=xxx, LIMIT=10)"
+	@echo "  issue-triage-offline: Run Issue Triage Orchestrator using offline replay fixtures"
+	@echo "  issue-triage-major: Run Issue Triage Orchestrator on upstream major/MySQLTuner-perl"
+	@echo "  issue-triage-major-offline: Run Issue Triage on major/MySQLTuner-perl using offline fixtures"
+	@echo "  sync-major-issues: Synchronize modifications to major/MySQLTuner-perl with jmrenouard assignee"
 	@echo "  analyze-output:    Analyze MySQLTuner output (FILE=path/to/output.txt)"
 
 
@@ -230,6 +236,31 @@ unit-tests-debug:
 clean_examples:
 	@echo "Cleaning up examples..."
 	bash build/clean_examples.sh $(KEEP)
+
+test-triage:
+	@echo "Running Issue Triage unit tests..."
+	python3 -m unittest discover -s tests -p "unit_*.py"
+	prove -I. -Itests tests/unit_issue_triage_bridge.t tests/unit_edge_case_triage_resilience.t
+
+issue-triage:
+	@echo "Running Issue Triage Orchestrator (Dry Run)..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
+
+issue-triage-offline:
+	@echo "Running Issue Triage Orchestrator (Offline Mode)..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py --offline $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
+
+issue-triage-major:
+	@echo "Running Upstream Issue Triage Orchestrator (major/MySQLTuner-perl)..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py --repo major/MySQLTuner-perl $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
+
+issue-triage-major-offline:
+	@echo "Running Upstream Issue Triage Orchestrator (Offline Mode - major/MySQLTuner-perl)..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py --repo major/MySQLTuner-perl --offline $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
+
+sync-major-issues:
+	@echo "Synchronizing modifications to major/MySQLTuner-perl..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py --sync-upstream $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
 
 push:
 	git push
