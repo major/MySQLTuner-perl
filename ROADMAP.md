@@ -262,7 +262,7 @@ To ensure consistency and high-density development, the following roles are defi
 
 ## 🔮 [Strategic Technical Evolutions](file:///documentation/specifications/strategic_technical_evolutions.md)
 
-### [Phase 18: Documentation Integrity & Dynamic References](file:///documentation/specifications/roadmap_phase_xvii_documentation_integrity.md) [NOT STARTED]
+### [Phase 18: Documentation Integrity & Dynamic References](file:///documentation/specifications/strategic_technical_evolutions.md) [NOT STARTED]
 
 * [ ] **Reference Link Auditing Pipeline**:
   * [ ] Set up a pipeline to automatically audit and verify reference link availability inside the repository documentation to prevent dead links.
@@ -271,7 +271,7 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Localization Support**:
   * [ ] Support localized versions of the reference documentation matching other translations of the script (e.g. Italian, French, Russian).
 
-### [Phase 19: CI/CD Quality Gates & Validation Runners](file:///documentation/specifications/roadmap_phase_xviii_ci_quality_gates.md) [NOT STARTED]
+### [Phase 19: CI/CD Quality Gates & Validation Runners](file:///documentation/specifications/strategic_technical_evolutions.md) [NOT STARTED]
 
 * [ ] **Automated Changelog Verification**:
   * [ ] Implement a Git pre-commit hook that automatically checks if the `Changelog` has been modified when changes of type `feat` or `fix` are detected, preventing commits without changelog documentation.
@@ -280,21 +280,21 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **Schema Validation for Release Artifacts**:
   * [ ] Implement a CI step to parse and validate that markdown formats, issues referenced, and version definitions in the `releases/` directory are syntactically and logically correct before release tagging.
 
-### [Phase 20: Release Automation & Synchronization](file:///documentation/specifications/roadmap_phase_xix_release_automation.md) [NOT STARTED]
+### [Phase 20: Release Automation & Synchronization](file:///documentation/specifications/strategic_technical_evolutions.md) [NOT STARTED]
 
 * [ ] **Interactive Release Orchestrator**:
-  * [ ] Create a script that automates the interactive selection of version bump categories (micro, minor, major), executes the version replacement across all 6 reference locations, and automatically runs the `release_gen.py` script to generate release notes in a single workflow step.
+  * [ ] Create a script that automates the interactive selection of version bump categories (micro, minor, major), executes the version replacement across all 6 reference locations, and automatically runs the `release_gen.pl` script to generate release notes in a single workflow step.
 * [ ] **Automated Release Notes Synchronization**:
   * [ ] Create a script or Git hook that automatically extracts changes from the branch commits and populates the `Executive Summary` sections in both the `Changelog` and release notes to prevent manual synchronization omissions.
 
-### [Phase 21: Structured Roadmap Automation](file:///documentation/specifications/roadmap_phase_xx_roadmap_automation.md) [NOT STARTED]
+### [Phase 21: Structured Roadmap Automation](file:///documentation/specifications/strategic_technical_evolutions.md) [COMPLETED]
 
-* [ ] **Structured Roadmap Schema Validation**:
-  * [ ] Implement a markdown linter or schema validator specifically for the `ROADMAP.md` checklist syntax (verifying correct hyperlinks, file pathways, and category labels).
-* [ ] **Automated Status Checklist Sync**:
-  * [ ] Integrate a workflow script that automatically marks roadmap checklist items as completed (`[x]`) upon detection of related commit scopes (e.g. `feat(auth):` marking authentication items as done).
+* [x] **Structured Roadmap Schema Validation**:
+  * [x] Implement a markdown linter or schema validator specifically for the `ROADMAP.md` checklist syntax (verifying correct hyperlinks, file pathways, and category labels).
+* [x] **Automated Status Checklist Sync**:
+  * [x] Integrate a workflow script that automatically marks roadmap checklist items as completed (`[x]`) upon detection of related commit scopes (e.g. `feat(auth):` marking authentication items as done).
 
-### [Phase 22: High Availability & Replication Auto-Discovery](file:///documentation/specifications/roadmap_phase_xxi_replication_autodiscovery.md) [NOT STARTED]
+### [Phase 22: High Availability & Replication Auto-Discovery](file:///documentation/specifications/strategic_technical_evolutions.md) [NOT STARTED]
 
 * [ ] **Topology Auto-Discovery**:
   * [ ] Query MySQL system tables and variables to automatically identify the topology (Galera Cluster, InnoDB Cluster, or Logical Replication source/replica).
@@ -305,7 +305,7 @@ To ensure consistency and high-density development, the following roles are defi
 * [ ] **InnoDB Cluster Auditing**:
   * [ ] Query `mysql_innodb_cluster_metadata` to retrieve cluster members status and performance schema metrics.
 
-### [Phase 23: E2E Quality and Query Safety Hardening](file:///documentation/specifications/roadmap_phase_xxii_query_safety.md) [IN PROGRESS]
+### [Phase 23: E2E Quality and Query Safety Hardening](file:///documentation/specifications/strategic_technical_evolutions.md) [IN PROGRESS]
 
 * [x] **Performance Schema Pre-Flight Checks**:
   * [x] Dynamically verify Performance Schema table availability in `information_schema.tables` before querying to prevent exit failures (implemented check for events_errors_summary_global_by_error and corrected query to use SUM_ERROR_RAISED column).
