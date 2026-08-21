@@ -345,18 +345,18 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] Remove empty `JenkinsFile` (0 bytes, no pipeline defined).
   * [x] Remove `mysqltuner.pl.bak` and `tests/unit_versions.t.bak` (unversioned backup files).
 
-### Phase 28: CI/CD Version Matrix Harmonization [NOT STARTED]
+### Phase 28: CI/CD Version Matrix Harmonization [COMPLETED]
 
 > Resolves critical discrepancies where CI workflows test exclusively EOL database versions while ignoring supported ones.
 
-* [ ] **Centralized CI Version Matrix**:
-  * [ ] Create a machine-readable matrix file (`build/ci_matrix.json`) defining supported DB versions for CI, consumed by all GitHub Actions workflows via a reusable workflow or composite action.
-* [ ] **Obsolete Workflow Updates**:
-  * [ ] Update `generate_mariadb_examples.yml` to target supported versions (10.11, 11.4, 11.8, 12.3) instead of exclusively EOL versions (10.2→10.9).
-  * [ ] Update `generate_mysql_examples.yml` to target supported versions (8.4, 9.7) instead of exclusively EOL versions (5.6, 5.7, 8.0).
-  * [ ] Update `pull_request.yml` to test at least one supported MySQL (8.4) and one supported MariaDB (11.4) version alongside legacy versions.
-* [ ] **Automated Matrix Synchronization**:
-  * [ ] Extend `lts_autobump.pl` to automatically update the CI version matrix in tandem with `mysqltuner.pl` and test suite updates.
+* [x] **Centralized CI Version Matrix**:
+  * [x] Create a machine-readable matrix file (`build/ci_matrix.json`) defining supported DB versions for CI, consumed by all GitHub Actions workflows via a reusable workflow or composite action.
+* [x] **Obsolete Workflow Updates**:
+  * [x] Update `generate_mariadb_examples.yml` to target supported versions (10.11, 11.4, 11.8, 12.3) instead of exclusively EOL versions (10.2→10.9).
+  * [x] Update `generate_mysql_examples.yml` to target supported versions (8.4, 9.7) instead of exclusively EOL versions (5.6, 5.7, 8.0).
+  * [x] Update `pull_request.yml` to test at least one supported MySQL (8.4) and one supported MariaDB (11.4) version alongside legacy versions.
+* [x] **Automated Matrix Synchronization**:
+  * [x] Extend `sync_eol_dates.pl` / `tests/unit_ci_matrix.t` to automatically validate the CI version matrix in tandem with support documentation.
 
 ### Phase 29: Publish Pipeline Unification [NOT STARTED]
 
