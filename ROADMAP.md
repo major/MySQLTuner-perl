@@ -321,10 +321,10 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **System-Wide Boolean Normalization**:
   * [x] Create an internal utility function to convert and normalize system variable boolean representations (`ON`/`OFF`, `1`/`0`, `YES`/`NO`) to simplify all current and future conditional logic in `mysqltuner.pl`.
 
-### Phase 25: Deprecated System Variables & Synonyms Audit [NOT STARTED]
+### Phase 25: Deprecated System Variables & Synonyms Audit [COMPLETED]
 
-* [ ] **Obsolete Configuration Warnings**:
-  * [ ] Add specific diagnostic warnings when obsolete synonyms (e.g. `log_slow_queries`) are configured instead of the modern recommended variables (e.g. `slow_query_log`).
+* [x] **Obsolete Configuration Warnings**:
+  * [x] Add specific diagnostic warnings when obsolete synonyms (e.g. `log_slow_queries`) are configured instead of the modern recommended variables (e.g. `slow_query_log`).
 
 ### Phase 26: Subtest Decomposition & Test Suite Optimization [NOT STARTED]
 
