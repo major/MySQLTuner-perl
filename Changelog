@@ -1,6 +1,7 @@
 # MySQLTuner Changelog
 
 2.9.3 2026-08-21
+- chore(build): consolidate EOL and CVE scripts in pure Perl and add get_version.sh (#1024)
 - feat(build): migrate release_gen.py and genFeatures.sh to pure Perl (#1023)
 - feat(engine): implement MySQL boolean normalization subroutines (#1021)
 - feat(engine): add audit_deprecated_variables for obsolete variables and synonyms (#1022)
@@ -8,6 +9,7 @@
 - feat(skill): add analyze_buffer_pool AI diagnostic skill to MCP server (#1003)
 - feat(skill): add diagnose_replication_lag AI diagnostic skill to MCP server (#1005)
 - feat(skill): add detect_fragmented_tables AI diagnostic skill to MCP server (#1007)
+- test(build): add unit_cve_update.t validating pure Perl CVE and EOL scripts (#1024)
 - test(build): add unit_release_gen.t validating pure Perl release generator (#1023)
 - test(engine): add unit_boolean_normalization.t validating boolean parsing (#1021)
 - test(engine): add unit_deprecated_vars_audit.t validating deprecation rules (#1022)
