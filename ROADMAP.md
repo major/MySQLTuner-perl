@@ -326,10 +326,10 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Obsolete Configuration Warnings**:
   * [x] Add specific diagnostic warnings when obsolete synonyms (e.g. `log_slow_queries`) are configured instead of the modern recommended variables (e.g. `slow_query_log`).
 
-### Phase 26: Subtest Decomposition & Test Suite Optimization [NOT STARTED]
+### Phase 26: Subtest Decomposition & Test Suite Optimization [IN PROGRESS]
 
-* [ ] **Granular Unit Test Decomposition**:
-  * [ ] Continue decomposing monolithic test scripts in the `tests/` directory into structured, human-assimilable subtests to simplify regression tracking and database laboratory debugging.
+* [x] **Granular Unit Test Decomposition**:
+  * [x] Continue decomposing monolithic test scripts in the `tests/` directory into structured, human-assimilable subtests (`tests/repro_native_parsing.t`).
 
 ### Phase 27: Multi-Language Normalization & Duplicate Elimination [COMPLETED]
 
