@@ -2800,6 +2800,60 @@ sub audit_pfs_stage_profiling {
     return @findings;
 }
 
+# Audits InnoDB Adaptive Hash Index (AHI) efficiency and memory partition configuration
+sub audit_innodb_ahi {
+    my (
+        $ahi_enabled, $ahi_searches, $non_ahi_searches,
+        $ahi_parts,   $bp_instances
+    ) = @_;
+    my @findings;
+    $ahi_searches     //= 0;
+    $non_ahi_searches //= 0;
+    $ahi_parts        //= 1;
+    $bp_instances     //= 1;
+
+    my $is_enabled = normalize_mysql_bool($ahi_enabled);
+
+    if ( defined $is_enabled && $is_enabled == 0 ) {
+        return @findings;    # AHI is already disabled
+    }
+
+    my $total_searches = $ahi_searches + $non_ahi_searches;
+    if ( $total_searches > 50000 ) {
+        my $hit_ratio = ( $ahi_searches / $total_searches ) * 100;
+        if ( $hit_ratio < 15.0 ) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'InnoDB AHI',
+                message  =>
+                  sprintf(
+"InnoDB Adaptive Hash Index (AHI) has low search hit ratio (%.2f%% < 15.00%%)",
+                    $hit_ratio ),
+                recommendation =>
+"Consider disabling innodb_adaptive_hash_index (OFF) on write-heavy workloads to eliminate latch overhead and free memory",
+              };
+        }
+    }
+
+    # Partition contention check for multi-instance buffer pools
+    if ( $bp_instances > 1 && $ahi_parts == 1 ) {
+        push @findings,
+          {
+            severity => 'WARN',
+            category => 'InnoDB AHI',
+            message  =>
+              sprintf(
+"innodb_adaptive_hash_index_parts is 1 with %d buffer pool instances",
+                $bp_instances ),
+            recommendation =>
+"Increase innodb_adaptive_hash_index_parts (e.g. 8 or matching buffer pool instances) to reduce btr_search_latch contention",
+          };
+    }
+
+    return @findings;
+}
+
 # Calculate Percentage
 sub percentage {
     my $value = shift;
