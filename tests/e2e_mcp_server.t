@@ -12,6 +12,23 @@ use FindBin;
 use IPC::Open2;
 use File::Path qw(make_path remove_tree);
 
+my $DB_PASS      = "mcp_test_pass";
+my $DB_PORT      = 13306;  # Non-standard port to avoid conflicts
+my $CONTAINER    = "mysqltuner_mcp_e2e_$$";
+my $MCP_SCRIPT   = "$FindBin::Bin/../build/mcp_server.py";
+my $MT_SCRIPT    = "$FindBin::Bin/../mysqltuner.pl";
+my $CACHE_DIR    = "$FindBin::Bin/mcp_e2e_cache_$$";
+
+# --- Helper: cleanup ---
+sub cleanup {
+    local $?;
+    system("docker rm -f $CONTAINER >/dev/null 2>&1") if defined $CONTAINER;
+    remove_tree($CACHE_DIR) if defined $CACHE_DIR && -d $CACHE_DIR;
+}
+
+# Ensure cleanup on exit
+END { cleanup(); }
+
 # --- Pre-flight checks ---
 my $has_docker = system("docker info >/dev/null 2>&1") == 0;
 my $has_python = system("which python3 >/dev/null 2>&1") == 0;
@@ -25,22 +42,6 @@ unless ($has_docker && $has_python && ($ENV{RUN_E2E_TESTS} || $has_image)) {
 }
 
 plan tests => 2;
-
-my $DB_PASS      = "mcp_test_pass";
-my $DB_PORT      = 13306;  # Non-standard port to avoid conflicts
-my $CONTAINER    = "mysqltuner_mcp_e2e_$$";
-my $MCP_SCRIPT   = "$FindBin::Bin/../build/mcp_server.py";
-my $MT_SCRIPT    = "$FindBin::Bin/../mysqltuner.pl";
-my $CACHE_DIR    = "$FindBin::Bin/mcp_e2e_cache_$$";
-
-# --- Helper: cleanup ---
-sub cleanup {
-    system("docker rm -f $CONTAINER >/dev/null 2>&1");
-    remove_tree($CACHE_DIR) if -d $CACHE_DIR;
-}
-
-# Ensure cleanup on exit
-END { cleanup(); }
 
 # --- Start MariaDB container ---
 subtest 'MCP E2E: Database Container Lifecycle' => sub {
