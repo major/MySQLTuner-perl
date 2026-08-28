@@ -11,6 +11,14 @@ use FindBin;
 use IPC::Open2;
 use File::Path qw(make_path remove_tree);
 
+my $test_cache_dir = "$FindBin::Bin/mcp_skill_cache_$$";
+
+# Cleanup
+END {
+    local $?;
+    remove_tree($test_cache_dir) if defined $test_cache_dir && -d $test_cache_dir;
+}
+
 my $has_python = system("which python3 >/dev/null 2>&1") == 0;
 if (!$has_python) {
     plan skip_all => "python3 is required to run skill unit tests";
@@ -18,7 +26,6 @@ if (!$has_python) {
 
 plan tests => 4;
 
-my $test_cache_dir = "$FindBin::Bin/mcp_skill_cache_$$";
 remove_tree($test_cache_dir) if -d $test_cache_dir;
 make_path($test_cache_dir);
 
@@ -108,10 +115,5 @@ subtest 'Skill Robustness: Malformed Arguments' => sub {
     close $chld_out;
     waitpid($pid, 0);
 };
-
-# Cleanup
-END {
-    remove_tree($test_cache_dir) if -d $test_cache_dir;
-}
 
 done_testing();

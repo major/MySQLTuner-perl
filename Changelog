@@ -53,6 +53,7 @@
 - test(skill): add unit_skill_fragmentation.t validating table fragmentation checks (#1007)
 - test(triage): add unit and E2E suites for issue triage engine (#1041)
 - test(triage): add unit_upstream_syncer.py for major/MySQLTuner-perl (#1042)
+- test(ci): guard END cleanup blocks against uninitialized variables on skipped tests (#1046)
 - ci(triage): add autonomous issue triage workflow and Makefile targets (#1041)
 - docs(mcp): fix Mermaid diagram syntax and quoting in architecture guides (#1045)
 
