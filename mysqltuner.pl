@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.9.2
+# mysqltuner.pl - Version 2.9.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.9.2";
+our $tunerversion = "2.9.3";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -1308,8 +1308,108 @@ sub predictive_capacity_analysis {
     }
 }
 
+# Auto-discovers cluster, HA, and replication topology (Phase 22)
+sub discover_cluster_topology {
+    my %ha_info = (
+        topology     => 'Standalone',
+        cluster_type => 'None',
+        role         => 'Standalone Node',
+        members      => [],
+        details      => {}
+    );
+
+    # 1. Galera / Percona XtraDB Cluster
+    if ( is_mysql_true( $myvar{'wsrep_on'} ) ) {
+        $ha_info{topology}     = 'Galera Cluster / PXC';
+        $ha_info{cluster_type} = 'Synchronous Multi-Primary';
+        $ha_info{role}         = $mystat{'wsrep_local_state_comment'}
+          // 'Cluster Member';
+
+        my $cluster_name = $myvar{'wsrep_cluster_name'}  // 'Unnamed Cluster';
+        my $cluster_size = $mystat{'wsrep_cluster_size'} // 1;
+        $ha_info{details}{cluster_name} = $cluster_name;
+        $ha_info{details}{cluster_size} = int($cluster_size);
+
+        if ( defined $myvar{'wsrep_incoming_addresses'}
+            && $myvar{'wsrep_incoming_addresses'} ne '' )
+        {
+            my @members = split( /,\s*/, $myvar{'wsrep_incoming_addresses'} );
+            $ha_info{members} = \@members;
+        }
+
+        goodprint
+"Topology Detected: Galera Cluster '$cluster_name' (Size: $cluster_size nodes)";
+        if ( $cluster_size == 2 ) {
+            badprint
+"Galera Cluster has only 2 nodes without arbitrator (garbd): Split-brain risk on network partition!";
+            push @generalrec,
+"Deploy a 3rd Galera node or garbd arbitrator to prevent split-brain conditions.";
+            push @sysrec,
+              "Galera Cluster size is 2 (requires >=3 nodes or arbitrator).";
+        }
+    }
+
+    # 2. MySQL Group Replication / InnoDB Cluster
+    elsif ( defined $myvar{'group_replication_group_name'}
+        && $myvar{'group_replication_group_name'} ne '' )
+    {
+        $ha_info{topology}     = 'InnoDB Cluster / Group Replication';
+        $ha_info{cluster_type} = 'Group Replication';
+        my $is_single_primary =
+          is_mysql_true( $myvar{'group_replication_single_primary_mode'} );
+        $ha_info{role} =
+          $is_single_primary ? 'Single-Primary' : 'Multi-Primary';
+        $ha_info{details}{group_name} = $myvar{'group_replication_group_name'};
+
+        goodprint
+          "Topology Detected: MySQL Group Replication (Mode: $ha_info{role})";
+    }
+
+    # 3. Asynchronous or Semi-Sync Replica
+    elsif (
+        (
+            defined $myrepl{'Seconds_Behind_Source'}
+            && $myrepl{'Seconds_Behind_Source'} ne 'NULL'
+        )
+        || ( defined $myrepl{'Seconds_Behind_Master'}
+            && $myrepl{'Seconds_Behind_Master'} ne 'NULL' )
+        || ( defined $myrepl{'Replica_IO_Running'}
+            && $myrepl{'Replica_IO_Running'} ne '' )
+        || ( defined $myrepl{'Slave_IO_Running'}
+            && $myrepl{'Slave_IO_Running'} ne '' )
+      )
+    {
+        $ha_info{topology}     = 'Asynchronous/Semi-Sync Replication';
+        $ha_info{cluster_type} = 'Source-Replica';
+        $ha_info{role}         = 'Replica';
+
+        my $lag = $myrepl{'Seconds_Behind_Source'}
+          // $myrepl{'Seconds_Behind_Master'} // 0;
+        $ha_info{details}{replication_lag} = $lag;
+
+        goodprint "Topology Detected: Replication Replica (Lag: ${lag}s)";
+    }
+
+    # 4. Replication Source (Binary log active)
+    elsif ( is_mysql_true( $myvar{'log_bin'} ) ) {
+        $ha_info{topology}     = 'Replication Source / Primary';
+        $ha_info{cluster_type} = 'Source-Replica';
+        $ha_info{role}         = 'Source';
+
+        goodprint "Topology Detected: Replication Source (Binary Log: ON)";
+    }
+    else {
+        infoprint "Topology Detected: Standalone MySQL Instance";
+    }
+
+    $result{'Topology'}     = $ha_info{topology};
+    $result{'HA_Discovery'} = \%ha_info;
+    return \%ha_info;
+}
+
 sub check_replication_advanced {
     subheaderprint "Cluster & Replication Intelligence";
+    discover_cluster_topology();
     if ($is_local_only) {
         infoprint
 "Skipping advanced replication checks: Server is bound to localhost-only (Ref: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_bind_address).";
@@ -2460,6 +2560,406 @@ sub hr_num {
     else {
         return $num;
     }
+}
+
+# Normalizes any MySQL/MariaDB boolean representation (ON/OFF, 1/0, YES/NO, TRUE/FALSE, ENABLED/DISABLED)
+# Returns 1 for truthy values, 0 for falsy values, and undef if undefined or unparseable.
+sub normalize_mysql_bool {
+    my $val = shift;
+    return undef if !defined $val;
+    $val =~ s/^\s+|\s+$//g;
+    return 1 if $val =~ /^(?:1|ON|YES|TRUE|ENABLE|ENABLED)$/i;
+    return 0 if $val =~ /^(?:0|OFF|NO|FALSE|DISABLE|DISABLED)$/i;
+    return undef;
+}
+
+# Checks if a MySQL/MariaDB variable or status value is functionally truthy
+sub is_mysql_true {
+    my $val = shift;
+    my $res = normalize_mysql_bool($val);
+    return ( defined $res && $res == 1 ) ? 1 : 0;
+}
+
+# Checks if a MySQL/MariaDB variable or status value is functionally falsy
+sub is_mysql_false {
+    my $val = shift;
+    my $res = normalize_mysql_bool($val);
+    return ( defined $res && $res == 0 ) ? 1 : 0;
+}
+
+# Formats a MySQL boolean value into a standardized string representation ("ON" or "OFF")
+sub format_mysql_bool {
+    my $val = shift;
+    my $res = normalize_mysql_bool($val);
+    return "ON"  if defined $res && $res == 1;
+    return "OFF" if defined $res && $res == 0;
+    return defined $val ? $val : "UNKNOWN";
+}
+
+# Returns standard documentation reference anchor tags for tuning topics
+sub get_doc_anchor {
+    my $topic = shift // 'general';
+    $topic = lc($topic);
+    $topic =~ s/[^a-z0-9_]/_/g;
+
+    my %anchors = (
+        'buffer_pool'        => '[REF: INNODB-BUFFER-POOL]',
+        'innodb_buffer_pool' => '[REF: INNODB-BUFFER-POOL]',
+        'query_cache'        => '[REF: QUERY-CACHE]',
+        'replication'        => '[REF: REPLICATION-LAG]',
+        'replication_lag'    => '[REF: REPLICATION-LAG]',
+        'table_cache'        => '[REF: TABLE-CACHE]',
+        'table_open_cache'   => '[REF: TABLE-CACHE]',
+        'connection_limits'  => '[REF: CONNECTION-LIMITS]',
+        'max_connections'    => '[REF: CONNECTION-LIMITS]',
+        'security_auth'      => '[REF: SECURITY-AUTH]',
+        'authentication'     => '[REF: SECURITY-AUTH]',
+        'temporary_tables'   => '[REF: TEMP-TABLES]',
+        'temp_tables'        => '[REF: TEMP-TABLES]',
+        'galera_cluster'     => '[REF: GALERA-CLUSTER]',
+        'galera'             => '[REF: GALERA-CLUSTER]',
+        'innodb_redo_log'    => '[REF: INNODB-REDO-LOG]',
+        'redo_log'           => '[REF: INNODB-REDO-LOG]',
+        'general'            => '[REF: MYSQLTUNER-DOCS]'
+    );
+
+    return $anchors{$topic} // '[REF: MYSQLTUNER-DOCS]';
+}
+
+# Returns official database documentation URL for tuning topics
+sub get_doc_url {
+    my $topic = shift // 'general';
+    $topic = lc($topic);
+    $topic =~ s/[^a-z0-9_]/_/g;
+
+    my %urls = (
+        'buffer_pool' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html',
+        'innodb_buffer_pool' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html',
+        'query_cache' => 'https://mariadb.com/kb/en/query-cache/',
+        'replication' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/replication.html',
+        'replication_lag' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/replication.html',
+        'table_cache' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/table-cache.html',
+        'table_open_cache' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/table-cache.html',
+        'connection_limits' =>
+'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_connections',
+        'max_connections' =>
+'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_connections',
+        'security_auth' =>
+'https://dev.mysql.com/doc/refman/8.4/en/pluggable-authentication.html',
+        'authentication' =>
+'https://dev.mysql.com/doc/refman/8.4/en/pluggable-authentication.html',
+        'temporary_tables' =>
+'https://dev.mysql.com/doc/refman/8.4/en/internal-temporary-tables.html',
+        'temp_tables' =>
+'https://dev.mysql.com/doc/refman/8.4/en/internal-temporary-tables.html',
+        'galera_cluster'  => 'https://galeracluster.com/library/documentation/',
+        'galera'          => 'https://galeracluster.com/library/documentation/',
+        'innodb_redo_log' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html',
+        'redo_log' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html',
+        'general' => 'https://github.com/jmrenouard/MySQLTuner-perl'
+    );
+
+    return $urls{$topic} // 'https://github.com/jmrenouard/MySQLTuner-perl';
+}
+
+# Global trace buffer for SQL execution errors and warnings
+our @sql_traces = ();
+
+# Logs an SQL execution error or warning to the internal trace buffer
+sub log_sql_trace {
+    my ( $query, $error_msg, $status_code ) = @_;
+    return unless defined $query;
+    $status_code //= 'ERROR';
+    $error_msg   //= 'Unknown SQL error';
+    my $timestamp = time();
+    push @sql_traces,
+      {
+        timestamp   => $timestamp,
+        query       => $query,
+        error       => $error_msg,
+        status_code => $status_code,
+      };
+}
+
+# Returns all recorded SQL execution traces
+sub get_sql_traces {
+    return @sql_traces;
+}
+
+# Clears the internal SQL execution trace buffer
+sub clear_sql_traces {
+    @sql_traces = ();
+}
+
+# Formats a summary diagnostic report of all recorded SQL execution traces
+sub format_sql_trace_report {
+    my @traces = get_sql_traces();
+    return "No SQL errors or execution anomalies recorded.\n" unless @traces;
+    my $out =
+      sprintf( "Recorded %d SQL execution anomalies:\n", scalar(@traces) );
+    for my $i ( 0 .. $#traces ) {
+        my $t = $traces[$i];
+        $out .= sprintf( "  [%d] [%s] %s -> Error: %s\n",
+            $i + 1, $t->{status_code}, $t->{query}, $t->{error} );
+    }
+    return $out;
+}
+
+# Audits Performance Schema stage and wait events to identify execution bottlenecks
+sub audit_pfs_stage_profiling {
+    my ( $stages_ref, $waits_ref ) = @_;
+    my @findings;
+    $stages_ref //= {};
+    $waits_ref  //= {};
+
+    # 1. Audit Stage Events: Disk / Memory Temp Tables and Sorting
+    if ( exists $stages_ref->{'stage/sql/Creating tmp table'} ) {
+        my $tmp_count = $stages_ref->{'stage/sql/Creating tmp table'}{'count'}
+          // 0;
+        my $tmp_latency_ms =
+          $stages_ref->{'stage/sql/Creating tmp table'}{'latency_ms'} // 0;
+        if ( $tmp_count > 1000 && $tmp_latency_ms > 5000 ) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Stages',
+                message  => sprintf(
+"High temporary table creation stage latency: %d executions took %.2f ms",
+                    $tmp_count, $tmp_latency_ms
+                ),
+                recommendation =>
+"Review queries generating temporary tables or increase tmp_table_size / max_heap_table_size",
+              };
+        }
+    }
+
+    if ( exists $stages_ref->{'stage/sql/Sorting result'} ) {
+        my $sort_count = $stages_ref->{'stage/sql/Sorting result'}{'count'}
+          // 0;
+        my $sort_latency_ms =
+          $stages_ref->{'stage/sql/Sorting result'}{'latency_ms'} // 0;
+        if ( $sort_count > 5000 && $sort_latency_ms > 10000 ) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Stages',
+                message  => sprintf(
+"High sorting stage latency: %d sort operations took %.2f ms",
+                    $sort_count, $sort_latency_ms
+                ),
+                recommendation =>
+"Optimize queries with filesorts using composite indexes or adjust sort_buffer_size",
+              };
+        }
+    }
+
+    # 2. Audit Wait Events: Mutex and IO Contention
+    foreach my $wait_event ( sort keys %$waits_ref ) {
+        my $wait_count      = $waits_ref->{$wait_event}{'count'}      // 0;
+        my $wait_latency_ms = $waits_ref->{$wait_event}{'latency_ms'} // 0;
+        if (   $wait_event =~ /^wait\/synch\/mutex\/innodb/
+            && $wait_latency_ms > 10000 )
+        {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Waits',
+                message  => sprintf(
+"InnoDB mutex contention detected on '%s': %.2f ms wait time",
+                    $wait_event, $wait_latency_ms
+                ),
+                recommendation =>
+"Consider increasing innodb_buffer_pool_instances or tuning thread concurrency",
+              };
+        }
+        elsif ($wait_event =~ /^wait\/io\/file\/innodb\/innodb_data_file/
+            && $wait_latency_ms > 50000 )
+        {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Waits',
+                message  => sprintf(
+"High InnoDB data file IO wait latency on '%s': %.2f ms wait time",
+                    $wait_event, $wait_latency_ms
+                ),
+                recommendation =>
+"Check disk IOPS capacity or consider tuning innodb_io_capacity / innodb_io_capacity_max",
+              };
+        }
+    }
+
+    return @findings;
+}
+
+# Audits InnoDB Adaptive Hash Index (AHI) efficiency and memory partition configuration
+sub audit_innodb_ahi {
+    my (
+        $ahi_enabled, $ahi_searches, $non_ahi_searches,
+        $ahi_parts,   $bp_instances
+    ) = @_;
+    my @findings;
+    $ahi_searches     //= 0;
+    $non_ahi_searches //= 0;
+    $ahi_parts        //= 1;
+    $bp_instances     //= 1;
+
+    my $is_enabled = normalize_mysql_bool($ahi_enabled);
+
+    if ( defined $is_enabled && $is_enabled == 0 ) {
+        return @findings;    # AHI is already disabled
+    }
+
+    my $total_searches = $ahi_searches + $non_ahi_searches;
+    if ( $total_searches > 50000 ) {
+        my $hit_ratio = ( $ahi_searches / $total_searches ) * 100;
+        if ( $hit_ratio < 15.0 ) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'InnoDB AHI',
+                message  =>
+                  sprintf(
+"InnoDB Adaptive Hash Index (AHI) has low search hit ratio (%.2f%% < 15.00%%)",
+                    $hit_ratio ),
+                recommendation =>
+"Consider disabling innodb_adaptive_hash_index (OFF) on write-heavy workloads to eliminate latch overhead and free memory",
+              };
+        }
+    }
+
+    # Partition contention check for multi-instance buffer pools
+    if ( $bp_instances > 1 && $ahi_parts == 1 ) {
+        push @findings,
+          {
+            severity => 'WARN',
+            category => 'InnoDB AHI',
+            message  =>
+              sprintf(
+"innodb_adaptive_hash_index_parts is 1 with %d buffer pool instances",
+                $bp_instances ),
+            recommendation =>
+"Increase innodb_adaptive_hash_index_parts (e.g. 8 or matching buffer pool instances) to reduce btr_search_latch contention",
+          };
+    }
+
+    return @findings;
+}
+
+# Audits TLS/SSL protocol versions and cipher suite security
+sub audit_tls_ciphers_protocols {
+    my ( $have_ssl, $tls_version, $ssl_cipher ) = @_;
+    my @findings;
+    $have_ssl    //= '';
+    $tls_version //= '';
+    $ssl_cipher  //= '';
+
+    my $ssl_active = normalize_mysql_bool($have_ssl);
+    if ( defined $ssl_active && $ssl_active == 0 ) {
+        return @findings;    # SSL not enabled
+    }
+
+    # 1. Audit TLS protocol versions
+    if ($tls_version) {
+        my @deprecated_protocols;
+        my @versions = split( /\s*,\s*/, $tls_version );
+        foreach my $v (@versions) {
+            if ( $v =~ /^TLSv1(?:\.0)?$/i || $v =~ /^TLSv1\.1$/i ) {
+                push @deprecated_protocols, $v;
+            }
+        }
+
+        if (@deprecated_protocols) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'Security TLS',
+                message  =>
+                  sprintf( "Insecure deprecated TLS protocol(s) enabled: %s",
+                    join( ', ', @deprecated_protocols ) ),
+                recommendation =>
+"Restrict tls_version to modern secure protocols: tls_version='TLSv1.2,TLSv1.3'",
+              };
+        }
+    }
+
+    # 2. Audit weak ciphers
+    if ($ssl_cipher) {
+        my @weak_ciphers;
+        foreach my $c ( split( /[:,]/, $ssl_cipher ) ) {
+            $c =~ s/^\s+|\s+$//g;
+            next unless length($c);
+            if (   $c =~ /^(?:RC4|DES|3DES|MD5|EXPORT|NULL|ADH)/i
+                || $c =~ /(?:-RC4|-MD5|-DES)/i )
+            {
+                push @weak_ciphers, $c;
+            }
+        }
+        if (@weak_ciphers) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'Security SSL Ciphers',
+                message  =>
+                  sprintf( "Weak or vulnerable SSL cipher(s) detected: %s",
+                    join( ', ', @weak_ciphers ) ),
+                recommendation =>
+"Update ssl_cipher to use strong AEAD/GCM ciphers (e.g. ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256)",
+              };
+        }
+    }
+
+    return @findings;
+}
+
+# Audits Table Definition Cache capacity, utilization, and eviction thrashing
+sub audit_table_definition_cache {
+    my ( $table_definition_cache, $open_table_definitions,
+        $opened_table_definitions, $uptime )
+      = @_;
+    my @findings;
+    $table_definition_cache   //= 0;
+    $open_table_definitions   //= 0;
+    $opened_table_definitions //= 0;
+    $uptime                   //= 1;
+
+    return @findings if ( $table_definition_cache <= 0 || $uptime <= 0 );
+
+    my $fill_ratio =
+      ( $open_table_definitions / $table_definition_cache ) * 100;
+    my $open_rate = $opened_table_definitions / $uptime;
+
+    if (   $fill_ratio >= 90.0
+        && $open_rate > 5.0
+        && $opened_table_definitions > $table_definition_cache * 2 )
+    {
+        my $suggested_cache = int( $table_definition_cache * 1.5 );
+        $suggested_cache = 2000 if $suggested_cache < 2000;
+        push @findings,
+          {
+            severity => 'WARN',
+            category => 'Table Cache',
+            message  => sprintf(
+"table_definition_cache is %0.1f%% full (%d/%d) with high eviction rate (%.1f opened/sec)",
+                $fill_ratio,             $open_table_definitions,
+                $table_definition_cache, $open_rate
+            ),
+            recommendation => sprintf(
+"Increase table_definition_cache (current: %d, suggest >= %d) to reduce table definition disk reads and mutex waits",
+                $table_definition_cache, $suggested_cache
+            ),
+          };
+    }
+
+    return @findings;
 }
 
 # Calculate Percentage
@@ -3918,7 +4418,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.9.2' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.9.3' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -3934,7 +4434,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.9.2' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.9.3' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -8006,8 +8506,7 @@ sub mysql_stats {
     my $slow_query_log_active = $myvar{'slow_query_log'}
       // $myvar{'log_slow_queries'};
     if ( defined($slow_query_log_active) ) {
-        if ( $slow_query_log_active eq "OFF" || $slow_query_log_active eq "0" )
-        {
+        if ( is_mysql_false($slow_query_log_active) ) {
             push( @generalrec,
                 "Enable the slow query log to troubleshoot bad queries" );
         }
@@ -12898,8 +13397,121 @@ sub check_removed_innodb_variables {
     }
 }
 
+# Audit deprecated system variables and obsolete synonyms (Phase 25)
+sub audit_deprecated_variables {
+    my $is_mariadb = (
+        ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+          or ( defined $myvar{'version_comment'}
+            && $myvar{'version_comment'} =~ /MariaDB/i )
+    );
+    my $is_mysql = !$is_mariadb;
+
+    my @deprecations = ();
+
+    # 1. log_slow_queries -> slow_query_log
+    if ( defined $myvar{'log_slow_queries'}
+        && $myvar{'log_slow_queries'} ne '' )
+    {
+        push @deprecations,
+          {
+            variable    => 'log_slow_queries',
+            replacement => 'slow_query_log',
+            reason      =>
+'log_slow_queries is an obsolete synonym; configure slow_query_log instead'
+          };
+    }
+
+    # 2. table_cache -> table_open_cache
+    if ( defined $myvar{'table_cache'} && $myvar{'table_cache'} ne '' ) {
+        push @deprecations,
+          {
+            variable    => 'table_cache',
+            replacement => 'table_open_cache',
+            reason      =>
+'table_cache is an obsolete synonym removed in MySQL 5.5; configure table_open_cache instead'
+          };
+    }
+
+    # 3. tx_isolation -> transaction_isolation
+    if ( defined $myvar{'tx_isolation'} && $myvar{'tx_isolation'} ne '' ) {
+        if (   ( $is_mysql && mysql_version_ge( 8, 0, 0 ) )
+            || ( $is_mariadb && mysql_version_ge( 11, 1, 0 ) ) )
+        {
+            push @deprecations,
+              {
+                variable    => 'tx_isolation',
+                replacement => 'transaction_isolation',
+                reason      =>
+'tx_isolation was removed in modern versions; use transaction_isolation'
+              };
+        }
+    }
+
+    # 4. tx_read_only -> transaction_read_only
+    if ( defined $myvar{'tx_read_only'} && $myvar{'tx_read_only'} ne '' ) {
+        if ( $is_mysql && mysql_version_ge( 8, 0, 0 ) ) {
+            push @deprecations,
+              {
+                variable    => 'tx_read_only',
+                replacement => 'transaction_read_only',
+                reason      =>
+'tx_read_only was removed in MySQL 8.0; use transaction_read_only'
+              };
+        }
+    }
+
+    # 5. query_cache_size / query_cache_type on MySQL 8.0+
+    if ( $is_mysql && mysql_version_ge( 8, 0, 0 ) ) {
+        if (
+            (
+                defined $myvar{'query_cache_size'}
+                && $myvar{'query_cache_size'} > 0
+            )
+            || ( defined $myvar{'query_cache_type'}
+                && !is_mysql_false( $myvar{'query_cache_type'} ) )
+          )
+        {
+            push @deprecations,
+              {
+                variable    => 'query_cache_size',
+                replacement => 'None (Removed)',
+                reason      =>
+'Query Cache subsystem was completely removed in MySQL 8.0; remove query_cache_* settings from my.cnf'
+              };
+        }
+    }
+
+    # 6. default_authentication_plugin on MySQL 8.4+
+    if (   $is_mysql
+        && mysql_version_ge( 8, 4, 0 )
+        && defined $myvar{'default_authentication_plugin'}
+        && $myvar{'default_authentication_plugin'} ne '' )
+    {
+        push @deprecations,
+          {
+            variable    => 'default_authentication_plugin',
+            replacement => 'authentication_policy',
+            reason      =>
+'default_authentication_plugin was removed in MySQL 8.4; use authentication_policy'
+          };
+    }
+
+    # Output and recording findings
+    if ( @deprecations > 0 ) {
+        $result{'Deprecated_Variables'} = \@deprecations;
+        foreach my $d (@deprecations) {
+            badprint
+"Deprecated/Obsolete variable detected: $d->{variable} ($d->{reason})";
+            push @generalrec,
+"Modernize deprecated configuration: replace $d->{variable} with $d->{replacement}";
+            push @sysrec, "Deprecated variable $d->{variable}: $d->{reason}";
+        }
+    }
+}
+
 sub check_migration_advisor {
     subheaderprint "Smart Migration LTS Advisor";
+    audit_deprecated_variables();
     my $is_mariadb = (
         ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
           or ( defined $myvar{'version_comment'}
@@ -16741,7 +17353,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.9.2 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
+ MySQLTuner 2.9.3 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
 
 =head1 SYNOPSIS
 
@@ -17045,7 +17657,7 @@ Suppress informational messages.
 
 =head1 VERSION
 
-Version 2.9.2
+Version 2.9.3
 
 =head1 PERLDOC
 

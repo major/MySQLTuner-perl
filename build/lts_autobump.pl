@@ -1,13 +1,16 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/lts_autobump.pl
+# Description: Queries endoflife.date API and updates LTS lists in mysqltuner.pl.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/lts_autobump.pl [options]
+# ===========================================================================
 use strict;
 use warnings;
 use HTTP::Tiny;
 use JSON::PP;
 use File::Basename;
 use Time::Piece;
-
-# LTS Version Auto-Bumper Utility for MySQLTuner-perl
-# Queries endoflife.date API and dynamically updates LTS lists in mysqltuner.pl and test suites.
 
 my $script_dir = dirname(__FILE__);
 my $tuner_file = "$script_dir/../mysqltuner.pl";

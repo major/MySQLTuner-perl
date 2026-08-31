@@ -1,0 +1,35 @@
+[
+  {
+    "number": 881,
+    "title": "MySQL 8.4 innodb_buffer_pool_size calculation warning",
+    "state": "open",
+    "author": "external_dba",
+    "created_at": "2026-08-20T10:00:00Z",
+    "updated_at": "2026-08-20T10:00:00Z",
+    "body": "Hello,\nOn MySQL 8.4.0-LTS running on Ubuntu 22.04 with 64GB RAM,\nMySQLTuner outputs:\n[!!] InnoDB Buffer Pool size is 12GB (< 70% of RAM).\nHowever innodb_buffer_pool_instances is set to 8.\nConfig:\ninnodb_buffer_pool_size = 12884901888\nmax_connections = 500\nCan you please advise?",
+    "labels": ["bug:diagnostic", "db:mysql84"],
+    "comments": []
+  },
+  {
+    "number": 882,
+    "title": "Roadmap: Support MariaDB 11.4 LTS optimization indicators",
+    "state": "open",
+    "author": "jmrenouard",
+    "created_at": "2026-08-21T08:30:00Z",
+    "updated_at": "2026-08-21T08:30:00Z",
+    "body": "Tracking issue for MariaDB 11.4 LTS indicators:\n- Optimizer trace and cost model\n- Aria storage engine cache sizing\n- S3 storage engine detection",
+    "labels": ["enhancement", "maintainer:tracking"],
+    "comments": []
+  },
+  {
+    "number": 883,
+    "title": "Deprecated query_cache_type detected on MySQL 8.0",
+    "state": "open",
+    "author": "legacy_migrator",
+    "created_at": "2026-08-21T14:15:00Z",
+    "updated_at": "2026-08-21T14:15:00Z",
+    "body": "Upgraded from 5.7 to 8.0.36. In my.cnf I still have:\nquery_cache_type = 0\nquery_cache_size = 0\nMySQLTuner warned about query cache. Is this expected?",
+    "labels": ["question:tuning"],
+    "comments": []
+  }
+]

@@ -1,9 +1,13 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/check_compliance.pl
+# Description: Compliance Sentinel enforcing single-file and zero CPAN dependency rules.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/check_compliance.pl
+# ===========================================================================
 use strict;
 use warnings;
 use File::Basename;
-
-# Compliance Check: Enforces single-file architecture and zero-dependency rules for mysqltuner.pl.
 # Whitelist of allowed Core/Standard modules.
 my %ALLOWED_MODULES = map { $_ => 1 } (
     'strict',       'warnings',    'constant',      'vars',
@@ -138,10 +142,12 @@ my %ALLOWED_SCOPES = map { $_ => 1 } (
     'ci',       'docs',     'test',         'chore',
     'versions', 'report',   'security',     'cve',
     'options',  'lab',      'container',    'refactor',
-    'style',    'releases', 'dependencies', 'cli',
-    'auth',     'main',     'metadata',     'deps',
-    'system',   'roadmap',  'hook',         'hooks',
-    'build',    'mcp',      'rules',    'galera'
+    'style',    'releases', 'release',      'dependencies',
+    'cli',      'auth',     'main',         'metadata',
+    'deps',     'system',   'roadmap',      'hook',
+    'hooks',    'build',    'mcp',          'rules',
+    'galera',   'skill',    'skills',       'innodb',
+    'replication', 'engine', 'ha',          'triage'
 );
 
 # Lint Changelog structure and scopes for the current version block

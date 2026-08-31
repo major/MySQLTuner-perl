@@ -34,6 +34,12 @@ help:
 	@echo "  test-ha-innodb:    Run E2E tests on InnoDB Cluster only"
 	@echo "  test-ha-repli:     Run E2E tests on Replication only"
 	@echo "  test-mcp-e2e:      Run MCP Server E2E tests with a real database"
+	@echo "  test-triage:       Run all Issue Triage Python & Perl unit tests"
+	@echo "  issue-triage:      Run Issue Triage Orchestrator (ISSUE=xxx, LIMIT=10)"
+	@echo "  issue-triage-offline: Run Issue Triage Orchestrator using offline replay fixtures"
+	@echo "  issue-triage-major: Run Issue Triage Orchestrator on upstream major/MySQLTuner-perl"
+	@echo "  issue-triage-major-offline: Run Issue Triage on major/MySQLTuner-perl using offline fixtures"
+	@echo "  sync-major-issues: Synchronize modifications to major/MySQLTuner-perl with jmrenouard assignee"
 	@echo "  analyze-output:    Analyze MySQLTuner output (FILE=path/to/output.txt)"
 
 
@@ -78,15 +84,14 @@ generate_version_file:
 
 generate_eof_files:
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_eof_files..." >> execution.log
-	bash ./build/endoflife.sh mariadb 
-	bash ./build/endoflife.sh mysql
+	perl ./build/sync_eol_dates.pl --generate
 	git add ./*_support.md
 	git commit -m "docs: generate end-of-life status files" || echo "No changes to commit"
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_eof_files." >> execution.log
 
 generate_features:
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_features..." >> execution.log
-	perl ./build/genFeatures.sh
+	perl ./build/genFeatures.pl
 	git add ./FEATURES.md
 	git commit -m "docs: generate FEATURES.md" || echo "No changes to commit"
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_features." >> execution.log
@@ -101,12 +106,12 @@ release:
 	echo "$(VERSION)" > CURRENT_VERSION.txt; \
 	sed -i "s/$$OLD_VERSION/$(VERSION)/g" mysqltuner.pl README.md POTENTIAL_ISSUES.md MEMORY_DB.md Changelog; \
 	pod2markdown mysqltuner.pl > USAGE.md; \
-	python3 build/release_gen.py; \
+	perl build/release_gen.pl; \
 	echo "Version bumped to $(VERSION). USAGE.md and release notes generated."
 
 generate_release_notes:
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_release_notes..." >> execution.log
-	python3 build/release_gen.py
+	perl build/release_gen.pl
 	git add ./releases/
 	git commit -m "docs: regenerate release notes" || echo "No changes to commit"
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Finished generate_release_notes." >> execution.log
@@ -142,7 +147,11 @@ docker_build:
 docker_slim:
 	docker run --rm -it --privileged -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):/root/app -w /root/app jmrenouard/mysqltuner:latest slim build
 
-docker_push: docker_build
+validate_release:
+	perl build/validate_release.pl
+
+docker_push: docker_build validate_release
+	@echo "WARNING: Local docker_push is deprecated. Use the GitHub Actions 'docker_publish.yml' workflow for multi-arch buildx releases."
 	bash build/publishtodockerhub.sh $(VERSION)
 	
 
@@ -227,6 +236,31 @@ unit-tests-debug:
 clean_examples:
 	@echo "Cleaning up examples..."
 	bash build/clean_examples.sh $(KEEP)
+
+test-triage:
+	@echo "Running Issue Triage unit tests..."
+	python3 -m unittest discover -s tests -p "unit_*.py"
+	prove -I. -Itests tests/unit_issue_triage_bridge.t tests/unit_edge_case_triage_resilience.t
+
+issue-triage:
+	@echo "Running Issue Triage Orchestrator (Dry Run)..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
+
+issue-triage-offline:
+	@echo "Running Issue Triage Orchestrator (Offline Mode)..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py --offline $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
+
+issue-triage-major:
+	@echo "Running Upstream Issue Triage Orchestrator (major/MySQLTuner-perl)..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py --repo major/MySQLTuner-perl $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
+
+issue-triage-major-offline:
+	@echo "Running Upstream Issue Triage Orchestrator (Offline Mode - major/MySQLTuner-perl)..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py --repo major/MySQLTuner-perl --offline $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
+
+sync-major-issues:
+	@echo "Synchronizing modifications to major/MySQLTuner-perl..."
+	PYTHONPATH=. python3 build/issue_triage/triage_orchestrator.py --sync-upstream $(if $(ISSUE),--issue $(ISSUE),) $(if $(LIMIT),--limit $(LIMIT),)
 
 push:
 	git push
