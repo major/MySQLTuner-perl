@@ -15,7 +15,13 @@ Features list for option: --feature (dev only)
 * badprint
 * build_mysql_connection_command
 * calculate_health_score
+* calculate_key_buffer_ratios
+* calculate_memory_allocation
+* calculate_per_thread_buffers
+* calculate_query_cache_efficiency
 * calculate_sectional_health_scores
+* calculate_server_buffers
+* calculate_traffic_and_sort_ratios
 * clear_sql_traces
 * cloud_setup
 * cmdprint
