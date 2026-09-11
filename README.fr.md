@@ -103,33 +103,41 @@ Merci à [endoflife.date](https://endoflife.date/)
 * **Analyse de tendances historiques** : Ingestion de sorties JSON de runs précédents via `--compare-file` pour suivre les tendances QPS et de croissance des données.
 * **Intégration Sysbench** : Analyse de la sortie sysbench pour les métriques QPS, TPS et latence (Moy/95e/Max) via `--sysbench-file`.
 * **Intégration logs Container et Systemd** : Détection automatique des logs depuis Docker, Podman, Kubectl/Kubernetes et le journal Systemd.
-* **Support Protocole IA & MCP** : Serveur microservice Model Context Protocol (MCP) natif stdio JSON-RPC et sortie JSON structurée `--agent-json` pour les clients IA (Claude Desktop, Cursor, VS Code / Cline, Antigravity).
+* **Support IA, Protocole MCP & Compétences (Skills)** : Serveur microservice Model Context Protocol (MCP) natif stdio JSON-RPC, catalogue d'heuristiques spécialisées dans `.agent/skills/` et sortie JSON structurée `--agent-json` pour les clients IA (Claude Desktop, Cursor, VS Code / Cline, Antigravity).
 
 ---
 
-## 🤖 Intégration Agent IA & Model Context Protocol (MCP)
+## 🤖 Intégration Agent IA, Model Context Protocol (MCP) & Compétences (Skills)
 
-MySQLTuner prend en charge en natif les flux de travail basés sur l'Intelligence Artificielle (IA), les agents DBA autonomes et les assistants de développement (ex. Claude Desktop, Cursor IDE, VS Code / Cline, Antigravity, ainsi que les frameworks LangChain et LlamaIndex).
+MySQLTuner prend en charge en natif les flux de travail basés sur l'Intelligence Artificielle (IA), les agents DBA autonomes et les assistants de développement (ex. Antigravity IDE, Claude Desktop, Cursor IDE, VS Code / Cline, ainsi que les frameworks LangChain et LlamaIndex).
 
 Pour la documentation technique complète, consultez le [Guide d'Intégration IA & MCP (FR)](documentation/mcp_ai_integration_guide.fr.md), la [Version Anglaise](documentation/mcp_ai_integration_guide.md) et le fichier [AGENT.md](AGENT.md).
 
-### Modes d'Opération
+### Modes d'Opération & Capacités
 
-1. **Télémétrie CLI Directe (`--agent-json`)** :
-   Émet un schéma JSON structuré sans dépendance externe contenant les diagnostics, les scores d'impact (`1`-`10`), les niveaux de risque (`Low`, `Medium`, `High`, `Critical`), les requêtes d'exécution `SET GLOBAL` ainsi que les instructions de retour en arrière `rollback_statement`.
-   ```bash
-   perl mysqltuner.pl --agent-json --host 127.0.0.1 --user root --pass secret
-   ```
+1. **Sous-système de Compétences IA (`.agent/skills/`)** :
+   Heuristiques diagnostiques structurées avec seuils d'évaluation mathématiques et garde-fous de sécurité :
+   - `analyze_buffer_pool` : Dimensionnement du buffer pool InnoDB, taux de succès du cache et analyse des écritures de pages sales.
+   - `detect-fragmented-tables` : Détection du taux de fragmentation, calcul de l'espace disque récupérable et commandes de défragmentation en ligne.
+   - `diagnose-replication-lag` : Diagnostic de latence de réplication, synchronisation GTID et saturation des threads parallèles.
+   - `db-version-rift` : Résolution des écarts de version MySQL 5.5-8.4 vs MariaDB 10.3-11.8.
+   - `cli-execution-mastery` : Options de connexion sécurisées, tunnels SSH et masquage des mots de passe.
 
 2. **Serveur Model Context Protocol (MCP)** :
    Un microservice léger ([build/mcp_server.py](build/mcp_server.py) et [Dockerfile.mcp](Dockerfile.mcp)) communiquant via l'entrée/sortie standard (stdio) en JSON-RPC 2.0.
-   - **Ressources** : `mysqltuner://reports/latest.json`, `mysqltuner://indicators/summary.json`
+   - **Ressources** : `mysqltuner://reports/latest.json`, `mysqltuner://reports/latest.html`, `mysqltuner://indicators/summary.json`
    - **Outils** : `get_latest_audit`, `run_audit`, `apply_recommendation`, `rollback_recommendation`
    ```bash
    docker run -d \
      --name mysqltuner-mcp \
      -e DB_HOST=127.0.0.1 -e DB_USER=root -e DB_PASSWORD=secret \
      mysqltuner-mcp
+   ```
+
+3. **Télémétrie CLI Directe (`--agent-json`)** :
+   Émet un schéma JSON structuré sans dépendance externe contenant les diagnostics, les scores d'impact (`1`-`10`), les niveaux de risque (`Low`, `Medium`, `High`, `Critical`), les requêtes d'exécution `SET GLOBAL` ainsi que les instructions de retour en arrière `rollback_statement`.
+   ```bash
+   perl mysqltuner.pl --agent-json --host 127.0.0.1 --user root --pass secret
    ```
 
 ---
