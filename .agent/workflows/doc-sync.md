@@ -26,4 +26,4 @@ perl build/doc_sync.pl
     - [ ] `Changelog` contains a section for the current version with correct date.
     - [ ] `releases/v[VERSION].md` exists and is synchronized with `Changelog`.
 
-3. Review the updated summary in [.agent/README.md](file://.agent/README.md).
+3. Review the updated summary in [README.md](file:///.agent/README.md).

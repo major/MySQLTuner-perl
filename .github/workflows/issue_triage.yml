@@ -1,0 +1,67 @@
+name: "Autonomous Issue Triage & Diagnostics"
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Target GitHub Issue number to triage"
+        required: false
+        type: number
+      dry_run:
+        description: "Dry Run mode (no comments or state mutations)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  triage:
+    name: "Autonomous Triage & Proof Verification"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python 3.12"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: "Set up Perl environment"
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: "5.38"
+
+      - name: "Verify Triage Engine Unit Tests"
+        run: |
+          python3 -m unittest discover -s tests -p "unit_*.py"
+          prove -I. -Itests tests/unit_issue_triage_bridge.t
+
+      - name: "Execute Issue Triage Orchestrator"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+          IS_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          EXTRA_ARGS=""
+          if [ -n "$ISSUE_NUMBER" ]; then
+            EXTRA_ARGS="--issue $ISSUE_NUMBER"
+          fi
+          if [ "$IS_DRY_RUN" = "false" ] || [ "${{ github.event_name }}" = "issues" ]; then
+            EXTRA_ARGS="$EXTRA_ARGS --live"
+          fi
+          python3 build/issue_triage/triage_orchestrator.py $EXTRA_ARGS
+
+      - name: "Upload Triage Reports & Artifacts"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-triage-reports
+          path: reports/triage/
+          retention-days: 14

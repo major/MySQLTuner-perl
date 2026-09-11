@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.9.2
+# mysqltuner.pl - Version 2.9.3
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.9.2";
+our $tunerversion = "2.9.3";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -114,13 +114,15 @@ our %CLI_METADATA = (
         placeholder => '<name>',
         cat         => 'CONNECTION'
     },
+
+    # [REQ-CLI-02] Strict numeric port validation (1-65535)
     'port' => {
         type        => '=i',
         default     => 3306,
         desc        => 'Port to use for connection',
         placeholder => '<port>',
         cat         => 'CONNECTION',
-        validate    => qr/^\d+$/
+        validate    => sub { $_[0] =~ /^\d+$/ && $_[0] >= 1 && $_[0] <= 65535 }
     },
     'user|u' => {
         type        => '=s',
@@ -199,13 +201,8 @@ our %CLI_METADATA = (
         placeholder => 'tcp',
         cat         => 'CONNECTION'
     },
-    'server-log' => {
-        type        => '=s',
-        default     => undef,
-        desc        => 'Path to explicit log file (error_log)',
-        placeholder => '<path>',
-        cat         => 'CONNECTION'
-    },
+
+# [REQ-CLI-01] Duplicate 'server-log' entry removed from CONNECTION (consolidated in PERFORMANCE)
 
     # Performance and Reporting
     'skipsize' => {
@@ -561,12 +558,14 @@ our %CLI_METADATA = (
     },
 
     # Misc
+    # [REQ-CLI-02] Bounds and type validations for numeric options
     'max-password-checks' => {
         type        => '=i',
         default     => 100,
         desc        => 'Max password checks from dictionary',
         placeholder => '<n>',
-        cat         => 'MISC'
+        cat         => 'MISC',
+        validate    => sub { $_[0] =~ /^\d+$/ && $_[0] >= 1 }
     },
     'dump-limit' => {
         type        => '=i',
@@ -574,7 +573,7 @@ our %CLI_METADATA = (
         desc        => 'Limit number of rows for dumpdir CSV exports',
         placeholder => '<n>',
         cat         => 'MISC',
-        validate    => qr/^\d+$/
+        validate    => sub { $_[0] =~ /^\d+$/ && $_[0] >= 0 }
     },
     'compress-dump' => {
         type    => '!',
@@ -601,7 +600,8 @@ our %CLI_METADATA = (
         default     => 0,
         desc        => 'Number of open ports allowable',
         placeholder => '<n>',
-        cat         => 'MISC'
+        cat         => 'MISC',
+        validate    => sub { $_[0] =~ /^\d+$/ && $_[0] >= 0 }
     },
     'defaultarch' => {
         type        => '=i',
@@ -648,6 +648,13 @@ our (
 # Gather the options from the command line
 sub parse_cli_args {
 
+    # [REQ-CLI-01] Initialize %opt from metadata defaults
+    %opt = map {
+        my ($primary) = split /\|/, $_;
+        $primary =~ s/[!+=:].*$//;    # Strip modifiers
+        $primary => $CLI_METADATA{$_}->{default}
+    } keys %CLI_METADATA;
+
     # Build GetOptions arguments dynamically
     my @getopt_args;
     Getopt::Long::Configure( "no_auto_abbrev", "no_ignore_case" );
@@ -677,6 +684,14 @@ sub parse_cli_args {
         }
     }
 
+    # [REQ-CLI-03] Enforce zero unvalidated positional arguments
+    if (@ARGV) {
+        print STDERR "ERROR:  Unexpected non-option argument(s): "
+          . join( ", ", @ARGV ) . "\n";
+        print STDERR "mysqltuner failed with errors\n";
+        exit 1;
+    }
+
     # Apply metadata-driven rules (Implications and Validation)
     foreach my $opt_spec ( keys %CLI_METADATA ) {
         my ($primary) = split /\|/, $opt_spec;
@@ -689,8 +704,11 @@ sub parse_cli_args {
             }
         }
 
-        # Validation (regex or coderef)
-        if ( $opt{$primary} && $meta->{validate} ) {
+# [REQ-CLI-02] Validation (regex or coderef) - execute whenever defined and non-empty
+        if (   defined $opt{$primary}
+            && $opt{$primary} ne ''
+            && $meta->{validate} )
+        {
             my $val      = $opt{$primary};
             my $is_valid = 1;
             if ( ref $meta->{validate} eq 'Regexp' ) {
@@ -1308,8 +1326,108 @@ sub predictive_capacity_analysis {
     }
 }
 
+# Auto-discovers cluster, HA, and replication topology (Phase 22)
+sub discover_cluster_topology {
+    my %ha_info = (
+        topology     => 'Standalone',
+        cluster_type => 'None',
+        role         => 'Standalone Node',
+        members      => [],
+        details      => {}
+    );
+
+    # 1. Galera / Percona XtraDB Cluster
+    if ( is_mysql_true( $myvar{'wsrep_on'} ) ) {
+        $ha_info{topology}     = 'Galera Cluster / PXC';
+        $ha_info{cluster_type} = 'Synchronous Multi-Primary';
+        $ha_info{role}         = $mystat{'wsrep_local_state_comment'}
+          // 'Cluster Member';
+
+        my $cluster_name = $myvar{'wsrep_cluster_name'}  // 'Unnamed Cluster';
+        my $cluster_size = $mystat{'wsrep_cluster_size'} // 1;
+        $ha_info{details}{cluster_name} = $cluster_name;
+        $ha_info{details}{cluster_size} = int($cluster_size);
+
+        if ( defined $myvar{'wsrep_incoming_addresses'}
+            && $myvar{'wsrep_incoming_addresses'} ne '' )
+        {
+            my @members = split( /,\s*/, $myvar{'wsrep_incoming_addresses'} );
+            $ha_info{members} = \@members;
+        }
+
+        goodprint
+"Topology Detected: Galera Cluster '$cluster_name' (Size: $cluster_size nodes)";
+        if ( $cluster_size == 2 ) {
+            badprint
+"Galera Cluster has only 2 nodes without arbitrator (garbd): Split-brain risk on network partition!";
+            push @generalrec,
+"Deploy a 3rd Galera node or garbd arbitrator to prevent split-brain conditions.";
+            push @sysrec,
+              "Galera Cluster size is 2 (requires >=3 nodes or arbitrator).";
+        }
+    }
+
+    # 2. MySQL Group Replication / InnoDB Cluster
+    elsif ( defined $myvar{'group_replication_group_name'}
+        && $myvar{'group_replication_group_name'} ne '' )
+    {
+        $ha_info{topology}     = 'InnoDB Cluster / Group Replication';
+        $ha_info{cluster_type} = 'Group Replication';
+        my $is_single_primary =
+          is_mysql_true( $myvar{'group_replication_single_primary_mode'} );
+        $ha_info{role} =
+          $is_single_primary ? 'Single-Primary' : 'Multi-Primary';
+        $ha_info{details}{group_name} = $myvar{'group_replication_group_name'};
+
+        goodprint
+          "Topology Detected: MySQL Group Replication (Mode: $ha_info{role})";
+    }
+
+    # 3. Asynchronous or Semi-Sync Replica
+    elsif (
+        (
+            defined $myrepl{'Seconds_Behind_Source'}
+            && $myrepl{'Seconds_Behind_Source'} ne 'NULL'
+        )
+        || ( defined $myrepl{'Seconds_Behind_Master'}
+            && $myrepl{'Seconds_Behind_Master'} ne 'NULL' )
+        || ( defined $myrepl{'Replica_IO_Running'}
+            && $myrepl{'Replica_IO_Running'} ne '' )
+        || ( defined $myrepl{'Slave_IO_Running'}
+            && $myrepl{'Slave_IO_Running'} ne '' )
+      )
+    {
+        $ha_info{topology}     = 'Asynchronous/Semi-Sync Replication';
+        $ha_info{cluster_type} = 'Source-Replica';
+        $ha_info{role}         = 'Replica';
+
+        my $lag = $myrepl{'Seconds_Behind_Source'}
+          // $myrepl{'Seconds_Behind_Master'} // 0;
+        $ha_info{details}{replication_lag} = $lag;
+
+        goodprint "Topology Detected: Replication Replica (Lag: ${lag}s)";
+    }
+
+    # 4. Replication Source (Binary log active)
+    elsif ( is_mysql_true( $myvar{'log_bin'} ) ) {
+        $ha_info{topology}     = 'Replication Source / Primary';
+        $ha_info{cluster_type} = 'Source-Replica';
+        $ha_info{role}         = 'Source';
+
+        goodprint "Topology Detected: Replication Source (Binary Log: ON)";
+    }
+    else {
+        infoprint "Topology Detected: Standalone MySQL Instance";
+    }
+
+    $result{'Topology'}     = $ha_info{topology};
+    $result{'HA_Discovery'} = \%ha_info;
+    return \%ha_info;
+}
+
 sub check_replication_advanced {
     subheaderprint "Cluster & Replication Intelligence";
+    discover_cluster_topology();
     if ($is_local_only) {
         infoprint
 "Skipping advanced replication checks: Server is bound to localhost-only (Ref: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_bind_address).";
@@ -2462,6 +2580,406 @@ sub hr_num {
     }
 }
 
+# Normalizes any MySQL/MariaDB boolean representation (ON/OFF, 1/0, YES/NO, TRUE/FALSE, ENABLED/DISABLED)
+# Returns 1 for truthy values, 0 for falsy values, and undef if undefined or unparseable.
+sub normalize_mysql_bool {
+    my $val = shift;
+    return undef if !defined $val;
+    $val =~ s/^\s+|\s+$//g;
+    return 1 if $val =~ /^(?:1|ON|YES|TRUE|ENABLE|ENABLED)$/i;
+    return 0 if $val =~ /^(?:0|OFF|NO|FALSE|DISABLE|DISABLED)$/i;
+    return undef;
+}
+
+# Checks if a MySQL/MariaDB variable or status value is functionally truthy
+sub is_mysql_true {
+    my $val = shift;
+    my $res = normalize_mysql_bool($val);
+    return ( defined $res && $res == 1 ) ? 1 : 0;
+}
+
+# Checks if a MySQL/MariaDB variable or status value is functionally falsy
+sub is_mysql_false {
+    my $val = shift;
+    my $res = normalize_mysql_bool($val);
+    return ( defined $res && $res == 0 ) ? 1 : 0;
+}
+
+# Formats a MySQL boolean value into a standardized string representation ("ON" or "OFF")
+sub format_mysql_bool {
+    my $val = shift;
+    my $res = normalize_mysql_bool($val);
+    return "ON"  if defined $res && $res == 1;
+    return "OFF" if defined $res && $res == 0;
+    return defined $val ? $val : "UNKNOWN";
+}
+
+# Returns standard documentation reference anchor tags for tuning topics
+sub get_doc_anchor {
+    my $topic = shift // 'general';
+    $topic = lc($topic);
+    $topic =~ s/[^a-z0-9_]/_/g;
+
+    my %anchors = (
+        'buffer_pool'        => '[REF: INNODB-BUFFER-POOL]',
+        'innodb_buffer_pool' => '[REF: INNODB-BUFFER-POOL]',
+        'query_cache'        => '[REF: QUERY-CACHE]',
+        'replication'        => '[REF: REPLICATION-LAG]',
+        'replication_lag'    => '[REF: REPLICATION-LAG]',
+        'table_cache'        => '[REF: TABLE-CACHE]',
+        'table_open_cache'   => '[REF: TABLE-CACHE]',
+        'connection_limits'  => '[REF: CONNECTION-LIMITS]',
+        'max_connections'    => '[REF: CONNECTION-LIMITS]',
+        'security_auth'      => '[REF: SECURITY-AUTH]',
+        'authentication'     => '[REF: SECURITY-AUTH]',
+        'temporary_tables'   => '[REF: TEMP-TABLES]',
+        'temp_tables'        => '[REF: TEMP-TABLES]',
+        'galera_cluster'     => '[REF: GALERA-CLUSTER]',
+        'galera'             => '[REF: GALERA-CLUSTER]',
+        'innodb_redo_log'    => '[REF: INNODB-REDO-LOG]',
+        'redo_log'           => '[REF: INNODB-REDO-LOG]',
+        'general'            => '[REF: MYSQLTUNER-DOCS]'
+    );
+
+    return $anchors{$topic} // '[REF: MYSQLTUNER-DOCS]';
+}
+
+# Returns official database documentation URL for tuning topics
+sub get_doc_url {
+    my $topic = shift // 'general';
+    $topic = lc($topic);
+    $topic =~ s/[^a-z0-9_]/_/g;
+
+    my %urls = (
+        'buffer_pool' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html',
+        'innodb_buffer_pool' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html',
+        'query_cache' => 'https://mariadb.com/kb/en/query-cache/',
+        'replication' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/replication.html',
+        'replication_lag' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/replication.html',
+        'table_cache' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/table-cache.html',
+        'table_open_cache' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/table-cache.html',
+        'connection_limits' =>
+'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_connections',
+        'max_connections' =>
+'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_connections',
+        'security_auth' =>
+'https://dev.mysql.com/doc/refman/8.4/en/pluggable-authentication.html',
+        'authentication' =>
+'https://dev.mysql.com/doc/refman/8.4/en/pluggable-authentication.html',
+        'temporary_tables' =>
+'https://dev.mysql.com/doc/refman/8.4/en/internal-temporary-tables.html',
+        'temp_tables' =>
+'https://dev.mysql.com/doc/refman/8.4/en/internal-temporary-tables.html',
+        'galera_cluster'  => 'https://galeracluster.com/library/documentation/',
+        'galera'          => 'https://galeracluster.com/library/documentation/',
+        'innodb_redo_log' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html',
+        'redo_log' =>
+          'https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html',
+        'general' => 'https://github.com/jmrenouard/MySQLTuner-perl'
+    );
+
+    return $urls{$topic} // 'https://github.com/jmrenouard/MySQLTuner-perl';
+}
+
+# Global trace buffer for SQL execution errors and warnings
+our @sql_traces = ();
+
+# Logs an SQL execution error or warning to the internal trace buffer
+sub log_sql_trace {
+    my ( $query, $error_msg, $status_code ) = @_;
+    return unless defined $query;
+    $status_code //= 'ERROR';
+    $error_msg   //= 'Unknown SQL error';
+    my $timestamp = time();
+    push @sql_traces,
+      {
+        timestamp   => $timestamp,
+        query       => $query,
+        error       => $error_msg,
+        status_code => $status_code,
+      };
+}
+
+# Returns all recorded SQL execution traces
+sub get_sql_traces {
+    return @sql_traces;
+}
+
+# Clears the internal SQL execution trace buffer
+sub clear_sql_traces {
+    @sql_traces = ();
+}
+
+# Formats a summary diagnostic report of all recorded SQL execution traces
+sub format_sql_trace_report {
+    my @traces = get_sql_traces();
+    return "No SQL errors or execution anomalies recorded.\n" unless @traces;
+    my $out =
+      sprintf( "Recorded %d SQL execution anomalies:\n", scalar(@traces) );
+    for my $i ( 0 .. $#traces ) {
+        my $t = $traces[$i];
+        $out .= sprintf( "  [%d] [%s] %s -> Error: %s\n",
+            $i + 1, $t->{status_code}, $t->{query}, $t->{error} );
+    }
+    return $out;
+}
+
+# Audits Performance Schema stage and wait events to identify execution bottlenecks
+sub audit_pfs_stage_profiling {
+    my ( $stages_ref, $waits_ref ) = @_;
+    my @findings;
+    $stages_ref //= {};
+    $waits_ref  //= {};
+
+    # 1. Audit Stage Events: Disk / Memory Temp Tables and Sorting
+    if ( exists $stages_ref->{'stage/sql/Creating tmp table'} ) {
+        my $tmp_count = $stages_ref->{'stage/sql/Creating tmp table'}{'count'}
+          // 0;
+        my $tmp_latency_ms =
+          $stages_ref->{'stage/sql/Creating tmp table'}{'latency_ms'} // 0;
+        if ( $tmp_count > 1000 && $tmp_latency_ms > 5000 ) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Stages',
+                message  => sprintf(
+"High temporary table creation stage latency: %d executions took %.2f ms",
+                    $tmp_count, $tmp_latency_ms
+                ),
+                recommendation =>
+"Review queries generating temporary tables or increase tmp_table_size / max_heap_table_size",
+              };
+        }
+    }
+
+    if ( exists $stages_ref->{'stage/sql/Sorting result'} ) {
+        my $sort_count = $stages_ref->{'stage/sql/Sorting result'}{'count'}
+          // 0;
+        my $sort_latency_ms =
+          $stages_ref->{'stage/sql/Sorting result'}{'latency_ms'} // 0;
+        if ( $sort_count > 5000 && $sort_latency_ms > 10000 ) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Stages',
+                message  => sprintf(
+"High sorting stage latency: %d sort operations took %.2f ms",
+                    $sort_count, $sort_latency_ms
+                ),
+                recommendation =>
+"Optimize queries with filesorts using composite indexes or adjust sort_buffer_size",
+              };
+        }
+    }
+
+    # 2. Audit Wait Events: Mutex and IO Contention
+    foreach my $wait_event ( sort keys %$waits_ref ) {
+        my $wait_count      = $waits_ref->{$wait_event}{'count'}      // 0;
+        my $wait_latency_ms = $waits_ref->{$wait_event}{'latency_ms'} // 0;
+        if (   $wait_event =~ /^wait\/synch\/mutex\/innodb/
+            && $wait_latency_ms > 10000 )
+        {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Waits',
+                message  => sprintf(
+"InnoDB mutex contention detected on '%s': %.2f ms wait time",
+                    $wait_event, $wait_latency_ms
+                ),
+                recommendation =>
+"Consider increasing innodb_buffer_pool_instances or tuning thread concurrency",
+              };
+        }
+        elsif ($wait_event =~ /^wait\/io\/file\/innodb\/innodb_data_file/
+            && $wait_latency_ms > 50000 )
+        {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'PFS Waits',
+                message  => sprintf(
+"High InnoDB data file IO wait latency on '%s': %.2f ms wait time",
+                    $wait_event, $wait_latency_ms
+                ),
+                recommendation =>
+"Check disk IOPS capacity or consider tuning innodb_io_capacity / innodb_io_capacity_max",
+              };
+        }
+    }
+
+    return @findings;
+}
+
+# Audits InnoDB Adaptive Hash Index (AHI) efficiency and memory partition configuration
+sub audit_innodb_ahi {
+    my (
+        $ahi_enabled, $ahi_searches, $non_ahi_searches,
+        $ahi_parts,   $bp_instances
+    ) = @_;
+    my @findings;
+    $ahi_searches     //= 0;
+    $non_ahi_searches //= 0;
+    $ahi_parts        //= 1;
+    $bp_instances     //= 1;
+
+    my $is_enabled = normalize_mysql_bool($ahi_enabled);
+
+    if ( defined $is_enabled && $is_enabled == 0 ) {
+        return @findings;    # AHI is already disabled
+    }
+
+    my $total_searches = $ahi_searches + $non_ahi_searches;
+    if ( $total_searches > 50000 ) {
+        my $hit_ratio = ( $ahi_searches / $total_searches ) * 100;
+        if ( $hit_ratio < 15.0 ) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'InnoDB AHI',
+                message  =>
+                  sprintf(
+"InnoDB Adaptive Hash Index (AHI) has low search hit ratio (%.2f%% < 15.00%%)",
+                    $hit_ratio ),
+                recommendation =>
+"Consider disabling innodb_adaptive_hash_index (OFF) on write-heavy workloads to eliminate latch overhead and free memory",
+              };
+        }
+    }
+
+    # Partition contention check for multi-instance buffer pools
+    if ( $bp_instances > 1 && $ahi_parts == 1 ) {
+        push @findings,
+          {
+            severity => 'WARN',
+            category => 'InnoDB AHI',
+            message  =>
+              sprintf(
+"innodb_adaptive_hash_index_parts is 1 with %d buffer pool instances",
+                $bp_instances ),
+            recommendation =>
+"Increase innodb_adaptive_hash_index_parts (e.g. 8 or matching buffer pool instances) to reduce btr_search_latch contention",
+          };
+    }
+
+    return @findings;
+}
+
+# Audits TLS/SSL protocol versions and cipher suite security
+sub audit_tls_ciphers_protocols {
+    my ( $have_ssl, $tls_version, $ssl_cipher ) = @_;
+    my @findings;
+    $have_ssl    //= '';
+    $tls_version //= '';
+    $ssl_cipher  //= '';
+
+    my $ssl_active = normalize_mysql_bool($have_ssl);
+    if ( defined $ssl_active && $ssl_active == 0 ) {
+        return @findings;    # SSL not enabled
+    }
+
+    # 1. Audit TLS protocol versions
+    if ($tls_version) {
+        my @deprecated_protocols;
+        my @versions = split( /\s*,\s*/, $tls_version );
+        foreach my $v (@versions) {
+            if ( $v =~ /^TLSv1(?:\.0)?$/i || $v =~ /^TLSv1\.1$/i ) {
+                push @deprecated_protocols, $v;
+            }
+        }
+
+        if (@deprecated_protocols) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'Security TLS',
+                message  =>
+                  sprintf( "Insecure deprecated TLS protocol(s) enabled: %s",
+                    join( ', ', @deprecated_protocols ) ),
+                recommendation =>
+"Restrict tls_version to modern secure protocols: tls_version='TLSv1.2,TLSv1.3'",
+              };
+        }
+    }
+
+    # 2. Audit weak ciphers
+    if ($ssl_cipher) {
+        my @weak_ciphers;
+        foreach my $c ( split( /[:,]/, $ssl_cipher ) ) {
+            $c =~ s/^\s+|\s+$//g;
+            next unless length($c);
+            if (   $c =~ /^(?:RC4|DES|3DES|MD5|EXPORT|NULL|ADH)/i
+                || $c =~ /(?:-RC4|-MD5|-DES)/i )
+            {
+                push @weak_ciphers, $c;
+            }
+        }
+        if (@weak_ciphers) {
+            push @findings,
+              {
+                severity => 'WARN',
+                category => 'Security SSL Ciphers',
+                message  =>
+                  sprintf( "Weak or vulnerable SSL cipher(s) detected: %s",
+                    join( ', ', @weak_ciphers ) ),
+                recommendation =>
+"Update ssl_cipher to use strong AEAD/GCM ciphers (e.g. ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256)",
+              };
+        }
+    }
+
+    return @findings;
+}
+
+# Audits Table Definition Cache capacity, utilization, and eviction thrashing
+sub audit_table_definition_cache {
+    my ( $table_definition_cache, $open_table_definitions,
+        $opened_table_definitions, $uptime )
+      = @_;
+    my @findings;
+    $table_definition_cache   //= 0;
+    $open_table_definitions   //= 0;
+    $opened_table_definitions //= 0;
+    $uptime                   //= 1;
+
+    return @findings if ( $table_definition_cache <= 0 || $uptime <= 0 );
+
+    my $fill_ratio =
+      ( $open_table_definitions / $table_definition_cache ) * 100;
+    my $open_rate = $opened_table_definitions / $uptime;
+
+    if (   $fill_ratio >= 90.0
+        && $open_rate > 5.0
+        && $opened_table_definitions > $table_definition_cache * 2 )
+    {
+        my $suggested_cache = int( $table_definition_cache * 1.5 );
+        $suggested_cache = 2000 if $suggested_cache < 2000;
+        push @findings,
+          {
+            severity => 'WARN',
+            category => 'Table Cache',
+            message  => sprintf(
+"table_definition_cache is %0.1f%% full (%d/%d) with high eviction rate (%.1f opened/sec)",
+                $fill_ratio,             $open_table_definitions,
+                $table_definition_cache, $open_rate
+            ),
+            recommendation => sprintf(
+"Increase table_definition_cache (current: %d, suggest >= %d) to reduce table definition disk reads and mutex waits",
+                $table_definition_cache, $suggested_cache
+            ),
+          };
+    }
+
+    return @findings;
+}
+
 # Calculate Percentage
 sub percentage {
     my $value = shift;
@@ -3228,13 +3746,18 @@ sub execute_system_command {
     # Avoid double transport if the command is already prefixed
     my $full_cmd = $command;
     if ( $ssh_prefix && index( $command, $ssh_prefix ) != 0 ) {
-        $full_cmd = "$ssh_prefix '$command'";
+
+  # [REQ-INFRA-02] Escape single quotes to prevent remote shell command breakout
+        my $escaped = $command;
+        $escaped =~ s/'/'\\''/g;
+        $full_cmd = "$ssh_prefix '$escaped'";
     }
     elsif ( $container_prefix
         && index( $command, $container_prefix ) != 0 )
     {
-        $command =~ s/'/'\\''/g;
-        $full_cmd = "$container_prefix '$command'";
+        my $escaped = $command;
+        $escaped =~ s/'/'\\''/g;
+        $full_cmd = "$container_prefix '$escaped'";
     }
 
     debugprint "Executing system command: $full_cmd";
@@ -3737,8 +4260,11 @@ sub select_array {
         $vertical = "-E ";
     }
     debugprint "PERFORM: $req ";
+
+# [REQ-INFRA-01] Escape double quotes, backticks, and dollar signs to prevent shell interpolation
     my $req_escaped = $req;
     $req_escaped =~ s/"/\\"/g;
+    $req_escaped =~ s/`/\\`/g;
     $req_escaped =~ s/\\*\$/\\\$/g;
     my $mcmd   = $mysqlcmd   // 'mysql';
     my $mlogin = $mysqllogin // '';
@@ -3773,8 +4299,11 @@ sub select_array {
 sub select_array_with_headers {
     my $req = shift;
     debugprint "PERFORM: $req ";
+
+# [REQ-INFRA-01] Escape double quotes, backticks, and dollar signs to prevent shell interpolation
     my $req_escaped = $req;
     $req_escaped =~ s/"/\\"/g;
+    $req_escaped =~ s/`/\\`/g;
     $req_escaped =~ s/\\*\$/\\\$/g;
     my @result =
       execute_system_command(
@@ -3843,6 +4372,9 @@ sub select_csv_file {
         print $l if $opt{debug};
     }
     close $fh;
+
+  # [REQ-INFRA-03] Ensure restrictive permissions on exported database artifacts
+    chmod( 0600, $actual_file ) if -e $actual_file;
 
     my $end_time = get_time();
     my $duration = $end_time - $start_time;
@@ -3918,7 +4450,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.9.2' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.9.3' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -3934,7 +4466,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.9.2' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.9.3' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -7257,6 +7789,474 @@ sub dump_into_file {
     }
 }
 
+# [REQ-METRIC-01] Pure calculation of global server-wide buffers
+# Invariant: robust non-negative numeric handling. Clamps negative or malformed values to 0.
+# Official documentation: https://dev.mysql.com/doc/refman/8.0/en/memory-use.html
+sub calculate_server_buffers {
+    my ($vars) = @_;
+    my $server_buffers = 0;
+    $server_buffers += $vars->{'key_buffer_size'}
+      if ( defined $vars->{'key_buffer_size'}
+        && is_int( $vars->{'key_buffer_size'} )
+        && $vars->{'key_buffer_size'} > 0 );
+    $server_buffers += $vars->{'innodb_buffer_pool_size'}
+      if ( defined $vars->{'innodb_buffer_pool_size'}
+        && is_int( $vars->{'innodb_buffer_pool_size'} )
+        && $vars->{'innodb_buffer_pool_size'} > 0 );
+
+# [REQ-METRIC-03] # OBSOLETE: innodb_additional_mem_pool_size was deprecated in MySQL 5.6 and removed in MySQL 5.7+
+    $server_buffers += $vars->{'innodb_additional_mem_pool_size'}
+      if ( defined $vars->{'innodb_additional_mem_pool_size'}
+        && is_int( $vars->{'innodb_additional_mem_pool_size'} )
+        && $vars->{'innodb_additional_mem_pool_size'} > 0 );
+
+    $server_buffers += $vars->{'innodb_log_buffer_size'}
+      if ( defined $vars->{'innodb_log_buffer_size'}
+        && is_int( $vars->{'innodb_log_buffer_size'} )
+        && $vars->{'innodb_log_buffer_size'} > 0 );
+
+# [REQ-METRIC-03] # OBSOLETE: query_cache_size was deprecated in MySQL 5.7 and removed in MySQL 8.0+
+    $server_buffers += $vars->{'query_cache_size'}
+      if ( defined $vars->{'query_cache_size'}
+        && is_int( $vars->{'query_cache_size'} )
+        && $vars->{'query_cache_size'} > 0 );
+
+    $server_buffers += $vars->{'aria_pagecache_buffer_size'}
+      if ( defined $vars->{'aria_pagecache_buffer_size'}
+        && is_int( $vars->{'aria_pagecache_buffer_size'} )
+        && $vars->{'aria_pagecache_buffer_size'} > 0 );
+
+    return $server_buffers;
+}
+
+# [REQ-METRIC-01] Pure calculation of per-thread memory buffers
+# Invariant: computes both base per-thread buffers and connection-scaled totals. Clamps negative inputs to 0.
+# Handles MySQL 8.0+ TempTable engine cap (temptable_max_ram) vs per-thread temp tables.
+# Official documentation: https://dev.mysql.com/doc/refman/8.0/en/internal-temporary-tables.html
+sub calculate_per_thread_buffers {
+    my ( $vars, $stats, $is_mariadb_param ) = @_;
+
+    my $raw_tmp =
+      (      defined $vars->{'tmp_table_size'}
+          && is_int( $vars->{'tmp_table_size'} )
+          && $vars->{'tmp_table_size'} > 0 ) ? $vars->{'tmp_table_size'} : 0;
+    my $raw_heap =
+      (      defined $vars->{'max_heap_table_size'}
+          && is_int( $vars->{'max_heap_table_size'} )
+          && $vars->{'max_heap_table_size'} > 0 )
+      ? $vars->{'max_heap_table_size'}
+      : 0;
+    my $max_tmp_table_size =
+      ( $raw_tmp > $raw_heap && $raw_heap > 0 ) ? $raw_heap : $raw_tmp;
+
+    my $per_thread = 0;
+    $per_thread += $vars->{'read_buffer_size'}
+      if ( defined $vars->{'read_buffer_size'}
+        && is_int( $vars->{'read_buffer_size'} )
+        && $vars->{'read_buffer_size'} > 0 );
+    $per_thread += $vars->{'read_rnd_buffer_size'}
+      if ( defined $vars->{'read_rnd_buffer_size'}
+        && is_int( $vars->{'read_rnd_buffer_size'} )
+        && $vars->{'read_rnd_buffer_size'} > 0 );
+    $per_thread += $vars->{'sort_buffer_size'}
+      if ( defined $vars->{'sort_buffer_size'}
+        && is_int( $vars->{'sort_buffer_size'} )
+        && $vars->{'sort_buffer_size'} > 0 );
+    $per_thread += $vars->{'thread_stack'}
+      if ( defined $vars->{'thread_stack'}
+        && is_int( $vars->{'thread_stack'} )
+        && $vars->{'thread_stack'} > 0 );
+    $per_thread += $vars->{'join_buffer_size'}
+      if ( defined $vars->{'join_buffer_size'}
+        && is_int( $vars->{'join_buffer_size'} )
+        && $vars->{'join_buffer_size'} > 0 );
+    $per_thread += $vars->{'binlog_cache_size'}
+      if ( defined $vars->{'binlog_cache_size'}
+        && is_int( $vars->{'binlog_cache_size'} )
+        && $vars->{'binlog_cache_size'} > 0 );
+    $per_thread += $max_tmp_table_size if $max_tmp_table_size > 0;
+
+    my $per_thread_without_tmp = $per_thread;
+    if ( $max_tmp_table_size > 0 ) {
+        $per_thread_without_tmp -= $max_tmp_table_size;
+    }
+
+    my $is_mariadb =
+      defined $is_mariadb_param
+      ? $is_mariadb_param
+      : (    ( $vars->{'version'} // '' ) =~ /mariadb/i
+          || ( $vars->{'version_comment'} // '' ) =~ /mariadb/i );
+    my $internal_tmp_engine = $vars->{'internal_tmp_mem_storage_engine'}
+      // 'TempTable';
+
+    my $max_conn =
+      (      defined $vars->{'max_connections'}
+          && is_int( $vars->{'max_connections'} )
+          && $vars->{'max_connections'} > 0 ) ? $vars->{'max_connections'} : 0;
+    my $used_conn =
+      (      defined $stats->{'Max_used_connections'}
+          && is_int( $stats->{'Max_used_connections'} )
+          && $stats->{'Max_used_connections'} > 0 )
+      ? $stats->{'Max_used_connections'}
+      : 0;
+
+    my ( $total_per_thread, $max_total_per_thread );
+
+    if (   defined $vars->{'temptable_max_ram'}
+        && is_int( $vars->{'temptable_max_ram'} )
+        && $vars->{'temptable_max_ram'} > 0
+        && !$is_mariadb
+        && $internal_tmp_engine eq 'TempTable' )
+    {
+        my $total_tmp_connections = $per_thread_without_tmp * $max_conn;
+        my $max_tmp_limit         = ( $max_tmp_table_size // 0 ) * $max_conn;
+        my $actual_tmp_ram =
+          ( $vars->{'temptable_max_ram'} < $max_tmp_limit )
+          ? $vars->{'temptable_max_ram'}
+          : $max_tmp_limit;
+        $total_per_thread = $total_tmp_connections + $actual_tmp_ram;
+
+        my $total_tmp_used_connections = $per_thread_without_tmp * $used_conn;
+        my $max_tmp_used_limit = ( $max_tmp_table_size // 0 ) * $used_conn;
+        my $actual_tmp_used_ram =
+          ( $vars->{'temptable_max_ram'} < $max_tmp_used_limit )
+          ? $vars->{'temptable_max_ram'}
+          : $max_tmp_used_limit;
+        $max_total_per_thread =
+          $total_tmp_used_connections + $actual_tmp_used_ram;
+    }
+    else {
+        $total_per_thread     = $per_thread * $max_conn;
+        $max_total_per_thread = $per_thread * $used_conn;
+    }
+
+    return {
+        max_tmp_table_size             => $max_tmp_table_size,
+        per_thread_buffers             => $per_thread,
+        per_thread_buffers_without_tmp => $per_thread_without_tmp,
+        total_per_thread_buffers       => $total_per_thread,
+        max_total_per_thread_buffers   => $max_total_per_thread,
+    };
+}
+
+# [REQ-METRIC-01, REQ-METRIC-02] Pure calculation of global memory allocation & footprint percentages
+# Invariant: guarded division by zero on $physical_mem; returns clean hash with exact values and clamped percentages.
+sub calculate_memory_allocation {
+    my ( $server_buffers, $total_per_thread, $max_total_per_thread,
+        $physical_mem, $pf_mem )
+      = @_;
+
+    $pf_mem               //= 0;
+    $server_buffers       //= 0;
+    $total_per_thread     //= 0;
+    $max_total_per_thread //= 0;
+
+    my $max_used_memory = $server_buffers + $max_total_per_thread + $pf_mem;
+    my $max_peak_memory = $server_buffers + $total_per_thread + $pf_mem;
+
+    my $pct_used = 0;
+    my $pct_peak = 0;
+    if ( defined $physical_mem && $physical_mem > 0 ) {
+        $pct_used = percentage( $max_used_memory, $physical_mem );
+        $pct_peak = percentage( $max_peak_memory, $physical_mem );
+    }
+
+    return {
+        max_used_memory         => $max_used_memory,
+        pct_max_used_memory     => $pct_used,
+        max_peak_memory         => $max_peak_memory,
+        pct_max_physical_memory => $pct_peak,
+    };
+}
+
+# [REQ-METRIC-04, REQ-METRIC-05] Pure calculation of Query Cache efficiency & utilization
+# Invariant: safe division by zero on Uptime, Com_select, and query_cache_size.
+# # OBSOLETE: Query Cache deprecated in MySQL 5.7 and removed in MySQL 8.0+. Retained for MariaDB and legacy MySQL.
+# Official documentation: https://mariadb.com/kb/en/query-cache/
+sub calculate_query_cache_efficiency {
+    my ( $vars, $stats, $is_mariadb ) = @_;
+
+    my $res = {
+        query_cache_efficiency     => 0,
+        pct_query_cache_used       => 0,
+        query_cache_prunes_per_day => 0,
+    };
+
+    my $ver = $vars->{'version'} // $myvar{'version'} // '';
+    my ($v_maj) = ( $ver =~ /^(\d+)/ );
+    $v_maj //= 0;
+
+    # MySQL 8.0+ through 10.x (non-MariaDB) removed query cache entirely
+    if ( $v_maj >= 8 && $v_maj <= 10 && !$is_mariadb ) {
+        return $res;
+    }
+
+    if ( $v_maj >= 4 ) {
+
+     # MDEV-4981: In MariaDB, Com_select includes query cache hits (Qcache_hits)
+        my $total_selects =
+          $is_mariadb
+          ? ( $stats->{'Com_select'} || 0 )
+          : ( ( $stats->{'Com_select'} || 0 ) +
+              ( $stats->{'Qcache_hits'} || 0 ) );
+
+        if ( $total_selects > 0 ) {
+            $res->{query_cache_efficiency} = sprintf( "%.1f",
+                ( ( $stats->{'Qcache_hits'} || 0 ) / $total_selects ) * 100 );
+        }
+
+        if ( defined $vars->{'query_cache_size'}
+            && $vars->{'query_cache_size'} > 0 )
+        {
+            my $free_mem = $stats->{'Qcache_free_memory'} // 0;
+            $res->{pct_query_cache_used} = sprintf( "%.1f",
+                100 - ( ( $free_mem / $vars->{'query_cache_size'} ) * 100 ) );
+        }
+
+        my $prunes = $stats->{'Qcache_lowmem_prunes'} || 0;
+        my $uptime = $stats->{'Uptime'}               || 0;
+        if ( $prunes > 0 && $uptime > 0 ) {
+            $res->{query_cache_prunes_per_day} =
+              int( $prunes / ( $uptime / 86400 ) );
+        }
+    }
+
+    return $res;
+}
+
+# [REQ-METRIC-04, REQ-METRIC-05] Pure calculation of Key Buffer & Aria Cache hit ratios
+# Invariant: safe division by zero on Key_read_requests, Key_write_requests, and Aria read requests.
+# # OBSOLETE: MyISAM engine is non-transactional and legacy; Aria is modern crash-safe replacement.
+# Official documentation: https://dev.mysql.com/doc/refman/8.0/en/myisam-key-cache.html
+sub calculate_key_buffer_ratios {
+    my ( $vars, $stats ) = @_;
+
+    my $res = {
+        pct_key_buffer_used    => 0,
+        pct_keys_from_mem      => 0,
+        pct_aria_keys_from_mem => 0,
+        pct_wkeys_from_mem     => 0,
+    };
+
+    my $ver = $vars->{'version'} // $myvar{'version'} // '';
+    my ( $v_maj, $v_min ) = ( $ver =~ /^(\d+)(?:\.(\d+))?/ );
+    $v_maj //= 0;
+    $v_min //= 0;
+    my $ver_ge_4_1 = ( $v_maj > 4 ) || ( $v_maj == 4 && $v_min >= 1 );
+
+    if (   $ver_ge_4_1
+        && defined $vars->{'key_buffer_size'}
+        && $vars->{'key_buffer_size'} > 0
+        && defined $stats->{'Key_blocks_unused'}
+        && defined $vars->{'key_cache_block_size'} )
+    {
+        $res->{pct_key_buffer_used} = sprintf(
+            "%.1f",
+            (
+                1 - (
+                    (
+                        $stats->{'Key_blocks_unused'} *
+                          $vars->{'key_cache_block_size'}
+                    ) / $vars->{'key_buffer_size'}
+                )
+            ) * 100
+        );
+    }
+
+    if ( defined $stats->{'Key_read_requests'}
+        && $stats->{'Key_read_requests'} > 0 )
+    {
+        $res->{pct_keys_from_mem} = sprintf(
+            "%.1f",
+            (
+                100 - (
+                    (
+                        ( $stats->{'Key_reads'} // 0 ) /
+                          $stats->{'Key_read_requests'}
+                    ) * 100
+                )
+            )
+        );
+    }
+
+    if ( defined $stats->{'Aria_pagecache_read_requests'}
+        && $stats->{'Aria_pagecache_read_requests'} > 0 )
+    {
+        $res->{pct_aria_keys_from_mem} = sprintf(
+            "%.1f",
+            (
+                100 - (
+                    (
+                        ( $stats->{'Aria_pagecache_reads'} // 0 ) /
+                          $stats->{'Aria_pagecache_read_requests'}
+                    ) * 100
+                )
+            )
+        );
+    }
+
+    if ( defined $stats->{'Key_write_requests'}
+        && $stats->{'Key_write_requests'} > 0 )
+    {
+        $res->{pct_wkeys_from_mem} = sprintf(
+            "%.1f",
+            (
+                (
+                    ( $stats->{'Key_writes'} // 0 ) /
+                      $stats->{'Key_write_requests'}
+                ) * 100
+            )
+        );
+    }
+
+    return $res;
+}
+
+# [REQ-METRIC-04, REQ-METRIC-05] Pure calculation of workload traffic, sorting, joins & cache efficiency ratios
+# Invariant: guarded against zero queries, zero uptime, zero connections, zero table cache entries.
+sub calculate_traffic_and_sort_ratios {
+    my ( $vars, $stats ) = @_;
+
+    my $res = {
+        pct_slow_queries              => 0,
+        pct_connections_used          => 0,
+        pct_connections_aborted       => 0,
+        total_sorts                   => 0,
+        pct_temp_sort_table           => 0,
+        joins_without_indexes         => 0,
+        joins_without_indexes_per_day => 0,
+        pct_temp_disk                 => 0,
+        table_cache_hit_rate          => 100,
+        pct_files_open                => 0,
+        pct_table_locks_immediate     => 100,
+        thread_cache_hit_rate         => 100,
+        total_reads                   => 0,
+        total_writes                  => 0,
+        pct_reads                     => 0,
+        pct_writes                    => 0,
+    };
+
+    my $questions   = $stats->{'Questions'}   // 0;
+    my $connections = $stats->{'Connections'} // 0;
+    my $uptime      = $stats->{'Uptime'}      // 0;
+
+    # Slow queries ratio
+    if ( $questions > 0 ) {
+        $res->{pct_slow_queries} =
+          int( ( ( $stats->{'Slow_queries'} // 0 ) / $questions ) * 100 );
+    }
+
+    # Connections used ratio
+    my $max_conn = $vars->{'max_connections'} // 0;
+    if ( $max_conn > 0 ) {
+        my $used = int(
+            ( ( $stats->{'Max_used_connections'} // 0 ) / $max_conn ) * 100 );
+        $res->{pct_connections_used} = ( $used > 100 ) ? 100 : $used;
+    }
+
+    # Aborted connections
+    if ( $connections > 0 ) {
+        $res->{pct_connections_aborted} =
+          percentage( $stats->{'Aborted_connects'} // 0, $connections );
+    }
+
+    # Sorting
+    my $sort_scan  = $stats->{'Sort_scan'}  // 0;
+    my $sort_range = $stats->{'Sort_range'} // 0;
+    $res->{total_sorts} = $sort_scan + $sort_range;
+    if ( $res->{total_sorts} > 0 ) {
+        $res->{pct_temp_sort_table} =
+          int(
+            ( ( $stats->{'Sort_merge_passes'} // 0 ) / $res->{total_sorts} ) *
+              100 );
+    }
+
+    # Joins without indexes
+    $res->{joins_without_indexes} =
+      ( $stats->{'Select_range_check'} // 0 ) +
+      ( $stats->{'Select_full_join'}   // 0 );
+    if ( $uptime > 0 ) {
+        $res->{joins_without_indexes_per_day} =
+          int( $res->{joins_without_indexes} / ( $uptime / 86400 ) );
+    }
+
+    # Temporary disk tables ratio
+    my $created_tmp = $stats->{'Created_tmp_tables'} // 0;
+    if ( $created_tmp > 0 ) {
+        my $created_disk = $stats->{'Created_tmp_disk_tables'} // 0;
+        $res->{pct_temp_disk} = int( ( $created_disk / $created_tmp ) * 100 );
+    }
+
+    # Table cache hit rate
+    if ( defined $stats->{'Opened_tables'} && $stats->{'Opened_tables'} > 0 ) {
+        if ( not defined( $stats->{'Table_open_cache_hits'} ) ) {
+            $res->{table_cache_hit_rate} =
+              int( ( $stats->{'Open_tables'} // 0 ) * 100 /
+                  $stats->{'Opened_tables'} );
+        }
+        else {
+            my $hits          = $stats->{'Table_open_cache_hits'}   // 0;
+            my $misses        = $stats->{'Table_open_cache_misses'} // 0;
+            my $total_lookups = $hits + $misses;
+            if ( $total_lookups > 0 ) {
+                $res->{table_cache_hit_rate} =
+                  int( ( $hits * 100 ) / $total_lookups );
+            }
+        }
+    }
+
+    # Open files percentage
+    if ( defined $vars->{'open_files_limit'}
+        && $vars->{'open_files_limit'} > 0 )
+    {
+        $res->{pct_files_open} =
+          int(
+            ( $stats->{'Open_files'} // 0 ) * 100 / $vars->{'open_files_limit'}
+          );
+    }
+
+    # Table locks immediate
+    my $locks_imm = $stats->{'Table_locks_immediate'} // 0;
+    my $locks_wt  = $stats->{'Table_locks_waited'}    // 0;
+    if ( $locks_imm > 0 ) {
+        if ( $locks_wt == 0 ) {
+            $res->{pct_table_locks_immediate} = 100;
+        }
+        else {
+            $res->{pct_table_locks_immediate} =
+              int( ( $locks_imm * 100 ) / ( $locks_imm + $locks_wt ) );
+        }
+    }
+
+    # Thread cache hit rate
+    if ( $connections > 0 ) {
+        my $created = $stats->{'Threads_created'} // 0;
+        $res->{thread_cache_hit_rate} =
+          int( 100 - ( ( $created / $connections ) * 100 ) );
+    }
+
+    # Reads vs Writes
+    if ( $questions > 0 ) {
+        $res->{total_reads} = $stats->{'Com_select'} // 0;
+        $res->{total_writes} =
+          ( $stats->{'Com_delete'}  // 0 ) +
+          ( $stats->{'Com_insert'}  // 0 ) +
+          ( $stats->{'Com_update'}  // 0 ) +
+          ( $stats->{'Com_replace'} // 0 );
+        my $rw_sum = $res->{total_reads} + $res->{total_writes};
+        if ( $rw_sum > 0 ) {
+            $res->{pct_reads}  = int( ( $res->{total_reads} / $rw_sum ) * 100 );
+            $res->{pct_writes} = 100 - $res->{pct_reads};
+        }
+        elsif ( $res->{total_reads} == 0 ) {
+            $res->{pct_reads}  = 0;
+            $res->{pct_writes} = 100;
+        }
+    }
+
+    return $res;
+}
+
 sub calculations {
     if ( $mystat{'Questions'} < 1 ) {
         badprint "Your server has not answered any queries: cannot continue...";
@@ -7270,124 +8270,24 @@ sub calculations {
         $myvar{'version'} =~ s/(.+)-.*?$/$1/;
     }
 
-    #infoprint "====>>>> MySQL version updated: $myvar{'version'}";
-    # Server-wide memory
-    $mycalc{'max_tmp_table_size'} =
-      ( $myvar{'tmp_table_size'} > $myvar{'max_heap_table_size'} )
-      ? $myvar{'max_heap_table_size'}
-      : $myvar{'tmp_table_size'};
-
-    # Per-thread memory
-    $mycalc{'per_thread_buffers'} = 0;
-    $mycalc{'per_thread_buffers'} += $myvar{'read_buffer_size'}
-      if is_int( $myvar{'read_buffer_size'} );
-    $mycalc{'per_thread_buffers'} += $myvar{'read_rnd_buffer_size'}
-      if is_int( $myvar{'read_rnd_buffer_size'} );
-    $mycalc{'per_thread_buffers'} += $myvar{'sort_buffer_size'}
-      if is_int( $myvar{'sort_buffer_size'} );
-    $mycalc{'per_thread_buffers'} += $myvar{'thread_stack'}
-      if is_int( $myvar{'thread_stack'} );
-    $mycalc{'per_thread_buffers'} += $myvar{'join_buffer_size'}
-      if is_int( $myvar{'join_buffer_size'} );
-    $mycalc{'per_thread_buffers'} += $myvar{'binlog_cache_size'}
-      if is_int( $myvar{'binlog_cache_size'} );
-    $mycalc{'per_thread_buffers'} += $mycalc{'max_tmp_table_size'}
-      if is_int( $mycalc{'max_tmp_table_size'} );
+   # [REQ-METRIC-01] Decomposed pure calculation of per-thread and server memory
+    my $thread_res =
+      calculate_per_thread_buffers( \%myvar, \%mystat, $is_mariadb );
+    $mycalc{$_} = $thread_res->{$_} for keys %$thread_res;
 
     debugprint "per_thread_buffers: $mycalc{'per_thread_buffers'} ("
       . human_size( $mycalc{'per_thread_buffers'} ) . " )";
 
-# Error max_allowed_packet is not included in thread buffers size
-#$mycalc{'per_thread_buffers'} += $myvar{'max_allowed_packet'} if is_int($myvar{'max_allowed_packet'});
+    $mycalc{'server_buffers'} = calculate_server_buffers( \%myvar );
 
-    # Total per-thread memory
-    my $per_thread_buffers_without_tmp = $mycalc{'per_thread_buffers'};
-    if ( is_int( $mycalc{'max_tmp_table_size'} ) ) {
-        $per_thread_buffers_without_tmp -= $mycalc{'max_tmp_table_size'};
-    }
-    $mycalc{'per_thread_buffers_without_tmp'} = $per_thread_buffers_without_tmp;
-
-    my $internal_tmp_engine = $myvar{'internal_tmp_mem_storage_engine'}
-      // 'TempTable';
-
-    if (   defined $myvar{'temptable_max_ram'}
-        && is_int( $myvar{'temptable_max_ram'} )
-        && !$is_mariadb
-        && $internal_tmp_engine eq 'TempTable' )
-    {
-        my $total_tmp_connections =
-          $per_thread_buffers_without_tmp * $myvar{'max_connections'};
-        my $max_tmp_limit =
-          ( $mycalc{'max_tmp_table_size'} // 0 ) * $myvar{'max_connections'};
-        my $actual_tmp_ram =
-          ( $myvar{'temptable_max_ram'} < $max_tmp_limit )
-          ? $myvar{'temptable_max_ram'}
-          : $max_tmp_limit;
-        $mycalc{'total_per_thread_buffers'} =
-          $total_tmp_connections + $actual_tmp_ram;
-
-        my $total_tmp_used_connections =
-          $per_thread_buffers_without_tmp * $mystat{'Max_used_connections'};
-        my $max_tmp_used_limit = ( $mycalc{'max_tmp_table_size'} // 0 ) *
-          $mystat{'Max_used_connections'};
-        my $actual_tmp_used_ram =
-          ( $myvar{'temptable_max_ram'} < $max_tmp_used_limit )
-          ? $myvar{'temptable_max_ram'}
-          : $max_tmp_used_limit;
-        $mycalc{'max_total_per_thread_buffers'} =
-          $total_tmp_used_connections + $actual_tmp_used_ram;
-    }
-    else {
-        $mycalc{'total_per_thread_buffers'} =
-          $mycalc{'per_thread_buffers'} * $myvar{'max_connections'};
-
-        # Max total per-thread memory reached
-        $mycalc{'max_total_per_thread_buffers'} =
-          $mycalc{'per_thread_buffers'} * $mystat{'Max_used_connections'};
-    }
-
-    $mycalc{'server_buffers'} = $myvar{'key_buffer_size'};
-    $mycalc{'server_buffers'} +=
-      ( defined $myvar{'innodb_buffer_pool_size'} )
-      ? $myvar{'innodb_buffer_pool_size'}
-      : 0;
-    $mycalc{'server_buffers'} +=
-      ( defined $myvar{'innodb_additional_mem_pool_size'} )
-      ? $myvar{'innodb_additional_mem_pool_size'}
-      : 0;
-    $mycalc{'server_buffers'} +=
-      ( defined $myvar{'innodb_log_buffer_size'} )
-      ? $myvar{'innodb_log_buffer_size'}
-      : 0;
-    $mycalc{'server_buffers'} +=
-      ( defined $myvar{'query_cache_size'} ) ? $myvar{'query_cache_size'} : 0;
-    $mycalc{'server_buffers'} +=
-      ( defined $myvar{'aria_pagecache_buffer_size'} )
-      ? $myvar{'aria_pagecache_buffer_size'}
-      : 0;
-
-# Global memory
-# Max used memory is memory used by MySQL based on Max_used_connections
-# This is the max memory used theoretically calculated with the max concurrent connection number reached by mysql
-    $mycalc{'max_used_memory'} =
-      $mycalc{'server_buffers'} +
-      $mycalc{"max_total_per_thread_buffers"} +
-      get_pf_memory();
-
-    #   + get_gcache_memory();
-    $mycalc{'pct_max_used_memory'} =
-      percentage( $mycalc{'max_used_memory'}, $physical_memory );
-
-# Total possible memory is memory needed by MySQL based on max_connections
-# This is the max memory MySQL can theoretically used if all connections allowed has opened by mysql
-    $mycalc{'max_peak_memory'} =
-      $mycalc{'server_buffers'} +
-      $mycalc{'total_per_thread_buffers'} +
-      get_pf_memory();
-
-    # +  get_gcache_memory();
-    $mycalc{'pct_max_physical_memory'} =
-      percentage( $mycalc{'max_peak_memory'}, $physical_memory );
+# [REQ-METRIC-01, REQ-METRIC-02] Global memory footprint and percentage assertions
+    my $mem_res = calculate_memory_allocation(
+        $mycalc{'server_buffers'},
+        $mycalc{'total_per_thread_buffers'},
+        $mycalc{'max_total_per_thread_buffers'},
+        $physical_memory, get_pf_memory()
+    );
+    $mycalc{$_} = $mem_res->{$_} for keys %$mem_res;
 
     debugprint "Max Used Memory: "
       . hr_bytes( $mycalc{'max_used_memory'} ) . "";
@@ -7399,111 +8299,15 @@ sub calculations {
     debugprint "Max Peak Percentage RAM: "
       . $mycalc{'pct_max_physical_memory'} . "%";
 
-    # Slow queries
-    if ( $mystat{'Questions'} > 0 ) {
-        $mycalc{'pct_slow_queries'} =
-          int( ( $mystat{'Slow_queries'} / $mystat{'Questions'} ) * 100 );
-    }
-    else {
-        $mycalc{'pct_slow_queries'} = 0;
-    }
+# [REQ-METRIC-04] Pure calculation of workload traffic, connections, sorting, and join invariants
+    my $traffic_res = calculate_traffic_and_sort_ratios( \%myvar, \%mystat );
+    $mycalc{$_} = $traffic_res->{$_} for keys %$traffic_res;
 
-    # Connections
-    if ( $myvar{'max_connections'} > 0 ) {
-        $mycalc{'pct_connections_used'} = int(
-            ( $mystat{'Max_used_connections'} / $myvar{'max_connections'} ) *
-              100 );
-    }
-    else {
-        $mycalc{'pct_connections_used'} = 0;
-    }
-    $mycalc{'pct_connections_used'} =
-      ( $mycalc{'pct_connections_used'} > 100 )
-      ? 100
-      : $mycalc{'pct_connections_used'};
+    # [REQ-METRIC-04] Pure calculation of key buffer & Aria cache hit ratios
+    my $key_res = calculate_key_buffer_ratios( \%myvar, \%mystat );
+    $mycalc{$_} = $key_res->{$_} for keys %$key_res;
 
-    # Aborted Connections
-    if ( $mystat{'Connections'} > 0 ) {
-        $mycalc{'pct_connections_aborted'} =
-          percentage( $mystat{'Aborted_connects'}, $mystat{'Connections'} );
-    }
-    else {
-        $mycalc{'pct_connections_aborted'} = 0;
-    }
-    debugprint "Aborted_connects: " . $mystat{'Aborted_connects'} . "";
-    debugprint "Connections: " . $mystat{'Connections'} . "";
-    debugprint "pct_connections_aborted: "
-      . $mycalc{'pct_connections_aborted'} . "";
-
-    # Key buffers
-    if (   mysql_version_ge( 4, 1 )
-        && defined $myvar{'key_buffer_size'}
-        && $myvar{'key_buffer_size'} > 0
-        && defined $mystat{'Key_blocks_unused'}
-        && defined $myvar{'key_cache_block_size'} )
-    {
-        $mycalc{'pct_key_buffer_used'} = sprintf(
-            "%.1f",
-            (
-                1 - (
-                    (
-                        $mystat{'Key_blocks_unused'} *
-                          $myvar{'key_cache_block_size'}
-                    ) / $myvar{'key_buffer_size'}
-                )
-            ) * 100
-        );
-    }
-    else {
-        $mycalc{'pct_key_buffer_used'} = 0;
-    }
-
-    if ( defined $mystat{'Key_read_requests'}
-        and $mystat{'Key_read_requests'} > 0 )
-    {
-        $mycalc{'pct_keys_from_mem'} = sprintf(
-            "%.1f",
-            (
-                100 - (
-                    ( $mystat{'Key_reads'} / $mystat{'Key_read_requests'} ) *
-                      100
-                )
-            )
-        );
-    }
-    else {
-        $mycalc{'pct_keys_from_mem'} = 0;
-    }
-    if ( defined( $mystat{'Aria_pagecache_read_requests'} )
-        and $mystat{'Aria_pagecache_read_requests'} > 0 )
-    {
-        $mycalc{'pct_aria_keys_from_mem'} = sprintf(
-            "%.1f",
-            (
-                100 - (
-                    (
-                        $mystat{'Aria_pagecache_reads'} /
-                          $mystat{'Aria_pagecache_read_requests'}
-                    ) * 100
-                )
-            )
-        );
-    }
-    else {
-        $mycalc{'pct_aria_keys_from_mem'} = 0;
-    }
-
-    if ( defined $mystat{'Key_write_requests'}
-        and $mystat{'Key_write_requests'} > 0 )
-    {
-        $mycalc{'pct_wkeys_from_mem'} = sprintf( "%.1f",
-            ( ( $mystat{'Key_writes'} / $mystat{'Key_write_requests'} ) * 100 )
-        );
-    }
-    else {
-        $mycalc{'pct_wkeys_from_mem'} = 0;
-    }
-
+# [REQ-METRIC-03] # OBSOLETE: Legacy MyISAM index size calculation from filesystem on MySQL < 5.0
     if ( defined $doremote and $doremote eq 0 and !mysql_version_ge(5) ) {
         if ($is_win) {
             my $size = 0;
@@ -7528,15 +8332,18 @@ sub calculations {
             $mycalc{'total_aria_indexes'} = $size;
         }
         else {
+            # [REQ-INFRA-01] Sanitize datadir path to prevent shell injection
+            my $safe_datadir = $myvar{'datadir'} // '';
+            $safe_datadir =~ s/'/'\\''/g;
             my $size = 0;
             $size += (split)[0]
               for execute_system_command(
-"find '$myvar{'datadir'}' -name '*.MYI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1"
+"find '$safe_datadir' -name '*.MYI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1"
               );
             $mycalc{'total_myisam_indexes'} = $size;
             $size = 0 + (split)[0]
               for execute_system_command(
-"find '$myvar{'datadir'}' -name '*.MAI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1"
+"find '$safe_datadir' -name '*.MAI' -print0 2>&1 | xargs $xargsflags -0 du -L $duflags 2>&1"
               );
             $mycalc{'total_aria_indexes'} = $size;
         }
@@ -7554,168 +8361,10 @@ sub calculations {
         chomp( $mycalc{'total_aria_indexes'} );
     }
 
-    # Query cache
-    if ( mysql_version_ge(8) and mysql_version_le(10) ) {
-        $mycalc{'query_cache_efficiency'} = 0;
-    }
-    elsif ( mysql_version_ge(4) ) {
-
-     # MDEV-4981: In MariaDB, Com_select includes query cache hits (Qcache_hits)
-        my $total_selects =
-          $is_mariadb
-          ? ( $mystat{'Com_select'} || 0 )
-          : (
-            ( $mystat{'Com_select'} || 0 ) + ( $mystat{'Qcache_hits'} || 0 ) );
-        if ( $total_selects > 0 ) {
-            $mycalc{'query_cache_efficiency'} = sprintf( "%.1f",
-                ( ( $mystat{'Qcache_hits'} || 0 ) / $total_selects ) * 100 );
-        }
-        else {
-            $mycalc{'query_cache_efficiency'} = 0;
-        }
-        if ( $myvar{'query_cache_size'} ) {
-            $mycalc{'pct_query_cache_used'} = sprintf(
-                "%.1f",
-                100 - (
-                    $mystat{'Qcache_free_memory'} / $myvar{'query_cache_size'}
-                ) * 100
-            );
-        }
-        if ( ( $mystat{'Qcache_lowmem_prunes'} || 0 ) == 0 ) {
-            $mycalc{'query_cache_prunes_per_day'} = 0;
-        }
-        else {
-            if ( ( $mystat{'Uptime'} || 0 ) > 0 ) {
-                $mycalc{'query_cache_prunes_per_day'} =
-                  int( $mystat{'Qcache_lowmem_prunes'} /
-                      ( $mystat{'Uptime'} / 86400 ) );
-            }
-            else {
-                $mycalc{'query_cache_prunes_per_day'} = 0;
-            }
-        }
-    }
-
-    # Sorting
-    $mycalc{'total_sorts'} =
-      ( $mystat{'Sort_scan'} || 0 ) + ( $mystat{'Sort_range'} || 0 );
-    if ( $mycalc{'total_sorts'} > 0 ) {
-        $mycalc{'pct_temp_sort_table'} = int(
-            ( $mystat{'Sort_merge_passes'} / $mycalc{'total_sorts'} ) * 100 );
-    }
-
-    # Joins
-    $mycalc{'joins_without_indexes'} =
-      ( $mystat{'Select_range_check'} || 0 ) +
-      ( $mystat{'Select_full_join'}   || 0 );
-    if ( ( $mystat{'Uptime'} || 0 ) > 0 ) {
-        $mycalc{'joins_without_indexes_per_day'} = int(
-            $mycalc{'joins_without_indexes'} / ( $mystat{'Uptime'} / 86400 ) );
-    }
-    else {
-        $mycalc{'joins_without_indexes_per_day'} = 0;
-    }
-
-    # Temporary tables
-    if ( ( $mystat{'Created_tmp_tables'} // 0 ) > 0 ) {
-        if ( ( $mystat{'Created_tmp_disk_tables'} // 0 ) > 0 ) {
-            $mycalc{'pct_temp_disk'} = int(
-                (
-                    $mystat{'Created_tmp_disk_tables'} /
-                      $mystat{'Created_tmp_tables'}
-                ) * 100
-            );
-        }
-        else {
-            $mycalc{'pct_temp_disk'} = 0;
-        }
-    }
-
-    # Table cache
-    if ( defined $mystat{'Opened_tables'} and $mystat{'Opened_tables'} > 0 ) {
-        if ( not defined( $mystat{'Table_open_cache_hits'} ) ) {
-            $mycalc{'table_cache_hit_rate'} =
-              int( ( $mystat{'Open_tables'} // 0 ) * 100 /
-                  $mystat{'Opened_tables'} );
-        }
-        else {
-            $mycalc{'table_cache_hit_rate'} = int(
-                $mystat{'Table_open_cache_hits'} * 100 / (
-                    $mystat{'Table_open_cache_hits'} +
-                      $mystat{'Table_open_cache_misses'}
-                )
-            );
-        }
-    }
-    else {
-        $mycalc{'table_cache_hit_rate'} = 100;
-    }
-
-    # Open files
-    if ( defined $myvar{'open_files_limit'} and $myvar{'open_files_limit'} > 0 )
-    {
-        $mycalc{'pct_files_open'} =
-          int(
-            ( $mystat{'Open_files'} // 0 ) * 100 / $myvar{'open_files_limit'} );
-    }
-
-    # Table locks
-    if ( $mystat{'Table_locks_immediate'} > 0 ) {
-        if ( $mystat{'Table_locks_waited'} == 0 ) {
-            $mycalc{'pct_table_locks_immediate'} = 100;
-        }
-        else {
-            $mycalc{'pct_table_locks_immediate'} = int(
-                $mystat{'Table_locks_immediate'} * 100 / (
-                    $mystat{'Table_locks_waited'} +
-                      $mystat{'Table_locks_immediate'}
-                )
-            );
-        }
-    }
-
-    # Thread cache
-    if ( ( $mystat{'Connections'} || 0 ) > 0 ) {
-        $mycalc{'thread_cache_hit_rate'} = int(
-            100 - (
-                (
-                    ( $mystat{'Threads_created'} // 0 ) / $mystat{'Connections'}
-                ) * 100
-            )
-        );
-    }
-    else {
-        $mycalc{'thread_cache_hit_rate'} = 100;
-    }
-
-    # Other
-    if ( ( $mystat{'Connections'} // 0 ) > 0 ) {
-        $mycalc{'pct_aborted_connections'} =
-          int(
-            ( ( $mystat{'Aborted_connects'} // 0 ) / $mystat{'Connections'} ) *
-              100 );
-    }
-    if ( ( $mystat{'Questions'} // 0 ) > 0 ) {
-        $mycalc{'total_reads'} = $mystat{'Com_select'} // 0;
-        $mycalc{'total_writes'} =
-          ( $mystat{'Com_delete'}  // 0 ) +
-          ( $mystat{'Com_insert'}  // 0 ) +
-          ( $mystat{'Com_update'}  // 0 ) +
-          ( $mystat{'Com_replace'} // 0 );
-        if ( $mycalc{'total_reads'} == 0 ) {
-            $mycalc{'pct_reads'}  = 0;
-            $mycalc{'pct_writes'} = 100;
-        }
-        else {
-            $mycalc{'pct_reads'} = int(
-                (
-                    $mycalc{'total_reads'} /
-                      ( $mycalc{'total_reads'} + $mycalc{'total_writes'} )
-                ) * 100
-            );
-            $mycalc{'pct_writes'} = 100 - $mycalc{'pct_reads'};
-        }
-    }
+    # [REQ-METRIC-04] Pure calculation of Query Cache efficiency and utilization
+    my $qc_res =
+      calculate_query_cache_efficiency( \%myvar, \%mystat, $is_mariadb );
+    $mycalc{$_} = $qc_res->{$_} for keys %$qc_res;
 
     # InnoDB
     $myvar{'innodb_log_files_in_group'} = 1
@@ -8006,8 +8655,7 @@ sub mysql_stats {
     my $slow_query_log_active = $myvar{'slow_query_log'}
       // $myvar{'log_slow_queries'};
     if ( defined($slow_query_log_active) ) {
-        if ( $slow_query_log_active eq "OFF" || $slow_query_log_active eq "0" )
-        {
+        if ( is_mysql_false($slow_query_log_active) ) {
             push( @generalrec,
                 "Enable the slow query log to troubleshoot bad queries" );
         }
@@ -12898,8 +13546,121 @@ sub check_removed_innodb_variables {
     }
 }
 
+# Audit deprecated system variables and obsolete synonyms (Phase 25)
+sub audit_deprecated_variables {
+    my $is_mariadb = (
+        ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
+          or ( defined $myvar{'version_comment'}
+            && $myvar{'version_comment'} =~ /MariaDB/i )
+    );
+    my $is_mysql = !$is_mariadb;
+
+    my @deprecations = ();
+
+    # 1. log_slow_queries -> slow_query_log
+    if ( defined $myvar{'log_slow_queries'}
+        && $myvar{'log_slow_queries'} ne '' )
+    {
+        push @deprecations,
+          {
+            variable    => 'log_slow_queries',
+            replacement => 'slow_query_log',
+            reason      =>
+'log_slow_queries is an obsolete synonym; configure slow_query_log instead'
+          };
+    }
+
+    # 2. table_cache -> table_open_cache
+    if ( defined $myvar{'table_cache'} && $myvar{'table_cache'} ne '' ) {
+        push @deprecations,
+          {
+            variable    => 'table_cache',
+            replacement => 'table_open_cache',
+            reason      =>
+'table_cache is an obsolete synonym removed in MySQL 5.5; configure table_open_cache instead'
+          };
+    }
+
+    # 3. tx_isolation -> transaction_isolation
+    if ( defined $myvar{'tx_isolation'} && $myvar{'tx_isolation'} ne '' ) {
+        if (   ( $is_mysql && mysql_version_ge( 8, 0, 0 ) )
+            || ( $is_mariadb && mysql_version_ge( 11, 1, 0 ) ) )
+        {
+            push @deprecations,
+              {
+                variable    => 'tx_isolation',
+                replacement => 'transaction_isolation',
+                reason      =>
+'tx_isolation was removed in modern versions; use transaction_isolation'
+              };
+        }
+    }
+
+    # 4. tx_read_only -> transaction_read_only
+    if ( defined $myvar{'tx_read_only'} && $myvar{'tx_read_only'} ne '' ) {
+        if ( $is_mysql && mysql_version_ge( 8, 0, 0 ) ) {
+            push @deprecations,
+              {
+                variable    => 'tx_read_only',
+                replacement => 'transaction_read_only',
+                reason      =>
+'tx_read_only was removed in MySQL 8.0; use transaction_read_only'
+              };
+        }
+    }
+
+    # 5. query_cache_size / query_cache_type on MySQL 8.0+
+    if ( $is_mysql && mysql_version_ge( 8, 0, 0 ) ) {
+        if (
+            (
+                defined $myvar{'query_cache_size'}
+                && $myvar{'query_cache_size'} > 0
+            )
+            || ( defined $myvar{'query_cache_type'}
+                && !is_mysql_false( $myvar{'query_cache_type'} ) )
+          )
+        {
+            push @deprecations,
+              {
+                variable    => 'query_cache_size',
+                replacement => 'None (Removed)',
+                reason      =>
+'Query Cache subsystem was completely removed in MySQL 8.0; remove query_cache_* settings from my.cnf'
+              };
+        }
+    }
+
+    # 6. default_authentication_plugin on MySQL 8.4+
+    if (   $is_mysql
+        && mysql_version_ge( 8, 4, 0 )
+        && defined $myvar{'default_authentication_plugin'}
+        && $myvar{'default_authentication_plugin'} ne '' )
+    {
+        push @deprecations,
+          {
+            variable    => 'default_authentication_plugin',
+            replacement => 'authentication_policy',
+            reason      =>
+'default_authentication_plugin was removed in MySQL 8.4; use authentication_policy'
+          };
+    }
+
+    # Output and recording findings
+    if ( @deprecations > 0 ) {
+        $result{'Deprecated_Variables'} = \@deprecations;
+        foreach my $d (@deprecations) {
+            badprint
+"Deprecated/Obsolete variable detected: $d->{variable} ($d->{reason})";
+            push @generalrec,
+"Modernize deprecated configuration: replace $d->{variable} with $d->{replacement}";
+            push @sysrec, "Deprecated variable $d->{variable}: $d->{reason}";
+        }
+    }
+}
+
 sub check_migration_advisor {
     subheaderprint "Smart Migration LTS Advisor";
+    audit_deprecated_variables();
     my $is_mariadb = (
         ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
           or ( defined $myvar{'version_comment'}
@@ -16741,7 +17502,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.9.2 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
+ MySQLTuner 2.9.3 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
 
 =head1 SYNOPSIS
 
@@ -17045,7 +17806,7 @@ Suppress informational messages.
 
 =head1 VERSION
 
-Version 2.9.2
+Version 2.9.3
 
 =head1 PERLDOC
 

@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.9.2 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
+    MySQLTuner 2.9.3 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
 
 # SYNOPSIS
 
@@ -269,7 +269,7 @@
 
 # VERSION
 
-Version 2.9.2
+Version 2.9.3
 
 # PERLDOC
 

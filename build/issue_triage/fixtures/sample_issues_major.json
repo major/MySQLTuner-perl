@@ -1,0 +1,48 @@
+[
+  {
+    "number": 512,
+    "title": "MySQL 8.4 compatibility warnings with thread_stack",
+    "user": {
+      "login": "upstream_reporter"
+    },
+    "created_at": "2026-08-20T10:00:00Z",
+    "updated_at": "2026-08-20T10:00:00Z",
+    "state": "open",
+    "body": "Running MySQLTuner against MySQL 8.4.0-LTS.\nthread_stack = 1048576\ninnodb_buffer_pool_size = 4G\nopen_files_limit = 4000\ntable_open_cache = 4000\nmax_connections = 500\n\nIs there an update for MySQL 8.4 LTS support?",
+    "labels": [
+      {"name": "enhancement"},
+      {"name": "mysql8"}
+    ],
+    "comments": []
+  },
+  {
+    "number": 513,
+    "title": "Roadmap upstream sync and MariaDB 11.4 support",
+    "user": {
+      "login": "jmrenouard"
+    },
+    "created_at": "2026-08-21T12:00:00Z",
+    "updated_at": "2026-08-21T12:00:00Z",
+    "state": "open",
+    "body": "Upstream tracking issue for MariaDB 11.4 LTS indicators synchronization and MySQL 8.4 LTS CVE catalog updates.",
+    "labels": [
+      {"name": "maintenance"}
+    ],
+    "comments": []
+  },
+  {
+    "number": 514,
+    "title": "Perl uninitialized value warning in arr2hash on empty tables",
+    "user": {
+      "login": "community_contributor"
+    },
+    "created_at": "2026-08-21T15:30:00Z",
+    "updated_at": "2026-08-21T15:30:00Z",
+    "state": "open",
+    "body": "When running mysqltuner.pl on a fresh MariaDB 10.11 instance with no user tables, I see:\nUse of uninitialized value in array assignment at mysqltuner.pl line 412.\nCan we add proper guarding?",
+    "labels": [
+      {"name": "bug"}
+    ],
+    "comments": []
+  }
+]
