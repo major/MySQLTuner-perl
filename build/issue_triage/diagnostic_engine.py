@@ -124,24 +124,30 @@ class DiagnosticEngine:
         bp_size = vars_dict.get("innodb_buffer_pool_size")
         bp_inst = vars_dict.get("innodb_buffer_pool_instances")
         if bp_size and bp_inst:
-            ib_finding = InnoDBExpertDiagnostics.diagnose_buffer_pool_instances(
-                int(bp_size), int(bp_inst), cpu_cores=infra.cpu_cores
-            )
-            if ib_finding:
-                findings.append(ib_finding)
+            try:
+                ib_finding = InnoDBExpertDiagnostics.diagnose_buffer_pool_instances(
+                    int(bp_size), int(bp_inst), cpu_cores=infra.cpu_cores
+                )
+                if ib_finding:
+                    findings.append(ib_finding)
+            except (ValueError, TypeError):
+                pass
 
         # Diagnostic 4: Table Cache & Descriptors
         tc_size = vars_dict.get("table_open_cache")
         max_conns = vars_dict.get("max_connections", 151)
         if tc_size:
-            tc_findings = TableCacheDiagnostics.diagnose_table_cache_and_descriptors(
-                table_open_cache=int(tc_size),
-                table_definition_cache=vars_dict.get("table_definition_cache"),
-                open_files_limit=vars_dict.get("open_files_limit"),
-                max_connections=int(max_conns),
-                table_open_cache_instances=vars_dict.get("table_open_cache_instances"),
-            )
-            findings.extend(tc_findings)
+            try:
+                tc_findings = TableCacheDiagnostics.diagnose_table_cache_and_descriptors(
+                    table_open_cache=int(tc_size),
+                    table_definition_cache=vars_dict.get("table_definition_cache"),
+                    open_files_limit=vars_dict.get("open_files_limit"),
+                    max_connections=int(max_conns),
+                    table_open_cache_instances=vars_dict.get("table_open_cache_instances"),
+                )
+                findings.extend(tc_findings)
+            except (ValueError, TypeError):
+                pass
 
         # Diagnostic 5: HA & Replication
         ha_findings = HAReplicationDiagnostics.diagnose_galera({}, vars_dict)

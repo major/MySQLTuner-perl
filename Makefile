@@ -3,6 +3,8 @@ UPDATE_SUB_VERSION=$(shell echo $(VERSION) | awk -F. '{ print $$1"."$$2"."$$3+1 
 UPDATE_MINOR_VERSION=$(shell echo $(VERSION) | awk -F. '{ print $$1"."$$2+1".0" }')
 UPDATE_MAJOR_VERSION=$(shell echo $(VERSION) | awk -F. '{ print $$1+1".0.0" }')
 
+.PHONY: all help generate_usage generate_release_notes generate_cve generate_features tidy check-tidy installdep_debian increment_sub_version increment_minor_version increment_major_version push pull vendor_setup test test-all test-container test-it unit-tests unit-tests-debug clean clean_examples validate_release docker_build docker_slim docker_push test-triage issue-triage issue-triage-offline issue-triage-major issue-triage-major-offline sync-major-issues
+
 all: generate_cve generate_features generate_usage tidy increment_sub_version 
 
 help:

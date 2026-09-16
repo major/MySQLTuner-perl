@@ -4,7 +4,9 @@ Multi-DB Docker Scenario Generator for Issue Reproduction
 
 from __future__ import annotations
 
+import base64
 import os
+import re
 from typing import Dict, Any, Optional
 from build.issue_triage.models import GitHubIssueRecord
 
@@ -39,6 +41,7 @@ class DockerScenarioGenerator:
     def generate_reproduce_script(cls, issue: GitHubIssueRecord) -> str:
         image = cls.get_image_for_issue(issue)
         container_name = f"mysqltuner_issue_{issue.number}"
+        safe_title = re.sub(r'[\r\n\x00-\x1f\x7f]+', ' ', issue.title).strip()
         
         # Build cnf content
         cnf_lines = ["[mysqld]"]
@@ -47,11 +50,12 @@ class DockerScenarioGenerator:
                 cnf_lines.append(f"{k} = {v}")
         else:
             cnf_lines.append("innodb_buffer_pool_size = 1G")
-        cnf_content = "\\n".join(cnf_lines)
+        cnf_content = "\n".join(cnf_lines) + "\n"
+        cnf_b64 = base64.b64encode(cnf_content.encode("utf-8")).decode("ascii")
 
         script = f"""#!/usr/bin/env bash
 # ==============================================================================
-# Reproduction Script for Issue #{issue.number} - {issue.title}
+# Reproduction Script for Issue #{issue.number} - {safe_title}
 # Target Engine / Version: {image}
 # ==============================================================================
 set -euo pipefail
@@ -75,7 +79,7 @@ echo "==> 3. Waiting for database readiness..."
 sleep 15
 
 echo "==> 4. Injecting custom configuration..."
-docker exec -i "$CONTAINER_NAME" bash -c 'printf "{cnf_content}\\n" > /etc/mysql/conf.d/issue.cnf'
+echo "{cnf_b64}" | base64 -d | docker exec -i "$CONTAINER_NAME" sh -c 'cat > /etc/mysql/conf.d/issue.cnf'
 
 echo "==> 5. Running MySQLTuner in 3 required modes (Standard, Container, Dumpdir)..."
 echo "--- Mode 1: Standard ---"

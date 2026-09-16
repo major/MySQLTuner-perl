@@ -31,18 +31,20 @@ class GitHubCLIWrapper:
             raise GitHubCLIError(args, -1, "GitHub CLI ('gh') binary not found in PATH.")
 
         cmd = [self.binary_path] + args
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
         try:
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
             stdout, stderr = proc.communicate(timeout=timeout)
             return proc.returncode, stdout.strip(), stderr.strip()
         except subprocess.TimeoutExpired:
             proc.kill()
             raise GitHubCLIError(cmd, -2, f"Command timed out after {timeout} seconds")
+        except OSError as e:
+            raise GitHubCLIError(cmd, -1, f"Failed to execute GitHub CLI: {e}")
 
     def list_issues(self, repo: Optional[str] = None, limit: int = 30, state: str = "open") -> List[Dict[str, Any]]:
         target_repo = repo or self.default_repo

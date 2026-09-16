@@ -31,7 +31,8 @@ class RoadmapSyncEngine:
         synced_count = 0
 
         for issue in resolved_issues:
-            issue_num_pattern = rf"- \[ \]\s+(.*?(?:#{issue.number}\b|Issue {issue.number}\b|[^\n\r]*{re.escape(issue.title[:30])}))"
+            title_escaped = re.escape(issue.title.strip())
+            issue_num_pattern = rf"- \[ \]\s+(.*?(?:#{issue.number}\b|Issue {issue.number}\b|[^\n\r]*{title_escaped}))"
             matches = list(re.finditer(issue_num_pattern, updated_content, re.IGNORECASE))
             if matches:
                 synced_count += len(matches)

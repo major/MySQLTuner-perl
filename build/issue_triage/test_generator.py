@@ -11,6 +11,13 @@ from typing import Dict, Any, Optional, Tuple
 from build.issue_triage.models import GitHubIssueRecord, TestProofArtifact
 
 
+def _escape_perl_literal(val: Any) -> str:
+    # Strip control characters
+    s = re.sub(r"[\r\n\x00-\x1f\x7f]+", " ", str(val))
+    # Escape backslashes first, then single quotes
+    return s.replace("\\", "\\\\").replace("'", "\\'")
+
+
 class PerlTestGenerator:
     def __init__(self, output_tests_dir: Optional[str] = None):
         self.output_tests_dir = output_tests_dir or os.path.abspath(
@@ -22,15 +29,19 @@ class PerlTestGenerator:
         title_sanitized = re.sub(r"[^a-zA-Z0-9_\- ]", "", issue.title)
         db_engine = issue.extracted_metrics.db_engine.value if issue.extracted_metrics else "MySQL"
         db_ver = issue.extracted_metrics.db_version_normalized if issue.extracted_metrics and issue.extracted_metrics.db_version_normalized else "8.4.0"
+        db_engine_safe = re.sub(r"[^a-zA-Z0-9_\- ]", "", str(db_engine))
+        db_ver_safe = re.sub(r"[^a-zA-Z0-9_\-\.]", "", str(db_ver))
 
         # Build variable mock hash
         vars_assignments = []
         if issue.extracted_metrics and issue.extracted_metrics.variables:
             for k, v in issue.extracted_metrics.variables.items():
+                k_escaped = _escape_perl_literal(k)
                 if isinstance(v, int):
-                    vars_assignments.append(f"        '{k}' => {v},")
+                    vars_assignments.append(f"        '{k_escaped}' => {v},")
                 else:
-                    vars_assignments.append(f"        '{k}' => '{v}',")
+                    v_escaped = _escape_perl_literal(v)
+                    vars_assignments.append(f"        '{k_escaped}' => '{v_escaped}',")
         else:
             vars_assignments.append("        'innodb_buffer_pool_size' => 1073741824,")
 
@@ -65,8 +76,8 @@ subtest 'Reproduction and Validation for Issue #{num} - {title_sanitized}' => su
         is(ref(\\%mock_vars), 'HASH', 'Variables structured as hash reference');
     }};
 
-    subtest 'Diagnostic Rule Verification for {db_engine} {db_ver}' => sub {{
-        my $version_str = '{db_ver}';
+    subtest 'Diagnostic Rule Verification for {db_engine_safe} {db_ver_safe}' => sub {{
+        my $version_str = '{db_ver_safe}';
         ok(defined $version_str, 'Target version string is defined');
         like($version_str, qr/^\\d+\\.\\d+/, 'Version conforms to semantic version pattern');
     }};

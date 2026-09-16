@@ -24,7 +24,7 @@ CACHE_DIR = os.environ.get("CACHE_DIR", "/var/cache/mysqltuner")
 AUDIT_INTERVAL_HOURS = float(os.environ.get("AUDIT_INTERVAL_HOURS", "12"))
 READ_ONLY = os.environ.get("READ_ONLY", "false").lower() in ("true", "1", "yes")
 MYSQLTUNER_SCRIPT = os.environ.get("MYSQLTUNER_PL", "mysqltuner.pl")
-SERVER_VERSION = "2.9.2"
+SERVER_VERSION = "2.9.3"
 PROTOCOL_VERSION = "2024-11-05"
 
 # Ensure cache directory exists
@@ -371,6 +371,13 @@ def handle_diagnose_replication_lag(arguments):
 
     max_lag = int(arguments.get("max_acceptable_lag_seconds", 30))
     channel = arguments.get("channel_name", "")
+    if channel:
+        channel = str(channel).strip()
+        if not re.match(r"^[A-Za-z0-9_-]{1,64}$", channel):
+            return {
+                "isError": True,
+                "content": [{"type": "text", "text": f"Invalid channel_name '{channel}'. Must match ^[A-Za-z0-9_-]{{1,64}}$"}]
+            }
 
     # Try SHOW REPLICA STATUS first, fallback to SHOW SLAVE STATUS
     channel_clause = f" FOR CHANNEL '{channel}'" if channel else ""
@@ -479,6 +486,12 @@ def handle_detect_fragmented_tables(arguments):
     min_size_mb = float(arguments.get("min_table_size_mb", 10.0))
     min_size_bytes = int(min_size_mb * 1024 * 1024)
     schema_filter = str(arguments.get("schema_filter") or "").strip()
+    if schema_filter:
+        if not re.match(r"^[A-Za-z0-9_$-]{1,64}$", schema_filter):
+            return {
+                "isError": True,
+                "content": [{"type": "text", "text": f"Invalid schema_filter '{schema_filter}'. Must match ^[A-Za-z0-9_$-]{{1,64}}$"}]
+            }
 
     where_clauses = [
         "TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys')",
@@ -868,14 +881,26 @@ class MCPSSEHandler(BaseHTTPRequestHandler):
         # Suppress noisy standard HTTP logging to stdout
         sys.stderr.write("%s - - [%s] %s\n" % (self.address_string(), self.log_date_time_string(), format % args))
 
+    def check_auth(self):
+        token = os.environ.get("MCP_AUTH_TOKEN")
+        if not token:
+            return True
+        auth = self.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            return auth[7:].strip() == token
+        return False
+
     def do_HEAD(self):
+        if not self.check_auth():
+            self.send_response(401)
+            self.end_headers()
+            return
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/sse":
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
             self.send_header("Cache-Control", "no-cache")
             self.send_header("Connection", "keep-alive")
-            self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
         elif parsed.path == "/health":
             self.send_response(200)
@@ -886,6 +911,12 @@ class MCPSSEHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_GET(self):
+        if not self.check_auth():
+            self.send_response(401)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Unauthorized"}).encode("utf-8"))
+            return
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/sse":
             session_id = str(uuid.uuid4())
@@ -893,7 +924,6 @@ class MCPSSEHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/event-stream")
             self.send_header("Cache-Control", "no-cache")
             self.send_header("Connection", "keep-alive")
-            self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
 
             # Announce endpoint event
@@ -919,6 +949,12 @@ class MCPSSEHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
+        if not self.check_auth():
+            self.send_response(401)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Unauthorized"}).encode("utf-8"))
+            return
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/message":
             length = int(self.headers.get("Content-Length", 0))
@@ -931,17 +967,19 @@ class MCPSSEHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
-                self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(json.dumps(resp).encode("utf-8"))
         else:
             self.send_response(404)
             self.end_headers()
 
-def run_sse_server(host="0.0.0.0", port=8000):
+def run_sse_server(host="127.0.0.1", port=8000):
+    global READ_ONLY
+    if not os.environ.get("MCP_AUTH_TOKEN"):
+        READ_ONLY = True
     server = ThreadingHTTPServer((host, port), MCPSSEHandler)
     server.daemon_threads = True
-    sys.stderr.write(f"MySQLTuner MCP SSE Server listening on http://{host}:{port}/sse\n")
+    sys.stderr.write(f"MySQLTuner MCP SSE Server listening on http://{host}:{port}/sse (read_only={READ_ONLY})\n")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -969,7 +1007,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MySQLTuner Model Context Protocol (MCP) Server")
     parser.add_argument("--daemon", action="store_true", help="Run background periodic auditing loop")
     parser.add_argument("--sse", action="store_true", help="Start HTTP SSE server instead of stdio")
-    parser.add_argument("--host", default="0.0.0.0", help="HTTP host for SSE server (default: 0.0.0.0)")
+    parser.add_argument("--host", default="127.0.0.1", help="HTTP host for SSE server (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=8000, help="HTTP port for SSE server (default: 8000)")
 
     args = parser.parse_args()
