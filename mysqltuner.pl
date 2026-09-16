@@ -17207,6 +17207,129 @@ sub which {
     return 0;
 }
 
+sub dump_sys_statement_analysis_statistical {
+    my $dumpdir = shift;
+    return if !$dumpdir;
+
+    # Check if sys schema exists and contains x$statement_analysis
+    my @has_sys_db = select_array("SHOW DATABASES LIKE 'sys'");
+    return if !@has_sys_db;
+    my @has_table =
+      select_array("SHOW TABLES FROM sys LIKE 'x\\\$statement_analysis'");
+    return if !@has_table;
+
+    infoprint "Dumping statistical statement analysis into $dumpdir";
+
+# Detect available columns in sys.x$statement_analysis for multi-version resilience (MySQL 8.0.0 to 8.4+)
+    my @cols = select_array(
+"SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'sys' AND TABLE_NAME = 'x\\\$statement_analysis'"
+    );
+    my %col_map = map { lc($_) => 1 } @cols;
+
+    my $col_exec_secondary =
+      $col_map{'exec_secondary_count'}
+      ? "x.exec_secondary_count AS exec_secondary_count_raw, "
+      . "CASE WHEN x.exec_secondary_count > 0 THEN ROUND(LOG10(x.exec_secondary_count), 4) ELSE NULL END AS log10_exec_secondary_count, "
+      : "NULL AS exec_secondary_count_raw, "
+      . "NULL AS log10_exec_secondary_count, ";
+
+    my $col_cpu_latency =
+      $col_map{'cpu_latency'}
+      ? "x.cpu_latency AS cpu_latency_ps_raw, "
+      . "sys.format_time(x.cpu_latency) AS cpu_latency_formatted, "
+      . "CASE WHEN x.cpu_latency > 0 THEN ROUND(LOG10(x.cpu_latency), 4) ELSE NULL END AS log10_cpu_latency_ps, "
+      : "NULL AS cpu_latency_ps_raw, "
+      . "NULL AS cpu_latency_formatted, "
+      . "NULL AS log10_cpu_latency_ps, ";
+
+    my $col_max_controlled_mem =
+      $col_map{'max_controlled_memory'}
+      ? "x.max_controlled_memory AS max_controlled_memory_bytes_raw, "
+      . "sys.format_bytes(x.max_controlled_memory) AS max_controlled_memory_formatted, "
+      . "CASE WHEN x.max_controlled_memory > 0 THEN ROUND(LOG10(x.max_controlled_memory), 4) ELSE NULL END AS log10_max_controlled_memory, "
+      : "NULL AS max_controlled_memory_bytes_raw, "
+      . "NULL AS max_controlled_memory_formatted, "
+      . "NULL AS log10_max_controlled_memory, ";
+
+    my $col_max_total_mem =
+      $col_map{'max_total_memory'}
+      ? "x.max_total_memory AS max_total_memory_bytes_raw, "
+      . "sys.format_bytes(x.max_total_memory) AS max_total_memory_formatted, "
+      . "CASE WHEN x.max_total_memory > 0 THEN ROUND(LOG10(x.max_total_memory), 4) ELSE NULL END AS log10_max_total_memory "
+      : "NULL AS max_total_memory_bytes_raw, "
+      . "NULL AS max_total_memory_formatted, "
+      . "NULL AS log10_max_total_memory ";
+
+    my $select_clause =
+        "SELECT "
+      . "x.db AS schema_name, "
+      . "x.digest AS digest, "
+      . "sys.format_statement(x.query) AS query_formatted, "
+      . "x.query AS query_raw, "
+      . "x.full_scan AS full_scan, "
+      . "x.first_seen AS first_seen, "
+      . "x.last_seen AS last_seen, "
+      . "x.exec_count AS exec_count_raw, "
+      . "CASE WHEN x.exec_count > 0 THEN ROUND(LOG10(x.exec_count), 4) ELSE NULL END AS log10_exec_count, "
+      . $col_exec_secondary
+      . "x.err_count AS err_count_raw, "
+      . "CASE WHEN x.err_count > 0 THEN ROUND(LOG10(x.err_count), 4) ELSE NULL END AS log10_err_count, "
+      . "x.warn_count AS warn_count_raw, "
+      . "CASE WHEN x.warn_count > 0 THEN ROUND(LOG10(x.warn_count), 4) ELSE NULL END AS log10_warn_count, "
+      . "x.total_latency AS total_latency_ps_raw, "
+      . "sys.format_time(x.total_latency) AS total_latency_formatted, "
+      . "CASE WHEN x.total_latency > 0 THEN ROUND(LOG10(x.total_latency), 4) ELSE NULL END AS log10_total_latency_ps, "
+      . "x.max_latency AS max_latency_ps_raw, "
+      . "sys.format_time(x.max_latency) AS max_latency_formatted, "
+      . "CASE WHEN x.max_latency > 0 THEN ROUND(LOG10(x.max_latency), 4) ELSE NULL END AS log10_max_latency_ps, "
+      . "x.avg_latency AS avg_latency_ps_raw, "
+      . "sys.format_time(x.avg_latency) AS avg_latency_formatted, "
+      . "CASE WHEN x.avg_latency > 0 THEN ROUND(LOG10(x.avg_latency), 4) ELSE NULL END AS log10_avg_latency_ps, "
+      . "x.lock_latency AS lock_latency_ps_raw, "
+      . "sys.format_time(x.lock_latency) AS lock_latency_formatted, "
+      . "CASE WHEN x.lock_latency > 0 THEN ROUND(LOG10(x.lock_latency), 4) ELSE NULL END AS log10_lock_latency_ps, "
+      . $col_cpu_latency
+      . "x.rows_sent AS rows_sent_raw, "
+      . "CASE WHEN x.rows_sent > 0 THEN ROUND(LOG10(x.rows_sent), 4) ELSE NULL END AS log10_rows_sent, "
+      . "x.rows_sent_avg AS rows_sent_avg_raw, "
+      . "CASE WHEN x.rows_sent_avg > 0 THEN ROUND(LOG10(x.rows_sent_avg), 4) ELSE NULL END AS log10_rows_sent_avg, "
+      . "x.rows_examined AS rows_examined_raw, "
+      . "CASE WHEN x.rows_examined > 0 THEN ROUND(LOG10(x.rows_examined), 4) ELSE NULL END AS log10_rows_examined, "
+      . "x.rows_examined_avg AS rows_examined_avg_raw, "
+      . "CASE WHEN x.rows_examined_avg > 0 THEN ROUND(LOG10(x.rows_examined_avg), 4) ELSE NULL END AS log10_rows_examined_avg, "
+      . "x.rows_affected AS rows_affected_raw, "
+      . "CASE WHEN x.rows_affected > 0 THEN ROUND(LOG10(x.rows_affected), 4) ELSE NULL END AS log10_rows_affected, "
+      . "x.rows_affected_avg AS rows_affected_avg_raw, "
+      . "CASE WHEN x.rows_affected_avg > 0 THEN ROUND(LOG10(x.rows_affected_avg), 4) ELSE NULL END AS log10_rows_affected_avg, "
+      . "x.tmp_tables AS tmp_tables_raw, "
+      . "CASE WHEN x.tmp_tables > 0 THEN ROUND(LOG10(x.tmp_tables), 4) ELSE NULL END AS log10_tmp_tables, "
+      . "x.tmp_disk_tables AS tmp_disk_tables_raw, "
+      . "CASE WHEN x.tmp_disk_tables > 0 THEN ROUND(LOG10(x.tmp_disk_tables), 4) ELSE NULL END AS log10_tmp_disk_tables, "
+      . "x.rows_sorted AS rows_sorted_raw, "
+      . "CASE WHEN x.rows_sorted > 0 THEN ROUND(LOG10(x.rows_sorted), 4) ELSE NULL END AS log10_rows_sorted, "
+      . "x.sort_merge_passes AS sort_merge_passes_raw, "
+      . "CASE WHEN x.sort_merge_passes > 0 THEN ROUND(LOG10(x.sort_merge_passes), 4) ELSE NULL END AS log10_sort_merge_passes, "
+      . $col_max_controlled_mem
+      . $col_max_total_mem
+      . "FROM sys.x\\\$statement_analysis AS x ";
+
+    # Unfiltered export
+    my $query_unfiltered = $select_clause . "ORDER BY x.total_latency DESC;";
+    select_csv_file( "$dumpdir/sys_statement_analysis_statistical.csv",
+        $query_unfiltered );
+
+   # Filtered export: exclude system databases and transactional control queries
+    my $query_filtered =
+        $select_clause
+      . "WHERE (x.db IS NULL OR x.db NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')) "
+      . "AND x.query NOT LIKE 'COMMIT%' "
+      . "AND x.query NOT LIKE 'ROLLBACK%' "
+      . "AND x.query NOT LIKE 'SET %' "
+      . "ORDER BY x.total_latency DESC;";
+    select_csv_file( "$dumpdir/sys_statement_analysis_statistical_filtered.csv",
+        $query_filtered );
+}
+
 sub dump_csv_files {
     return if !$opt{dumpdir};
 
@@ -17380,6 +17503,8 @@ sub dump_csv_files {
                 $query_filtered );
         }
     }
+
+    dump_sys_statement_analysis_statistical( $opt{dumpdir} );
 
     # Store all information schema in dumpdir if defined
     infoprint("Dumping information schema");
