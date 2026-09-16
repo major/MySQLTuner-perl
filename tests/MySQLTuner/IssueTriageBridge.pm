@@ -33,7 +33,7 @@ sub classify_author {
 
 sub parse_version_string {
     my ($self, $version_raw) = @_;
-    return { major => 0, minor => 0, patch => 0, engine => 'Unknown', normalized => '0.0.0' } unless defined $version_raw;
+    return { raw => '', major => 0, minor => 0, patch => 0, engine => 'Unknown', is_mariadb => 0, normalized => '0.0.0' } unless defined $version_raw;
     
     my $is_mariadb = 0;
     my ($major, $minor, $patch) = (0, 0, 0);

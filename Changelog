@@ -30,6 +30,7 @@
 - feat(engine): pure calculation subroutines, memory decomposition, and CLI contract hardening (#1048)
 - feat(engine): add statistical statement analysis CSV export in dumpdir
 - fix(ci): allow 'release' scope in commit and changelog compliance auditor (#1047)
+- fix(triage): address CodeRabbit review recommendations on PR #989
 - test(build): add unit_build_headers.t validating build script header compliance (#1029)
 - test(build): add unit_cve_update.t validating pure Perl CVE and EOL scripts (#1024)
 - test(build): add unit_release_gen.t validating pure Perl release generator (#1023)

@@ -1403,6 +1403,7 @@ sub discover_cluster_topology {
 
         my $lag = $myrepl{'Seconds_Behind_Source'}
           // $myrepl{'Seconds_Behind_Master'} // 0;
+        $lag = 0 unless ( defined $lag && $lag =~ /^\d+(?:\.\d+)?$/ );
         $ha_info{details}{replication_lag} = $lag;
 
         goodprint "Topology Detected: Replication Replica (Lag: ${lag}s)";

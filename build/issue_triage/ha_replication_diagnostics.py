@@ -13,7 +13,7 @@ class HAReplicationDiagnostics:
     def diagnose_galera(cls, status: Dict[str, Any], vars_: Dict[str, Any]) -> List[DiagnosticFinding]:
         findings: List[DiagnosticFinding] = []
         wsrep_on = vars_.get("wsrep_on") or status.get("wsrep_on")
-        if wsrep_on != 1 and wsrep_on != "ON":
+        if str(wsrep_on).strip().lower() not in ("1", "on", "true", "yes"):
             return findings
 
         # Check 1: Cluster primary component

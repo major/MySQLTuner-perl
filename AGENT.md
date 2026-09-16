@@ -13,7 +13,7 @@ MySQLTuner provides a two-tier AI architecture separating **Heuristic Intelligen
 
 ```mermaid
 graph TD
-    subgraph "AI Agent & IDE Layer"
+    subgraph AIAgentLayer["AI Agent & IDE Layer"]
         Antigravity["Antigravity IDE / CLI"]
         Claude["Claude Desktop"]
         Cursor["Cursor IDE"]
@@ -21,7 +21,7 @@ graph TD
         CustomAgent["Autonomous DBA Agent / LangChain"]
     end
 
-    subgraph "Intelligence Layer (.agent/skills/)"
+    subgraph IntelligenceLayer["Intelligence Layer (.agent/skills/)"]
         SkillBP["analyze-buffer-pool"]
         SkillFrag["detect-fragmented-tables"]
         SkillRepl["diagnose-replication-lag"]
@@ -30,7 +30,7 @@ graph TD
         SkillTest["testing-orchestration"]
     end
 
-    subgraph "Execution Layer (MCP Server & CLI)"
+    subgraph ExecutionLayer["Execution Layer (MCP Server & CLI)"]
         JSONRPC["JSON-RPC 2.0 stdio Interface"]
         ToolAudit["Tool: run_audit / get_latest_audit"]
         ToolApply["Tool: apply_recommendation"]
@@ -39,7 +39,7 @@ graph TD
         ResKPI["Resource: indicators/summary.json"]
     end
 
-    subgraph "Core Engine & Database"
+    subgraph CoreEngine["Core Engine & Database"]
         PerlCore["MySQLTuner Engine (mysqltuner.pl)"]
         TargetDB[("MySQL / MariaDB / Percona Server")]
     end

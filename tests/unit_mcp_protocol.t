@@ -97,7 +97,7 @@ subtest 'MCP Protocol: Standard JSON-RPC 2.0 Error Codes' => sub {
 
 # --- Subtest 3: SQL Safety Guardrails & Injection Prevention ---
 subtest 'MCP Safety Guardrails: SQL Sanitization' => sub {
-    plan tests => 5;
+    plan tests => 7;
 
     my ($chld_out, $chld_in);
     my $pid = open2($chld_out, $chld_in, "python3", $mcp_server_path);
@@ -123,6 +123,16 @@ subtest 'MCP Safety Guardrails: SQL Sanitization' => sub {
     print $chld_in '{"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "apply_recommendation", "arguments": {"statement": "GRANT ALL PRIVILEGES ON *.* TO \'attacker\'@\'%\'"}}, "id": "sec-4"}' . "\n";
     my $sec4 = <$chld_out>;
     like($sec4, qr/"isError"\s*:\s*true/, "Privilege escalation GRANT rejected");
+
+    # 5. Invalid channel_name rejected
+    print $chld_in '{"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "diagnose_replication_lag", "arguments": {"channel_name": "ch; DROP TABLE t;"}}, "id": "sec-5"}' . "\n";
+    my $sec5 = <$chld_out>;
+    like($sec5, qr/"isError"\s*:\s*true/, "Invalid channel_name rejected with isError");
+
+    # 6. Invalid schema_filter rejected
+    print $chld_in '{"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "detect_fragmented_tables", "arguments": {"schema_filter": "schema\' OR 1=1--"}}, "id": "sec-6"}' . "\n";
+    my $sec6 = <$chld_out>;
+    like($sec6, qr/"isError"\s*:\s*true/, "Invalid schema_filter rejected with isError");
 
     close $chld_in;
     close $chld_out;
@@ -182,6 +192,12 @@ subtest 'MCP Protocol: Resources Management' => sub {
 
 # --- Subtest 6: SSE HTTP Transport Integration ---
 subtest 'MCP Server: SSE HTTP Server Mode' => sub {
+    my $curl_path = `which curl 2>/dev/null`;
+    chomp($curl_path);
+    if ( !$curl_path || !-x $curl_path ) {
+        plan skip_all => 'curl binary not available for SSE integration test';
+        return;
+    }
     plan tests => 3;
 
     my $test_port = 18000 + int(rand(1000));
@@ -193,11 +209,17 @@ subtest 'MCP Server: SSE HTTP Server Mode' => sub {
         exit(0);
     }
 
-    # Wait for server to bind
-    sleep(1);
+    # Bounded polling for server readiness (max 5 seconds)
+    my $health_resp = '';
+    for (1 .. 50) {
+        $health_resp = `curl -s -m 1 http://127.0.0.1:$test_port/health 2>/dev/null`;
+        if ($health_resp =~ /"status":\s*"healthy"/) {
+            last;
+        }
+        select(undef, undef, undef, 0.1);
+    }
 
     # 1. Health check GET
-    my $health_resp = `curl -s http://127.0.0.1:$test_port/health`;
     like($health_resp, qr/"status":\s*"healthy"/, "SSE HTTP /health endpoint returns healthy");
 
     # 2. JSON-RPC POST to /message

@@ -183,7 +183,7 @@ Skills represent structured domain knowledge capsules located in `.agent/skills/
 * **Metrics Analyzed**: `Seconds_Behind_Master`, `Slave_IO_Running`, `Slave_SQL_Running`, `Replica_parallel_workers`.
 
 #### 6. `legacy-perl-patterns` ([`SKILL.md`](file:///.agent/skills/legacy-perl-patterns/SKILL.md))
-* **Objective**: Ensures all Perl modifications preserve strict compatibility with legacy Perl versions (Perl 5.8+) without third-party CPAN dependencies.
+* **Objective**: Ensures all Perl modifications preserve strict compatibility with legacy Perl versions (Perl 5.6+) without third-party CPAN dependencies.
 
 #### 7. `testing-orchestration` ([`SKILL.md`](file:///.agent/skills/testing-orchestration/SKILL.md))
 * **Objective**: Enforces tripartite test validation (`--verbose`, `--container`, `--dumpdir`), lab validation, and subtest decomposition.
@@ -339,6 +339,4 @@ make test-mcp-e2e
 Or execute directly via `prove`:
 ```bash
 prove -v tests/e2e_mcp_server.t
-```
-commendation`.
 ```

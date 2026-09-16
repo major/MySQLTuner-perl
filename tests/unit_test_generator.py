@@ -44,6 +44,36 @@ class TestPerlTestGenerator(unittest.TestCase):
         if os.path.exists(real_path):
             os.remove(real_path)
 
+    def test_generate_test_content_escaping(self):
+        issue = GitHubIssueRecord(
+            number=9998,
+            title="Dangerous ' Quotes and \\ Backslashes \n\x00 in title",
+            author="malicious",
+            author_type=IssueAuthorType.COMMUNITY_USER,
+            created_at="2026-08-22T00:00:00Z",
+            updated_at="2026-08-22T00:00:00Z",
+            state="open",
+            body="Sample",
+            extracted_metrics=ExtractedMetrics(
+                db_engine=DatabaseEngineType.MYSQL,
+                db_version_raw="8.4.0",
+                db_version_normalized="8.4.0",
+                variables={
+                    "var_with_'quote": "val_with_'single_quote' and \\backslash\nand newline\x00null",
+                },
+            ),
+        )
+        content = self.gen.generate_test_content(issue)
+        # Verify single quotes and backslashes are properly escaped in Perl hash
+        self.assertIn("'var_with_\\'quote' => 'val_with_\\'single_quote\\' and \\\\backslash and newline null',", content)
+        # Verify test syntax is valid
+        artifact = self.gen.write_and_verify_test(issue)
+        self.assertTrue(artifact.syntax_valid)
+        self.assertTrue(artifact.execution_passed)
+        real_path = os.path.join(self.gen.output_tests_dir, "test_issue_9998.t")
+        if os.path.exists(real_path):
+            os.remove(real_path)
+
 
 if __name__ == "__main__":
     unittest.main()

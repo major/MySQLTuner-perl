@@ -27,14 +27,22 @@ subtest 'Dry-Run SemVer Bumps Calculation' => sub {
     plan tests => 4;
 
     my $orch = File::Spec->catfile( $FindBin::Bin, '..', 'build', 'release_orchestrator.pl' );
+    my $ver_file = File::Spec->catfile( $FindBin::Bin, '..', 'CURRENT_VERSION.txt' );
+    open my $fh, '<', $ver_file or die "Cannot open $ver_file: $!\n";
+    my $curr_ver = <$fh>;
+    close $fh;
+    chomp($curr_ver);
+    my ( $major, $minor, $patch ) = split( /\./, $curr_ver );
+    my $expected_micro = join( '.', $major, $minor, $patch + 1 );
+    my $expected_minor = join( '.', $major, $minor + 1, 0 );
 
     my $out_micro = `perl "$orch" --dry-run --bump=micro 2>&1`;
     is( $? >> 8, 0, "Dry-run micro bump exits 0" );
-    like( $out_micro, qr/Target Release Version :\s*2\.9\.4/, "Micro bump calculates 2.9.4" );
+    like( $out_micro, qr/Target Release Version :\s*\Q$expected_micro\E/, "Micro bump calculates $expected_micro" );
 
     my $out_minor = `perl "$orch" --dry-run --bump=minor 2>&1`;
     is( $? >> 8, 0, "Dry-run minor bump exits 0" );
-    like( $out_minor, qr/Target Release Version :\s*2\.10\.0/, "Minor bump calculates 2.10.0" );
+    like( $out_minor, qr/Target Release Version :\s*\Q$expected_minor\E/, "Minor bump calculates $expected_minor" );
 };
 
 # --- Subtest 3: Help Screen Output ---

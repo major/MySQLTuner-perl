@@ -34,7 +34,7 @@ class DatabaseTaxonomyResolver:
     # MariaDB: <= 10.4 EOL. 10.5 EOL June 2025. 10.6 LTS. 10.11 LTS. 11.4 LTS.
     
     MYSQL_EOL_VERSIONS = [(5, 5), (5, 6), (5, 7)]
-    MARIADB_EOL_VERSIONS = [(5, 5), (10, 0), (10, 1), (10, 2), (10, 3), (10, 4)]
+    MARIADB_EOL_VERSIONS = [(5, 5), (10, 0), (10, 1), (10, 2), (10, 3), (10, 4), (10, 5)]
 
     MARIADB_PREFIX_REGEX = re.compile(r"^5\.5\.5-([0-9.]+)-MariaDB")
     MARIADB_REGEX = re.compile(r"([0-9]+)\.([0-9]+)\.([0-9]+)(?:-[a-zA-Z0-9.]+)?-MariaDB", re.IGNORECASE)

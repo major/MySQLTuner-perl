@@ -35,6 +35,24 @@ class TestDockerScenarioGenerator(unittest.TestCase):
         self.assertIn("mysqltuner_issue_777", script)
         self.assertIn("--container", script)
         self.assertIn("--dumpdir=dumps", script)
+        self.assertIn("base64 -d", script)
+
+    def test_generate_reproduce_script_sanitizes_title(self):
+        issue = GitHubIssueRecord(
+            number=999,
+            title="Injected Title\nrm -rf /\r\x00echo pwned",
+            author="attacker",
+            author_type=IssueAuthorType.COMMUNITY_USER,
+            created_at="2026-08-22T00:00:00Z",
+            updated_at="2026-08-22T00:00:00Z",
+            state="open",
+            body="Sample body",
+        )
+        script = DockerScenarioGenerator.generate_reproduce_script(issue)
+        self.assertNotIn("\nrm -rf /", script)
+        self.assertNotIn("\x00", script)
+        self.assertIn("Injected Title rm -rf / echo pwned", script)
+        self.assertIn("base64 -d", script)
 
 
 if __name__ == "__main__":
