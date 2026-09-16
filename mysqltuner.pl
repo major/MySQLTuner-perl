@@ -4318,7 +4318,7 @@ sub select_array_with_headers {
                 "$mysqlcmd $mysqllogin -Bse \"$req_debug\" 2>&1");
         }
 
-        #exit $?;
+        return ();
     }
     debugprint "select_array_with_headers: return code : $?";
     chomp(@result);
@@ -4352,6 +4352,11 @@ sub select_csv_file {
     my $gzip_bin    = which('gzip');
     my $fh;
     my $is_compressed = 0;
+    my $dir           = dirname($actual_file);
+    if ( $dir && !-d $dir ) {
+        mkdir $dir or warn "Could not create directory '$dir': $!";
+    }
+
     if ( $opt{'compress-dump'} && $gzip_bin ) {
         $actual_file .= '.gz';
         my $escaped_file = $actual_file;
@@ -17489,11 +17494,9 @@ sub dump_csv_files {
         }
         infoprint "Dumping $sys_view into $opt{dumpdir}";
         my $sys_view_table = $sys_view;
-        $sys_view_table =~ s/\$/\\\$/g;
 
         # Unfiltered export
-        my $query_unfiltered =
-          'use sys; select * from sys.\`' . $sys_view_table . '\`';
+        my $query_unfiltered = "select * from sys.`$sys_view_table`";
         select_csv_file( "$opt{dumpdir}/sys_$sys_view.csv", $query_unfiltered );
 
         # Filtered export

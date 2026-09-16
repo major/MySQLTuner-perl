@@ -177,4 +177,71 @@ subtest 'Statistical Statement Analysis - Integration in dump_csv_files()' => su
     ok($stat_filt, "dump_csv_files invokes dump_sys_statement_analysis_statistical for filtered CSV");
 };
 
+subtest 'dump_csv_files - Sys views SQL query construction without escaping defects' => sub {
+    no warnings 'redefine';
+    my @selected_queries;
+
+    local *main::select_array = sub {
+        my $query = shift;
+        if ($query =~ /use sys;show tables;/i) {
+            return ('x$statement_analysis', 'version');
+        }
+        return ();
+    };
+
+    local *main::select_csv_file = sub {
+        my ($file, $query) = @_;
+        push @selected_queries, { file => $file, query => $query };
+    };
+    local *main::infoprint = sub {};
+    local *main::dump_sys_statement_analysis_statistical = sub {};
+    local *main::write_manifest_files = sub {};
+
+    local %main::opt = ( dumpdir => '/tmp/dummy_dump' );
+
+    main::dump_csv_files();
+
+    my ($x_stmt) = grep { $_->{file} =~ /sys_x\$statement_analysis\.csv$/ } @selected_queries;
+    ok($x_stmt, "Dumps x\$statement_analysis view");
+    is($x_stmt->{query}, "select * from sys.`x\$statement_analysis`", "Query has backticks without literal backslash escaping");
+    unlike($x_stmt->{query}, qr/sys\.\\`/, "Does not contain backslash before backtick");
+    unlike($x_stmt->{query}, qr/sys\.\\\$/, "Does not contain double backslash before dollar");
+};
+
+subtest 'select_array_with_headers - Returns empty list on non-zero exit code' => sub {
+    no warnings 'redefine';
+    local $main::mysqlcmd   = 'mysql';
+    local $main::mysqllogin = '';
+    local $main::devnull    = '/dev/null';
+    local *main::execute_system_command = sub {
+        $? = 256; # Non-zero exit code
+        return "ERROR 1064 (42000): You have an error in your SQL syntax";
+    };
+    local *main::badprint = sub {};
+
+    my @res = main::select_array_with_headers("SELECT * FROM invalid_table");
+    is(scalar @res, 0, "Returns empty list when command fails ($? != 0)");
+};
+
+subtest 'select_csv_file - Creates directory if non-existent' => sub {
+    no warnings 'redefine';
+    use File::Temp qw(tempdir);
+    my $tmpdir = tempdir(CLEANUP => 1);
+    my $nested_dir = "$tmpdir/nested_test_dir";
+    my $test_file = "$nested_dir/test.csv";
+
+    local *main::select_array_with_headers = sub {
+        return ("header1\theader2", "val1\tval2");
+    };
+    local *main::debugprint = sub {};
+    local *main::infoprint = sub {};
+    local %main::opt = ();
+
+    ok(!-d $nested_dir, "Target directory does not exist prior to select_csv_file");
+    main::select_csv_file($test_file, "SELECT 1");
+    ok(-d $nested_dir, "Directory was created automatically by select_csv_file");
+    ok(-f $test_file, "CSV file was written successfully in newly created directory");
+};
+
 done_testing();
+
