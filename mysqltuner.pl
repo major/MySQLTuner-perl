@@ -17496,7 +17496,7 @@ sub dump_csv_files {
         my $sys_view_table = $sys_view;
 
         # Unfiltered export
-        my $query_unfiltered = "select * from sys.`$sys_view_table`";
+        my $query_unfiltered = "SELECT * FROM sys.`$sys_view_table`";
         select_csv_file( "$opt{dumpdir}/sys_$sys_view.csv", $query_unfiltered );
 
         # Filtered export
@@ -17517,7 +17517,8 @@ sub dump_csv_files {
         if (   $info_s_table =~ /INNODB_BUFFER_PAGE/
             or $info_s_table =~ /RDS_CONTROL_PERFORMANCE_INSIGHTS_STATUS/
             or $info_s_table =~ /RDS_METRICS_COUNTER/
-            or $info_s_table =~ /RDS_METRICS_GAUGE/ )
+            or $info_s_table =~ /RDS_METRICS_GAUGE/
+            or $info_s_table =~ /^(?:GLOBAL|SESSION)_(?:STATUS|VARIABLES)$/i )
         {
             infoprint("SKIPPING $info_s_table");
             next;
@@ -17525,7 +17526,7 @@ sub dump_csv_files {
         infoprint "Dumping $info_s_table into $opt{dumpdir}";
         select_csv_file(
             "$opt{dumpdir}/ifs_${info_s_table}.csv",
-            "select * from information_schema.$info_s_table"
+            "SELECT * FROM information_schema.$info_s_table"
         );
     }
 
@@ -17542,7 +17543,7 @@ sub dump_csv_files {
           "Performance Schema Dumping $info_pf_table into $opt{dumpdir}";
         select_csv_file(
             "$opt{dumpdir}/ps_${info_pf_table}.csv",
-            "select * from performance_schema.$info_pf_table"
+            "SELECT * FROM performance_schema.$info_pf_table"
         );
     }
 

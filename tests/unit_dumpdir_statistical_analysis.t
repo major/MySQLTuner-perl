@@ -203,7 +203,7 @@ subtest 'dump_csv_files - Sys views SQL query construction without escaping defe
 
     my ($x_stmt) = grep { $_->{file} =~ /sys_x\$statement_analysis\.csv$/ } @selected_queries;
     ok($x_stmt, "Dumps x\$statement_analysis view");
-    is($x_stmt->{query}, "select * from sys.`x\$statement_analysis`", "Query has backticks without literal backslash escaping");
+    is($x_stmt->{query}, "SELECT * FROM sys.`x\$statement_analysis`", "Query has backticks without literal backslash escaping");
     unlike($x_stmt->{query}, qr/sys\.\\`/, "Does not contain backslash before backtick");
     unlike($x_stmt->{query}, qr/sys\.\\\$/, "Does not contain double backslash before dollar");
 };
@@ -243,5 +243,38 @@ subtest 'select_csv_file - Creates directory if non-existent' => sub {
     ok(-f $test_file, "CSV file was written successfully in newly created directory");
 };
 
+subtest 'dump_csv_files - Information schema skips legacy disabled status/variables views' => sub {
+    no warnings 'redefine';
+    my @dumped_files;
+
+    local *main::select_array = sub {
+        my $query = shift;
+        if ($query =~ /use information_schema;show tables;/i) {
+            return ('TABLES', 'COLUMNS', 'GLOBAL_STATUS', 'GLOBAL_VARIABLES', 'SESSION_STATUS', 'SESSION_VARIABLES');
+        }
+        return ();
+    };
+
+    local *main::select_csv_file = sub {
+        my ($file, $query) = @_;
+        push @dumped_files, $file;
+    };
+    local *main::infoprint = sub {};
+    local *main::dump_sys_statement_analysis_statistical = sub {};
+    local *main::write_manifest_files = sub {};
+
+    local %main::opt = ( dumpdir => '/tmp/dummy_dump' );
+
+    main::dump_csv_files();
+
+    ok((grep { $_ =~ /ifs_TABLES\.csv$/ } @dumped_files), "Dumps normal table TABLES");
+    ok((grep { $_ =~ /ifs_COLUMNS\.csv$/ } @dumped_files), "Dumps normal table COLUMNS");
+    ok(!(grep { $_ =~ /ifs_GLOBAL_STATUS\.csv$/ } @dumped_files), "Skips disabled information_schema.GLOBAL_STATUS");
+    ok(!(grep { $_ =~ /ifs_GLOBAL_VARIABLES\.csv$/ } @dumped_files), "Skips disabled information_schema.GLOBAL_VARIABLES");
+    ok(!(grep { $_ =~ /ifs_SESSION_STATUS\.csv$/ } @dumped_files), "Skips disabled information_schema.SESSION_STATUS");
+    ok(!(grep { $_ =~ /ifs_SESSION_VARIABLES\.csv$/ } @dumped_files), "Skips disabled information_schema.SESSION_VARIABLES");
+};
+
 done_testing();
+
 
