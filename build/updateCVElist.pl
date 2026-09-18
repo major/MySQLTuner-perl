@@ -1,100 +1,104 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/updateCVElist.pl
+# Description: Fetches and updates MySQL and MariaDB CVE vulnerabilities
+#              from NVD API 2.0 using pure Perl (Core HTTP::Tiny & JSON::PP).
+# Author:      Jean-Marie Renouard / Antigravity
+# Project:     MySQLTuner-perl
+# ===========================================================================
 use strict;
 use warnings;
-use LWP::UserAgent;
-use JSON;
-use Data::Dumper;
+use HTTP::Tiny;
+use JSON::PP;
+use File::Spec;
+use Cwd qw(getcwd);
 
-# Configuration
-my $NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0";
-my $OUTPUT_FILE = "./vulnerabilities.csv";
-my $RESULTS_PER_PAGE = 2000; # Max allowed by NVD API 2.0
-my $DELAY_SECONDS = 6;      # Delay between pagination calls to stay under rate limits
+my $PROJECT_ROOT = getcwd();
+my $OUTPUT_FILE  = File::Spec->catfile( $PROJECT_ROOT, "vulnerabilities.csv" );
+my $NVD_API_URL  = "https://services.nvd.nist.gov/rest/json/cves/2.0";
+my $RESULTS_PER_PAGE = 2000;
+my $DELAY_SECONDS     = 6;
 
-# Target CPEs
 my @TARGET_CPES = (
     "cpe:2.3:a:oracle:mysql_server",
     "cpe:2.3:a:mariadb:mariadb"
 );
 
-my $ua = LWP::UserAgent->new(timeout => 30);
-$ua->agent("MySQLTuner-CVE-Updater/2.0");
+my $http = HTTP::Tiny->new(
+    agent   => "MySQLTuner-CVE-Updater/2.0",
+    timeout => 30
+);
 
-# Delete old file
 unlink $OUTPUT_FILE if -f $OUTPUT_FILE;
 
-open(my $out_fh, ">", $OUTPUT_FILE) or die "Cannot open $OUTPUT_FILE: $!";
+open( my $out_fh, ">", $OUTPUT_FILE ) or die "Cannot open $OUTPUT_FILE: $!";
 print "Fetching vulnerabilities from NVD API 2.0...\n";
 
 foreach my $cpe (@TARGET_CPES) {
     print "Processing CPE: $cpe\n";
-    my $start_index = 0;
-    my $total_results = 1; # Initial dummy value
+    my $start_index   = 0;
+    my $total_results = 1;
 
-    while ($start_index < $total_results) {
+    while ( $start_index < $total_results ) {
         my $url = "$NVD_API_URL?virtualMatchString=$cpe&resultsPerPage=$RESULTS_PER_PAGE&startIndex=$start_index";
         print "  Requesting: $url\n";
-        
-        my $response = $ua->get($url);
-        if (!$response->is_success) {
-            warn "  ERROR: Failed to fetch data: " . $response->status_line;
+
+        my $response = $http->get($url);
+        if ( !$response->{success} ) {
+            warn "  ERROR: Failed to fetch data: $response->{status} $response->{reason}\n";
             last;
         }
 
-        my $data = eval { decode_json($response->decoded_content) };
-        if (!$data) {
-            warn "  ERROR: Failed to parse JSON response: $@";
+        my $data = eval { decode_json( $response->{content} ) };
+        if ( !$data ) {
+            warn "  ERROR: Failed to parse JSON response: $@\n";
             last;
         }
 
         $total_results = $data->{totalResults} // 0;
-        my @vulnerabilities = @{$data->{vulnerabilities} // []};
+        my @vulnerabilities = @{ $data->{vulnerabilities} // [] };
         print "  Found " . scalar(@vulnerabilities) . " vulnerabilities (Total: $total_results)\n";
 
         foreach my $v (@vulnerabilities) {
-            my $cve = $v->{cve};
+            my $cve    = $v->{cve};
             my $cve_id = $cve->{id};
             my $status = $cve->{vulnStatus} // 'PUBLISHED';
-            
-            # Extract English description
+
             my $description = "";
-            foreach my $desc (@{$cve->{descriptions} // []}) {
-                if ($desc->{lang} eq 'en') {
+            foreach my $desc ( @{ $cve->{descriptions} // [] } ) {
+                if ( $desc->{lang} eq 'en' ) {
                     $description = $desc->{value};
                     last;
                 }
             }
-            $description =~ s/;/ /g; # Replace semicolons to avoid breaking CSV
-            $description =~ s/\n/ /g; # Replace newlines
-            $description = substr($description, 0, 200) . "..." if length($description) > 200;
+            $description =~ s/;/ /g;
+            $description =~ s/\n/ /g;
+            $description = substr( $description, 0, 200 ) . "..." if length($description) > 200;
 
-            # Extract vulnerable versions from configurations
             my %seen_versions;
-            foreach my $config (@{$cve->{configurations} // []}) {
-                foreach my $node (@{$config->{nodes} // []}) {
-                    foreach my $match (@{$node->{cpeMatch} // []}) {
-                        if ($match->{criteria} =~ /^\Q$cpe\E/) {
-                            my $v_end = $match->{versionEndIncluding} 
-                                     || $match->{versionEndExcluding} 
-                                     || "";
-                            
-                            # If no specific version end is mentioned, but criteria has a version
-                            if (!$v_end && $match->{criteria} =~ /:([^:]+)$/) {
+            foreach my $config ( @{ $cve->{configurations} // [] } ) {
+                foreach my $node ( @{ $config->{nodes} // [] } ) {
+                    foreach my $match ( @{ $node->{cpeMatch} // [] } ) {
+                        if ( $match->{criteria} =~ /^\Q$cpe\E/ ) {
+                            my $v_end = $match->{versionEndIncluding}
+                              || $match->{versionEndExcluding}
+                              || "";
+
+                            if ( !$v_end && $match->{criteria} =~ /:([^:]+)$/ ) {
                                 $v_end = $1;
-                                next if $v_end eq '*'; # Skip wildcard
+                                next if $v_end eq '*';
                             }
 
-                            if ($v_end && $v_end =~ /^(\d+)\.(\d+)\.(\d+)/) {
+                            if ( $v_end && $v_end =~ /^(\d+)\.(\d+)\.(\d+)/ ) {
                                 my $major = $1;
                                 my $minor = $2;
                                 my $micro = $3;
-                                
-                                # Decrement micro if versionEndExcluding
-                                if ($match->{versionEndExcluding}) {
-                                    if ($micro > 0) {
+
+                                if ( $match->{versionEndExcluding} ) {
+                                    if ( $micro > 0 ) {
                                         $micro--;
-                                    } else {
-                                        # Skip version 0.0.0 cases if we can't easily decrement
+                                    }
+                                    else {
                                         next;
                                     }
                                 }
@@ -103,8 +107,6 @@ foreach my $cpe (@TARGET_CPES) {
                                 next if $seen_versions{$full_v};
                                 $seen_versions{$full_v} = 1;
 
-                                # Format: version;major;minor;micro;CVE-ID;Status;Description
-                                # MySQLTuner format: $cve[1].$cve[2].$cve[3]
                                 print $out_fh "$full_v;$major;$minor;$micro;$cve_id;$status;$description\n";
                             }
                         }
@@ -114,7 +116,7 @@ foreach my $cpe (@TARGET_CPES) {
         }
 
         $start_index += $RESULTS_PER_PAGE;
-        if ($start_index < $total_results) {
+        if ( $start_index < $total_results ) {
             print "  Waiting $DELAY_SECONDS seconds before next page...\n";
             sleep($DELAY_SECONDS);
         }

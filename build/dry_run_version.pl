@@ -1,13 +1,16 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/dry_run_version.pl
+# Description: Simulates version increment and synchronization across artifacts.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/dry_run_version.pl [options]
+# ===========================================================================
 use strict;
 use warnings;
 use File::Basename;
 use File::Spec;
 use File::Temp qw(tempfile);
 use Time::Local;
-
-# Dry-Run Version Validation script
-# Simulates incrementing the version (e.g. from CURRENT_VERSION.txt)
 # to a target version and runs checks on all 8 files.
 
 my $script_dir = dirname(__FILE__);

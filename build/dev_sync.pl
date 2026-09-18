@@ -1,4 +1,10 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/dev_sync.pl
+# Description: Synchronize developer changes, unit tests, and changelog.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/dev_sync.pl [options]
+# ===========================================================================
 use strict;
 use warnings;
 use File::Basename;
@@ -193,7 +199,7 @@ sub main {
     }
     
     log_msg("Regenerating release notes file...");
-    my $rel_notes_res = system("python3 build/release_gen.py");
+    my $rel_notes_res = system("perl build/release_gen.pl");
     if ($rel_notes_res != 0) {
         log_msg("FAIL: Release notes generation failed!");
         exit(1);

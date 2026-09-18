@@ -273,7 +273,7 @@ docker run --rm -it -v $(pwd)/my.cnf:/defaults.cnf -v $(pwd)/results:/results jm
 
 ### Posizione delle release
 
-* Le note di rilascio ufficiali e la cronologia sono documentate nella cartella [releases/](releases/) di questo repository (ad esempio, [releases/v2.9.2.md](releases/v2.9.2.md)).
+* Le note di rilascio ufficiali e la cronologia sono documentate nella cartella [releases/](releases/) di questo repository (ad esempio, [releases/v2.9.3.md](releases/v2.9.3.md)).
 * I tag di rilascio Git e gli archivi sorgente scaricabili sono disponibili su [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 Installazione facoltativa di Sysschema per MySQL 5.6
