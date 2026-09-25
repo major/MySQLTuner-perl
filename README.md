@@ -3,7 +3,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
 
 [![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
-[![MySQLTuner Version](https://img.shields.io/badge/version-2.9.2-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.2)
+[![MySQLTuner Version](https://img.shields.io/badge/version-2.9.3-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.3)
 [![Test Status](https://github.com/major/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/major/MySQLTuner-perl/actions)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
 [![Percentage of open issues](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
@@ -105,33 +105,41 @@ Thanks to [endoflife.date](https://endoflife.date/)
 * **Historical Trend Analysis**: Ingest JSON output from previous runs via `--compare-file` to track QPS and data growth trends.
 * **Sysbench Integration**: Parse sysbench output for QPS, TPS, and latency metrics (Avg/95th/Max) via `--sysbench-file`.
 * **Container & Systemd Log Integration**: Automatic log detection from Docker, Podman, Kubectl/Kubernetes, and Systemd journal.
-* **AI & MCP Protocol Support**: Native JSON-RPC stdio Model Context Protocol (MCP) server daemon and `--agent-json` structured output for AI client tools (Claude Desktop, Cursor, VS Code / Cline, Antigravity).
+* **AI, MCP Protocol & Skills Support**: Native JSON-RPC stdio Model Context Protocol (MCP) server daemon, specialized domain heuristics in `.agent/skills/`, and `--agent-json` structured output for AI client tools (Claude Desktop, Cursor, VS Code / Cline, Antigravity).
 
 ---
 
-## 🤖 AI Agent & Model Context Protocol (MCP) Integration
+## 🤖 AI Agent, Model Context Protocol (MCP) & Skills Integration
 
-MySQLTuner natively supports modern Artificial Intelligence (AI) workflows, autonomous DBA agents, and developer assistants (e.g., Claude Desktop, Cursor IDE, VS Code / Cline, Antigravity, and LangChain/LlamaIndex frameworks).
+MySQLTuner natively supports modern Artificial Intelligence (AI) workflows, autonomous DBA agents, and developer assistants (e.g., Antigravity IDE, Claude Desktop, Cursor IDE, VS Code / Cline, and LangChain/LlamaIndex frameworks).
 
 For complete technical documentation, refer to the [AI & MCP Integration Guide](documentation/mcp_ai_integration_guide.md), [Guide Serveur MCP IA (FR)](documentation/mcp_ai_integration_guide.fr.md), and [AGENT.md](AGENT.md).
 
-### Operating Modes
+### Operating Modes & Capabilities
 
-1. **Direct CLI Telemetry (`--agent-json`)**:
-   Outputs zero-dependency structured JSON containing findings, impact scores (`1`-`10`), risk levels (`Low`, `Medium`, `High`, `Critical`), executable `SET GLOBAL` SQL statements, and pre-calculated `rollback_statement` baselines.
-   ```bash
-   perl mysqltuner.pl --agent-json --host 127.0.0.1 --user root --pass secret
-   ```
+1. **AI Agent Skills Subsystem (`.agent/skills/`)**:
+   Pre-packaged diagnostic heuristics with mathematical evaluation thresholds and safety guardrails:
+   - `analyze_buffer_pool`: Deep InnoDB buffer pool sizing, hit ratio, and dirty page flush analysis.
+   - `detect-fragmented-tables`: Fragmentation ratio detection, disk space reclaim calculation, and online defrag commands.
+   - `diagnose-replication-lag`: Replication latency, GTID synchronization, and worker saturation diagnostics.
+   - `db-version-rift`: MySQL 5.5-8.4 vs MariaDB 10.3-11.8 version rift resolution.
+   - `cli-execution-mastery`: Safe connection flags, SSH tunnels, and credential masking.
 
 2. **Model Context Protocol (MCP) Server**:
    A lightweight microservice ([build/mcp_server.py](build/mcp_server.py) and [Dockerfile.mcp](Dockerfile.mcp)) communicating over standard I/O (stdio) via JSON-RPC 2.0.
-   - **Resources**: `mysqltuner://reports/latest.json`, `mysqltuner://indicators/summary.json`
+   - **Resources**: `mysqltuner://reports/latest.json`, `mysqltuner://reports/latest.html`, `mysqltuner://indicators/summary.json`
    - **Tools**: `get_latest_audit`, `run_audit`, `apply_recommendation`, `rollback_recommendation`
    ```bash
    docker run -d \
      --name mysqltuner-mcp \
      -e DB_HOST=127.0.0.1 -e DB_USER=root -e DB_PASSWORD=secret \
      mysqltuner-mcp
+   ```
+
+3. **Direct CLI Telemetry (`--agent-json`)**:
+   Outputs zero-dependency structured JSON containing findings, impact scores (`1`-`10`), risk levels (`Low`, `Medium`, `High`, `Critical`), executable `SET GLOBAL` SQL statements, and pre-calculated `rollback_statement` baselines.
+   ```bash
+   perl mysqltuner.pl --agent-json --host 127.0.0.1 --user root --pass secret
    ```
 
 ---
@@ -275,7 +283,7 @@ docker run --rm -it -v $(pwd)/my.cnf:/defaults.cnf -v $(pwd)/results:/results jm
 
 ### Releases Location
 
-* Official release notes and history are documented in the [releases/](releases/) directory of this repository (e.g., [releases/v2.9.2.md](releases/v2.9.2.md)).
+* Official release notes and history are documented in the [releases/](releases/) directory of this repository (e.g., [releases/v2.9.3.md](releases/v2.9.3.md)).
 * Git release tags and downloadable source tarballs are available on [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 Optional Sysschema installation for MySQL 5.6

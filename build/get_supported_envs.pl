@@ -1,9 +1,12 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/get_supported_envs.pl
+# Description: Extracts supported DB environments from lifecycle markdown files.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/get_supported_envs.pl
+# ===========================================================================
 use strict;
 use warnings;
-
-# Parses mysql_support.md and mariadb_support.md to find "Supported" versions
-# and outputs them in the format expected by multi-db-docker-env (e.g. mysql84 mariadb1011)
 
 my @configs;
 
