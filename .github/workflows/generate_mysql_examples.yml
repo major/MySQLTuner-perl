@@ -67,7 +67,7 @@ jobs:
           git add ./examples/github/result/mysql/${{ matrix.MYSQL_VERSION }}/* || true
 
       - name: Run the Action Commit
-        uses: devops-infra/action-commit-push@f27e0951b748268e6ac8d91861eeac5bc2bd36a8 # master
+        uses: devops-infra/action-commit-push@b7477769b20d4ee5ce9a0ed850a2a93f4725aef3 # master
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           add_timestamp: true
