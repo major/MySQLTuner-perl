@@ -1,8 +1,10 @@
-#!/bin/bash
-# ==================================================================================
-# Script: parallel_test.sh
+#!/usr/bin/env bash
+# ===========================================================================
+# Script:      build/parallel_test.sh
 # Description: Runs MySQLTuner laboratory validation tests in parallel.
-# ==================================================================================
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       bash build/parallel_test.sh [options]
+# ===========================================================================
 
 PROJECT_ROOT=$(pwd)
 EXAMPLES_DIR="$PROJECT_ROOT/examples"

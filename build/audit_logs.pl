@@ -1,12 +1,14 @@
 #!/usr/bin/env perl
-
+# ===========================================================================
+# Script:      build/audit_logs.pl
+# Description: Scan laboratory execution.log files for anomalies and regressions.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/audit_logs.pl [options]
+# ===========================================================================
 use strict;
 use warnings;
 use File::Find;
 use Getopt::Long;
-
-# MySQLTuner Audit Log Script
-# Purpose: Scan laboratory execution.log files for anomalies and regressions.
 
 my $directory = 'examples';
 my $help      = 0;
@@ -56,7 +58,14 @@ find(
             if ($line =~ /Syntax error/i || $line =~ /unexpected/i) {
                 push @anomalies, { file => $file_path, line => $line_num, type => 'Syntax Anomaly', content => $line };
             }
-            if ( ($line =~ /uninitialized value/i || $line =~ /deprecated/i) && $line !~ /(?:✔|\[OK\])/ && $line !~ /uses DEPRECATED/ && $line !~ /uses DISABLED/ ) {
+            if ( ( $line =~ /uninitialized value/i || ( $line =~ /deprecated/i && $line =~ /at \S+ line \d+/i ) )
+                && $line !~ /(?:✔|\[OK\])/
+                && $line !~ /uses DEPRECATED/
+                && $line !~ /uses DISABLED/
+                && $line !~ /Deprecated\/Obsolete variable detected/
+                && $line !~ /Modernize deprecated configuration/
+                && $line !~ /^\s*\d{4}-\d{2}-\d{2}T.*\[Warning\]/ )
+            {
                 push @anomalies, { file => $file_path, line => $line_num, type => 'Perl Warning', content => $line };
             }
         }

@@ -1,10 +1,12 @@
 #!/usr/bin/env perl
-
+# ===========================================================================
+# Script:      build/audit_tests.pl
+# Description: Test Output Auditor scanning test runs for warnings and errors.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/audit_tests.pl
+# ===========================================================================
 use strict;
 use warnings;
-
-# MySQLTuner Test Output Auditor
-# Purpose: Run prove and scan its output for subtle Perl warnings, typos, and syntax errors.
 
 my $quiet = 1;
 my $debug = 0;
@@ -118,6 +120,19 @@ if (-f $sql_linter_script) {
         exit 1;
     }
     print "[OK] SQL Linter: All embedded queries conform to conventions.\n\n";
+}
+
+# --- Phase 1.6: Roadmap Schema & Link Integrity Check ---
+print "Performing Roadmap schema and link validation...\n";
+my $roadmap_script = 'build/validate_roadmap.pl';
+if (-f $roadmap_script) {
+    my $roadmap_out = qx(perl "$roadmap_script" 2>&1);
+    my $exit_val = $? >> 8;
+    if ($exit_val != 0) {
+        print "\n[!] Roadmap Validation Failed:\n$roadmap_out\n";
+        exit 1;
+    }
+    print "[OK] Roadmap Linter: ROADMAP.md conforms to schema and link integrity.\n\n";
 }
 
 # --- Phase 2: Run test suite and audit runtime output ---

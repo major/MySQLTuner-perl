@@ -12,18 +12,6 @@ use FindBin;
 use IPC::Open2;
 use File::Path qw(make_path remove_tree);
 
-# --- Pre-flight checks ---
-my $has_docker = system("docker info >/dev/null 2>&1") == 0;
-my $has_python = system("which python3 >/dev/null 2>&1") == 0;
-
-unless ($has_docker && $has_python) {
-    plan skip_all => "Docker and Python3 are required for MCP E2E tests"
-        . ($has_docker ? "" : " (Docker unavailable)")
-        . ($has_python ? "" : " (Python3 unavailable)");
-}
-
-plan tests => 2;
-
 my $DB_PASS      = "mcp_test_pass";
 my $DB_PORT      = 13306;  # Non-standard port to avoid conflicts
 my $CONTAINER    = "mysqltuner_mcp_e2e_$$";
@@ -33,12 +21,27 @@ my $CACHE_DIR    = "$FindBin::Bin/mcp_e2e_cache_$$";
 
 # --- Helper: cleanup ---
 sub cleanup {
-    system("docker rm -f $CONTAINER >/dev/null 2>&1");
-    remove_tree($CACHE_DIR) if -d $CACHE_DIR;
+    local $?;
+    system("docker rm -f $CONTAINER >/dev/null 2>&1") if defined $CONTAINER;
+    remove_tree($CACHE_DIR) if defined $CACHE_DIR && -d $CACHE_DIR;
 }
 
 # Ensure cleanup on exit
 END { cleanup(); }
+
+# --- Pre-flight checks ---
+my $has_docker = system("docker info >/dev/null 2>&1") == 0;
+my $has_python = system("which python3 >/dev/null 2>&1") == 0;
+my $has_image  = system("docker image inspect mariadb:11.4 >/dev/null 2>&1") == 0;
+
+unless ($has_docker && $has_python && ($ENV{RUN_E2E_TESTS} || $has_image)) {
+    plan skip_all => "Docker, Python3 and mariadb:11.4 image (or RUN_E2E_TESTS=1) are required for MCP E2E tests"
+        . ($has_docker ? "" : " (Docker unavailable)")
+        . ($has_python ? "" : " (Python3 unavailable)")
+        . (($has_image || $ENV{RUN_E2E_TESTS}) ? "" : " (mariadb:11.4 image not cached; set RUN_E2E_TESTS=1 to pull)");
+}
+
+plan tests => 2;
 
 # --- Start MariaDB container ---
 subtest 'MCP E2E: Database Container Lifecycle' => sub {

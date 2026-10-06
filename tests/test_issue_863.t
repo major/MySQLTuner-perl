@@ -1,8 +1,14 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Test:        test_issue_863.t
+# Description: Validates cPanel & standard skip-name-resolve matrix (Issue #863 / Phase 26.2).
+# ===========================================================================
 use strict;
 use warnings;
 no warnings 'once';
 use Test::More;
+
+plan tests => 4;
 
 # Mocking variables and functions from mysqltuner.pl
 our %result;
@@ -10,37 +16,30 @@ our %opt = ( "debug" => 0 );
 our ( @adjvars, @generalrec );
 
 my $infoprint_called = 0;
-my $badprint_called = 0;
+my $badprint_called  = 0;
 
 sub debugprint { }
-sub infoprint { 
+sub infoprint {
     my $msg = shift;
     $infoprint_called++;
-    # print "INFO: $msg\n";
 }
-sub badprint { 
+sub badprint {
     my $msg = shift;
     $badprint_called++;
-    # print "BAD: $msg\n";
 }
 
-# Mocking -r operator is not possible easily, so we will extract the logic into a testable function
-# For the purpose of reproduction, we copy the logic here as it will be after fix
-sub test_logic {
-    my ($has_cpanel, $skip_name_resolve) = @_;
+sub evaluate_skip_name_resolve_logic {
+    my ( $has_cpanel, $skip_name_resolve ) = @_;
     $result{'Variables'}{'skip_name_resolve'} = $skip_name_resolve;
-    $infoprint_called = 0;
-    $badprint_called = 0;
-    @adjvars = ();
-    @generalrec = ();
+    $infoprint_called                         = 0;
+    $badprint_called                          = 0;
+    @adjvars                                  = ();
+    @generalrec                               = ();
 
-    # Logic from mysqltuner.pl (FIXED)
     if ( not defined( $result{'Variables'}{'skip_name_resolve'} ) ) {
-        # infoprint "Skipped name resolution test due to missing skip_name_resolve in system variables.";
+        # Skipped
     }
-    # Cpanel and Skip name resolve (Issue #863)
-    # Ref: https://support.cpanel.net/hc/en-us/articles/21664293830423
-    elsif ( $has_cpanel ) {
+    elsif ($has_cpanel) {
         if ( $result{'Variables'}{'skip_name_resolve'} ne 'OFF'
             and $result{'Variables'}{'skip_name_resolve'} ne '0' )
         {
@@ -62,17 +61,42 @@ sub test_logic {
     }
 }
 
-# Test Case 1: cPanel detected, skip_name_resolve=OFF
-# EXPECTED: No badprint, no recommendation
-test_logic(1, 'OFF');
-is($badprint_called, 0, "FIXED: cPanel with skip_name_resolve=OFF does NOT trigger a badprint");
-is(scalar(@adjvars), 0, "FIXED: cPanel with skip_name_resolve=OFF does NOT recommend an adjustment");
+# --- Subtest 1: cPanel with skip_name_resolve=OFF ---
+subtest 'cPanel Environment with skip_name_resolve=OFF' => sub {
+    plan tests => 2;
 
-# Test Case 2: cPanel detected, skip_name_resolve=ON
-# EXPECTED: badprint saying it should be OFF
-test_logic(1, 'ON');
-is($badprint_called, 1, "FIXED: cPanel with skip_name_resolve=ON triggers a badprint (should be OFF)");
-is(scalar(@adjvars), 0, "FIXED: cPanel should NOT recommend skip-name-resolve=0 even if ON");
-like($generalrec[0], qr/cPanel recommends keeping skip-name-resolve disabled/, "FIXED: Recommendation contains cPanel support link");
+    evaluate_skip_name_resolve_logic( 1, 'OFF' );
+    is( $badprint_called, 0, "cPanel with skip_name_resolve=OFF does NOT trigger badprint" );
+    is( scalar(@adjvars), 0, "cPanel with skip_name_resolve=OFF does NOT recommend variable adjustment" );
+};
+
+# --- Subtest 2: cPanel with skip_name_resolve=ON ---
+subtest 'cPanel Environment with skip_name_resolve=ON' => sub {
+    plan tests => 3;
+
+    evaluate_skip_name_resolve_logic( 1, 'ON' );
+    is( $badprint_called, 1, "cPanel with skip_name_resolve=ON triggers badprint warning" );
+    is( scalar(@adjvars), 0, "cPanel does NOT recommend skip-name-resolve=ON" );
+    like( $generalrec[0], qr/cPanel recommends keeping skip-name-resolve disabled/, "Recommendation contains cPanel KB link" );
+};
+
+# --- Subtest 3: Standard Environment with skip_name_resolve=OFF ---
+subtest 'Standard Environment with skip_name_resolve=OFF' => sub {
+    plan tests => 3;
+
+    evaluate_skip_name_resolve_logic( 0, 'OFF' );
+    is( $badprint_called, 1, "Standard system with skip_name_resolve=OFF triggers badprint warning" );
+    is( scalar(@adjvars), 1, "Standard system recommends variable adjustment" );
+    is( $adjvars[0], "skip-name-resolve=ON", "Adjustment specifies skip-name-resolve=ON" );
+};
+
+# --- Subtest 4: Standard Environment with skip_name_resolve=ON ---
+subtest 'Standard Environment with skip_name_resolve=ON' => sub {
+    plan tests => 2;
+
+    evaluate_skip_name_resolve_logic( 0, 'ON' );
+    is( $badprint_called, 0, "Standard system with skip_name_resolve=ON does NOT trigger badprint" );
+    is( scalar(@adjvars), 0, "No adjustment recommended when already ON" );
+};
 
 done_testing();

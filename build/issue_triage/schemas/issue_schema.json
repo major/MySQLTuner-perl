@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GitHubIssueRecordSchema",
+  "type": "object",
+  "required": ["number", "title", "author", "author_type", "created_at", "updated_at", "state", "body"],
+  "properties": {
+    "number": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "author": { "type": "string", "minLength": 1 },
+    "author_type": {
+      "type": "string",
+      "enum": ["maintainer", "contributor", "community", "bot"]
+    },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "state": { "type": "string", "enum": ["open", "closed"] },
+    "body": { "type": "string" },
+    "labels": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "bug:diagnostic",
+        "bug:parsing",
+        "bug:syntax",
+        "feat:metric",
+        "feat:db-support",
+        "feat:container",
+        "docs:general",
+        "question:tuning",
+        "sec:vulnerability",
+        "unknown"
+      ]
+    },
+    "triage_status": {
+      "type": "string",
+      "enum": [
+        "pending_ingestion",
+        "parsed",
+        "diagnosed",
+        "test_generated",
+        "verified_on_master",
+        "requires_patch",
+        "needs_user_info",
+        "maintainer_hold",
+        "ready_to_close",
+        "closed"
+      ]
+    },
+    "extracted_metrics": {
+      "type": "object",
+      "properties": {
+        "db_engine": { "type": "string" },
+        "db_version_raw": { "type": ["string", "null"] },
+        "db_version_normalized": { "type": ["string", "null"] },
+        "variables": { "type": "object" },
+        "status_metrics": { "type": "object" },
+        "system_metrics": { "type": "object" },
+        "sql_snippets": { "type": "array", "items": { "type": "string" } },
+        "mysqltuner_output_snippets": { "type": "array", "items": { "type": "string" } },
+        "error_log_excerpts": { "type": "array", "items": { "type": "string" } },
+        "stack_traces": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "title", "severity", "root_cause", "confidence_score", "official_doc_url", "recommendation"],
+        "properties": {
+          "rule_id": { "type": "string" },
+          "title": { "type": "string" },
+          "severity": { "type": "string", "enum": ["OK", "INFO", "WARN", "BAD", "CRITICAL"] },
+          "root_cause": { "type": "string" },
+          "confidence_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "official_doc_url": { "type": "string", "format": "uri" },
+          "recommendation": { "type": "string" },
+          "suggested_cnf_directives": { "type": "object" },
+          "code_fix_hint": { "type": ["string", "null"] },
+          "is_already_supported_in_master": { "type": "boolean" },
+          "master_feature_ref": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "test_proofs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["test_file_path", "test_name", "subtest_count", "syntax_valid", "execution_passed", "output_log_excerpt", "reproduce_command"],
+        "properties": {
+          "test_file_path": { "type": "string" },
+          "test_name": { "type": "string" },
+          "subtest_count": { "type": "integer", "minimum": 1 },
+          "syntax_valid": { "type": "boolean" },
+          "execution_passed": { "type": "boolean" },
+          "output_log_excerpt": { "type": "string" },
+          "reproduce_command": { "type": "string" },
+          "ci_workflow_url": { "type": ["string", "null"] },
+          "commit_sha": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "governance": {
+      "type": ["object", "null"],
+      "properties": {
+        "author": { "type": "string" },
+        "author_type": { "type": "string" },
+        "can_auto_close": { "type": "boolean" },
+        "close_action_blocked_reason": { "type": ["string", "null"] },
+        "target_labels_to_add": { "type": "array", "items": { "type": "string" } },
+        "target_labels_to_remove": { "type": "array", "items": { "type": "string" } },
+        "response_markdown": { "type": "string" },
+        "closing_comment": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

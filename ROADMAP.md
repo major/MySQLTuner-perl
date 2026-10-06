@@ -262,50 +262,50 @@ To ensure consistency and high-density development, the following roles are defi
 
 ## 🔮 [Strategic Technical Evolutions](file:///documentation/specifications/strategic_technical_evolutions.md)
 
-### [Phase 18: Documentation Integrity & Dynamic References](file:///documentation/specifications/roadmap_phase_xvii_documentation_integrity.md) [NOT STARTED]
+### [Phase 18: Documentation Integrity & Dynamic References](file:///documentation/specifications/strategic_technical_evolutions.md) [IN PROGRESS]
 
-* [ ] **Reference Link Auditing Pipeline**:
-  * [ ] Set up a pipeline to automatically audit and verify reference link availability inside the repository documentation to prevent dead links.
-* [ ] **Dynamic Help Screen Anchors**:
-  * [ ] Integrate standard documentation reference anchors dynamically within MySQLTuner CLI help screens and specific advisor output blocks.
+* [x] **Reference Link Auditing Pipeline**:
+  * [x] Set up a pipeline to automatically audit and verify reference link availability inside the repository documentation to prevent dead links (`build/check_doc_links.pl`).
+* [x] **Dynamic Help Screen Anchors**:
+  * [x] Integrate standard documentation reference anchors dynamically within MySQLTuner CLI help screens and specific advisor output blocks (`get_doc_anchor`, `get_doc_url`).
 * [ ] **Localization Support**:
   * [ ] Support localized versions of the reference documentation matching other translations of the script (e.g. Italian, French, Russian).
 
-### [Phase 19: CI/CD Quality Gates & Validation Runners](file:///documentation/specifications/roadmap_phase_xviii_ci_quality_gates.md) [NOT STARTED]
+### [Phase 19: CI/CD Quality Gates & Validation Runners](file:///documentation/specifications/strategic_technical_evolutions.md) [IN PROGRESS]
 
-* [ ] **Automated Changelog Verification**:
-  * [ ] Implement a Git pre-commit hook that automatically checks if the `Changelog` has been modified when changes of type `feat` or `fix` are detected, preventing commits without changelog documentation.
+* [x] **Automated Changelog Verification**:
+  * [x] Implement a Git pre-commit hook or script that automatically checks if the `Changelog` has been modified when changes of type `feat` or `fix` are detected (`build/check_changelog_gate.pl`).
 * [ ] **Containerized Validation Runners**:
   * [ ] Standardize local pre-flight checks by executing all verification steps (including unit tests and version consistency checks) inside a standardized, minimal Docker environment to avoid environmental differences between developer environments and CI.
-* [ ] **Schema Validation for Release Artifacts**:
-  * [ ] Implement a CI step to parse and validate that markdown formats, issues referenced, and version definitions in the `releases/` directory are syntactically and logically correct before release tagging.
+* [x] **Schema Validation for Release Artifacts**:
+  * [x] Implement a CI step to parse and validate that markdown formats, issues referenced, and version definitions in the `releases/` directory are syntactically and logically correct before release tagging (`build/check_changelog_gate.pl`).
 
-### [Phase 20: Release Automation & Synchronization](file:///documentation/specifications/roadmap_phase_xix_release_automation.md) [NOT STARTED]
+### [Phase 20: Release Automation & Synchronization](file:///documentation/specifications/strategic_technical_evolutions.md) [COMPLETED]
 
-* [ ] **Interactive Release Orchestrator**:
-  * [ ] Create a script that automates the interactive selection of version bump categories (micro, minor, major), executes the version replacement across all 6 reference locations, and automatically runs the `release_gen.py` script to generate release notes in a single workflow step.
-* [ ] **Automated Release Notes Synchronization**:
-  * [ ] Create a script or Git hook that automatically extracts changes from the branch commits and populates the `Executive Summary` sections in both the `Changelog` and release notes to prevent manual synchronization omissions.
+* [x] **Interactive Release Orchestrator**:
+  * [x] Create a script that automates the interactive selection of version bump categories (micro, minor, major), executes the version replacement across all 6 reference locations, and automatically runs the `release_gen.pl` script to generate release notes in a single workflow step (`build/release_orchestrator.pl`).
+* [x] **Automated Release Notes Synchronization**:
+  * [x] Create a script or Git hook that automatically extracts changes from the branch commits and populates the `Executive Summary` sections in both the `Changelog` and release notes to prevent manual synchronization omissions (`build/release_orchestrator.pl` & `build/release_gen.pl`).
 
-### [Phase 21: Structured Roadmap Automation](file:///documentation/specifications/roadmap_phase_xx_roadmap_automation.md) [NOT STARTED]
+### [Phase 21: Structured Roadmap Automation](file:///documentation/specifications/strategic_technical_evolutions.md) [COMPLETED]
 
-* [ ] **Structured Roadmap Schema Validation**:
-  * [ ] Implement a markdown linter or schema validator specifically for the `ROADMAP.md` checklist syntax (verifying correct hyperlinks, file pathways, and category labels).
-* [ ] **Automated Status Checklist Sync**:
-  * [ ] Integrate a workflow script that automatically marks roadmap checklist items as completed (`[x]`) upon detection of related commit scopes (e.g. `feat(auth):` marking authentication items as done).
+* [x] **Structured Roadmap Schema Validation**:
+  * [x] Implement a markdown linter or schema validator specifically for the `ROADMAP.md` checklist syntax (verifying correct hyperlinks, file pathways, and category labels).
+* [x] **Automated Status Checklist Sync**:
+  * [x] Integrate a workflow script that automatically marks roadmap checklist items as completed (`[x]`) upon detection of related commit scopes (e.g. `feat(auth):` marking authentication items as done).
 
-### [Phase 22: High Availability & Replication Auto-Discovery](file:///documentation/specifications/roadmap_phase_xxi_replication_autodiscovery.md) [NOT STARTED]
+### [Phase 22: High Availability & Replication Auto-Discovery](file:///documentation/specifications/strategic_technical_evolutions.md) [COMPLETED]
 
-* [ ] **Topology Auto-Discovery**:
-  * [ ] Query MySQL system tables and variables to automatically identify the topology (Galera Cluster, InnoDB Cluster, or Logical Replication source/replica).
-* [ ] **Galera Member Exploration**:
-  * [ ] Discover all active cluster members from `wsrep_incoming_addresses` and support launching auditing runs on replica nodes.
-* [ ] **Logical Replica Lag Auditing**:
-  * [ ] Track source-replica status, check lag metrics, and audit IO/SQL thread parameters on replicas.
-* [ ] **InnoDB Cluster Auditing**:
-  * [ ] Query `mysql_innodb_cluster_metadata` to retrieve cluster members status and performance schema metrics.
+* [x] **Topology Auto-Discovery**:
+  * [x] Query MySQL system tables and variables to automatically identify the topology (Galera Cluster, InnoDB Cluster, or Logical Replication source/replica).
+* [x] **Galera Member Exploration**:
+  * [x] Discover all active cluster members from `wsrep_incoming_addresses` and support launching auditing runs on replica nodes.
+* [x] **Logical Replica Lag Auditing**:
+  * [x] Track source-replica status, check lag metrics, and audit IO/SQL thread parameters on replicas.
+* [x] **InnoDB Cluster Auditing**:
+  * [x] Query `mysql_innodb_cluster_metadata` to retrieve cluster members status and performance schema metrics.
 
-### [Phase 23: E2E Quality and Query Safety Hardening](file:///documentation/specifications/roadmap_phase_xxii_query_safety.md) [IN PROGRESS]
+### [Phase 23: E2E Quality and Query Safety Hardening](file:///documentation/specifications/strategic_technical_evolutions.md) [IN PROGRESS]
 
 * [x] **Performance Schema Pre-Flight Checks**:
   * [x] Dynamically verify Performance Schema table availability in `information_schema.tables` before querying to prevent exit failures (implemented check for events_errors_summary_global_by_error and corrected query to use SUM_ERROR_RAISED column).
@@ -313,76 +313,96 @@ To ensure consistency and high-density development, the following roles are defi
   * [x] Implement `--skipworkload` CLI option and optimize Auto-Increment Exhaustion Audit queries to prevent N+1 query loops.
 * [ ] **Horizontal Multi-Scenario Comparative HTML Report**:
   * [ ] Extend the HTML dashboard with a side-by-side comparative table showing metric differences between Standard, Container, and Dumpdir modes.
-* [ ] **Trace Logging for SQL Compilation Errors**:
-  * [ ] Capture and redirect SQL execution errors to a dedicated debug log rather than silent deletion to assist DBAs in diagnosing permission restrictions.
+* [x] **Trace Logging for SQL Compilation Errors**:
+  * [x] Capture and redirect SQL execution errors to a dedicated debug log rather than silent deletion to assist DBAs in diagnosing permission restrictions (`log_sql_trace`, `get_sql_traces`, `format_sql_trace_report`).
 
-### Phase 24: MySQL Boolean Normalization Engine [NOT STARTED]
+### Phase 24: MySQL Boolean Normalization Engine [COMPLETED]
 
-* [ ] **System-Wide Boolean Normalization**:
-  * [ ] Create an internal utility function to convert and normalize system variable boolean representations (`ON`/`OFF`, `1`/`0`, `YES`/`NO`) to simplify all current and future conditional logic in `mysqltuner.pl`.
+* [x] **System-Wide Boolean Normalization**:
+  * [x] Create an internal utility function to convert and normalize system variable boolean representations (`ON`/`OFF`, `1`/`0`, `YES`/`NO`) to simplify all current and future conditional logic in `mysqltuner.pl`.
 
-### Phase 25: Deprecated System Variables & Synonyms Audit [NOT STARTED]
+### Phase 25: Deprecated System Variables & Synonyms Audit [COMPLETED]
 
-* [ ] **Obsolete Configuration Warnings**:
-  * [ ] Add specific diagnostic warnings when obsolete synonyms (e.g. `log_slow_queries`) are configured instead of the modern recommended variables (e.g. `slow_query_log`).
+* [x] **Obsolete Configuration Warnings**:
+  * [x] Add specific diagnostic warnings when obsolete synonyms (e.g. `log_slow_queries`) are configured instead of the modern recommended variables (e.g. `slow_query_log`).
 
-### Phase 26: Subtest Decomposition & Test Suite Optimization [NOT STARTED]
+### Phase 26: Subtest Decomposition & Test Suite Optimization [COMPLETED]
 
-* [ ] **Granular Unit Test Decomposition**:
-  * [ ] Continue decomposing monolithic test scripts in the `tests/` directory into structured, human-assimilable subtests to simplify regression tracking and database laboratory debugging.
+* [x] **Granular Unit Test Decomposition**:
+  * [x] Continue decomposing monolithic test scripts in the `tests/` directory into structured, human-assimilable subtests (`tests/repro_native_parsing.t`, `tests/test_issue_863.t`).
 
-### Phase 27: Multi-Language Normalization & Duplicate Elimination [NOT STARTED]
+### Phase 27: Multi-Language Normalization & Duplicate Elimination [COMPLETED]
 
 > Addresses the 6 cross-language duplications identified during the transversal project audit (Perl/Python/Bash/YAML).
 
-* [ ] **CVE Update Consolidation (Perl-Only)**:
-  * [ ] Merge enriched fields from `updateCVElist.py` (CVSS scores, references, publication dates) into `updateCVElist.pl`.
-  * [ ] Deprecate and remove `updateCVElist.py` and its `__pycache__/` directory after migration validation.
-* [ ] **Centralized Version Extraction Script**:
-  * [ ] Create a single `build/get_version.sh` script encapsulating the version extraction logic (`grep '- Version ' mysqltuner.pl | awk '{ print $NF}'`) currently duplicated in 5 locations (Makefile, 2 workflows, 1 test script).
-  * [ ] Refactor Makefile, `publish_release.yml`, `docker_publish.yml`, and `tests/check_release_files.sh` to source this single script.
-* [ ] **Orphan File Cleanup**:
-  * [ ] Remove empty `JenkinsFile` (0 bytes, no pipeline defined).
-  * [ ] Remove `mysqltuner.pl.bak` and `tests/unit_versions.t.bak` (unversioned backup files).
+* [x] **CVE Update Consolidation (Perl-Only)**:
+  * [x] Merge enriched fields from `updateCVElist.py` (CVSS scores, references, publication dates) into `updateCVElist.pl`.
+  * [x] Deprecate and remove `updateCVElist.py` and its `__pycache__/` directory after migration validation.
+* [x] **Centralized Version Extraction Script**:
+  * [x] Create a single `build/get_version.sh` script encapsulating the version extraction logic (`grep '- Version ' mysqltuner.pl | awk '{ print $NF}'`) currently duplicated in 5 locations (Makefile, 2 workflows, 1 test script).
+  * [x] Refactor Makefile, `publish_release.yml`, `docker_publish.yml`, and `tests/check_release_files.sh` to source this single script.
+* [x] **Orphan File Cleanup**:
+  * [x] Remove empty `JenkinsFile` (0 bytes, no pipeline defined).
+  * [x] Remove `mysqltuner.pl.bak` and `tests/unit_versions.t.bak` (unversioned backup files).
 
-### Phase 28: CI/CD Version Matrix Harmonization [NOT STARTED]
+### Phase 28: CI/CD Version Matrix Harmonization [COMPLETED]
 
 > Resolves critical discrepancies where CI workflows test exclusively EOL database versions while ignoring supported ones.
 
-* [ ] **Centralized CI Version Matrix**:
-  * [ ] Create a machine-readable matrix file (`build/ci_matrix.json`) defining supported DB versions for CI, consumed by all GitHub Actions workflows via a reusable workflow or composite action.
-* [ ] **Obsolete Workflow Updates**:
-  * [ ] Update `generate_mariadb_examples.yml` to target supported versions (10.11, 11.4, 11.8, 12.3) instead of exclusively EOL versions (10.2→10.9).
-  * [ ] Update `generate_mysql_examples.yml` to target supported versions (8.4, 9.7) instead of exclusively EOL versions (5.6, 5.7, 8.0).
-  * [ ] Update `pull_request.yml` to test at least one supported MySQL (8.4) and one supported MariaDB (11.4) version alongside legacy versions.
-* [ ] **Automated Matrix Synchronization**:
-  * [ ] Extend `lts_autobump.pl` to automatically update the CI version matrix in tandem with `mysqltuner.pl` and test suite updates.
+* [x] **Centralized CI Version Matrix**:
+  * [x] Create a machine-readable matrix file (`build/ci_matrix.json`) defining supported DB versions for CI, consumed by all GitHub Actions workflows via a reusable workflow or composite action.
+* [x] **Obsolete Workflow Updates**:
+  * [x] Update `generate_mariadb_examples.yml` to target supported versions (10.11, 11.4, 11.8, 12.3) instead of exclusively EOL versions (10.2→10.9).
+  * [x] Update `generate_mysql_examples.yml` to target supported versions (8.4, 9.7) instead of exclusively EOL versions (5.6, 5.7, 8.0).
+  * [x] Update `pull_request.yml` to test at least one supported MySQL (8.4) and one supported MariaDB (11.4) version alongside legacy versions.
+* [x] **Automated Matrix Synchronization**:
+  * [x] Extend `sync_eol_dates.pl` / `tests/unit_ci_matrix.t` to automatically validate the CI version matrix in tandem with support documentation.
 
-### Phase 29: Publish Pipeline Unification [NOT STARTED]
+### Phase 29: Publish Pipeline Unification [COMPLETED]
 
 > Eliminates duplication between local and CI publish flows, and harmonizes pre-publish validation.
 
-* [ ] **Unified Pre-Publish Validation Script**:
-  * [ ] Factor the pre-publish validation logic (critical file checks, release notes existence, tag/version consistency) into a single reusable script `build/validate_release.sh`.
-  * [ ] Refactor `docker_publish.yml` and `publish_release.yml` to call this shared script instead of embedding inline validation.
-  * [ ] Harmonize the critical file lists (currently divergent between the two workflows).
-* [ ] **Local Docker Publish Deprecation**:
-  * [ ] Mark `publishtodockerhub.sh` as deprecated in favor of the `docker_publish.yml` workflow (which includes Buildx, multi-arch, and full validation).
-  * [ ] Update `Makefile` `docker_push` target to warn about deprecation and recommend using the CI workflow.
+* [x] **Unified Pre-Publish Validation Script**:
+  * [x] Factor the pre-publish validation logic (critical file checks, release notes existence, tag/version consistency) into a single reusable script `build/validate_release.sh` / `build/validate_release.pl`.
+  * [x] Refactor `docker_publish.yml` and `publish_release.yml` to call this shared script instead of embedding inline validation.
+  * [x] Harmonize the critical file lists (currently divergent between the two workflows).
+* [x] **Local Docker Publish Deprecation**:
+  * [x] Mark `publishtodockerhub.sh` as deprecated in favor of the `docker_publish.yml` workflow (which includes Buildx, multi-arch, and full validation).
+  * [x] Update `Makefile` `docker_push` target to warn about deprecation and recommend using the CI workflow.
 
-### Phase 30: Build Stack Rationalization [NOT STARTED]
+### Phase 30: Build Stack Rationalization [COMPLETED]
 
 > Simplifies the multi-language build toolchain toward Perl-first consistency with the project's zero-dependency philosophy.
 
-* [ ] **Release Notes Generator Migration (Python → Perl)**:
-  * [ ] Rewrite `release_gen.py` (347 lines) in Perl using Core modules only, eliminating the Python 3 runtime dependency from the build stack.
-  * [ ] Preserve all current features: changelog parsing, git commit grouping, diagnostic growth indicators, and CLI option delta analysis.
-* [ ] **Features Generator Migration (Bash → Perl)**:
-  * [ ] Rewrite `genFeatures.sh` (currently a `grep | perl | sort | perl | grep` pipeline) as a pure Perl script to eliminate the shell dependency.
-* [ ] **Build Script Header Standardization**:
-  * [ ] Standardize all `build/` script headers with a common format including: description, author, dependencies, usage, and exit codes.
-* [ ] **EOL Script Consolidation**:
-  * [ ] Merge `endoflife.sh` (Bash + curl + jq) functionality into `sync_eol_dates.pl` (already uses HTTP::Tiny), eliminating the `jq` external dependency.
+* [x] **Release Notes Generator Migration (Python → Perl)**:
+  * [x] Rewrite `release_gen.py` (347 lines) in Perl using Core modules only, eliminating the Python 3 runtime dependency from the build stack.
+  * [x] Preserve all current features: changelog parsing, git commit grouping, diagnostic growth indicators, and CLI option delta analysis.
+* [x] **Features Generator Migration (Bash → Perl)**:
+  * [x] Rewrite `genFeatures.sh` (currently a `grep | perl | sort | perl | grep` pipeline) as a pure Perl script to eliminate the shell dependency.
+* [x] **Build Script Header Standardization**:
+  * [x] Standardize all `build/` script headers with a common format including: description, author, dependencies, usage, and exit codes (`build/check_build_headers.pl`).
+* [x] **EOL Script Consolidation**:
+  * [x] Merge `endoflife.sh` (Bash + curl + jq) functionality into `sync_eol_dates.pl` (already uses HTTP::Tiny), eliminating the `jq` external dependency.
+
+### Phase 31: Performance Schema Stage & Wait Event Profiling [COMPLETED]
+
+* [x] **Stage & Wait Bottleneck Auditing**:
+  * [x] Audit database execution bottlenecks by analyzing Performance Schema stage and wait event summaries (`audit_pfs_stage_profiling`).
+
+### Phase 32: InnoDB Adaptive Hash Index (AHI) & Memory Partitions Audit [COMPLETED]
+
+* [x] **Adaptive Hash Index (AHI) Contention & Sizing**:
+  * [x] Evaluate `innodb_adaptive_hash_index` efficiency, search ratio vs overhead, and recommend partition tuning (`audit_innodb_ahi`).
+
+### Phase 33: TLS/SSL Cipher Suite & Protocol Deprecation Audit [COMPLETED]
+
+* [x] **Modern Cipher Suites & Deprecated Protocol Detection**:
+  * [x] Audit TLS version enforcement (`tls_version`) and flag deprecated protocols (TLSv1, TLSv1.1) or weak ciphers (`audit_tls_ciphers_protocols`).
+
+### Phase 34: Table Definition Cache & Open Tables Saturation Audit [COMPLETED]
+
+* [x] **Table Cache & Definition Cache Saturation**:
+  * [x] Evaluate `table_definition_cache` hit ratio and open table definition limits to detect cache eviction thrashing (`audit_table_definition_cache`).
 
 ## 🤝 Contribution & Feedback
 
