@@ -1,4 +1,10 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/doc_sync.pl
+# Description: Synchronize .agent/README.md with active rules, skills, and workflows.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/doc_sync.pl
+# ===========================================================================
 use strict;
 use warnings;
 use File::Basename;

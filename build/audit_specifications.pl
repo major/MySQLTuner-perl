@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/audit_specifications.pl
+# Description: Specification Consistency Auditor & QA Matrix Builder.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/audit_specifications.pl
+# ===========================================================================
 use strict;
 use warnings;
 use File::Basename;
-
-# Specification Consistency Auditor & QA Matrix Builder
-# Checks all specifications in documentation/specifications/ for:
-# - Valid markdown heading structure
-# - Resolution of referenced local file links
-# - Existence of associated test file defined in YAML frontmatter
 # - Dynamically rewrites the Spec-to-Test Mapping Matrix in documentation/QUALITY_AND_TESTING.md
 
 my $script_dir = dirname(__FILE__);
@@ -130,8 +130,8 @@ if (-f $qa_file) {
     $matrix_md .= "| Specification Document | Path | Target Test File / Suite |\n";
     $matrix_md .= "| :--- | :--- | :--- |\n";
     for my $entry (@matrix_entries) {
-        my $test_link = $entry->{test_file} eq 'N/A' ? 'N/A' : "[$entry->{test_file}](file:///MySQLTuner-perl/$entry->{test_file})";
-        $matrix_md .= sprintf("| **%s** | [%s](file:///MySQLTuner-perl/%s) | %s |\n",
+        my $test_link = $entry->{test_file} eq 'N/A' ? 'N/A' : "[$entry->{test_file}](file:///$entry->{test_file})";
+        $matrix_md .= sprintf("| **%s** | [%s](file:///%s) | %s |\n",
             $entry->{spec_name},
             basename($entry->{spec_path}),
             $entry->{spec_path},
