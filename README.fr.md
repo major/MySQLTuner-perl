@@ -95,7 +95,7 @@ Merci à [endoflife.date](https://endoflife.date/)
 * **Planification prédictive des capacités** : Analyse de la marge de manœuvre mémoire (pic vs RAM+Swap disponible), prévision de la croissance disque, et détection de la capacité AUTO_INCREMENT proche du maximum.
 * **Découverte automatique du Cloud** : Prise en charge native d'AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed) et DigitalOcean. Détection automatique via `@@version_comment` et variables spécifiques au fournisseur.
 * **Tuning adaptatif à l'infrastructure** : Détection des types de stockage SSD/NVMe vs HDD et des architectures ARM64/Graviton vs x86_64. Ajustement des recommandations pour `innodb_flush_neighbors` et `innodb_io_capacity`.
-* **Audit de sécurité SSL/TLS** : Vérification du chiffrement de session, audit des versions TLS (alerte sur TLSv1.0/1.1), expiration des certificats, application de `require_secure_transport`, et vérification SSL des utilisateurs distants.
+* **Audit de sécurité SSL/TLS** : Vérification du chiffrement de session, audit des versions TLS (alerte sur TLSv1.0/1.1), expiration des certificats, application de `require_secure_transport`, et vérification SSL des utilisateurs distants. Le statut TLS du serveur est détecté via `have_ssl`, puis `Ssl_cipher`, puis `performance_schema.tls_channel_status` (MySQL 8.4+ n'expose plus `have_ssl`).
 * **Audit des plugins d'authentification** : Détection des plugins non sécurisés (`mysql_native_password`, `sha256_password`), diagnostic de compatibilité MySQL 9.x, et recommandations MariaDB `ed25519`/`unix_socket`.
 * **Modélisation de schéma et conventions de nommage** : Analyse complète de la structure des tables (PK manquantes, types de clés de substitution, conformité UTF-8, tables non-InnoDB), audit des conventions de nommage (cohérence snake_case/camelCase, détection du pluriel, préfixes de colonnes booléennes/dates), et analyse des clés étrangères (colonnes `_id` non contraintes, incohérences de types, audit CASCADE).
 * **Modélisation MySQL 8.0+ / MariaDB** : Indexabilité des colonnes JSON (colonnes virtuelles générées), index invisibles, contraintes CHECK.
@@ -716,6 +716,9 @@ Connexion et authentification
  --pass <password> Mot de passe à utiliser pour l'authentification
  --defaults-file <path> fichier de valeurs par défaut pour les informations d'identification
 
+* En cas d'échec de connexion, l'erreur réelle du client est affichée (ex. `Client error: ERROR 2026 ... self-signed certificate`) avec une indication TLS ou réseau ; « identifiants invalides » n'est signalé que pour les erreurs d'authentification (1045/1698).
+* Un échec avec des identifiants explicites `--pass` ou `--login-path` arrête immédiatement l'exécution (code 1) sans essayer d'autres méthodes de connexion (`debian.cnf`, fichier de valeurs par défaut, invite).
+
 Étant donné que vous utilisez un hôte distant, utilisez des paramètres pour fournir des valeurs à partir du système d'exploitation
 
  --forcemem <size>  Quantité de RAM installée (en mégaoctets ou avec unités, ex. 15G, 1024M)
@@ -781,9 +784,11 @@ mysql_percona80 sakila
 
 **Cibles de test prises en charge** (reportez-vous à [support MariaDB](mariadb_support.md) et [support MySQL](mysql_support.md) pour la matrice de compatibilité actuelle) :
 
-* MySQL 8.0, 8.4, 9.x
-* MariaDB 10.6, 10.11, 11.4, 11.8
+* MySQL 8.4, 9.7 (LTS), 8.0 (support legacy) et 26.7 (support court terme)
+* MariaDB 10.11, 11.4, 11.8, 12.3 (LTS) et 13.0 (support court terme)
 * Percona Server 8.0
+
+Les cycles supportés sont définis une seule fois dans `build/ci_matrix.json` (`lts`, `legacy_supported`, `short_term`) et propagés dans `mysqltuner.pl` avec `make sync_versions` (`make check_versions` les vérifie en CI).
 
 Les contributions sont les bienvenues
 --

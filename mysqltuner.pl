@@ -759,6 +759,17 @@ sub setup_environment {
     $opt{'forceswap'} = parse_human_size_to_mb( $opt{'forceswap'} )
       if $opt{'forceswap'};
 
+    if ( $opt{dumpdir} ) {
+        my_mkdir_p( $opt{dumpdir} )
+          or die "Cannot create directory $opt{dumpdir}: $!";
+        $opt{dumpdir} = abs_path( $opt{dumpdir} );
+    }
+    if ( $opt{schemadir} ) {
+        my_mkdir_p( $opt{schemadir} )
+          or die "Cannot create directory $opt{schemadir}: $!";
+        $opt{schemadir} = abs_path( $opt{schemadir} );
+    }
+
     $devnull = File::Spec->devnull();
     $basic_password_files =
       ( !$opt{passwordfile} )
@@ -805,15 +816,23 @@ sub setup_environment {
     $opt{cvefile} = '/usr/share/mysqltuner/vulnerabilities.csv'
       if ( !$opt{cvefile} && -f '/usr/share/mysqltuner/vulnerabilities.csv' );
 
+    $opt{json} = 1 if $opt{prettyjson};
+
     $opt{'bannedports'} = '' unless $opt{'bannedports'};
     @banned_ports       = split ',', $opt{'bannedports'};
 
     $outputfile = undef;
-    $outputfile = abs_path( $opt{outputfile} ) if $opt{outputfile};
+    if ( $opt{outputfile} ) {
+        my ( $vol, $dirs, $file ) = File::Spec->splitpath( $opt{outputfile} );
+        if ($dirs) {
+            my_mkdir_p($dirs);
+        }
+        $outputfile = abs_path( $opt{outputfile} ) // $opt{outputfile};
+    }
 
     $fh               = undef;
     @raw_output_lines = ();
-    if ($outputfile) {
+    if ( $outputfile && !$opt{json} && !$opt{yaml} ) {
         open( $fh, '>', $outputfile )
           or die("Fail opening $outputfile");
     }
@@ -934,17 +953,17 @@ sub prettyprint {
 
 sub goodprint {
     my $prefix = $good // '[OK]';
-    prettyprint $prefix. " " . $_[0] unless ( $opt{nogood} == 1 );
+    prettyprint $prefix. " " . $_[0] unless ( ( $opt{nogood} // 0 ) == 1 );
 }
 
 sub infoprint {
     my $prefix = $info // '[--]';
-    prettyprint $prefix. " " . $_[0] unless ( $opt{noinfo} == 1 );
+    prettyprint $prefix. " " . $_[0] unless ( ( $opt{noinfo} // 0 ) == 1 );
 }
 
 sub badprint {
     my $prefix = $bad // '[!!]';
-    prettyprint $prefix. " " . $_[0] unless ( $opt{nobad} == 1 );
+    prettyprint $prefix. " " . $_[0] unless ( ( $opt{nobad} // 0 ) == 1 );
 }
 
 sub debugprint {
@@ -1965,20 +1984,80 @@ sub check_replication_advanced {
     }
 }
 
+# Pure: derive server-side TLS availability from collected signals.
+# Returns 1 (enabled), 0 (disabled) or undef (unknown).
+# have_ssl / have_openssl were removed in MySQL 8.4.0:
+#   https://dev.mysql.com/doc/refman/8.4/en/mysql-nutshell.html
+# Ssl_cipher (session status) is non-empty when the current connection is encrypted:
+#   https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html#statvar_Ssl_cipher
+# performance_schema.tls_channel_status 'Enabled' property (MySQL 8.0.21+):
+#   https://dev.mysql.com/doc/refman/8.4/en/performance-schema-tls-channel-status-table.html
+sub compute_server_tls_status {
+    my ( $have_ssl, $session_cipher, $channel_enabled ) = @_;
+    if ( defined $have_ssl && $have_ssl ne '' ) {
+        return ( $have_ssl =~ /^(?:YES|ON)$/i ) ? 1 : 0;
+    }
+    if (   defined $session_cipher
+        && $session_cipher ne ''
+        && $session_cipher !~ /^(?:NULL|0)$/i )
+    {
+        return 1;
+    }
+    if ( defined $channel_enabled && $channel_enabled ne '' ) {
+        return ( $channel_enabled =~ /^(?:YES|ON|1|TRUE)$/i ) ? 1 : 0;
+    }
+    return undef;
+}
+
+# Collect TLS signals from the server (have_ssl, then Ssl_cipher, then
+# performance_schema.tls_channel_status) and return compute_server_tls_status().
+sub get_server_tls_status {
+    my $have_ssl = $myvar{'have_ssl'};
+    return compute_server_tls_status($have_ssl)
+      if defined $have_ssl && $have_ssl ne '';
+
+    my $cipher = '';
+    my $row    = select_one("SHOW SESSION STATUS LIKE 'Ssl_cipher'") // '';
+    if ( $row =~ /Ssl_cipher\s+(\S.*?)\s*$/ ) {
+        $cipher = $1;
+    }
+
+    my $channel;
+    my $is_mariadb = (
+             ( $myvar{'version'} // '' ) =~ /MariaDB/i
+          or ( $myvar{'version_comment'} // '' ) =~ /MariaDB/i
+    );
+    if (   $cipher eq ''
+        && !$is_mariadb
+        && ( $myvar{'performance_schema'} // '' ) eq 'ON'
+        && mysql_version_ge( 8, 0, 21 ) )
+    {
+        $channel = select_one(
+"SELECT VALUE FROM performance_schema.tls_channel_status WHERE CHANNEL = 'mysql_main' AND PROPERTY = 'Enabled'"
+        );
+    }
+    return compute_server_tls_status( undef, $cipher, $channel );
+}
+
 sub check_security_2_0 {
     subheaderprint "Security Hardening 2.0";
 
     # TLS/SSL Cipher Suite
-    if ( defined $myvar{'have_ssl'} && $myvar{'have_ssl'} eq 'YES' ) {
+    my $tls_status = get_server_tls_status();
+    if ( defined $tls_status && $tls_status == 1 ) {
         infoprint "TLS/SSL is enabled. Minimum supported TLS version: "
           . ( $myvar{'tls_version'} // 'defaults' );
     }
-    else {
+    elsif ( defined $tls_status ) {
         unless ($is_local_only) {
             badprint "TLS/SSL is disabled. Connections are unencrypted.";
             push_recommendation( 'sec',
                 "Enable TLS/SSL for encrypted connections." );
         }
+    }
+    else {
+        infoprint
+"TLS/SSL server status could not be determined (have_ssl unavailable, no encrypted session, no tls_channel_status).";
     }
 
     # TDE Check (InnoDB)
@@ -3095,7 +3174,10 @@ sub detect_infrastructure {
             # Check if system has HW RAID controller via lspci if available
             my $pci_out    = '';
             my $lspci_path = which('lspci');
-            if ( defined $lspci_path && -x $lspci_path ) {
+
+            # which() returns 0 when not found; -x "0" is true if the CWD
+            # contains an entry named "0", so test truthiness, not defined.
+            if ( $lspci_path && -x $lspci_path ) {
                 my @lspci = execute_system_command(
 "$lspci_path -d ::0104 2>/dev/null || $lspci_path 2>/dev/null"
                 );
@@ -3171,7 +3253,7 @@ sub detect_infrastructure {
             if ( $has_hw_raid && !$has_ssd ) {
                 my $storcli =
                   which('storcli') || which('storcli64') || which('megacli');
-                if ( defined $storcli && -x $storcli ) {
+                if ( $storcli && -x $storcli ) {
                     my @raid_info = execute_system_command(
 "$storcli /c0 show all 2>/dev/null || $storcli -pdlist -aall 2>/dev/null"
                     );
@@ -3215,8 +3297,14 @@ sub detect_infrastructure {
                 next if $line =~ /^loop|^ram|^nbd|^zram|^dm-|^md/;
                 my ( $name, $rota, $gran, $model ) = split( /\s+/, $line, 4 );
                 $model //= '';
+                my $has_gran =
+                  (      defined $gran
+                      && $gran =~ /[1-9]/
+                      && $gran !~ /^0[A-Za-z]?$/ )
+                  ? 1
+                  : 0;
                 if (   ( $name // '' ) =~ /^nvme/
-                    || ( $gran // 0 ) > 0
+                    || $has_gran
                     || ( $rota // 1 ) eq '0' )
                 {
                     $has_ssd = 1;
@@ -3278,7 +3366,7 @@ sub mysql_cloud_discovery {
     }
 
     # 2. GCP Detection (Cloud SQL)
-    elsif (( $myvar{'version_comment'} // '' ) =~ /Google/i
+    elsif ( ( $myvar{'version_comment'} // '' ) =~ /Google/i
         || defined $myvar{'cloudsql_instance_id'}
         || ( $myvar{'socket'} // '' ) =~ m{/cloudsql/} )
     {
@@ -3796,6 +3884,55 @@ if ($is_win) {
     #exit 1;
 }
 
+# Pure: extract the most relevant error line from mysql/mysqladmin client output.
+# Prefers "ERROR nnnn" lines; masks any inline -p'...' password; truncates long lines.
+# Client error codes: https://dev.mysql.com/doc/mysql-errors/8.4/en/client-error-reference.html
+sub extract_client_error {
+    my ($output) = @_;
+    return undef unless defined $output;
+    my @lines =
+      grep { /\S/ && !/Using a password on the command line/i }
+      split( /\r?\n/, $output );
+    return undef unless @lines;
+    my ($err) = grep { /\bERROR\s+\d{4}\b/ } @lines;
+    $err = $lines[-1] unless defined $err;
+    $err =~ s/-p'[^']*'/-p'***'/g;
+    $err =~ s/^\s+|\s+$//g;
+    $err = substr( $err, 0, 300 ) . '...' if length($err) > 300;
+    return $err;
+}
+
+# Print the real client error and an actionable hint for common failure classes.
+sub report_client_error {
+    my ($output) = @_;
+    my $reason = extract_client_error($output);
+    return unless defined $reason;
+    badprint "Client error: $reason";
+    if ( $reason =~ /ERROR 2026|SSL|TLS|certificate/i ) {
+        infoprint
+"Hint: TLS negotiation failed. Use --ssl-ca=<CA file>, or a --defaults-extra-file with [client] disable-ssl-verify-server-cert (MariaDB client >= 11.4 verifies certificates by default).";
+    }
+    elsif ( $reason =~ /ERROR 200[2-5]/ ) {
+        infoprint
+"Hint: server unreachable. Check --host, --port, --socket and network/firewall rules.";
+    }
+    return;
+}
+
+# Report a credential-based login failure; only claims invalid credentials
+# when the client actually returned an authentication error (1045/1698).
+sub report_login_failure {
+    my ( $prefix, $output ) = @_;
+    my $reason = extract_client_error($output);
+    my $is_auth =
+      ( !defined $reason || $reason =~ /ERROR 1045|ERROR 1698|Access denied/i );
+    badprint $is_auth
+      ? "$prefix, but they were invalid."
+      : "$prefix, but the connection failed.";
+    report_client_error($output);
+    return;
+}
+
 sub mysql_setup {
     $mysqllogin   = '';
     $doremote     = 0;
@@ -3963,6 +4100,10 @@ sub mysql_setup {
         }
     }
 
+    # Credentials explicitly supplied by the user (not derived from the
+    # container environment): a failure with them is final (PI-026).
+    my $explicit_credentials = ( $opt{pass} || $opt{'login-path'} ) ? 1 : 0;
+
     if ( $transport_prefix && !$opt{pass} ) {
         if (   ( $ENV{MARIADB_ROOT_PASSWORD} // '' ) ne ''
             || ( $ENV{MYSQL_ROOT_PASSWORD} // '' ) ne '' )
@@ -3997,9 +4138,15 @@ sub mysql_setup {
             return 1;
         }
         else {
-            badprint
-              "Attempted to use login credentials, but they were invalid.";
             debugprint "Login failure output: $loginstatus";
+
+            # Retrying anonymous/prompted logins after explicit credentials
+            # failed only re-printed the same client error (PI-026).
+            if ($explicit_credentials) {
+                report_login_failure( "Attempted to use login credentials",
+                    $loginstatus );
+                exit 1;
+            }
         }
     }
 
@@ -4115,6 +4262,7 @@ sub mysql_setup {
         else {
             badprint
 "Attempted to use login credentials from Debian maintenance account, but they failed.";
+            report_client_error($loginstatus);
             exit 1;
         }
     }
@@ -4170,8 +4318,8 @@ sub mysql_setup {
         }
         else {
             if ( $opt{'noask'} == 1 ) {
-                badprint
-                  "Attempted to use login credentials, but they were invalid";
+                report_login_failure( "Attempted to use login credentials",
+                    $loginstatus );
                 exit 1;
             }
             my ( $name, $password );
@@ -4240,8 +4388,8 @@ sub mysql_setup {
             }
             else {
                 #print STDERR "";
-                badprint
-                  "Attempted to use login credentials, but they were invalid.";
+                report_login_failure( "Attempted to use login credentials",
+                    $loginstatus );
                 exit 1;
             }
             exit 1;
@@ -4354,7 +4502,7 @@ sub select_csv_file {
     my $is_compressed = 0;
     my $dir           = dirname($actual_file);
     if ( $dir && !-d $dir ) {
-        mkdir $dir or warn "Could not create directory '$dir': $!";
+        my_mkdir_p($dir) or warn "Could not create directory '$dir': $!";
     }
 
     if ( $opt{'compress-dump'} && $gzip_bin ) {
@@ -5188,7 +5336,7 @@ sub log_file_recommendations {
     }
 
     # Try to find logs from docker/podman if file doesn't exist locally
-    elsif (!-f "$myvar{'log_error'}"
+    elsif ( !-f "$myvar{'log_error'}"
         && $myvar{'log_error'} !~ /^(docker|podman|kubectl|systemd):/
         && !is_docker() )
     {
@@ -6279,18 +6427,17 @@ sub ssl_tls_recommendations {
         }
     }
 
-    # Global SSL check
-    if ( defined( $myvar{'have_ssl'} ) ) {
-        if ( $myvar{'have_ssl'} eq 'DISABLED' ) {
-            badprint "SSL is DISABLED on the server.";
-            push_recommendation( 'Security',
-                "Enable SSL support on the server (check have_ssl variable)." );
-            push @ssl_csv_rows,
+    # Global SSL check (have_ssl removed in MySQL 8.4.0 -> fallback signals)
+    my $server_tls = get_server_tls_status();
+    if ( defined $server_tls && $server_tls == 0 ) {
+        badprint "SSL is DISABLED on the server.";
+        push_recommendation( 'Security',
+            "Enable SSL support on the server (check have_ssl variable)." );
+        push @ssl_csv_rows,
 "have_ssl,DISABLED,SSLDisabled,Enable SSL support on the server (check have_ssl variable).";
-        }
-        elsif ( $myvar{'have_ssl'} eq 'YES' || $myvar{'have_ssl'} eq 'ON' ) {
-            goodprint "SSL support is enabled";
-        }
+    }
+    elsif ( defined $server_tls ) {
+        goodprint "SSL support is enabled";
     }
 
     # require_secure_transport (MySQL 5.7+, MariaDB 10.5+)
@@ -6503,6 +6650,27 @@ sub my_file_exists {
 sub my_file_readable {
     my $file = shift;
     return -r $file;
+}
+
+sub my_mkdir_p {
+    my $target = shift;
+    return 1 if !defined $target || $target eq '' || -d $target;
+    my ( $vol, $dirs, $file ) = File::Spec->splitpath( $target, 1 );
+    my @parts = File::Spec->splitdir($dirs);
+    my $path  = $vol // '';
+    for my $part (@parts) {
+        next if !defined $part || $part eq '';
+        $path =
+          length($path) ? File::Spec->catdir( $path, $part )
+          : (
+              File::Spec->file_name_is_absolute($target)
+            ? File::Spec->catdir( File::Spec->rootdir(), $part )
+            : $part
+          );
+        next if $path eq '' || -d $path;
+        mkdir( $path, 0755 ) or return 0;
+    }
+    return -d $target;
 }
 
 sub check_remote_user_ssl {
@@ -7222,6 +7390,22 @@ sub get_replication_status {
     }
 }
 
+# BEGIN GENERATED SUPPORTED VERSIONS (source: build/ci_matrix.json)
+# Do not edit by hand: run `perl build/sync_supported_versions.pl`
+our @SUPPORTED_LTS_VERSIONS        = qw(8.0 8.4 9.7 10.11 11.4 11.8 12.3);
+our @SUPPORTED_SHORT_TERM_VERSIONS = qw(13.0 26.7);
+
+# END GENERATED SUPPORTED VERSIONS
+
+# Pure: return 1 if the running version matches one of the "major.minor" cycles
+sub mysql_version_in_cycles {
+    foreach my $cycle (@_) {
+        my ( $maj, $min ) = split( /\./, $cycle );
+        return 1 if mysql_version_eq( $maj, $min // 0 );
+    }
+    return 0;
+}
+
 # https://endoflife.date/mysql
 # https://endoflife.date/mariadb
 sub validate_mysql_version {
@@ -7234,16 +7418,18 @@ sub validate_mysql_version {
 
     prettyprint " ";
 
-    if (   mysql_version_eq( 8, 0 )
-        or mysql_version_eq( 8,  4 )
-        or mysql_version_eq( 9,  7 )
-        or mysql_version_eq( 10, 11 )
-        or mysql_version_eq( 11, 4 )
-        or mysql_version_eq( 11, 8 )
-        or mysql_version_eq( 12, 3 ) )
-    {
+    # LTS releases (lts=true on endoflife.date) + whitelisted legacy cycles
+    my $is_lts = mysql_version_in_cycles(@SUPPORTED_LTS_VERSIONS);
+
+    # Short-term supported releases (lts=false, EOL not yet reached)
+    # https://mariadb.org/about/#maintenance-policy
+    my $is_short_term =
+      !$is_lts && mysql_version_in_cycles(@SUPPORTED_SHORT_TERM_VERSIONS);
+
+    if ( $is_lts or $is_short_term ) {
         goodprint "Currently running supported MySQL/MariaDB version "
-          . $myvar{'version'} . "(LTS)";
+          . $myvar{'version'}
+          . ( $is_lts ? " (LTS)" : " (short-term support)" );
         return;
     }
     else {
@@ -11143,7 +11329,7 @@ sub mariadb_xtradb {
     infoprint "XtraDB is enabled.";
     infoprint "Note that MariaDB 10.2 makes use of InnoDB, not XtraDB."
 
-      # Not implemented
+    # Not implemented
 }
 
 # Recommendations for RocksDB
@@ -12876,7 +13062,7 @@ sub mysql_innodb {
         infoprint
 "innodb_buffer_pool_chunk_size is set to 'autosize' (0) in MariaDB >= 10.8. Skipping chunk size checks.";
     }
-    elsif (!defined( $myvar{'innodb_buffer_pool_chunk_size'} )
+    elsif ( !defined( $myvar{'innodb_buffer_pool_chunk_size'} )
         || $myvar{'innodb_buffer_pool_chunk_size'} == 0
         || !defined( $myvar{'innodb_buffer_pool_size'} )
         || $myvar{'innodb_buffer_pool_size'} == 0
@@ -12972,7 +13158,7 @@ sub mysql_innodb {
         infoprint
 "InnoDB Write Log efficiency: metrics are not reliable (writes > write requests)";
     }
-    elsif (defined $mycalc{'pct_write_efficiency'}
+    elsif ( defined $mycalc{'pct_write_efficiency'}
         && $mycalc{'pct_write_efficiency'} < 90
         && defined $mystat{'Innodb_log_waits'}
         && $mystat{'Innodb_log_waits'} > 0 )
@@ -13396,6 +13582,32 @@ sub mysql_innodb {
     $result{'Calculations'} = {%mycalc};
 }
 
+# True when a MariaDB GLOBAL_VALUE_ORIGIN means the value was explicitly set
+# by the user (option file, command line or SET GLOBAL), as opposed to a
+# compiled-in default, an auto-sized value or an alias mirror.
+# Ref: https://mariadb.com/kb/en/information-schema-system_variables-table/
+sub is_user_configured_origin {
+    my $origin = shift;
+    return 0 unless defined $origin;
+    return ( uc($origin) =~ /^(?:CONFIG|COMMAND-LINE|SQL)$/ ) ? 1 : 0;
+}
+
+# Returns information_schema.SYSTEM_VARIABLES.GLOBAL_VALUE_ORIGIN for a
+# MariaDB variable ('' when unknown or unavailable, MariaDB >= 10.1 only).
+# Ref: https://mariadb.com/kb/en/information-schema-system_variables-table/
+sub get_mariadb_variable_origin {
+    my $var = shift;
+    return '' unless defined $var && $var =~ /^[A-Za-z0-9_]+$/;
+    return '' unless mysql_version_ge( 10, 1, 0 );
+    my $name   = uc $var;
+    my $origin = select_one(
+"SELECT GLOBAL_VALUE_ORIGIN FROM information_schema.SYSTEM_VARIABLES WHERE VARIABLE_NAME = '$name'"
+    );
+    $origin = '' unless defined $origin;
+    $origin =~ s/^\s+|\s+$//g;
+    return $origin;
+}
+
 sub check_removed_innodb_variables {
     my $is_mariadb = (
         ( defined $myvar{'version'} && $myvar{'version'} =~ /MariaDB/i )
@@ -13465,11 +13677,16 @@ sub check_removed_innodb_variables {
                 removed => [ 10, 6, 0 ],
                 note    => 'No longer supported.'
             },
-            {
-                var     => 'innodb_prefix_index_cluster_optimization',
-                removed => [ 10, 10, 0 ],
-                note    => 'Always enabled.'
-            },
+
+# PI-025: innodb_prefix_index_cluster_optimization is only
+# deprecated since MariaDB 10.10 (still present in 11.8), not
+# removed. Relocated to audit_deprecated_variables().
+# Ref: https://mariadb.com/kb/en/innodb-system-variables/#innodb_prefix_index_cluster_optimization
+# {
+#     var     => 'innodb_prefix_index_cluster_optimization',
+#     removed => [ 10, 10, 0 ],
+#     note    => 'Always enabled.'
+# },
         );
     }
     elsif ($is_mysql) {
@@ -13588,10 +13805,13 @@ sub audit_deprecated_variables {
     }
 
     # 3. tx_isolation -> transaction_isolation
+    # MariaDB still exposes tx_isolation as an alias in SHOW VARIABLES, so it
+    # is only reported when its value origin shows explicit configuration
+    # (PI-024).
+    # Ref: https://mariadb.com/kb/en/server-system-variables/#tx_isolation
+    # Ref: https://dev.mysql.com/doc/refman/8.0/en/added-deprecated-removed.html
     if ( defined $myvar{'tx_isolation'} && $myvar{'tx_isolation'} ne '' ) {
-        if (   ( $is_mysql && mysql_version_ge( 8, 0, 0 ) )
-            || ( $is_mariadb && mysql_version_ge( 11, 1, 0 ) ) )
-        {
+        if ( $is_mysql && mysql_version_ge( 8, 0, 0 ) ) {
             push @deprecations,
               {
                 variable    => 'tx_isolation',
@@ -13600,6 +13820,45 @@ sub audit_deprecated_variables {
 'tx_isolation was removed in modern versions; use transaction_isolation'
               };
         }
+        elsif (
+               $is_mariadb
+            && mysql_version_ge( 11, 1, 0 )
+            && is_user_configured_origin(
+                get_mariadb_variable_origin('tx_isolation')
+            )
+          )
+        {
+            push @deprecations,
+              {
+                variable    => 'tx_isolation',
+                replacement => 'transaction_isolation',
+                reason      =>
+'tx_isolation is deprecated since MariaDB 11.1; use transaction_isolation'
+              };
+        }
+    }
+
+# 3b. innodb_prefix_index_cluster_optimization (MariaDB >= 10.10)
+# Deprecated and ignored (optimization always enabled); only reported
+# when explicitly configured (PI-025).
+# Ref: https://mariadb.com/kb/en/innodb-system-variables/#innodb_prefix_index_cluster_optimization
+    if (
+           $is_mariadb
+        && mysql_version_ge( 10, 10, 0 )
+        && defined $myvar{'innodb_prefix_index_cluster_optimization'}
+        && is_user_configured_origin(
+            get_mariadb_variable_origin(
+                'innodb_prefix_index_cluster_optimization')
+        )
+      )
+    {
+        push @deprecations,
+          {
+            variable    => 'innodb_prefix_index_cluster_optimization',
+            replacement => 'None (always enabled)',
+            reason      =>
+'innodb_prefix_index_cluster_optimization is deprecated since MariaDB 10.10 and ignored (always enabled); remove it from configuration'
+          };
     }
 
     # 4. tx_read_only -> transaction_read_only
@@ -14772,7 +15031,10 @@ sub make_recommendations {
 }
 
 sub close_outputfile {
-    close($fh) if defined($fh);
+    if ( defined($fh) ) {
+        close($fh);
+        $fh = undef;
+    }
 }
 
 sub headerprint {
@@ -17160,31 +17422,36 @@ HTML
         }
 
         my $json = JSON->new->allow_nonref;
-        print $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
-          ->encode($sanitized_res);
+        print $json->utf8(1)
+          ->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
+          ->encode($sanitized_res)
+          unless ( $opt{'silent'} );
 
         if ( $opt{'outputfile'} ) {
+            close_outputfile();
             unlink $opt{'outputfile'} if ( -e $opt{'outputfile'} );
-            open my $fh, q(>), $opt{'outputfile'}
+            open my $ofh, q(>), $opt{'outputfile'}
               or die
 "Unable to open $opt{'outputfile'} in write mode. please check permissions for this file or directory";
-            print $fh $json->utf8(1)->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
+            print $ofh $json->utf8(1)
+              ->pretty( ( $opt{'prettyjson'} ? 1 : 0 ) )
               ->encode($sanitized_res);
-            close $fh;
+            close $ofh;
         }
     }
 
     if ( $opt{'yaml'} ) {
         my $yaml_str = _to_yaml($sanitized_res);
-        print $yaml_str;
+        print $yaml_str unless ( $opt{'silent'} );
 
         if ( $opt{'outputfile'} ) {
+            close_outputfile();
             unlink $opt{'outputfile'} if ( -e $opt{'outputfile'} );
-            open my $fh, q(>), $opt{'outputfile'}
+            open my $ofh, q(>), $opt{'outputfile'}
               or die
 "Unable to open $opt{'outputfile'} in write mode. please check permissions for this file or directory";
-            print $fh $yaml_str;
-            close $fh;
+            print $ofh $yaml_str;
+            close $ofh;
         }
     }
 }

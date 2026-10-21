@@ -32,6 +32,7 @@ like($output, qr/mysqltuner failed with errors/i, "Should show failed with error
 
 # 6. Test authentication failure (wrong credentials)
 $output = `perl $script --user nonexistent --pass wrong 2>&1`;
-like($output, qr/Attempted to use login credentials, but they were invalid/i, "Should show invalid credentials error");
+like($output, qr/Attempted to use login credentials, but (?:they were invalid|the connection failed)/i, "Should show login failure error");
+like($output, qr/Client error: /i, "Should surface the real mysql client error");
 
 done_testing();

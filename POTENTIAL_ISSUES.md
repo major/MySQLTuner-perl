@@ -2,6 +2,84 @@
 
 This file records anomalies discovered during laboratory testing (Perl warnings, SQL errors, etc.).
 
+## [2026-10-20 Audit] Version Support Patch Review v2.9.3
+
+### Unit Test Results
+
+- **Status**: ✅ ALL PASS (`perl build/audit_tests.pl`)
+- **Files**: 153 test files
+- **Assertions**: 748 tests
+- **Perl Syntax**: Clean (`perl -cw mysqltuner.pl`, `perl -cw build/sync_eol_dates.pl`, `perl -cw build/sync_supported_versions.pl`)
+- **EOL Audit**: `perl build/sync_eol_dates.pl` → `[OK]` (10 cycles declared = 7 LTS + 8.0 legacy + MariaDB 13.0 & MySQL 26.7 short-term)
+- **Release Gates**: `check_changelog_gate.pl` and `validate_release.pl` → 0 errors
+
+### Live Validation (ephemeral official Docker images, `--verbose`)
+
+| Version | Support label | Perl warnings | FAIL Execute SQL |
+|:---|:---|:---|:---|
+| MariaDB 13.0.2 | ✔ supported (short-term support) | 0 | 0 |
+| MariaDB 12.3.3 | ✔ supported (LTS) | 0 | 0 |
+| MariaDB 11.8.9 | ✔ supported (LTS) | 0 | 0 |
+| MariaDB 10.11.19 | ✔ supported (LTS) | 0 | 0 |
+| MySQL 9.7.2 | ✔ supported (LTS) | 0 | 0 |
+| MySQL 8.4.11 | ✔ supported (LTS) | 0 | 0 |
+
+Second run, after the PI-023 / PI-026 fixes:
+
+- MySQL 8.4.11 / 9.7.2 (encrypted session) → `TLS/SSL is enabled`, `SSL support is enabled`. The `Ssl_cipher` path works.
+- MySQL 9.7.2 with client `skip-ssl` (plain session) → `SSL support is enabled`. The `performance_schema.tls_channel_status` fallback works. The query returns `Yes` on 8.4 and 9.7.
+- MariaDB 10.11–13.0 → unchanged (`have_ssl` path). MariaDB 10.11 docker has TLS disabled and is correctly flagged.
+- MySQL 9.7.2 without the client workaround → `Client error: ERROR 2026 ... self-signed certificate` plus the TLS hint.
+
+### Patch Review Findings (fixed in this session)
+
+- [x] **PI-022a**: MariaDB 13.0 (lts=false on endoflife.date) was labelled "(LTS)". **FIXED** — `validate_mysql_version` now prints `(LTS)` or `(short-term support)`; missing space before label added. Tests: `tests/unit_version_control.t` subtest 6.
+- [x] **PI-022b**: Generated `*_support.md` hint said `perl build/sync_eol_dates.pl` but generation requires `--generate`. **FIXED** + docs regenerated. Tests: `tests/unit_cve_update.t` subtest 6.
+- [x] **PI-022c**: Redundant LTS comparisons and possible `<=>` warnings on non-numeric cycles in `sync_eol_dates.pl`. **FIXED**.
+- [x] **PI-022d**: Supported cycles were duplicated in `validate_mysql_version`, `sync_eol_dates.pl` (`%LEGACY_SUPPORTED`) and `ci_matrix.json`. **FIXED**: `build/ci_matrix.json` is now the single source (`lts`, `legacy_supported`, `short_term`). The `build/sync_supported_versions.pl` generator writes the `@SUPPORTED_*_VERSIONS` block in `mysqltuner.pl`. `--check` runs in CI and in `tests/unit_supported_versions_sync.t`.
+
+### 🟠 High Issues
+
+#### PI-023: False "TLS/SSL is disabled" on MySQL 8.4+ / 9.x
+- **Source**: `mysqltuner.pl` `check_security_2_0` (relies only on `have_ssl`)
+- **Evidence**: MySQL 8.4.11 and 9.7.2 runs print both `✔ Current connection is encrypted` and `✘ TLS/SSL is disabled. Connections are unencrypted.`
+- **Root Cause**: `have_ssl` / `have_openssl` were removed in MySQL 8.4.0 (deprecated since 8.0.26). Undefined `have_ssl` falls into the "disabled" branch.
+- **Suggested fix**: treat TLS as enabled when `have_ssl` is undefined and `Ssl_cipher`/`Current_tls_version` status or `performance_schema.tls_channel_status` reports an active context.
+- **Status**: [x] **FIXED**: new `compute_server_tls_status` / `get_server_tls_status` (have_ssl → `Ssl_cipher` → `performance_schema.tls_channel_status`). These are used by `check_security_2_0` and `ssl_tls_recommendations`. Unknown status is now informational. Live re-run: MySQL 8.4.11 / 9.7.2 report `TLS/SSL is enabled` and `SSL support is enabled`. Tests: `tests/unit_tls_status_detection.t`.
+
+### 🟡 Medium Issues
+
+#### PI-024: False positive `tx_isolation` deprecation on every MariaDB ≥ 11.1
+- **Source**: `mysqltuner.pl` `audit_deprecated_variables`
+- **Evidence**: MariaDB 11.8 / 12.3 / 13.0 runs print `✘ Deprecated/Obsolete variable detected: tx_isolation` on default containers.
+- **Root Cause**: MariaDB still exposes `tx_isolation` as a deprecated alias in `SHOW VARIABLES`, so presence does not mean user configuration. Message says "removed", but in MariaDB it is only deprecated.
+- **Status**: [x] **FIXED**: on MariaDB, `tx_isolation` is reported only when `information_schema.SYSTEM_VARIABLES.GLOBAL_VALUE_ORIGIN` is `CONFIG`, `COMMAND-LINE` or `SQL` (new `get_mariadb_variable_origin` / `is_user_configured_origin`). The message now says "deprecated since MariaDB 11.1". MySQL ≥ 8.0 behaviour is unchanged. `GLOBAL_VALUE_ORIGIN` was preferred to `my_print_defaults` because it works remotely, needs no local binary, and also covers command-line and `SET GLOBAL` values. Note: MariaDB 11.4+ refuses to start with `--tx-isolation`, so on those versions the alias can never be user-configured. Live re-run (2026-10-14): no `tx_isolation` finding on MariaDB 10.11 / 11.8 / 12.3 / 13.0, including 11.8 started with `--transaction-isolation=READ-COMMITTED`. Tests: `tests/unit_mariadb_var_origin.t`.
+
+#### PI-025: `innodb_prefix_index_cluster_optimization` reported "removed in MariaDB 10.10.0" on 10.11
+- **Source**: `mysqltuner.pl` removed-InnoDB-variables table
+- **Evidence**: MariaDB 10.11.19 still exposes the variable, so it is deprecated there, not removed.
+- **Status**: [x] **FIXED**: the entry is commented out in `check_removed_innodb_variables` and relocated to `audit_deprecated_variables`. It is reported as deprecated (MariaDB ≥ 10.10) only when explicitly configured (origin-based). Live re-run: no finding on defaults (10.11 default ON, 11.8 default OFF). With `--innodb-prefix-index-cluster-optimization=ON`, 10.11 and 11.8 report `Deprecated/Obsolete variable detected: innodb_prefix_index_cluster_optimization`. Tests: `tests/unit_mariadb_var_origin.t`, `tests/removed_innodb_vars.t`.
+
+#### PI-026: Misleading "login credentials invalid" when the client fails TLS verification
+- **Evidence**: With a MariaDB ≥ 11.4 client against MySQL 8.4/9.7 (self-signed certs) or MariaDB 10.11, the real error is `ERROR 2026 TLS/SSL error: self-signed certificate`, but mysqltuner reports invalid credentials. Workaround: `--defaults-extra-file` with `[client] disable-ssl-verify-server-cert`, or `--ssl-ca`.
+- **Status**: [x] **FIXED**: `extract_client_error` / `report_client_error` / `report_login_failure` show `Client error: ERROR 2026 ...` with a TLS hint (or a network hint for 2002-2005). "Invalid credentials" is reported only for 1045/1698. Live re-run on MySQL 9.7.2 without the workaround confirms it. Tests: `tests/unit_login_error_reporting.t`, `tests/cli_validation.t`.
+- **Remaining (low)**: [x] **FIXED**: a failure with explicit `--pass` or `--login-path` now reports once and exits 1, with no fallback login. `--user` alone still falls back to the prompt / `--noask` path, which reports once. Behaviour change: an explicit failing `--pass` no longer silently falls back to `debian.cnf` or the defaults file. Live re-run with a wrong password on all 6 versions: exit 1, exactly one `Client error: ERROR 1045` line. Tests: `tests/unit_login_explicit_failure.t`.
+
+### 🟢 Low Issues
+
+#### PI-027: Aria pagecache hit-rate label
+- `Aria_pagecache_read_requests` is printed as "cached" (e.g. `13 cached / 12 reads`). It should be "requests". There is also no minimum-sample threshold, so idle servers get flagged.
+
+#### PI-028: `make check-tidy` formatting drift
+- Status: [x] **FIXED**: Formatted `mysqltuner.pl` using `perltidy`. Verified `make check-tidy` passes cleanly with 0 diff.
+
+#### PI-029: Policy notes & README targets alignment
+- MySQL 8.0 (EOL 2026-04-30) is still accepted and labelled `(LTS)`. **Decision: kept** (`ci_matrix.json` → `mysql.legacy_supported`).
+- MariaDB 13.0 is declared in `ci_matrix.json` → `mariadb.short_term`. MySQL 26.7 is declared in `ci_matrix.json` → `mysql.short_term`.
+- Status: [x] **FIXED**: Aligned supported test targets in README files (EN, FR, IT, RU) with `ci_matrix.json` (LTS, legacy supported, short-term support).
+
+---
+
 ## [2026-07-18 Audit] Status Refresh v2.9.1
 
 ### Unit Test Results

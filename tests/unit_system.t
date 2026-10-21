@@ -435,7 +435,7 @@ subtest 'Close Output File Handle' => sub {
         open(my $th, '>', $tmp_file) or die $!;
         $main::fh = $th;
         main::close_outputfile();
-        ok(!fileno($main::fh), 'close_outputfile successfully closes the open file handle');
+        ok(!$main::fh || !eval { fileno($main::fh) }, 'close_outputfile successfully closes the open file handle');
     }
 };
 

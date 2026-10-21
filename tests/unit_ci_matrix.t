@@ -10,7 +10,7 @@ use FindBin;
 use File::Spec;
 use JSON::PP;
 
-plan tests => 5;
+plan tests => 6;
 
 my $matrix_file = File::Spec->catfile( $FindBin::Bin, '..', 'build', 'ci_matrix.json' );
 
@@ -95,6 +95,35 @@ subtest 'CI Default Sanity' => sub {
 
     ok( scalar( @{ $data->{engines}{mysql}{ci_default} } ) >= 2, "At least 2 MySQL versions in ci_default" );
     ok( scalar( @{ $data->{engines}{mariadb}{ci_default} } ) >= 2, "At least 2 MariaDB versions in ci_default" );
+};
+
+# --- Subtest 6: Validator Source Keys (short_term / legacy_supported) ---
+subtest 'Validator Source Keys' => sub {
+    open my $fh, '<', $matrix_file or die "Cannot open $matrix_file: $!\n";
+    my $data = decode_json( do { local $/; <$fh> } );
+    close $fh;
+
+    for my $engine (qw(mysql mariadb)) {
+        my $e = $data->{engines}{$engine};
+        is( ref $e->{short_term},       'ARRAY', "$engine.short_term is an array" );
+        is( ref $e->{legacy_supported}, 'ARRAY', "$engine.legacy_supported is an array" );
+
+        my $doc = File::Spec->catfile( $FindBin::Bin, '..', "${engine}_support.md" );
+        open my $dfh, '<', $doc or die "Cannot open $doc: $!\n";
+        my $doc_content = do { local $/; <$dfh> };
+        close $dfh;
+
+        my %lts = map { $_ => 1 } @{ $e->{lts} };
+        foreach my $ver ( @{ $e->{short_term} } ) {
+            ok( !$lts{$ver}, "$engine $ver is not both lts and short_term" );
+            like( $doc_content, qr/\|\s*\Q$ver\E\s*\|\s*[^\|]+\|\s*NO\s*\|\s*Supported\s*\|/,
+                "$engine $ver is marked Supported non-LTS in ${engine}_support.md" );
+        }
+        foreach my $ver ( @{ $e->{legacy_supported} } ) {
+            ok( grep( { $_ eq $ver } @{ $e->{all} } ), "$engine legacy_supported $ver is listed in all" );
+        }
+    }
+    done_testing();
 };
 
 done_testing();

@@ -97,7 +97,7 @@ Thanks to [endoflife.date](https://endoflife.date/)
 * **Predictive Capacity Planning**: Memory headroom analysis (peak vs available RAM+Swap), disk growth forecasting, and AUTO_INCREMENT capacity near max value detection.
 * **Cloud Autodiscovery**: Native support for AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed), and DigitalOcean. Automatic detection via `@@version_comment` and provider-specific variables.
 * **Infrastructure-Aware Tuning**: Detection of SSD/NVMe vs HDD storage types and ARM64/Graviton vs x86_64 architectures. Adjusts recommendations for `innodb_flush_neighbors` and `innodb_io_capacity`.
-* **SSL/TLS Security Audit**: Session encryption check, TLS version audit (warn on TLSv1.0/1.1), certificate expiration, `require_secure_transport` enforcement, and remote user SSL checks.
+* **SSL/TLS Security Audit**: Session encryption check, TLS version audit (warn on TLSv1.0/1.1), certificate expiration, `require_secure_transport` enforcement, and remote user SSL checks. Server TLS status is detected via `have_ssl`, then `Ssl_cipher`, then `performance_schema.tls_channel_status` (MySQL 8.4+ no longer exposes `have_ssl`).
 * **Authentication Plugin Auditing**: Detection of insecure plugins (`mysql_native_password`, `sha256_password`), MySQL 9.x readiness diagnostics, and MariaDB `ed25519`/`unix_socket` recommendations.
 * **Schema Modeling & Naming Conventions**: Comprehensive table structure analysis (missing PKs, surrogate key types, UTF-8 compliance, non-InnoDB tables), naming convention audit (snake_case/camelCase consistency, plural detection, boolean/date column prefixes), and foreign key analysis (unconstrained `_id` columns, type mismatches, CASCADE audit).
 * **MySQL 8.0+ / MariaDB Modeling**: JSON column indexability (virtual generated columns), invisible indexes, CHECK constraints.
@@ -726,6 +726,9 @@ Connection and Authentication
  --defaults-file <path> defaults file for credentials
 ```
 
+* On login failure, the real client error is printed (e.g. `Client error: ERROR 2026 ... self-signed certificate`) with a TLS or network hint; "invalid credentials" is only reported for authentication errors (1045/1698).
+* A failure with explicit `--pass` or `--login-path` credentials stops immediately (exit 1) without falling back to other login methods (`debian.cnf`, defaults file, prompt).
+
 Since you are using a remote host, use parameters to supply values from the OS
 
 ```
@@ -795,9 +798,11 @@ mysql_percona80 sakila
 
 **Supported test targets** (refer to [MariaDB support](mariadb_support.md) and [MySQL support](mysql_support.md) for the current compatibility matrix):
 
-* MySQL 8.0, 8.4, 9.x
-* MariaDB 10.6, 10.11, 11.4, 11.8
+* MySQL 8.4, 9.7 (LTS), 8.0 (legacy supported) and 26.7 (short-term support)
+* MariaDB 10.11, 11.4, 11.8, 12.3 (LTS) and 13.0 (short-term support)
 * Percona Server 8.0
+
+The supported cycles are defined once in `build/ci_matrix.json` (`lts`, `legacy_supported`, `short_term`) and propagated to `mysqltuner.pl` with `make sync_versions` (`make check_versions` verifies them in CI).
 
 Contributions welcome
 --

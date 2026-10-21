@@ -31,6 +31,8 @@ Runs compile-time checks, compliance checks, EOL mapping validation, and the uni
   3. `unit_tests`: Runs:
      - compliance sentinels (`perl build/check_compliance.pl`)
      - EOL sync checking (`perl build/sync_eol_dates.pl`)
+       - local maintenance: `--check` reports `build/ci_matrix.json` drift against endoflife.date without writing (exit 1); `--update-matrix` rewrites it (then run `perl build/sync_supported_versions.pl`)
+     - supported versions single-source check (`perl build/sync_supported_versions.pl --check`, source: `build/ci_matrix.json`)
      - unit test runner (`make unit-tests`)
 
 ### 2. Docker Image Publication (`docker_publish.yml`)

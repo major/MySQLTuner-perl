@@ -25,6 +25,7 @@ Features list for option: --feature (dev only)
 * clear_sql_traces
 * cloud_setup
 * cmdprint
+* compute_server_tls_status
 * cve_recommendations
 * debugprint
 * detect_infrastructure
@@ -33,6 +34,7 @@ Features list for option: --feature (dev only)
 * escape_html
 * execute_system_command
 * execute_system_command
+* extract_client_error
 * find_dominant_style
 * format_mysql_bool
 * format_recommendation_item
@@ -57,6 +59,7 @@ Features list for option: --feature (dev only)
 * mariadb_xtradb
 * my_file_exists
 * my_file_readable
+* my_mkdir_p
 * mysql_80_modeling_checks
 * mysql_cloud_discovery
 * mysql_databases
@@ -86,6 +89,8 @@ Features list for option: --feature (dev only)
 * process_sysbench_metrics
 * push_recommendation
 * redwrap
+* report_client_error
+* report_login_failure
 * save_aborted_connects_state
 * security_recommendations
 * setup_environment

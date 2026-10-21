@@ -10,7 +10,7 @@ use Test::More;
 use FindBin;
 use File::Spec;
 
-plan tests => 5;
+plan tests => 6;
 
 # --- Subtest 1: sync_eol_dates.pl Compilation & Syntax ---
 subtest 'sync_eol_dates.pl Syntax & Dependency Check' => sub {
@@ -92,6 +92,34 @@ subtest 'Zero-Dependency Policy on sync_eol_dates.pl' => sub {
     }
     close $fh;
     is( scalar(@uses), 0, "sync_eol_dates.pl uses only standard Perl core modules" );
+};
+
+# --- Subtest 6: Generated Support Markdown Structure ---
+subtest 'Generated Support Markdown Structure' => sub {
+    plan tests => 6;
+
+    for my $product (qw(mysql mariadb)) {
+        my $doc = File::Spec->catfile( $FindBin::Bin, '..', "${product}_support.md" );
+        open my $fh, '<', $doc or die "Cannot open $doc: $!\n";
+        my ( $hint_ok, $bad_rows, @cycles ) = ( 0, 0 );
+        while ( my $line = <$fh> ) {
+            $hint_ok = 1 if $line =~ /Regenerate via: `perl build\/sync_eol_dates\.pl --generate`/;
+            if ( $line =~ /^\|\s*(\d+)\.(\d+)\s*\|/ ) {
+                push @cycles, [ $1, $2 ];
+                $bad_rows++ unless $line =~ /^\|[^|]+\|\s*(?:\d{4}-\d{2}-\d{2}|N\/A)\s*\|\s*(?:YES|NO)\s*\|\s*(?:Supported|Outdated)\s*\|$/;
+            }
+        }
+        close $fh;
+
+        ok( $hint_ok, "${product}_support.md regenerate hint includes --generate" );
+        my $sorted = 1;
+        for my $i ( 1 .. $#cycles ) {
+            my ( $p, $c ) = ( $cycles[ $i - 1 ], $cycles[$i] );
+            $sorted = 0 if $p->[0] < $c->[0] || ( $p->[0] == $c->[0] && $p->[1] < $c->[1] );
+        }
+        ok( @cycles > 1 && $sorted, "${product}_support.md rows are sorted newest version first" );
+        is( $bad_rows, 0, "${product}_support.md rows match | ver | date | LTS | status | format" );
+    }
 };
 
 done_testing();
