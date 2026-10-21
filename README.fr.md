@@ -95,7 +95,7 @@ Merci à [endoflife.date](https://endoflife.date/)
 * **Planification prédictive des capacités** : Analyse de la marge de manœuvre mémoire (pic vs RAM+Swap disponible), prévision de la croissance disque, et détection de la capacité AUTO_INCREMENT proche du maximum.
 * **Découverte automatique du Cloud** : Prise en charge native d'AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed) et DigitalOcean. Détection automatique via `@@version_comment` et variables spécifiques au fournisseur.
 * **Tuning adaptatif à l'infrastructure** : Détection des types de stockage SSD/NVMe vs HDD et des architectures ARM64/Graviton vs x86_64. Ajustement des recommandations pour `innodb_flush_neighbors` et `innodb_io_capacity`.
-* **Audit de sécurité SSL/TLS** : Vérification du chiffrement de session, audit des versions TLS (alerte sur TLSv1.0/1.1), expiration des certificats, application de `require_secure_transport`, et vérification SSL des utilisateurs distants.
+* **Audit de sécurité SSL/TLS** : Vérification du chiffrement de session, audit des versions TLS (alerte sur TLSv1.0/1.1), expiration des certificats, application de `require_secure_transport`, et vérification SSL des utilisateurs distants. Le statut TLS du serveur est détecté via `have_ssl`, puis `Ssl_cipher`, puis `performance_schema.tls_channel_status` (MySQL 8.4+ n'expose plus `have_ssl`).
 * **Audit des plugins d'authentification** : Détection des plugins non sécurisés (`mysql_native_password`, `sha256_password`), diagnostic de compatibilité MySQL 9.x, et recommandations MariaDB `ed25519`/`unix_socket`.
 * **Modélisation de schéma et conventions de nommage** : Analyse complète de la structure des tables (PK manquantes, types de clés de substitution, conformité UTF-8, tables non-InnoDB), audit des conventions de nommage (cohérence snake_case/camelCase, détection du pluriel, préfixes de colonnes booléennes/dates), et analyse des clés étrangères (colonnes `_id` non contraintes, incohérences de types, audit CASCADE).
 * **Modélisation MySQL 8.0+ / MariaDB** : Indexabilité des colonnes JSON (colonnes virtuelles générées), index invisibles, contraintes CHECK.
@@ -103,33 +103,41 @@ Merci à [endoflife.date](https://endoflife.date/)
 * **Analyse de tendances historiques** : Ingestion de sorties JSON de runs précédents via `--compare-file` pour suivre les tendances QPS et de croissance des données.
 * **Intégration Sysbench** : Analyse de la sortie sysbench pour les métriques QPS, TPS et latence (Moy/95e/Max) via `--sysbench-file`.
 * **Intégration logs Container et Systemd** : Détection automatique des logs depuis Docker, Podman, Kubectl/Kubernetes et le journal Systemd.
-* **Support Protocole IA & MCP** : Serveur microservice Model Context Protocol (MCP) natif stdio JSON-RPC et sortie JSON structurée `--agent-json` pour les clients IA (Claude Desktop, Cursor, VS Code / Cline, Antigravity).
+* **Support IA, Protocole MCP & Compétences (Skills)** : Serveur microservice Model Context Protocol (MCP) natif stdio JSON-RPC, catalogue d'heuristiques spécialisées dans `.agent/skills/` et sortie JSON structurée `--agent-json` pour les clients IA (Claude Desktop, Cursor, VS Code / Cline, Antigravity).
 
 ---
 
-## 🤖 Intégration Agent IA & Model Context Protocol (MCP)
+## 🤖 Intégration Agent IA, Model Context Protocol (MCP) & Compétences (Skills)
 
-MySQLTuner prend en charge en natif les flux de travail basés sur l'Intelligence Artificielle (IA), les agents DBA autonomes et les assistants de développement (ex. Claude Desktop, Cursor IDE, VS Code / Cline, Antigravity, ainsi que les frameworks LangChain et LlamaIndex).
+MySQLTuner prend en charge en natif les flux de travail basés sur l'Intelligence Artificielle (IA), les agents DBA autonomes et les assistants de développement (ex. Antigravity IDE, Claude Desktop, Cursor IDE, VS Code / Cline, ainsi que les frameworks LangChain et LlamaIndex).
 
 Pour la documentation technique complète, consultez le [Guide d'Intégration IA & MCP (FR)](documentation/mcp_ai_integration_guide.fr.md), la [Version Anglaise](documentation/mcp_ai_integration_guide.md) et le fichier [AGENT.md](AGENT.md).
 
-### Modes d'Opération
+### Modes d'Opération & Capacités
 
-1. **Télémétrie CLI Directe (`--agent-json`)** :
-   Émet un schéma JSON structuré sans dépendance externe contenant les diagnostics, les scores d'impact (`1`-`10`), les niveaux de risque (`Low`, `Medium`, `High`, `Critical`), les requêtes d'exécution `SET GLOBAL` ainsi que les instructions de retour en arrière `rollback_statement`.
-   ```bash
-   perl mysqltuner.pl --agent-json --host 127.0.0.1 --user root --pass secret
-   ```
+1. **Sous-système de Compétences IA (`.agent/skills/`)** :
+   Heuristiques diagnostiques structurées avec seuils d'évaluation mathématiques et garde-fous de sécurité :
+   - `analyze_buffer_pool` : Dimensionnement du buffer pool InnoDB, taux de succès du cache et analyse des écritures de pages sales.
+   - `detect-fragmented-tables` : Détection du taux de fragmentation, calcul de l'espace disque récupérable et commandes de défragmentation en ligne.
+   - `diagnose-replication-lag` : Diagnostic de latence de réplication, synchronisation GTID et saturation des threads parallèles.
+   - `db-version-rift` : Résolution des écarts de version MySQL 5.5-8.4 vs MariaDB 10.3-11.8.
+   - `cli-execution-mastery` : Options de connexion sécurisées, tunnels SSH et masquage des mots de passe.
 
 2. **Serveur Model Context Protocol (MCP)** :
    Un microservice léger ([build/mcp_server.py](build/mcp_server.py) et [Dockerfile.mcp](Dockerfile.mcp)) communiquant via l'entrée/sortie standard (stdio) en JSON-RPC 2.0.
-   - **Ressources** : `mysqltuner://reports/latest.json`, `mysqltuner://indicators/summary.json`
+   - **Ressources** : `mysqltuner://reports/latest.json`, `mysqltuner://reports/latest.html`, `mysqltuner://indicators/summary.json`
    - **Outils** : `get_latest_audit`, `run_audit`, `apply_recommendation`, `rollback_recommendation`
    ```bash
    docker run -d \
      --name mysqltuner-mcp \
      -e DB_HOST=127.0.0.1 -e DB_USER=root -e DB_PASSWORD=secret \
      mysqltuner-mcp
+   ```
+
+3. **Télémétrie CLI Directe (`--agent-json`)** :
+   Émet un schéma JSON structuré sans dépendance externe contenant les diagnostics, les scores d'impact (`1`-`10`), les niveaux de risque (`Low`, `Medium`, `High`, `Critical`), les requêtes d'exécution `SET GLOBAL` ainsi que les instructions de retour en arrière `rollback_statement`.
+   ```bash
+   perl mysqltuner.pl --agent-json --host 127.0.0.1 --user root --pass secret
    ```
 
 ---
@@ -273,7 +281,7 @@ docker run --rm -it -v $(pwd)/my.cnf:/defaults.cnf -v $(pwd)/results:/results jm
 
 ### Emplacement des versions (Releases)
 
-* Les notes de version officielles et l'historique sont documentés dans le dossier [releases/](releases/) de ce dépôt (par exemple, [releases/v2.9.2.md](releases/v2.9.2.md)).
+* Les notes de version officielles et l'historique sont documentés dans le dossier [releases/](releases/) de ce dépôt (par exemple, [releases/v2.9.3.md](releases/v2.9.3.md)).
 * Les tags de version Git et les archives sources téléchargeables sont disponibles sur [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 Installation facultative de Sysschema pour MySQL 5.6
@@ -708,6 +716,9 @@ Connexion et authentification
  --pass <password> Mot de passe à utiliser pour l'authentification
  --defaults-file <path> fichier de valeurs par défaut pour les informations d'identification
 
+* En cas d'échec de connexion, l'erreur réelle du client est affichée (ex. `Client error: ERROR 2026 ... self-signed certificate`) avec une indication TLS ou réseau ; « identifiants invalides » n'est signalé que pour les erreurs d'authentification (1045/1698).
+* Un échec avec des identifiants explicites `--pass` ou `--login-path` arrête immédiatement l'exécution (code 1) sans essayer d'autres méthodes de connexion (`debian.cnf`, fichier de valeurs par défaut, invite).
+
 Étant donné que vous utilisez un hôte distant, utilisez des paramètres pour fournir des valeurs à partir du système d'exploitation
 
  --forcemem <size>  Quantité de RAM installée (en mégaoctets ou avec unités, ex. 15G, 1024M)
@@ -773,9 +784,11 @@ mysql_percona80 sakila
 
 **Cibles de test prises en charge** (reportez-vous à [support MariaDB](mariadb_support.md) et [support MySQL](mysql_support.md) pour la matrice de compatibilité actuelle) :
 
-* MySQL 8.0, 8.4, 9.x
-* MariaDB 10.6, 10.11, 11.4, 11.8
+* MySQL 8.4, 9.7 (LTS), 8.0 (support legacy) et 26.7 (support court terme)
+* MariaDB 10.11, 11.4, 11.8, 12.3 (LTS) et 13.0 (support court terme)
 * Percona Server 8.0
+
+Les cycles supportés sont définis une seule fois dans `build/ci_matrix.json` (`lts`, `legacy_supported`, `short_term`) et propagés dans `mysqltuner.pl` avec `make sync_versions` (`make check_versions` les vérifie en CI).
 
 Les contributions sont les bienvenues
 --

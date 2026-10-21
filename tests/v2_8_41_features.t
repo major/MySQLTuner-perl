@@ -2,6 +2,11 @@
 use strict;
 use warnings;
 no warnings 'once';
+
+# mysql_setup() exits after a failed login with explicit --pass (PI-026):
+# turn exit() into die so the eval-wrapped calls below keep the test alive.
+BEGIN { *CORE::GLOBAL::exit = sub { die "MOCK_EXIT\n" }; }
+
 use Test::More;
 
 # Load MySQLTuner

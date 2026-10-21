@@ -1,5 +1,106 @@
 # MySQLTuner Changelog
 
+2.9.3 2026-10-21
+- chore(build): consolidate EOL and CVE scripts in pure Perl and add get_version.sh (#1024)
+- chore(build): standardize metadata headers across all build scripts (#1029)
+- feat(build): migrate release_gen.py and genFeatures.sh to pure Perl (#1023)
+- feat(ci): implement validate_roadmap.pl for schema and link integrity (#1025)
+- feat(ci): implement ci_matrix.json for centralized supported versions matrix (#1027)
+- feat(ci): implement validate_release.pl for unified pre-publish validation (#1028)
+- feat(ci): implement check_doc_links.pl for documentation link auditing (#1030)
+- feat(ci): implement check_changelog_gate.pl for release artifacts schema verification (#1032)
+- feat(ci): implement release_orchestrator.pl for automated SemVer release flow (#1033)
+- feat(engine): implement MySQL boolean normalization subroutines (#1021)
+- feat(engine): add audit_deprecated_variables for obsolete variables and synonyms (#1022)
+- feat(engine): implement get_doc_anchor and get_doc_url for documentation anchors (#1031)
+- feat(engine): implement SQL error trace logging and query anomaly capture (#1034)
+- feat(engine): implement audit_pfs_stage_profiling for stage and wait event analysis (#1037)
+- feat(engine): implement audit_innodb_ahi for adaptive hash index partitions and hit ratio (#1038)
+- feat(engine): implement audit_tls_ciphers_protocols for cipher and TLS version audit (#1039)
+- feat(engine): implement audit_table_definition_cache for cache thrashing detection (#1040)
+- feat(ha): implement discover_cluster_topology for Galera, Group Replication and Replicas (#1026)
+- feat(mcp): harden JSON-RPC 2.0 error handling, safety guardrails and SSE transport (#1001)
+- feat(skill): add analyze_buffer_pool AI diagnostic skill to MCP server (#1003)
+- feat(skill): add diagnose_replication_lag AI diagnostic skill to MCP server (#1005)
+- feat(skill): add detect_fragmented_tables AI diagnostic skill to MCP server (#1007)
+- feat(triage): implement autonomous issue triage & diagnostic engine (#1041)
+- feat(triage): add upstream synchronization and triage for major/MySQLTuner-perl (#1042)
+- feat(triage): add live triage and closing runner for major/MySQLTuner-perl (#1043)
+- feat(triage): add English translation engine for major/MySQLTuner-perl comments (#1044)
+- feat(engine): pure calculation subroutines, memory decomposition, and CLI contract hardening (#1048)
+- feat(engine): add statistical statement analysis CSV export in dumpdir
+- feat(versions): add MariaDB 13.0 and MySQL 26.7 (short-term releases) to supported version validation with distinct (LTS) / (short-term support) labels
+- feat(versions): make build/ci_matrix.json (lts, legacy_supported, short_term) the single source of validate_mysql_version cycles via build/sync_supported_versions.pl
+- feat(build): add --update-matrix (atomic rewrite of build/ci_matrix.json from endoflife.date) and --check (drift guard, no write) to sync_eol_dates.pl
+- fix(ci): allow 'release' scope in commit and changelog compliance auditor (#1047)
+- fix(ci): refine audit_logs warning filter to prevent false positives on deprecation advice
+- fix(engine): fix sys views query escaping and dumpdir initialization in select_csv_file
+- fix(engine): skip legacy disabled status and variables views in information_schema dump
+- fix(triage): address CodeRabbit review recommendations on PR #989
+- fix(build): resolve numeric comparison warning, sort direction, LTS detection and regenerate hint (--generate) in sync_eol_dates.pl
+- fix(build): read legacy whitelist from ci_matrix.json and audit the generated version block in sync_eol_dates.pl
+- fix(security): detect server TLS via Ssl_cipher and performance_schema.tls_channel_status when have_ssl is absent (false "TLS/SSL is disabled" on MySQL 8.4+/9.x)
+- fix(auth): surface the real mysql client error with TLS/network hints on login failure instead of always reporting invalid credentials
+- fix(auth): stop after a login failure with explicit --pass/--login-path credentials instead of retrying other methods (error printed once)
+- fix(engine): report MariaDB tx_isolation only when explicitly configured (GLOBAL_VALUE_ORIGIN), worded as deprecated since 11.1
+- fix(engine): report innodb_prefix_index_cluster_optimization as deprecated (MariaDB >= 10.10, when explicitly configured) instead of removed
+- fix(engine): treat which() "not found" (0) as missing in lspci/storcli hardware RAID detection (no more "sh: 1: 0: not found" when the working directory contains an entry named 0)
+- fix(cli): auto-enable json export in prettyjson mode and prevent CLI log output from contaminating outputfile
+- fix(engine): harden my_mkdir_p for absolute path creation across platforms and avoid uninitialized warnings in print helpers
+- test(build): add unit_build_headers.t validating build script header compliance (#1029)
+- test(build): add unit_cve_update.t validating pure Perl CVE and EOL scripts (#1024)
+- test(build): add unit_release_gen.t validating pure Perl release generator (#1023)
+- test(ci): add unit_roadmap_validation.t validating roadmap schema (#1025)
+- test(ci): add unit_ci_matrix.t validating CI version matrix and markdown alignment (#1027)
+- test(ci): add unit_release_validation.t validating release pre-flight checks (#1028)
+- test(ci): add unit_doc_link_auditor.t validating reference link integrity (#1030)
+- test(ci): add unit_changelog_gate.t validating conventional commits and release schema (#1032)
+- test(ci): add unit_release_orchestrator.t validating SemVer bumps and dry runs (#1033)
+- test(ci): decompose repro_native_parsing.t into granular structured subtests (#1035)
+- test(ci): decompose test_issue_863.t into granular structured subtests (#1036)
+- test(engine): add unit_boolean_normalization.t validating boolean parsing (#1021)
+- test(engine): add unit_deprecated_vars_audit.t validating deprecation rules (#1022)
+- test(engine): add unit_doc_anchors.t validating topic anchor and KB URL mappings (#1031)
+- test(engine): add unit_sql_trace_logging.t validating trace buffer and diagnostic report (#1034)
+- test(engine): add unit_pfs_stage_profiling.t validating stage bottlenecks and mutex waits (#1037)
+- test(engine): add unit_innodb_ahi.t validating search hit ratios and partition sizing (#1038)
+- test(engine): add unit_tls_ciphers.t validating deprecated TLS versions and weak ciphers (#1039)
+- test(engine): add unit_table_definition_cache.t validating fill ratio and eviction rate (#1040)
+- test(ha): add unit_topology_autodiscovery.t validating topology classification (#1026)
+- test(mcp): add unit_mcp_protocol.t validating standard JSON-RPC 2.0 error codes and SSE endpoints (#1001)
+- test(skill): add unit_skill_buffer_pool.t validating InnoDB buffer pool calculations (#1003)
+- test(skill): add unit_skill_replication.t validating replication lag and thread diagnostics (#1005)
+- test(skill): add unit_skill_fragmentation.t validating table fragmentation checks (#1007)
+- test(triage): add unit and E2E suites for issue triage engine (#1041)
+- test(triage): add unit_upstream_syncer.py for major/MySQLTuner-perl (#1042)
+- test(ci): guard END cleanup blocks against uninitialized variables on skipped tests (#1046)
+- test(engine): add adversarial fuzzing, mutation testing, and pure metrics unit tests (#1048)
+- test(engine): add unit tests for dumpdir statistical analysis, query escaping, and directory creation
+- test(engine): add unit tests for information_schema view filtering in dumpdir
+- test(versions): add unit_version_control.t (incl. LTS vs short-term label checks) and expand version coverage in test_vulnerabilities.t
+- test(build): add generated support markdown structure checks (ordering, row format, regenerate hint) to unit_cve_update.t
+- test(security): add unit_tls_status_detection.t validating TLS detection without have_ssl
+- test(auth): add unit_login_error_reporting.t and update cli_validation.t for real client error reporting
+- test(versions): add unit_supported_versions_sync.t and extend unit_ci_matrix.t with short_term / legacy_supported checks
+- test(engine): add unit_mariadb_var_origin.t validating origin-based MariaDB deprecated variable detection
+- test(auth): add unit_login_explicit_failure.t validating single error report and no fallback after explicit credentials fail
+- test(auth): trap exit() in test_issue_605.t and v2_8_41_features.t now that failed explicit credentials stop mysql_setup
+- test(build): add unit_eol_matrix_update.t validating ci_matrix.json update, layout round-trip and --check guard
+- test(engine): add unit_which_missing_binary.t validating that no system command runs with a missing lspci/storcli binary
+- test(cli): add unit_outputfile_json.t validating clean json export and nested directory creation
+- ci(triage): add autonomous issue triage workflow and Makefile targets (#1041)
+- ci(versions): add sync_supported_versions.pl --check step to pull_request.yml and Makefile targets sync_versions / check_versions
+- docs(mcp): fix Mermaid diagram syntax and quoting in architecture guides (#1045)
+- docs(mcp): update AI agent skills, architecture diagrams, and integration guide (#1048)
+- docs(versions): update mysql_support.md and mariadb_support.md from official EOL API
+- docs(ci): document the supported versions single-source check in .agent/GITHUB_ACTIONS.md
+- docs(ci): document sync_eol_dates.pl --check / --update-matrix in .agent/GITHUB_ACTIONS.md
+- docs(report): regenerate FEATURES.md with TLS detection and login error reporting subroutines
+- docs(report): record version-support patch review and live validation findings (MySQL 8.4/9.7, MariaDB 10.11-13.0) in POTENTIAL_ISSUES.md
+- docs(docs): align supported test targets with ci_matrix.json (LTS, legacy supported, short-term) and document TLS detection fallback and explicit-credential login failure behaviour (README.md, fr, it, ru)
+- docs(docs): document TLS detection chain, login failure reporting, LTS / short-term labels and origin-based MariaDB deprecation checks in INTERNALS.md
+- docs(report): record v2.9.3 pre-release E2E campaign results (lab and container modes) in POTENTIAL_ISSUES.md
+
 2.9.2 2026-07-29
 - chore(deps): replace abandoned cz-conventional-changelog with @commitlint/cz-commitlint (#587)
 - feat(galera): add network queue, PK certification, and split-brain quorum diagnostics (#975)

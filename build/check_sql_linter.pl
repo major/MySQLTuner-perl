@@ -1,4 +1,10 @@
 #!/usr/bin/env perl
+# ===========================================================================
+# Script:      build/check_sql_linter.pl
+# Description: Static SQL Linter validating queries embedded in mysqltuner.pl.
+# Author:      Jean-Marie Renouard / Antigravity
+# Usage:       perl build/check_sql_linter.pl
+# ===========================================================================
 use strict;
 use warnings;
 use File::Basename;

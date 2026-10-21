@@ -128,6 +128,10 @@
     - If working, and .my.cnf isn't there, **WARNING**
     - If working, and .my.cnf is there, okay
   - Prompt for creds on the console
+- On login failure:
+  - Print the real client error (`Client error: ERROR nnnn ...`) with a TLS hint (2026/SSL) or network hint (2002-2005)
+  - Report "invalid credentials" only for authentication errors (1045/1698)
+  - Explicit `--pass` / `--login-path` credentials: report once and exit 1 (no fallback to other methods)
 
 ## MySQLTuner system checks
 
@@ -150,6 +154,8 @@
 - Currently MySQL < 5.5 and MariaDB < 10.6 are considered EOL
 - Using 5.5+ version of MySQL for performance issue (asynchronous IO)
 - MySQL 9.x readiness: detection of removed variables and eliminated authentication methods
+- Supported versions are labelled `(LTS)` or `(short-term support)`; cycles come from `build/ci_matrix.json` (`lts`, `legacy_supported`, `short_term`) via `build/sync_supported_versions.pl`
+- MariaDB deprecated aliases (`tx_isolation` >= 11.1, `innodb_prefix_index_cluster_optimization` >= 10.10) are reported only when explicitly configured (`information_schema.SYSTEM_VARIABLES.GLOBAL_VALUE_ORIGIN` = CONFIG, COMMAND-LINE or SQL)
 
 ## Mysql error log file analysis
 
@@ -187,7 +193,7 @@
 ## MySQLTuner SSL/TLS security checks
 
 - Current session encryption status (Ssl_cipher check)
-- Global SSL support (have_ssl variable)
+- Global SSL support (have_ssl variable, then session `Ssl_cipher`, then `performance_schema.tls_channel_status` on MySQL 8.0.21+ since `have_ssl` was removed in MySQL 8.4)
 - `require_secure_transport` enforcement (MySQL 5.7+, MariaDB 10.5+)
 - TLS version audit:
   - Warn if TLSv1.0 or TLSv1.1 are enabled (insecure)

@@ -80,9 +80,16 @@ subtest 'Validate MySQL Version LTS support' => sub {
         { version => "9.7.0", lts => 1, desc => "MySQL 9.7.0 is recognized as supported LTS" },
         { version => "9.6.0", lts => 0, desc => "MySQL 9.6.0 is recognized as EOL/unsupported" },
         { version => "9.5.0", lts => 0, desc => "MySQL 9.5.0 is recognized as EOL/unsupported" },
-        { version => "8.0.35", lts => 1, desc => "MySQL 8.0.35 is recognized as supported LTS (8.0 matches)" },
-        { version => "8.4.1", lts => 1, desc => "MySQL 8.4.1 is recognized as supported LTS (8.4 matches)" },
-        { version => "11.4.2", lts => 1, desc => "MariaDB 11.4.2 is recognized as supported LTS (11.4 matches)" },
+        { version => "8.0.35",  lts => 1, desc => "MySQL 8.0.35 is recognized as supported LTS (8.0 matches)" },
+        { version => "8.4.1",   lts => 1, desc => "MySQL 8.4.1 is recognized as supported LTS (8.4 matches)" },
+        { version => "10.11.8", lts => 1, desc => "MariaDB 10.11.8 is recognized as supported LTS (10.11 matches)" },
+        { version => "11.4.2",  lts => 1, desc => "MariaDB 11.4.2 is recognized as supported LTS (11.4 matches)" },
+        { version => "11.8.1",  lts => 1, desc => "MariaDB 11.8.1 is recognized as supported LTS (11.8 matches)" },
+        { version => "12.3.1",  lts => 1, desc => "MariaDB 12.3.1 is recognized as supported LTS (12.3 matches)" },
+        { version => "13.0.0",  lts => 1, desc => "MariaDB 13.0.0 is recognized as supported (13.0 matches)" },
+        { version => "26.7.0",  lts => 1, desc => "MySQL 26.7.0 is recognized as supported (26.7 matches)" },
+        { version => "10.6.18", lts => 0, desc => "MariaDB 10.6.18 is recognized as EOL/unsupported" },
+        { version => "12.2.0",  lts => 0, desc => "MariaDB 12.2.0 is recognized as EOL/unsupported" },
     );
 
     for my $case (@cases) {

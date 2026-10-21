@@ -95,7 +95,7 @@ Grazie a [endoflife.date](https://endoflife.date/)
 * **Predictive Capacity Planning**: Analisi dell'headroom della memoria (picco vs RAM+Swap disponibile), previsione della crescita del disco e rilevamento della capacità AUTO_INCREMENT vicina al massimo.
 * **Cloud Autodiscovery**: Supporto nativo per AWS RDS/Aurora, GCP Cloud SQL, Azure (Flexible/Managed) e DigitalOcean. Rilevamento automatico tramite `@@version_comment` e variabili specifiche del provider.
 * **Tuning adattivo all'infrastruttura**: Rilevamento dei tipi di storage SSD/NVMe vs HDD e architetture ARM64/Graviton vs x86_64. Adeguamento delle raccomandazioni per `innodb_flush_neighbors` e `innodb_io_capacity`.
-* **Audit di sicurezza SSL/TLS**: Verifica della crittografia della sessione, audit delle versioni TLS (avviso su TLSv1.0/1.1), scadenza dei certificati, applicazione di `require_secure_transport` e verifica SSL degli utenti remoti.
+* **Audit di sicurezza SSL/TLS**: Verifica della crittografia della sessione, audit delle versioni TLS (avviso su TLSv1.0/1.1), scadenza dei certificati, applicazione di `require_secure_transport` e verifica SSL degli utenti remoti. Lo stato TLS del server viene rilevato tramite `have_ssl`, poi `Ssl_cipher`, poi `performance_schema.tls_channel_status` (MySQL 8.4+ non espone più `have_ssl`).
 * **Audit dei plugin di autenticazione**: Rilevamento di plugin non sicuri (`mysql_native_password`, `sha256_password`), diagnostica di compatibilità MySQL 9.x e raccomandazioni MariaDB `ed25519`/`unix_socket`.
 * **Modellazione dello schema e convenzioni di denominazione**: Analisi completa della struttura delle tabelle (PK mancanti, tipi di chiavi surrogate, conformità UTF-8, tabelle non-InnoDB), audit delle convenzioni di denominazione (coerenza snake_case/camelCase, rilevamento plurale, prefissi colonne booleane/date) e analisi delle chiavi esterne (colonne `_id` senza vincoli, disallineamenti di tipo, audit CASCADE).
 * **Modellazione MySQL 8.0+ / MariaDB**: Indicizzabilità delle colonne JSON (colonne virtuali generate), indici invisibili, vincoli CHECK.
@@ -273,7 +273,7 @@ docker run --rm -it -v $(pwd)/my.cnf:/defaults.cnf -v $(pwd)/results:/results jm
 
 ### Posizione delle release
 
-* Le note di rilascio ufficiali e la cronologia sono documentate nella cartella [releases/](releases/) di questo repository (ad esempio, [releases/v2.9.2.md](releases/v2.9.2.md)).
+* Le note di rilascio ufficiali e la cronologia sono documentate nella cartella [releases/](releases/) di questo repository (ad esempio, [releases/v2.9.3.md](releases/v2.9.3.md)).
 * I tag di rilascio Git e gli archivi sorgente scaricabili sono disponibili su [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 Installazione facoltativa di Sysschema per MySQL 5.6
@@ -708,6 +708,9 @@ Connessione e autenticazione
  --pass <password> Password da utilizzare per l'autenticazione
  --defaults-file <path> file dei valori predefiniti per le credenziali
 
+* In caso di accesso non riuscito viene mostrato l'errore reale del client (es. `Client error: ERROR 2026 ... self-signed certificate`) con un suggerimento TLS o di rete; "credenziali non valide" viene segnalato solo per errori di autenticazione (1045/1698).
+* Un errore con credenziali esplicite `--pass` o `--login-path` termina subito (codice 1) senza provare altri metodi di accesso (`debian.cnf`, file dei valori predefiniti, prompt).
+
 Poiché si sta utilizzando un host remoto, utilizzare i parametri per fornire i valori dal sistema operativo
 
  --forcemem <size>  Quantità di RAM installata (in megabyte o con unità, es. 15G, 1024M)
@@ -773,9 +776,11 @@ mysql_percona80 sakila
 
 **Target di test supportati** (fare riferimento a [supporto MariaDB](mariadb_support.md) e [supporto MySQL](mysql_support.md) per la matrice di compatibilità attuale):
 
-* MySQL 8.0, 8.4, 9.x
-* MariaDB 10.6, 10.11, 11.4, 11.8
+* MySQL 8.4, 9.7 (LTS), 8.0 (supporto legacy) e 26.7 (supporto a breve termine)
+* MariaDB 10.11, 11.4, 11.8, 12.3 (LTS) e 13.0 (supporto a breve termine)
 * Percona Server 8.0
+
+I cicli supportati sono definiti una sola volta in `build/ci_matrix.json` (`lts`, `legacy_supported`, `short_term`) e propagati in `mysqltuner.pl` con `make sync_versions` (`make check_versions` li verifica in CI).
 
 I contributi sono benvenuti
 --
