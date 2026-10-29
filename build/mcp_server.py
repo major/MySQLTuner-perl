@@ -24,7 +24,7 @@ CACHE_DIR = os.environ.get("CACHE_DIR", "/var/cache/mysqltuner")
 AUDIT_INTERVAL_HOURS = float(os.environ.get("AUDIT_INTERVAL_HOURS", "12"))
 READ_ONLY = os.environ.get("READ_ONLY", "false").lower() in ("true", "1", "yes")
 MYSQLTUNER_SCRIPT = os.environ.get("MYSQLTUNER_PL", "mysqltuner.pl")
-SERVER_VERSION = "2.9.3"
+SERVER_VERSION = "2.9.4"
 PROTOCOL_VERSION = "2024-11-05"
 
 # Ensure cache directory exists
