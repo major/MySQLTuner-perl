@@ -2524,12 +2524,17 @@ sub cpu_cores {
         return $cntCPU + 0;
     }
     if ($is_win) {
-        my $cntCPU =
-          execute_system_command(
+        my $cntCPU = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfCores -Sum).Sum"'
+        );
+        chomp $cntCPU if defined $cntCPU;
+        if ( !$cntCPU || $cntCPU !~ /^\d+$/ || $cntCPU == 0 ) {
+            $cntCPU = execute_system_command(
 'wmic cpu get NumberOfCores| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
-          );
-        chomp $cntCPU;
-        return $cntCPU + 0;
+            );
+            chomp $cntCPU if defined $cntCPU;
+        }
+        return ( $cntCPU && $cntCPU =~ /^\d+$/ ) ? $cntCPU + 0 : 0;
     }
     return 0;
 }
@@ -2562,12 +2567,17 @@ sub logical_cpu_cores {
         return $cntCPU + 0;
     }
     if ($is_win) {
-        my $cntCPU =
-          execute_system_command(
+        my $cntCPU = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum"'
+        );
+        chomp $cntCPU if defined $cntCPU;
+        if ( !$cntCPU || $cntCPU !~ /^\d+$/ || $cntCPU == 0 ) {
+            $cntCPU = execute_system_command(
 'wmic cpu get NumberOfLogicalProcessors| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
-          );
-        chomp $cntCPU;
-        return $cntCPU + 0;
+            );
+            chomp $cntCPU if defined $cntCPU;
+        }
+        return ( $cntCPU && $cntCPU =~ /^\d+$/ ) ? $cntCPU + 0 : cpu_cores();
     }
     return cpu_cores();
 }
@@ -3507,14 +3517,28 @@ sub os_setup {
             $swap_memory = $swap_memory * 1024 * 1024;
         }
         elsif ( $os =~ /windows/i ) {
-            $physical_memory =
-              execute_system_command(
-'wmic ComputerSystem get TotalPhysicalMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;'
-              ) or memerror;
-            $swap_memory =
-              execute_system_command(
-'wmic OS get FreeVirtualMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;'
-              ) or memerror;
+            $physical_memory = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory"'
+            );
+            chomp($physical_memory) if defined $physical_memory;
+            if ( !$physical_memory || $physical_memory !~ /^\d+$/ ) {
+                $physical_memory = execute_system_command(
+'wmic ComputerSystem get TotalPhysicalMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
+                );
+                chomp($physical_memory) if defined $physical_memory;
+            }
+            $swap_memory = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_OperatingSystem).FreeVirtualMemory"'
+            );
+            chomp($swap_memory) if defined $swap_memory;
+            if ( !$swap_memory || $swap_memory !~ /^\d+$/ ) {
+                $swap_memory = execute_system_command(
+'wmic OS get FreeVirtualMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
+                );
+                chomp($swap_memory) if defined $swap_memory;
+            }
+            $physical_memory or memerror;
+            $swap_memory     or memerror;
         }
     }
     debugprint "Physical Memory: $physical_memory";
@@ -3864,7 +3888,7 @@ sub execute_system_command {
 
         # Be less verbose for commands that are expected to fail on some systems
         if ( $command !~
-/(?:^|\/)(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb|curl|wget|which)/
+/(?:^|\/)(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|powershell|pwsh|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb|curl|wget|which)/
           )
         {
             badprint "System command failed: $command";
@@ -5871,8 +5895,14 @@ sub get_fs_info {
 }
 
 sub get_fs_info_win {
-    my @sinfo =
-      execute_system_command('wmic logicaldisk get Name,Size,FreeSpace');
+    my @sinfo = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_LogicalDisk | Select-Object -Property FreeSpace,DeviceID,Size | Format-Table -HideTableHeaders"'
+    );
+    my @valid = grep { /^\s*(\d+)\s+(.*?)\s+(\d+)\s*$/ } @sinfo;
+    if ( !@valid ) {
+        @sinfo =
+          execute_system_command('wmic logicaldisk get Name,Size,FreeSpace');
+    }
 
     foreach my $info (@sinfo) {
         if ( $info =~ /^\s*(\d+)\s+(.*?)\s+(\d+)\s*$/ ) {
@@ -7528,7 +7558,15 @@ sub check_architecture {
         return;
     }
     elsif ($is_win) {
-        if ( execute_system_command('wmic os get osarchitecture') =~ /64/ ) {
+        my $osarch = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_OperatingSystem).OSArchitecture"'
+        );
+        chomp($osarch) if defined $osarch;
+        if ( !$osarch ) {
+            $osarch = execute_system_command('wmic os get osarchitecture');
+            chomp($osarch) if defined $osarch;
+        }
+        if ( $osarch =~ /64/ ) {
             goodprint "Operating on 64-bit architecture";
             $arch = 64;
         }
