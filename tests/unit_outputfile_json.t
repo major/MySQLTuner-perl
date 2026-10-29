@@ -94,7 +94,7 @@ subtest 'dump_result exports clean JSON without raw CLI interference' => sub {
     {
         no warnings 'once';
         %main::result = (
-            'MySQLTuner'  => { 'version' => '2.9.3' },
+            'MySQLTuner'  => { 'version' => '2.9.4' },
             'HealthScore' => 85,
         );
     }
