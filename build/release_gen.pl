@@ -287,7 +287,7 @@ sub parse_git_commits {
 }
 
 sub generate_version_note {
-    my ( $version, $block, $custom_range ) = @_;
+    my ( $version, $block, $custom_range, $custom_output ) = @_;
     my $date      = $block->{date};
     my $changelog = sort_changelog_lines( $block->{summary} );
     my $commits   = get_git_commits( $version, $custom_range );
@@ -302,8 +302,14 @@ sub generate_version_note {
     push @summary_lines, @$other_commits;
     my $commits_summary = @summary_lines ? join( "\n", @summary_lines ) : "No commits recorded.";
 
-    mkdir $RELEASES_DIR unless -d $RELEASES_DIR;
-    my $filename = File::Spec->catfile( $RELEASES_DIR, "v$version.md" );
+    my $filename;
+    if ($custom_output) {
+        $filename = $custom_output;
+    }
+    else {
+        mkdir $RELEASES_DIR unless -d $RELEASES_DIR;
+        $filename = File::Spec->catfile( $RELEASES_DIR, "v$version.md" );
+    }
 
     open my $fh, '>', $filename or die "Cannot open $filename for writing: $!";
     print $fh "# Release Notes - v$version\n\n";
@@ -423,10 +429,12 @@ sub version_cmp {
 # Main execution
 my $since_ver;
 my $custom_range;
+my $output_file;
 
 GetOptions(
-    'since=s' => \$since_ver,
-    'range=s' => \$custom_range,
+    'since=s'  => \$since_ver,
+    'range=s'  => \$custom_range,
+    'output=s' => \$output_file,
 ) or die "Error in command line arguments\n";
 
 my $blocks = get_changelog_blocks();
@@ -436,14 +444,14 @@ if ($since_ver) {
     my @sorted_versions = sort { version_cmp( $a, $b ) } keys %$blocks;
     for my $v (@sorted_versions) {
         if ( version_cmp( $v, $since_ver ) >= 0 ) {
-            generate_version_note( $v, $blocks->{$v}, $custom_range );
+            generate_version_note( $v, $blocks->{$v}, $custom_range, $output_file );
         }
     }
 }
 else {
     my $version = get_current_version();
     if ( exists $blocks->{$version} ) {
-        generate_version_note( $version, $blocks->{$version}, $custom_range );
+        generate_version_note( $version, $blocks->{$version}, $custom_range, $output_file );
     }
     else {
         print STDERR "Error: Version $version not found in Changelog.\n";

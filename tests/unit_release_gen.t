@@ -9,8 +9,14 @@ use warnings;
 use Test::More;
 use FindBin;
 use File::Spec;
+use File::Temp qw(tempfile);
 
 plan tests => 5;
+
+my ( $rfh_temp, $temp_release ) = tempfile( CLEANUP => 1 );
+close $rfh_temp;
+my ( $ffh_temp, $temp_features ) = tempfile( CLEANUP => 1 );
+close $ffh_temp;
 
 # --- Subtest 1: Test release_gen.pl Execution & Output ---
 subtest 'release_gen.pl Script Syntax & Execution' => sub {
@@ -22,7 +28,7 @@ subtest 'release_gen.pl Script Syntax & Execution' => sub {
     my $syntax_check = `perl -c "$script" 2>&1`;
     like( $syntax_check, qr/syntax OK/, "build/release_gen.pl compiles cleanly" );
 
-    my $exec_out = `perl "$script" 2>&1`;
+    my $exec_out = `perl "$script" --output "$temp_release" 2>&1`;
     is( $? >> 8, 0, "build/release_gen.pl exits with code 0" );
 };
 
@@ -31,16 +37,15 @@ subtest 'genFeatures.pl Script Syntax & Output' => sub {
     plan tests => 4;
 
     my $script = File::Spec->catfile( $FindBin::Bin, '..', 'build', 'genFeatures.pl' );
-    my $features_md = File::Spec->catfile( $FindBin::Bin, '..', 'FEATURES.md' );
     ok( -f $script, "build/genFeatures.pl exists" );
 
     my $syntax_check = `perl -c "$script" 2>&1`;
     like( $syntax_check, qr/syntax OK/, "build/genFeatures.pl compiles cleanly" );
 
-    my $exec_out = `perl "$script" 2>&1`;
+    my $exec_out = `perl "$script" --output "$temp_features" 2>&1`;
     is( $? >> 8, 0, "build/genFeatures.pl exits with code 0" );
 
-    ok( -f $features_md && -s $features_md > 100, "FEATURES.md generated with content" );
+    ok( -f $temp_features && -s $temp_features > 100, "FEATURES.md generated with content" );
 };
 
 # --- Subtest 3: Release Notes Content Validation ---
@@ -53,10 +58,9 @@ subtest 'Generated Release Note Schema Validation' => sub {
     close $fh;
     $version =~ s/^\s+|\s+$//g;
 
-    my $rel_file = File::Spec->catfile( $FindBin::Bin, '..', 'releases', "v$version.md" );
-    ok( -f $rel_file, "Release notes for current version exists: $rel_file" );
+    ok( -f $temp_release, "Release notes generated in temporary file: $temp_release" );
 
-    open my $rfh, '<', $rel_file or die "Cannot open $rel_file: $!\n";
+    open my $rfh, '<', $temp_release or die "Cannot open $temp_release: $!\n";
     my $content = do { local $/; <$rfh> };
     close $rfh;
 

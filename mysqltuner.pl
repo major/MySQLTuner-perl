@@ -3963,8 +3963,8 @@ sub mysql_setup {
     $remotestring = '';
     my $transport_prefix = get_transport_prefix();
 
-    if ( $opt{mysqladmin} ) {
-        $mysqladmincmd = $opt{mysqladmin};
+    if ( $opt{mysqladmin} || $opt{mysqladmincmd} ) {
+        $mysqladmincmd = $opt{mysqladmin} // $opt{mysqladmincmd};
     }
     else {
         if ($transport_prefix) {
@@ -5961,7 +5961,6 @@ sub is_virtual_machine {
     if ( $^O eq 'freebsd' ) {
         my $isVm = execute_system_command('sysctl -n kern.vm_guest');
         chomp $isVm;
-        print "FARK DEBUG isVm=[$isVm]";
         return ( $isVm eq 'none' ? 0 : 1 );
     }
 

@@ -3,6 +3,7 @@
 2.9.4 2026-10-29
 - fix(engine): resolve false positive for BIGINT UNSIGNED AUTO_INCREMENT primary keys (#1007)
 - fix(system): modernize Windows metrics discovery using PowerShell CIM with WMIC fallback (#992)
+- fix(test): resolve chroot test failures and prevent tree mutation during test execution (#1010)
 
 2.9.3 2026-10-21
 - chore(build): consolidate EOL and CVE scripts in pure Perl and add get_version.sh (#1024)

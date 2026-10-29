@@ -40,10 +40,15 @@ subtest 'get_log_file_real_path detection' => sub {
     # 1. Test systemd detection
     $mock_system_output = "mariadb.service\n";
     
+    no warnings 'redefine';
+    local *main::which = sub {
+        my ($cmd) = @_;
+        return '/bin/journalctl' if $cmd eq 'journalctl';
+        return 0;
+    };
+
     my $path = main::get_log_file_real_path('/nonexistent/log', 'myhost', '/tmp/');
-    if (main::which('journalctl', $ENV{'PATH'})) {
-        is($path, 'systemd:mariadb.service', 'Detected mariadb.service via systemctl');
-    }
+    is($path, 'systemd:mariadb.service', 'Detected mariadb.service via systemctl');
 };
 
 # Test log_file_recommendations with syslog mock
