@@ -11468,7 +11468,7 @@ having sum(if(c.column_key in ('PRI', 'UNI'), 1, 0)) = 0"
 
     # Advanced PK checks
     my @pkInfo = select_array(
-"SELECT c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, c.COLUMN_TYPE
+"SELECT c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, c.COLUMN_TYPE, c.EXTRA
 FROM information_schema.columns c
 JOIN information_schema.tables t USING (TABLE_SCHEMA, TABLE_NAME)
 WHERE t.TABLE_TYPE = 'BASE TABLE'
@@ -11482,13 +11482,14 @@ WHERE t.TABLE_TYPE = 'BASE TABLE'
       ("Schema,Table,Column,DataType,ColumnType,IssueType,Description");
 
     foreach my $pk (@pkInfo) {
-        my ( $schema, $table, $column, $datatype, $columntype ) = split /\t/,
-          $pk;
+        my ( $schema, $table, $column, $datatype, $columntype, $extra ) =
+          split /\t/, $pk;
         $schema     //= '';
         $table      //= '';
         $column     //= '';
         $datatype   //= '';
         $columntype //= '';
+        $extra      //= '';
 
         # PK Naming Convention
         if ( $column ne 'id' && $column ne "${table}_id" ) {
@@ -11503,9 +11504,12 @@ WHERE t.TABLE_TYPE = 'BASE TABLE'
         }
 
         # Surrogate Key Recommendation
-        if (   $datatype !~ /int/i
+        if (
+               $datatype   !~ /int/i
             || $columntype !~ /unsigned/i
-            || $columntype !~ /auto_increment/i )
+            || (   $extra !~ /auto_increment/i
+                && $columntype !~ /auto_increment/i )
+          )
         {
             # Check if it might be a UUID
             if ( $column =~ /uuid/i ) {

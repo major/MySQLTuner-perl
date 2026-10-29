@@ -1,5 +1,8 @@
 # MySQLTuner Changelog
 
+2.9.4 2026-10-29
+- fix(engine): resolve false positive for BIGINT UNSIGNED AUTO_INCREMENT primary keys (#1007)
+
 2.9.3 2026-10-21
 - chore(build): consolidate EOL and CVE scripts in pure Perl and add get_version.sh (#1024)
 - chore(build): standardize metadata headers across all build scripts (#1029)
