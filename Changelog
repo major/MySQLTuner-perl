@@ -3,6 +3,7 @@
 2.9.4 2026-10-29
 - chore(ai): adapt AI governance rules and add skills for isolated testing and Windows telemetry (#1010, #992)
 - fix(engine): resolve false positive for BIGINT UNSIGNED AUTO_INCREMENT primary keys (#1007)
+- fix(security): remediate Dependabot vulnerabilities in fast-uri, brace-expansion, and js-yaml (#1016, #1017, #1018, #1019, #1020, #1021)
 - fix(system): modernize Windows metrics discovery using PowerShell CIM with WMIC fallback (#992)
 - fix(test): resolve chroot test failures and prevent tree mutation during test execution (#1010)
 
