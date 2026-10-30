@@ -8,12 +8,21 @@
 # ===========================================================================
 use strict;
 use warnings;
+use Getopt::Long;
 use File::Spec;
 use Cwd qw(getcwd);
 
 my $PROJECT_ROOT  = getcwd();
 my $MYSQLTUNER_PL = File::Spec->catfile( $PROJECT_ROOT, 'mysqltuner.pl' );
 my $FEATURES_MD   = File::Spec->catfile( $PROJECT_ROOT, 'FEATURES.md' );
+
+my $output_file;
+my $dry_run;
+
+GetOptions(
+    'output=s' => \$output_file,
+    'dry-run'  => \$dry_run,
+) or die "Error in command line arguments\n";
 
 open my $in_fh, '<', $MYSQLTUNER_PL or die "Cannot open $MYSQLTUNER_PL: $!\n";
 
@@ -31,19 +40,29 @@ close $in_fh;
 
 my @sorted_subs = sort @subs;
 
-open my $out_fh, '>', $FEATURES_MD or die "Cannot open $FEATURES_MD for writing: $!\n";
-print $out_fh "Features list for option: --feature (dev only)\n---\n\n";
-for my $s (@sorted_subs) {
-    print $out_fh "* $s\n";
-}
-close $out_fh;
+my $target_file = $output_file || $FEATURES_MD;
 
-print "Generated: $FEATURES_MD\n";
-
-# Print contents to stdout for CLI feedback
-if ( open my $rfh, '<', $FEATURES_MD ) {
-    while ( my $line = <$rfh> ) {
-        print $line;
+if ( !$dry_run ) {
+    open my $out_fh, '>', $target_file or die "Cannot open $target_file for writing: $!\n";
+    print $out_fh "Features list for option: --feature (dev only)\n---\n\n";
+    for my $s (@sorted_subs) {
+        print $out_fh "* $s\n";
     }
-    close $rfh;
+    close $out_fh;
+
+    print "Generated: $target_file\n";
+
+    # Print contents to stdout for CLI feedback
+    if ( open my $rfh, '<', $target_file ) {
+        while ( my $line = <$rfh> ) {
+            print $line;
+        }
+        close $rfh;
+    }
+}
+else {
+    print "Dry-run: generated features list for option: --feature (dev only)\n";
+    for my $s (@sorted_subs) {
+        print "* $s\n";
+    }
 }

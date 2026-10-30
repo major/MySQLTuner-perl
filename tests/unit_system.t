@@ -229,7 +229,7 @@ subtest 'Check Architecture' => sub {
         ok(grep({ /Skipping architecture check/ } @mock_output), 'logged skipping architecture on remote');
     }
 
-    # Case B: Windows 64-bit
+    # Case B: Windows 64-bit via WMIC fallback
     {
         no warnings 'redefine';
         local *main::is_remote = sub () { return 0 };
@@ -245,6 +245,25 @@ subtest 'Check Architecture' => sub {
         %main::result = ();
         main::check_architecture();
         is($main::result{'OS'}{'Architecture'}, '64 bits', 'Windows wmic match sets architecture to 64');
+        $main::is_win = 0;
+    }
+
+    # Case B2: Windows 64-bit via PowerShell CIM
+    {
+        no warnings 'redefine';
+        local *main::is_remote = sub () { return 0 };
+        local *main::get_transport_prefix = sub { return "" };
+        local *main::execute_system_command = sub {
+            my ($cmd) = @_;
+            if ($cmd =~ /powershell.*OSArchitecture/) {
+                return "64-bit";
+            }
+            return "";
+        };
+        $main::is_win = 1;
+        %main::result = ();
+        main::check_architecture();
+        is($main::result{'OS'}{'Architecture'}, '64 bits', 'Windows PowerShell CIM match sets architecture to 64');
         $main::is_win = 0;
     }
 

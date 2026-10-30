@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# mysqltuner.pl - Version 2.9.3
+# mysqltuner.pl - Version 2.9.4
 # High Performance MySQL Tuning Script
 # Copyright (C) 2015-2026 Jean-Marie Renouard - jmrenouard@gmail.com
 # Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
@@ -67,7 +67,7 @@ sub execute_system_command;
 our $is_win = $^O eq 'MSWin32';
 
 # Set up a few variables for use in the script
-our $tunerversion = "2.9.3";
+our $tunerversion = "2.9.4";
 our ( @adjvars, @generalrec, @modeling, @sysrec, @secrec );
 our ( %result, %myvar, %real_vars, %mystat, %mycalc, %myrepl, %myreplicas,
     $dummyselect );
@@ -2524,12 +2524,17 @@ sub cpu_cores {
         return $cntCPU + 0;
     }
     if ($is_win) {
-        my $cntCPU =
-          execute_system_command(
+        my $cntCPU = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfCores -Sum).Sum"'
+        );
+        chomp $cntCPU if defined $cntCPU;
+        if ( !$cntCPU || $cntCPU !~ /^\d+$/ || $cntCPU == 0 ) {
+            $cntCPU = execute_system_command(
 'wmic cpu get NumberOfCores| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
-          );
-        chomp $cntCPU;
-        return $cntCPU + 0;
+            );
+            chomp $cntCPU if defined $cntCPU;
+        }
+        return ( $cntCPU && $cntCPU =~ /^\d+$/ ) ? $cntCPU + 0 : 0;
     }
     return 0;
 }
@@ -2562,12 +2567,17 @@ sub logical_cpu_cores {
         return $cntCPU + 0;
     }
     if ($is_win) {
-        my $cntCPU =
-          execute_system_command(
+        my $cntCPU = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum"'
+        );
+        chomp $cntCPU if defined $cntCPU;
+        if ( !$cntCPU || $cntCPU !~ /^\d+$/ || $cntCPU == 0 ) {
+            $cntCPU = execute_system_command(
 'wmic cpu get NumberOfLogicalProcessors| perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
-          );
-        chomp $cntCPU;
-        return $cntCPU + 0;
+            );
+            chomp $cntCPU if defined $cntCPU;
+        }
+        return ( $cntCPU && $cntCPU =~ /^\d+$/ ) ? $cntCPU + 0 : cpu_cores();
     }
     return cpu_cores();
 }
@@ -3507,14 +3517,28 @@ sub os_setup {
             $swap_memory = $swap_memory * 1024 * 1024;
         }
         elsif ( $os =~ /windows/i ) {
-            $physical_memory =
-              execute_system_command(
-'wmic ComputerSystem get TotalPhysicalMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;'
-              ) or memerror;
-            $swap_memory =
-              execute_system_command(
-'wmic OS get FreeVirtualMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;'
-              ) or memerror;
+            $physical_memory = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory"'
+            );
+            chomp($physical_memory) if defined $physical_memory;
+            if ( !$physical_memory || $physical_memory !~ /^\d+$/ ) {
+                $physical_memory = execute_system_command(
+'wmic ComputerSystem get TotalPhysicalMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
+                );
+                chomp($physical_memory) if defined $physical_memory;
+            }
+            $swap_memory = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_OperatingSystem).FreeVirtualMemory"'
+            );
+            chomp($swap_memory) if defined $swap_memory;
+            if ( !$swap_memory || $swap_memory !~ /^\d+$/ ) {
+                $swap_memory = execute_system_command(
+'wmic OS get FreeVirtualMemory | perl -ne "s/[^0-9]//g; print if /[0-9]+/;"'
+                );
+                chomp($swap_memory) if defined $swap_memory;
+            }
+            $physical_memory or memerror;
+            $swap_memory     or memerror;
         }
     }
     debugprint "Physical Memory: $physical_memory";
@@ -3864,7 +3888,7 @@ sub execute_system_command {
 
         # Be less verbose for commands that are expected to fail on some systems
         if ( $command !~
-/(?:^|\/)(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb|curl|wget|which)/
+/(?:^|\/)(dmesg|lspci|dmidecode|ipconfig|isainfo|bootinfo|ver|wmic|powershell|pwsh|lsattr|prtconf|swapctl|swapinfo|svcprop|ps|ping|ifconfig|ip|hostname|who|free|top|uptime|netstat|sysctl|mysql|mariadb|curl|wget|which)/
           )
         {
             badprint "System command failed: $command";
@@ -3939,8 +3963,8 @@ sub mysql_setup {
     $remotestring = '';
     my $transport_prefix = get_transport_prefix();
 
-    if ( $opt{mysqladmin} ) {
-        $mysqladmincmd = $opt{mysqladmin};
+    if ( $opt{mysqladmin} || $opt{mysqladmincmd} ) {
+        $mysqladmincmd = $opt{mysqladmin} // $opt{mysqladmincmd};
     }
     else {
         if ($transport_prefix) {
@@ -4604,7 +4628,7 @@ sub write_manifest_files {
     }
 
     my $json_content =
-      "{\n  \"version\": \"" . ( $tunerversion // '2.9.3' ) . "\",\n";
+      "{\n  \"version\": \"" . ( $tunerversion // '2.9.4' ) . "\",\n";
     $json_content .= "  \"exported_at\": \"" . scalar( gmtime() ) . " UTC\",\n";
     $json_content .= "  \"total_files\": $total_files,\n";
     $json_content .= "  \"total_size_bytes\": $total_size,\n";
@@ -4620,7 +4644,7 @@ sub write_manifest_files {
 
     my $meta_content = "MySQLTuner Offline Diagnostic Snapshot Metadata\n";
     $meta_content .= "================================================\n";
-    $meta_content .= "Version: " . ( $tunerversion // '2.9.3' ) . "\n";
+    $meta_content .= "Version: " . ( $tunerversion // '2.9.4' ) . "\n";
     $meta_content .= "Exported At: " . scalar( gmtime() ) . " UTC\n";
     $meta_content .= "Host: " . ( $myvar{'hostname'} // 'unknown' ) . "\n";
     $meta_content .=
@@ -5871,8 +5895,14 @@ sub get_fs_info {
 }
 
 sub get_fs_info_win {
-    my @sinfo =
-      execute_system_command('wmic logicaldisk get Name,Size,FreeSpace');
+    my @sinfo = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_LogicalDisk | Select-Object -Property FreeSpace,DeviceID,Size | Format-Table -HideTableHeaders"'
+    );
+    my @valid = grep { /^\s*(\d+)\s+(.*?)\s+(\d+)\s*$/ } @sinfo;
+    if ( !@valid ) {
+        @sinfo =
+          execute_system_command('wmic logicaldisk get Name,Size,FreeSpace');
+    }
 
     foreach my $info (@sinfo) {
         if ( $info =~ /^\s*(\d+)\s+(.*?)\s+(\d+)\s*$/ ) {
@@ -5931,7 +5961,6 @@ sub is_virtual_machine {
     if ( $^O eq 'freebsd' ) {
         my $isVm = execute_system_command('sysctl -n kern.vm_guest');
         chomp $isVm;
-        print "FARK DEBUG isVm=[$isVm]";
         return ( $isVm eq 'none' ? 0 : 1 );
     }
 
@@ -7528,7 +7557,15 @@ sub check_architecture {
         return;
     }
     elsif ($is_win) {
-        if ( execute_system_command('wmic os get osarchitecture') =~ /64/ ) {
+        my $osarch = execute_system_command(
+'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_OperatingSystem).OSArchitecture"'
+        );
+        chomp($osarch) if defined $osarch;
+        if ( !$osarch ) {
+            $osarch = execute_system_command('wmic os get osarchitecture');
+            chomp($osarch) if defined $osarch;
+        }
+        if ( $osarch =~ /64/ ) {
             goodprint "Operating on 64-bit architecture";
             $arch = 64;
         }
@@ -11468,7 +11505,7 @@ having sum(if(c.column_key in ('PRI', 'UNI'), 1, 0)) = 0"
 
     # Advanced PK checks
     my @pkInfo = select_array(
-"SELECT c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, c.COLUMN_TYPE
+"SELECT c.TABLE_SCHEMA, c.TABLE_NAME, c.COLUMN_NAME, c.DATA_TYPE, c.COLUMN_TYPE, c.EXTRA
 FROM information_schema.columns c
 JOIN information_schema.tables t USING (TABLE_SCHEMA, TABLE_NAME)
 WHERE t.TABLE_TYPE = 'BASE TABLE'
@@ -11482,13 +11519,14 @@ WHERE t.TABLE_TYPE = 'BASE TABLE'
       ("Schema,Table,Column,DataType,ColumnType,IssueType,Description");
 
     foreach my $pk (@pkInfo) {
-        my ( $schema, $table, $column, $datatype, $columntype ) = split /\t/,
-          $pk;
+        my ( $schema, $table, $column, $datatype, $columntype, $extra ) =
+          split /\t/, $pk;
         $schema     //= '';
         $table      //= '';
         $column     //= '';
         $datatype   //= '';
         $columntype //= '';
+        $extra      //= '';
 
         # PK Naming Convention
         if ( $column ne 'id' && $column ne "${table}_id" ) {
@@ -11503,9 +11541,12 @@ WHERE t.TABLE_TYPE = 'BASE TABLE'
         }
 
         # Surrogate Key Recommendation
-        if (   $datatype !~ /int/i
+        if (
+               $datatype   !~ /int/i
             || $columntype !~ /unsigned/i
-            || $columntype !~ /auto_increment/i )
+            || (   $extra !~ /auto_increment/i
+                && $columntype !~ /auto_increment/i )
+          )
         {
             # Check if it might be a UUID
             if ( $column =~ /uuid/i ) {
@@ -17899,7 +17940,7 @@ __END__
 
 =head1 NAME
 
- MySQLTuner 2.9.3 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
+ MySQLTuner 2.9.4 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
 
 =head1 SYNOPSIS
 
@@ -18203,7 +18244,7 @@ Suppress informational messages.
 
 =head1 VERSION
 
-Version 2.9.3
+Version 2.9.4
 
 =head1 PERLDOC
 

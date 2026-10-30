@@ -57,10 +57,11 @@ subtest 'Primary Key Checks (Baseline + Advanced)' => sub {
     %mock_queries = (
         'having sum\(if\(c.column_key in \(\'PRI\', \'UNI\'\), 1, 0\)\) = 0' => ['test_db,table_no_pk'],
         'COLUMN_KEY = \'PRI\'' => [
-            "test_db\tusers\tid\tbigint\tbigint(20) unsigned auto_increment",      # Good PK
-            "test_db\torders\tord_id\tint\tint(11) auto_increment",                # Bad PK name
-            "test_db\tlogs\tlog_uuid\tvarchar\tvarchar(36) auto_increment",        # Non-optimized UUID
-            "test_db\titems\tid\tint\tint(11)",                                    # Non-unsigned/auto_inc
+            "test_db\tusers\tid\tbigint\tbigint unsigned\tauto_increment",              # Good PK (MySQL 8.x)
+            "test_db\tlegacy_users\tid\tbigint\tbigint(20) unsigned auto_increment\t", # Good PK (Legacy format)
+            "test_db\torders\tord_id\tint\tint(11) auto_increment",                    # Bad PK name
+            "test_db\tlogs\tlog_uuid\tvarchar\tvarchar(36) auto_increment",            # Non-optimized UUID
+            "test_db\titems\tid\tint\tint(11)",                                        # Non-unsigned/auto_inc
         ],
         'ENGINE <> \'InnoDB\'' => [],
         'CHARacter_set_name  LIKE \'utf8%\'' => [],
@@ -95,6 +96,8 @@ subtest 'Primary Key Checks (Baseline + Advanced)' => sub {
     ok(has_output(qr/BAD: Table test_db.orders: Primary key 'ord_id' does not follow/), 'Bad PK name detected');
     ok(has_output(qr/BAD: Table test_db.logs: UUID primary key 'log_uuid' is not optimized/), 'Non-optimized UUID detected');
     ok(has_output(qr/BAD: Table test_db.items: Primary key 'id' is not a recommended surrogate key/), 'Non-unsigned/auto_inc PK detected');
+    ok(!has_output(qr/Table test_db.users: Primary key 'id' is not a recommended surrogate key/), 'MySQL 8.x Good PK does not trigger surrogate key warning');
+    ok(!has_output(qr/Table test_db.legacy_users: Primary key 'id' is not a recommended surrogate key/), 'Legacy Good PK does not trigger surrogate key warning');
     ok(has_output(qr/BAD: Table test_db.big_table is large \(1073741825\) and has no secondary indexes/), 'Large table without secondary indexes detected');
 
     # Consolidated generalrec checks
@@ -247,6 +250,53 @@ subtest 'Data Type Optimization Checks' => sub {
     main::mysql_datatype_optimization();
     
     ok(has_output(qr/INFO: There are 25 columns with NULL enabled/), 'Excessive nullable columns detected');
+};
+
+subtest 'Issue #1007: Primary Key Surrogate Key Detection (MySQL 8.x vs Legacy)' => sub {
+    $main::myvar{'version'} = '8.0.30';
+    %mock_queries = (
+        'having sum\(if\(c.column_key in \(\'PRI\', \'UNI\'\), 1, 0\)\) = 0' => [],
+        'COLUMN_KEY = \'PRI\'' => [
+            # MySQL 8.x format (auto_increment is in EXTRA, COLUMN_TYPE is 'bigint unsigned')
+            "test_db\tusers_8x\tid\tbigint\tbigint unsigned\tauto_increment",
+            # Legacy format (auto_increment is in COLUMN_TYPE)
+            "test_db\tusers_legacy\tid\tbigint\tbigint(20) unsigned auto_increment\t",
+            # Invalid: BIGINT UNSIGNED without auto_increment
+            "test_db\tusers_no_autoinc\tid\tbigint\tbigint unsigned\t",
+            # Invalid: BIGINT signed with auto_increment
+            "test_db\tusers_signed\tid\tbigint\tbigint\tauto_increment",
+            # Invalid: non-int datatype with auto_increment
+            "test_db\tusers_varchar\tid\tvarchar\tvarchar(255)\tauto_increment",
+        ],
+        'ENGINE <> \'InnoDB\'' => [],
+        'CHARacter_set_name  LIKE \'utf8%\'' => [],
+        'data_type=\'FULLTEXT\'' => [],
+        'SELECT TABLE_SCHEMA, TABLE_NAME, \(DATA_LENGTH \+ INDEX_LENGTH\).*1024\*1024\*1024' => [],
+        'statistics s WHERE s.TABLE_SCHEMA = t.TABLE_SCHEMA.*INDEX_NAME != \'PRIMARY\'' => [],
+    );
+    @main::generalrec = ();
+    %main::result = ();
+    @mock_output = ();
+    $main::opt{'structstat'} = 1;
+    $main::opt{'nocolor'} = 1;
+
+    {
+        no warnings 'redefine';
+        local *main::mysql_naming_conventions = sub { };
+        local *main::mysql_foreign_key_checks = sub { };
+        local *main::mysql_80_modeling_checks = sub { };
+        local *main::mysql_datatype_optimization = sub { };
+        local *main::mysql_schema_sanitization = sub { };
+        main::mysql_table_structures();
+    }
+
+    ok(!has_output(qr/test_db\.users_8x: Primary key 'id' is not a recommended surrogate key/), 'MySQL 8.x format does not trigger false positive');
+    ok(!has_output(qr/test_db\.users_legacy: Primary key 'id' is not a recommended surrogate key/), 'Legacy format does not trigger false positive');
+    ok(has_output(qr/BAD: Table test_db\.users_no_autoinc: Primary key 'id' is not a recommended surrogate key/), 'Non-auto_increment triggers surrogate key recommendation');
+    ok(has_output(qr/BAD: Table test_db\.users_signed: Primary key 'id' is not a recommended surrogate key/), 'Non-unsigned triggers surrogate key recommendation');
+    ok(has_output(qr/BAD: Table test_db\.users_varchar: Primary key 'id' is not a recommended surrogate key/), 'Non-int triggers surrogate key recommendation');
+
+    is(scalar(grep { $_ eq "Use BIGINT UNSIGNED AUTO_INCREMENT for Primary Keys in 3 table(s)" } @main::generalrec), 1, 'Consolidated surrogate key recommendation for 3 invalid tables');
 };
 
 done_testing();

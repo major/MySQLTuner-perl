@@ -7,13 +7,22 @@
 # ===========================================================================
 use strict;
 use warnings;
+use Getopt::Long;
 use File::Basename;
 use File::Spec;
 use Cwd 'abs_path';
 
+my $output_file;
+my $dry_run;
+
+GetOptions(
+    'output=s' => \$output_file,
+    'dry-run'  => \$dry_run,
+) or die "Error in command line arguments\n";
+
 my $project_root = abs_path(File::Spec->catfile(dirname(abs_path(__FILE__)), '..'));
 my $agent_dir = File::Spec->catfile($project_root, '.agent');
-my $readme_path = File::Spec->catfile($agent_dir, 'README.md');
+my $readme_path = $output_file || File::Spec->catfile($agent_dir, 'README.md');
 
 sub parse_markdown_metadata {
     my ($file_path) = @_;
@@ -85,11 +94,16 @@ sub generate_readme {
 
     push @output, "---\n*Generated automatically by `/doc-sync`*";
 
-    open my $fh, '>', $readme_path or die "Cannot write to $readme_path: $!";
-    print $fh join("\n", @output);
-    close $fh;
+    if ( !$dry_run ) {
+        open my $fh, '>', $readme_path or die "Cannot write to $readme_path: $!";
+        print $fh join( "\n", @output );
+        close $fh;
 
-    print "Documentation synchronized: $readme_path\n";
+        print "Documentation synchronized: $readme_path\n";
+    }
+    else {
+        print "Documentation synchronized (dry-run): $readme_path\n";
+    }
 }
 
 generate_readme();
