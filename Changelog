@@ -29,6 +29,7 @@
 - fix(system): scale Windows FreeVirtualMemory to bytes and handle zero swap safely (#1025)
 - fix(system): respect --noprocess flag and exclude mariadbd and garbd in process memory (#1024)
 - fix(test): resolve chroot test failures and prevent tree mutation during test execution (#1010)
+- fix(versions): synchronize MySQL 26.10 short-term release cycle with endoflife.date (#75)
 - test(build): add automated test suites for audit remediation validation (#1022)
 - test(cli): add pod_cli_sync.t validating POD options and CLI metadata parity (#1039)
 - test(cli): add unit_m4_autofix_agent_json.t for auto-fix comments and agent JSON (#1027)
@@ -43,7 +44,9 @@
 - test(system): add unit_m2_system_kernel_fs.t for command deduplication, sysctl, and filesystem metrics (#1031)
 - test(cli): add test_list_indicators.t validating indicator export contract (#1046)
 - test(docs): add automated verification test for multi-language README translation parity (#1045)
+- test(ci): isolate Dockerfile ENTRYPOINT check from CMD and add npm security overrides unit test (#75)
 - ci(build): add doc-lint job to PR workflow for POD/CLI parity and invariants (#1044)
+- ci(release): synchronize release and Docker workflows, Dockerfile layers, VERSION file, and CVE list from master (#75)
 - docs(cli): eliminate phantom CLI options in POD and USAGE.md and document missing options (#1039)
 - docs(rules): resolve license conflict to GPLv3 and clean external prompt boilerplate (#1041)
 - docs(system): correct kernel sysctl and Galera parameter typos and document v2.9.4 audit subroutines (#1041)
@@ -52,6 +55,7 @@
 - docs(ci): add YAML frontmatter to specifications and align QA traceability matrix (#1042)
 - docs(build): extend documentation link auditor with multi-artifact version invariants (#1042)
 - docs(docs): automate multi-language README translation synchronization and verification (#1045)
+- docs(docs): add GitHub release and Docker image badges across multilingual READMEs (#75)
 
 2.9.3 2026-10-21
 - chore(build): consolidate EOL and CVE scripts in pure Perl and add get_version.sh (#1024)

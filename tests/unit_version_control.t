@@ -173,7 +173,7 @@ subtest 'Support Label LTS vs Short-Term' => sub {
         like( $mock_good[0] // '', qr/\Q$ver\E \(LTS\)$/, "$ver is labelled (LTS)" );
     }
 
-    for my $ver ( '13.0.0-MariaDB', '13.0.2-MariaDB', '26.7.0' ) {
+    for my $ver ( '13.0.0-MariaDB', '13.0.2-MariaDB', '26.10.0' ) {
         reset_state();
         $main::myvar{'version'} = $ver;
         main::validate_mysql_version();

@@ -3,6 +3,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
 
 [![Статус проекта](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
+[![Последний релиз GitHub](https://img.shields.io/github/v/release/jmrenouard/MySQLTuner-perl?style=flat-square&logo=github)](https://github.com/jmrenouard/MySQLTuner-perl/releases/latest)
+[![Версия Docker-образа](https://img.shields.io/docker/v/jmrenouard/mysqltuner?sort=semver&style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/jmrenouard/mysqltuner)
 [![Версия MySQLTuner](https://img.shields.io/badge/version-2.9.4-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.4)
 [![Статус тестов](https://github.com/major/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/major/MySQLTuner-perl/actions)
 [![Среднее время решения проблемы](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Среднее время решения проблемы")
@@ -782,7 +784,7 @@ mysql_percona80 sakila
 
 **Поддерживаемые цели тестирования** (см. [поддержка MariaDB](mariadb_support.md) и [поддержка MySQL](mysql_support.md) для текущей матрицы совместимости):
 
-* MySQL 8.4, 9.7 (LTS), 8.0 (legacy-поддержка) и 26.7 (краткосрочная поддержка)
+* MySQL 8.4, 9.7 (LTS), 8.0 (legacy-поддержка) и 26.10 (краткосрочная поддержка)
 * MariaDB 10.11, 11.4, 11.8, 12.3 (LTS) и 13.0 (краткосрочная поддержка)
 * Percona Server 8.0
 
