@@ -105,6 +105,15 @@ if ( $target_ver ne $current_ver ) {
     close $ovh;
     print "  [OK] Updated CURRENT_VERSION.txt\n";
 
+    # Update VERSION if present
+    my $short_version_file = File::Spec->catfile( $PROJECT_ROOT, 'VERSION' );
+    if ( -f $short_version_file ) {
+        open my $svh, '>', $short_version_file or die "Cannot write to $short_version_file: $!\n";
+        print $svh "$target_ver\n";
+        close $svh;
+        print "  [OK] Updated VERSION\n";
+    }
+
     # Update mysqltuner.pl
     my $mt_file = File::Spec->catfile( $PROJECT_ROOT, 'mysqltuner.pl' );
     open my $mtfh, '<', $mt_file or die "Cannot read $mt_file: $!\n";

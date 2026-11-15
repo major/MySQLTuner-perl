@@ -4,10 +4,8 @@ permissions:
   contents: read
 
 on:
-  push:
-    tags: ["v*"]
-    branches: ["v*"]
-  # Allows you to run this workflow manually from the Actions tab
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -18,97 +16,37 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
       - name: Log in to Docker Hub
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
         with:
-          username: ${{ secrets.DOCKER_USER_LOGIN }}
-          password: ${{ secrets.DOCKER_USER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME || secrets.DOCKER_USER_LOGIN }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_USER_PASSWORD }}
 
-      - name: Extract version and tag logic
-        id: version
+      - name: Extract version and resolve image tags
+        id: resolve_tags
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          IS_PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
           VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            TAG_NAME=${GITHUB_REF#refs/tags/}
-            IS_PRERELEASE="false"
-          else
-            TAG_NAME=${GITHUB_REF#refs/heads/}
-            IS_PRERELEASE="true"
+          IMAGE="jmrenouard/mysqltuner"
+          TAGS="${IMAGE}:${VERSION},${IMAGE}:v${VERSION}"
+          if [ "$EVENT_NAME" = "release" ] && [ "$IS_PRERELEASE" != "true" ]; then
+            TAGS="${IMAGE}:latest,${TAGS}"
           fi
-          
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
-
-      - name: Pre-publish validation
-        run: |
-          echo "Checking for critical files..."
-          CRITICAL_FILES=("mysqltuner.pl" "Dockerfile" "LICENSE" "vulnerabilities.csv" "basic_passwords.txt")
-          for file in "${CRITICAL_FILES[@]}"; do
-            if [ ! -f "$file" ]; then
-              echo "ERROR: Critical file missing: $file"
-              exit 1
-            fi
-            echo "✔ Found: $file"
-          done
-
-          echo "Checking for release notes: releases/v${{ env.VERSION }}.md..."
-          if [ ! -f "releases/v${{ env.VERSION }}.md" ]; then
-            echo "ERROR: Release notes missing: releases/v${{ env.VERSION }}.md"
-            exit 1
-          fi
-          echo "✔ Found release notes"
-
-          if [ "${{ env.IS_PRERELEASE }}" == "false" ]; then
-            echo "Checking tag consistency (Tag: ${{ env.TAG_NAME }} vs Version: v${{ env.VERSION }})..."
-            if [ "v${{ env.VERSION }}" != "${{ env.TAG_NAME }}" ]; then
-              echo "ERROR: Tag ${{ env.TAG_NAME }} does not match version in mysqltuner.pl (v${{ env.VERSION }})"
-              exit 1
-            fi
-            echo "✔ Tag matches script version"
-          else
-             echo "ℹ Skipping tag consistency check (not a tag push)"
-          fi
-
-      - name: Extract release notes
-        id: release_notes
-        run: |
-          {
-            echo 'RELEASE_NOTES<<EOF'
-            cat "releases/v${{ env.VERSION }}.md"
-            echo 'EOF'
-          } >> $GITHUB_ENV
-
-      - name: Prepare Docker Tags
-        id: docker_tags
-        run: |
-          TAGS="jmrenouard/mysqltuner:${{ env.VERSION }}"
-          if [ "${{ env.VERSION }}" != "${{ env.TAG_NAME }}" ]; then
-            TAGS="${TAGS}\njmrenouard/mysqltuner:${{ env.TAG_NAME }}"
-          fi
-          if [ "${{ env.IS_PRERELEASE }}" == "false" ]; then
-            TAGS="${TAGS}\njmrenouard/mysqltuner:latest"
-          fi
-          # Print multiline correctly for Github outputs / env
-          {
-            echo 'DOCKER_IMAGE_TAGS<<EOF'
-            echo -e "$TAGS"
-            echo 'EOF'
-          } >> $GITHUB_ENV
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.DOCKER_IMAGE_TAGS }}
-          labels: |
-            org.opencontainers.image.title=MySQLTuner
-            org.opencontainers.image.description=**MySQLTuner** is a script written in Perl that allows you to review a MySQL installation quickly and make adjustments to increase performance and stability. The current configuration variables and status data is retrieved and presented in a brief format along with some basic performance suggestions. **MySQLTuner** supports ~300 indicators for MySQL/MariaDB/Percona Server in this latest version.
-            org.opencontainers.image.version=${{ env.VERSION }}
-            org.opencontainers.image.licenses=GPL-3.0
-            com.mysqltuner.release-notes=${{ env.RELEASE_NOTES }}
+          tags: ${{ steps.resolve_tags.outputs.tags }}

@@ -5,7 +5,8 @@
 
 | Version | End of Support Date | LTS | Status |
 |---------|------------------------|-----|--------|
-| 26.7 | N/A | NO | Supported |
+| 26.10 | N/A | NO | Supported |
+| 26.7 | 2026-10-20 | NO | Outdated |
 | 9.7 | 2034-04-30 | YES | Supported |
 | 9.6 | 2026-04-21 | NO | Outdated |
 | 9.5 | 2026-01-20 | NO | Outdated |
@@ -22,3 +23,8 @@
 | 5.7 | 2023-10-31 | NO | Outdated |
 | 5.6 | 2021-02-28 | NO | Outdated |
 | 5.5 | 2018-12-31 | NO | Outdated |
+| 5.1 | 2013-12-31 | NO | Outdated |
+| 5.0 | 2011-12-31 | NO | Outdated |
+| 4.1 | 2009-12-31 | NO | Outdated |
+| 4.0 | 2008-09-30 | NO | Outdated |
+| 3.23 | 2006-12-31 | NO | Outdated |

@@ -7803,7 +7803,7 @@ sub get_replication_status {
 # BEGIN GENERATED SUPPORTED VERSIONS (source: build/ci_matrix.json)
 # Do not edit by hand: run `perl build/sync_supported_versions.pl`
 our @SUPPORTED_LTS_VERSIONS        = qw(8.0 8.4 9.7 10.11 11.4 11.8 12.3);
-our @SUPPORTED_SHORT_TERM_VERSIONS = qw(13.0 26.7);
+our @SUPPORTED_SHORT_TERM_VERSIONS = qw(13.0 26.10);
 
 # END GENERATED SUPPORTED VERSIONS
 
