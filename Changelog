@@ -49,7 +49,7 @@
 - fix(triage): support configurable state_file and tests_dir paths across issue triage orchestrator and validators (#78)
 - fix(versions): synchronize MySQL 26.10 short-term release cycle with endoflife.date (#75)
 - test(build): add automated test suites for audit remediation validation (#1022)
-- test(build): add release note diagnostic sanitization and Changelog parity assertions to unit_release_gen.t (#78)
+- test(build): add release note diagnostic sanitization, shallow-clone resilience, and Changelog parity assertions to unit_release_gen.t (#78)
 - test(build): add unit_lab_harness.t validating parallel_test.sh and test_envs.sh (#78)
 - test(ci): integrate hermetic adversarial stress test suites for doc-lint and release governance (#1044) (#1045)
 - test(ci): isolate Dockerfile ENTRYPOINT check from CMD and add npm security overrides unit test (#75)

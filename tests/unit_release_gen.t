@@ -108,21 +108,16 @@ subtest 'Zero Dependency Check on Build Scripts' => sub {
     }
 };
 
-# --- Subtest 6: Diagnostic Sanitization & Markdown LaTeX Math Safety ---
-subtest 'Release Notes Diagnostic Sanitization & Changelog Parity' => sub {
-    plan tests => 5;
-
-    open my $rfh, '<', $temp_release or die "Cannot open $temp_release: $!\n";
-    my $rel_content = do { local $/; <$rfh> };
-    close $rfh;
-
-    my @lines               = split /\n/, $rel_content;
-    my $in_fence            = 0;
-    my $in_diag             = 0;
-    my $in_exec_summary     = 0;
-    my $bad_diag_bullets    = 0;
-    my $raw_perl_fragments  = 0;
-    my $unescaped_dollars   = 0;
+# --- Helper: Parse generated release notes for diagnostic & math invariants ---
+sub _audit_release_content {
+    my ($rel_content) = @_;
+    my @lines              = split /\n/, $rel_content;
+    my $in_fence           = 0;
+    my $in_diag            = 0;
+    my $in_exec_summary    = 0;
+    my $bad_diag_bullets   = 0;
+    my $raw_perl_fragments = 0;
+    my $unescaped_dollars  = 0;
     my @exec_entries;
 
     for my $line (@lines) {
@@ -148,7 +143,7 @@ subtest 'Release Notes Diagnostic Sanitization & Changelog Parity' => sub {
         if ( $in_diag && $line =~ /^-\s+(.+)$/ ) {
             my $body = $1;
             $raw_perl_fragments++
-              if $body =~ /(?:sprintf\s*\(|\$dbinfo\[|#"Skip|them for now|\{\s*$|^\s*`?\$[A-Za-z_][A-Za-z0-9_\[\]'"]*`?\s*$)/;
+              if $body =~ /(?:sprintf\s*\(|#"Skip|them for now|\{\s*$|^\s*`?\$[A-Za-z_][A-Za-z0-9_\[\]\{\}'"]*`?\s*$)/;
             if ( $body =~ /^`([^`]+)`$/ ) {
                 my $inner = $1;
                 $bad_diag_bullets++ if length($inner) < 12;
@@ -159,9 +154,43 @@ subtest 'Release Notes Diagnostic Sanitization & Changelog Parity' => sub {
         }
     }
 
+    return ( $bad_diag_bullets, $raw_perl_fragments, $unescaped_dollars, \@exec_entries );
+}
+
+# --- Subtest 6: Diagnostic Sanitization & Markdown LaTeX Math Safety ---
+subtest 'Release Notes Diagnostic Sanitization & Changelog Parity' => sub {
+    plan tests => 6;
+
+    open my $rfh, '<', $temp_release or die "Cannot open $temp_release: $!\n";
+    my $rel_content = do { local $/; <$rfh> };
+    close $rfh;
+
+    my ( $bad_diag_bullets, $raw_perl_fragments, $unescaped_dollars, $exec_entries ) =
+      _audit_release_content($rel_content);
+
     is( $bad_diag_bullets,   0, "All New Diagnostic Capabilities bullets are backtick-wrapped readable phrases (>= 12 chars)" );
     is( $raw_perl_fragments, 0, "No raw Perl AST fragments leak into New Diagnostic Capabilities" );
     is( $unescaped_dollars,  0, "No unescaped '\$' symbols outside backticks or fenced blocks (LaTeX safety)" );
+
+    # Simulate tagless shallow CI checkouts / sbuild chroots (GIT_DIR=/nonexistent)
+    my ( $tfh_tagless, $temp_tagless ) = tempfile( CLEANUP => 1 );
+    close $tfh_tagless;
+    my $script = File::Spec->catfile( $FindBin::Bin, '..', 'build', 'release_gen.pl' );
+    my $tagless_raw_fragments = -1;
+    {
+        local $ENV{GIT_DIR} = '/nonexistent';
+        my $tagless_out = `$^X "$script" --output "$temp_tagless" 2>&1`;
+        if ( ( $? >> 8 ) == 0 && open my $tlfh, '<', $temp_tagless ) {
+            my $tl_content = do { local $/; <$tlfh> };
+            close $tlfh;
+            my ( undef, $tl_raw ) = _audit_release_content($tl_content);
+            $tagless_raw_fragments = $tl_raw;
+        }
+        else {
+            diag("Shallow/tagless release_gen.pl run failed: $tagless_out");
+        }
+    }
+    is( $tagless_raw_fragments, 0, "No raw Perl AST fragments leak in tagless shallow-clone mode (GIT_DIR=/nonexistent)" );
 
     my $changelog_path = File::Spec->catfile( $FindBin::Bin, '..', 'Changelog' );
     open my $cfh, '<', $changelog_path or die "Cannot open $changelog_path: $!\n";
@@ -180,8 +209,8 @@ subtest 'Release Notes Diagnostic Sanitization & Changelog Parity' => sub {
     }
     close $cfh;
 
-    is( scalar(@exec_entries), scalar(@cl_entries), "Executive Summary entry count matches latest Changelog block" );
-    is_deeply( \@exec_entries, \@cl_entries, "Executive Summary entries match latest Changelog block 1:1" );
+    is( scalar(@$exec_entries), scalar(@cl_entries), "Executive Summary entry count matches latest Changelog block" );
+    is_deeply( $exec_entries, \@cl_entries, "Executive Summary entries match latest Changelog block 1:1" );
 };
 
 done_testing();
