@@ -3959,7 +3959,9 @@ sub os_setup {
     }
     else {
         if ( $os =~ /Linux|CYGWIN/ ) {
-            if ( $prefix eq '' && open( my $meminfo, '<', '/proc/meminfo' ) ) {
+            my $meminfo_path = $ENV{'MYSQLTUNER_PROC_MEMINFO'}
+              // '/proc/meminfo';
+            if ( $prefix eq '' && open( my $meminfo, '<', $meminfo_path ) ) {
                 while (<$meminfo>) {
                     if (/^MemTotal:\s+(\d+)/i) { $physical_memory = $1 * 1024; }
                     if (/^SwapTotal:\s+(\d+)/i) { $swap_memory = $1 * 1024; }

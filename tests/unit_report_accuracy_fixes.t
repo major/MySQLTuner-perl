@@ -51,7 +51,7 @@ sub reset_local_mocks {
 }
 
 subtest 'Container mode cgroup v2/v1 memory and swap detection in os_setup' => sub {
-    plan tests => 10;
+    plan tests => 11;
 
     # 1. Local cgroup v2 finite memory & swap limits cap /proc/meminfo host values
     reset_local_mocks();
@@ -62,18 +62,27 @@ subtest 'Container mode cgroup v2/v1 memory and swap detection in os_setup' => s
     open my $sf, '>', File::Spec->catfile( $cg_v2, 'memory.swap.max' ) or die $!;
     print {$sf} "536870912\n";
     close $sf;
+    my $mock_meminfo = File::Spec->catfile( $cg_v2, 'meminfo' );
+    open my $mif, '>', $mock_meminfo or die $!;
+    print {$mif} "MemTotal:       16777216 kB\nSwapTotal:       4194304 kB\n";
+    close $mif;
+    my $mock_meminfo_noswap = File::Spec->catfile( $cg_v2, 'meminfo_noswap' );
+    open my $minsf, '>', $mock_meminfo_noswap or die $!;
+    print {$minsf} "MemTotal:       16777216 kB\nSwapTotal:             0 kB\n";
+    close $minsf;
 
     {
         no warnings 'redefine';
         local $ENV{MYSQLTUNER_CGROUP_DIR}      = $cg_v2;
-        local *main::is_docker               = sub { return 1; };
-        local *main::get_transport_prefix    = sub { return ''; };
-        local *main::detect_infrastructure   = sub { return {}; };
-        local *main::get_other_process_memory = sub { return 0; };
-        local *main::execute_system_command  = sub {
+        local $ENV{MYSQLTUNER_PROC_MEMINFO}    = $mock_meminfo;
+        local *main::is_docker                 = sub { return 1; };
+        local *main::get_transport_prefix      = sub { return ''; };
+        local *main::detect_infrastructure     = sub { return {}; };
+        local *main::get_other_process_memory  = sub { return 0; };
+        local *main::execute_system_command    = sub {
             my ($cmd) = @_;
-            return "MemTotal: 16000000 kB" if $cmd =~ /memtotal/i;
-            return "SwapTotal: 4000000 kB" if $cmd =~ /swaptotal/i;
+            return '16777216' if $cmd =~ /memtotal/i;
+            return '4194304'  if $cmd =~ /swaptotal/i;
             return 'Linux';
         };
         local $^O = 'linux';
@@ -84,6 +93,30 @@ subtest 'Container mode cgroup v2/v1 memory and swap detection in os_setup' => s
     }
     is( $main::physical_memory, 1073741824, 'cgroup v2 memory.max caps physical_memory to 1 GiB' );
     is( $main::swap_memory,     536870912,  'cgroup v2 memory.swap.max caps swap_memory to 512 MiB' );
+
+    # 1b. Host with SwapTotal: 0 kB stays at 0 even when memory.swap.max is higher
+    reset_local_mocks();
+    {
+        no warnings 'redefine';
+        local $ENV{MYSQLTUNER_CGROUP_DIR}      = $cg_v2;
+        local $ENV{MYSQLTUNER_PROC_MEMINFO}    = $mock_meminfo_noswap;
+        local *main::is_docker                 = sub { return 1; };
+        local *main::get_transport_prefix      = sub { return ''; };
+        local *main::detect_infrastructure     = sub { return {}; };
+        local *main::get_other_process_memory  = sub { return 0; };
+        local *main::execute_system_command    = sub {
+            my ($cmd) = @_;
+            return '16777216' if $cmd =~ /memtotal/i;
+            return '0'        if $cmd =~ /swaptotal/i;
+            return 'Linux';
+        };
+        local $^O = 'linux';
+        $main::opt{'forcemem'}  = 0;
+        $main::opt{'forceswap'} = 0;
+        $main::opt{'container'} = '';
+        main::os_setup();
+    }
+    is( $main::swap_memory, 0, 'cgroup v2 memory.swap.max does not inflate 0 host swap' );
 
     # 2. Local cgroup v2 unlimited ("max") keeps host memory without error
     reset_local_mocks();
@@ -98,11 +131,12 @@ subtest 'Container mode cgroup v2/v1 memory and swap detection in os_setup' => s
     {
         no warnings 'redefine';
         local $ENV{MYSQLTUNER_CGROUP_DIR}      = $cg_unlim;
-        local *main::is_docker               = sub { return 1; };
-        local *main::get_transport_prefix    = sub { return ''; };
-        local *main::detect_infrastructure   = sub { return {}; };
-        local *main::get_other_process_memory = sub { return 0; };
-        local *main::execute_system_command  = sub { return 'Linux'; };
+        local $ENV{MYSQLTUNER_PROC_MEMINFO}    = $mock_meminfo;
+        local *main::is_docker                 = sub { return 1; };
+        local *main::get_transport_prefix      = sub { return ''; };
+        local *main::detect_infrastructure     = sub { return {}; };
+        local *main::get_other_process_memory  = sub { return 0; };
+        local *main::execute_system_command    = sub { return 'Linux'; };
         local $^O = 'linux';
         $main::opt{'forcemem'}  = 0;
         $main::opt{'forceswap'} = 0;
