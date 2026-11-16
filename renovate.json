@@ -14,7 +14,9 @@
   "git-submodules": {
     "enabled": true
   },
-  "dependencyDashboard": true,
+  "dependencyDashboard": {
+    "enabled": true
+  },
   "packageRules": [
     {
       "description": "Require approval for major updates",
