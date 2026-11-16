@@ -1,3 +1,5 @@
+[English](README.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Русский](README.ru.md) | [Tiếng Việt](README.vi.md)
+
 ![MySQLTuner-perl](mtlogo2.png)
 
 [![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
