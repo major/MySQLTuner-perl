@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_changelog_gate.t
+---
+
 # Issue #1032: Automated Changelog & Release Schema Quality Gate (Phase 19.1 & 19.3)
 
 **Type:** Feature / CI/CD Quality Gate  

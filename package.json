@@ -15,16 +15,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jmrenouard/MySQLTuner-perl.git"
+    "url": "git+https://github.com/major/MySQLTuner-perl.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/jmrenouard/MySQLTuner-perl/issues"
+    "url": "https://github.com/major/MySQLTuner-perl/issues"
   },
-  "homepage": "https://github.com/jmrenouard/MySQLTuner-perl#readme",
+  "homepage": "https://github.com/major/MySQLTuner-perl#readme",
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
@@ -36,6 +36,8 @@
   "overrides": {
     "lodash": "4.18.1",
     "tmp": "^0.2.6",
-    "brace-expansion": ">=1.1.13"
+    "brace-expansion": "^1.1.21",
+    "fast-uri": "^3.1.9",
+    "js-yaml": "^4.3.2"
   }
 }

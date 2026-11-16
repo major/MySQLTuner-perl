@@ -1,3 +1,7 @@
+---
+test_file: tests/repro_native_parsing.t
+---
+
 # Issue #1035: Unit Test Decomposition: `repro_native_parsing.t` (Phase 26.1)
 
 **Type:** Refactoring / Unit Test Decomposition  

@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_innodb_ahi.t
+---
+
 # Issue #1038: InnoDB Adaptive Hash Index (AHI) & Memory Partitions Audit (Phase 32)
 
 **Type:** Feature / Engine Diagnostic  

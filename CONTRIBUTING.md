@@ -102,7 +102,7 @@ project), maintenance burden and general usefulness.
 Creating something great often means saying no to seemingly good ideas. Don't
 despair if your feature request isn't accepted, take action! Fork the
 repository, build your idea and share it with others. We released MySQLTuner under
-the MIT License for this purpose precisely. Open source works best when smart
+the GPLv3 License for this purpose precisely. Open source works best when smart
 and dedicated people riff off of each others' ideas to make even greater things.
 
 ## New feature request

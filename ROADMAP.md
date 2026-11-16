@@ -354,7 +354,7 @@ To ensure consistency and high-density development, the following roles are defi
 * [x] **Obsolete Workflow Updates**:
   * [x] Update `generate_mariadb_examples.yml` to target supported versions (10.11, 11.4, 11.8, 12.3) instead of exclusively EOL versions (10.2→10.9).
   * [x] Update `generate_mysql_examples.yml` to target supported versions (8.4, 9.7) instead of exclusively EOL versions (5.6, 5.7, 8.0).
-  * [x] Update `pull_request.yml` to test at least one supported MySQL (8.4) and one supported MariaDB (11.4) version alongside legacy versions.
+  * [ ] Update `pull_request.yml` to test at least one supported MySQL (8.4) and one supported MariaDB (11.4) version alongside legacy versions (in progress: pull_request.yml currently runs MySQL 5.7 and 8.0; expanding service containers to MySQL 8.4 and MariaDB 11.4).
 * [x] **Automated Matrix Synchronization**:
   * [x] Extend `sync_eol_dates.pl` / `tests/unit_ci_matrix.t` to automatically validate the CI version matrix in tandem with support documentation.
 
@@ -406,4 +406,4 @@ To ensure consistency and high-density development, the following roles are defi
 
 ## 🤝 Contribution & Feedback
 
-We welcome community feedback on this roadmap. If you have specific feature requests or want to contribute to a specific phase, please open an issue on our [GitHub repository](https://github.com/jmrenouard/MySQLTuner-perl).
+We welcome community feedback on this roadmap. If you have specific feature requests or want to contribute to a specific phase, please open an issue on our [GitHub repository](https://github.com/major/MySQLTuner-perl).

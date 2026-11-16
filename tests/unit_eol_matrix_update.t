@@ -32,7 +32,7 @@ my $F = JSON::PP::false;
 # Fixtures mirroring the endoflife.date API shape
 my %raw = (
     mysql => [
-        { cycle => '26.7', eol => $F, lts => $F },
+        { cycle => '26.10', eol => $F, lts => $F },
         { cycle => '9.7', eol => '2034-04-30', lts => $T },
         { cycle => '9.6', eol => '2026-04-21', lts => $F },
         { cycle => '8.4', eol => '2032-04-30', lts => $T },

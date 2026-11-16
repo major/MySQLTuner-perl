@@ -1,100 +1,43 @@
-name: Create Release
+name: Publish Release
 
 on:
-  push:
-    tags: ["v*"]
-    branches: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: Create Release
+  release:
+    name: Package and Attach Deliverables
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Set Release Info
-        id: rel_info
+      - name: Prepare Release Artifacts
+        id: prepare
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          VERSION=$(grep '\- Version ' mysqltuner.pl | awk '{ print $NF}')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            TAG_NAME=${GITHUB_REF#refs/tags/}
-            IS_PRERELEASE="false"
-          else
-            TAG_NAME=${GITHUB_REF#refs/heads/}
-            IS_PRERELEASE="true"
-          fi
-          
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
+          VERSION=$(tr -d '[:space:]' < CURRENT_VERSION.txt)
+          SAFE_REF="${REF_NAME//\//-}"
+          mkdir -p dist
+          cp mysqltuner.pl dist/
+          cp vulnerabilities.csv dist/
+          cp basic_passwords.txt dist/
+          tar -czvf "dist/mysqltuner-${SAFE_REF}.tar.gz" mysqltuner.pl vulnerabilities.csv basic_passwords.txt LICENSE README.md
+          cd dist
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Pre-publish validation
-        run: |
-          echo "Checking for critical files..."
-          CRITICAL_FILES=("mysqltuner.pl" "basic_passwords.txt" "vulnerabilities.csv")
-          for file in "${CRITICAL_FILES[@]}"; do
-            if [ ! -f "$file" ]; then
-              echo "ERROR: Critical file missing: $file"
-              exit 1
-            fi
-            # Generate SHA256 sum
-            sha256sum "$file" > "$file.sha256"
-          done
-
-      - name: Generate Beautiful Release Notes
-        run: |
-          # 1. Start with the real release notes
-          if [ -f "releases/v${VERSION}.md" ]; then
-            cat "releases/v${VERSION}.md" > release_body.md
-          else
-            echo "# Release ${TAG_NAME}" > release_body.md
-          fi
-
-          # 2. Add Deliverables Section
-          {
-            echo ""
-            echo "---"
-            echo "## Deliverables"
-            echo ""
-            echo "### Standalone Script & Data"
-            echo "| Asset | Checksum |"
-            echo "|---|---|"
-            echo "| \`mysqltuner.pl\` | [sha256] |"
-            echo "| \`basic_passwords.txt\` | [sha256] |"
-            echo "| \`vulnerabilities.csv\` | [sha256] |"
-            echo ""
-            echo "### Docker Images"
-            echo "\`\`\`bash"
-            echo "docker pull jmrenouard/mysqltuner:${VERSION}"
-            if [ "${IS_PRERELEASE}" == "false" ]; then
-              echo "docker pull jmrenouard/mysqltuner:latest"
-            fi
-            echo "\`\`\`"
-            echo ""
-            echo "---"
-            echo "*Checksums (.sha256) are available in the assets list below.*"
-          } >> release_body.md
-
-      - name: Create GitHub Release
+      - name: Upload Release Assets
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
-          tag_name: ${{ env.TAG_NAME }}
-          name: "${{ env.TAG_NAME }}"
-          body_path: release_body.md
-          prerelease: ${{ env.IS_PRERELEASE == 'true' }}
-          generate_release_notes: false
+          tag_name: ${{ github.event.release.tag_name || format('v{0}', steps.prepare.outputs.version) }}
           files: |
-            mysqltuner.pl
-            mysqltuner.pl.sha256
-            basic_passwords.txt
-            basic_passwords.txt.sha256
-            vulnerabilities.csv
-            vulnerabilities.csv.sha256
+            dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -13,6 +13,7 @@ import time
 import re
 import threading
 import subprocess
+import tempfile
 import traceback
 import argparse
 import urllib.parse
@@ -24,7 +25,7 @@ CACHE_DIR = os.environ.get("CACHE_DIR", "/var/cache/mysqltuner")
 AUDIT_INTERVAL_HOURS = float(os.environ.get("AUDIT_INTERVAL_HOURS", "12"))
 READ_ONLY = os.environ.get("READ_ONLY", "false").lower() in ("true", "1", "yes")
 MYSQLTUNER_SCRIPT = os.environ.get("MYSQLTUNER_PL", "mysqltuner.pl")
-SERVER_VERSION = "2.9.3"
+SERVER_VERSION = "2.9.4"
 PROTOCOL_VERSION = "2024-11-05"
 
 # Ensure cache directory exists
@@ -34,22 +35,48 @@ STATE_FILE = os.path.join(CACHE_DIR, "state.json")
 LATEST_JSON = os.path.join(CACHE_DIR, "latest.json")
 LATEST_HTML = os.path.join(CACHE_DIR, "latest.html")
 
+CACHE_LOCK = threading.Lock()
+STATE_LOCK = threading.RLock()
+
+
+def _atomic_write_text(target_path, content):
+    parent = os.path.dirname(os.path.abspath(target_path))
+    os.makedirs(parent, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(prefix=".tmp_", dir=parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, target_path)
+    except Exception:
+        if os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+        raise
+
+
 # State Management
 def load_state():
-    if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {"applied": []}
+    with STATE_LOCK:
+        if os.path.exists(STATE_FILE):
+            try:
+                with open(STATE_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {"applied": []}
+
 
 def save_state(state):
-    try:
-        with open(STATE_FILE, "w", encoding="utf-8") as f:
-            json.dump(state, f, indent=2)
-    except Exception as e:
-        sys.stderr.write(f"Failed to save state: {e}\n")
+    with STATE_LOCK:
+        try:
+            _atomic_write_text(STATE_FILE, json.dumps(state, indent=2))
+        except Exception as e:
+            sys.stderr.write(f"Failed to save state: {e}\n")
+
 
 # Execution Helpers
 def run_mysqltuner_cmd():
@@ -60,7 +87,12 @@ def run_mysqltuner_cmd():
         if os.path.exists(cand):
             script_path = os.path.abspath(cand)
 
-    args = ["/usr/bin/perl", script_path, "--prettyjson", "--reportfile", LATEST_HTML]
+    html_dir = os.path.dirname(os.path.abspath(LATEST_HTML))
+    os.makedirs(html_dir, exist_ok=True)
+    tmp_html_fd, tmp_html_path = tempfile.mkstemp(prefix=".tmp_report_", suffix=".html", dir=html_dir)
+    os.close(tmp_html_fd)
+
+    args = ["/usr/bin/perl", script_path, "--prettyjson", "--reportfile", tmp_html_path]
 
     db_host = os.environ.get("DB_HOST")
     db_port = os.environ.get("DB_PORT")
@@ -78,14 +110,22 @@ def run_mysqltuner_cmd():
 
     try:
         result = subprocess.run(args, capture_output=True, text=True, check=True)
-        with open(LATEST_JSON, "w", encoding="utf-8") as f:
-            f.write(result.stdout)
+        with CACHE_LOCK:
+            _atomic_write_text(LATEST_JSON, result.stdout)
+            if os.path.exists(tmp_html_path) and os.path.getsize(tmp_html_path) > 0:
+                os.replace(tmp_html_path, LATEST_HTML)
         return True, result.stdout
     except subprocess.CalledProcessError as e:
         err_msg = f"MySQLTuner failed with code {e.returncode}: {e.stderr or e.stdout}"
         return False, err_msg
     except Exception as e:
         return False, str(e)
+    finally:
+        if os.path.exists(tmp_html_path):
+            try:
+                os.unlink(tmp_html_path)
+            except OSError:
+                pass
 
 def run_db_query(query):
     mysql_cmd = ["mysql", "-Bse", query]
@@ -128,25 +168,29 @@ def sanitize_sql_statement(statement):
         stripped_lines.append(line_clean)
     stmt = "\n".join(stripped_lines)
 
-    # Strip block comments /* ... */
-    stmt = re.sub(r'/\*.*?\*/', '', stmt, flags=re.DOTALL).strip()
+    # Strip block comments /* ... */ (replace with space so adjacent tokens cannot merge/evade)
+    stmt = re.sub(r'/\*.*?\*/', ' ', stmt, flags=re.DOTALL).strip()
+    if "/*" in stmt:
+        return False, "Unclosed block comment in SQL statement.", ""
 
     if not stmt:
         return False, "Statement is empty after comment stripping.", ""
 
-    # Check for multi-statements (semicolons separating non-empty statements)
-    parts = [p.strip() for p in stmt.split(";") if p.strip()]
-    if len(parts) > 1:
+    # Allow at most one trailing semicolon; reject any embedded or repeated semicolons
+    stmt_body = stmt[:-1].strip() if stmt.endswith(";") else stmt
+    if not stmt_body:
+        return False, "Statement is empty after comment stripping.", ""
+    if ";" in stmt_body:
         return False, "Multiple SQL statements in a single execution are strictly prohibited for safety.", ""
 
-    single_stmt = parts[0] if parts else stmt
-    normalized = single_stmt.upper().strip()
+    single_stmt = stmt_body
+    normalized = re.sub(r'\s+', ' ', single_stmt).upper().strip()
 
     # Disallow destructive keywords anywhere in statement
     blacklisted = [
         r'\bDROP\b', r'\bDELETE\b', r'\bTRUNCATE\b', r'\bINSERT\b', r'\bUPDATE\b',
         r'\bGRANT\b', r'\bREVOKE\b', r'\bCREATE\b', r'\bREPLACE\b', r'\bEXECUTE\b',
-        r'\bCALL\b', r'\bLOAD_FILE\b', r'\bINTO\s+OUTFILE\b', r'\bINTO\s+DUMPFILE\b',
+        r'\bCALL\b', r'\bLOAD_FILE\b', r'\bLOAD\s+DATA\b', r'\bINTO\s+OUTFILE\b', r'\bINTO\s+DUMPFILE\b',
         r'\bSHUTDOWN\b', r'\bKILL\b', r'\bFLUSH\s+PRIVILEGES\b'
     ]
     for pattern in blacklisted:
@@ -162,13 +206,14 @@ def sanitize_sql_statement(statement):
 
 # Tool Handlers
 def handle_get_latest_audit(arguments):
-    if os.path.exists(LATEST_JSON):
-        try:
-            with open(LATEST_JSON, "r", encoding="utf-8") as f:
-                content = f.read()
+    with CACHE_LOCK:
+        if os.path.exists(LATEST_JSON):
+            try:
+                with open(LATEST_JSON, "r", encoding="utf-8") as f:
+                    content = f.read()
                 return {"content": [{"type": "text", "text": content}]}
-        except Exception as e:
-            return {"isError": True, "content": [{"type": "text", "text": f"Error reading cached audit: {str(e)}"}]}
+            except Exception as e:
+                return {"isError": True, "content": [{"type": "text", "text": f"Error reading cached audit: {str(e)}"}]}
     return {"content": [{"type": "text", "text": "No cached audit findings found. Try running run_audit first."}]}
 
 def handle_run_audit(arguments):
@@ -205,16 +250,17 @@ def handle_apply_recommendation(arguments):
     if not success:
         return {"isError": True, "content": [{"type": "text", "text": f"SQL Execution failed: {err}"}]}
 
-    state = load_state()
-    stmt_id = str(int(time.time() * 1000))
-    state["applied"].append({
-        "id": stmt_id,
-        "statement": clean_stmt,
-        "variable_name": var_name,
-        "old_value": old_value,
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-    })
-    save_state(state)
+    with STATE_LOCK:
+        state = load_state()
+        stmt_id = str(int(time.time() * 1000))
+        state["applied"].append({
+            "id": stmt_id,
+            "statement": clean_stmt,
+            "variable_name": var_name,
+            "old_value": old_value,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+        })
+        save_state(state)
 
     return {"content": [{"type": "text", "text": f"Success: Statement executed successfully. Statement ID: {stmt_id}"}]}
 
@@ -229,47 +275,100 @@ def handle_rollback_recommendation(arguments):
     if not stmt_id:
         return {"isError": True, "content": [{"type": "text", "text": "Missing parameter: 'statement_id' is required."}]}
 
-    state = load_state()
-    target = None
-    for entry in state.get("applied", []):
-        if entry.get("id") == str(stmt_id):
-            target = entry
-            break
+    with STATE_LOCK:
+        state = load_state()
+        target = None
+        for entry in state.get("applied", []):
+            if entry.get("id") == str(stmt_id):
+                target = entry
+                break
 
-    if not target:
-        return {"isError": True, "content": [{"type": "text", "text": f"Error: Statement ID {stmt_id} not found in state registry."}]}
+        if not target:
+            return {"isError": True, "content": [{"type": "text", "text": f"Error: Statement ID {stmt_id} not found in state registry."}]}
 
-    var_name = target.get("variable_name")
-    old_value = target.get("old_value")
+        var_name = target.get("variable_name")
+        old_value = target.get("old_value")
 
-    if var_name and old_value is not None:
-        if not re.match(r'^[a-zA-Z0-9_]+$', var_name):
-            return {"isError": True, "content": [{"type": "text", "text": f"Invalid variable name in state: {var_name}"}]}
-        # Safely quote string or numeric
-        if isinstance(old_value, (int, float)) or str(old_value).isdigit():
-            rollback_stmt = f"SET GLOBAL {var_name} = {old_value}"
+        if var_name and old_value is not None:
+            if not re.match(r'^[a-zA-Z0-9_]+$', var_name):
+                return {"isError": True, "content": [{"type": "text", "text": f"Invalid variable name in state: {var_name}"}]}
+            # Safely quote string or numeric
+            if isinstance(old_value, (int, float)) or str(old_value).isdigit():
+                rollback_stmt = f"SET GLOBAL {var_name} = {old_value}"
+            else:
+                escaped_val = str(old_value).replace("'", "''")
+                rollback_stmt = f"SET GLOBAL {var_name} = '{escaped_val}'"
+
+            success, err = run_db_query(rollback_stmt)
+            if not success:
+                return {"isError": True, "content": [{"type": "text", "text": f"Rollback SQL failed: {err}"}]}
         else:
-            escaped_val = str(old_value).replace("'", "''")
-            rollback_stmt = f"SET GLOBAL {var_name} = '{escaped_val}'"
+            return {"isError": True, "content": [{"type": "text", "text": "Cannot rollback: This statement type does not have a captured previous state."}]}
 
-        success, err = run_db_query(rollback_stmt)
-        if not success:
-            return {"isError": True, "content": [{"type": "text", "text": f"Rollback SQL failed: {err}"}]}
-    else:
-        return {"isError": True, "content": [{"type": "text", "text": "Cannot rollback: This statement type does not have a captured previous state."}]}
-
-    state["applied"].remove(target)
-    save_state(state)
+        state["applied"].remove(target)
+        save_state(state)
 
     return {"content": [{"type": "text", "text": f"Success: Rollback executed successfully: {rollback_stmt}"}]}
+
+def _get_available_ram_bytes():
+    db_host = (os.environ.get("DB_HOST") or "").strip().lower()
+    if db_host not in ("", "127.0.0.1", "localhost", "::1"):
+        return None
+
+    mem_bytes = None
+    try:
+        with open("/proc/meminfo", "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("MemTotal:"):
+                    parts = line.split()
+                    if len(parts) >= 2 and parts[1].isdigit():
+                        mem_bytes = int(parts[1]) * 1024
+                    break
+    except OSError:
+        pass
+
+    if mem_bytes is None and hasattr(os, "sysconf"):
+        try:
+            mem_bytes = int(os.sysconf("SC_PHYS_PAGES")) * int(os.sysconf("SC_PAGE_SIZE"))
+        except (ValueError, OSError):
+            pass
+
+    # Cap by container cgroup limit when running inside a memory-constrained container
+    for cg_path in ("/sys/fs/cgroup/memory.max", "/sys/fs/cgroup/memory/memory.limit_in_bytes"):
+        try:
+            with open(cg_path, "r", encoding="utf-8") as f:
+                raw = f.read().strip()
+            if raw.isdigit():
+                cg_val = int(raw)
+                if 0 < cg_val < (1 << 60):
+                    mem_bytes = cg_val if mem_bytes is None else min(mem_bytes, cg_val)
+                    break
+        except OSError:
+            pass
+
+    return mem_bytes if mem_bytes and mem_bytes > 0 else None
 
 def handle_analyze_buffer_pool(arguments):
     if not isinstance(arguments, dict):
         arguments = {}
 
-    include_dirty = arguments.get("include_dirty_pages", True)
+    raw_include_dirty = arguments.get("include_dirty_pages", True)
+    include_dirty = True if raw_include_dirty is None else bool(raw_include_dirty)
 
-    # 1. Query live database status or fallback
+    raw_target_ram = arguments.get("target_ram_percentage")
+    if raw_target_ram is None:
+        target_ram_pct = 75.0
+    elif isinstance(raw_target_ram, bool):
+        return {"isError": True, "content": [{"type": "text", "text": f"Invalid target_ram_percentage: {raw_target_ram!r}"}]}
+    else:
+        try:
+            target_ram_pct = float(raw_target_ram)
+        except (TypeError, ValueError):
+            return {"isError": True, "content": [{"type": "text", "text": f"Invalid target_ram_percentage: {raw_target_ram!r}"}]}
+    if not (0.0 < target_ram_pct <= 100.0):
+        return {"isError": True, "content": [{"type": "text", "text": "Invalid target_ram_percentage: must be > 0 and <= 100."}]}
+
+    # 1. Query live database status (fail closed on error; never fabricate OPTIMAL fallback metrics)
     query_status = "SHOW GLOBAL STATUS WHERE Variable_name IN ('Innodb_buffer_pool_read_requests', 'Innodb_buffer_pool_reads', 'Innodb_buffer_pool_pages_total', 'Innodb_buffer_pool_pages_data', 'Innodb_buffer_pool_pages_free', 'Innodb_buffer_pool_pages_dirty', 'Innodb_page_size');"
     query_vars = "SHOW GLOBAL VARIABLES WHERE Variable_name IN ('innodb_buffer_pool_size', 'innodb_buffer_pool_instances', 'innodb_buffer_pool_chunk_size');"
     query_data = "SELECT IFNULL(SUM(data_length + index_length), 0) FROM information_schema.TABLES WHERE engine = 'InnoDB';"
@@ -279,36 +378,45 @@ def handle_analyze_buffer_pool(arguments):
     dataset_bytes = 0
 
     s_ok, s_out = run_db_query(query_status)
-    if s_ok and s_out:
+    if not s_ok:
+        return {"isError": True, "content": [{"type": "text", "text": f"Failed to query InnoDB buffer pool status: {s_out}"}]}
+    if s_out:
         for line in s_out.strip().splitlines():
             p = line.split()
             if len(p) >= 2:
                 status_dict[p[0]] = p[1]
 
     v_ok, v_out = run_db_query(query_vars)
-    if v_ok and v_out:
+    if not v_ok:
+        return {"isError": True, "content": [{"type": "text", "text": f"Failed to query InnoDB buffer pool variables: {v_out}"}]}
+    if v_out:
         for line in v_out.strip().splitlines():
             p = line.split()
             if len(p) >= 2:
                 vars_dict[p[0]] = p[1]
 
     d_ok, d_out = run_db_query(query_data)
-    if d_ok and d_out and d_out.strip().isdigit():
+    if not d_ok:
+        return {"isError": True, "content": [{"type": "text", "text": f"Failed to query InnoDB dataset size: {d_out}"}]}
+    if d_out and d_out.strip().isdigit():
         dataset_bytes = int(d_out.strip())
 
-    # Fallback / parsed metrics
-    read_req = int(status_dict.get("Innodb_buffer_pool_read_requests", 1000000))
-    reads = int(status_dict.get("Innodb_buffer_pool_reads", 500))
-    pages_total = int(status_dict.get("Innodb_buffer_pool_pages_total", 8192))
-    pages_data = int(status_dict.get("Innodb_buffer_pool_pages_data", 7500))
-    pages_free = int(status_dict.get("Innodb_buffer_pool_pages_free", 692))
-    pages_dirty = int(status_dict.get("Innodb_buffer_pool_pages_dirty", 120))
-    bp_size = int(vars_dict.get("innodb_buffer_pool_size", pages_total * 16384))
+    # Parsed metrics (zero-safe defaults only for omitted optional keys)
+    read_req = int(status_dict.get("Innodb_buffer_pool_read_requests", 0))
+    reads = int(status_dict.get("Innodb_buffer_pool_reads", 0))
+    pages_total = int(status_dict.get("Innodb_buffer_pool_pages_total", 0))
+    pages_free = int(status_dict.get("Innodb_buffer_pool_pages_free", 0))
+    pages_dirty = int(status_dict.get("Innodb_buffer_pool_pages_dirty", 0))
+    page_size = int(status_dict.get("Innodb_page_size", 16384))
+    bp_size = int(vars_dict.get("innodb_buffer_pool_size", pages_total * page_size))
     instances = int(vars_dict.get("innodb_buffer_pool_instances", 1))
 
     hit_ratio = round((1.0 - (reads / float(read_req))) * 100.0, 3) if read_req > 0 else 100.0
     free_ratio = round((pages_free / float(pages_total)) * 100.0, 2) if pages_total > 0 else 0.0
     dirty_ratio = round((pages_dirty / float(pages_total)) * 100.0, 2) if pages_total > 0 else 0.0
+
+    host_ram_bytes = _get_available_ram_bytes()
+    target_bp_bytes = int(host_ram_bytes * (target_ram_pct / 100.0)) if host_ram_bytes else None
 
     recommendations = []
     status_label = "OPTIMAL"
@@ -316,10 +424,28 @@ def handle_analyze_buffer_pool(arguments):
     if hit_ratio < 95.0:
         status_label = "UNDERSIZED"
         new_size = int(bp_size * 1.5)
+        if target_bp_bytes is not None and new_size > target_bp_bytes:
+            new_size = max(bp_size, target_bp_bytes)
+        if target_bp_bytes is not None and bp_size >= target_bp_bytes:
+            recommendations.append({
+                "action": f"Review workload indexing before exceeding target RAM ceiling ({target_ram_pct}% = {target_bp_bytes} bytes).",
+                "rollback": None,
+                "reason": f"Hit ratio ({hit_ratio}%) is below 95% threshold, while buffer pool ({bp_size} bytes) already meets target {target_ram_pct}% RAM ceiling ({target_bp_bytes} bytes).",
+                "requires_restart": False
+            })
+        else:
+            recommendations.append({
+                "action": f"SET GLOBAL innodb_buffer_pool_size = {new_size}",
+                "rollback": f"SET GLOBAL innodb_buffer_pool_size = {bp_size}",
+                "reason": f"Hit ratio ({hit_ratio}%) is below 95% threshold. Increasing buffer pool size reduces disk I/O.",
+                "requires_restart": False
+            })
+    elif target_bp_bytes is not None and bp_size > target_bp_bytes:
+        status_label = "OVERSIZED"
         recommendations.append({
-            "action": f"SET GLOBAL innodb_buffer_pool_size = {new_size}",
+            "action": f"SET GLOBAL innodb_buffer_pool_size = {target_bp_bytes}",
             "rollback": f"SET GLOBAL innodb_buffer_pool_size = {bp_size}",
-            "reason": f"Hit ratio ({hit_ratio}%) is below 95% threshold. Increasing buffer pool size reduces disk I/O.",
+            "reason": f"Allocated buffer pool ({bp_size} bytes) exceeds target {target_ram_pct}% of available RAM ({target_bp_bytes} bytes).",
             "requires_restart": False
         })
     elif free_ratio > 40.0 and dataset_bytes > 0 and bp_size > dataset_bytes * 2:
@@ -348,18 +474,23 @@ def handle_analyze_buffer_pool(arguments):
             "requires_restart": True
         })
 
+    metrics = {
+        "hit_ratio_pct": hit_ratio,
+        "allocated_bytes": bp_size,
+        "allocated_human": f"{round(bp_size / (1024*1024), 2)} MB",
+        "dataset_bytes": dataset_bytes,
+        "dataset_human": f"{round(dataset_bytes / (1024*1024), 2)} MB",
+        "free_pages_pct": free_ratio,
+        "dirty_pages_pct": dirty_ratio,
+        "instances": instances,
+        "target_ram_percentage": target_ram_pct
+    }
+    if target_bp_bytes is not None:
+        metrics["target_buffer_pool_bytes"] = target_bp_bytes
+
     result = {
         "status": status_label,
-        "metrics": {
-            "hit_ratio_pct": hit_ratio,
-            "allocated_bytes": bp_size,
-            "allocated_human": f"{round(bp_size / (1024*1024), 2)} MB",
-            "dataset_bytes": dataset_bytes,
-            "dataset_human": f"{round(dataset_bytes / (1024*1024), 2)} MB",
-            "free_pages_pct": free_ratio,
-            "dirty_pages_pct": dirty_ratio,
-            "instances": instances
-        },
+        "metrics": metrics,
         "recommendations": recommendations
     }
 
@@ -842,14 +973,15 @@ def dispatch_jsonrpc(req_raw):
             target_path = LATEST_HTML
             mime = "text/html"
 
-        if target_path and os.path.exists(target_path):
-            try:
-                with open(target_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-            except Exception as e:
-                content = f"Error reading resource: {str(e)}"
-        else:
-            content = "Resource not found or cache is empty."
+        with CACHE_LOCK:
+            if target_path and os.path.exists(target_path):
+                try:
+                    with open(target_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                except Exception as e:
+                    content = f"Error reading resource: {str(e)}"
+            else:
+                content = "Resource not found or cache is empty."
 
         return {
             "jsonrpc": "2.0",

@@ -10,7 +10,7 @@ MySQLTuner provides a zero-dependency, container-ready AI integration stack. It 
 
 ```mermaid
 graph TD
-    subgraph "AI Client & Orchestration Layer"
+    subgraph ClientLayer["AI Client & Orchestration Layer"]
         Antigravity["Antigravity IDE / CLI"]
         Claude["Claude Desktop"]
         Cursor["Cursor IDE"]
@@ -18,7 +18,7 @@ graph TD
         Custom["Custom LLM / LangChain Pipeline"]
     end
 
-    subgraph "Domain Intelligence Layer (.agent/skills/)"
+    subgraph DomainIntelligenceLayer["Domain Intelligence Layer (.agent/skills/)"]
         SkillBP["analyze-buffer-pool"]
         SkillFrag["detect-fragmented-tables"]
         SkillRepl["diagnose-replication-lag"]
@@ -26,16 +26,18 @@ graph TD
         SkillCLI["cli-execution-mastery"]
         SkillTest["testing-orchestration"]
         SkillLegacy["legacy-perl-patterns"]
+        SkillIsolated["isolated-test-guard"]
+        SkillWinPS["windows-powershell-metrics"]
     end
 
-    subgraph "MCP Server Layer (build/mcp_server.py)"
+    subgraph MCPLayer["MCP Server Layer (build/mcp_server.py)"]
         JSONRPC["JSON-RPC 2.0 stdio / SSE Interface"]
         Daemon["Background Periodic Audit Daemon"]
         CacheManager["JSON / HTML Cache Store"]
         RollbackEngine["Rollback & Transaction Ledger"]
     end
 
-    subgraph "Database & Core Engine"
+    subgraph DatabaseLayer["Database & Core Engine"]
         PerlEngine["MySQLTuner Perl Core (mysqltuner.pl)"]
         MySQLInstance[("MySQL / MariaDB / Percona Server")]
     end
@@ -154,8 +156,10 @@ Skills represent structured domain knowledge capsules located in `.agent/skills/
 ├── db-version-rift/            # MySQL vs MariaDB version matrix and deprecations
 ├── detect-fragmented-tables/   # Table fragmentation, disk recovery, online defrag
 ├── diagnose-replication-lag/   # Replication latency, GTID sync, worker saturation
+├── isolated-test-guard/        # Hermetic, isolated test execution without tree mutation
 ├── legacy-perl-patterns/       # Perl 5.8+ backward compatibility rules
-└── testing-orchestration/      # Tripartite testing, prove, test laboratories
+├── testing-orchestration/      # Tripartite testing, prove, test laboratories
+└── windows-powershell-metrics/ # Windows telemetry via PowerShell CIM with WMIC fallback
 ```
 
 #### 1. `analyze_buffer_pool` ([`SKILL.md`](file:///.agent/skills/analyze-buffer-pool/SKILL.md))
@@ -187,6 +191,14 @@ Skills represent structured domain knowledge capsules located in `.agent/skills/
 
 #### 7. `testing-orchestration` ([`SKILL.md`](file:///.agent/skills/testing-orchestration/SKILL.md))
 * **Objective**: Enforces tripartite test validation (`--verbose`, `--container`, `--dumpdir`), lab validation, and subtest decomposition.
+
+#### 8. `isolated-test-guard` ([`SKILL.md`](file:///.agent/skills/isolated-test-guard/SKILL.md))
+* **Objective**: Guidelines and defensive patterns for isolated, hermetic, and chroot/sbuild unit test execution without host dependencies or source tree mutations.
+* **Safety**: Enforces sandbox isolation, temporary directory isolation, and mock transport guards.
+
+#### 9. `windows-powershell-metrics` ([`SKILL.md`](file:///.agent/skills/windows-powershell-metrics/SKILL.md))
+* **Objective**: Modernized extraction of Windows system metrics via PowerShell `Get-CimInstance` with graceful WMIC fallback and error suppression.
+* **Safety**: Prevents terminal hanging, suppresses stderr noise, and guarantees valid numeric conversions.
 
 ---
 

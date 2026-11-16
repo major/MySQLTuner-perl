@@ -5,7 +5,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
 
 [![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
-[![MySQLTuner Version](https://img.shields.io/badge/version-2.9.3-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.3)
+[![GitHub Release](https://img.shields.io/github/v/release/jmrenouard/MySQLTuner-perl?style=flat-square&logo=github)](https://github.com/jmrenouard/MySQLTuner-perl/releases/latest)
+[![Docker Image Version](https://img.shields.io/docker/v/jmrenouard/mysqltuner?sort=semver&style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/jmrenouard/mysqltuner)
+[![MySQLTuner Version](https://img.shields.io/badge/version-2.9.4-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.4)
 [![Test Status](https://github.com/major/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/major/MySQLTuner-perl/actions)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Average time to resolve an issue")
 [![Percentage of open issues](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Percentage of issues still open")
@@ -44,7 +46,7 @@ MySQLTuner needs you
 * Please join us on our issue tracker at [GitHub tracker](https://github.com/major/MySQLTuner-perl/issues).
 * Contribution guide is available following [MySQLTuner contributing guide](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Star **MySQLTuner project** at [MySQLTuner Git Hub Project](https://github.com/major/MySQLTuner-perl/)
-* Paid support for LightPath here: [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
+* Paid support for LightPath here: [jmrenouard@lightpath.fr](mailto:jmrenouard@lightpath.fr)
 * Paid support for Releem available here: [Releem App](https://releem.com/)
 
 ### Sponsors
@@ -121,11 +123,15 @@ For complete technical documentation, refer to the [AI & MCP Integration Guide](
 
 1. **AI Agent Skills Subsystem (`.agent/skills/`)**:
    Pre-packaged diagnostic heuristics with mathematical evaluation thresholds and safety guardrails:
-   - `analyze_buffer_pool`: Deep InnoDB buffer pool sizing, hit ratio, and dirty page flush analysis.
+   - `analyze-buffer-pool`: Deep InnoDB buffer pool sizing, hit ratio, and dirty page flush analysis.
    - `detect-fragmented-tables`: Fragmentation ratio detection, disk space reclaim calculation, and online defrag commands.
    - `diagnose-replication-lag`: Replication latency, GTID synchronization, and worker saturation diagnostics.
    - `db-version-rift`: MySQL 5.5-8.4 vs MariaDB 10.3-11.8 version rift resolution.
    - `cli-execution-mastery`: Safe connection flags, SSH tunnels, and credential masking.
+   - `isolated-test-guard`: Hermetic test execution and tree mutation defense in chroot/sbuild environments.
+   - `legacy-perl-patterns`: Perl 5.8+ backward compatibility rules and core-only patterns.
+   - `testing-orchestration`: Tripartite testing (`--verbose`, `--container`, `--dumpdir`), lab validation, and unit test decomposition.
+   - `windows-powershell-metrics`: PowerShell CIM metrics extraction with WMIC fallback and error suppression.
 
 2. **Model Context Protocol (MCP) Server**:
    A lightweight microservice ([build/mcp_server.py](build/mcp_server.py) and [Dockerfile.mcp](Dockerfile.mcp)) communicating over standard I/O (stdio) via JSON-RPC 2.0.
@@ -285,7 +291,7 @@ docker run --rm -it -v $(pwd)/my.cnf:/defaults.cnf -v $(pwd)/results:/results jm
 
 ### Releases Location
 
-* Official release notes and history are documented in the [releases/](releases/) directory of this repository (e.g., [releases/v2.9.3.md](releases/v2.9.3.md)).
+* Official release notes and history are documented in the [releases/](releases/) directory of this repository (e.g., [releases/v2.9.4.md](releases/v2.9.4.md)).
 * Git release tags and downloadable source tarballs are available on [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 Optional Sysschema installation for MySQL 5.6
@@ -305,18 +311,6 @@ unzip -l sysschema.zip
 unzip sysschema.zip
 cd mysql-sys-master
 mysql -uroot -p < sys_56.sql
-```
-
-Sysschema for MariaDB old version
---
-
-```bash
-curl "https://github.com/FromDual/mariadb-sys/archive/refs/heads/master.zip" > sysschema.zip
-# check zip file
-unzip -l sysschema.zip
-unzip sysschema.zip
-cd mariadb-sys-master
-mysql -u root -p < ./sys_10.sql
 ```
 
 Performance schema setup
@@ -345,7 +339,7 @@ performance-schema-consumer-events-waits-history=ON
 performance-schema-consumer-events-waits-history-long=ON
 performance-schema-instrument='%=ON'
 max-digest-length=2048
-performance-schema-max-digest-length=2018
+performance-schema-max-digest-length=2048
 ```
 
 Sysschema installation for MariaDB < 10.6
@@ -653,6 +647,16 @@ Be cautious when implementing changes to ensure the stability and performance of
 
 If your DBA constantly takes your parking spot and steals your lunch from the fridge, then you may want to consider it - but that's your call.
 
+**Question: How can I configure MySQLTuner to run automatically without prompting for credentials?**
+
+The script checks for `~/.my.cnf` files, Plesk credentials, and empty password root logins. If you would like the script to run unattended without interactive prompts, create a `~/.my.cnf` configuration file in your home directory:
+
+```ini
+[client]
+user=someusername
+password=thatuserspassword
+```
+
 Once you create it, make sure it's owned by your user and the mode on the file is `0600`.  This should prevent the prying eyes from getting your database login credentials under normal conditions.
 
 **Question: I get "ERROR 1524 (HY000): Plugin 'unix_socket' is not loaded" even with unix_socket=OFF. How to fix?**
@@ -755,26 +759,8 @@ Yes! `brew install mysqltuner` can be used to install this application using [ho
 
 Linux distributions such as Ubuntu, Debian, RHEL, and CentOS often ship an older version of MySQLTuner in their official repositories. For example, Ubuntu 22.04 ships version 1.7.17 while the latest release may be significantly newer.
 
-There is currently **no official APT/YUM/DNF repository** that tracks the latest MySQLTuner release. To get the latest version, use one of these methods:
-
-* **Direct download (recommended):**
-
-```bash
-wget https://mysqltuner.pl/ -O mysqltuner.pl
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
-chmod +x mysqltuner.pl
-```
-
-* **Git clone:**
-
-```bash
-git clone --depth 1 -b master https://github.com/major/MySQLTuner-perl.git
-cd MySQLTuner-perl
-perl mysqltuner.pl
-```
-
-* **Air-gapped environments:** If your server has no direct internet access, download the files above on a host that has internet access (or via a proxy), then transfer `mysqltuner.pl`, `basic_passwords.txt`, and `vulnerabilities.csv` to the target server using `scp`, `rsync`, or another file transfer method.
+There is currently **no official APT/YUM/DNF repository** that tracks the latest release.
+To install or upgrade to the latest version, follow the official instructions in [Download/Installation](#downloadinstallation).
 
 MySQLTuner and Vagrant (Legacy)
 --
@@ -800,7 +786,7 @@ mysql_percona80 sakila
 
 **Supported test targets** (refer to [MariaDB support](mariadb_support.md) and [MySQL support](mysql_support.md) for the current compatibility matrix):
 
-* MySQL 8.4, 9.7 (LTS), 8.0 (legacy supported) and 26.7 (short-term support)
+* MySQL 8.4, 9.7 (LTS), 8.0 (legacy supported) and 26.10 (short-term support)
 * MariaDB 10.11, 11.4, 11.8, 12.3 (LTS) and 13.0 (short-term support)
 * Percona Server 8.0
 

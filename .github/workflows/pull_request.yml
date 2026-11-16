@@ -18,6 +18,33 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  doc-lint:
+    name: Documentation & CLI Invariant Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup MySQL Tuner repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Run POD & CLI metadata contract test
+        run: |
+          prove -v tests/pod_cli_sync.t
+
+      - name: Run documentation reference links & invariants auditor
+        run: |
+          perl build/check_doc_links.pl
+
+      - name: Run specification consistency auditor
+        run: |
+          perl build/audit_specifications.pl
+
+      - name: Verify specification traceability matrix is up to date
+        run: |
+          git diff --exit-code documentation/QUALITY_AND_TESTING.md
+
+      - name: Run README translations synchronization check
+        run: |
+          prove -v tests/readme_translations_sync.t
+
   # This workflow contains a single job called "build"
   test_help:
     strategy:

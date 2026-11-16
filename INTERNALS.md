@@ -141,9 +141,9 @@
 - Check 80, 8080, 443 and 8443 ports if warning is raised if they are opened
 - Check if some banned ports are not opened (option --bannedports separated by comma)
 - Check if non kernel and user process except mysqld are not using more than 15% of total physical memory
-- Check vm.swapiness
-- Check /etc/security/limit.conf
-- Check sysctl entries: sunrpc.tcp_slot_entries, vm.swappiness, fs.aio-fs-nr
+- Check vm.swappiness
+- Check /etc/security/limits.conf
+- Check sysctl entries: sunrpc.tcp_slot_table_entries, vm.swappiness, fs.aio-max-nr, fs.nr_open
 - Check mount point
 - Check Ethernet card
 - Check load average
@@ -151,8 +151,8 @@
 ## MySQLTuner Server version checks
 
 - EOL MySQL and MariaDB version check
-- Currently MySQL < 5.5 and MariaDB < 10.6 are considered EOL
-- Using 5.5+ version of MySQL for performance issue (asynchronous IO)
+- Currently MySQL < 8.0 and MariaDB < 10.11 are considered EOL (per official vendor lifecycle and mysql_support.md / mariadb_support.md)
+- Using supported LTS releases for production stability and performance
 - MySQL 9.x readiness: detection of removed variables and eliminated authentication methods
 - Supported versions are labelled `(LTS)` or `(short-term support)`; cycles come from `build/ci_matrix.json` (`lts`, `legacy_supported`, `short_term`) via `build/sync_supported_versions.pl`
 - MariaDB deprecated aliases (`tx_isolation` >= 11.1, `innodb_prefix_index_cluster_optimization` >= 10.10) are reported only when explicitly configured (`information_schema.SYSTEM_VARIABLES.GLOBAL_VALUE_ORIGIN` = CONFIG, COMMAND-LINE or SQL)
@@ -276,7 +276,7 @@
 - Percentage of temporary table written on disk (<25%)
 - Thread cache (=4)
 - Thread cache hit ratio (>50%) if thread_handling is different of pools-of-threads
-- Table cache hit ratio (>2°%)
+- Table cache hit ratio (>20%)
 - Table cache definition should be upper that total number of tables or in autoresizing mode
 - Percentage of open file and open file limit (<85%)
 - Percentage of table locks (<95%)
@@ -381,10 +381,10 @@
   - SYNCED state able to read/write
 - wsrep_cluster_conf_id configuration level must be identical in all nodes
 - wsrep_slave_thread is between 3 or 4 times number of CPU core.
-- gcs.limit should be equal to wsrep_slave_threads * 5
+- gcs.fc_limit should be equal to wsrep_slave_threads * 5
 - gcs.fc_factor should be equal to 0.8
 - Flow control fraction should be lower than 0.02 (wsrep_flow_control_paused < 0.02)
-- wsrep_last_commited committed level must be identical in all nodes
+- wsrep_last_committed committed level must be identical in all nodes
 - Look for tables without primary keys
 - Look for non InnoDB tables for Galera
 - Variable innodb_flush_log_at_trx_commit should be set to 0.
@@ -726,4 +726,84 @@ Activated with `--structstat` or `--verbose`.
 - **MySQL Group Replication & InnoDB Cluster**:
   - Analyzes `performance_schema.replication_group_members` for node states (`ONLINE`, `RECOVERING`, `UNREACHABLE`).
   - Audits single-primary vs multi-primary configurations and transaction certification queues.
+
+## MySQLTuner Modern Audit Engine & Subroutines (v2.9.4)
+
+MySQLTuner v2.9.4 introduces specialized audit subroutines targeting modern engine architectures, security configurations, and cluster topologies:
+
+### 1. `audit_pfs_stage_profiling($stages_ref, $waits_ref)`
+- **Input Signature**:
+  - `$stages_ref`: Hash reference of Performance Schema stage metrics (keyed by stage event name, e.g. `stage/sql/Creating tmp table`, `stage/sql/Sorting result`, containing `count` and `latency_ms`).
+  - `$waits_ref`: Hash reference of wait events (keyed by wait event name, e.g. `wait/synch/mutex/innodb/*`, `wait/io/file/innodb/innodb_data_file`, containing `count` and `latency_ms`).
+- **Audit Criteria & Thresholds**:
+  - Flags high temporary table creation latency when executions $> 1,000$ and total latency $> 5,000\text{ ms}$.
+  - Flags high sorting stage latency when sort operations $> 5,000$ and total latency $> 10,000\text{ ms}$.
+  - Flags InnoDB mutex contention on `wait/synch/mutex/innodb/*` when wait latency exceeds $10,000\text{ ms}$.
+  - Flags InnoDB data file I/O wait latency on `wait/io/file/innodb/innodb_data_file` when wait latency exceeds $50,000\text{ ms}$.
+- **Outputs**:
+  - Returns list of finding hash references (`severity`, `category`, `message`, `recommendation`).
+  - Emits recommendations to optimize queries, increase `tmp_table_size`/`max_heap_table_size`, add composite indexes, tune `sort_buffer_size`, or increase `innodb_buffer_pool_instances` / `innodb_io_capacity`.
+
+### 2. `audit_innodb_ahi($ahi_enabled, $ahi_searches, $non_ahi_searches, $ahi_parts, $bp_instances)`
+- **Input Signature**:
+  - `$ahi_enabled`: Boolean/string indicating whether `innodb_adaptive_hash_index` is ON/OFF.
+  - `$ahi_searches`: Total adaptive hash index searches (`Innodb_adaptive_hash_searches` or equivalent).
+  - `$non_ahi_searches`: Searches using B-tree navigation without AHI.
+  - `$ahi_parts`: Number of AHI partitions (`innodb_adaptive_hash_index_parts`, default 1 or 8).
+  - `$bp_instances`: Number of buffer pool instances (`innodb_buffer_pool_instances`).
+- **Audit Criteria & Thresholds**:
+  - Evaluates search efficiency when total searches $> 50,000$. Flags low search hit ratio when hit ratio $< 15.0\%$.
+  - Evaluates latch contention: Flags when `bp_instances > 1` but `innodb_adaptive_hash_index_parts == 1`.
+- **Outputs**:
+  - Returns finding records advising disabling AHI on write-heavy workloads to eliminate `btr_search_latch` overhead, or partitioning AHI (`innodb_adaptive_hash_index_parts`) to match buffer pool instances.
+
+### 3. `audit_tls_ciphers_protocols($have_ssl, $tls_version, $ssl_cipher)`
+- **Input Signature**:
+  - `$have_ssl`: Status of SSL subsystem (`have_ssl` / `have_openssl` = YES/ON).
+  - `$tls_version`: Comma-separated list of enabled TLS protocol versions (e.g. `TLSv1,TLSv1.1,TLSv1.2,TLSv1.3`).
+  - `$ssl_cipher`: Colon-separated or comma-separated list of permitted SSL cipher suites.
+- **Audit Criteria & Thresholds**:
+  - Flags deprecated and cryptographically broken TLS protocols (`TLSv1`, `TLSv1.0`, `TLSv1.1`).
+  - Flags weak, broken, or insecure cipher algorithms: `RC4`, `DES`, `3DES`, `MD5`, `EXPORT`, `NULL`, `ADH`.
+- **Outputs**:
+  - Returns security findings recommending restricting `tls_version` to `'TLSv1.2,TLSv1.3'` and configuring modern AEAD/GCM cipher suites (e.g. `ECDHE-ECDSA-AES128-GCM-SHA256`).
+
+### 4. `audit_table_definition_cache($table_definition_cache, $open_table_definitions, $opened_table_definitions, $uptime)`
+- **Input Signature**:
+  - `$table_definition_cache`: Configured cache capacity (`table_definition_cache`).
+  - `$open_table_definitions`: Current number of cached table definitions (`Open_table_definitions`).
+  - `$opened_table_definitions`: Cumulative table definitions opened since startup (`Opened_table_definitions`).
+  - `$uptime`: Server uptime in seconds (`Uptime`).
+- **Audit Criteria & Thresholds**:
+  - Evaluates cache fill ratio: $\frac{\text{Open\_table\_definitions}}{\text{table\_definition\_cache}} \times 100$.
+  - Evaluates eviction opening rate: $\frac{\text{Opened\_table\_definitions}}{\text{Uptime}}$.
+  - Flags cache saturation when fill ratio $\ge 90\%$, eviction rate $> 5.0\text{ opened/sec}$, and total opened definitions $> 2 \times \text{table\_definition\_cache}$.
+- **Outputs**:
+  - Recommends increasing `table_definition_cache` (suggesting $1.5\times$ current size, minimum 2000) to minimize disk reads and metadata lock mutex contention.
+
+### 5. `audit_deprecated_variables()`
+- **Input Signature**: None (evaluates global `%myvar`, `%mystat`, and version indicators).
+- **Audit Criteria & Thresholds**:
+  - Detects obsolete configuration parameters across major release boundaries:
+    - `log_slow_queries` (superseded by `slow_query_log`).
+    - `table_cache` (removed in MySQL 5.5, superseded by `table_open_cache`).
+    - `tx_isolation` (removed in MySQL 8.0, superseded by `transaction_isolation`; respects MariaDB user-configured origin check `is_user_configured_origin()`).
+    - `innodb_prefix_index_cluster_optimization` (deprecated in MariaDB 10.10+; respects user-configured origin check).
+    - `tx_read_only` (removed in MySQL 8.0, superseded by `transaction_read_only`).
+    - `query_cache_*` parameters (removed in MySQL 8.0).
+    - `default_authentication_plugin` (removed in MySQL 8.4, superseded by `authentication_policy`).
+- **Outputs**:
+  - Populates `$result{'Deprecated_Variables'}`, prints warnings via `badprint`, and pushes modernization advice into `@generalrec` and `@sysrec`.
+
+### 6. `discover_cluster_topology()`
+- **Input Signature**: None (evaluates `%myvar`, `%mystat`, `%myrepl`).
+- **Audit Criteria & Topology Detection**:
+  - **Galera Cluster / Percona XtraDB Cluster**: Detects `wsrep_on = ON`. Evaluates cluster size, members, and warns on 2-node clusters without an arbitrator (`garbd`) due to split-brain vulnerability.
+  - **MySQL Group Replication / InnoDB Cluster**: Detects `group_replication_group_name`. Classifies role as Single-Primary or Multi-Primary based on `group_replication_single_primary_mode`.
+  - **Asynchronous / Semi-Synchronous Replica**: Detects replication status (`Seconds_Behind_Source`, `Seconds_Behind_Master`, `Replica_IO_Running`, `Slave_IO_Running`). Reports replication role and latency.
+  - **Replication Source**: Detects `log_bin = ON` without replica threads active.
+  - **Standalone Node**: Fallback when no cluster or replication metadata is active.
+- **Outputs**:
+  - Populates `$result{'Topology'}` (string) and `$result{'HA_Discovery'}` (structured hash reference with `topology`, `cluster_type`, `role`, `members`, and `details`).
+  - Emits recommendations and topology status badges in console output and JSON telemetry.
 

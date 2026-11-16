@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_skill_fragmentation.t
+---
+
 # Issue #1007: AI Skill Specification — detect_fragmented_tables
 
 **Type:** Feature / AI Skill  
@@ -5,7 +9,10 @@
 **Assignee:** jmrenouard  
 **Labels:** `mcp`, `skill`, `storage`, `tables`, `defragmentation`  
 
-## 🎯 Description & Objectives
+## Goal
+Implement the specialized AI Diagnostic Skill `detect_fragmented_tables` in the MySQLTuner MCP server to scan tables, compute unused allocated pages, estimate reclaimable storage, and assess defragmentation locks.
+
+## Description & Objectives
 Implement the specialized AI Diagnostic Skill `detect_fragmented_tables` in the MySQLTuner MCP server.
 This skill allows LLM agents and DBA tools to scan user tables, compute unused allocated pages (`Data_free`), estimate reclaimable storage, assess online defragmentation locks, and propose safe optimization scripts.
 
@@ -20,7 +27,15 @@ This skill allows LLM agents and DBA tools to scan user tables, compute unused a
    - Tables $< 5\text{GB}$: Recommend direct `OPTIMIZE TABLE \`db\`.\`tbl\`;` (InnoDB online rebuild).
    - Tables $\ge 5\text{GB}$: Flag `is_high_impact: true` and advise off-peak scheduling or online schema change tools (`pt-online-schema-change`, `gh-ost`).
 
-## 🧪 Acceptance Criteria
+## Implementation Details
+- Registered `detect_fragmented_tables` in MCP server.
+- Implemented diagnostic algorithms in `.agent/skills/detect-fragmented-tables/SKILL.md`.
+- Added unit test validation in `tests/unit_skill_fragmentation.t`.
+
+## Verification
+- Run `prove tests/unit_skill_fragmentation.t`
+
+## Acceptance Criteria
 - [x] Registered in MCP Tools Catalog as `detect_fragmented_tables` with strict JSON Schema.
 - [x] Computes cumulative reclaimable storage in human-readable and raw byte formats.
 - [x] Unit test `tests/unit_skill_fragmentation.t` verifying filtering, fragmentation ratios, and high-impact classification.

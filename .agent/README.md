@@ -22,8 +22,10 @@ This directory contains the project's technical constitution, specialized skills
 | [`db-version-rift/`](./skills/db-version-rift/SKILL.md) | Mapping of critical differences between MySQL and MariaDB versions for cross-compatible diagnostics. |
 | [`detect-fragmented-tables/`](./skills/detect-fragmented-tables/SKILL.md) | Detects tables with high storage fragmentation, calculates reclaimable disk space, evaluates lock impact, and generates safe defragmentation commands. |
 | [`diagnose-replication-lag/`](./skills/diagnose-replication-lag/SKILL.md) | Diagnoses MySQL and MariaDB replication latency, IO/SQL thread failures, GTID synchronization, and parallel worker saturation. |
+| [`isolated-test-guard/`](./skills/isolated-test-guard/SKILL.md) | Guidelines and defensive patterns for isolated, hermetic, and chroot/sbuild unit test execution without host dependencies or source tree mutations. |
 | [`legacy-perl-patterns/`](./skills/legacy-perl-patterns/SKILL.md) | Guidelines and patterns for maintaining backward compatibility with older Perl versions (5.8+). |
 | [`testing-orchestration/`](./skills/testing-orchestration/SKILL.md) | Knowledge on how to run, orchestrate, and validate tests in the MySQLTuner project. |
+| [`windows-powershell-metrics/`](./skills/windows-powershell-metrics/SKILL.md) | Best practices for extracting Windows system metrics via PowerShell Get-CimInstance with graceful WMIC fallback and error suppression. |
 
 
 ## Automation & Operational Workflows

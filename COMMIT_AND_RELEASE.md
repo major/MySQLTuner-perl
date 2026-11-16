@@ -117,7 +117,7 @@ make increment_major_version # Bumps major version (e.g. 2.8.41 -> 3.0.0)
     - `perf`
 2.  Run the `/release-notes-gen` workflow (or script directly) to analyze the changelog, delta indicator metrics, and generate/update the corresponding release notes file:
     ```bash
-    python3 build/release_gen.py
+    perl build/release_gen.pl
     ```
     *Behind the scenes*: This compiles the release summary, diagnostic growth statistics, commit differences, and CLI modifications into [releases/](file:///releases/) (e.g., `releases/v2.9.2.md`).
 

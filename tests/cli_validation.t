@@ -31,8 +31,19 @@ like($output, qr/Option port requires an argument/i, "Should show error for miss
 like($output, qr/mysqltuner failed with errors/i, "Should show failed with errors message for missing argument");
 
 # 6. Test authentication failure (wrong credentials)
-$output = `perl $script --user nonexistent --pass wrong 2>&1`;
-like($output, qr/Attempted to use login credentials, but (?:they were invalid|the connection failed)/i, "Should show login failure error");
-like($output, qr/Client error: /i, "Should surface the real mysql client error");
+SKIP: {
+    my $has_client = 0;
+    for my $dir (File::Spec->path()) {
+        if (-x File::Spec->catfile($dir, 'mysqladmin') || -x File::Spec->catfile($dir, 'mariadb-admin')) {
+            $has_client = 1;
+            last;
+        }
+    }
+    skip 'mysqladmin or mariadb-admin not installed', 2 unless $has_client;
+
+    $output = `perl $script --user nonexistent --pass wrong 2>&1`;
+    like($output, qr/Attempted to use login credentials, but (?:they were invalid|the connection failed)/i, "Should show login failure error");
+    like($output, qr/Client error: /i, "Should surface the real mysql client error");
+}
 
 done_testing();

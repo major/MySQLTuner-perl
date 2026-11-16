@@ -68,7 +68,7 @@ subtest 'Issue 781 - Only --pass specified defaults to -u root' => sub {
 
     eval { main::mysql_setup(); };
 
-    my $found = grep { /-u root/ && /-p'somepass'/ } @commands_executed;
+    my $found = grep { /-u ['"]?root['"]?/ && /-p'somepass'/ } @commands_executed;
     ok($found, "mysql_setup should connect with -u root when only --pass is set");
     diag "Commands tried: " . join(", ", @commands_executed) unless $found;
 };
@@ -84,7 +84,7 @@ subtest 'Issue 781 - Passwords with single quotes are escaped' => sub {
 
     eval { main::mysql_setup(); };
 
-    my $found = grep { /-u tuneruser/ && /-p'my'\\''pass'\\''word'/ } @commands_executed;
+    my $found = grep { /-u ['"]?tuneruser['"]?/ && /-p'my'\\''pass'\\''word'/ } @commands_executed;
     ok($found, "mysql_setup should escape single quotes in passwords");
     diag "Commands tried: " . join(", ", @commands_executed) unless $found;
 };
@@ -100,7 +100,7 @@ subtest 'Issue 781 - Passwords with complex characters' => sub {
 
     eval { main::mysql_setup(); };
 
-    my $found = grep { /-u tuneruser/ && /-p'J-GHs\[Rx\.6\[Ggdfaqe8Ay'/ } @commands_executed;
+    my $found = grep { /-u ['"]?tuneruser['"]?/ && /-p'J-GHs\[Rx\.6\[Ggdfaqe8Ay'/ } @commands_executed;
     ok($found, "mysql_setup should pass complex characters inside single quotes");
     diag "Commands tried: " . join(", ", @commands_executed) unless $found;
 };

@@ -36,8 +36,11 @@ my $script = abs_path(File::Spec->catfile($script_dir, '..', 'mysqltuner.pl'));
     # Prototype-matching mock for is_remote (original has () prototype)
     eval '*main::is_remote = sub () { return 1; };';
 
-    *main::get_transport_prefix = sub { return ''; };
-    *main::which = sub { return "/usr/bin/$_[0]"; };
+    *main::which = sub {
+        my ($cmd) = @_;
+        return $^X if $cmd && $cmd =~ /^(?:mariadb|mysql)/;
+        return 0;
+    };
     *main::execute_system_command = sub {
         my ($cmd) = @_;
         diag "MOCK CMD: $cmd";
@@ -64,8 +67,9 @@ my $script = abs_path(File::Spec->catfile($script_dir, '..', 'mysqltuner.pl'));
         'user'       => 'root',
         'pass'       => 'root',
         'noask'      => 1,
-        'mysqlcmd'   => '/usr/bin/mysql',
-        'mysqladmin' => '/usr/bin/mysqladmin',
+        'mysqlcmd'      => $^X,
+        'mysqladmincmd' => $^X,
+        'mysqladmin'    => $^X,
     );
     # Wrap in eval to catch exit() calls from mysql_setup
     eval { main::mysql_setup(); };

@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_pfs_stage_profiling.t
+---
+
 # Issue #1037: Performance Schema Stage & Wait Event Profiling (Phase 31)
 
 **Type:** Feature / Engine Diagnostic  

@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_deprecated_vars_audit.t
+---
+
 # Issue #1022: Deprecated System Variables & Synonyms Audit (Phase 25)
 
 **Type:** Feature / Diagnostic Rule Engine  
@@ -5,7 +9,10 @@
 **Assignee:** jmrenouard  
 **Labels:** `diagnostic`, `variables`, `deprecated`, `tuning`, `recommendations`  
 
-## 🎯 Description & Objectives
+## Goal
+Implement a dedicated diagnostic audit routine `audit_deprecated_variables()` in `mysqltuner.pl` to inspect loaded server variables and emit actionable modernization guidance for deprecated system variables and obsolete synonyms.
+
+## Description & Objectives
 Modern MySQL (8.0, 8.4, 9.x) and MariaDB (10.11, 11.4+) have eliminated dozens of legacy system variables and obsolete synonyms. When legacy configuration files contain these variables, the server either logs deprecation notices or fails to parse them on startup.
 
 This phase implements a dedicated diagnostic audit routine `audit_deprecated_variables()` in `mysqltuner.pl` that inspects loaded server variables and emits actionable modernization guidance:
@@ -16,7 +23,15 @@ This phase implements a dedicated diagnostic audit routine `audit_deprecated_var
 5. `default_authentication_plugin` (MySQL 8.4+) -> `authentication_policy`
 6. `innodb_file_format` / `innodb_large_prefix` (MySQL 8.0+) -> Remove (Barracuda is default)
 
-## 🧪 Acceptance Criteria
+## Implementation Details
+- Implemented `audit_deprecated_variables()` in `mysqltuner.pl`.
+- Version-gated deprecation rules based on engine family and major version.
+- Pushed recommendations to `@generalrec` and structured output into `$result{'Deprecated_Variables'}`.
+
+## Verification
+- Run `prove tests/unit_deprecated_vars_audit.t`
+
+## Acceptance Criteria
 - [x] Dedicated diagnostic subroutine `audit_deprecated_variables()` implemented in `mysqltuner.pl`.
 - [x] Correct version-gating ensuring legacy variables are only flagged when obsolete for the target DB version.
 - [x] Recommendations pushed to `@generalrec` and structured in `$result{'Deprecated_Variables'}` for JSON/HTML reports.

@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_mcp_protocol.t
+---
+
 # Issue #1001: MCP Protocol Hardening, Robust Error Handling & SSE Transport Support
 
 **Type:** Feature / Hardening  
@@ -5,7 +9,10 @@
 **Assignee:** jmrenouard  
 **Labels:** `mcp`, `protocol`, `security`, `sse`, `json-rpc`  
 
-## 🎯 Description & Objectives
+## Goal
+Harden the Model Context Protocol (MCP) server for MySQLTuner adhering to MCP 2024-11-05 and JSON-RPC 2.0 specifications with robust error handling and dual stdio/SSE transport support.
+
+## Description & Objectives
 The Model Context Protocol (MCP) server for MySQLTuner needs to adhere strictly to the MCP 2024-11-05 specification and JSON-RPC 2.0 (RFC 4627 / 7159).
 Key requirements:
 1. **Full JSON-RPC 2.0 Compliance**:
@@ -21,7 +28,15 @@ Key requirements:
 4. **Complete Schema Definitions**:
    - All tools must expose valid JSON Schemas for `inputSchema` with `type: "object"` and structured parameter validation.
 
-## 🧪 Acceptance Criteria
+## Implementation Details
+- Implemented JSON-RPC 2.0 protocol handler in `build/mcp_server.py`.
+- Added support for stdio and SSE transport protocols.
+- Enforced strict schema validation and query sanitization.
+
+## Verification
+- Run `prove tests/unit_mcp_protocol.t`
+
+## Acceptance Criteria
 - [x] JSON-RPC 2.0 error handling adheres to standard codes.
 - [x] Support `--sse --port <PORT>` and `--stdio` modes.
 - [x] Unit test suite `tests/unit_mcp_protocol.t` validates stdio and SSE interfaces.

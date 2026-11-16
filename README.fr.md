@@ -5,6 +5,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
 
 [![État du projet](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges)
+[![Dernière version GitHub](https://img.shields.io/github/v/release/jmrenouard/MySQLTuner-perl?style=flat-square&logo=github)](https://github.com/jmrenouard/MySQLTuner-perl/releases/latest)
+[![Version de l'image Docker](https://img.shields.io/docker/v/jmrenouard/mysqltuner?sort=semver&style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/jmrenouard/mysqltuner)
+[![Version MySQLTuner](https://img.shields.io/badge/version-2.9.4-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.4)
 [![État des tests](https://github.com/major/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/major/MySQLTuner-perl/actions)
 [![Temps moyen de résolution d'un problème](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Temps moyen de résolution d'un problème")
 [![Pourcentage de problèmes ouverts](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Pourcentage de problèmes encore ouverts")
@@ -28,6 +31,7 @@ Liens utiles
 * **Versions/Tags :** [https://github.com/major/MySQLTuner-perl/tags](https://github.com/major/MySQLTuner-perl/tags)
 * **Changelog :** [https://github.com/major/MySQLTuner-perl/blob/master/Changelog](https://github.com/major/MySQLTuner-perl/blob/master/Changelog)
 * **Images Docker :** [https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags](https://hub.docker.com/repository/docker/jmrenouard/mysqltuner/tags)
+* **Références utiles :** [Documentation/Références](https://github.com/major/MySQLTuner-perl/blob/master/documentation/REFERENCES.md)
 * **Guide d'intégration Agent IA & Serveur MCP :** [Documentation/Guide Serveur MCP IA](https://github.com/major/MySQLTuner-perl/blob/master/documentation/mcp_ai_integration_guide.fr.md)
 * **Rapports HTML Interactifs (v2.9.0+) :**
   * [Exemple de rapport MariaDB 11.4](https://lightpath.fr/MySQLtuner_reports/MySQLTuner-v290_mariadb114/Schemadir/mysqltuner_report.html)
@@ -42,7 +46,7 @@ MySQLTuner a besoin de vous
 * Veuillez nous rejoindre sur notre outil de suivi des problèmes sur [le suivi GitHub](https://github.com/major/MySQLTuner-perl/issues).
 * Le guide de contribution est disponible en suivant [le guide de contribution de MySQLTuner](https://github.com/major/MySQLTuner-perl/blob/master/CONTRIBUTING.md)
 * Mettez une étoile au **projet MySQLTuner** sur [le projet Git Hub de MySQLTuner](https://github.com/major/MySQLTuner-perl/)
-* Support payant pour LightPath ici : [jmrenouard@lightpath.fr](jmrenouard@lightpath.fr)
+* Support payant pour LightPath ici : [jmrenouard@lightpath.fr](mailto:jmrenouard@lightpath.fr)
 * Support payant pour Releem disponible ici : [Application Releem](https://releem.com/)
 
 ### Sponsors
@@ -119,11 +123,15 @@ Pour la documentation technique complète, consultez le [Guide d'Intégration IA
 
 1. **Sous-système de Compétences IA (`.agent/skills/`)** :
    Heuristiques diagnostiques structurées avec seuils d'évaluation mathématiques et garde-fous de sécurité :
-   - `analyze_buffer_pool` : Dimensionnement du buffer pool InnoDB, taux de succès du cache et analyse des écritures de pages sales.
+   - `analyze-buffer-pool` : Dimensionnement du buffer pool InnoDB, taux de succès du cache et analyse des écritures de pages sales.
    - `detect-fragmented-tables` : Détection du taux de fragmentation, calcul de l'espace disque récupérable et commandes de défragmentation en ligne.
    - `diagnose-replication-lag` : Diagnostic de latence de réplication, synchronisation GTID et saturation des threads parallèles.
    - `db-version-rift` : Résolution des écarts de version MySQL 5.5-8.4 vs MariaDB 10.3-11.8.
    - `cli-execution-mastery` : Options de connexion sécurisées, tunnels SSH et masquage des mots de passe.
+   - `isolated-test-guard` : Exécution hermétique des tests et protection contre les mutations de l'arborescence en environnements chroot/sbuild.
+   - `legacy-perl-patterns` : Règles de rétrocompatibilité Perl 5.8+ et modèles réservés au cœur Perl.
+   - `testing-orchestration` : Orchestration des tests tripartites (`--verbose`, `--container`, `--dumpdir`), validation en laboratoire et décomposition des tests unitaires.
+   - `windows-powershell-metrics` : Extraction des métriques Windows via PowerShell CIM avec repli WMIC et suppression d'erreurs.
 
 2. **Serveur Model Context Protocol (MCP)** :
    Un microservice léger ([build/mcp_server.py](build/mcp_server.py) et [Dockerfile.mcp](Dockerfile.mcp)) communiquant via l'entrée/sortie standard (stdio) en JSON-RPC 2.0.
@@ -283,7 +291,7 @@ docker run --rm -it -v $(pwd)/my.cnf:/defaults.cnf -v $(pwd)/results:/results jm
 
 ### Emplacement des versions (Releases)
 
-* Les notes de version officielles et l'historique sont documentés dans le dossier [releases/](releases/) de ce dépôt (par exemple, [releases/v2.9.3.md](releases/v2.9.3.md)).
+* Les notes de version officielles et l'historique sont documentés dans le dossier [releases/](releases/) de ce dépôt (par exemple, [releases/v2.9.4.md](releases/v2.9.4.md)).
 * Les tags de version Git et les archives sources téléchargeables sont disponibles sur [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 Installation facultative de Sysschema pour MySQL 5.6
@@ -303,18 +311,6 @@ unzip -l sysschema.zip
 unzip sysschema.zip
 cd mysql-sys-master
 mysql -uroot -p < sys_56.sql
-```
-
-Sysschema pour l'ancienne version de MariaDB
---
-
-```bash
-curl "https://github.com/FromDual/mariadb-sys/archive/refs/heads/master.zip" > sysschema.zip
-# check zip file
-unzip -l sysschema.zip
-unzip sysschema.zip
-cd mariadb-sys-master
-mysql -u root -p < ./sys_10.sql
 ```
 
 Configuration du schéma de performance
@@ -343,7 +339,7 @@ performance-schema-consumer-events-waits-history=ON
 performance-schema-consumer-events-waits-history-long=ON
 performance-schema-instrument='%=ON'
 max-digest-length=2048
-performance-schema-max-digest-length=2018
+performance-schema-max-digest-length=2048
 ```
 
 Installation de Sysschema pour MariaDB < 10.6
@@ -551,6 +547,12 @@ export MYSQL_PASS=secret
 perl mysqltuner.pl --userenv=MYSQL_USER --passenv=MYSQL_PASS
 ```
 
+**Utilisation :** Utiliser un fichier de configuration personnalisé
+
+```bash
+perl mysqltuner.pl --defaults-file=/path/to/my.cnf
+```
+
 Pour une liste complète de toutes les options disponibles, exécutez `perl mysqltuner.pl --help` ou consultez la documentation [USAGE.md](USAGE.md).
 
 Prise en charge du cloud
@@ -645,7 +647,17 @@ Soyez prudent lorsque vous mettez en œuvre des modifications pour assurer la st
 
 Si votre DBA prend constamment votre place de parking et vole votre déjeuner dans le réfrigérateur, vous voudrez peut-être y réfléchir - mais c'est votre décision.
 
-Une fois que vous l'avez créé, assurez-vous qu'il appartient à votre utilisateur et que le mode du fichier est 0600. Cela devrait empêcher les regards indiscrets d'obtenir vos informations de connexion à la base de données dans des conditions normales.
+**Question : Comment puis-je configurer MySQLTuner pour s'exécuter automatiquement sans demander d'identifiants ?**
+
+Le script recherche les fichiers `~/.my.cnf`, les identifiants Plesk et les connexions root sans mot de passe. Si vous souhaitez que le script s'exécute de façon autonome sans invites interactives, créez un fichier de configuration `~/.my.cnf` dans votre répertoire personnel :
+
+```ini
+[client]
+user=nom_utilisateur
+password=mot_de_passe
+```
+
+Une fois que vous l'avez créé, assurez-vous qu'il appartient à votre utilisateur et que le mode du fichier est `0600`. Cela devrait empêcher les regards indiscrets d'obtenir vos informations de connexion à la base de données dans des conditions normales.
 
 **Question : J'obtiens "ERROR 1524 (HY000): Plugin 'unix_socket' is not loaded" même avec unix_socket=OFF. Comment corriger ?**
 
@@ -711,27 +723,33 @@ Merci à [@rolandomysqldba](https://dba.stackexchange.com/users/877/rolandomysql
 
 Connexion et authentification
 
- --host <hostname> Se connecter à un hôte distant pour effectuer des tests (par défaut : localhost)
+```
+ --host <hostname> Se connecter à un hôte distant pour effectuer des tests (par défaut : localhost)
  --socket <socket> Utiliser un socket différent pour une connexion locale
- --port <port>     Port à utiliser pour la connexion (par défaut : 3306)
+ --port <port>     Port à utiliser pour la connexion (par défaut : 3306)
  --user <username> Nom d'utilisateur à utiliser pour l'authentification
  --pass <password> Mot de passe à utiliser pour l'authentification
  --defaults-file <path> fichier de valeurs par défaut pour les informations d'identification
+```
 
 * En cas d'échec de connexion, l'erreur réelle du client est affichée (ex. `Client error: ERROR 2026 ... self-signed certificate`) avec une indication TLS ou réseau ; « identifiants invalides » n'est signalé que pour les erreurs d'authentification (1045/1698).
 * Un échec avec des identifiants explicites `--pass` ou `--login-path` arrête immédiatement l'exécution (code 1) sans essayer d'autres méthodes de connexion (`debian.cnf`, fichier de valeurs par défaut, invite).
 
 Étant donné que vous utilisez un hôte distant, utilisez des paramètres pour fournir des valeurs à partir du système d'exploitation
 
+```
  --forcemem <size>  Quantité de RAM installée (en mégaoctets ou avec unités, ex. 15G, 1024M)
  --forceswap <size> Quantité de mémoire de pagination configurée (en mégaoctets ou avec unités)
+```
 
 * Vous devrez peut-être contacter votre administrateur système distant pour lui demander la quantité de RAM et de pagination dont vous disposez
 
-Si la base de données a trop de tables, ou une très grande table, utilisez ceci :
+Si la base de données a trop de tables, ou une très grande table, utilisez ceci :
 
- --skipsize           Ne pas énumérer les tables et leurs types/tailles (par défaut : activé)
+```
+ --skipsize           Ne pas énumérer les tables et leurs types/tailles (par défaut : activé)
                       (Recommandé pour les serveurs avec de nombreuses tables)
+```
 
 **Question : Puis-je installer ce projet à l'aide de homebrew sur Apple Macintosh ?**
 
@@ -741,26 +759,8 @@ Oui ! `brew install mysqltuner` peut être utilisé pour installer cette applic
 
 Les distributions Linux telles qu'Ubuntu, Debian, RHEL et CentOS fournissent souvent une version plus ancienne de MySQLTuner dans leurs dépôts officiels. Par exemple, Ubuntu 22.04 fournit la version 1.7.17 alors que la dernière version publiée peut être nettement plus récente.
 
-Il n'existe actuellement **aucun dépôt APT/YUM/DNF officiel** qui suit la dernière version de MySQLTuner. Pour obtenir la dernière version, utilisez l'une de ces méthodes :
-
-* **Téléchargement direct (recommandé) :**
-
-```bash
-wget https://mysqltuner.pl/ -O mysqltuner.pl
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
-wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
-chmod +x mysqltuner.pl
-```
-
-* **Git clone :**
-
-```bash
-git clone --depth 1 -b master https://github.com/major/MySQLTuner-perl.git
-cd MySQLTuner-perl
-perl mysqltuner.pl
-```
-
-* **Environnements isolés (air-gapped) :** Si votre serveur ne dispose pas d'un accès direct à Internet, téléchargez les fichiers ci-dessus sur un hôte disposant d'un accès Internet (ou via un proxy), puis transférez `mysqltuner.pl`, `basic_passwords.txt` et `vulnerabilities.csv` sur le serveur cible via `scp`, `rsync` ou toute autre méthode de transfert de fichiers.
+Il n'existe actuellement **aucun dépôt officiel** qui suit la dernière version.
+Pour installer ou mettre à niveau vers la dernière version, suivez les instructions officielles dans [Téléchargement/Installation](#téléchargementinstallation).
 
 MySQLTuner et Vagrant (Héritage)
 --
@@ -786,7 +786,7 @@ mysql_percona80 sakila
 
 **Cibles de test prises en charge** (reportez-vous à [support MariaDB](mariadb_support.md) et [support MySQL](mysql_support.md) pour la matrice de compatibilité actuelle) :
 
-* MySQL 8.4, 9.7 (LTS), 8.0 (support legacy) et 26.7 (support court terme)
+* MySQL 8.4, 9.7 (LTS), 8.0 (support legacy) et 26.10 (support court terme)
 * MariaDB 10.11, 11.4, 11.8, 12.3 (LTS) et 13.0 (support court terme)
 * Percona Server 8.0
 

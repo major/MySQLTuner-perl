@@ -82,6 +82,8 @@ subtest 'get_fs_info' => sub {
     is($result{'Filesystem'}{'Inode Pct'}{'/'}, 90, 'root Inode Pct parsed');
     ok(grep({ /mount point \/ is using 90 % total space/ } @mock_output), 'warning on high disk usage printed');
     ok(grep({ /mount point \/ is using 90 % of max allowed inodes/ } @mock_output), 'warning on high inode usage printed');
+    ok(grep({ /Add some space to \/ mountpoint\./ } @main::generalrec), 'recommendation has correct mountpoint instead of percent');
+    ok(!grep({ /Add some space to 90 mountpoint\./ } @main::generalrec), 'no percentage interpolated as mountpoint');
 };
 
 subtest 'get_fs_info_win' => sub {

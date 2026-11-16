@@ -4,7 +4,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/major/MySQLTuner-perl?style=for-the-badge&logo=github)](https://github.com/major/MySQLTuner-perl)
 
-[![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges) [![MySQLTuner Version](https://img.shields.io/badge/version-2.9.3-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.3) [![Test Status](https://github.com/major/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/major/MySQLTuner-perl/actions) [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Thời gian trung bình để giải quyết một issue") [![Percentage of open issues](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Tỷ lệ issue còn mở") [![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
+[![Project Status](https://opensource.box.com/badges/active.svg)](https://opensource.box.com/badges) [![MySQLTuner Version](https://img.shields.io/badge/version-2.9.4-blue.svg)](https://github.com/major/MySQLTuner-perl/releases/tag/v2.9.4) [![Test Status](https://github.com/major/MySQLTuner-perl/actions/workflows/pull_request.yml/badge.svg)](https://github.com/major/MySQLTuner-perl/actions) [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Thời gian trung bình để giải quyết một issue") [![Percentage of open issues](https://isitmaintained.com/badge/open/major/MySQLTuner-perl.svg)](https://isitmaintained.com/project/major/MySQLTuner-perl "Tỷ lệ issue còn mở") [![GPL License](https://badges.frapsoft.com/os/gpl/gpl.png?v=103)](https://opensource.org/licenses/GPL-3.0/)
 
 **MySQLTuner** là một script viết bằng Perl cho phép bạn xem xét nhanh một bản cài đặt MySQL và điều chỉnh để tăng hiệu năng và độ ổn định. Các biến cấu hình hiện tại và dữ liệu trạng thái được thu thập và trình bày ngắn gọn, kèm một số gợi ý cơ bản về hiệu năng.
 
@@ -260,7 +260,7 @@ Chọn một trong các cách sau:
 
 ### Vị trí các bản phát hành
 
-- Ghi chú phát hành chính thức và lịch sử được lưu trong thư mục [releases/](releases) của repository này (ví dụ: [releases/v2.9.3.md](releases/v2.9.3.md)).
+- Ghi chú phát hành chính thức và lịch sử được lưu trong thư mục [releases/](releases) của repository này (ví dụ: [releases/v2.9.4.md](releases/v2.9.4.md)).
 - Các Git tag và bản nén mã nguồn có thể tải xuống có trên [GitHub Releases](https://github.com/major/MySQLTuner-perl/releases).
 
 ## Cài đặt Sysschema tùy chọn cho MySQL 5.6

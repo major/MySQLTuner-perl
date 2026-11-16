@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_sql_trace_logging.t
+---
+
 # Issue #1034: SQL Error Trace Logging & Query Safety (Phase 23.3)
 
 **Type:** Feature / Logging & Observability  

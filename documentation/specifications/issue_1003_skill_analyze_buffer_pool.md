@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_skill_buffer_pool.t
+---
+
 # Issue #1003: AI Skill Specification — analyze_buffer_pool
 
 **Type:** Feature / AI Skill  
@@ -5,7 +9,10 @@
 **Assignee:** jmrenouard  
 **Labels:** `mcp`, `skill`, `innodb`, `performance`, `memory`  
 
-## 🎯 Description & Objectives
+## Goal
+Implement the specialized AI Diagnostic Skill `analyze_buffer_pool` in the MySQLTuner MCP server to evaluate InnoDB Buffer Pool memory allocation, caching efficiency, dirty page ratios, and instance partitioning.
+
+## Description & Objectives
 Implement the specialized AI Diagnostic Skill `analyze_buffer_pool` in the MySQLTuner MCP server.
 This skill allows LLM agents and autonomous DBA routines to deeply evaluate InnoDB Buffer Pool memory allocation, caching efficiency, dirty page ratios, and instance partitioning without needing manual log parsing.
 
@@ -21,7 +28,15 @@ This skill allows LLM agents and autonomous DBA routines to deeply evaluate Inno
 4. **Instance Concurrency**:
    - For buffer pools $> 1\text{GB}$, recommend `innodb_buffer_pool_instances` matching CPU cores (up to 64, typical 8).
 
-## 🧪 Acceptance Criteria
+## Implementation Details
+- Registered `analyze_buffer_pool` tool in MCP server.
+- Implemented diagnostic algorithms in `.agent/skills/analyze-buffer-pool/SKILL.md`.
+- Added unit test validation in `tests/unit_skill_buffer_pool.t`.
+
+## Verification
+- Run `prove tests/unit_skill_buffer_pool.t`
+
+## Acceptance Criteria
 - [x] Skill registered in MCP Tools Catalog as `analyze_buffer_pool` with strict JSON Schema.
 - [x] Returns typed output with metrics, health status, and rollback-ready SQL recommendations.
 - [x] Unit test `tests/unit_skill_buffer_pool.t` covering optimal, undersized, and dirty-stall states.

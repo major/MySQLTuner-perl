@@ -3,7 +3,7 @@ UPDATE_SUB_VERSION=$(shell echo $(VERSION) | awk -F. '{ print $$1"."$$2"."$$3+1 
 UPDATE_MINOR_VERSION=$(shell echo $(VERSION) | awk -F. '{ print $$1"."$$2+1".0" }')
 UPDATE_MAJOR_VERSION=$(shell echo $(VERSION) | awk -F. '{ print $$1+1".0.0" }')
 
-.PHONY: all help generate_usage generate_release_notes generate_cve generate_features tidy check-tidy installdep_debian increment_sub_version increment_minor_version increment_major_version push pull vendor_setup test test-all test-container test-it unit-tests unit-tests-debug clean clean_examples validate_release docker_build docker_slim docker_push test-triage issue-triage issue-triage-offline issue-triage-major issue-triage-major-offline sync-major-issues sync_versions check_versions
+.PHONY: all help generate_usage generate_release_notes generate_cve generate_features tidy check-tidy installdep_debian increment_sub_version increment_minor_version increment_major_version push pull vendor_setup test test-all test-container test-it unit-tests unit-tests-debug clean clean_examples validate_release docker_build docker_slim docker_push test-triage issue-triage issue-triage-offline issue-triage-major issue-triage-major-offline sync-major-issues sync_versions check_versions sync_translations check_translations
 
 all: generate_cve generate_features generate_usage tidy increment_sub_version 
 
@@ -43,6 +43,8 @@ help:
 	@echo "  issue-triage-major-offline: Run Issue Triage on major/MySQLTuner-perl using offline fixtures"
 	@echo "  sync-major-issues: Synchronize modifications to major/MySQLTuner-perl with jmrenouard assignee"
 	@echo "  analyze-output:    Analyze MySQLTuner output (FILE=path/to/output.txt)"
+	@echo "  sync_translations: Synchronize version badges and invariants across README translations"
+	@echo "  check_translations: Check synchronization of multilingual README translations"
 
 
 installdep_debian: setup_commits
@@ -97,6 +99,12 @@ sync_versions:
 check_versions:
 	perl ./build/sync_supported_versions.pl --check
 
+sync_translations:
+	perl ./build/sync_translations.pl --sync
+
+check_translations:
+	perl ./build/sync_translations.pl --check
+
 generate_features:
 	@echo "[$$(date '+%Y-%m-%d %H:%M:%S')] [MAKE] Starting generate_features..." >> execution.log
 	perl ./build/genFeatures.pl
@@ -112,7 +120,7 @@ release:
 	@OLD_VERSION=$$(cat CURRENT_VERSION.txt | tr -d '\n'); \
 	echo "Bumping version from $$OLD_VERSION to $(VERSION)..."; \
 	echo "$(VERSION)" > CURRENT_VERSION.txt; \
-	sed -i "s/$$OLD_VERSION/$(VERSION)/g" mysqltuner.pl README.md POTENTIAL_ISSUES.md MEMORY_DB.md Changelog; \
+	sed -i "s/$$OLD_VERSION/$(VERSION)/g" mysqltuner.pl README.md README.*.md POTENTIAL_ISSUES.md MEMORY_DB.md SECURITY.md Changelog; \
 	pod2markdown mysqltuner.pl > USAGE.md; \
 	perl build/release_gen.pl; \
 	echo "Version bumped to $(VERSION). USAGE.md and release notes generated."
@@ -145,8 +153,8 @@ increment_major_version:
 	@echo "Incrementing major version from $(VERSION) to $(UPDATE_MAJOR_VERSION)"
 	sed -i "s/$(VERSION)/$(UPDATE_MAJOR_VERSION)/" mysqltuner.pl *.md .github/workflows/*.yml
 	git add ./*.md ./mysqltuner.pl
-	git commit -m "Generate $(UPDATE_SUB_VERSION) major version at $(shell date --iso=seconds)"
-	git tag -a v$(UPDATE_MINOR_VERSION) -m "Generate $(UPDATE_MAJOR_VERSION) major version at $(shell date --iso=seconds)"
+	git commit -m "Generate $(UPDATE_MAJOR_VERSION) major version at $(shell date --iso=seconds)"
+	git tag -a v$(UPDATE_MAJOR_VERSION) -m "Generate $(UPDATE_MAJOR_VERSION) major version at $(shell date --iso=seconds)"
 	git push --tags
 
 docker_build:

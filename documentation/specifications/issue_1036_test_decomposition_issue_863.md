@@ -1,3 +1,7 @@
+---
+test_file: tests/test_issue_863.t
+---
+
 # Issue #1036: Unit Test Decomposition: `test_issue_863.t` (Phase 26.2)
 
 **Type:** Refactoring / Unit Test Decomposition  

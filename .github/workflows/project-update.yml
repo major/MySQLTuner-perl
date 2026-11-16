@@ -34,7 +34,7 @@ jobs:
         run: dos2unix mysqltuner.pl
 
       - name: Generate FEATURES.md
-        run: bash build/genFeatures.sh
+        run: perl build/genFeatures.pl
 
       - name: Commit and Push changes
         run: |

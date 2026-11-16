@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_release_orchestrator.t
+---
+
 # Issue #1033: Pure Perl Interactive Release Orchestrator (Phase 20.1 & 20.2)
 
 **Type:** Feature / Release Automation  

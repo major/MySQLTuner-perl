@@ -14,7 +14,7 @@ my %ALLOWED_MODULES = map { $_ => 1 } (
     'utf8',         'POSIX',       'File::Spec',    'File::Temp',
     'Getopt::Long', 'Pod::Usage',  'Sys::Hostname', 'File::Basename',
     'Cwd',          'Time::Local', 'HTTP::Tiny',    'Win32',
-    'Time::HiRes',  'Digest::SHA', 'JSON'
+    'Time::HiRes',  'Digest::SHA', 'JSON::PP'
 );
 
 my $script_path = dirname(__FILE__) . '/../mysqltuner.pl';
@@ -147,7 +147,8 @@ my %ALLOWED_SCOPES = map { $_ => 1 } (
     'deps',     'system',   'roadmap',      'hook',
     'hooks',    'build',    'mcp',          'rules',
     'galera',   'skill',    'skills',       'innodb',
-    'replication', 'engine', 'ha',          'triage'
+    'replication', 'engine', 'ha',          'triage',
+    'ai',       'compliance'
 );
 
 # Lint Changelog structure and scopes for the current version block

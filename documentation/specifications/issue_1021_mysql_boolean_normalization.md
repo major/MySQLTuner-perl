@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_boolean_normalization.t
+---
+
 # Issue #1021: MySQL Boolean Normalization Engine (Phase 24)
 
 **Type:** Feature / Architecture Refactoring  
@@ -5,7 +9,10 @@
 **Assignee:** jmrenouard  
 **Labels:** `engine`, `normalization`, `boolean`, `quality`  
 
-## 🎯 Description & Objectives
+## Goal
+Implement a central, high-performance boolean normalization engine in `mysqltuner.pl` to handle disparate boolean representations across MySQL, MariaDB, and Percona Server versions and subsystems.
+
+## Description & Objectives
 MySQL, MariaDB, and Percona Server represent boolean configurations using disparate representations across engine versions and subsystems:
 - `ON` / `OFF`
 - `1` / `0`
@@ -15,7 +22,15 @@ MySQL, MariaDB, and Percona Server represent boolean configurations using dispar
 
 This phase implements a central, high-performance boolean normalization engine in `mysqltuner.pl` (`normalize_mysql_bool`, `is_mysql_true`, `is_mysql_false`, `format_mysql_bool`) and replaces fragile ad-hoc regexes with unified helper invocations.
 
-## 🧪 Acceptance Criteria
+## Implementation Details
+- Implemented `normalize_mysql_bool`, `is_mysql_true`, `is_mysql_false`, and `format_mysql_bool` in `mysqltuner.pl`.
+- Integrated boolean normalization across core diagnostic sections.
+- Verified behavioral consistency across engine outputs.
+
+## Verification
+- Run `prove tests/unit_boolean_normalization.t`
+
+## Acceptance Criteria
 - [x] Standard subroutines `normalize_mysql_bool`, `is_mysql_true`, `is_mysql_false`, `format_mysql_bool` defined in `mysqltuner.pl`.
 - [x] Handles undefined values, numeric 0/1, strings `ON`/`OFF`, `YES`/`NO`, `TRUE`/`FALSE`, `ENABLED`/`DISABLED` case-insensitively.
 - [x] Comprehensive TAP unit test `tests/unit_boolean_normalization.t` covering all representations, edge cases, and helper methods.

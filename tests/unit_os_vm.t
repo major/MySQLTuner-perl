@@ -102,6 +102,7 @@ subtest 'is_virtual_machine' => sub {
     # Case 4: Windows check
     {
         reset_mocks();
+        local $^O = 'MSWin32';
         local $main::is_win = 1;
         no warnings 'redefine';
         local *main::execute_system_command = sub {

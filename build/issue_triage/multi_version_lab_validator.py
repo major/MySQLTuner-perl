@@ -5,7 +5,7 @@ Multi-Version Matrix Lab & Interoperability Validator
 from __future__ import annotations
 
 import unittest
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Optional, Tuple
 from build.issue_triage.models import GitHubIssueRecord, IssueAuthorType, DatabaseEngineType
 from build.issue_triage.diagnostic_engine import DiagnosticEngine
 from build.issue_triage.test_generator import PerlTestGenerator
@@ -24,9 +24,9 @@ class MultiVersionLabValidator:
     ]
 
     @classmethod
-    def validate_matrix(cls) -> Dict[str, Any]:
+    def validate_matrix(cls, tests_dir: Optional[str] = None) -> Dict[str, Any]:
         engine = DiagnosticEngine()
-        test_gen = PerlTestGenerator()
+        test_gen = PerlTestGenerator(output_tests_dir=tests_dir)
         results = []
 
         for item in cls.SUPPORTED_MATRIX:

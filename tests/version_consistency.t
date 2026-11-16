@@ -80,4 +80,15 @@ while (my $line = <$fl>) {
 close $fl;
 is($log_ver, $expected, "Changelog: Latest version matches");
 
+# 7. VERSION file
+ok(-f 'VERSION', "VERSION file exists");
+if (-f 'VERSION') {
+    open my $fver, '<', 'VERSION' or die "Cannot open VERSION: $!";
+    my $short_ver = <$fver>;
+    close $fver;
+    $short_ver = '' unless defined $short_ver;
+    $short_ver =~ s/^\s+|\s+$//g;
+    is($short_ver, $expected, "VERSION: File content matches CURRENT_VERSION.txt");
+}
+
 done_testing();

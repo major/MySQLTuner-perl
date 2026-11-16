@@ -111,7 +111,7 @@ subtest 'Issue #782: Failure after all retries' => sub {
     
     my $err = $@;
     is($err, "MOCK_EXIT\n", "The script should exit upon connection failure");
-    is($exit_val, 256, "Exit code must be 256");
+    is($exit_val, 1, "Exit code must be 1");
     is($select_calls, 3, "Tried 3 times before failing");
     ok(grep(/Failed to connect to the database or insufficient privileges/, @bad_prints), "Error message printed");
 };

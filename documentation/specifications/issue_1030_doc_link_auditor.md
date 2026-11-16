@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_doc_link_auditor.t
+---
+
 # Issue #1030: Reference Link Auditing Pipeline (Phase 18.1)
 
 **Type:** Feature / Quality Assurance  

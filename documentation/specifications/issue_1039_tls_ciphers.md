@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_tls_ciphers.t
+---
+
 # Issue #1039: TLS/SSL Cipher Suite & Protocol Deprecation Audit (Phase 33)
 
 **Type:** Feature / Security Diagnostic  

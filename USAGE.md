@@ -1,6 +1,6 @@
 # NAME
 
-    MySQLTuner 2.9.3 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
+    MySQLTuner 2.9.4 - MySQL High Performance Tuning Advisor for MySQL, MariaDB, and Percona Server
 
 # SYNOPSIS
 
@@ -23,6 +23,9 @@
 
     # AI Agent integration output (actionable JSON remediation plan)
     perl mysqltuner.pl --agent-json
+
+    # Export indicator catalog and metadata in JSON format (offline, no database connection)
+    perl mysqltuner.pl --list-indicators
 
 # IMPORTANT USAGE GUIDELINES
 
@@ -47,6 +50,18 @@
 
     Path to local UNIX domain socket for database communication.
 
+- **--pipe**
+
+    Connect to a local Windows database using named pipes.
+
+- **--pipe\_name** _name_
+
+    Use a different pipe name for a local Windows named pipe connection.
+
+- **--protocol** _tcp_
+
+    Force TCP connection protocol instead of UNIX domain socket.
+
 - **--user** _username_
 
     Database username for authentication.
@@ -55,9 +70,13 @@
 
     Database password for authentication.
 
-- **--ask-pass**
+- **--userenv** _envvar_
 
-    Prompt interactively for database password on the terminal.
+    Environment variable name containing the database username.
+
+- **--passenv** _envvar_
+
+    Environment variable name containing the database password.
 
 - **--defaults-file** _path_
 
@@ -79,19 +98,19 @@
 
     Path to custom `mysqladmin` binary.
 
-- **--tli**
-
-    Use Transport Layer Interface abstraction.
-
 - **--ssl-ca** _path_
 
     Path to SSL Certificate Authority (CA) certificate.
 
-- **--caching-sha2-password**
-
-    Force caching\_sha2\_password authentication plugin mode.
-
 ## Target Environment and Cloud Discovery Options
+
+- **--cloud**
+
+    Enable cloud mode for remote or managed cloud database instances.
+
+- **--azure**
+
+    Enable Azure Database for MySQL specific optimizations and metrics.
 
 - **--container** _container\_name\_or\_id_
 
@@ -105,45 +124,13 @@
 
     SSH login username.
 
-- **--ssh-key** _path_
+- **--ssh-password** _password_
 
-    Path to SSH private key file.
+    SSH password for remote cloud host authentication.
 
-- **--ssh-port** _port_
+- **--ssh-identity-file** _path_
 
-    SSH daemon port (default: 22).
-
-- **--aws-profile** _profile_
-
-    AWS CLI profile for Amazon RDS / Aurora cluster discovery.
-
-- **--aws-region** _region_
-
-    AWS Region for RDS / Aurora discovery.
-
-- **--aws-cluster-identifier** _id_
-
-    Amazon RDS / Aurora cluster identifier.
-
-- **--aws-instance-identifier** _id_
-
-    Amazon RDS instance identifier.
-
-- **--gcp-project** _project\_id_
-
-    Google Cloud project ID for Cloud SQL instances.
-
-- **--gcp-instance** _instance\_id_
-
-    Google Cloud SQL instance identifier.
-
-- **--azure-resource-group** _group_
-
-    Azure resource group for Azure Database for MySQL.
-
-- **--azure-server-name** _name_
-
-    Azure MySQL flexible/single server name.
+    Path to SSH private key identity file for remote host authentication.
 
 ## Performance and Diagnostic Tuning Options
 
@@ -182,6 +169,26 @@
 - **--checkversion**
 
     Check for upstream MySQLTuner version updates.
+
+- **--updateversion**
+
+    Update MySQLTuner in-place if a newer version is available.
+
+- **--sysbench-file** _path_
+
+    Path to a sysbench output file for performance metadata integration.
+
+- **--compare-file** _path_
+
+    Path to a previous JSON result file for trend analysis.
+
+- **--feature** _feature\_name_
+
+    Run a specific diagnostic feature report subroutine (see FEATURES.md).
+
+- **--server-log** _path_
+
+    Path to explicit server error log file for log analysis.
 
 - **--nondedicated**
 
@@ -233,9 +240,13 @@
 
     Export individual Markdown documentation files with Mermaid ER diagrams per schema.
 
-- **--nocolor**
+- **--list-indicators**
 
-    Disable ANSI color codes in terminal output.
+    Export all diagnostic indicators, features, and metadata in JSON format and exit without establishing a database connection.
+
+- **--color**, **--nocolor**
+
+    Control ANSI color codes in terminal output (enabled by default on TTY).
 
 - **--noprettyicon**
 
@@ -244,6 +255,46 @@
 - **--stage-timings**
 
     Display execution duration for each analysis stage.
+
+- **--experimental**
+
+    Print experimental diagnostic analysis and recommendations.
+
+- **--dbstat**, **--nodbstat**
+
+    Print database storage, tables count, and collation breakdown.
+
+- **--tbstat**, **--notbstat**
+
+    Print table-level storage metrics and engine distribution.
+
+- **--colstat**, **--nocolstat**
+
+    Print column metadata and schema optimization findings.
+
+- **--idxstat**, **--noidxstat**
+
+    Print index cardinality, unused index, and duplicate index analysis.
+
+- **--sysstat**, **--nosysstat**
+
+    Print operating system hardware and kernel metrics.
+
+- **--pfstat**, **--nopfstat**
+
+    Print MySQL Performance Schema telemetry and instrumentation metrics.
+
+- **--plugininfo**, **--noplugininfo**
+
+    Print active and inactive MySQL/MariaDB plugin details.
+
+- **--myisamstat**, **--nomyisamstat**
+
+    Print detailed MyISAM key cache and storage statistics.
+
+- **--structstat**, **--nostructstat**
+
+    Print table structure and schema design recommendations.
 
 ## Debugging and Filtering Options
 
@@ -267,9 +318,47 @@
 
     Suppress informational messages.
 
+## Miscellaneous Options
+
+- **--max-password-checks** _number_
+
+    Maximum number of passwords to test from the dictionary file (default: 100).
+
+- **--dump-limit** _number_
+
+    Limit number of rows exported per table in CSV dump mode (default: 50000).
+
+- **--compress-dump**
+
+    Compress dumped CSV files using gzip compression.
+
+- **--ignore-tables** _tables_
+
+    Comma-separated list of tables to exclude from intensive analysis.
+
+- **--bannedports** _ports_
+
+    Comma-separated list of banned network ports to flag.
+
+- **--maxportallowed** _number_
+
+    Maximum allowable number of open ports on the host.
+
+- **--defaultarch** _32|64_
+
+    Assumed operating system architecture (32 or 64-bit, default: 64).
+
+- **--noask**
+
+    Do not prompt for interactive confirmation during operations.
+
+- **--help**, **-?**
+
+    Display the help message and options summary.
+
 # VERSION
 
-Version 2.9.3
+Version 2.9.4
 
 # PERLDOC
 
@@ -279,7 +368,7 @@ You can inspect the embedded manual with the perldoc command:
 
 ## INTERNALS
 
-[https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md](https://github.com/jmrenouard/MySQLTuner-perl/blob/master/INTERNALS.md)
+[https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md](https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md)
 
     Internal documentation
 
@@ -333,15 +422,15 @@ Jean-Marie Renouard - jmrenouard@gmail.com
 
 Bug reports, feature requests, and downloads at http://mysqltuner.pl/
 
-Bug tracker can be found at https://github.com/jmrenouard/MySQLTuner-perl/issues
+Bug tracker can be found at https://github.com/major/MySQLTuner-perl/issues
 
 Maintained by Jean-Marie Renouard (jmrenouard\\@gmail.com) - Licensed under GPL
 
 # SOURCE CODE
 
-[https://github.com/jmrenouard/MySQLTuner-perl/](https://github.com/jmrenouard/MySQLTuner-perl/)
+[https://github.com/major/MySQLTuner-perl/](https://github.com/major/MySQLTuner-perl/)
 
-    git clone https://github.com/jmrenouard/MySQLTuner-perl/.git
+    git clone https://github.com/major/MySQLTuner-perl.git
 
 # COPYRIGHT AND LICENSE
 
@@ -350,7 +439,7 @@ Copyright (C) 2006-2026 Major Hayden - major@mhtx.net
 
 For the latest updates, please visit http://mysqltuner.pl/
 
-Git repository available at https://github.com/jmrenouard/MySQLTuner-perl/
+Git repository available at https://github.com/major/MySQLTuner-perl/
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

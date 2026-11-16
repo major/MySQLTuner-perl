@@ -10,7 +10,7 @@ MySQLTuner propose une architecture IA découplée en deux couches : l'**Intelli
 
 ```mermaid
 graph TD
-    subgraph "Couche Clients IA & Orchestration"
+    subgraph ClientLayer["Couche Clients IA & Orchestration"]
         Antigravity["Antigravity IDE / CLI"]
         Claude["Claude Desktop"]
         Cursor["Cursor IDE"]
@@ -18,7 +18,7 @@ graph TD
         CustomAgent["Agent DBA Autonome / LangChain"]
     end
 
-    subgraph "Couche d'Intelligence Métier (.agent/skills/)"
+    subgraph DomainIntelligenceLayer["Couche d'Intelligence Métier (.agent/skills/)"]
         SkillBP["analyze-buffer-pool"]
         SkillFrag["detect-fragmented-tables"]
         SkillRepl["diagnose-replication-lag"]
@@ -26,16 +26,18 @@ graph TD
         SkillCLI["cli-execution-mastery"]
         SkillTest["testing-orchestration"]
         SkillLegacy["legacy-perl-patterns"]
+        SkillIsolated["isolated-test-guard"]
+        SkillWinPS["windows-powershell-metrics"]
     end
 
-    subgraph "Couche Serveur MCP (build/mcp_server.py)"
+    subgraph MCPLayer["Couche Serveur MCP (build/mcp_server.py)"]
         JSONRPC["Interface stdio / SSE JSON-RPC 2.0"]
         Daemon["Démon d'Audit Périodique"]
         CacheManager["Gestionnaire de Cache JSON / HTML"]
         RollbackEngine["Registre de Transactions & Rollback"]
     end
 
-    subgraph "Base de Données & Moteur"
+    subgraph DatabaseLayer["Base de Données & Moteur"]
         PerlEngine["Moteur Perl MySQLTuner (mysqltuner.pl)"]
         MySQLInstance[("MySQL / MariaDB / Percona Server")]
     end
@@ -46,10 +48,10 @@ graph TD
     VSCode <--> JSONRPC
     CustomAgent <--> JSONRPC
 
-    Antigravity -.-> CouchedIntelligenceMétier
-    Claude -.-> CouchedIntelligenceMétier
-    Cursor -.-> CouchedIntelligenceMétier
-    VSCode -.-> CouchedIntelligenceMétier
+    Antigravity -.-> DomainIntelligenceLayer
+    Claude -.-> DomainIntelligenceLayer
+    Cursor -.-> DomainIntelligenceLayer
+    VSCode -.-> DomainIntelligenceLayer
 
     JSONRPC --> Daemon
     Daemon -->|Exécute --agent-json| PerlEngine
@@ -119,6 +121,8 @@ Les compétences (Skills) sont des modules de connaissances procédurales situé
 | **`diagnose-replication-lag`** | [`.agent/skills/diagnose-replication-lag/SKILL.md`](file:///.agent/skills/diagnose-replication-lag/SKILL.md) | Diagnostic du retard de réplication, synchronisation GTID et saturation des threads parallèles. |
 | **`legacy-perl-patterns`** | [`.agent/skills/legacy-perl-patterns/SKILL.md`](file:///.agent/skills/legacy-perl-patterns/SKILL.md) | Règles de compatibilité ascendante avec les anciennes versions de Perl (5.8+) sans dépendances externes. |
 | **`testing-orchestration`** | [`.agent/skills/testing-orchestration/SKILL.md`](file:///.agent/skills/testing-orchestration/SKILL.md) | Validation tripartite (`--verbose`, `--container`, `--dumpdir`), tests en laboratoire et décomposition des sous-tests. |
+| **`isolated-test-guard`** | [`.agent/skills/isolated-test-guard/SKILL.md`](file:///.agent/skills/isolated-test-guard/SKILL.md) | Directives d'isolation hermétique des tests unitaires en environnement chroot/sbuild sans mutation de l'arbre source. |
+| **`windows-powershell-metrics`** | [`.agent/skills/windows-powershell-metrics/SKILL.md`](file:///.agent/skills/windows-powershell-metrics/SKILL.md) | Modernisation de la télémétrie Windows via PowerShell Get-CimInstance avec repli gracieux WMIC et suppression d'erreurs. |
 
 ---
 

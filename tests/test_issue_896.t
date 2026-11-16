@@ -60,9 +60,18 @@ subtest 'Issue #896: Debian maintenance account login' => sub {
         return "";
     };
 
+    local *main::which = sub {
+        my ($cmd) = @_;
+        return $^X if $cmd && $cmd =~ /^(?:mariadb|mysql)/;
+        return 0;
+    };
+
     MySQLTuner::TestHelper::reset_state();
-    $main::mysqladmincmd = "/usr/bin/mysqladmin";
-    $main::mysqlcmd = "/usr/bin/mysql";
+    $main::opt{mysqladmincmd} = $^X;
+    $main::opt{mysqladmin} = $^X;
+    $main::opt{mysqlcmd} = $^X;
+    $main::mysqladmincmd = $^X;
+    $main::mysqlcmd = $^X;
     $main::doremote = 0;
     $main::opt{'defaults-file'} = '';
 

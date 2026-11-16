@@ -47,7 +47,7 @@ my @commands_executed;
         if ($cmd =~ /ping/ || $cmd =~ /select "mysqld is alive"/) {
             # Check if our expected faulty behavior is happening
             # Currently it will NOT have --defaults-file if it has -u/-p
-            if ($cmd =~ /--defaults-file/ && $cmd =~ /-u tuneruser/ && $cmd =~ /-p'tunerpass'/) {
+            if ($cmd =~ /--defaults-file/ && $cmd =~ /-u ['"]?tuneruser['"]?/ && $cmd =~ /-p'tunerpass'/) {
                 return "mysqld is alive";
             }
             return "failed to connect";
@@ -100,7 +100,7 @@ subtest 'Issue 605 - --defaults-file should allow --user and --pass' => sub {
         *main::execute_system_command = sub {
             my ($cmd) = @_;
             push @commands_executed, $cmd;
-            if ($cmd =~ /--defaults-file=\/tmp\/my.cnf/ && $cmd =~ /-u tuneruser/ && $cmd =~ /-p'tunerpass'/) {
+            if ($cmd =~ /--defaults-file=\/tmp\/my.cnf/ && $cmd =~ /-u ['"]?tuneruser['"]?/ && $cmd =~ /-p'tunerpass'/) {
                 return "mysqld is alive";
             }
             if ($cmd =~ /--print-defaults/) { return "mysql --defaults-file=/tmp/my.cnf"; }
@@ -111,7 +111,7 @@ subtest 'Issue 605 - --defaults-file should allow --user and --pass' => sub {
     # Now call mysql_setup
     eval { main::mysql_setup(); };
     
-    my $found = grep { /--defaults-file=["']?\/tmp\/my.cnf["']?/ && /-u tuneruser/ && /-p'tunerpass'/ } @commands_executed;
+    my $found = grep { /--defaults-file=["']?\/tmp\/my.cnf["']?/ && /-u ['"]?tuneruser['"]?/ && /-p'tunerpass'/ } @commands_executed;
     ok($found, "mysql_setup should have tried to login using defaults-file AND user/pass");
     
     unless ($found) {
@@ -147,7 +147,7 @@ subtest 'Issue 605 - --defaults-extra-file should allow --user and --pass' => su
         *main::execute_system_command = sub {
             my ($cmd) = @_;
             push @commands_executed, $cmd;
-            if ($cmd =~ /--defaults-extra-file=["']?\/tmp\/extra.cnf["']?/ && $cmd =~ /-u tuneruser/ && $cmd =~ /-p'tunerpass'/) {
+            if ($cmd =~ /--defaults-extra-file=["']?\/tmp\/extra.cnf["']?/ && $cmd =~ /-u ['"]?tuneruser['"]?/ && $cmd =~ /-p'tunerpass'/) {
                 return "mysqld is alive";
             }
             if ($cmd =~ /--print-defaults/) { return "mysql --defaults-extra-file=/tmp/extra.cnf"; }
@@ -157,7 +157,7 @@ subtest 'Issue 605 - --defaults-extra-file should allow --user and --pass' => su
 
     eval { main::mysql_setup(); };
     
-    my $found = grep { /--defaults-extra-file=["']?\/tmp\/extra.cnf["']?/ && /-u tuneruser/ && /-p'tunerpass'/ } @commands_executed;
+    my $found = grep { /--defaults-extra-file=["']?\/tmp\/extra.cnf["']?/ && /-u ['"]?tuneruser['"]?/ && /-p'tunerpass'/ } @commands_executed;
     ok($found, "mysql_setup should have tried to login using defaults-extra-file AND user/pass");
     
     unless ($found) {

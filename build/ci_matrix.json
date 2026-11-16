@@ -2,16 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MySQLTuner CI/CD Version Matrix",
   "description": "Centralized machine-readable database versions matrix for CI workflows and test suites",
-  "generated_at": "2026-10-20",
+  "generated_at": "2026-11-15",
   "engines": {
     "mysql": {
       "supported": ["8.4", "9.7"],
       "lts": ["8.4", "9.7"],
-      "short_term": ["26.7"],
+      "short_term": ["26.10"],
       "legacy_supported": ["8.0"],
       "legacy": ["5.6", "5.7", "8.0"],
       "ci_default": ["8.0", "8.4"],
-      "all": ["5.5", "5.6", "5.7", "8.0", "8.1", "8.2", "8.3", "8.4", "9.0", "9.1", "9.2", "9.3", "9.4", "9.5", "9.6", "9.7", "26.7"]
+      "all": ["5.5", "5.6", "5.7", "8.0", "8.1", "8.2", "8.3", "8.4", "9.0", "9.1", "9.2", "9.3", "9.4", "9.5", "9.6", "9.7", "26.7", "26.10"]
     },
     "mariadb": {
       "supported": ["10.11", "11.4", "11.8", "12.3"],

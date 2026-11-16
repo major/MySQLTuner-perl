@@ -14,7 +14,8 @@ $$\text{Global Buffers} = \text{innodb\_buffer\_pool\_size} + \text{innodb\_log\
 
 ### 2. Per-Thread Session Buffers
 Per-thread buffers are allocated individually for each connected client whenever a query requires sorting, joins, or table scans:
-$$\text{Per-Thread Memory} = \text{read\_buffer\_size} + \text{read\_rnd\_buffer\_size} + \text{sort\_buffer\_size} + \text{join\_buffer\_size} + \text{binlog\_cache\_size} + \text{thread\_stack}$$
+$$\text{Per-Thread Memory} = \text{read\_buffer\_size} + \text{read\_rnd\_buffer\_size} + \text{sort\_buffer\_size} + \text{join\_buffer\_size} + \text{binlog\_cache\_size} + \text{thread\_stack} + \text{tmp\_table\_size}$$
+*(Note: As implemented in `calculate_per_thread_buffers`, $\text{tmp\_table\_size}$ evaluates to $\min(\text{tmp\_table\_size}, \text{max\_heap\_table\_size})$ when both are configured).*
 
 ### 3. Total Maximum Theoretical vs. Peak Memory
 - **Maximum Possible Memory Allocation:**

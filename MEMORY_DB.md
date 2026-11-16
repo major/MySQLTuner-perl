@@ -1,6 +1,6 @@
 # MySQLTuner-perl Version Memory
 
-## Current Version: 2.9.2
+## Current Version: 2.9.4
 
 ## Project Evolution & Systemic Findings
 
@@ -18,6 +18,18 @@ Migrated several external commands to native Core Perl to reduce fork overhead a
 - `uptime` -> `/proc/uptime` parsing or `$^T` calculation
 
 ### Recent Audits
+- **v2.9.4**:
+  - Remediated Ponytail audit issues 1-17 across SQL mutation removal, shell escaping, process memory, buffer pool calculations, and Windows swap metrics.
+  - Hardened hermetic test execution in minimal chroot/sbuild environments without source tree mutation (#1010).
+  - Modernized Windows metrics discovery using PowerShell `Get-CimInstance` with graceful WMIC fallback (#992).
+  - Fixed false-positive threshold for `BIGINT UNSIGNED AUTO_INCREMENT` primary keys (#1007).
+  - Corrected query cache type check using logical `||` instead of bitwise `|` (#1034).
+  - Synchronized CLI metadata and POD documentation, removing 13 phantom options.
+- **v2.9.3**:
+  - Added `diagnose_replication_lag` and `detect_fragmented_tables` AI diagnostic skills to MCP server (#1005, #1007).
+  - Implemented autonomous issue triage and diagnostic engine for major/MySQLTuner-perl (#1041-#1044).
+  - Migrated build generators (`release_gen.pl`, `genFeatures.pl`) to pure Perl Core modules (#1023).
+  - Synchronized supported versions matrix from `ci_matrix.json` across test suites and workflows.
 - **v2.9.2**:
   - Comprehensive Model Context Protocol (MCP) AI Server integration guides in English and French.
   - Hardware RAID controller storage detection for AVAGO/LSI MegaRAID (`storcli` / `perccli` / `megacli`).
@@ -84,5 +96,5 @@ The following files track and contain the MySQLTuner version string. Below are t
    - **Update Command**: Updated automatically during `make release VERSION=X.Y.Z` using `sed` substitution.
 
 8. **[releases/v[VERSION].md](file:///releases/)** (Release notes):
-   - **Update Command**: Generated via `python3 build/release_gen.py`.
+   - **Update Command**: Generated via `perl build/release_gen.pl`.
 

@@ -4,6 +4,7 @@ use warnings;
 use Test::More;
 use File::Basename;
 use File::Spec;
+use File::Temp qw(tempfile);
 use Cwd 'abs_path';
 
 my $script_dir = dirname(abs_path(__FILE__));
@@ -16,11 +17,15 @@ subtest 'doc_sync.pl execution verification' => sub {
     my $doc_sync_script = File::Spec->catfile('build', 'doc_sync.pl');
     ok(-f $doc_sync_script, "build/doc_sync.pl exists");
 
-    my $output = qx(perl "$doc_sync_script" 2>&1);
+    my ($tfh, $temp_doc) = tempfile(CLEANUP => 1);
+    close $tfh;
+
+    my $output = qx(perl "$doc_sync_script" --output "$temp_doc" 2>&1);
     my $exit_code = $? >> 8;
 
     is($exit_code, 0, "doc_sync.pl executed successfully");
     like($output, qr/Documentation synchronized/i, "doc_sync.pl reports success");
+    ok(-s $temp_doc > 100, "Documentation written to output destination");
 };
 
 done_testing();

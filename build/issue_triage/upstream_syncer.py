@@ -51,6 +51,8 @@ class UpstreamSyncer:
         offline_mode: bool = False,
         dry_run: bool = True,
         output_dir: Optional[str] = None,
+        state_file: Optional[str] = None,
+        tests_dir: Optional[str] = None,
     ):
         self.upstream_repo = upstream_repo
         self.downstream_repo = downstream_repo
@@ -71,9 +73,10 @@ class UpstreamSyncer:
         self.ingest_facade = GitHubIngestionFacade(
             repo=self.upstream_repo,
             offline_engine=offline_eng,
+            state_file=state_file,
         )
         self.diag_engine = DiagnosticEngine()
-        self.test_gen = PerlTestGenerator()
+        self.test_gen = PerlTestGenerator(output_tests_dir=tests_dir)
 
     @classmethod
     def determine_tags_for_change(cls, commit_type: str, scope: Optional[str] = None) -> List[str]:

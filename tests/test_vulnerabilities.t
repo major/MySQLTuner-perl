@@ -87,7 +87,8 @@ subtest 'Validate MySQL Version LTS support' => sub {
         { version => "11.8.1",  lts => 1, desc => "MariaDB 11.8.1 is recognized as supported LTS (11.8 matches)" },
         { version => "12.3.1",  lts => 1, desc => "MariaDB 12.3.1 is recognized as supported LTS (12.3 matches)" },
         { version => "13.0.0",  lts => 1, desc => "MariaDB 13.0.0 is recognized as supported (13.0 matches)" },
-        { version => "26.7.0",  lts => 1, desc => "MySQL 26.7.0 is recognized as supported (26.7 matches)" },
+        { version => "26.10.0", lts => 1, desc => "MySQL 26.10.0 is recognized as supported (26.10 matches)" },
+        { version => "26.7.0",  lts => 0, desc => "MySQL 26.7.0 is recognized as EOL/unsupported" },
         { version => "10.6.18", lts => 0, desc => "MariaDB 10.6.18 is recognized as EOL/unsupported" },
         { version => "12.2.0",  lts => 0, desc => "MariaDB 12.2.0 is recognized as EOL/unsupported" },
     );

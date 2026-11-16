@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_doc_anchors.t
+---
+
 # Issue #1031: Dynamic Help Screen Anchors & KB References (Phase 18.2)
 
 **Type:** Feature / Documentation & CLI  

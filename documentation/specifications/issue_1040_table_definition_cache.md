@@ -1,3 +1,7 @@
+---
+test_file: tests/unit_table_definition_cache.t
+---
+
 # Issue #1040: Table Definition Cache & Open Tables Saturation Audit (Phase 34)
 
 **Type:** Feature / Engine Diagnostic  

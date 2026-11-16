@@ -64,3 +64,4 @@ __pycache__/
 execution.log
 reports/
 .triage_cache/
+.agents/teamwork/
