@@ -2,6 +2,8 @@
 Unit tests for build.issue_triage.github_ingest
 """
 
+import os
+import tempfile
 import unittest
 from build.issue_triage.github_ingest import GitHubIngestionService
 from build.issue_triage.offline_replay_engine import OfflineReplayEngine
@@ -10,8 +12,13 @@ from build.issue_triage.models import IssueAuthorType, TriageStatus
 
 class TestGitHubIngestionService(unittest.TestCase):
     def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir.cleanup)
         self.offline = OfflineReplayEngine()
-        self.service = GitHubIngestionService(offline_engine=self.offline)
+        self.service = GitHubIngestionService(
+            offline_engine=self.offline,
+            state_file=os.path.join(self.tmpdir.name, "triage_state.json"),
+        )
 
     def test_fetch_and_transform_all_issues(self):
         records = self.service.fetch_open_issues(limit=10)

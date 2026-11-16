@@ -20,17 +20,18 @@ MULTI_DB_REPO="https://github.com/jmrenouard/multi-db-docker-env"
 TEST_DB_REPO="https://github.com/jmrenouard/test_db"
 
 # Default configurations
-get_supported_versions() {
-    local type=$1
-    local file="$PROJECT_ROOT/${type}_support.md"
-    if [ -f "$file" ]; then
-        grep "| Supported |" "$file" | awk -v t="$type" -F'|' '{gsub(/ /, "", $2); gsub(/\./, "", $2); print t$2}' | xargs
-    fi
-}
-
-MYSQL_SUPPORTED=$(get_supported_versions "mysql")
-MARIADB_SUPPORTED=$(get_supported_versions "mariadb")
-DEFAULT_CONFIGS="$MYSQL_SUPPORTED $MARIADB_SUPPORTED percona80"
+DEFAULT_CONFIGS=""
+if [ -f "$PROJECT_ROOT/build/get_supported_envs.pl" ]; then
+    DEFAULT_CONFIGS=$(cd "$PROJECT_ROOT" && perl "$PROJECT_ROOT/build/get_supported_envs.pl" 2>/dev/null | xargs || true)
+fi
+if [ -z "$DEFAULT_CONFIGS" ]; then
+    DEFAULT_CONFIGS="mysql84 mariadb114 percona80"
+else
+    case " $DEFAULT_CONFIGS " in
+        *" percona80 "*) ;;
+        *) DEFAULT_CONFIGS="$DEFAULT_CONFIGS percona80" ;;
+    esac
+fi
 
 CONFIGS=""
 TARGET_DB=""
@@ -144,19 +145,26 @@ mkdir -p "$EXAMPLES_DIR"
 mkdir -p "$VENDOR_DIR"
 
 # Setup Vendor Repositories (only for Lab mode)
+sync_vendor_repo() {
+    local repo_url=$1
+    local target_dir=$2
+    if [ ! -d "$target_dir" ]; then
+        git clone "$repo_url" "$target_dir"
+    elif [ -d "$target_dir/.git" ]; then
+        if [ -z "$(git -C "$target_dir" status --porcelain 2>/dev/null)" ]; then
+            if ! git -C "$target_dir" pull --ff-only >/dev/null 2>&1; then
+                log_step "WARNING: git pull failed for $target_dir (offline or diverged); keeping existing checkout."
+            fi
+        else
+            log_step "INFO: Vendor repo $target_dir has local changes; skipping git pull."
+        fi
+    fi
+}
+
 setup_vendor() {
     log_step "Setting up vendor repositories..."
-    if [ ! -d "$VENDOR_DIR/multi-db-docker-env" ]; then
-        git clone "$MULTI_DB_REPO" "$VENDOR_DIR/multi-db-docker-env"
-    else
-        (cd "$VENDOR_DIR/multi-db-docker-env" && git pull)
-    fi
-
-    if [ ! -d "$VENDOR_DIR/test_db" ]; then
-        git clone "$TEST_DB_REPO" "$VENDOR_DIR/test_db"
-    else
-        (cd "$VENDOR_DIR/test_db" && git pull)
-    fi
+    sync_vendor_repo "$MULTI_DB_REPO" "$VENDOR_DIR/multi-db-docker-env"
+    sync_vendor_repo "$TEST_DB_REPO" "$VENDOR_DIR/test_db"
 }
 
 # Helper to run commands (local, docker, or ssh)
@@ -897,6 +905,9 @@ run_test_lab() {
     local t_end_ready=$(date +%s)
     duration_ready=$((t_end_ready - t_start_ready))
 
+    local db_client
+    db_client=$(command -v mysql || command -v mariadb)
+
     if [ "$NO_INJECTION" = false ]; then
         log_step "Injecting sample data..."
         local t_start_inject=$(date +%s)
@@ -904,8 +915,8 @@ run_test_lab() {
         export MYSQL_TCP_PORT=3306
         export MYSQL_USER=root
         export MYSQL_PWD=mysqltuner_test
-        
-        find "$VENDOR_DIR/test_db" -name "employees.sql" -exec sh -c 'cd $(dirname {}) && mysql -h 127.0.0.1 -u root -pmysqltuner_test < $(basename {})' \; > "$root_target_dir/db_injection.log" 2>&1
+
+        find "$VENDOR_DIR/test_db" -path "*/employees/employees.sql" -exec sh -c 'cd "$(dirname "$1")" && sed "s/^connect /USE /i" "$(basename "$1")" | "$2" -h 127.0.0.1 -u root -pmysqltuner_test' _ {} "$db_client" \; > "$root_target_dir/db_injection.log" 2>&1
         check_exit_code $? "Database Data Injection" "$root_target_dir/execution.log"
         local t_end_inject=$(date +%s)
         duration_inject=$((t_end_inject - t_start_inject))
@@ -914,12 +925,14 @@ run_test_lab() {
         echo "Data injection skipped by user request." > "$root_target_dir/db_injection.log"
     fi
 
-    db_version=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SELECT VERSION();" -sN 2>/dev/null)
-    db_list=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SHOW DATABASES;" -sN 2>/dev/null)
-    local db_total_rows=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SELECT SUM(TABLE_ROWS) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys');" -sN 2>/dev/null || echo "0")
-    local db_total_size=$(mysql -h 127.0.0.1 -u root -pmysqltuner_test -e "SELECT ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys');" -sN 2>/dev/null || echo "0")
-    # Detect the actual container name (excluding traefik)
-    local container_name=$(docker ps --format '{{.Names}}' | grep -v "traefik" | head -n 1)
+    db_version=$("$db_client" -h 127.0.0.1 -u root -pmysqltuner_test -e "SELECT VERSION();" -sN 2>/dev/null)
+    db_list=$("$db_client" -h 127.0.0.1 -u root -pmysqltuner_test -e "SHOW DATABASES;" -sN 2>/dev/null)
+    local db_total_rows=$("$db_client" -h 127.0.0.1 -u root -pmysqltuner_test -e "SELECT SUM(TABLE_ROWS) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys');" -sN 2>/dev/null || echo "0")
+    local db_total_size=$("$db_client" -h 127.0.0.1 -u root -pmysqltuner_test -e "SELECT ROUND(SUM(DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2) FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys');" -sN 2>/dev/null || echo "0")
+    # Detect the scoped compose container name for this config (excluding traefik)
+    local container_name
+    container_name=$(cd "$VENDOR_DIR/multi-db-docker-env" && docker compose --profile "$config" ps --format '{{.Names}}' 2>/dev/null | grep -v "traefik" | head -n 1)
+    [ -z "$container_name" ] && container_name=$(cd "$VENDOR_DIR/multi-db-docker-env" && docker compose ps --format '{{.Names}}' 2>/dev/null | grep -v "traefik" | head -n 1)
     [ -z "$container_name" ] && container_name="$config"
 
     # Iterate over 4 scenarios
@@ -994,7 +1007,7 @@ make $config
 
 # 3. Inject Sample Data
 cd \$PROJECT_ROOT
-find \"vendor/test_db\" -name \"employees.sql\" -exec sh -c 'cd \$(dirname {}) && mysql -h 127.0.0.1 -u root -pmysqltuner_test < \$(basename {})' \\;
+find \"vendor/test_db\" -path \"*/employees/employees.sql\" -exec sh -c 'cd \"\$(dirname \"\$1\")\" && sed \"s/^connect /USE /i\" \"\$(basename \"\$1\")\" | mysql -h 127.0.0.1 -u root -pmysqltuner_test' _ {} \\;
 
 # 4. Execute Scenario: $scenario
 $repro_cmds"

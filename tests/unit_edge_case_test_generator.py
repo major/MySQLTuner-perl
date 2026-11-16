@@ -4,13 +4,16 @@ Unit tests for build.issue_triage.edge_case_test_generator
 
 import os
 import subprocess
+import tempfile
 import unittest
 from build.issue_triage.edge_case_test_generator import EdgeCaseTestGenerator
 
 
 class TestEdgeCaseTestGenerator(unittest.TestCase):
     def setUp(self):
-        self.gen = EdgeCaseTestGenerator()
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir.cleanup)
+        self.gen = EdgeCaseTestGenerator(output_tests_dir=self.tmpdir.name)
 
     def test_generate_and_execute_resilience_test(self):
         test_path = self.gen.generate_resilience_test_file()

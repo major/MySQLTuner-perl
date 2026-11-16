@@ -3,6 +3,7 @@ Unit tests for build.issue_triage.test_generator
 """
 
 import os
+import tempfile
 import unittest
 from build.issue_triage.test_generator import PerlTestGenerator
 from build.issue_triage.models import (
@@ -15,7 +16,9 @@ from build.issue_triage.models import (
 
 class TestPerlTestGenerator(unittest.TestCase):
     def setUp(self):
-        self.gen = PerlTestGenerator()
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir.cleanup)
+        self.gen = PerlTestGenerator(output_tests_dir=self.tmpdir.name)
 
     def test_generate_and_execute_test(self):
         issue = GitHubIssueRecord(

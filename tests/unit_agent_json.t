@@ -68,7 +68,7 @@ subtest 'Agent Actionable JSON Schema Verification' => sub {
     is($ibp->{risk_level}, 'Medium', 'Correct risk level');
     is($ibp->{requires_restart}, JSON::false, 'Requires restart is false');
     is($ibp->{action}->{type}, 'SQL', 'Action type is SQL');
-    is($ibp->{action}->{statement}, 'SET GLOBAL innodb_buffer_pool_size = 1G;', 'Correct SQL statement');
+    is($ibp->{action}->{statement}, 'SET GLOBAL innodb_buffer_pool_size = 1073741824;', 'Correct SQL statement');
     is($ibp->{action}->{rollback_statement}, 'SET GLOBAL innodb_buffer_pool_size = 134217728;', 'Correct rollback SQL statement');
 
     # 2. Verify performance_schema

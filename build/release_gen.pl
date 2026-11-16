@@ -150,10 +150,12 @@ sub get_cli_options {
 
 sub analyze_indicators {
     my ($content) = @_;
-    my @good = ( $content =~ /(?<!sub\s)\bgoodprint\b/g );
-    my @bad  = ( $content =~ /(?<!sub\s)\bbadprint\b/g );
-    my @info = ( $content =~ /(?<!sub\s)\binfoprint\b/g );
-    my @rec  = ( $content =~ /(?<!sub\s)\bpush_recommendation\b/g );
+    my ($code)    = split /^__(?:END|DATA)__/m, ( $content // '' );
+    $code //= '';
+    my @good = ( $code =~ /(?<!sub\s)\bgoodprint\b/g );
+    my @bad  = ( $code =~ /(?<!sub\s)\bbadprint\b/g );
+    my @info = ( $code =~ /(?<!sub\s)\binfoprint\b/g );
+    my @rec  = ( $code =~ /(?<!sub\s)\bpush_recommendation\b/g );
 
     my %counts = (
         good  => scalar(@good),
@@ -167,10 +169,27 @@ sub analyze_indicators {
 
 sub extract_diagnostic_names {
     my ($content) = @_;
+    my ($code)    = split /^__(?:END|DATA)__/m, ( $content // '' );
+    $code //= '';
+    $code =~ s/^\s*#.*$//mg;
+
     my %diag = ( good => {}, bad => {}, info => {} );
-    while ( $content =~ /(?<!sub\s)\bgoodprint\s*\(?\s*["'](.*?)["']/g ) { $diag{good}{$1} = 1; }
-    while ( $content =~ /(?<!sub\s)\bbadprint\s*\(?\s*["'](.*?)["']/g )  { $diag{bad}{$1}  = 1; }
-    while ( $content =~ /(?<!sub\s)\binfoprint\s*\(?\s*["'](.*?)["']/g ) { $diag{info}{$1} = 1; }
+    while ( $code =~ /(?<!sub\s)\b(goodprint|badprint|infoprint)\b\s*\(?\s*(?:sprintf\s*\(\s*)?(['"])((?:\\.|(?!\2).)+)\2/sg ) {
+        my ( $fn, $msg ) = ( $1, $3 );
+        my $cat = ( $fn eq 'goodprint' ) ? 'good' : ( $fn eq 'badprint' ? 'bad' : 'info' );
+        $msg =~ s/\\(['"\\])/$1/g;
+        $msg =~ s/\\[nt]/ /g;
+        $msg =~ s/`/'/g;
+        $msg =~ s/\s+/ /g;
+        $msg =~ s/^\s+|\s+$//g;
+        $msg =~ s/^\+--\s*//;
+        $msg =~ s/^\s+|\s+$//g;
+        next unless length($msg) >= 12;
+        next unless $msg =~ /[A-Za-z]{2,}.*\s+.*[A-Za-z]{2,}/;
+        next if $msg =~ /^%[-0-9.]*[sdfx]/;
+        next if $msg =~ /^\$\w+\s*$/;
+        $diag{$cat}{$msg} = 1;
+    }
     return \%diag;
 }
 
@@ -204,15 +223,14 @@ sub analyze_tech_details {
             if ( $data && ref $data eq 'HASH' ) {
                 $current_opts       = $data->{cli_options};
                 $current_indicators = $data->{summary};
-                $current_names      = $data->{diagnostics};
             }
         }
     }
 
-    # Fallback to source/git regex parsing if --list-indicators is absent (e.g. historical tags)
+    # Normalize diagnostic label extraction identically for current vs previous tag
     $current_opts       //= get_cli_options($current_code);
     $current_indicators //= analyze_indicators($current_code);
-    $current_names      //= extract_diagnostic_names($current_code);
+    $current_names        = extract_diagnostic_names($current_code);
 
     my $prev_tag = `git describe --tags --abbrev=0 ${tag}^ 2>/dev/null`;
     $prev_tag =~ s/^\s+|\s+$//g if defined $prev_tag;
@@ -400,7 +418,7 @@ sub generate_version_note {
                 if ( @{ $tech_data->{new_diagnostics}{$cat} } ) {
                     print $fh "### $icon New $label\n";
                     for my $item ( @{ $tech_data->{new_diagnostics}{$cat} } ) {
-                        print $fh "- $item\n";
+                        print $fh "- `$item`\n";
                     }
                     print $fh "\n";
                 }

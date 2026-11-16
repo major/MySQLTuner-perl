@@ -11,7 +11,7 @@ use Test::More;
 use FindBin;
 use File::Spec;
 
-my $script_path = File::Spec->catfile( $FindBin::Bin, '..', 'mysqltuner.pl' );
+my $script_path = $ENV{MYSQLTUNER_SCRIPT_PATH} || File::Spec->catfile( $FindBin::Bin, '..', 'mysqltuner.pl' );
 plan skip_all => "Cannot find mysqltuner.pl at $script_path" unless -f $script_path;
 
 open my $fh, '<', $script_path or die "Could not open $script_path: $!";

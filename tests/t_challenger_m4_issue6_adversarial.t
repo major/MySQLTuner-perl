@@ -159,10 +159,10 @@ subtest 'Challenge 2: Real-World Pathological Value Extraction in Snippets' => s
     like( $all_output, qr/SET GLOBAL innodb_io_capacity = 2000;/, 'innodb_io_capacity (>= 2000) for SSD/NVMe storage extracted as 2000' );
     like( $all_output, qr/SET GLOBAL key_buffer_size = 0;/, 'key_buffer_size=0 extracted' );
     like( $all_output, qr/SET GLOBAL binlog_format = (?:'ROW'|ROW);/, 'binlog_format = ROW extracted' );
-    like( $all_output, qr/SET GLOBAL sort_buffer_size = 2M;/, 'sort_buffer_size # stripped' );
-    like( $all_output, qr/SET GLOBAL read_rnd_buffer_size = 1M;/, 'read_rnd_buffer_size -- stripped' );
-    like( $all_output, qr/SET GLOBAL join_buffer_size = 512K;/, 'join_buffer_size /* */ stripped' );
-    like( $all_output, qr/SET GLOBAL join_buffer_size = 256\.0K;/, 'join_buffer_size (> 256.0K, ...) extracted as 256.0K' );
+    like( $all_output, qr/SET GLOBAL sort_buffer_size = 2097152;/, 'sort_buffer_size # stripped' );
+    like( $all_output, qr/SET GLOBAL read_rnd_buffer_size = 1048576;/, 'read_rnd_buffer_size -- stripped' );
+    like( $all_output, qr/SET GLOBAL join_buffer_size = 524288;/, 'join_buffer_size /* */ stripped' );
+    like( $all_output, qr/SET GLOBAL join_buffer_size = 262144;/, 'join_buffer_size (> 256.0K, ...) extracted as 262144' );
     like( $all_output, qr/^\s{4}join_buffer_size = 256\.0K$/m, 'join_buffer_size = 256.0K present in [mysqld] section' );
 };
 
@@ -358,7 +358,7 @@ subtest 'Challenge 4: Agent JSON Schema and Static vs Dynamic Typing' => sub {
 
     ok( exists $map{'join_buffer_size_adjust'}, 'join_buffer_size finding exists in agent-json' );
     is( $map{'join_buffer_size_adjust'}->{action}->{statement},
-        'SET GLOBAL join_buffer_size = 256.0K;', 'join_buffer_size statement extracted as 256.0K' );
+        'SET GLOBAL join_buffer_size = 262144;', 'join_buffer_size statement extracted as 262144' );
     is( $map{'join_buffer_size_adjust'}->{requires_restart}, JSON::false,
         'join_buffer_size does not require restart' );
     is( $map{'join_buffer_size_adjust'}->{action}->{type}, 'SQL',

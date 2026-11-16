@@ -181,6 +181,9 @@ while (my $line = <$ph>) {
     elsif ($line =~ /Out of memory/i) {
         push @anomalies, { type => 'Out Of Memory Error', content => $line, line => $line_num };
     }
+    elsif ($line =~ /isn't numeric/i) {
+        push @anomalies, { type => 'Perl Numeric Warning', content => $line, line => $line_num };
+    }
     elsif ($line =~ /Dubious, test returned/i || $line =~ /Failed test/i) {
         push @anomalies, { type => 'Test Failure', content => $line, line => $line_num };
     }

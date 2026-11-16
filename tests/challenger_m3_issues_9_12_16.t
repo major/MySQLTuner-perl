@@ -404,7 +404,7 @@ subtest 'Issue 12C: Index TYPE Dual-Resolution ($info[3] / $info[4]) Stress' => 
 subtest 'Issue 16: Empirical Proof of Zero FK Mismatch Queries in mysql_table_structures' => sub {
     reset_state();
     $opt{structstat} = 1;
-    $opt{dumpdir} = 0;
+    $opt{dumpdir} = tempdir( CLEANUP => 1 );
 
     my @queries_in_table_structures;
 

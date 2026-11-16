@@ -92,7 +92,7 @@ subtest 'SSH Prefix and Remote Host Checks' => sub {
         );
         @mock_output = ();
         $prefix = main::get_ssh_prefix();
-        like($prefix, qr/sshpass -p 'secret'/, 'sshpass wrapper included');
+        like($prefix, qr/SSHPASS='secret' sshpass -e/, 'sshpass wrapper included via SSHPASS env');
     }
 };
 

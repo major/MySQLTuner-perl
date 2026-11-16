@@ -3,7 +3,6 @@ End-to-End Integration Test Suite for MySQLTuner Issue Triage System
 """
 
 import os
-import shutil
 import tempfile
 import unittest
 
@@ -19,17 +18,19 @@ from build.issue_triage.triage_orchestrator import IssueTriageOrchestrator
 
 class TestE2EIssueTriageSystem(unittest.TestCase):
     def setUp(self):
-        self.tmpdir = tempfile.mkdtemp()
+        self.tmpdir_obj = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir_obj.cleanup)
+        self.tmpdir = self.tmpdir_obj.name
+        tests_dir = os.path.join(self.tmpdir, "tests")
+        os.makedirs(tests_dir, exist_ok=True)
         self.orchestrator = IssueTriageOrchestrator(
             repo="jmrenouard/MySQLTuner-perl",
             offline_mode=True,
             dry_run=True,
             output_dir=self.tmpdir,
+            state_file=os.path.join(self.tmpdir, "triage_state.json"),
+            tests_dir=tests_dir,
         )
-
-    def tearDown(self):
-        if os.path.exists(self.tmpdir):
-            shutil.rmtree(self.tmpdir)
 
     def test_e2e_scenario_community_mysql_8_4(self):
         # Issue #881 in offline fixtures is community MySQL 8.4 inquiry

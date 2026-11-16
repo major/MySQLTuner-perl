@@ -39,6 +39,12 @@ sub mock_subheaderprint { push @captured_output, "SUBHEADER: " . join(' ', @_); 
 # Mock SQL execution
 sub mock_select_array {
     my $req = shift;
+    if ($req =~ /information_schema\.columns/ && $req =~ /TABLE_SCHEMA/) {
+        return (
+            "employees\tdepartments\tdept_name\tvarchar",
+            "employees\ttitles\tfrom_date\tdate"
+        );
+    }
     if ($req =~ /information_schema\.tables/ && $req =~ /TABLE_NAME/) {
         return (
             "employees\tdepartments",
@@ -52,12 +58,6 @@ sub mock_select_array {
             "employees\tdept_manager\temp_no\temployees\temp_no\tCASCADE",
             "employees\tdept_manager\tdept_no\tdepartments\tdept_no\tCASCADE",
             "employees\tdept_emp\temp_no\temployees\temp_no\tCASCADE"
-        );
-    }
-    if ($req =~ /information_schema\.columns/ && $req =~ /TABLE_SCHEMA/) {
-        return (
-            "employees\tdepartments\tdept_name\tvarchar",
-            "employees\ttitles\tfrom_date\tdate"
         );
     }
     if ($req =~ /information_schema\.statistics/ && $req =~ /IS_VISIBLE/) {

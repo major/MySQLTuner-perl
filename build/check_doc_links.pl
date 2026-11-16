@@ -103,7 +103,7 @@ sub audit_version_invariants {
     }
 
     # Check 4: README badges
-    for my $readme ('README.md', 'README.fr.md', 'README.it.md', 'README.ru.md') {
+    for my $readme ('README.md', 'README.fr.md', 'README.it.md', 'README.ru.md', 'README.vi.md') {
         my $rf = File::Spec->catfile($PROJECT_ROOT, $readme);
         next unless -f $rf;
         $invariants_checked++;
@@ -142,7 +142,7 @@ push @md_files, map { File::Spec->catfile( $PROJECT_ROOT, $_ ) }
   grep { -f File::Spec->catfile( $PROJECT_ROOT, $_ ) && /\.md$/ } readdir $dh;
 closedir $dh;
 
-my $doc_dir = File::Spec->catdir( $PROJECT_ROOT, 'documentation' );
+my $doc_dir = $ENV{MYSQLTUNER_DOCS_DIR} || File::Spec->catdir( $PROJECT_ROOT, 'documentation' );
 if ( -d $doc_dir ) {
     find(
         sub {

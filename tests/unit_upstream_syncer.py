@@ -3,7 +3,6 @@ Unit tests for build.issue_triage.upstream_syncer
 """
 
 import os
-import shutil
 import tempfile
 import unittest
 
@@ -13,18 +12,20 @@ from build.issue_triage.models import IssueAuthorType
 
 class TestUpstreamSyncer(unittest.TestCase):
     def setUp(self):
-        self.tmpdir = tempfile.mkdtemp()
+        self.tmpdir_obj = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir_obj.cleanup)
+        self.tmpdir = self.tmpdir_obj.name
+        tests_dir = os.path.join(self.tmpdir, "tests")
+        os.makedirs(tests_dir, exist_ok=True)
         self.syncer = UpstreamSyncer(
             upstream_repo="major/MySQLTuner-perl",
             downstream_repo="jmrenouard/MySQLTuner-perl",
             offline_mode=True,
             dry_run=True,
             output_dir=self.tmpdir,
+            state_file=os.path.join(self.tmpdir, "triage_state.json"),
+            tests_dir=tests_dir,
         )
-
-    def tearDown(self):
-        if os.path.exists(self.tmpdir):
-            shutil.rmtree(self.tmpdir)
 
     def test_determine_tags_for_change(self):
         tags_feat = UpstreamSyncer.determine_tags_for_change("feat", "mysql84")
