@@ -95,7 +95,7 @@ subtest 'Issue 6B: generate_auto_fix_snippets handles static variables, sysctl d
     # Dynamic variables should emit SET GLOBAL
     like($output, qr/SET GLOBAL max_connections = 500;/, 'Dynamic max_connections emitted via SET GLOBAL');
     like($output, qr/SET GLOBAL innodb_flush_neighbors = 0;/, 'Comment stripped from innodb_flush_neighbors');
-    like($output, qr/SET GLOBAL sort_buffer_size = 2M;/, 'Comment stripped from sort_buffer_size');
+    like($output, qr/SET GLOBAL sort_buffer_size = 2097152;/, 'Comment stripped and converted to bytes for sort_buffer_size');
 
     # Static variables must NOT emit SET GLOBAL
     unlike($output, qr/SET GLOBAL performance_schema/, 'Static performance_schema not emitted as SET GLOBAL');
@@ -111,7 +111,7 @@ subtest 'Issue 6B: generate_auto_fix_snippets handles static variables, sysctl d
     unlike($output, qr/SET GLOBAL vm\.swappiness/, 'Sysctl key vm.swappiness excluded from SET GLOBAL');
 
     # Verify real-world memory and advice recommendations in SQL snippets
-    like($output, qr/SET GLOBAL join_buffer_size = 256\.0K;/, 'join_buffer_size with decimal K and comma-comment emitted correctly');
+    like($output, qr/SET GLOBAL join_buffer_size = 262144;/, 'join_buffer_size with decimal K and comma-comment emitted as bytes');
     like($output, qr/SET GLOBAL thread_cache_size = 4;/, 'thread_cache_size (start at 4) emitted as 4');
     like($output, qr/SET GLOBAL innodb_io_capacity = 2000;/, 'innodb_io_capacity (>= 2000) for SSD/NVMe storage emitted as 2000');
     like($output, qr/SET GLOBAL query_cache_size = 0;/, 'query_cache_size with version string comment emitted as 0');
@@ -218,7 +218,7 @@ subtest 'Issue 6C: dump_result (--agent-json) restart classification and value c
     ok(exists $findings_by_id{'join_buffer_size_adjust'}, 'Found join_buffer_size finding');
     is($findings_by_id{'join_buffer_size_adjust'}->{requires_restart}, JSON::false, 'join_buffer_size does not require restart');
     is($findings_by_id{'join_buffer_size_adjust'}->{action}->{type}, 'SQL', 'join_buffer_size action type is SQL');
-    is($findings_by_id{'join_buffer_size_adjust'}->{action}->{statement}, 'SET GLOBAL join_buffer_size = 256.0K;', 'join_buffer_size SET GLOBAL format');
+    is($findings_by_id{'join_buffer_size_adjust'}->{action}->{statement}, 'SET GLOBAL join_buffer_size = 262144;', 'join_buffer_size SET GLOBAL format');
     is($findings_by_id{'join_buffer_size_adjust'}->{action}->{rollback_statement}, 'SET GLOBAL join_buffer_size = 131072;', 'join_buffer_size rollback format');
 
     # 10. thread_cache_size (start at 4)

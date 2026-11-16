@@ -39,6 +39,8 @@ class IssueTriageOrchestrator:
         offline_mode: bool = False,
         dry_run: bool = True,
         output_dir: Optional[str] = None,
+        state_file: Optional[str] = None,
+        tests_dir: Optional[str] = None,
     ):
         self.repo = repo
         self.offline_mode = offline_mode
@@ -62,9 +64,10 @@ class IssueTriageOrchestrator:
         self.ingest_facade = GitHubIngestionFacade(
             repo=self.repo,
             offline_engine=offline_eng,
+            state_file=state_file,
         )
         self.diag_engine = DiagnosticEngine()
-        self.test_gen = PerlTestGenerator()
+        self.test_gen = PerlTestGenerator(output_tests_dir=tests_dir)
 
     def process_issue(self, issue: GitHubIssueRecord) -> Dict[str, Any]:
         # 1. Run Diagnostic Engine

@@ -101,7 +101,7 @@ subtest 'Primary Key Checks (Baseline + Advanced)' => sub {
     ok(has_output(qr/BAD: Table test_db.big_table is large \(1073741825\) and has no secondary indexes/), 'Large table without secondary indexes detected');
 
     # Consolidated generalrec checks
-    is(scalar(grep { $_ eq "Use 'id' or '_<table>_id' for Primary Key naming in 2 table(s)" } @main::generalrec), 1, 'Consolidated PK naming recommendation pushed');
+    is(scalar(grep { $_ eq "Use 'id' or '<table>_id' for Primary Key naming in 2 table(s)" } @main::generalrec), 1, 'Consolidated PK naming recommendation pushed');
     is(scalar(grep { $_ eq "Use BIGINT UNSIGNED AUTO_INCREMENT for Primary Keys in 2 table(s)" } @main::generalrec), 1, 'Consolidated surrogate key recommendation pushed');
 };
 
@@ -121,7 +121,7 @@ subtest 'Naming Convention Checks' => sub {
             "test_db\torder_item\tidx_shipped_at", # snake_case (Good)
             "test_db\torder_item\tidxShippedAt",    # camelCase (Bad)
         ],
-        'columns.*TABLE_SCHEMA NOT IN' => [
+        'c\.COLUMN_NAME, c\.DATA_TYPE.*information_schema\.columns c\s+JOIN information_schema\.tables t' => [
             "test_db\torder_item\tis_active\ttinyint(1)",  # Good boolean
             "test_db\torder_item\tactive\ttinyint(1)",     # Bad boolean name
             "test_db\torder_item\tcreated\tdatetime",      # Bad date name
@@ -155,7 +155,7 @@ subtest 'Foreign Key Checks' => sub {
     $main::myvar{'version'} = '8.0.30';
 
     %mock_queries = (
-        'COLUMN_NAME LIKE \'%_id\'.*COLUMN_NAME IS NULL' => [
+        'COLUMN_NAME LIKE \'%\\\\_id\'.*COLUMN_NAME IS NULL' => [
             "test_db\torders\tpromo_id",
         ],
         'referential_constraints' => [
@@ -176,7 +176,7 @@ subtest 'Foreign Key Checks' => sub {
     # FK Type Mismatch Test
     %mock_queries = (
         'referential_constraints' => [],
-        'COLUMN_NAME LIKE \'%_id\'.*COLUMN_NAME IS NULL' => [],
+        'COLUMN_NAME LIKE \'%\\\\_id\'.*COLUMN_NAME IS NULL' => [],
         'k.REFERENCED_TABLE_NAME IS NOT NULL.*c1.COLUMN_TYPE != c2.COLUMN_TYPE' => [
             "test_db\torders\tuser_id\tint(11)\tusers\tid\tbigint(20) unsigned", # Child int, Parent bigint
         ],

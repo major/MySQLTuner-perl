@@ -11,8 +11,8 @@ use File::Basename;
 # - Dynamically rewrites the Spec-to-Test Mapping Matrix in documentation/QUALITY_AND_TESTING.md
 
 my $script_dir = dirname(__FILE__);
-my $spec_dir   = "$script_dir/../documentation/specifications";
-my $qa_file    = "$script_dir/../documentation/QUALITY_AND_TESTING.md";
+my $spec_dir   = $ENV{MYSQLTUNER_SPEC_DIR} || "$script_dir/../documentation/specifications";
+my $qa_file    = $ENV{MYSQLTUNER_QA_FILE} || "$script_dir/../documentation/QUALITY_AND_TESTING.md";
 
 print "Auditing specifications in $spec_dir...\n";
 
@@ -23,15 +23,19 @@ closedir($dh);
 my $errors = 0;
 my @matrix_entries;
 
-# Identify modified or untracked specifications via git status
+# Identify modified or untracked specifications via git status or env flag
 my %is_strict;
-my @git_status = `git status --porcelain "$spec_dir" 2>/dev/null`;
-for my $line (@git_status) {
-    chomp $line;
-    if ($line =~ /(\S+\.md)$/) {
-        my $base = basename($1);
-        $is_strict{$base} = 1;
-        print "Enforcing strict validation on modified spec: $base\n";
+if ($ENV{MYSQLTUNER_STRICT_ALL}) {
+    $is_strict{ basename($_) } = 1 for @spec_files;
+} else {
+    my @git_status = `git --no-optional-locks status --porcelain "$spec_dir" 2>/dev/null`;
+    for my $line (@git_status) {
+        chomp $line;
+        if ($line =~ /(\S+\.md)$/) {
+            my $base = basename($1);
+            $is_strict{$base} = 1;
+            print "Enforcing strict validation on modified spec: $base\n";
+        }
     }
 }
 

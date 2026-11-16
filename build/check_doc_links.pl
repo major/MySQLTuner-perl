@@ -142,7 +142,7 @@ push @md_files, map { File::Spec->catfile( $PROJECT_ROOT, $_ ) }
   grep { -f File::Spec->catfile( $PROJECT_ROOT, $_ ) && /\.md$/ } readdir $dh;
 closedir $dh;
 
-my $doc_dir = File::Spec->catdir( $PROJECT_ROOT, 'documentation' );
+my $doc_dir = $ENV{MYSQLTUNER_DOCS_DIR} || File::Spec->catdir( $PROJECT_ROOT, 'documentation' );
 if ( -d $doc_dir ) {
     find(
         sub {

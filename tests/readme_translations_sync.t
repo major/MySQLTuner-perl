@@ -16,6 +16,7 @@ use FindBin;
 use Cwd qw(abs_path);
 
 my $PROJECT_ROOT = abs_path(File::Spec->catdir($FindBin::Bin, '..'));
+my $README_DIR   = $ENV{MYSQLTUNER_README_DIR} || $PROJECT_ROOT;
 
 my @README_FILES = (
     { file => 'README.md',    lang => 'en', name => 'English' },
@@ -51,7 +52,7 @@ my @EXPECTED_DOWNLOAD_SNIPPETS = (
 
 sub read_file_content {
     my ($file) = @_;
-    my $path = File::Spec->catfile($PROJECT_ROOT, $file);
+    my $path = File::Spec->catfile($README_DIR, $file);
     open my $fh, '<:encoding(UTF-8)', $path or die "Cannot open $path: $!\n";
     my $content = do { local $/; <$fh> };
     close $fh;

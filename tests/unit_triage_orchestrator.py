@@ -17,12 +17,18 @@ from build.issue_triage.models import (
 
 class TestIssueTriageOrchestrator(unittest.TestCase):
     def setUp(self):
-        self.tmpdir = tempfile.mkdtemp()
+        self.tmpdir_obj = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir_obj.cleanup)
+        self.tmpdir = self.tmpdir_obj.name
+        tests_dir = os.path.join(self.tmpdir, "tests")
+        os.makedirs(tests_dir, exist_ok=True)
         self.orchestrator = IssueTriageOrchestrator(
             repo="jmrenouard/MySQLTuner-perl",
             offline_mode=True,
             dry_run=True,
             output_dir=self.tmpdir,
+            state_file=os.path.join(self.tmpdir, "triage_state.json"),
+            tests_dir=tests_dir,
         )
 
     def test_run_offline_issue_triage(self):

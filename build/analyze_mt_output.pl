@@ -132,17 +132,17 @@ if ($content =~ /Performance_schema should be activated/i) {
 # Category 6: Standard Sections Detection
 # ===================================================================
 my @standard_sections = (
-    'General Statistics',
-    'Storage Engine Statistics',
-    'Performance Metrics',
-    'Security Recommendations',
+    { label => 'Audit Snapshot Summary',    pattern => qr/Audit Snapshot Summary|General Statistics/i },
+    { label => 'Storage Engine Statistics', pattern => qr/Storage Engine Statistics/i },
+    { label => 'Performance Metrics',       pattern => qr/Performance Metrics/i },
+    { label => 'Security Recommendations',  pattern => qr/Security Recommendations/i },
 );
 
 for my $section (@standard_sections) {
-    if ($content =~ /\Q$section\E/i) {
-        push @sections_found, $section;
+    if ($content =~ $section->{pattern}) {
+        push @sections_found, $section->{label};
     } else {
-        push @sections_missing, $section;
+        push @sections_missing, $section->{label};
     }
 }
 
